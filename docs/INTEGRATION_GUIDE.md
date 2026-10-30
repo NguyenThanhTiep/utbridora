@@ -1,5 +1,7 @@
 # Hướng dẫn tích hợp T2–T5
 
+Quy trình đưa code backend/frontend/database của từng team vào cấu trúc repo hiện tại, kèm ví dụ guard, audit, migration, menu theo scope và pull request: [TEAM_IMPLEMENTATION_GUIDE.md](TEAM_IMPLEMENTATION_GUIDE.md).
+
 Các team thêm module trong **cùng modular monolith** Spring Boot/Java21, dùng chung users, organizations, session và audit. Không tạo lại login, JWT, bảng tài khoản theo role hoặc microservice riêng để thay core.
 
 ## Đăng nhập và gọi API
