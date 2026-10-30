@@ -1,0 +1,76 @@
+spring:
+  config:
+    import: "optional:file:./.env.local[.properties]"
+  application:
+    name: utbridora-auth
+  datasource:
+    url: ${DB_URL:jdbc:mysql://127.0.0.1:3307/utbridora?useUnicode=true&characterEncoding=utf8&connectionTimeZone=UTC}
+    username: ${DB_USER:bridora} # IDE dùng MySQL Docker; Compose truyền địa chỉ mysql:3306 riêng.
+    password: ${DB_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+  session:
+    jdbc:
+      initialize-schema: never
+    timeout: 30m
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp:
+        connectiontimeout: 5000
+        timeout: 5000
+        writetimeout: 5000
+        auth: ${MAIL_AUTH:false}
+        starttls.enable: ${MAIL_STARTTLS:false}
+        starttls.required: ${MAIL_STARTTLS:false}
+server:
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        name: SESSION
+        http-only: true
+        secure: ${COOKIE_SECURE:false} # true behind HTTPS in production
+        same-site: lax
+app:
+  public-url: ${APP_PUBLIC_URL:http://localhost:5173}
+  mail-from: ${MAIL_FROM:no-reply@utbridora.local}
+  bootstrap:
+    admin:
+      email: ${BOOTSTRAP_ADMIN_EMAIL:}
+      password: ${BOOTSTRAP_ADMIN_PASSWORD:}
+  demo:
+    allow-org-verification: ${ALLOW_DEMO_VERIFICATION:false}
+management:
+  health:
+    mail:
+      enabled: false # SMTP availability must not take down identity/session health.
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,db
+logging:
+  level:
+    org.springframework.web: INFO
+    org.hibernate.SQL: INFO
+  pattern:
+    level: "%5p [requestId=%X{requestId:-}]"

@@ -1,0 +1,6 @@
+.git
+.env*
+target
+web-demo
+docs
+*.log

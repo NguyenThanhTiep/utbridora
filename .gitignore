@@ -1,0 +1,14 @@
+.env
+*.iml
+.idea/
+.vscode/
+target/
+*.log
+.DS_Store
+node_modules/
+dist/
+*.tsbuildinfo
+playwright-report/
+test-results/
+.env.*
+!.env.example
