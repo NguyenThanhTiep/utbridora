@@ -1,0 +1,170 @@
+﻿{
+    "date":  "2026-10-29",
+    "timezone":  "Asia/Bangkok",
+    "finishedLocal":  "2026-10-29T19:34:29+07:00",
+    "command":  "./mvnw.cmd -Dfrontend.e2e=true -Dit.test=CorePlatformIT#frontendMustFlowsInChromium verify -B",
+    "build":  "PASS",
+    "unitTests":  28,
+    "failsafeOrchestrators":  1,
+    "browserTests":  14,
+    "browserFailures":  0,
+    "browserSkipped":  0,
+    "uiMockTests":  3,
+    "fullBackend49Rerun":  false,
+    "backendOrApiChanged":  false,
+    "runtimeDependenciesAdded":  false,
+    "cases":  [
+                  {
+                      "name":  "Quản trị viên đăng nhập, tra cứu tài khoản, audit và đăng xuất",
+                      "class":  "core.spec.ts",
+                      "seconds":  11.007,
+                      "uiMock":  false,
+                      "result":  "PASS"
+                  },
+                  {
+                      "name":  "Sai mật khẩu có lỗi chung và khôi phục không tiết lộ email",
+                      "class":  "core.spec.ts",
+                      "seconds":  2.623,
+                      "uiMock":  false,
+                      "result":  "PASS"
+                  },
+                  {
+                      "name":  "Kích hoạt lời mời và đăng nhập bằng tài khoản mới",
+                      "class":  "core.spec.ts",
+                      "seconds":  3.561,
+                      "uiMock":  false,
+                      "result":  "PASS"
+                  },
+                  {
+                      "name":  "Đặt lại mật khẩu một lần, liên kết cũ bị từ chối",
+                      "class":  "core.spec.ts",
+                      "seconds":  4.545,
+                      "uiMock":  false,
+                      "result":  "PASS"
+                  },
+                  {
+                      "name":  "Sinh viên bị chặn API quản trị và giao diện vừa màn hình di động",
+                      "class":  "core.spec.ts",
+                      "seconds":  2.271,
+                      "uiMock":  false,
+                      "result":  "PASS"
+                  },
+                  {
+                      "name":  "Khóa, mở tài khoản và quản lý membership trên giao diện",
+                      "class":  "core.spec.ts",
+                      "seconds":  11.187,
+                      "uiMock":  false,
+                      "result":  "PASS"
+                  },
+                  {
+                      "name":  "Phiên bị thu hồi đưa người dùng về đăng nhập khi gọi API",
+                      "class":  "core.spec.ts",
+                      "seconds":  6.312,
+                      "uiMock":  false,
+                      "result":  "PASS"
+                  },
+                  {
+                      "name":  "UX: hiện mật khẩu có trạng thái truy cập và đăng nhập được bằng bàn phím",
+                      "class":  "ux.spec.ts",
+                      "seconds":  2.222,
+                      "uiMock":  false,
+                      "result":  "PASS"
+                  },
+                  {
+                      "name":  "UX: menu di động mở, đóng bằng Escape và đóng sau khi chọn chức năng",
+                      "class":  "ux.spec.ts",
+                      "seconds":  4.828,
+                      "uiMock":  false,
+                      "result":  "PASS"
+                  },
+                  {
+                      "name":  "UX: bốn màn quản trị vừa màn hình 320px và 390px",
+                      "class":  "ux.spec.ts",
+                      "seconds":  11.738,
+                      "uiMock":  false,
+                      "result":  "PASS"
+                  },
+                  {
+                      "name":  "UX UI mock: kết quả tìm kiếm cũ không ghi đè truy vấn mới",
+                      "class":  "ux.spec.ts",
+                      "seconds":  2.595,
+                      "uiMock":  true,
+                      "result":  "PASS"
+                  },
+                  {
+                      "name":  "UX: liên kết kích hoạt và đặt lại thiếu mã giải thích được cách tiếp tục",
+                      "class":  "ux.spec.ts",
+                      "seconds":  0.989,
+                      "uiMock":  false,
+                      "result":  "PASS"
+                  },
+                  {
+                      "name":  "UX UI mock: danh sách rỗng có hướng dẫn, lỗi tải có thể thử lại",
+                      "class":  "ux.spec.ts",
+                      "seconds":  1.601,
+                      "uiMock":  true,
+                      "result":  "PASS"
+                  },
+                  {
+                      "name":  "UX UI mock: yêu cầu đăng nhập chậm chặn gửi trùng và khôi phục sau lỗi",
+                      "class":  "ux.spec.ts",
+                      "seconds":  0.831,
+                      "uiMock":  true,
+                      "result":  "PASS"
+                  }
+              ],
+    "visualReviewed":  [
+                           "login",
+                           "account desktop",
+                           "account mobile",
+                           "users desktop/mobile",
+                           "organizations desktop/mobile",
+                           "audit desktop/mobile"
+                       ],
+    "responsiveWidths":  [
+                             320,
+                             390,
+                             1280
+                         ],
+    "notRun":  [
+                   "Firefox",
+                   "Safari",
+                   "Physical devices",
+                   "Full WCAG/screen reader audit"
+               ],
+    "localFrontend":  {
+                          "health":  "PASS",
+                          "javascriptCssFavicon":  "PASS",
+                          "runtimeOrCspErrors":  0,
+                          "productionChromiumSmoke":  "PASS",
+                          "containerOnly":  "frontend",
+                          "url":  "http://localhost:8088",
+                          "backendDatabaseRestarted":  false
+                      },
+    "typography":  {
+                       "bodyAndInputPx":  16,
+                       "navigationAndTablePx":  15,
+                       "labelsAndSupportingCopyPx":  14,
+                       "metadataPx":  13,
+                       "decorativeCaptionPx":  12,
+                       "accountWidths":  [
+                                             320,
+                                             390,
+                                             901,
+                                             1051,
+                                             1280
+                                         ],
+                       "detailWidths":  [
+                                            320,
+                                            901,
+                                            1051
+                                        ],
+                       "finalBuild":  "PASS",
+                       "localComputedStylesAndOverflow":  "PASS",
+                       "localSmokeFinished":  "2026-10-29T19:42:20+07:00",
+                       "screenshotsAnimations":  "disabled",
+                       "finalFourCssRuleFollowup":  "Select scope16px; password hint/access note/security copy14px verified after the14-case run by final build and local Chromium smoke",
+                       "finalCss":  "index-DirwZUWJ.css",
+                       "fullBackendIntegrationRerun":  false
+                   }
+}

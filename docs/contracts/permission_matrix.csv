@@ -1,0 +1,22 @@
+﻿action,permission_code,resource,role,scope,required_business_condition,owner_team,decision_status
+view_own_profile,student_profile:self:read,Own student record,STUDENT,self,Owner user_id matches principal,T2,DRAFT_NEEDS_SIGNOFF
+edit_own_profile,student_profile:self:write,Own student record,STUDENT,self,Allow edit in permitted workflow state,T2,DRAFT_NEEDS_SIGNOFF
+view_shared_student_profile,student_profile:shared:read,Student profile detail,ENTERPRISE,enterprise,"Explicit share+consent+field permission, valid time",T2/T5,DRAFT_NEEDS_SIGNOFF
+view_school_student_profile,student_profile:school:read,Student profile detail,SCHOOL_STAFF,university,Delegated school scope confirmed by T2/T5,T2/T5,DRAFT_NEEDS_SIGNOFF
+create_demand,cooperation:enterprise:create,Enterprise demand,ENTERPRISE,enterprise,"Org VERIFIED, own organization, allowed demand status",T5,DRAFT_NEEDS_SIGNOFF
+review_cooperation,cooperation:school:review,Cooperation request,SCHOOL_STAFF,university,"Assigned school, valid request state",T5,DRAFT_NEEDS_SIGNOFF
+create_placement,placement:school:write,Placement,SCHOOL_STAFF,university,Acceptance approved and student consent,T5,DRAFT_NEEDS_SIGNOFF
+assign_task,internship:enterprise:task_write,Task,ENTERPRISE,enterprise,"Assigned mentor, active placement",T3,DRAFT_NEEDS_SIGNOFF
+submit_deliverable,internship:student:submission_write,Submission,STUDENT,university,"Own active placement, task open",T3,DRAFT_NEEDS_SIGNOFF
+evaluate_internship,internship:enterprise:evaluate,Evaluation,ENTERPRISE,enterprise,"Assigned mentor, evaluation state allows",T3,DRAFT_NEEDS_SIGNOFF
+read_matching_statistics,matching:enterprise:aggregate_read,Aggregate,ENTERPRISE,enterprise,"Verified org, threshold/no row-level identity",T4,DRAFT_NEEDS_SIGNOFF
+read_my_account,account:self:read,Identity,ALL,self,Authenticated current actor only,T1,DRAFT_NEEDS_SIGNOFF
+change_my_password,account:self:password_change,Identity,ALL,self,Valid current password & security checks,T1,DRAFT_NEEDS_SIGNOFF
+create_organization,organization:admin:create,Organization,ADMIN,global,"Global admin membership, no verification approval",T1,DRAFT_NEEDS_SIGNOFF
+manage_membership,membership:admin:write,Membership,ADMIN,global,"Valid role-org mapping, protect last admin",T1,DRAFT_NEEDS_SIGNOFF
+change_user_status,account:admin:status,Account,ADMIN,global,"Allowed state transition/reason, protect last admin",T1,DRAFT_NEEDS_SIGNOFF
+revoke_user_sessions,account:admin:revoke,Session,ADMIN,global,"Use security_version bump, log action",T1,DRAFT_NEEDS_SIGNOFF
+read_global_audit,audit:global:read,Audit,ADMIN,global,Authorized auditor only; sensitive metadata minimization,T1,DRAFT_NEEDS_SIGNOFF
+read_business_audit,NOT_GRANTED,Audit,ENTERPRISE,none,Never read global audit in starter,T1,DRAFT_NEEDS_SIGNOFF
+read_school_audit,NOT_GRANTED,Audit,SCHOOL_STAFF,none,Scoped role not implemented; deny by default,T1,DRAFT_NEEDS_SIGNOFF
+download_file,NOT_IMPLEMENTED,File,ALL,resource-specific,Owner+business right+clean scan+private storage required,T1/T2/T3,DRAFT_NEEDS_SIGNOFF

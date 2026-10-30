@@ -1,0 +1,12 @@
+flowchart TD
+ A[Authenticated request] --> B{Session and account active?}
+ B -->|No| X[Deny - 401]
+ B -->|Yes| C{Permission in role catalog?}
+ C -->|No| Y[Deny - 403]
+ C -->|Yes| D{Correct membership and org scope?}
+ D -->|No| Y
+ D -->|Yes| E{Resource owner or explicit business grant?}
+ E -->|No| Y
+ E -->|Yes| F[Allow operation]
+ F --> G[Audit sensitive success]
+ Y --> H[Audit denied without secrets]

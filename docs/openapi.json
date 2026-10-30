@@ -1,0 +1,1771 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "UT.Bridora T1 Core Platform",
+    "version": "0.2.0",
+    "description": "Hợp đồng dựa trên code ngày 29/10/2026. Session JDBC + CSRF. Các quyết định chia sẻ hồ sơ, Placement và xác thực tổ chức thật do T2–T5 cung cấp."
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "security": [
+    {
+      "session": []
+    }
+  ],
+  "paths": {
+    "/api/v1/auth/csrf": {
+      "get": {
+        "summary": "Lấy token CSRF theo session",
+        "description": "Token chỉ giữ trong bộ nhớ. Lấy lại sau login/logout. Không ghi token vào log.",
+        "operationId": "get_api_v1_auth_csrf",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "headerName": {
+                      "type": "string"
+                    },
+                    "token": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "headerName",
+                    "token"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload hoặc điều kiện không hợp lệ"
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc phiên hết hiệu lực"
+          },
+          "403": {
+            "description": "Thiếu quyền, scope hoặc CSRF"
+          },
+          "409": {
+            "description": "Trùng dữ liệu hoặc xung đột đồng thời"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "summary": "Đăng nhập email và mật khẩu",
+        "description": "Đổi ID phiên, lưu SecurityContext. Sai thông tin hoặc account unavailable: cùng lỗi 401. 5 lần sai khóa credential 15 phút.",
+        "operationId": "post_api_v1_auth_login",
+        "security": [
+          {
+            "csrf": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload hoặc điều kiện không hợp lệ"
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc phiên hết hiệu lực"
+          },
+          "403": {
+            "description": "Thiếu quyền, scope hoặc CSRF"
+          },
+          "409": {
+            "description": "Trùng dữ liệu hoặc xung đột đồng thời"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Login"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "summary": "Hủy phiên hiện tại",
+        "description": "",
+        "operationId": "post_api_v1_auth_logout",
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload hoặc điều kiện không hợp lệ"
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc phiên hết hiệu lực"
+          },
+          "403": {
+            "description": "Thiếu quyền, scope hoặc CSRF"
+          },
+          "409": {
+            "description": "Trùng dữ liệu hoặc xung đột đồng thời"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "summary": "Thông tin của chính người đang đăng nhập",
+        "description": "",
+        "operationId": "get_api_v1_auth_me",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload hoặc điều kiện không hợp lệ"
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc phiên hết hiệu lực"
+          },
+          "403": {
+            "description": "Thiếu quyền, scope hoặc CSRF"
+          },
+          "409": {
+            "description": "Trùng dữ liệu hoặc xung đột đồng thời"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me/permissions": {
+      "get": {
+        "summary": "Quyền theo membership để điều hướng UI",
+        "description": "Không thay thế backend authorization.",
+        "operationId": "get_api_v1_auth_me_permissions",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PermissionGrant"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload hoặc điều kiện không hợp lệ"
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc phiên hết hiệu lực"
+          },
+          "403": {
+            "description": "Thiếu quyền, scope hoặc CSRF"
+          },
+          "409": {
+            "description": "Trùng dữ liệu hoặc xung đột đồng thời"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/password/change": {
+      "post": {
+        "summary": "Đổi mật khẩu và thu hồi phiên",
+        "description": "",
+        "operationId": "post_api_v1_auth_password_change",
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload hoặc điều kiện không hợp lệ"
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc phiên hết hiệu lực"
+          },
+          "403": {
+            "description": "Thiếu quyền, scope hoặc CSRF"
+          },
+          "409": {
+            "description": "Trùng dữ liệu hoặc xung đột đồng thời"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePassword"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/password/forgot": {
+      "post": {
+        "summary": "Yêu cầu khôi phục với phản hồi chung",
+        "description": "",
+        "operationId": "post_api_v1_auth_password_forgot",
+        "security": [
+          {
+            "csrf": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload hoặc điều kiện không hợp lệ"
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc phiên hết hiệu lực"
+          },
+          "403": {
+            "description": "Thiếu quyền, scope hoặc CSRF"
+          },
+          "409": {
+            "description": "Trùng dữ liệu hoặc xung đột đồng thời"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPassword"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/password/reset": {
+      "post": {
+        "summary": "Đặt lại mật khẩu bằng token 30 phút một lần",
+        "description": "",
+        "operationId": "post_api_v1_auth_password_reset",
+        "security": [
+          {
+            "csrf": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload hoặc điều kiện không hợp lệ"
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc phiên hết hiệu lực"
+          },
+          "403": {
+            "description": "Thiếu quyền, scope hoặc CSRF"
+          },
+          "409": {
+            "description": "Trùng dữ liệu hoặc xung đột đồng thời"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPassword"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/invitations/accept": {
+      "post": {
+        "summary": "Nhận lời mời 48 giờ, tạo account ACTIVE",
+        "description": "",
+        "operationId": "post_api_v1_auth_invitations_accept",
+        "security": [
+          {
+            "csrf": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload hoặc điều kiện không hợp lệ"
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc phiên hết hiệu lực"
+          },
+          "403": {
+            "description": "Thiếu quyền, scope hoặc CSRF"
+          },
+          "409": {
+            "description": "Trùng dữ liệu hoặc xung đột đồng thời"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptInvitation"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/organizations": {
+      "post": {
+        "summary": "Tạo identity tổ chức PENDING",
+        "description": "ADMIN global + organization:admin:create. Không thực hiện verification nghiệp vụ T5.",
+        "operationId": "post_api_v1_admin_organizations",
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organization"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload hoặc điều kiện không hợp lệ"
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc phiên hết hiệu lực"
+          },
+          "403": {
+            "description": "Thiếu quyền, scope hoặc CSRF"
+          },
+          "409": {
+            "description": "Trùng dữ liệu hoặc xung đột đồng thời"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrganization"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Liệt kê tổ chức có phân trang",
+        "description": "ADMIN global + membership:admin:write.",
+        "operationId": "get_api_v1_admin_organizations",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageOrganizations"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload hoặc điều kiện không hợp lệ"
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc phiên hết hiệu lực"
+          },
+          "403": {
+            "description": "Thiếu quyền, scope hoặc CSRF"
+          },
+          "409": {
+            "description": "Trùng dữ liệu hoặc xung đột đồng thời"
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000,
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/invitations": {
+      "post": {
+        "summary": "Mời tài khoản mới",
+        "description": "ADMIN global + membership:admin:write. Email hiện gửi đồng bộ, chưa có outbox.",
+        "operationId": "post_api_v1_admin_invitations",
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload hoặc điều kiện không hợp lệ"
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc phiên hết hiệu lực"
+          },
+          "403": {
+            "description": "Thiếu quyền, scope hoặc CSRF"
+          },
+          "409": {
+            "description": "Trùng dữ liệu hoặc xung đột đồng thời"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInvitation"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/memberships": {
+      "post": {
+        "summary": "Cấp hoặc khôi phục membership",
+        "description": "ADMIN global + membership:admin:write. Cấp trùng active là no-op, không tăng security_version.",
+        "operationId": "post_api_v1_admin_memberships",
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload hoặc điều kiện không hợp lệ"
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc phiên hết hiệu lực"
+          },
+          "403": {
+            "description": "Thiếu quyền, scope hoặc CSRF"
+          },
+          "409": {
+            "description": "Trùng dữ liệu hoặc xung đột đồng thời"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeMembership"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Thu hồi membership",
+        "description": "ADMIN global + membership:admin:write. Không tự thu hồi ADMIN; bảo vệ admin cuối qua lock database.",
+        "operationId": "delete_api_v1_admin_memberships",
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload hoặc điều kiện không hợp lệ"
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc phiên hết hiệu lực"
+          },
+          "403": {
+            "description": "Thiếu quyền, scope hoặc CSRF"
+          },
+          "409": {
+            "description": "Trùng dữ liệu hoặc xung đột đồng thời"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeMembership"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users": {
+      "get": {
+        "summary": "Liệt kê tài khoản an toàn",
+        "description": "ADMIN global + account:admin:status. Không có password hash/security_version.",
+        "operationId": "get_api_v1_admin_users",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageUsers"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload hoặc điều kiện không hợp lệ"
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc phiên hết hiệu lực"
+          },
+          "403": {
+            "description": "Thiếu quyền, scope hoặc CSRF"
+          },
+          "409": {
+            "description": "Trùng dữ liệu hoặc xung đột đồng thời"
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000,
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 150
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING_ACTIVATION",
+                "ACTIVE",
+                "SUSPENDED",
+                "DEACTIVATED"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/users/{id}/status": {
+      "patch": {
+        "summary": "Thay đổi trạng thái, history và audit",
+        "description": "ADMIN global + account:admin:status. DEACTIVATED terminal, PENDING không được ép ACTIVE.",
+        "operationId": "patch_api_v1_admin_users__id__status",
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload hoặc điều kiện không hợp lệ"
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc phiên hết hiệu lực"
+          },
+          "403": {
+            "description": "Thiếu quyền, scope hoặc CSRF"
+          },
+          "409": {
+            "description": "Trùng dữ liệu hoặc xung đột đồng thời"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStatus"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/users/{id}/revoke-sessions": {
+      "patch": {
+        "summary": "Thu hồi phiên qua security_version",
+        "description": "ADMIN global + account:admin:revoke.",
+        "operationId": "patch_api_v1_admin_users__id__revoke_sessions",
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload hoặc điều kiện không hợp lệ"
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc phiên hết hiệu lực"
+          },
+          "403": {
+            "description": "Thiếu quyền, scope hoặc CSRF"
+          },
+          "409": {
+            "description": "Trùng dữ liệu hoặc xung đột đồng thời"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/users/{id}/status-history": {
+      "get": {
+        "summary": "Lịch sử trạng thái theo tài khoản",
+        "description": "ADMIN global + account:admin:status.",
+        "operationId": "get_api_v1_admin_users__id__status_history",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageHistory"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload hoặc điều kiện không hợp lệ"
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc phiên hết hiệu lực"
+          },
+          "403": {
+            "description": "Thiếu quyền, scope hoặc CSRF"
+          },
+          "409": {
+            "description": "Trùng dữ liệu hoặc xung đột đồng thời"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000,
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/audit-logs": {
+      "get": {
+        "summary": "Tra cứu audit có phân trang",
+        "description": "ADMIN global + audit:global:read. Khoảng thời gian [from,until), UTC ISO-8601.",
+        "operationId": "get_api_v1_admin_audit_logs",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageAudit"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload hoặc điều kiện không hợp lệ"
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc phiên hết hiệu lực"
+          },
+          "403": {
+            "description": "Thiếu quyền, scope hoặc CSRF"
+          },
+          "409": {
+            "description": "Trùng dữ liệu hoặc xung đột đồng thời"
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000,
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z0-9_]{1,90}$"
+            }
+          },
+          {
+            "name": "actorId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "organizationId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "result",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SUCCESS",
+                "FAILURE",
+                "DENIED"
+              ]
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/demo/organizations/{organizationId}/private": {
+      "get": {
+        "summary": "Kiểm tra org scope bằng dữ liệu giả",
+        "description": "ENTERPRISE membership + cooperation:enterprise:create + đúng org VERIFIED. Không trả dữ liệu nghiệp vụ thật.",
+        "operationId": "get_api_v1_demo_organizations__organizationId__private",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "organizationId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "result": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "organizationId",
+                    "result"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload hoặc điều kiện không hợp lệ"
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc phiên hết hiệu lực"
+          },
+          "403": {
+            "description": "Thiếu quyền, scope hoặc CSRF"
+          },
+          "409": {
+            "description": "Trùng dữ liệu hoặc xung đột đồng thời"
+          }
+        },
+        "parameters": [
+          {
+            "name": "organizationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/demo/admin/organizations/{id}/verify": {
+      "patch": {
+        "summary": "Demo xác thực tổ chức",
+        "description": "Chỉ tồn tại khi ALLOW_DEMO_VERIFICATION=true. Không bật staging. ADMIN global + organization:admin:create.",
+        "operationId": "patch_api_v1_demo_admin_organizations__id__verify",
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload hoặc điều kiện không hợp lệ"
+          },
+          "401": {
+            "description": "Chưa xác thực hoặc phiên hết hiệu lực"
+          },
+          "403": {
+            "description": "Thiếu quyền, scope hoặc CSRF"
+          },
+          "409": {
+            "description": "Trùng dữ liệu hoặc xung đột đồng thời"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "session": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "SESSION"
+      },
+      "csrf": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-CSRF-TOKEN"
+      }
+    },
+    "schemas": {
+      "Membership": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "STUDENT",
+              "ENTERPRISE",
+              "SCHOOL_STAFF",
+              "ADMIN"
+            ]
+          },
+          "organizationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "role",
+          "organizationId"
+        ]
+      },
+      "Me": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "memberships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Membership"
+            }
+          }
+        },
+        "required": [
+          "userId",
+          "email",
+          "displayName",
+          "memberships"
+        ]
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "message"
+        ]
+      },
+      "Login": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "ChangePassword": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ]
+      },
+      "ForgotPassword": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "ResetPassword": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "newPassword": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "newPassword"
+        ]
+      },
+      "AcceptInvitation": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "displayName": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "displayName",
+          "password"
+        ]
+      },
+      "ChangeMembership": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "STUDENT",
+              "ENTERPRISE",
+              "SCHOOL_STAFF",
+              "ADMIN"
+            ]
+          },
+          "organizationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "userId",
+          "role"
+        ]
+      },
+      "CreateInvitation": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "STUDENT",
+              "ENTERPRISE",
+              "SCHOOL_STAFF",
+              "ADMIN"
+            ]
+          },
+          "organizationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "email",
+          "role"
+        ]
+      },
+      "CreateOrganization": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "UNIVERSITY",
+              "ENTERPRISE"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ]
+      },
+      "UpdateStatus": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING_ACTIVATION",
+              "ACTIVE",
+              "SUSPENDED",
+              "DEACTIVATED"
+            ]
+          },
+          "reasonCode": {
+            "type": "string",
+            "pattern": "^[A-Z0-9_]{3,64}$"
+          }
+        },
+        "required": [
+          "status",
+          "reasonCode"
+        ]
+      },
+      "Organization": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "UNIVERSITY",
+              "ENTERPRISE"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "VERIFIED",
+              "SUSPENDED"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "status",
+          "createdAt"
+        ]
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "memberships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Membership"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING_ACTIVATION",
+              "ACTIVE",
+              "SUSPENDED",
+              "DEACTIVATED"
+            ]
+          },
+          "lockedUntil": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "userId",
+          "email",
+          "displayName",
+          "memberships",
+          "status",
+          "lockedUntil"
+        ]
+      },
+      "PermissionGrant": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "STUDENT",
+              "ENTERPRISE",
+              "SCHOOL_STAFF",
+              "ADMIN"
+            ]
+          },
+          "organizationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "role",
+          "organizationId",
+          "permissions"
+        ]
+      },
+      "StatusHistory": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fromStatus": {
+            "type": "string",
+            "enum": [
+              "PENDING_ACTIVATION",
+              "ACTIVE",
+              "SUSPENDED",
+              "DEACTIVATED"
+            ]
+          },
+          "toStatus": {
+            "type": "string",
+            "enum": [
+              "PENDING_ACTIVATION",
+              "ACTIVE",
+              "SUSPENDED",
+              "DEACTIVATED"
+            ]
+          },
+          "reasonCode": {
+            "type": "string"
+          },
+          "changedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "actorId",
+          "fromStatus",
+          "toStatus",
+          "reasonCode",
+          "changedAt"
+        ]
+      },
+      "AuditLog": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "action": {
+            "type": "string"
+          },
+          "resourceType": {
+            "type": "string"
+          },
+          "resourceId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "FAILURE",
+              "DENIED"
+            ]
+          },
+          "organizationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "requestId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reasonCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "actorId",
+          "action",
+          "resourceType",
+          "resourceId",
+          "result",
+          "organizationId",
+          "requestId",
+          "reasonCode",
+          "occurredAt"
+        ]
+      },
+      "PageUsers": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          },
+          "number": {
+            "type": "integer"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "totalElements": {
+            "type": "integer"
+          },
+          "totalPages": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "content",
+          "number",
+          "size",
+          "totalElements",
+          "totalPages"
+        ]
+      },
+      "PageOrganizations": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Organization"
+            }
+          },
+          "number": {
+            "type": "integer"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "totalElements": {
+            "type": "integer"
+          },
+          "totalPages": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "content",
+          "number",
+          "size",
+          "totalElements",
+          "totalPages"
+        ]
+      },
+      "PageAudit": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditLog"
+            }
+          },
+          "number": {
+            "type": "integer"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "totalElements": {
+            "type": "integer"
+          },
+          "totalPages": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "content",
+          "number",
+          "size",
+          "totalElements",
+          "totalPages"
+        ]
+      },
+      "PageHistory": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatusHistory"
+            }
+          },
+          "number": {
+            "type": "integer"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "totalElements": {
+            "type": "integer"
+          },
+          "totalPages": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "content",
+          "number",
+          "size",
+          "totalElements",
+          "totalPages"
+        ]
+      }
+    }
+  }
+}
