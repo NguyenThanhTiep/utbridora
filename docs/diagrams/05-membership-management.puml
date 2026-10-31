@@ -1,0 +1,127 @@
+@startuml
+title UT.Bridora — Cấp và thu hồi membership
+skinparam backgroundColor white
+skinparam defaultFontName Segoe UI
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #EAF2FF
+  BorderColor #315B8A
+  DiamondBackgroundColor #FFF3D6
+  DiamondBorderColor #8A6820
+}
+
+|Quản trị viên|
+start
+:Chọn người dùng, role, organization\nvà thao tác cấp / thu hồi;
+:Gửi request cùng cookie phiên\nvà CSRF;
+
+|Backend|
+:Kiểm tra phiên, account ACTIVE,\nsecurity_version và CSRF;
+if (Request qua kiểm tra bảo mật?) then (Không)
+  :Từ chối 401 hoặc 403\ntheo nguyên nhân;
+  stop
+else (Có)
+endif
+:Kiểm tra global ADMIN và\nmembership:admin:write;
+if (Có quyền quản trị?) then (Không)
+  :Từ chối 403;
+  stop
+else (Có)
+endif
+
+|Cơ sở dữ liệu|
+:Bắt đầu transaction;\nkhóa mutex GLOBAL_ADMIN;
+
+|Backend|
+:Kiểm tra lại actor và permission\nsau khi lấy khóa;
+if (Actor vẫn có quyền?) then (Không)
+  :Rollback và từ chối 403;
+  stop
+else (Có)
+endif
+:Kiểm tra phạm vi role và tổ chức;
+note right
+  ADMIN: organizationId = null.
+  ENTERPRISE: tổ chức ENTERPRISE.
+  STUDENT / SCHOOL_STAFF: UNIVERSITY.
+  Đây là cấp quyền; trạng thái VERIFIED
+  được kiểm tra khi truy cập nghiệp vụ.
+end note
+if (Role và phạm vi hợp lệ?) then (Không)
+  :Rollback; báo dữ liệu không hợp lệ;
+  stop
+else (Có)
+endif
+if (Thu hồi ADMIN của chính actor?) then (Có)
+  :Rollback; từ chối tự thu hồi ADMIN;
+  stop
+else (Không)
+endif
+
+|Cơ sở dữ liệu|
+:Khóa bản ghi người dùng đích;
+
+|Backend|
+if (Tìm thấy người dùng?) then (Không)
+  :Rollback; báo người dùng không tồn tại;
+  stop
+else (Có)
+endif
+if (Thao tác cấp?) then (Có)
+  if (Tài khoản DEACTIVATED?) then (Có)
+    :Rollback; không cấp role\ncho tài khoản DEACTIVATED;
+    stop
+  else (Không)
+  endif
+  :Tìm membership theo\nuser + role + organization;
+  if (Membership đã tồn tại và active?) then (Có)
+    :Kết thúc transaction không thay đổi;\nkhông tăng version, không tạo audit mới;
+    stop
+  else (Không)
+  endif
+  :Tạo mới hoặc kích hoạt lại membership;\ncập nhật updatedAt;
+  :Chọn event MEMBERSHIP_GRANTED;
+else (Thu hồi)
+  :Tìm membership theo\nuser + role + organization;
+  if (Membership tồn tại?) then (Không)
+    :Rollback; báo membership không tồn tại;
+    stop
+  else (Có)
+  endif
+  if (Membership đã inactive?) then (Có)
+    :Kết thúc transaction không thay đổi;\nkhông tăng version, không tạo audit mới;
+    stop
+  else (Không)
+  endif
+  if (Làm mất global ADMIN ACTIVE cuối cùng?) then (Có)
+    :Rollback; từ chối thu hồi ADMIN cuối;
+    stop
+  else (Không)
+  endif
+  :Đặt membership.active = false;\ncập nhật updatedAt;
+  :Chọn event MEMBERSHIP_REVOKED;
+endif
+:Tăng security_version của người dùng;
+
+|Cơ sở dữ liệu|
+:Lưu thay đổi và ghi audit SUCCESS\ntrong cùng transaction;
+if (Ghi dữ liệu, audit và commit thành công?) then (Không)
+  :Rollback toàn bộ thay đổi;
+  |Backend|
+  :Trả lỗi; không báo cập nhật thành công;
+  stop
+else (Có)
+endif
+
+|Backend|
+:Trả kết quả thành công;
+note right
+  Với membership thực sự thay đổi,
+  phiên cũ bị từ chối ở request tiếp theo.
+  Không mô tả xóa tức thì mọi bản ghi session.
+end note
+|Quản trị viên|
+:Xem kết quả và tải lại danh sách;
+stop
+@enduml

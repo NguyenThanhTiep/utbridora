@@ -1,0 +1,82 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Segoe UI
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #EFF6FF
+  BorderColor #2563EB
+  DiamondBackgroundColor #FFFBEB
+  DiamondBorderColor #D97706
+}
+title UT.Bridora — Đăng nhập bằng session
+
+|Người dùng|
+start
+:Mở trang đăng nhập;
+:Nhập email và mật khẩu;
+|Frontend|
+:GET /api/v1/auth/csrf;
+:POST /api/v1/auth/login\ncùng cookie và header CSRF;
+|Backend|
+if (CSRF hợp lệ?) then (Có)
+else (Không)
+  :Trả 403;
+  stop
+endif
+if (Dữ liệu đầu vào hợp lệ?) then (Có)
+else (Không)
+  :Trả 400;
+  stop
+endif
+:AuthenticationManager xác thực\nemail, BCrypt, ACTIVE và khóa tạm;
+note right
+  Sau xác thực, successfulLogin khóa user và kiểm tra lại
+  ACTIVE, security_version và locked_until.
+  Nếu hợp lệ: reset bộ đếm + LOGIN / SUCCESS cùng transaction.
+  Các bước tạo session diễn ra sau transaction này.
+end note
+:Gọi successfulLogin nếu xác thực thành công;
+if (Xác thực và kiểm tra lại thành công?) then (Có)
+  |Backend|
+  :SessionAuthenticationStrategy\nđổi session ID và xoay CSRF;
+  :Tạo SecurityContext\nvà lưu qua SecurityContextRepository;
+  |Cơ sở dữ liệu|
+  :Spring Session JDBC lưu phiên phía server;
+  |Backend|
+  :Trả 200 + thông tin tài khoản;
+  note right
+    Cookie SESSION: HttpOnly, SameSite=Lax.
+    Secure=true khi triển khai HTTPS.
+    Không lưu session trong localStorage.
+  end note
+  |Frontend|
+  :GET /api/v1/auth/csrf để lấy CSRF mới;
+  :Tải quyền hiện tại và hiển thị giao diện;
+  |Người dùng|
+  :Sử dụng chức năng được cấp quyền;
+  stop
+else (Lỗi xác thực)
+  |Backend|
+  :failedLogin cập nhật bộ đếm nếu\naccount ACTIVE và chưa bị khóa tạm;
+  |Cơ sở dữ liệu|
+  if (Đủ 5 lần thất bại?) then (Có)
+    :Đặt locked_until thêm 15 phút;\nreset bộ đếm; giữ nguyên users.status;
+  else (Không)
+    :Giữ kết quả kiểm tra / tăng bộ đếm phù hợp;
+  endif
+  |Backend|
+  :Ghi LOGIN / FAILURE;
+  :Trả 401 với thông báo xác thực chung;
+  |Frontend|
+  :Hiển thị lỗi, cho phép thử lại;
+  stop
+endif
+
+legend bottom
+  Các request tiếp theo: timeout 30 phút không hoạt động hoặc security_version cũ → 401.
+  Khóa credential 15 phút khác với trạng thái SUSPENDED.
+  Lỗi hạ tầng/audit/session có thể trả 5xx; không hiển thị đăng nhập thành công khi request lỗi.
+  LOGIN / FAILURE và cập nhật bộ đếm không được khẳng định là một transaction chung.
+endlegend
+@enduml

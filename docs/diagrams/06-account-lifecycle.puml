@@ -1,0 +1,116 @@
+@startuml
+title UT.Bridora — Thay đổi trạng thái tài khoản
+skinparam backgroundColor white
+skinparam defaultFontName Segoe UI
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #EAF2FF
+  BorderColor #315B8A
+  DiamondBackgroundColor #FFF3D6
+  DiamondBorderColor #8A6820
+}
+
+|Quản trị viên|
+start
+:Chọn tài khoản, trạng thái đích\nvà reasonCode;
+:Gửi PATCH /api/v1/admin/users/{id}/status\ncùng cookie phiên và CSRF;
+
+|Backend|
+:Kiểm tra phiên, account ACTIVE,\nsecurity_version và CSRF;
+if (Request qua kiểm tra bảo mật?) then (Không)
+  :Từ chối 401 hoặc 403\ntheo nguyên nhân;
+  stop
+else (Có)
+endif
+:Kiểm tra global ADMIN và\naccount:admin:status;
+if (Có quyền quản trị?) then (Không)
+  :Từ chối 403;
+  stop
+else (Có)
+endif
+
+|Cơ sở dữ liệu|
+:Bắt đầu transaction;\nkhóa mutex GLOBAL_ADMIN;
+
+|Backend|
+:Kiểm tra lại actor và permission\nsau khi lấy khóa;
+if (Actor vẫn có quyền?) then (Không)
+  :Rollback và từ chối 403;
+  stop
+else (Có)
+endif
+if (Trạng thái đích được cung cấp?) then (Không)
+  :Rollback; báo dữ liệu không hợp lệ;
+  stop
+else (Có)
+endif
+if (Đổi trạng thái chính actor sang khác ACTIVE?) then (Có)
+  :Rollback; từ chối tự khóa\nhoặc vô hiệu hóa tài khoản;
+  stop
+else (Không)
+endif
+if (reasonCode khớp [A-Z0-9_]{3,64}?) then (Không)
+  :Rollback; yêu cầu reasonCode hợp lệ;
+  stop
+else (Có)
+endif
+
+|Cơ sở dữ liệu|
+:Khóa và tải người dùng đích;
+
+|Backend|
+if (Tài khoản tồn tại?) then (Không)
+  :Rollback; báo tài khoản không tồn tại;
+  stop
+else (Có)
+endif
+:Đối chiếu trạng thái hiện tại và đích\nvới AccountStatusPolicy;
+note right
+  Các chuyển trạng thái khác nhau được phép:
+  PENDING_ACTIVATION -> SUSPENDED / DEACTIVATED
+  ACTIVE -> SUSPENDED / DEACTIVATED
+  SUSPENDED -> ACTIVE / DEACTIVATED
+  DEACTIVATED: không có đường khôi phục.
+  Cùng trạng thái: no-op sau các kiểm tra đầu vào.
+end note
+if (Chuyển trạng thái được phép?) then (Không)
+  :Rollback; từ chối chuyển trạng thái;
+  stop
+else (Có)
+endif
+if (Trạng thái hiện tại trùng trạng thái đích?) then (Có)
+  :Kết thúc transaction không thay đổi;\nkhông tăng version, không ghi history / audit mới;
+  stop
+else (Không)
+endif
+if (Làm mất global ADMIN ACTIVE cuối cùng?) then (Có)
+  :Rollback; từ chối khóa\nhoặc vô hiệu hóa ADMIN cuối;
+  stop
+else (Không)
+endif
+:Cập nhật status; tăng security_version;\nreset failedAttempts và lockedUntil;
+
+|Cơ sở dữ liệu|
+:Lưu account_status_history:\nactor, user, fromStatus, toStatus,\nreasonCode, changedAt UTC;
+:Ghi ACCOUNT_STATUS_CHANGED / SUCCESS\ntrong cùng transaction;
+if (Ghi dữ liệu, audit và commit thành công?) then (Không)
+  :Rollback trạng thái, version, history và audit;
+  |Backend|
+  :Trả lỗi; không báo cập nhật thành công;
+  stop
+else (Có)
+endif
+
+|Backend|
+:Trả kết quả thành công;
+note right
+  Phiên cũ bị từ chối ở request tiếp theo.
+  Mở khóa không khôi phục phiên cũ.
+  Trạng thái tài khoản khác trạng thái
+  xác thực doanh nghiệp / tổ chức.
+end note
+|Quản trị viên|
+:Xem trạng thái và lịch sử mới;
+stop
+@enduml
