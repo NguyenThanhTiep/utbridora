@@ -1,4 +1,4 @@
-> Tài liệu baseline được giữ để truy vết thiết kế ban đầu. Code và kết quả kiểm thử sau triển khai ngày 29/10/2026 xem [HANDOFF_CHECKLIST.md](HANDOFF_CHECKLIST.md) và [báo cáo thực thi](TEST_REPORT.md); các câu “chưa triển khai/chưa test” bên dưới mô tả baseline, không phải trạng thái mới nhất.
+> Tài liệu baseline được giữ để truy vết thiết kế ban đầu. Code và kết quả kiểm thử sau triển khai ngày 29/10/2026 xem [HANDOFF_CHECKLIST.md](../../status/HANDOFF_CHECKLIST.md) và [báo cáo thực thi](../../testing/TEST_REPORT.md); các câu “chưa triển khai/chưa test” bên dưới mô tả baseline, không phải trạng thái mới nhất.
 
 # Checklist bàn giao T1 cho PM và T2–T5
 
@@ -6,7 +6,7 @@
 
 - [x] Nối với code Authentication #1, không thay đổi ID/role/session.
 - [x] Authorization policy tổng quát + scope/permission + deny-default profile integration port.
-- [x] Bảng phân quyền `contracts/permission_matrix.csv` dự thảo cho 4 vai trò.
+- [x] Bảng phân quyền `../../contracts/permission_matrix.csv` dự thảo cho 4 vai trò.
 - [x] SQL migration V3–V6 + metadata files + status history.
 - [x] Sơ đồ account lifecycle và bảng ai được chuyển.
 - [x] Audit writer và quy tắc event, request id, global paged audit read.

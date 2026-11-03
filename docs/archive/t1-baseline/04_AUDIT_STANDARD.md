@@ -1,4 +1,4 @@
-> Tài liệu baseline được giữ để truy vết thiết kế ban đầu. Code và kết quả kiểm thử sau triển khai ngày 29/10/2026 xem [AUDIT_LOG.md](AUDIT_LOG.md) và [báo cáo thực thi](TEST_REPORT.md); các câu “chưa triển khai/chưa test” bên dưới mô tả baseline, không phải trạng thái mới nhất.
+> Tài liệu baseline được giữ để truy vết thiết kế ban đầu. Code và kết quả kiểm thử sau triển khai ngày 29/10/2026 xem [AUDIT_LOG.md](../../core/AUDIT_LOG.md) và [báo cáo thực thi](../../testing/TEST_REPORT.md); các câu “chưa triển khai/chưa test” bên dưới mô tả baseline, không phải trạng thái mới nhất.
 
 # Công việc 5 – Audit Log tiêu chuẩn dùng chung cho 5 team
 

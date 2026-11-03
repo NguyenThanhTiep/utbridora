@@ -50,7 +50,7 @@ Use Case khai báo layout Smetana; Activity dùng bộ dựng của PlantUML. B�
 - **AD-06 là luồng hợp đồng tích hợp**, chưa phải endpoint nghiệp vụ thật. Guard đã có; record/assignment, adapter chia sẻ, consent và lọc field còn phụ thuộc T2–T5. Nhánh owner được xét trước nhánh tổ chức. Adapter chia sẻ mặc định từ chối.
 - Không vẽ các module T2–T5 thành microservice; kiến trúc vẫn là Modular Monolith.
 
-Nguồn đối chiếu: [API](../API_DOCUMENTATION.md), [Authorization](../AUTHORIZATION.md), [Vòng đời tài khoản](../ACCOUNT_LIFECYCLE.md), [Audit](../AUDIT_LOG.md), cùng các controller/service thực tế.
+Nguồn đối chiếu: [API](../core/API_DOCUMENTATION.md), [Authorization](../core/AUTHORIZATION.md), [Vòng đời tài khoản](../core/ACCOUNT_LIFECYCLE.md), [Audit](../core/AUDIT_LOG.md), cùng các controller/service thực tế.
 
 ## Kiểm tra ngày 31/10/2026
 

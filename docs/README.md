@@ -1,0 +1,76 @@
+# Tài liệu UT.Bridora
+
+Mục lục tài liệu dùng chung cho năm team. Cập nhật cách sắp xếp ngày 03/11/2026; việc di chuyển tài liệu không thay đổi yêu cầu nghiệp vụ, mã nguồn hoặc kết quả kiểm thử.
+
+## Đọc từ đâu
+
+| Nhu cầu | Tài liệu bắt đầu |
+|---|---|
+| Hiểu yêu cầu toàn hệ thống | [SRS tổng thể v1.2.4](srs/UTBridora_SRS_Tong_The_v1.2.4.docx) và [trạng thái SRS](srs/README.md) |
+| Thống nhất giao điểm giữa các team | [Contract Pack B01–B06 v1.0 Candidate](contracts/UTBridora_Contract_Pack_B01_B06_v1.0_Candidate.md) và [quy tắc sử dụng contract](contracts/README.md) |
+| Biết source hiện đã có gì | [Trạng thái triển khai](status/IMPLEMENTATION_STATUS.md) và [báo cáo kiểm thử](testing/TEST_REPORT.md) |
+| Đưa module của team vào repository | [Hướng dẫn triển khai module](guides/TEAM_IMPLEMENTATION_GUIDE.md) và [hướng dẫn tích hợp](guides/INTEGRATION_GUIDE.md) |
+| Chạy local hoặc chuẩn bị staging | [Hướng dẫn triển khai](guides/DEPLOYMENT_GUIDE.md) |
+| Xem sơ đồ | [Use case, activity và cách render](diagrams/README.md) |
+
+**Phân biệt trạng thái:** SRS v1.2.4 và Contract Pack hiện là đề xuất, còn chờ owner/consumer ký nhận. Tài liệu trong `core` mô tả nền tảng đã có tại thời điểm ghi nhận; báo cáo trong `testing` chỉ chứng minh các lượt chạy được ghi rõ ngày. Không dùng việc có tài liệu hoặc ví dụ JSON để kết luận tính năng đã triển khai hay test đã PASS.
+
+## Cấu trúc thư mục
+
+```text
+docs/
+├── README.md                  # Mục lục và cách sử dụng
+├── openapi.json               # OpenAPI core; giữ đường dẫn công bố hiện có
+├── srs/                       # SRS tổng thể
+├── contracts/                 # Contract liên team và ma trận quyền
+├── core/                      # Kiến trúc, API, database, bảo mật của core
+├── guides/                    # Hướng dẫn tích hợp, chạy và làm việc
+├── status/                    # Trạng thái triển khai và bàn giao
+├── testing/                   # Báo cáo và evidence kiểm thử
+├── diagrams/                  # Mã nguồn sơ đồ và ảnh đã render
+├── reviews/                   # Báo cáo kiểm định, đề xuất và checkpoint
+└── archive/t1-baseline/        # Bộ thiết kế nền tảng cũ để truy vết
+```
+
+## Tài liệu core
+
+- [Kiến trúc](core/ARCHITECTURE.md).
+- [API nền tảng](core/API_DOCUMENTATION.md) và [OpenAPI 3.1](openapi.json).
+- [Database và migration](core/DATABASE.md).
+- [Phân quyền](core/AUTHORIZATION.md).
+- [Vòng đời tài khoản](core/ACCOUNT_LIFECYCLE.md).
+- [Audit Log](core/AUDIT_LOG.md).
+
+## Hướng dẫn làm việc
+
+- [Tích hợp API, quyền và dữ liệu T2–T5](guides/INTEGRATION_GUIDE.md).
+- [Đưa code backend, frontend và migration vào dự án](guides/TEAM_IMPLEMENTATION_GUIDE.md).
+- [Chạy local, chuẩn bị staging và backup](guides/DEPLOYMENT_GUIDE.md).
+- [Commit theo chức năng](guides/COMMIT_GUIDE.md): có phần mô tả lần khởi tạo Git trước đây; đối chiếu trạng thái Git hiện tại trước khi dùng.
+- [Khảo sát đồng bộ dữ liệu Docker](guides/DATA_SYNCHRONIZATION.md): tài liệu thiết kế, chưa chứng minh replication đã triển khai.
+- [Hướng dẫn nhanh ở thư mục gốc](../TEAM_INTEGRATION_QUICKSTART.md).
+
+## Trạng thái và kiểm thử
+
+- [Trạng thái triển khai](status/IMPLEMENTATION_STATUS.md).
+- [Checklist bàn giao](status/HANDOFF_CHECKLIST.md).
+- [Các thay đổi giao diện và kiểm chứng đã ghi nhận](status/UI_UPGRADE.md).
+- [Báo cáo kiểm thử](testing/TEST_REPORT.md).
+- Evidence gốc: [backend và tích hợp](testing/evidence/TEST_EVIDENCE.json), [giao diện](testing/evidence/UI_TEST_EVIDENCE.json), [trước push](testing/evidence/PREPUSH_TEST_EVIDENCE.json).
+
+Evidence JSON được giữ nguyên nội dung. Đường dẫn source/log hoặc checksum bên trong phản ánh snapshot lúc chạy, không phải kết quả được chạy lại khi tổ chức tài liệu.
+
+## Kiểm định và lịch sử
+
+- [Danh mục các lần kiểm định và đề xuất](reviews/README.md).
+- [Bộ thiết kế nền tảng cũ](archive/t1-baseline/README.md).
+
+Tài liệu đánh số `00`–`10`, `API_EXAMPLES`, `HANDOFF_T1`, `STATE_DIAGRAMS` và `TEST_PLAN` được chuyển vào `archive/t1-baseline`; vẫn giữ để truy vết. Trạng thái triển khai phải đọc từ `status` và `testing`, không suy từ các câu “chưa triển khai” của baseline cũ.
+
+## Quy tắc cập nhật
+
+1. SRS đặt trong `srs`; contract đặt trong `contracts`; nhận xét và kết quả kiểm định đặt trong `reviews`.
+2. Giữ một bản nội dung cho mỗi tài liệu. Mục lục liên kết đến bản đó, không sao chép toàn bộ sang thư mục khác.
+3. Contract Candidate đang được SRS tham chiếu bằng SHA-256. Muốn sửa nội dung phải phát hành phiên bản và cập nhật tham chiếu/signoff tương ứng; việc sắp xếp này giữ nguyên hai file.
+4. Giữ `docs/openapi.json` và `docs/contracts/permission_matrix.csv` ở đường dẫn hiện có. OpenAPI core hiện hữu và contract tính năng mới phải được phân biệt rõ trạng thái.
+5. Khi di chuyển tài liệu, cập nhật cả liên kết Markdown và đường dẫn trong hướng dẫn. Snapshot kiểm định/contract đã đóng băng được giữ nguyên; dùng mục lục hoặc liên kết tương thích để dẫn đến vị trí mới.

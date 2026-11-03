@@ -1,4 +1,4 @@
-> Tài liệu baseline được giữ để truy vết thiết kế ban đầu. Code và kết quả kiểm thử sau triển khai ngày 29/10/2026 xem [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) và [báo cáo thực thi](TEST_REPORT.md); các câu “chưa triển khai/chưa test” bên dưới mô tả baseline, không phải trạng thái mới nhất.
+> Tài liệu baseline được giữ để truy vết thiết kế ban đầu. Code và kết quả kiểm thử sau triển khai ngày 29/10/2026 xem [IMPLEMENTATION_STATUS.md](../../status/IMPLEMENTATION_STATUS.md) và [báo cáo thực thi](../../testing/TEST_REPORT.md); các câu “chưa triển khai/chưa test” bên dưới mô tả baseline, không phải trạng thái mới nhất.
 
 # UT.Bridora · T1 FOUNDATION – Thiết kế công việc 2–5
 
@@ -21,7 +21,7 @@
 
 | Công việc | Có mã nguồn | Tài liệu | Cần T2–T5 xác nhận |
 |---|---|---|---|
-| #2 Authorization | `AuthorizationPolicy`, `PermissionCatalog`, `MembershipService`, demo guard | `01_AUTHORIZATION.md`, `contracts/permission_matrix.csv` | Quy tắc chia sẻ hồ sơ, trường phụ trách, mentor/placement |
+| #2 Authorization | `AuthorizationPolicy`, `PermissionCatalog`, `MembershipService`, demo guard | `01_AUTHORIZATION.md`, `../../contracts/permission_matrix.csv` | Quy tắc chia sẻ hồ sơ, trường phụ trách, mentor/placement |
 | #3 Database Core | Flyway V3–V6, JPA Audit, Status History, File Metadata | `02_DATABASE_CORE.md` | FK/entity của các team nghiệp vụ; org status semantics |
 | #4 Account Lifecycle | `AccountLifecycleService`, `AccountStatusPolicy`, status history | `03_ACCOUNT_LIFECYCLE.md` | Thẩm quyền kích hoạt/khóa/thu hồi quyền |
 | #5 Audit Log | `AuditService`, `AuditLogView`, `RequestIdFilter`, log denied | `04_AUDIT_STANDARD.md` | Event gửi từ service nghiệp vụ, quyền xem audit theo phạm vi |
@@ -57,4 +57,4 @@
 
 ## 5. Thứ tự đọc tài liệu
 
-`01_AUTHORIZATION.md` → `contracts/permission_matrix.csv` → `02_DATABASE_CORE.md` → `03_ACCOUNT_LIFECYCLE.md` → `04_AUDIT_STANDARD.md` → `05_API_HANDOFF.md` → `06_USER_STORIES.md` → `07_TEST_STRATEGY.md` → `08_HANDOFF_CHECKLIST.md`.
+`01_AUTHORIZATION.md` → `../../contracts/permission_matrix.csv` → `02_DATABASE_CORE.md` → `03_ACCOUNT_LIFECYCLE.md` → `04_AUDIT_STANDARD.md` → `05_API_HANDOFF.md` → `06_USER_STORIES.md` → `07_TEST_STRATEGY.md` → `08_HANDOFF_CHECKLIST.md`.

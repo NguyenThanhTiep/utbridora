@@ -23,7 +23,7 @@ MySQL **8.4**, InnoDB, utf8mb4. Identity dùng UUID dạng `VARCHAR(36)`. Thời
 
 ## Flyway và tương thích
 
-Giữ nguyên byte của V1–V6 được cung cấp. V7 thêm `core_locks` và index `users(status,created_at)`, token expiry, membership global-role. Không xóa/gộp dữ liệu cũ tự động. Trước nâng cấp phải chạy SQL preflight trong `10_MIGRATION_PREFLIGHT.md`, sao lưu và thử trên bản sao. Nếu V3 gặp membership trùng, dừng để xử lý có review; không chạy repair/clean để bỏ lỗi.
+Giữ nguyên byte của V1–V6 được cung cấp. V7 thêm `core_locks` và index `users(status,created_at)`, token expiry, membership global-role. Không xóa/gộp dữ liệu cũ tự động. Trước nâng cấp phải chạy SQL preflight trong `../archive/t1-baseline/10_MIGRATION_PREFLIGHT.md`, sao lưu và thử trên bản sao. Nếu V3 gặp membership trùng, dừng để xử lý có review; không chạy repair/clean để bỏ lỗi.
 
 Các field enum JPA dùng JDBC VARCHAR rõ ràng để tương thích cột VARCHAR kế thừa thay vì để Hibernate tự chọn native enum. Quan hệ user–org–role được kiểm tra tại `MembershipService`; FK chỉ bảo vệ tồn tại tham chiếu. Scope ADMIN global không đại diện cho mọi org.
 
@@ -38,6 +38,6 @@ Không sửa trực tiếp membership/status qua SQL khi vận hành: sẽ bỏ 
 
 ## Kiểm chứng
 
-`mvn verify` chạy MySQL 8.4 Testcontainers. `CorePlatformIT` khởi động schema sạch, Flyway V1–V7, JPA validate và JDBC session; `MigrationUpgradeIT` nâng V2 có dữ liệu mẫu lên V7, validate, chạy lại no-op, kiểm tra unique global membership và FK. Kết quả thực thi cụ thể nằm trong `TEST_REPORT.md`.
+`mvn verify` chạy MySQL 8.4 Testcontainers. `CorePlatformIT` khởi động schema sạch, Flyway V1–V7, JPA validate và JDBC session; `MigrationUpgradeIT` nâng V2 có dữ liệu mẫu lên V7, validate, chạy lại no-op, kiểm tra unique global membership và FK. Kết quả thực thi cụ thể nằm trong `../testing/TEST_REPORT.md`.
 
 Chưa đo query plan/hiệu năng dữ liệu lớn. API danh sách user có bounded N+1 membership (tối đa 100 user/trang), cần đo trước khi tăng tải. Backup/restore và retention phải được kiểm chứng trên staging riêng.

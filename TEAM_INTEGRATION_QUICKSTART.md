@@ -2,7 +2,7 @@
 
 Các team đưa code nghiệp vụ vào cùng dự án hiện tại theo module, dùng chung một backend Spring Boot, một frontend React và database của môi trường đó. Kiến trúc tiếp tục là **Modular Monolith**.
 
-Ví dụ phân quyền, audit, migration và quy trình merge chi tiết nằm trong [TEAM_IMPLEMENTATION_GUIDE.md](docs/TEAM_IMPLEMENTATION_GUIDE.md).
+Ví dụ phân quyền, audit, migration và quy trình merge chi tiết nằm trong [TEAM_IMPLEMENTATION_GUIDE.md](docs/guides/TEAM_IMPLEMENTATION_GUIDE.md).
 
 ## 1. Mỗi team tạo nhánh theo chức năng
 

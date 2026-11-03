@@ -6,14 +6,14 @@
 - `./mvnw.cmd -Dfrontend.e2e=true verify -B`: **BUILD SUCCESS**, kết thúc **11:07:57 (UTC+7)**, thời gian 2 phút 51 giây.
 - **28 unit, 49 integration/Failsafe, 14 Chromium PASS**, không failure/error/skip. Lượt này chạy lại toàn bộ suite, bao gồm MySQL 8.4 Testcontainers, migration upgrade và các luồng UI. Ba kịch bản Chromium có nhãn UI mock chỉ kiểm chứng hành vi frontend.
 - Kiểm tra danh sách source trước commit không phát hiện secret từ cấu hình local, access token/private key theo các mẫu đã kiểm tra, dump database hoặc file build. Đây không thay thế pentest hoặc kiểm toán độc lập. `.env.local` nằm trong `.gitignore`.
-- Bằng chứng máy đọc: `PREPUSH_TEST_EVIDENCE.json`. Log thực thi local: `D:\HKDN-TTTV-UTH\.work\github-prepush-verify.log`; JUnit XML trong `target/surefire-reports`, `target/failsafe-reports`, `web-demo/test-results/e2e.xml`.
+- Bằng chứng máy đọc: `evidence/PREPUSH_TEST_EVIDENCE.json`. Log thực thi local: `D:\HKDN-TTTV-UTH\.work\github-prepush-verify.log`; JUnit XML trong `target/surefire-reports`, `target/failsafe-reports`, `web-demo/test-results/e2e.xml`.
 - Repo đích: private `NguyenThanhTiep/utbridora`; kết quả GitHub Actions cần kiểm tra sau push, không suy ra từ kết quả local.
 
 ## Lịch sử kiểm chứng ngày 29/10/2026
 
 Ngày29/10/2026, múi giờ Asia/Bangkok (UTC+7). Lượt xác minh toàn bộ nền tảng trước nâng cấp UI kết thúc **17:47:08**, lệnh `./mvnw.cmd -Dfrontend.e2e=true verify -B`: **BUILD SUCCESS**. Kiểm thử dùng MySQL8.4 Testcontainers và Chromium thật; không dùng H2 thay MySQL, không bỏ CSRF/authorization, không dùng dữ liệu sinh viên thật.
 
-**Cập nhật giao diện 18:56:43:** production build PASS, **28 unit + 1 Failsafe điều phối 14/14 Chromium PASS**. Lệnh lần này giới hạn `CorePlatformIT#frontendMustFlowsInChromium`; không gọi đây là lần chạy lại toàn bộ49 integration test bên dưới. 7 luồng core giữ nguyên, 7 UX mới có3 bài UI mock được ghi rõ. Xem [UI_UPGRADE.md](UI_UPGRADE.md) và [UI_TEST_EVIDENCE.json](UI_TEST_EVIDENCE.json).
+**Cập nhật giao diện 18:56:43:** production build PASS, **28 unit + 1 Failsafe điều phối 14/14 Chromium PASS**. Lệnh lần này giới hạn `CorePlatformIT#frontendMustFlowsInChromium`; không gọi đây là lần chạy lại toàn bộ49 integration test bên dưới. 7 luồng core giữ nguyên, 7 UX mới có3 bài UI mock được ghi rõ. Xem [UI_UPGRADE.md](../status/UI_UPGRADE.md) và [UI_TEST_EVIDENCE.json](evidence/UI_TEST_EVIDENCE.json).
 
 ## Kết quả thực thi
 
@@ -33,7 +33,7 @@ Ngày29/10/2026, múi giờ Asia/Bangkok (UTC+7). Lượt xác minh toàn bộ n
 | Backup script | **PASS cú pháp PowerShell** | Chưa thực thi backup/restore thực tế |
 | Staging HTTPS/server và GitHub CI | **NOT RUN** | Chưa có server/certificate/repository GitHub được cung cấp |
 
-49 Failsafe đã bao gồm test điều phối7 E2E; không cộng lại thành56 integration độc lập. Tổng JUnit77 test, cộng7 kịch bản browser ở tầng con. Machine-readable summary và checksum ở [TEST_EVIDENCE.json](TEST_EVIDENCE.json). Raw reports tạo lại tại target/surefire-reports, target/failsafe-reports, target/frontend-e2e.log và web-demo/test-results/e2e.xml.
+49 Failsafe đã bao gồm test điều phối7 E2E; không cộng lại thành56 integration độc lập. Tổng JUnit77 test, cộng7 kịch bản browser ở tầng con. Machine-readable summary và checksum ở [TEST_EVIDENCE.json](evidence/TEST_EVIDENCE.json). Raw reports tạo lại tại target/surefire-reports, target/failsafe-reports, target/frontend-e2e.log và web-demo/test-results/e2e.xml.
 
 ## Baseline và lỗi đã sửa qua test
 
@@ -139,4 +139,4 @@ Docker Linux engine phải hoạt động và tải được image mysql:8.4/Tes
 - Bốn quy tắc CSS select/hướng dẫn/lưu ý được tăng bổ sung sau lượt hồi quy. Bản cuối đã build lại và kiểm tra bằng Chromium trên Docker local: **PASS** cỡ chữ thực tế body/input 16px, menu/nút/bảng 15px, hướng dẫn/lưu ý 14px; không tràn toàn trang ở màn tài khoản 320/390/901/1051/1280px và chi tiết tài khoản 320/901/1051px; icon mật khẩu căn giữa.
 - Đã xem ảnh desktop/mobile có dữ liệu cho dashboard, users, organizations và audit; ảnh bổ sung tại `web-demo/test-results/typography-*.png`. Ảnh local được chụp với `animations: disabled` để loại trạng thái menu giữa chuyển động.
 - Chỉ cập nhật Docker frontend local; health **PASS**, JavaScript/CSS/favicon tải được, không lỗi runtime/CSP. Smoke dùng tài khoản demo local, giữ credential trong bộ nhớ và đăng xuất sau kiểm tra.
-- Chi tiết và bằng chứng máy đọc: `docs/UI_UPGRADE.md`, `docs/UI_TEST_EVIDENCE.json`. Firefox/Safari, thiết bị vật lý và audit WCAG đầy đủ: **NOT RUN**.
+- Chi tiết và bằng chứng máy đọc: `docs/status/UI_UPGRADE.md`, `docs/testing/evidence/UI_TEST_EVIDENCE.json`. Firefox/Safari, thiết bị vật lý và audit WCAG đầy đủ: **NOT RUN**.

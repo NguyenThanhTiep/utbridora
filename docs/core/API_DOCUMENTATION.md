@@ -1,6 +1,6 @@
 # API nền tảng
 
-Hợp đồng máy đọc: [openapi.json](openapi.json), OpenAPI 3.1. Prefix `/api/v1`. Giữ toàn bộ endpoint đã công bố; thêm read API phục vụ UI quản trị và filter audit. Chưa tích hợp Swagger UI/runtime generator; có thể import file vào công cụ OpenAPI nội bộ.
+Hợp đồng máy đọc: [openapi.json](../openapi.json), OpenAPI 3.1. Prefix `/api/v1`. Giữ toàn bộ endpoint đã công bố; thêm read API phục vụ UI quản trị và filter audit. Chưa tích hợp Swagger UI/runtime generator; có thể import file vào công cụ OpenAPI nội bộ.
 
 ## Xác thực và CSRF
 

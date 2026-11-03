@@ -30,7 +30,7 @@ Service nghiệp vụ phải query tài nguyên với `id AND organization_id` v
 
 `ProfileVisibilityPort` hiện có hai phương thức boolean `explicitlySharedWithEnterprise` và `delegatedToSchool`. Adapter mặc định luôn false. Boolean chỉ là điều kiện truy cập tổng quát; **không phải danh sách field đã được chia sẻ**. T2/T5 phải kiểm tra consent, thời hạn, purpose và lọc field ở service/projection trước serialize; chỉ trả true khi quyết định hợp lệ. ADMIN kỹ thuật không tự có quyền xem hồ sơ.
 
-Quyền mentor/Placement do T3/T5; thống kê và ngưỡng ẩn danh do T4. Ma trận `contracts/permission_matrix.csv` vẫn là DRAFT_NEEDS_SIGNOFF, chưa có xác nhận nghiệp vụ. Test adapter mock không phải bằng chứng chia sẻ dữ liệu thật.
+Quyền mentor/Placement do T3/T5; thống kê và ngưỡng ẩn danh do T4. Ma trận `../contracts/permission_matrix.csv` vẫn là DRAFT_NEEDS_SIGNOFF, chưa có xác nhận nghiệp vụ. Test adapter mock không phải bằng chứng chia sẻ dữ liệu thật.
 
 ## Kiểm thử và giới hạn
 

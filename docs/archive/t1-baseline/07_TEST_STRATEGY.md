@@ -1,4 +1,4 @@
-> Tài liệu baseline được giữ để truy vết thiết kế ban đầu. Code và kết quả kiểm thử sau triển khai ngày 29/10/2026 xem [TEST_REPORT.md](TEST_REPORT.md) và [báo cáo thực thi](TEST_REPORT.md); các câu “chưa triển khai/chưa test” bên dưới mô tả baseline, không phải trạng thái mới nhất.
+> Tài liệu baseline được giữ để truy vết thiết kế ban đầu. Code và kết quả kiểm thử sau triển khai ngày 29/10/2026 xem [TEST_REPORT.md](../../testing/TEST_REPORT.md) và [báo cáo thực thi](../../testing/TEST_REPORT.md); các câu “chưa triển khai/chưa test” bên dưới mô tả baseline, không phải trạng thái mới nhất.
 
 # Kế hoạch kiểm thử & tiêu chí nghiệm thu T1 #2–5
 

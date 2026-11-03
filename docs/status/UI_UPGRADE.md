@@ -102,7 +102,7 @@ Liên kết email giữ mã trong bộ nhớ và bỏ fragment khỏi URL sau kh
 | `web-demo/src/main.tsx` | Import stylesheet chung rồi stylesheet quản trị |
 | `web-demo/tests/ux.spec.ts` | Kịch bản UX bổ sung, có phân biệt rõ test UI mock |
 | `web-demo/index.html`, `web-demo/public/favicon.svg` | Tiêu đề, metadata và favicon cùng nhận diện thương hiệu |
-| `docs/UI_UPGRADE.md` | Phạm vi, cách tái sử dụng và bằng chứng kiểm thử bản nâng cấp |
+| `docs/status/UI_UPGRADE.md` | Phạm vi, cách tái sử dụng và bằng chứng kiểm thử bản nâng cấp |
 
 Bộ luồng Must tại `web-demo/tests/core.spec.ts` tiếp tục được dùng để kiểm tra hồi quy với backend/MySQL thật. Phần source backend và secret local nằm ngoài phạm vi nâng cấp giao diện này.
 
@@ -127,7 +127,7 @@ Bộ luồng Must tại `web-demo/tests/core.spec.ts` tiếp tục được dùn
 
 Ba test **UI mock** chỉ chứng minh hành vi frontend. Không dùng chúng làm bằng chứng cho authentication, authorization, CSRF hoặc database integration ở backend. Kết quả cuối và tên bài thực thi cần đối chiếu với `target/frontend-e2e.log`, `web-demo/test-results/e2e.xml` và báo cáo bàn giao do root cập nhật. Không ghi PASS cho test còn đang chạy hoặc chỉ được kiểm tra tĩnh.
 
-Lệnh xác minh: `./mvnw.cmd -Dfrontend.e2e=true -Dit.test=CorePlatformIT#frontendMustFlowsInChromium verify -B`. Machine-readable summary được lưu tại `docs/UI_TEST_EVIDENCE.json`. Bản build production có CSS khoảng 39,68kB (gzip 8,94kB), JavaScript khoảng 281,40kB (gzip 85,17kB); không thêm package runtime hoặc font/image từ bên ngoài.
+Lệnh xác minh: `./mvnw.cmd -Dfrontend.e2e=true -Dit.test=CorePlatformIT#frontendMustFlowsInChromium verify -B`. Machine-readable summary được lưu tại `docs/testing/evidence/UI_TEST_EVIDENCE.json`. Bản build production có CSS khoảng 39,68kB (gzip 8,94kB), JavaScript khoảng 281,40kB (gzip 85,17kB); không thêm package runtime hoặc font/image từ bên ngoài.
 
 Các lượt phát triển đã sửa lỗi dấu sao trong label ảnh hưởng exact label lookup. Hai lần test mock recovery cũng được sửa để chờ trạng thái đúng dưới React StrictMode và chọn chính xác nút thử lại. Bộ kiểm thử cuối không bỏ bài hoặc đổi API để đạt PASS.
 

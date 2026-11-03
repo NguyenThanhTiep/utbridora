@@ -1,6 +1,6 @@
 # Trạng thái triển khai Core Platform
 
-Ngày khảo sát: 29/10/2026. Đã đọc toàn bộ SRS v1.0 (Draft for Review), báo cáo bàn giao và tài liệu trong `docs`. Đây là dự án kế thừa, không tạo project thay thế. Gói workspace ban đầu chưa có thư mục `.git`. Cập nhật 30/10/2026: đã khởi tạo Git, chia source theo nhóm chức năng và cấu hình origin tới repo private [NguyenThanhTiep/utbridora](https://github.com/NguyenThanhTiep/utbridora). Lượt kiểm thử trước push kết thúc 11:07:57 (UTC+7): 28 unit, 49 integration và 14 Chromium PASS; bằng chứng tại `PREPUSH_TEST_EVIDENCE.json`. Kết quả này là thực thi local, không phải kết quả GitHub Actions.
+Ngày khảo sát: 29/10/2026. Đã đọc toàn bộ SRS v1.0 (Draft for Review), báo cáo bàn giao và tài liệu trong `docs`. Đây là dự án kế thừa, không tạo project thay thế. Gói workspace ban đầu chưa có thư mục `.git`. Cập nhật 30/10/2026: đã khởi tạo Git, chia source theo nhóm chức năng và cấu hình origin tới repo private [NguyenThanhTiep/utbridora](https://github.com/NguyenThanhTiep/utbridora). Lượt kiểm thử trước push kết thúc 11:07:57 (UTC+7): 28 unit, 49 integration và 14 Chromium PASS; bằng chứng tại `../testing/evidence/PREPUSH_TEST_EVIDENCE.json`. Kết quả này là thực thi local, không phải kết quả GitHub Actions.
 
 ## Baseline trước thay đổi
 
@@ -38,7 +38,7 @@ Ngày khảo sát: 29/10/2026. Đã đọc toàn bộ SRS v1.0 (Draft for Review
 5. Hoàn thiện React bằng API hiện có và API bổ sung; build, kiểm thử các luồng quan trọng.
 6. Chuẩn bị staging/CI/backup và cập nhật tài liệu theo bằng chứng kiểm thử thực tế.
 
-Kết quả sau thay đổi và ma trận nghiệm thu cuối phiên được cập nhật tại `TEST_REPORT.md`; không đánh dấu toàn bộ Must hoàn thành khi còn dependency nghiệp vụ hoặc test chưa chạy.
+Kết quả sau thay đổi và ma trận nghiệm thu cuối phiên được cập nhật tại `../testing/TEST_REPORT.md`; không đánh dấu toàn bộ Must hoàn thành khi còn dependency nghiệp vụ hoặc test chưa chạy.
 
 ## Kết quả sau triển khai
 

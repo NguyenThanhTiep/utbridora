@@ -1,4 +1,4 @@
-> Tài liệu baseline được giữ để truy vết thiết kế ban đầu. Code và kết quả kiểm thử sau triển khai ngày 29/10/2026 xem [AUTHORIZATION.md](AUTHORIZATION.md) và [báo cáo thực thi](TEST_REPORT.md); các câu “chưa triển khai/chưa test” bên dưới mô tả baseline, không phải trạng thái mới nhất.
+> Tài liệu baseline được giữ để truy vết thiết kế ban đầu. Code và kết quả kiểm thử sau triển khai ngày 29/10/2026 xem [AUTHORIZATION.md](../../core/AUTHORIZATION.md) và [báo cáo thực thi](../../testing/TEST_REPORT.md); các câu “chưa triển khai/chưa test” bên dưới mô tả baseline, không phải trạng thái mới nhất.
 
 # Công việc 2 – Authorization: thiết kế chi tiết
 
