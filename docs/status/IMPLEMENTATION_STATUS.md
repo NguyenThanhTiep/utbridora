@@ -1,5 +1,22 @@
 # Trạng thái triển khai Core Platform
 
+## Đối chiếu hiện tại — 04/11/2026
+
+Đây là cập nhật tài liệu và kiểm tra tĩnh, **không phải lượt build/test/migration mới**. Các số PASS và lỗi baseline ở những mục lịch sử bên dưới giữ nguyên thời điểm 29–30/10/2026; không dùng để khẳng định runtime Docker/MySQL, GitHub Actions hoặc source của team khác vừa được kiểm chứng.
+
+| Nội dung | Trạng thái được đối chiếu |
+|---|---|
+| Yêu cầu hiện có | [SRS tổng thể v1.2.4](../srs/UTBridora_SRS_Tong_The_v1.2.4.docx); đọc phân biệt baseline §25.8 với đề xuất hợp nhất §25.9 |
+| Giao tiếp liên team | [Contract Pack B01–B06 Candidate](../contracts/UTBridora_Contract_Pack_B01_B06_v1.0_Candidate.md) còn cần signoff; không coi API/permission đề xuất là đã triển khai |
+| Source nền tảng | Core T1 hiện có, migration V1–V7; file service mới có metadata. Chưa thấy module nghiệp vụ T2–T5 trong checkout hiện tại |
+| Phần chưa triển khai | Hồ sơ/roster sinh viên, import job/claim/mail outbox mới, Placement/workspace, Matching và adapter share/consent thật |
+| Quy tắc đã đặc tả | T5 sở hữu Placement, T3 sở hữu InternshipCase; baseline privacy k=5. Đây là yêu cầu cần chuyển thành code/test, không phải kết quả nghiệm thu |
+| Môi trường và remote | Chưa kiểm chứng lại Docker/MySQL/SMTP, visibility/quyền GitHub, CI remote hoặc staging trong lượt sắp xếp tài liệu |
+
+Hướng dẫn đang dùng: [phát triển và tích hợp BE/FE](../guides/HUONG_DAN_PHAT_TRIEN_BE_FE_CHO_CAC_TEAM.md), [Git/GitHub](../guides/HUONG_DAN_LAM_VIEC_VOI_GITHUB.md), [triển khai](../guides/DEPLOYMENT_GUIDE.md). Báo cáo UI cũ ở [archive](../archive/UI_UPGRADE.md); kết quả kiểm thử có ngày cụ thể ở [TEST_REPORT](../testing/TEST_REPORT.md).
+
+## Snapshot lịch sử 29–30/10/2026
+
 Ngày khảo sát: 29/10/2026. Đã đọc toàn bộ SRS v1.0 (Draft for Review), báo cáo bàn giao và tài liệu trong `docs`. Đây là dự án kế thừa, không tạo project thay thế. Gói workspace ban đầu chưa có thư mục `.git`. Cập nhật 30/10/2026: đã khởi tạo Git, chia source theo nhóm chức năng và cấu hình origin tới repo private [NguyenThanhTiep/utbridora](https://github.com/NguyenThanhTiep/utbridora). Lượt kiểm thử trước push kết thúc 11:07:57 (UTC+7): 28 unit, 49 integration và 14 Chromium PASS; bằng chứng tại `../testing/evidence/PREPUSH_TEST_EVIDENCE.json`. Kết quả này là thực thi local, không phải kết quả GitHub Actions.
 
 ## Baseline trước thay đổi
@@ -57,11 +74,15 @@ Lượt nền tảng trước nâng cấp UI ngày29/10/2026 kết thúc 17:47:0
 | Staging | Dockerfiles, nginx.conf, compose.staging.yaml, backup script, CI workflow | Image build, Compose config, nginx syntax PASS; script backup chỉ syntax PASS | Server HTTPS/CI thực, restore, monitoring/limiter NOT RUN |
 | Bàn giao | 11 tài liệu yêu cầu, README, openapi.json, TEST_EVIDENCE | Ma trận code/test/nghiệm thu đủ12 US ở TEST_REPORT | PM/Leader ký nhận và chốt quyết định OPEN |
 
-## Ưu tiên tiếp theo
+## Bổ sung UI và vận hành đã ghi nhận trong lịch sử
 
-Bản nâng cấp UI toàn diện: App/components/management được chuẩn hóa cùng design tokens; sidebar/topbar mới, màn xác thực, dashboard tài khoản, bảng/forms, mobile drawer, keyboard focus và password visibility. Không đổi backend/API/migrations. Lượt UI kết thúc18:56:43 ngày29/10/2026: build PASS,28 unit+1 Failsafe điều phối14/14 Chromium PASS, gồm7 core cũ và7 UX mới(3UI mock). Xem UI_UPGRADE.md và UI_TEST_EVIDENCE.json; không nhầm với việc chạy lại toàn bộ49 backend integration test.
+Bản nâng cấp UI toàn diện: App/components/management được chuẩn hóa cùng design tokens; sidebar/topbar mới, màn xác thực, dashboard tài khoản, bảng/forms, mobile drawer, keyboard focus và password visibility. Không đổi backend/API/migrations. Lượt UI kết thúc18:56:43 ngày29/10/2026: build PASS,28 unit+1 Failsafe điều phối14/14 Chromium PASS, gồm7 core cũ và7 UX mới(3UI mock). Xem [báo cáo UI được lưu trữ](../archive/UI_UPGRADE.md) và [UI_TEST_EVIDENCE.json](../testing/evidence/UI_TEST_EVIDENCE.json); không nhầm với việc chạy lại toàn bộ49 backend integration test.
 
 Bổ sung cách chạy đơn giản: `run-local.cmd`, `scripts/run-local.ps1`, `compose.local.yaml`; chỉ cần Docker Desktop. Script tự sinh secret trong `.env.local`, không sửa `.env` cũ, dùng volume riêng và chờ health check. Đã chạy stack thật và smoke test frontend/login/session/CSRF/logout/admin API/Mailpit PASS. Cấu hình staging HTTPS không thay đổi.
+
+## Ưu tiên tiếp theo — đối chiếu ngày 04/11/2026
+
+Trước tích hợp API/registry/schema mới, hoàn tất review/signoff đúng phiên bản Contract Pack B01–B06 giữa owner và consumer. Sau đó triển khai theo phạm vi được giao, không viết lại core và không tự coi Candidate là hợp đồng đã phê duyệt.
 
 1. P0 trước truy cập công khai: mail delivery tin cậy, timing/abuse recovery, gateway throttling, HTTPS xuyên proxy và review bảo mật độc lập.
 2. P0 tích hợp: T2/T5 adapter share/consent/field và T3/T4/T5 business guards; giữ deny khi thiếu dữ liệu.

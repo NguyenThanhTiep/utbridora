@@ -1,6 +1,8 @@
 # Checklist bàn giao Core Platform
 
-Ngày cập nhật30/10/2026. Trạng thái cuối và số test chính xác xem TEST_REPORT. Mã nguồn sẵn sàng review không có nghĩa toàn bộ SRS đã được nghiệm thu.
+Đối chiếu tài liệu ngày **04/11/2026**. Các mục nền tảng đã có dựa trên source và evidence lịch sử 29–30/10/2026; không có lượt kiểm thử runtime mới trong lần cập nhật này. Số test và thời điểm thực thi xem [TEST_REPORT](../testing/TEST_REPORT.md); trạng thái hiện tại xem [IMPLEMENTATION_STATUS](IMPLEMENTATION_STATUS.md). Mã nguồn sẵn sàng review không có nghĩa toàn bộ SRS đã được nghiệm thu.
+
+SRS hiện có là v1.2.4, Contract Pack B01–B06 còn là Candidate. Giữ phân biệt yêu cầu đã đặc tả, phần chờ signoff, source đã triển khai và test đã thực thi. Hướng dẫn tích hợp hiện hành ở [BE/FE cho các team và AI](../guides/HUONG_DAN_PHAT_TRIEN_BE_FE_CHO_CAC_TEAM.md).
 
 ## Nền tảng đã có
 
@@ -22,10 +24,11 @@ Ngày cập nhật30/10/2026. Trạng thái cuối và số test chính xác xem
 | Owner | Phần còn thiếu | Điều kiện nhận |
 |---|---|---|
 | T2/T5 | Share/consent/purpose/field/time, delegated school | Adapter reviewed + deny cases + projection an toàn |
-| T3/T5 | Placement/mentor assignment | Record-level tests cho task/evaluation |
-| T4/PM | Ngưỡng ẩn danh và export | Không lộ danh tính hoặc suy ngược nhóm nhỏ |
+| T3/T5 | T5 sở hữu Placement, T3 sở hữu case và HR/Mentor assignment | Handoff APPROVED→WAITING_START; chỉ ACTIVE/effectiveAt hợp lệ mới cho task/submission; record-level tests |
+| T4 | Thực thi privacy k=5, suppression/query guard và export theo baseline | Test không lộ danh tính/suy ngược nhóm nhỏ; không mở lại lựa chọn k=3 cho demo |
 | T5/PM | Xác thực tổ chức thật | Không dùng demo verify ở staging |
-| PM/T1 | Flow pre-provision PENDING, retention và đặc quyền | Quy trình được phê duyệt, migration/test nếu phát sinh |
+| T1/T2/T5 | Import/roster/identity binding, claim/token và mail outbox mới | Contract được owner/consumer chấp nhận, migration/test phù hợp; không tự tạo user ACTIVE hoặc schoolApproved chỉ từ preview/import |
+| PM/owner dữ liệu | Chính sách retention/đặc quyền và điều kiện dùng dữ liệu thật | Phân biệt mặc định demo đã đặc tả với phê duyệt vận hành thật; không coi tài liệu proposal là signoff |
 
 ## Việc T1 tiếp tục trước môi trường công khai
 
@@ -35,7 +38,7 @@ Ngày cập nhật30/10/2026. Trạng thái cuối và số test chính xác xem
 - [ ] Tách DB runtime/migration credential; audit append-only/retention theo phê duyệt.
 - [ ] Backup/restore drill, RPO/RTO, vulnerability/secret scan và review độc lập.
 - [ ] File storage/upload/AV/download khi được giao phạm vi; hiện metadata-only.
-- [ ] CI chạy thành công trên GitHub Actions; Git local và origin đã cấu hình tới repo private `NguyenThanhTiep/utbridora`, kết quả CI cần kiểm tra sau push.
+- [ ] CI chạy thành công trên GitHub Actions; origin local trỏ `NguyenThanhTiep/utbridora`, visibility/quyền và kết quả CI remote chưa được kiểm chứng trong lượt cập nhật này.
 - [ ] MFA/SSO theo quyết định triển khai tài khoản đặc quyền.
 
 Không còn dùng checklist thiết kế cũ để chứng minh chức năng đã chạy. Test chưa thực thi ghi NOT RUN; dependency nghiệp vụ ghi CHỜ, không ghi PASS thay team khác.
