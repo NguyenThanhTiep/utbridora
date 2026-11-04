@@ -1,6 +1,6 @@
 # Tài liệu UT.Bridora
 
-Mục lục tài liệu dùng chung cho năm team. Cập nhật cách sắp xếp ngày 03/11/2026; việc di chuyển tài liệu không thay đổi yêu cầu nghiệp vụ, mã nguồn hoặc kết quả kiểm thử.
+Mục lục tài liệu dùng chung cho năm team. Cập nhật cách sắp xếp ngày 04/11/2026; việc di chuyển tài liệu không thay đổi yêu cầu nghiệp vụ, mã nguồn hoặc kết quả kiểm thử.
 
 ## Đọc từ đâu
 
@@ -9,7 +9,9 @@ Mục lục tài liệu dùng chung cho năm team. Cập nhật cách sắp xế
 | Hiểu yêu cầu toàn hệ thống | [SRS tổng thể v1.2.4](srs/UTBridora_SRS_Tong_The_v1.2.4.docx) và [trạng thái SRS](srs/README.md) |
 | Thống nhất giao điểm giữa các team | [Contract Pack B01–B06 v1.0 Candidate](contracts/UTBridora_Contract_Pack_B01_B06_v1.0_Candidate.md) và [quy tắc sử dụng contract](contracts/README.md) |
 | Biết source hiện đã có gì | [Trạng thái triển khai](status/IMPLEMENTATION_STATUS.md) và [báo cáo kiểm thử](testing/TEST_REPORT.md) |
-| Đưa module của team vào repository | [Hướng dẫn triển khai module](guides/TEAM_IMPLEMENTATION_GUIDE.md) và [hướng dẫn tích hợp](guides/INTEGRATION_GUIDE.md) |
+| Xem kế hoạch và phân công công việc | [Workbook kế hoạch UT.Bridora](plans/UTBridora_Plan.xlsx) |
+| Đưa module của team vào repository | [Hướng dẫn BE/FE cho các team và AI](guides/HUONG_DAN_PHAT_TRIEN_BE_FE_CHO_CAC_TEAM.md) |
+| Làm việc với GitHub | [Nhánh, commit theo chức năng, PR, review và xử lý xung đột](guides/HUONG_DAN_LAM_VIEC_VOI_GITHUB.md) |
 | Chạy local hoặc chuẩn bị staging | [Hướng dẫn triển khai](guides/DEPLOYMENT_GUIDE.md) |
 | Xem sơ đồ | [Use case, activity và cách render](diagrams/README.md) |
 
@@ -25,11 +27,12 @@ docs/
 ├── contracts/                 # Contract liên team và ma trận quyền
 ├── core/                      # Kiến trúc, API, database, bảo mật của core
 ├── guides/                    # Hướng dẫn tích hợp, chạy và làm việc
+├── plans/                     # Workbook UTBridora_Plan.xlsx do nhóm cung cấp
 ├── status/                    # Trạng thái triển khai và bàn giao
 ├── testing/                   # Báo cáo và evidence kiểm thử
 ├── diagrams/                  # Mã nguồn sơ đồ và ảnh đã render
 ├── reviews/                   # Báo cáo kiểm định, đề xuất và checkpoint
-└── archive/t1-baseline/        # Bộ thiết kế nền tảng cũ để truy vết
+└── archive/                    # Khảo sát/lịch sử UI và bộ thiết kế t1-baseline
 ```
 
 ## Tài liệu core
@@ -43,18 +46,15 @@ docs/
 
 ## Hướng dẫn làm việc
 
-- [Tích hợp API, quyền và dữ liệu T2–T5](guides/INTEGRATION_GUIDE.md).
-- [Đưa code backend, frontend và migration vào dự án](guides/TEAM_IMPLEMENTATION_GUIDE.md).
+- [Phát triển backend, frontend và migration cho các team và AI](guides/HUONG_DAN_PHAT_TRIEN_BE_FE_CHO_CAC_TEAM.md).
 - [Chạy local, chuẩn bị staging và backup](guides/DEPLOYMENT_GUIDE.md).
-- [Commit theo chức năng](guides/COMMIT_GUIDE.md): có phần mô tả lần khởi tạo Git trước đây; đối chiếu trạng thái Git hiện tại trước khi dùng.
-- [Khảo sát đồng bộ dữ liệu Docker](guides/DATA_SYNCHRONIZATION.md): tài liệu thiết kế, chưa chứng minh replication đã triển khai.
-- [Hướng dẫn nhanh ở thư mục gốc](../TEAM_INTEGRATION_QUICKSTART.md).
+- [Làm việc với GitHub: nhánh, commit, pull request, review và xử lý xung đột](guides/HUONG_DAN_LAM_VIEC_VOI_GITHUB.md).
 
 ## Trạng thái và kiểm thử
 
 - [Trạng thái triển khai](status/IMPLEMENTATION_STATUS.md).
 - [Checklist bàn giao](status/HANDOFF_CHECKLIST.md).
-- [Các thay đổi giao diện và kiểm chứng đã ghi nhận](status/UI_UPGRADE.md).
+- [Lịch sử nâng cấp giao diện và kiểm chứng đã ghi nhận](archive/UI_UPGRADE.md).
 - [Báo cáo kiểm thử](testing/TEST_REPORT.md).
 - Evidence gốc: [backend và tích hợp](testing/evidence/TEST_EVIDENCE.json), [giao diện](testing/evidence/UI_TEST_EVIDENCE.json), [trước push](testing/evidence/PREPUSH_TEST_EVIDENCE.json).
 
@@ -63,6 +63,7 @@ Evidence JSON được giữ nguyên nội dung. Đường dẫn source/log ho�
 ## Kiểm định và lịch sử
 
 - [Danh mục các lần kiểm định và đề xuất](reviews/README.md).
+- [Mục lục tài liệu lưu trữ](archive/README.md): lịch sử UI, khảo sát đồng bộ dữ liệu và thiết kế ban đầu.
 - [Bộ thiết kế nền tảng cũ](archive/t1-baseline/README.md).
 
 Tài liệu đánh số `00`–`10`, `API_EXAMPLES`, `HANDOFF_T1`, `STATE_DIAGRAMS` và `TEST_PLAN` được chuyển vào `archive/t1-baseline`; vẫn giữ để truy vết. Trạng thái triển khai phải đọc từ `status` và `testing`, không suy từ các câu “chưa triển khai” của baseline cũ.

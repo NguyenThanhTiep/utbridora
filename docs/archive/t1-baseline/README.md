@@ -11,8 +11,8 @@ Các file trong thư mục này được giữ để truy vết source và thi�
 | [04 Audit](04_AUDIT_STANDARD.md) | [Audit Log](../../core/AUDIT_LOG.md) |
 | [05 API handoff](05_API_HANDOFF.md), [API examples](API_EXAMPLES.md) | [API core](../../core/API_DOCUMENTATION.md) |
 | [07 Test strategy](07_TEST_STRATEGY.md), [Test plan](TEST_PLAN.md) | [Báo cáo kiểm thử thực tế](../../testing/TEST_REPORT.md) |
-| [08 Handoff checklist](08_HANDOFF_CHECKLIST.md), [Handoff T1](HANDOFF_T1.md) | [Checklist bàn giao](../../status/HANDOFF_CHECKLIST.md) và [hướng dẫn tích hợp](../../guides/INTEGRATION_GUIDE.md) |
-| [09 Wireframes](09_WIREFRAMES_T1_02_05.md) | [Các thay đổi giao diện đã ghi nhận](../../status/UI_UPGRADE.md) |
+| [08 Handoff checklist](08_HANDOFF_CHECKLIST.md), [Handoff T1](HANDOFF_T1.md) | [Checklist bàn giao](../../status/HANDOFF_CHECKLIST.md) và [hướng dẫn tích hợp BE/FE](../../guides/HUONG_DAN_PHAT_TRIEN_BE_FE_CHO_CAC_TEAM.md) |
+| [09 Wireframes](09_WIREFRAMES_T1_02_05.md) | [Các thay đổi giao diện đã ghi nhận](../UI_UPGRADE.md) |
 | [10 Migration preflight](10_MIGRATION_PREFLIGHT.md) | Nguồn preflight được [Database core](../../core/DATABASE.md) dẫn chiếu; đọc đúng phiên bản migration, không tự chạy trên dữ liệu thật |
 
 Không dùng số test hoặc trạng thái “chưa triển khai” trong baseline để thay kết quả trong `status`/`testing`. Chuyển vào archive không có nghĩa xóa bỏ yêu cầu hoặc thay đổi migration.

@@ -78,8 +78,8 @@ Integration/E2E dùng MySQL Testcontainers và dữ liệu thử `@example.test`
 - [Mục lục toàn bộ tài liệu](docs/README.md): phân biệt yêu cầu, contract đề xuất, source đã triển khai và bằng chứng kiểm thử.
 - [SRS tổng thể v1.2.4](docs/srs/UTBridora_SRS_Tong_The_v1.2.4.docx) · [Contract Pack B01–B06 v1.0 Candidate](docs/contracts/UTBridora_Contract_Pack_B01_B06_v1.0_Candidate.md): còn chờ owner/consumer ký nhận, chưa phải xác nhận chức năng mới đã triển khai.
 - [Kiến trúc](docs/core/ARCHITECTURE.md) · [Database](docs/core/DATABASE.md)
-- [API](docs/core/API_DOCUMENTATION.md) · [OpenAPI](docs/openapi.json) · [Tích hợp T2–T5](docs/guides/INTEGRATION_GUIDE.md)
+- [API](docs/core/API_DOCUMENTATION.md) · [OpenAPI](docs/openapi.json) · [Phát triển và tích hợp BE/FE T2–T5](docs/guides/HUONG_DAN_PHAT_TRIEN_BE_FE_CHO_CAC_TEAM.md)
 - [Phân quyền](docs/core/AUTHORIZATION.md) · [Vòng đời tài khoản](docs/core/ACCOUNT_LIFECYCLE.md) · [Audit log](docs/core/AUDIT_LOG.md)
-- [Giao diện](docs/status/UI_UPGRADE.md) · [Triển khai và backup](docs/guides/DEPLOYMENT_GUIDE.md) · [Checklist bàn giao](docs/status/HANDOFF_CHECKLIST.md)
+- [Lịch sử nâng cấp giao diện](docs/archive/UI_UPGRADE.md) · [Triển khai và backup](docs/guides/DEPLOYMENT_GUIDE.md) · [Checklist bàn giao](docs/status/HANDOFF_CHECKLIST.md)
 
 Tài liệu thiết kế ban đầu được giữ trong [archive](docs/archive/t1-baseline/README.md). Trạng thái source xem `docs/status`, kết quả kiểm thử xem `docs/testing`; SRS và contract đề xuất không tự thay thế bằng chứng thực thi.

@@ -103,4 +103,4 @@ Replication truyền thay đổi không thay thế backup; cần bản backup c�
 | Mất mạng, bắt kịp lại dữ liệu, cảnh báo và phục hồi | NOT RUN |
 
 Đây là danh sách cần thực thi sau khi chọn mô hình; không phải kết quả test đã PASS.
-Tham khảo [triển khai](DEPLOYMENT_GUIDE.md), [database](../core/DATABASE.md), [authorization](../core/AUTHORIZATION.md) và [vòng đời tài khoản](../core/ACCOUNT_LIFECYCLE.md).
+Tham khảo [triển khai](../guides/DEPLOYMENT_GUIDE.md), [database](../core/DATABASE.md), [authorization](../core/AUTHORIZATION.md) và [vòng đời tài khoản](../core/ACCOUNT_LIFECYCLE.md).

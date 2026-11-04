@@ -13,7 +13,7 @@
 
 Ngày29/10/2026, múi giờ Asia/Bangkok (UTC+7). Lượt xác minh toàn bộ nền tảng trước nâng cấp UI kết thúc **17:47:08**, lệnh `./mvnw.cmd -Dfrontend.e2e=true verify -B`: **BUILD SUCCESS**. Kiểm thử dùng MySQL8.4 Testcontainers và Chromium thật; không dùng H2 thay MySQL, không bỏ CSRF/authorization, không dùng dữ liệu sinh viên thật.
 
-**Cập nhật giao diện 18:56:43:** production build PASS, **28 unit + 1 Failsafe điều phối 14/14 Chromium PASS**. Lệnh lần này giới hạn `CorePlatformIT#frontendMustFlowsInChromium`; không gọi đây là lần chạy lại toàn bộ49 integration test bên dưới. 7 luồng core giữ nguyên, 7 UX mới có3 bài UI mock được ghi rõ. Xem [UI_UPGRADE.md](../status/UI_UPGRADE.md) và [UI_TEST_EVIDENCE.json](evidence/UI_TEST_EVIDENCE.json).
+**Cập nhật giao diện 18:56:43:** production build PASS, **28 unit + 1 Failsafe điều phối 14/14 Chromium PASS**. Lệnh lần này giới hạn `CorePlatformIT#frontendMustFlowsInChromium`; không gọi đây là lần chạy lại toàn bộ49 integration test bên dưới. 7 luồng core giữ nguyên, 7 UX mới có3 bài UI mock được ghi rõ. Xem [UI_UPGRADE.md](../archive/UI_UPGRADE.md) và [UI_TEST_EVIDENCE.json](evidence/UI_TEST_EVIDENCE.json).
 
 ## Kết quả thực thi
 
@@ -139,4 +139,4 @@ Docker Linux engine phải hoạt động và tải được image mysql:8.4/Tes
 - Bốn quy tắc CSS select/hướng dẫn/lưu ý được tăng bổ sung sau lượt hồi quy. Bản cuối đã build lại và kiểm tra bằng Chromium trên Docker local: **PASS** cỡ chữ thực tế body/input 16px, menu/nút/bảng 15px, hướng dẫn/lưu ý 14px; không tràn toàn trang ở màn tài khoản 320/390/901/1051/1280px và chi tiết tài khoản 320/901/1051px; icon mật khẩu căn giữa.
 - Đã xem ảnh desktop/mobile có dữ liệu cho dashboard, users, organizations và audit; ảnh bổ sung tại `web-demo/test-results/typography-*.png`. Ảnh local được chụp với `animations: disabled` để loại trạng thái menu giữa chuyển động.
 - Chỉ cập nhật Docker frontend local; health **PASS**, JavaScript/CSS/favicon tải được, không lỗi runtime/CSP. Smoke dùng tài khoản demo local, giữ credential trong bộ nhớ và đăng xuất sau kiểm tra.
-- Chi tiết và bằng chứng máy đọc: `docs/status/UI_UPGRADE.md`, `docs/testing/evidence/UI_TEST_EVIDENCE.json`. Firefox/Safari, thiết bị vật lý và audit WCAG đầy đủ: **NOT RUN**.
+- Chi tiết và bằng chứng máy đọc: [báo cáo nâng cấp UI được lưu trữ](../archive/UI_UPGRADE.md), `docs/testing/evidence/UI_TEST_EVIDENCE.json`. Firefox/Safari, thiết bị vật lý và audit WCAG đầy đủ: **NOT RUN**.
