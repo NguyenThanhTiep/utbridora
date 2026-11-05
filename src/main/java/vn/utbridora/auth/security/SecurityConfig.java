@@ -52,6 +52,9 @@ public class SecurityConfig {
                        "/api/v1/auth/password/reset","/api/v1/auth/invitations/accept").permitAll()
                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                .requestMatchers("/api/v1/auth/**", "/api/v1/demo/**").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/demands").authenticated()
+               .requestMatchers(HttpMethod.POST,"/api/v1/enterprise/demands").authenticated()
+               .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/demands/{id}").authenticated()
                .anyRequest().denyAll())
            .exceptionHandling(ex->ex
                .authenticationEntryPoint((req,res,error)->res.sendError(HttpServletResponse.SC_UNAUTHORIZED))

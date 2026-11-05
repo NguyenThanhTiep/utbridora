@@ -44,6 +44,13 @@ server:
         secure: ${COOKIE_SECURE:false} # true behind HTTPS in production
         same-site: lax
 app:
+  t5:
+    demand:
+      # Candidate contract: keep disabled until owner/consumer confirmation.
+      # An authoritative DemandReferencePort is also required; approval alone never grants access.
+      contract-approved: ${T5_DEMAND_CONTRACT_APPROVED:false}
+      default-reference-adapter:
+        enabled: ${T5_DEMAND_DEMO_REFERENCES:false} # Static local fixtures only; never authoritative catalogs.
   public-url: ${APP_PUBLIC_URL:http://localhost:5173}
   mail-from: ${MAIL_FROM:no-reply@utbridora.local}
   bootstrap:
