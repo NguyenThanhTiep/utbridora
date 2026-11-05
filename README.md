@@ -71,12 +71,13 @@ Integration/E2E dùng MySQL Testcontainers và dữ liệu thử `@example.test`
 
 - Build frontend và 14 kịch bản Chromium đã PASS trong lượt ghi nhận tại [báo cáo kiểm thử](docs/testing/TEST_REPORT.md); trạng thái 12 User Story Must nằm trong [IMPLEMENTATION_STATUS](docs/status/IMPLEMENTATION_STATUS.md).
 - Chưa triển khai server staging/production. Local HTTP dùng `COOKIE_SECURE=false`; staging yêu cầu HTTPS và `COOKIE_SECURE=true`. Không dùng dữ liệu sinh viên thật hoặc bật `ALLOW_DEMO_VERIFICATION` ngoài demo local.
-- Kích hoạt hiện qua invitation; chưa có workflow cấp tài khoản PENDING riêng. T5 phụ trách xác thực tổ chức thật; ma trận quyền còn chờ PM/Leader phê duyệt.
+- Kích hoạt hiện qua invitation; chưa có workflow cấp tài khoản PENDING riêng. T5 phụ trách xác thực tổ chức thật; ma trận quyền cần đối chiếu với registry của Contract Pack đã được người dùng chốt.
 
 ## Tài liệu
 
 - [Mục lục toàn bộ tài liệu](docs/README.md): phân biệt yêu cầu, contract đề xuất, source đã triển khai và bằng chứng kiểm thử.
-- [SRS tổng thể v1.2.4](docs/srs/UTBridora_SRS_Tong_The_v1.2.4.docx) · [Contract Pack B01–B06 v1.0 Candidate](docs/contracts/UTBridora_Contract_Pack_B01_B06_v1.0_Candidate.md): còn chờ owner/consumer ký nhận, chưa phải xác nhận chức năng mới đã triển khai.
+- [SRS tổng thể v1.2.4](docs/srs/UTBridora_SRS_Tong_The_v1.2.4.docx) · [Contract Pack B01–B06 v1.0 Candidate](docs/contracts/UTBridora_Contract_Pack_B01_B06_v1.0_Candidate.md): người dùng chốt bản v1.0 ngày 05/11/2026, xem [quyết định và hash](docs/contracts/README.md#quyết-định-chốt-contract--05112026). Rà soát kỹ thuật còn tiếp tục; chưa phải xác nhận chức năng mới đã triển khai.
+- [Review kỹ thuật T1-01](docs/contracts/T1_01_TECHNICAL_REVIEW.md) · [v1.1 Candidate](docs/contracts/UTBridora_Contract_Pack_B01_B06_v1.1_Candidate.md) · [checker DEV](scripts/contracts/README.md): 868 kiểm tra schema/registry/oracle PASS; tách khỏi runtime và xác nhận Tester.
 - [Kiến trúc](docs/core/ARCHITECTURE.md) · [Database](docs/core/DATABASE.md)
 - [API](docs/core/API_DOCUMENTATION.md) · [OpenAPI](docs/openapi.json) · [Phát triển và tích hợp BE/FE T2–T5](docs/guides/HUONG_DAN_PHAT_TRIEN_BE_FE_CHO_CAC_TEAM.md)
 - [Phân quyền](docs/core/AUTHORIZATION.md) · [Vòng đời tài khoản](docs/core/ACCOUNT_LIFECYCLE.md) · [Audit log](docs/core/AUDIT_LOG.md)

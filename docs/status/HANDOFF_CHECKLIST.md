@@ -2,7 +2,7 @@
 
 Đối chiếu tài liệu ngày **04/11/2026**. Các mục nền tảng đã có dựa trên source và evidence lịch sử 29–30/10/2026; không có lượt kiểm thử runtime mới trong lần cập nhật này. Số test và thời điểm thực thi xem [TEST_REPORT](../testing/TEST_REPORT.md); trạng thái hiện tại xem [IMPLEMENTATION_STATUS](IMPLEMENTATION_STATUS.md). Mã nguồn sẵn sàng review không có nghĩa toàn bộ SRS đã được nghiệm thu.
 
-SRS hiện có là v1.2.4, Contract Pack B01–B06 còn là Candidate. Giữ phân biệt yêu cầu đã đặc tả, phần chờ signoff, source đã triển khai và test đã thực thi. Hướng dẫn tích hợp hiện hành ở [BE/FE cho các team và AI](../guides/HUONG_DAN_PHAT_TRIEN_BE_FE_CHO_CAC_TEAM.md).
+SRS hiện có là v1.2.4. Ngày 05/11/2026, người dùng đã chốt Contract Pack B01–B06 v1.0, không chờ vòng ký riêng T2–T5; xem [quyết định và hash](../contracts/README.md#quyết-định-chốt-contract--05112026). Tên file Candidate được giữ để bảo toàn tham chiếu của SRS. Rà soát kỹ thuật còn tiếp tục; giữ phân biệt quyết định chốt, source đã triển khai, test DEV và xác nhận Tester. Hướng dẫn tích hợp hiện hành ở [BE/FE cho các team và AI](../guides/HUONG_DAN_PHAT_TRIEN_BE_FE_CHO_CAC_TEAM.md).
 
 ## Nền tảng đã có
 
@@ -16,7 +16,9 @@ SRS hiện có là v1.2.4, Contract Pack B01–B06 còn là Candidate. Giữ ph�
 - [x] Audit registry, correlation, filter/paging và read permission.
 - [x] React auth/recovery/account/admin/membership/audit; loading/error, responsive.
 - [x] OpenAPI và hướng dẫn tích hợp; cấu hình staging/health/backup/CI.
-- [ ] Ký nghiệm thu toàn bộ12 Must và ma trận quyền bởi PM/T2–T5.
+- [x] Người dùng chốt Contract Pack B01–B06 v1.0 ngày 05/11/2026; quyết định được ghi kèm hash, không giả chữ ký T2–T5.
+- [x] Xuất bản rà soát kỹ thuật T1-01: v1.1 Candidate, bundle DTO/port, CSV quyền/audit và 868 kiểm tra DEV PASS; xem [review](../contracts/T1_01_TECHNICAL_REVIEW.md).
+- [ ] Review diff v1.1 và nghiệm thu toàn bộ12 Must; contract/schema PASS không thay kết quả implementation hoặc xác nhận Tester.
 - [ ] Triển khai server staging HTTPS và kiểm thử vận hành thực.
 
 ## Dependency cần team khác bàn giao

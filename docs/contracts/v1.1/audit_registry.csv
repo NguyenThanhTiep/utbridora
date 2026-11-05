@@ -1,0 +1,94 @@
+action,legacy,results,resourceType,metadata,producer,enumImplemented
+LOGIN,LOGIN,"SUCCESS,FAILURE",user,reasonCode,T1,True
+LOGOUT,LOGOUT,SUCCESS,user,,T1,True
+PASSWORD_CHANGED,PASSWORD_CHANGED,SUCCESS,user,securityVersion,T1,True
+PASSWORD_RESET,PASSWORD_RESET,SUCCESS,user,securityVersion,T1,True
+INVITATION_CREATED,INVITATION_CREATED,SUCCESS,account_invitation,"purpose,role,operationId",T1,True
+ACCOUNT_ACTIVATED,ACCOUNT_ACTIVATED,SUCCESS,user,"purpose,operationId,rosterId",T1,True
+ACCOUNT_STATUS_CHANGED,ACCOUNT_STATUS_CHANGED,SUCCESS,user,"fromStatus,toStatus,securityVersion,reasonCode",T1,True
+MEMBERSHIP_GRANTED,MEMBERSHIP_GRANTED,SUCCESS,membership,"role,scopeOrgId,securityVersion,operationId",T1,True
+MEMBERSHIP_REVOKED,MEMBERSHIP_REVOKED,SUCCESS,membership,"role,scopeOrgId,securityVersion,reasonCode,operationId",T1,True
+SESSIONS_REVOKED,SESSIONS_REVOKED,SUCCESS,user,"securityVersion,reasonCode",T1,True
+ACCESS_DENIED,ACCESS_DENIED,DENIED,http_request,"reasonCode,knownActionCode",T1 guards,True
+ORG_CREATED,ORG_CREATED,SUCCESS,organization,organizationType,T1,True
+ORG_DEMO_VERIFIED,ORG_DEMO_VERIFIED,SUCCESS,organization,demoFixtureRef,T1 demo,True
+STUDENT_PROFILE_UPDATED,STUDENT_PROFILE_UPDATED,SUCCESS,student_profile,"profileVersion,changedFieldCodes",T2,True
+STUDENT_EVIDENCE_ADDED,STUDENT_EVIDENCE_ADDED,SUCCESS,student_evidence,"fileId,evidenceType,profileVersion",T2,True
+STUDENT_PROFILE_ACCESSED,STUDENT_PROFILE_ACCESSED,SUCCESS,student_profile,"accessPurpose,fieldCodes,consentId,consentVersion,shareId,shareVersion",T1/T2,True
+INVITATION_RESPONDED,INVITATION_RESPONDED,SUCCESS,internship_invitation,"decision,invitationVersion,operationId",T5,True
+ENTERPRISE_VERIFIED,ENTERPRISE_VERIFIED,SUCCESS,enterprise_verification,"schoolOrgId,submissionNo,version,decisionRef",T5,True
+COOPERATION_REVIEWED,COOPERATION_REVIEWED,SUCCESS,cooperation,"decision,submissionNo,version,reasonCode",T5,True
+PROFILE_SHARED,PROFILE_SHARED,SUCCESS,profile_share,"consentId,consentVersion,shareVersion,fieldCodes,expiresAt",T5,True
+PROFILE_SHARE_REVOKED,PROFILE_SHARE_REVOKED,SUCCESS,profile_share,"shareVersion,reasonCode",T5,True
+PLACEMENT_CREATED,PLACEMENT_CREATED,SUCCESS,placement,"termId,placementVersion,operationId",T5,True
+PLACEMENT_TERMINATED,PLACEMENT_TERMINATED,SUCCESS,placement,"fromStatus,toStatus,reasonCode,placementVersion",Legacy,True
+TASK_ASSIGNED,TASK_ASSIGNED,SUCCESS,task_assignment,"taskId,caseId,groupId,assignmentVersion",T3,True
+SUBMISSION_CREATED,SUBMISSION_CREATED,SUCCESS,submission,"assignmentId,versionNo,fileId,fileIds,lateFlag",T3,True
+SUBMISSION_REVISED,SUBMISSION_REVISED,SUCCESS,submission,"assignmentId,versionNo,previousSubmissionId,fileId,fileIds,lateFlag",T3,True
+EVALUATION_SUBMITTED,EVALUATION_SUBMITTED,SUCCESS,evaluation,"caseId,templateVersion,evaluationVersion",T3,True
+EVALUATION_PUBLISHED,EVALUATION_PUBLISHED,SUCCESS,evaluation,"caseId,evaluationVersion,decisionRef",T3,True
+MATCH_AGGREGATE_VIEWED,MATCH_AGGREGATE_VIEWED,SUCCESS,protected_release,"releaseFingerprint,eligibleBand,ruleVersion",T4,True
+MATCH_EXPORT_ATTEMPTED,MATCH_EXPORT_ATTEMPTED,"SUCCESS,DENIED",protected_release,"format,reasonCode,releaseFingerprint",T4,True
+CAPABILITY_GRANTED,Không có mã lưu cũ; alias ở E.4,SUCCESS,capability_assignment,"permissionCode,scopeKind,scopeId,termId,assignmentKind,validFrom,validUntil,securityVersion,decisionRef",T1/T3,False
+CAPABILITY_REVOKED,Không có mã lưu cũ; alias ở E.4,SUCCESS,capability_assignment,"permissionCode,scopeKind,scopeId,termId,assignmentKind,securityVersion,reasonCode",T1/T3,False
+MENTOR_INVITATION_ACCEPTED,Không có mã lưu cũ; alias ở E.4,SUCCESS,account_invitation,"enterpriseOrgId,assignmentId,operationId",T1/T3,False
+STUDENT_IMPORT_PREVIEWED,Không có mã lưu cũ; alias ở E.4,SUCCESS,student_import_job,"totalRows,validRows,invalidRows,needsReviewRows,previewVersion,fileHash",T1,False
+STUDENT_IMPORT_CONFIRMED,Không có mã lưu cũ; alias ở E.4,SUCCESS,student_import_job,"selectedCount,jobVersion,operationId",T1,False
+STUDENT_IMPORT_RESUMED,Không có mã lưu cũ; alias ở E.4,SUCCESS,student_import_job,"retryRowCount,jobVersion,operationId",T1,False
+STUDENT_IMPORT_COMPLETED,Không có mã lưu cũ; alias ở E.4,SUCCESS,student_import_job,"jobState,totalRows,processedRows,provisionedRows,alreadyLinkedRows,reviewRows,failedRows",T1,False
+STUDENT_IMPORT_FAILED,Không có mã lưu cũ; alias ở E.4,FAILURE,student_import_job,"jobVersion,errorClass,checkpointVersion",T1,False
+STUDENT_ROSTER_PROVISIONED,Không có mã lưu cũ; alias ở E.4,SUCCESS,student_import_row,"rosterId,rowNo,operationId,rosterVersion",T1/T2 port,False
+STUDENT_ROSTER_ALREADY_LINKED,Không có mã lưu cũ; alias ở E.4,SUCCESS,student_import_row,"rosterId,rowNo,operationId,rosterVersion",T1/T2 port,False
+ACCOUNT_INVITATION_REVOKED,Không có mã lưu cũ,SUCCESS,account_invitation,"purpose,reasonCode,operationId",T1,False
+ACTIVATION_INVITATION_REISSUED,Không có mã lưu cũ; alias ở E.4,SUCCESS,account_invitation,"rowId,operationId,reasonCode,expiresAt",T1,False
+ACTIVATION_EMAIL_SENT,Không có mã lưu cũ; alias ở E.4,SUCCESS,email_outbox,"messageId,attemptNo,operationId",T1 worker,False
+ACTIVATION_EMAIL_FAILED,Không có mã lưu cũ; alias ở E.4,FAILURE,email_outbox,"messageId,attemptNo,errorClass,terminal,operationId",T1 worker,False
+CONSENT_GRANTED,Không có mã lưu cũ; alias ở E.4,SUCCESS,student_consent,"recipientOrgId,schoolOrgId,termId,purpose,fieldCodes,consentVersion,expiresAt",T2,False
+CONSENT_REVOKED,Không có mã lưu cũ; alias ở E.4,SUCCESS,student_consent,"consentVersion,reasonCode",T2,False
+STUDENT_ELIGIBILITY_CHANGED,Không có mã lưu cũ; alias ở E.4,SUCCESS,student_term_eligibility,"schoolOrgId,termId,fromApproved,toApproved,version,decisionRef",T2,False
+PREFERENCE_SUBMITTED,Không có mã lưu cũ; alias ở E.4,SUCCESS,student_preference,"opportunityId,termId,version",T2,False
+PREFERENCE_WITHDRAWN,Không có mã lưu cũ; alias ở E.4,SUCCESS,student_preference,"version,reasonCode",T2,False
+PREFERENCE_REVIEWED,Không có mã lưu cũ; alias ở E.4,SUCCESS,student_preference,"version,decision,decisionRef",T2,False
+ENTERPRISE_VERIFICATION_DRAFT_SAVED,Không có mã lưu cũ; alias ở E.4,SUCCESS,enterprise_verification,"schoolOrgId,submissionNo,version",T5,False
+ENTERPRISE_VERIFICATION_SUBMITTED,Không có mã lưu cũ; alias ở E.4,SUCCESS,enterprise_verification,"schoolOrgId,submissionNo,version",T5,False
+ENTERPRISE_VERIFICATION_REJECTED,Không có mã lưu cũ; alias ở E.4,SUCCESS,enterprise_verification,"schoolOrgId,submissionNo,version,reasonCode",T5,False
+ENTERPRISE_VERIFICATION_CHANGES_REQUESTED,Không có mã lưu cũ; alias ở E.4,SUCCESS,enterprise_verification,"schoolOrgId,submissionNo,version,missingFieldCodes,reasonCode",T5,False
+DEMAND_CHANGED,Không có mã lưu cũ; alias ở E.4,SUCCESS,demand,"operation,demandVersion,criteriaVersion",T5,False
+COOPERATION_DRAFT_SAVED,Không có mã lưu cũ; alias ở E.4,SUCCESS,cooperation,"operation,version",T5,False
+COOPERATION_SUBMITTED,Không có mã lưu cũ; alias ở E.4,SUCCESS,cooperation,"submissionNo,demandVersion,version",T5,False
+OPPORTUNITY_PUBLICATION_CHANGED,Không có mã lưu cũ; alias ở E.4,SUCCESS,cooperation,"publishedAt,closedAt,version,operation",T5,False
+SCHOOL_PROFILE_SHARING_POLICY_CHANGED,Không có mã lưu cũ; alias ở E.4,SUCCESS,school_sharing_policy,"schoolOrgId,termId,fieldCodes,version",T5,False
+PROPOSAL_ITEM_RESERVED,Không có mã lưu cũ; alias ở E.4,SUCCESS,proposal_item,"batchId,reservationUntil,version,operationId",T5,False
+PROPOSAL_ITEM_DECIDED,Không có mã lưu cũ; alias ở E.4,SUCCESS,proposal_item,"fromStatus,toStatus,version,reasonCode,operationId",T5,False
+INTERNSHIP_INVITATION_ISSUED,Không có mã lưu cũ; alias ở E.4,SUCCESS,internship_invitation,"proposalItemId,expiresAt,version,operationId",T5,False
+INTERNSHIP_INVITATION_EXPIRED,Không có mã lưu cũ; alias ở E.4,SUCCESS,internship_invitation,"version,expiredAt",T5,False
+INTERNSHIP_INVITATION_REVOKED,Không có mã lưu cũ; alias ở E.4,SUCCESS,internship_invitation,"version,reasonCode",T5,False
+PLACEMENT_APPROVED,Không có mã lưu cũ; alias ở E.4,SUCCESS,placement,"termId,placementVersion,decisionRef,operationId",T5,False
+PLACEMENT_ACTIVATED,Không có mã lưu cũ; alias ở E.4,SUCCESS,placement,"termId,placementVersion,effectiveAt,operationId",T5,False
+PLACEMENT_CANCELLED,Không có mã lưu cũ; alias ở E.4,SUCCESS,placement,"termId,placementVersion,decisionRef,reasonCode,operationId",T5,False
+PLACEMENT_COMPLETED,Không có mã lưu cũ; alias ở E.4,SUCCESS,placement,"termId,placementVersion,caseId,caseVersion,decisionRef,operationId",T5,False
+COHORT_CREATED,Không có mã lưu cũ; alias ở E.4,SUCCESS,internship_cohort,"enterpriseOrgId,termId,cohortVersion",T3,False
+GROUP_MEMBERSHIP_CHANGED,Không có mã lưu cũ; alias ở E.4,SUCCESS,internship_case,"cohortId,fromGroupId,toGroupId,version,reasonCode",T3,False
+TASK_UPDATED,Không có mã lưu cũ; alias ở E.4,SUCCESS,task_assignment,"taskId,caseId,fromStatus,toStatus,assignmentVersion",T3,False
+TASK_COMMENTED,Không có mã lưu cũ; alias ở E.4,SUCCESS,task_assignment,"commentId,assignmentVersion",T3,False
+SUBMISSION_REVIEWED,Không có mã lưu cũ; alias ở E.4,SUCCESS,submission,"assignmentId,reviewedVersion,verdict,assignmentVersion",T3,False
+WEEKLY_REPORT_DRAFT_SAVED,Không có mã lưu cũ; alias ở E.4,SUCCESS,weekly_report,"caseId,weekStart,revisionNo,reportVersion",T3,False
+WEEKLY_REPORT_REVISION_CREATED,Không có mã lưu cũ; alias ở E.4,SUCCESS,weekly_report,"caseId,weekStart,revisionNo,reportVersion,reasonCode",T3,False
+WEEKLY_REPORT_SUBMITTED,Không có mã lưu cũ; alias ở E.4,SUCCESS,weekly_report,"caseId,weekStart,revisionNo,lateFlag",T3,False
+WEEKLY_REPORT_REVIEWED,Không có mã lưu cũ; alias ở E.4,SUCCESS,weekly_report,"caseId,weekStart,revisionNo,reportVersion",T3,False
+EVALUATION_DRAFT_SAVED,Không có mã lưu cũ; alias ở E.4,SUCCESS,evaluation,"caseId,templateVersion,evaluationVersion",T3,False
+EVALUATION_REVISION_CREATED,Không có mã lưu cũ; alias ở E.4,SUCCESS,evaluation,"caseId,previousEvaluationId,revisionNo,decisionRef",T3,False
+GRADE_VISIBILITY_CHANGED,Không có mã lưu cũ; alias ở E.4,SUCCESS,grade_visibility,"enterpriseOrgId,caseId,enabled,version",T3,False
+SCHOOL_RESULT_VISIBILITY_CHANGED,Không có mã lưu cũ; alias ở E.4,SUCCESS,school_result_policy,"schoolOrgId,termId,enabled,version,decisionRef",T3,False
+CASE_CLOSED,Không có mã lưu cũ; alias ở E.4,SUCCESS,internship_case,"placementId,caseVersion,decision,decisionRef,reasonCode",T3,False
+ENTERPRISE_QUALITY_EVALUATED,Không có mã lưu cũ; alias ở E.4,SUCCESS,enterprise_quality_evaluation,"enterpriseOrgId,schoolOrgId,termId,version",T3,False
+COORDINATION_ISSUE_CHANGED,Không có mã lưu cũ; alias ở E.4,SUCCESS,coordination_issue,"enterpriseOrgId,schoolOrgId,operation,version",T3,False
+TAXONOMY_CHANGED,Không có mã lưu cũ; alias ở E.4,SUCCESS,skill_taxonomy_entry,"entityType,operation,skillCode,taxonomyVersion",T4,False
+MATCH_RUN_REQUESTED,Không có mã lưu cũ; alias ở E.4,SUCCESS,match_run,"demandId,criteriaHash,criteriaVersion,ruleVersion,taxonomyVersion",T4,False
+MATCH_RUN_COMPLETED,Không có mã lưu cũ; alias ở E.4,"SUCCESS,FAILURE",match_run,"demandId,runVersion,status,ruleVersion",T4,False
+MATCH_DETAILS_VIEWED,Không có mã lưu cũ; alias ở E.4,SUCCESS,match_run,"schoolOrgId,termId,page,size",T4,False
+PRIVACY_RELEASE_CREATED,Không có mã lưu cũ; alias ở E.4,SUCCESS,protected_release,"demoBatchId,releaseFingerprint,eligibleBand,ruleVersion",T4,False
+PRIVACY_RELEASE_BLOCKED,Không có mã lưu cũ; alias ở E.4,DENIED,protected_release,"demoBatchId,reasonCode,releaseFingerprint",T4,False
+FILE_UPLOADED,Không có mã lưu cũ; alias ở E.4,SUCCESS,file,"purpose,contentType,sizeBytes,scanStatus",T1,False
+FILE_SCAN_COMPLETED,Không có mã lưu cũ; alias ở E.4,"SUCCESS,FAILURE",file,"scanStatus,attemptNo,reasonCode",T1 worker,False
+FILE_DOWNLOADED,Không có mã lưu cũ; alias ở E.4,SUCCESS,file,"purpose,resourceType,resourceId,rangeRequest,consentVersion,shareVersion",T1,False

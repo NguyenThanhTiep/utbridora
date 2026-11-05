@@ -8,6 +8,7 @@ Mục lục tài liệu dùng chung cho năm team. Cập nhật cách sắp xế
 |---|---|
 | Hiểu yêu cầu toàn hệ thống | [SRS tổng thể v1.2.4](srs/UTBridora_SRS_Tong_The_v1.2.4.docx) và [trạng thái SRS](srs/README.md) |
 | Thống nhất giao điểm giữa các team | [Contract Pack B01–B06 v1.0 Candidate](contracts/UTBridora_Contract_Pack_B01_B06_v1.0_Candidate.md) và [quy tắc sử dụng contract](contracts/README.md) |
+| Rà soát kỹ thuật T1-01 và schema | [Review T1-01](contracts/T1_01_TECHNICAL_REVIEW.md), [v1.1 Candidate](contracts/UTBridora_Contract_Pack_B01_B06_v1.1_Candidate.md), [checker DEV](../scripts/contracts/README.md) |
 | Biết source hiện đã có gì | [Trạng thái triển khai](status/IMPLEMENTATION_STATUS.md) và [báo cáo kiểm thử](testing/TEST_REPORT.md) |
 | Xem kế hoạch và phân công công việc | [Workbook kế hoạch UT.Bridora](plans/UTBridora_Plan.xlsx) |
 | Đưa module của team vào repository | [Hướng dẫn BE/FE cho các team và AI](guides/HUONG_DAN_PHAT_TRIEN_BE_FE_CHO_CAC_TEAM.md) |
@@ -15,7 +16,7 @@ Mục lục tài liệu dùng chung cho năm team. Cập nhật cách sắp xế
 | Chạy local hoặc chuẩn bị staging | [Hướng dẫn triển khai](guides/DEPLOYMENT_GUIDE.md) |
 | Xem sơ đồ | [Use case, activity và cách render](diagrams/README.md) |
 
-**Phân biệt trạng thái:** SRS v1.2.4 và Contract Pack hiện là đề xuất, còn chờ owner/consumer ký nhận. Tài liệu trong `core` mô tả nền tảng đã có tại thời điểm ghi nhận; báo cáo trong `testing` chỉ chứng minh các lượt chạy được ghi rõ ngày. Không dùng việc có tài liệu hoặc ví dụ JSON để kết luận tính năng đã triển khai hay test đã PASS.
+**Phân biệt trạng thái:** người dùng đã chốt Contract Pack v1.0 ngày 05/11/2026, không chờ vòng ký riêng T2–T5; xem [quyết định và hash phiên bản](contracts/README.md#quyết-định-chốt-contract--05112026). SRS và nội dung Candidate gốc giữ nguyên để truy vết; rà soát kỹ thuật vẫn còn, việc chốt không đồng nghĩa chức năng mới đã triển khai hoặc nghiệm thu. Tài liệu trong `core` mô tả nền tảng đã có tại thời điểm ghi nhận; báo cáo trong `testing` chỉ chứng minh các lượt chạy được ghi rõ ngày. Kết quả test DEV và xác nhận Tester được theo dõi riêng.
 
 ## Cấu trúc thư mục
 

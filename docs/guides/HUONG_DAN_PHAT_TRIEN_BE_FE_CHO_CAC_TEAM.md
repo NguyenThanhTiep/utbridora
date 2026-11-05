@@ -4,7 +4,7 @@ Ngày đối chiếu: **04/11/2026**. Áp dụng cho repository `NguyenThanhTiep
 
 Tài liệu giúp thành viên T1–T5 hoặc AI tiếp nhận một chức năng, đặt code đúng chỗ, dùng lại nền tảng và kiểm thử trước khi tích hợp. Đây là hướng dẫn làm việc trên dự án đang có, không phải hướng dẫn tạo năm project riêng.
 
-**Trạng thái cần hiểu trước:** core T1 đã có source; module nghiệp vụ T2–T5 chưa có trong checkout được kiểm tra. Các cây `modules/`, lớp nghiệp vụ và ví dụ T2 bên dưới là cấu trúc đề xuất để triển khai. SRS v1.2.4 có phần đề xuất hợp nhất; Contract Pack B01–B06 đang là **Candidate**, chưa có bằng chứng signoff đầy đủ. Không xem ví dụ trong hướng dẫn là API đã triển khai hoặc contract mới đã được duyệt.
+**Trạng thái cần hiểu trước:** core T1 đã có source; module nghiệp vụ T2–T5 chưa có trong checkout được kiểm tra. Các cây `modules/`, lớp nghiệp vụ và ví dụ T2 bên dưới là cấu trúc đề xuất để triển khai. Cập nhật 05/11/2026: người dùng đã chốt Contract v1.0, không chờ vòng ký riêng T2–T5; [v1.1 Candidate](../contracts/UTBridora_Contract_Pack_B01_B06_v1.1_Candidate.md) là diff kỹ thuật với schema/checker DEV, chưa tự thay bản đã chốt. Xem [review T1-01](../contracts/T1_01_TECHNICAL_REVIEW.md). Ví dụ trong hướng dẫn không chứng minh API đã triển khai.
 
 ## Mục lục
 

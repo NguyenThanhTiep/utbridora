@@ -1,6 +1,20 @@
 # Trạng thái triển khai Core Platform
 
-## Đối chiếu hiện tại — 04/11/2026
+## Rà soát kỹ thuật T1-01 — 05/11/2026
+
+Đã xuất [Contract v1.1 Candidate](../contracts/UTBridora_Contract_Pack_B01_B06_v1.1_Candidate.md), Data Dictionary bổ sung, 374 schema, Input/Value cho 62 port/consumer và CSV quyền/audit. **868/868 kiểm tra DEV PASS**: 69 ví dụ, 795 fixture và 4 kiểm tra tĩnh; không phải integration test của module chưa triển khai. Diff v1.1 chưa tự được phê duyệt theo quyết định v1.0.
+
+Core runtime đã chạy thật trong cùng phiên trước phần rà contract: 28 unit, 49 Failsafe, 14 Chromium PASS (3 UI mock), frontend build PASS; bản kiểm tra contract không chạy lại suite đó. Xem [review/phạm vi còn thiếu](../contracts/T1_01_TECHNICAL_REVIEW.md), [evidence contract](../testing/evidence/T1_01_CONTRACT_REVIEW.json) và [evidence core](../testing/evidence/T1_01_CORE_REGRESSION.json).
+
+Workbook chỉ cập nhật ô DEV/bằng chứng/ghi chú; Tester, Leader và nghiệm thu SRS giữ nguyên. T1-01 tổng vẫn Đang làm, CONTRACT-01 hoàn thành phần DEV chuẩn bị typed contract. Nghiệp vụ mới/adapter/migration, R33 và staging vẫn có task riêng. Job CI contracts đã thêm nhưng chưa có kết quả GitHub cho thay đổi mới. Không sửa mã ứng dụng BE/FE, migration, SRS hoặc nội dung Contract v1.0.
+
+## Quyết định chốt Contract — 05/11/2026
+
+Người dùng đã chốt Contract Pack B01–B06 v1.0 làm căn cứ kỹ thuật và không chờ vòng ký riêng T2–T5. Xem [quyết định và hash phiên bản](../contracts/README.md#quyết-định-chốt-contract--05112026). Đây là xác nhận của người dùng, không ghi thay chữ ký/review của các team hoặc kết quả QA.
+
+Phần rà kỹ thuật được cập nhật ở mục đầu; không đánh dấu toàn bộ task hoàn thành chỉ từ quyết định chốt. Bản SRS và nội dung Candidate v1.0 được giữ nguyên.
+
+## Snapshot kiểm tra tĩnh — 04/11/2026
 
 Đây là cập nhật tài liệu và kiểm tra tĩnh, **không phải lượt build/test/migration mới**. Các số PASS và lỗi baseline ở những mục lịch sử bên dưới giữ nguyên thời điểm 29–30/10/2026; không dùng để khẳng định runtime Docker/MySQL, GitHub Actions hoặc source của team khác vừa được kiểm chứng.
 
@@ -80,9 +94,9 @@ Bản nâng cấp UI toàn diện: App/components/management được chuẩn h�
 
 Bổ sung cách chạy đơn giản: `run-local.cmd`, `scripts/run-local.ps1`, `compose.local.yaml`; chỉ cần Docker Desktop. Script tự sinh secret trong `.env.local`, không sửa `.env` cũ, dùng volume riêng và chờ health check. Đã chạy stack thật và smoke test frontend/login/session/CSRF/logout/admin API/Mailpit PASS. Cấu hình staging HTTPS không thay đổi.
 
-## Ưu tiên tiếp theo — đối chiếu ngày 04/11/2026
+## Ưu tiên tiếp theo — cập nhật ngày 05/11/2026
 
-Trước tích hợp API/registry/schema mới, hoàn tất review/signoff đúng phiên bản Contract Pack B01–B06 giữa owner và consumer. Sau đó triển khai theo phạm vi được giao, không viết lại core và không tự coi Candidate là hợp đồng đã phê duyệt.
+Quyết định chốt bản v1.0 đã được người dùng xác nhận tại mục đầu. Tiếp tục hoàn tất rà soát kỹ thuật DTO/Data Dictionary, schema/ví dụ và mapping permission/audit với core trước khi tích hợp phần liên quan. Nếu cần sửa contract, phát hành phiên bản mới với diff và quyết định tương ứng; giữ phạm vi công việc được giao, tái sử dụng core hiện có.
 
 1. P0 trước truy cập công khai: mail delivery tin cậy, timing/abuse recovery, gateway throttling, HTTPS xuyên proxy và review bảo mật độc lập.
 2. P0 tích hợp: T2/T5 adapter share/consent/field và T3/T4/T5 business guards; giữ deny khi thiếu dữ liệu.

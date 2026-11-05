@@ -16,6 +16,6 @@ Contract Candidate SHA-256:
 9c62f229908f3c66f300455e33bdde6aef127f8e6edd99b286def0687ff9f2ef
 ```
 
-Các báo cáo kiểm định phiên bản trước nằm trong [reviews](../reviews/README.md); báo cáo về v1.2.3 không tự trở thành bằng chứng nghiệm thu v1.2.4. Quyết định giao triển khai liên team cần owner/consumer và Leader T1 duyệt cùng phiên bản contract.
+Các báo cáo kiểm định phiên bản trước nằm trong [reviews](../reviews/README.md); báo cáo về v1.2.3 không tự trở thành bằng chứng nghiệm thu v1.2.4. Người dùng đã chốt Contract v1.0 ngày 05/11/2026 và không chờ vòng ký riêng T2–T5, xem [quyết định](../contracts/README.md#quyết-định-chốt-contract--05112026). DOCX vẫn giữ nguyên trạng thái/checksum tại thời điểm tạo. Bản [v1.1 Candidate](../contracts/UTBridora_Contract_Pack_B01_B06_v1.1_Candidate.md) là diff kỹ thuật đã có checker DEV, không tự thay file được Word viện dẫn; xem [review T1-01](../contracts/T1_01_TECHNICAL_REVIEW.md).
 
 [Về mục lục tài liệu](../README.md)

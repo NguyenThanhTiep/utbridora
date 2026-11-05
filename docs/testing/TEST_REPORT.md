@@ -1,5 +1,13 @@
 # Báo cáo kiểm thử và đối chiếu nghiệm thu
 
+## Kiểm tra DEV T1-01 — 05/11/2026
+
+- Contract v1.1: **868/868 PASS**, gồm 4 kiểm tra tĩnh, 69 ví dụ JSON khớp schema và 795 fixture regression/boundary. Bundle có 374 schema và Input/Value cho 62 port/consumer. Đây là kiểm tra schema/source/oracle, không phải 868 integration test hoặc bằng chứng guard của module mới đã chạy.
+- Đối chiếu 18 permission core, 30 AuditAction hiện hữu, 21 operation core và hash 62 file nguồn/baseline: PASS. Danh mục 33 permission/63 action mới vẫn chưa được áp dụng vào runtime.
+- Core runtime đã chạy thật trước đó trong cùng phiên: Maven verify kết thúc 08:44:18 (UTC+7), **28 unit +49 Failsafe +14 Chromium PASS**, không failure/error/skip; 3 Chromium là UI mock. Frontend npm build PASS. Không cộng 14 browser scenario vào số Failsafe vì đã có test điều phối. Phần contract không chạy lại suite core; mã ứng dụng giữ nguyên.
+- Evidence: [contract](evidence/T1_01_CONTRACT_REVIEW.json), [core cùng phiên](evidence/T1_01_CORE_REGRESSION.json), [phạm vi cập nhật workbook](evidence/T1_01_WORKBOOK_UPDATE.json). Chi tiết và cách chạy ở [review T1-01](../contracts/T1_01_TECHNICAL_REVIEW.md).
+- Chỉ cập nhật tiến độ DEV, không tự đánh dấu Tester PASS hoặc nghiệm thu SRS. Import/SMTP/scanner/capability/adapter thật, race/load của module mới và job CI contracts mới trên GitHub: **NOT RUN**.
+
 ## Kiểm tra trước push GitHub — 30/10/2026
 
 - Frontend `npm run build`: **PASS**, TypeScript/Vite production build, 33 module; CSS 39,68kB và JavaScript 281,40kB.
