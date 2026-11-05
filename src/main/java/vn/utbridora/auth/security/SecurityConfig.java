@@ -52,6 +52,23 @@ public class SecurityConfig {
                        "/api/v1/auth/password/reset","/api/v1/auth/invitations/accept").permitAll()
                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                .requestMatchers("/api/v1/auth/**", "/api/v1/demo/**").authenticated()
+               // T5: TermReference — public reads (session required)
+               .requestMatchers(HttpMethod.GET, "/api/v1/terms", "/api/v1/terms/*").authenticated()
+               // T5: TermReference — school-staff mutations
+               .requestMatchers(HttpMethod.POST,  "/api/v1/school/*/terms").authenticated()
+               .requestMatchers(HttpMethod.PATCH, "/api/v1/school/*/terms/*/status").authenticated()
+               // T5: Verification — enterprise routes
+               .requestMatchers(HttpMethod.POST,  "/api/v1/enterprise/*/verifications").authenticated()
+               .requestMatchers(HttpMethod.PATCH, "/api/v1/enterprise/*/verifications/*").authenticated()
+               .requestMatchers(HttpMethod.PATCH, "/api/v1/enterprise/*/verifications/*/submit").authenticated()
+               .requestMatchers(HttpMethod.GET,   "/api/v1/enterprise/*/verifications").authenticated()
+               .requestMatchers(HttpMethod.GET,   "/api/v1/enterprise/*/verifications/*").authenticated()
+               // T5: Verification — school routes
+               .requestMatchers(HttpMethod.GET,   "/api/v1/school/*/verifications").authenticated()
+               .requestMatchers(HttpMethod.GET,   "/api/v1/school/*/verifications/*").authenticated()
+               .requestMatchers(HttpMethod.PATCH, "/api/v1/school/*/verifications/*/decision").authenticated()
+               // T5: Guard read for downstream modules (T3, T5 cooperation submit)
+               .requestMatchers(HttpMethod.GET,   "/api/v1/school-verification/*/*").authenticated()
                .anyRequest().denyAll())
            .exceptionHandling(ex->ex
                .authenticationEntryPoint((req,res,error)->res.sendError(HttpServletResponse.SC_UNAUTHORIZED))
