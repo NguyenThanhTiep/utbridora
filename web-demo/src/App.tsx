@@ -2,9 +2,14 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'rea
 import { api, send, login, logout, whoAmI, ApiError, type Me, type Grant } from './api';
 import { Brand, EmptyState, Field, Icon, Notice, useAction, roleNames, permissionNames } from './components';
 import { UserManagement, OrganizationManagement, AuditViewer } from './management';
+import { DemandWorkspace, canAuthorDemands } from './modules/cooperation/DemandWorkspace';
+import { SchoolWorkspace } from './modules/cooperation/SchoolWorkspace';
+import { canLeaveDemand } from './modules/cooperation/navigation';
 
 const screens = [
+  { id: 'school', title: 'Hợp tác doanh nghiệp', description: 'Không gian phối hợp thực tập dành cho nhà trường.', icon: 'building', permission: null },
   { id: 'account', title: 'Tài khoản của tôi', description: 'Thông tin cá nhân, vai trò và bảo mật tài khoản.', icon: 'grid', permission: null },
+  { id: 'demands', title: 'Nhu cầu thực tập', description: 'Quản lý bản nháp nhu cầu và tiêu chí tuyển thực tập của doanh nghiệp.', icon: 'briefcase', permission: 'cooperation:enterprise:create' },
   { id: 'users', title: 'Tài khoản & phân quyền', description: 'Quản lý thành viên và quyền truy cập trong hệ thống.', icon: 'users', permission: 'account:admin:status' },
   { id: 'organizations', title: 'Tổ chức & lời mời', description: 'Kết nối các tổ chức và mời thành viên tham gia.', icon: 'building', permission: 'membership:admin:write' },
   { id: 'audit', title: 'Nhật ký hệ thống', description: 'Theo dõi và tra cứu các hoạt động quan trọng.', icon: 'activity', permission: 'audit:global:read' }
@@ -31,7 +36,9 @@ export default function App() {
   const menuButton = useRef<HTMLButtonElement>(null);
   const action = useAction();
   const permissions = new Set(grants.filter(grant => grant.role === 'ADMIN' && grant.organizationId === null).flatMap(grant => grant.permissions));
-  const menus = screens.filter(item => item.permission === null || permissions.has(item.permission));
+  const menus = screens.filter(item => item.id === 'school' ? grants.some(grant => grant.role === 'SCHOOL_STAFF' && !!grant.organizationId)
+    : item.id === 'demands' ? grants.some(canAuthorDemands)
+    : item.permission === null || permissions.has(item.permission));
   const current = screens.find(item => item.id === screen) || screens[0];
 
   useEffect(() => {
@@ -92,8 +99,9 @@ export default function App() {
     };
   }, [mobileOpen]);
 
-  const navigate = (next: string) => { setScreen(next); setMobileOpen(false); };
+  const navigate = (next: string) => { if (next !== screen && !canLeaveDemand()) return; setScreen(next); setMobileOpen(false); };
   const signOut = async () => {
+    if (!canLeaveDemand()) return;
     await logout(); generation.current += 1;
     setMe(null); setGrants([]); setContext('0'); setMobileOpen(false);
     setAuthScreen('login'); setSessionMessage(''); history.replaceState(null, '', '/');
@@ -132,10 +140,10 @@ export default function App() {
         <button className="btn-icon sidebar-close" aria-label="Đóng menu điều hướng" onClick={() => setMobileOpen(false)}><Icon name="close" /></button></div>
       <nav aria-label="Điều hướng chính">
         <p className="nav-group-label">KHÔNG GIAN CỦA BẠN</p>
-        {menus.filter(item => item.id === 'account').map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
+        {menus.filter(item => ['account', 'demands', 'school'].includes(item.id)).map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
           aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
-        {menus.some(item => item.id !== 'account') && <p className="nav-group-label nav-group-admin">QUẢN TRỊ HỆ THỐNG</p>}
-        {menus.filter(item => item.id !== 'account').map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
+        {menus.some(item => !['account', 'demands', 'school'].includes(item.id)) && <p className="nav-group-label nav-group-admin">QUẢN TRỊ HỆ THỐNG</p>}
+        {menus.filter(item => !['account', 'demands', 'school'].includes(item.id)).map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
           aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
       </nav>
       <div className="sidebar-bottom">
@@ -154,14 +162,18 @@ export default function App() {
           <button className="profile-shortcut" aria-label="Mở tài khoản của tôi" onClick={() => navigate('account')}><span className="avatar avatar-small">{initials(me.displayName)}</span><span>{me.displayName}</span><Icon name="chevron-down" size={14} /></button></div>
       </header>
       <main className="content" id="main-content">
-        <div className="page-header"><div><p className="section-kicker">{screen === 'account' ? 'KHÔNG GIAN CÁ NHÂN' : 'QUẢN TRỊ NỀN TẢNG'}</p>
+        <div className="page-header"><div><p className="section-kicker">{screen === 'account' ? 'KHÔNG GIAN CÁ NHÂN' : screen === 'demands' ? 'KHÔNG GIAN DOANH NGHIỆP' : screen === 'school' ? 'KHÔNG GIAN NHÀ TRƯỜNG' : 'QUẢN TRỊ NỀN TẢNG'}</p>
           <h1 ref={heading} tabIndex={-1}>{current.title}</h1><p className="page-description">{current.description}</p></div>
           <span className="workspace-label"><span className="live-dot" />UT.Bridora</span></div>
         <Notice message={action.message} tone={action.error ? 'error' : 'info'} />
+        {screen === 'account' && me.memberships.some(m => m.role === 'ENTERPRISE') && !grants.some(canAuthorDemands)
+          && <Notice message="Tài khoản có vai trò doanh nghiệp nhưng chưa được cấp quyền quản lý nhu cầu. Nhờ quản trị viên kiểm tra trạng thái xác minh tổ chức và liên kết vai trò." />}
         {!menus.some(item => item.id === screen) ? <section className="panel"><EmptyState icon="lock" title="Không có quyền truy cập" description="Chọn một chức năng trong menu để tiếp tục." /></section>
           : screen === 'users' ? <UserManagement me={me} permissions={permissions} />
           : screen === 'organizations' ? <OrganizationManagement permissions={permissions} />
           : screen === 'audit' ? <AuditViewer />
+          : screen === 'demands' ? <DemandWorkspace key={me.userId} grants={grants} />
+          : screen === 'school' ? <SchoolWorkspace />
           : <AccountOverview me={me} grants={grants} context={context} setContext={setContext}
             signedOut={() => { generation.current += 1; setMe(null); setGrants([]); setAuthScreen('login'); setSessionMessage('Đổi mật khẩu thành công. Vui lòng đăng nhập lại.'); }} />}
         <footer className="app-footer"><span>© {new Date().getFullYear()} UT.Bridora</span><span>Kết nối giáo dục với cơ hội nghề nghiệp.</span></footer>
