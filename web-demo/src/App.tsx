@@ -2,12 +2,16 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'rea
 import { api, send, login, logout, whoAmI, ApiError, type Me, type Grant } from './api';
 import { Brand, EmptyState, Field, Icon, Notice, useAction, roleNames, permissionNames } from './components';
 import { UserManagement, OrganizationManagement, AuditViewer } from './management';
+// DEV08 đã nối màn hình danh mục kỹ năng vào khung ứng dụng hiện có để người kiểm thử mở được giao diện US-T4-06.
+import { SkillTaxonomy } from './modules/taxonomy';
 
 const screens = [
   { id: 'account', title: 'Tài khoản của tôi', description: 'Thông tin cá nhân, vai trò và bảo mật tài khoản.', icon: 'grid', permission: null },
   { id: 'users', title: 'Tài khoản & phân quyền', description: 'Quản lý thành viên và quyền truy cập trong hệ thống.', icon: 'users', permission: 'account:admin:status' },
   { id: 'organizations', title: 'Tổ chức & lời mời', description: 'Kết nối các tổ chức và mời thành viên tham gia.', icon: 'building', permission: 'membership:admin:write' },
-  { id: 'audit', title: 'Nhật ký hệ thống', description: 'Theo dõi và tra cứu các hoạt động quan trọng.', icon: 'activity', permission: 'audit:global:read' }
+  { id: 'audit', title: 'Nhật ký hệ thống', description: 'Theo dõi và tra cứu các hoạt động quan trọng.', icon: 'activity', permission: 'audit:global:read' },
+  // DEV08 cho phép quản trị viên toàn cục mở màn hình để kiểm thử; giao diện lập trình vẫn tự kiểm tra quyền ở máy chủ.
+  { id: 'taxonomy', title: 'Danh mục kỹ năng', description: 'Quản lý cây kỹ năng chuẩn, tên gọi khác và tra cứu mã.', icon: 'layers', permission: 'taxonomy:skills:write' }
 ];
 function initials(name: string) {
   const words = name.trim().split(/\s+/);
@@ -31,7 +35,10 @@ export default function App() {
   const menuButton = useRef<HTMLButtonElement>(null);
   const action = useAction();
   const permissions = new Set(grants.filter(grant => grant.role === 'ADMIN' && grant.organizationId === null).flatMap(grant => grant.permissions));
-  const menus = screens.filter(item => item.permission === null || permissions.has(item.permission));
+  const globalAdmin = grants.some(grant => grant.role === 'ADMIN' && grant.organizationId === null);
+  const menus = screens.filter(item => item.permission === null || permissions.has(item.permission)
+    // DEV08 chỉ mở lối vào giao diện cho quản trị viên toàn cục; đây không thay thế kiểm tra quyền tại máy chủ.
+    || item.id === 'taxonomy' && globalAdmin);
   const current = screens.find(item => item.id === screen) || screens[0];
 
   useEffect(() => {
@@ -162,6 +169,8 @@ export default function App() {
           : screen === 'users' ? <UserManagement me={me} permissions={permissions} />
           : screen === 'organizations' ? <OrganizationManagement permissions={permissions} />
           : screen === 'audit' ? <AuditViewer />
+          // DEV08 hiển thị mô-đun danh mục kỹ năng trong khung ứng dụng hiện có để người kiểm thử bắt đầu kiểm tra giao diện.
+          : screen === 'taxonomy' ? <SkillTaxonomy />
           : <AccountOverview me={me} grants={grants} context={context} setContext={setContext}
             signedOut={() => { generation.current += 1; setMe(null); setGrants([]); setAuthScreen('login'); setSessionMessage('Đổi mật khẩu thành công. Vui lòng đăng nhập lại.'); }} />}
         <footer className="app-footer"><span>© {new Date().getFullYear()} UT.Bridora</span><span>Kết nối giáo dục với cơ hội nghề nghiệp.</span></footer>
