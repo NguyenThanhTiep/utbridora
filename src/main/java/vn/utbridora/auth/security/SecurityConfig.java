@@ -57,7 +57,10 @@ public class SecurityConfig {
                .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/demands/{id}").authenticated()
                .anyRequest().denyAll())
            .exceptionHandling(ex->ex
-               .authenticationEntryPoint((req,res,error)->res.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+               .authenticationEntryPoint((req,res,error)->{
+                   if(DemandSecurityErrors.applies(req)) DemandSecurityErrors.write(req,res,401,"SESSION_EXPIRED","Phiên đăng nhập không hợp lệ.");
+                   else res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+               })
                .accessDeniedHandler((req,res,error)->{
                    var authentication=org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
                    String actor=authentication!=null && authentication.getPrincipal() instanceof AppPrincipal p
@@ -67,6 +70,12 @@ public class SecurityConfig {
                    catch (RuntimeException auditFailure) {
                        org.slf4j.LoggerFactory.getLogger(SecurityConfig.class)
                            .warn("Security audit write failed; access remains denied");
+                   }
+                   if(DemandSecurityErrors.applies(req)) {
+                       boolean csrf=error instanceof org.springframework.security.web.csrf.CsrfException;
+                       DemandSecurityErrors.write(req,res,403,csrf?"CSRF_INVALID":"ACCESS_DENIED",
+                           csrf?"Mã bảo vệ không hợp lệ.":"Bạn không có quyền thực hiện thao tác.");
+                       return;
                    }
                    res.setStatus(HttpServletResponse.SC_FORBIDDEN);
                    res.setContentType("application/json");

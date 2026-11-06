@@ -1,10 +1,16 @@
-# T5-02 — Bàn giao phần nhu cầu thực tập tuần 1
+# T5-02 / T5-03 — Bàn giao Dev11 và Dev12 tuần 1
 
-**Cập nhật 05/11:** Dev11/Dev12 đã bổ sung bảo vệ form, khung nhà trường, lỗi cạnh trường và browser test với backend thật. Adapter danh mục mẫu nay tắt mặc định; xem [hướng dẫn local và tích hợp](T5_WEEK1_LOCAL_AND_INTEGRATION.md) trước khi chạy demo hoặc ghép T4.
+**Cập nhật 06/11/2026:** người dùng đảm nhiệm cả Dev11 và Dev12. Phạm vi tuần này chỉ gồm **T5-02** và **T5-03**, theo sheet CAP NHAT CHUNG hàng 17–18 trong [workbook](../plans/UTBridora_Plan.xlsx). Xem [cấu trúc module](../../web-demo/src/modules/cooperation/README.md) và [kết quả kiểm thử](../testing/T5_DEMAND_TEST_REPORT.md).
 
-Ngày triển khai: **05/11/2026**. Owner: Dev 11; UI phối hợp Dev 12; QA05.
+| Nhiệm vụ | Phần bàn giao | Trạng thái |
+|---|---|---|
+| Dev11 / T5-02 | API nhu cầu DRAFT, Required/Preferred, version/history, snapshot bất biến, guard, audit, taxonomy T4 và đọc kỳ Dev10 | Đã có code và test phía T5; còn ghép nguồn ngành T2 và consumer T4 thật |
+| Dev12 / T5-03 | Khung doanh nghiệp/nhà trường, form schema chuẩn, giữ nội dung khi lỗi, phân trang, lỗi field/version, retry, quyền theo org, responsive | Đã triển khai và kiểm thử phạm vi tuần 1; chờ QA05/Leader nghiệm thu |
+| Opportunity trong T5-02 | Thiết kế projection và fixture BC22 | Bàn giao minh họa; chưa mở runtime khi chưa có Cooperation APPROVED |
 
-Đây là implementation candidate để review. Người dùng xác nhận **chưa rõ signoff T1/T4/T5**, và chọn **nhập đủ thông tin theo schema Candidate khi lưu nháp**. Không thay đổi trạng thái phê duyệt của SRS/Contract Pack.
+T5-03 tuần 1 yêu cầu phần chưa có backend ghi rõ đang chờ. Vì vậy các API tra cứu danh mục, xử lý xác minh, gửi/duyệt hợp tác, Placement chưa sẵn sàng không biến thành nhiệm vụ phải làm thay owner. Chỉ ghép phần thuộc hai task trên khi nguồn được bàn giao.
+
+Contract v1.0 đã được người dùng chốt, theo [review T1-01](../contracts/T1_01_TECHNICAL_REVIEW.md); không chờ ký lại. Người dùng chọn nhập đủ thông tin theo schema khi lưu nháp. Trạng thái DEV, tích hợp liên team và nghiệm thu QA được ghi riêng.
 
 ## 1. Phần đã viết
 
@@ -20,9 +26,9 @@ Source BE: `src/main/java/vn/utbridora/auth/modules/cooperation/`. Source FE: `w
 
 ## 2. Trạng thái chạy mặc định
 
-`app.t5.demand.contract-approved` mặc định **false**, có thể cấu hình bằng `T5_DEMAND_CONTRACT_APPROVED`. Sau khi kiểm session/quyền, API trả **503 CONTRACT_PENDING_SIGNOFF** khi chưa xác nhận contract. Không tự bật cờ trong `.env` của máy.
+`app.t5.demand.contract-approved` mặc định **false**, cấu hình bằng `T5_DEMAND_CONTRACT_APPROVED`. Tên giữ để tương thích nhưng đây là công tắc triển khai: sau khi kiểm session/quyền, API trả **503 FEATURE_DISABLED** nếu tắt. Lỗi này không có nghĩa contract chưa chốt.
 
-Ngay cả khi contract được xác nhận, mutation và đọc criteria vẫn cần implementation thật của **DemandReferencePort** để kiểm school/term/catalog/taxonomy và gate đã thống nhất. Adapter mặc định trả **503 DEPENDENCY_UNAVAILABLE**, không có fallback cho phép mọi mã. Reference fixture từng dùng trong kiểm thử đã được xóa cùng test Demand theo yêu cầu người dùng; không có adapter runtime cho phép giả.
+Khi tắt adapter demo, `DemandReferencePort` dùng mã/version thật từ T4 và `TermAcademicReferences` đọc kỳ Dev10. `DemandMajorCatalogPort` vẫn cần implementation từ nguồn ngành T2; thiếu nguồn trả **503 DEPENDENCY_UNAVAILABLE**. Adapter danh mục tĩnh chỉ dùng khi bật cấu hình demo rõ ràng, không chứng minh đã ghép nguồn thật. Test đã được khôi phục; fixture ngành chỉ nằm trong test tích hợp.
 
 FE có menu **Nhu cầu thực tập** khi grant ENTERPRISE có `cooperation:enterprise:create`. ADMIN global không tự thấy menu. Khi backend chưa sẵn sàng, form giữ dữ liệu nhưng không báo lưu thành công. Bản nhập chỉ nằm trong bộ nhớ trang; tải lại hoặc đổi doanh nghiệp sẽ bỏ bản nhập đó.
 
@@ -63,7 +69,7 @@ Body tạo mới (các UUID/mã dưới đây chỉ là ví dụ; không phải 
 
 Mọi field trong ví dụ phải hiện diện. `location`, `benefits`, `minLevel`, `minYearsPractice` được null. Các array phải có mặt, có thể rỗng; `majorCodes=[]` nghĩa không giới hạn ngành. Nháp trong bản này luôn đủ schema và chỉ trở thành VALID sau khi reference provider xác minh.
 
-Lỗi nghiệp vụ của module có `errorCode,error,message,requestId,fieldErrors,retryAfterSeconds`. Các lỗi session/CSRF phát sinh tại filter core giữ response legacy. Foreign Demand trả 404; sai org grant 403; version/state conflict 409; criteria không hợp lệ 422; contract/reference chưa sẵn sàng 503.
+Lỗi nghiệp vụ của module có `errorCode,error,message,requestId,fieldErrors,retryAfterSeconds`. Filter của route Demand đã trả envelope mới cho 401/403/CSRF; core khác giữ legacy. Foreign Demand trả 404; sai org grant 403; version/state conflict 409; criteria không hợp lệ 422; chức năng/nguồn tham chiếu chưa sẵn sàng 503.
 
 ## 4. Version, snapshot và retry
 
@@ -73,7 +79,7 @@ Deadline vẫn thuộc Demand version và lịch sử. Các nghiệp vụ nomina
 
 `t5_demand_revisions` append theo `(demand_id,version)`, lưu data, snapshot, actor và operation. Không có API sửa/xóa revision. `DemandCriteriaPort.read` trả snapshot của revision hiện hành; expectedCriteriaVersion khác trả CRITERIA_STALE. Snapshot cũ được giữ trong lịch sử, không bị ghi đè. Purpose NOMINATE/PLACEMENT và actor SCHOOL chưa hỗ trợ, luôn từ chối.
 
-Port local hiện nhận Spring `Authentication`/org đã xác minh và dùng `DemandFailure`; adapter sang `ActorContext`/`Result<T>` của bộ contract chung vẫn cần T1/T4 thống nhất. Không coi chữ ký Java local là contract liên team đã phê duyệt.
+`DemandCriteriaFacade` bọc port local thành Success/DomainError và context từ workflow đã xác thực. Snapshot trả ra cũng sao chép collection thành bất biến, không chỉ lưu revision bất biến trong DB. Context này còn là kiểu local; chưa thay thế runtime context chung của T1. Test bên gọi chứng minh phía provider T5; consumer Matching T4 thật vẫn cần ghép và kiểm tra riêng.
 
 Idempotency command và effect/audit commit cùng transaction. Cùng key/body replay response cũ sau kiểm quyền hiện hành; khác body trả IDEMPOTENCY_KEY_REUSED. Sau 24 giờ trả IDEMPOTENCY_RESPONSE_EXPIRED, không tạo lại effect. Request cùng actor có thể chờ lock rồi nhận replay; lock conflict được chuyển thành REQUEST_IN_PROGRESS/Retry-After. Chưa cam kết mọi request đang chạy đều nhận 409 ngay lập tức.
 
@@ -83,9 +89,9 @@ FE giữ cùng key/body khi kết quả save chưa rõ do mạng/5xx. Lỗi cont
 
 Thêm **V8__t5_demand_drafts.sql** theo HEAD local V1–V7. **V8 là số đề xuất local, chưa được T1 cấp slot cho môi trường chung.** T1 cần điều phối version theo HEAD tại lúc merge; chỉ đổi tên migration trước khi nó được áp dụng ở môi trường dùng chung. Không sửa V1–V7.
 
-Ba bảng: `t5_demands`, `t5_demand_revisions`, `t5_demand_commands`; FK về tổ chức/user core, không cascade xóa. Term/catalog được kiểm qua owner port vì chưa có bảng canonical tương ứng trong checkout; không dựng bảng kỳ/ngành/kỹ năng riêng của Dev 11. Flyway vẫn áp dụng schema mới khi app boot kể cả feature gate false; chưa chạy migration vào database local/staging của người dùng trong lượt triển khai này.
+Ba bảng Demand: `t5_demands`, `t5_demand_revisions`, `t5_demand_commands`; FK về tổ chức/user core, không cascade xóa. V9 nhận DDL taxonomy T4; V10 thêm metadata audit; V11 nhận phần bảng `terms` từ nhánh Dev10 `feature/t5-term-verification` (7353971), không nhập V8 trùng version của nhánh đó. Không tạo registry ngành riêng. Khi merge toàn nhánh Dev10 phải hợp nhất migration để tránh tạo `terms` lần hai. Các migration mới chỉ được kiểm trên Testcontainers trong lượt này, chưa áp dụng vào DB local/staging của người dùng.
 
-Audit thêm action `DEMAND_CHANGED`, reason `DEMAND_CREATE`/`DEMAND_UPDATE`. Version/operation/actor chi tiết nằm trong revision. Chưa triển khai metadata_json audit của toàn Contract Pack; T1 cần review tương thích registry trước merge.
+Audit `DEMAND_CHANGED` có reason `DEMAND_CREATE`/`DEMAND_UPDATE`; metadata allowlist gồm operation/demandVersion/criteriaVersion, ghi cùng transaction. Không tuyên bố đã triển khai metadata của toàn Contract Pack; thay đổi core audit/migration vẫn cần review khi hợp nhất.
 
 Các thay đổi file chung: SecurityConfig matcher chính xác, AuditAction, cấu hình gate, App.tsx/menu, ApiError hỗ trợ fieldErrors và migration upgrade assertion. Không nâng framework hoặc thêm dependency.
 
@@ -93,7 +99,9 @@ Các thay đổi file chung: SecurityConfig matcher chính xác, AuditAction, c�
 
 Opportunity chưa có endpoint runtime trong lát cắt này. Thiết kế bàn giao: T5 cung cấp projection của Cooperation đã APPROVED, `opportunityId=cooperationId`; lấy title/location/criteria từ Demand liên kết, school/term và publication window từ owner nghiệp vụ. T2 giữ Preference. Demand DRAFT không được tự xuất hiện thành opportunity.
 
-Còn chờ: signoff CP-T5UI1/BC31/header org/chính sách version/gate school; reference adapter T2/T4/T5; consumer T4 thật, school-scoped evaluation; slot migration T1; QA05/Leader nghiệm thu. Không đánh dấu toàn bộ T5-02 hoặc SRS đã hoàn thành chỉ vì code/test local chạy.
+Fixture: [t5-opportunity-week1.json](../contracts/fixtures/t5-opportunity-week1.json), hoàn toàn synthetic, không seed vào DB. Tại thời điểm kiểm cố định `2026-11-06T00:00:00Z`, chỉ được hiển thị nếu Cooperation tương ứng APPROVED và actor đúng school/student-term. DRAFT, sai scope, trước publishedAt hoặc tại/sau closedAt không được hiển thị. Fixture chỉ biểu diễn OpportunityView, không giả lập bản ghi đã duyệt trong runtime.
+
+Phụ thuộc tích hợp: nguồn ngành/version T2 (Dev04), consumer/context BC31 chung và review migration; QA05/Leader nghiệm thu riêng. Đó là việc phối hợp cần nhận bàn giao, không phải yêu cầu người dùng code thêm module của team khác để hoàn thành phần mình.
 
 ## 7. Kiểm tra
 
@@ -106,7 +114,7 @@ Tại gốc repo với JDK đã cấu hình và Docker Linux engine:
 .\mvnw.cmd verify
 ```
 
-`test` chạy unit test; `verify` chạy thêm integration test. Chạy riêng phần tích hợp Nhu cầu bằng `.\mvnw.cmd '-Dit.test=DemandIT' verify`. `MigrationUpgradeIT` vẫn kiểm nâng V2→V8 vì migration V8 còn trong source. DemandIT dùng MySQL Testcontainers riêng, không dùng database của người dùng.
+`test` chạy unit test; `verify` chạy thêm integration test. Chạy riêng phần tích hợp bằng `.\mvnw.cmd '-Dit.test=DemandIT,DemandTaxonomyIT,MigrationUpgradeIT' verify`. `MigrationUpgradeIT` kiểm nâng V2→V11. Test dùng MySQL Testcontainers riêng, không dùng database của người dùng.
 
 Frontend:
 
@@ -117,4 +125,4 @@ npm run build
 npx playwright test tests/demand.spec.ts
 ```
 
-Core E2E dùng harness `mvnw.cmd '-Dfrontend.e2e=true' verify` theo guide hiện có. Demand browser tests dùng API giả lập và không cần harness core; không coi chúng là kiểm chứng FE nối backend thật.
+`demand.spec.ts` dùng API giả lập. Luồng browser nối backend/DB thật chạy bằng `.\mvnw.cmd '-Dit.test=DemandTaxonomyIT#browserUsesRealDemandApiAndDatabase' '-Ddemand.e2e=true' verify`; riêng catalog ngành vẫn dùng fixture T2. Không nhầm hai loại bằng chứng. Core E2E dùng `-Dfrontend.e2e=true` theo guide chung.

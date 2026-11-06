@@ -74,6 +74,10 @@ public class DemandService implements DemandCriteriaPort {
         if(state!=null && !state.equals("DRAFT") && !state.equals("READY")) throw new DemandFailure(400,"SCHEMA_VALIDATION","Trạng thái nhu cầu không hợp lệ.");
         return repository.list(org,term,state,includeDeleted,page,size);
     }
+    @Transactional
+    public void checkWorkspaceAccess(Authentication authentication,String organization) {
+        authorize(authentication,DemandValidator.uuid(organization,"X-Organization-Id"));
+    }
     @Override @Transactional
     public DemandCriteriaSnapshot read(Authentication authentication,String organization,String id,Long expectedCriteriaVersion,Purpose purpose) {
         String org=DemandValidator.uuid(organization,"X-Organization-Id"), demandId=DemandValidator.uuid(id,"demandId"); authorize(authentication,org);
@@ -94,7 +98,7 @@ public class DemandService implements DemandCriteriaPort {
             throw new DemandFailure(401,"SESSION_EXPIRED","Phiên đăng nhập đã hết hiệu lực.");
         if(!authorization.hasOrganization(authentication,org,Role.ENTERPRISE,"cooperation:enterprise:create"))
             throw new DemandFailure(403,"ACCESS_DENIED","Bạn không có quyền thao tác trong doanh nghiệp này.");
-        if(!contractApproved) throw new DemandFailure(503,"CONTRACT_PENDING_SIGNOFF","Chức năng đang chờ xác nhận hợp đồng giữa các team.");
+        if(!contractApproved) throw new DemandFailure(503,"FEATURE_DISABLED","Chức năng nhu cầu chưa được bật trong môi trường này.");
         return principal.userId();
     }
     private StoredDemand find(String id,String org) {
@@ -111,7 +115,7 @@ public class DemandService implements DemandCriteriaPort {
                 d.data().required(),d.data().preferred(),d.criteriaHash(),d.data().academicCatalogVersion(),d.data().taxonomyVersion(),null,null,d.updatedAt());
     }
     private void audit(String actor,StoredDemand demand,String reason) {
-        try { audit.writeScoped(actor,"DEMAND_CHANGED","demand",demand.id(),"SUCCESS",demand.enterpriseOrgId(),reason); entityManager.flush(); }
+        try { audit.demandChanged(actor,demand.id(),demand.enterpriseOrgId(),reason.substring("DEMAND_".length()),demand.version(),demand.criteriaVersion()); entityManager.flush(); }
         catch(RuntimeException failure) { throw new DemandFailure(500,"AUDIT_WRITE_FAILED","Không thể ghi nhật ký; thao tác đã được hủy."); }
     }
 }

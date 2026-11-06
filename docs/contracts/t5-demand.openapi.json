@@ -3,7 +3,7 @@
   "info": {
     "title": "UTBridora T5 Demand implementation candidate",
     "version": "0.1.0-candidate",
-    "description": "Local T5-02 implementation of CP-T5UI1. Not owner/consumer signoff. Disabled by default; missing reference provider fails closed. X-Organization-Id is a proposed transport choice. Core security errors keep legacy envelopes."
+    "description": "T5-02 implementation of approved CP-T5UI1 v1.0. Deployment is disabled by default (FEATURE_DISABLED); missing reference sources fail closed (DEPENDENCY_UNAVAILABLE). X-Organization-Id selects an organization and is checked against authenticated membership. Demand security errors use the module envelope; other core routes retain legacy responses. Cross-team runtime acceptance is separate."
   },
   "servers": [{"url": "/api/v1"}],
   "security": [{"session": []}],
@@ -58,7 +58,7 @@
       "Csrf":{"name":"X-CSRF-TOKEN","in":"header","required":true,"description":"Obtain from /auth/csrf and refresh after login.","schema":{"type":"string"}}
     },
     "responses": {
-      "Error":{"description":"400 schema, 401 session, 403 permission/CSRF, 404 foreign/missing demand, 409 conflict/replay, 422 criteria, 500 rollback, 503 contract/reference unavailable. Errors before the controller may use the core legacy envelope.","content":{"application/json":{"schema":{"anyOf":[{"$ref":"#/components/schemas/DemandError"},{"type":"object","description":"Core security envelope","properties":{"error":{"type":"string"},"message":{"type":"string"}}}]}}}}
+      "Error":{"description":"400 schema, 401 session, 403 permission/CSRF, 404 foreign/missing demand, 409 conflict/replay/catalog changed, 422 criteria, 500 rollback, 503 feature disabled/reference unavailable. Demand authentication/authorization/CSRF filters use this envelope.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/DemandError"}}}}
     },
     "schemas": {
       "Uuid":{"type":"string","format":"uuid"},

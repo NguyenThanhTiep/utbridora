@@ -30,6 +30,8 @@ services:
       APP_PUBLIC_URL: http://localhost:${LOCAL_HTTP_PORT:-8088}
       COOKIE_SECURE: 'false' # HTTP loopback only; staging still requires Secure=true.
       ALLOW_DEMO_VERIFICATION: 'false'
+      T5_DEMAND_CONTRACT_APPROVED: ${T5_DEMAND_CONTRACT_APPROVED:-false}
+      T5_DEMAND_DEMO_REFERENCES: ${T5_DEMAND_DEMO_REFERENCES:-false}
       MAIL_HOST: mailpit
       MAIL_PORT: '1025'
       MAIL_FROM: no-reply@utbridora.local

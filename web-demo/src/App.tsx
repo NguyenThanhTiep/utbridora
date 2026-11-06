@@ -2,9 +2,7 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'rea
 import { api, send, login, logout, whoAmI, ApiError, type Me, type Grant } from './api';
 import { Brand, EmptyState, Field, Icon, Notice, useAction, roleNames, permissionNames } from './components';
 import { UserManagement, OrganizationManagement, AuditViewer } from './management';
-import { DemandWorkspace, canAuthorDemands } from './modules/cooperation/DemandWorkspace';
-import { SchoolWorkspace } from './modules/cooperation/SchoolWorkspace';
-import { canLeaveDemand } from './modules/cooperation/navigation';
+import { DemandWorkspace, SchoolWorkspace, canAuthorDemands, canLeaveDemand } from './modules/cooperation';
 
 const screens = [
   { id: 'school', title: 'Hợp tác doanh nghiệp', description: 'Không gian phối hợp thực tập dành cho nhà trường.', icon: 'building', permission: null },

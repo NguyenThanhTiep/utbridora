@@ -2,6 +2,8 @@
 
 Tài liệu này hướng dẫn ghép module nghiệp vụ vào source hiện tại. Chưa có source T2–T5 được cung cấp trong lần hướng dẫn này, nên cây thư mục, endpoint và lớp nghiệp vụ bên dưới là đề xuất tích hợp, không phải chức năng đã triển khai.
 
+**Cập nhật 06/11/2026:** đoạn trên và các số migration/test bên dưới mô tả thời điểm viết hướng dẫn. Checkout hiện đã có module T5 và source taxonomy T4. Cấu trúc FE T5 đã tách scope, danh sách, editor, tiêu chí và API; xem [README module T5](../../web-demo/src/modules/cooperation/README.md) và [báo cáo kiểm thử](../testing/T5_DEMAND_TEST_REPORT.md) để biết trạng thái thực tế. Các nguyên tắc chia module và dùng chung core dưới đây vẫn áp dụng.
+
 ## 1. Mô hình triển khai chung
 
 Toàn bộ sản phẩm tiếp tục là **Modular Monolith**:

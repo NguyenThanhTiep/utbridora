@@ -46,8 +46,8 @@ server:
 app:
   t5:
     demand:
-      # Candidate contract: keep disabled until owner/consumer confirmation.
-      # An authoritative DemandReferencePort is also required; approval alone never grants access.
+      # Deployment switch (legacy property name). Contract v1.0 is approved; this does not grant access.
+      # Real T4 + a school/term/academic provider are required when demo references are off.
       contract-approved: ${T5_DEMAND_CONTRACT_APPROVED:false}
       default-reference-adapter:
         enabled: ${T5_DEMAND_DEMO_REFERENCES:false} # Static local fixtures only; never authoritative catalogs.

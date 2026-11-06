@@ -81,31 +81,34 @@ class DemandIT {
     @Test void createListEditAndImmutableRevision() throws Exception {
         var d=create();
         var list=browser.send("GET",path,null,org,false); assertEquals(200,list.statusCode()); assertTrue(list.body().contains(d.demandId()));
-        String snapshot=jdbc.queryForObject("SELECT snapshot_json FROM t5_demand_revisions WHERE demand_id=? AND version=1",String.class,d.demandId());
-        var changed=new DemandInput(school,input.termId(),input.title(),6,input.description(),null,null,input.deadline(),input.required(),input.preferred(),"v1","v1");
+        String snapshot=jdbc.queryForObject("SELECT snapshot_json FROM demand_revisions WHERE demand_id=? AND version=1",String.class,d.demandId());
+        var changed=new DemandInput(school,input.termId(),input.title(),6,input.description(),null,null,input.deadline(),input.required(),input.preferred(),input.academicCatalogVersion(),input.taxonomyVersion());
         var r=browser.send("PATCH",path+"/"+d.demandId(),new UpdateDemand(1L,changed),org,true);
         assertEquals(200,r.statusCode(),r.body()); var updated=DemandJson.read(r.body(),DemandDto.class);
         assertEquals(2,updated.version()); assertEquals(2,updated.criteriaVersion());
-        assertEquals(snapshot,jdbc.queryForObject("SELECT snapshot_json FROM t5_demand_revisions WHERE demand_id=? AND version=1",String.class,d.demandId()));
-        assertEquals(2,jdbc.queryForObject("SELECT count(*) FROM t5_demand_revisions WHERE demand_id=?",Integer.class,d.demandId()));
+        assertEquals(snapshot,jdbc.queryForObject("SELECT snapshot_json FROM demand_revisions WHERE demand_id=? AND version=1",String.class,d.demandId()));
+        assertEquals(2,jdbc.queryForObject("SELECT count(*) FROM demand_revisions WHERE demand_id=?",Integer.class,d.demandId()));
     }
     @Test void replayDoesNotDuplicateAndChangedPayloadConflicts() throws Exception {
         var d=create(); assertEquals(d,create());
-        var changed=new DemandInput(school,input.termId(),"Different",5,input.description(),null,null,input.deadline(),input.required(),List.of(),"v1","v1");
+        var changed=new DemandInput(school,input.termId(),"Different",5,input.description(),null,null,input.deadline(),input.required(),List.of(),input.academicCatalogVersion(),input.taxonomyVersion());
         var r=browser.send("POST",path,changed,org,true); assertEquals(409,r.statusCode()); assertTrue(r.body().contains("IDEMPOTENCY_KEY_REUSED"));
-        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM t5_demands WHERE enterprise_org_id=?",Integer.class,org));
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM demands WHERE enterprise_org_id=?",Integer.class,org));
     }
     @Test void rejectsCrossOrganizationAndMissingCsrf() throws Exception {
         var d=create();
         assertEquals(403,browser.send("GET",path,null,other,false).statusCode());
         assertEquals(403,browser.send("PATCH",path+"/"+d.demandId(),new UpdateDemand(1L,input),other,true).statusCode());
-        assertEquals(403,browser.send("POST",path,input,org,false).statusCode());
-        assertEquals(401,new Browser().send("GET",path,null,org,false).statusCode());
+        var csrf=browser.send("POST",path,input,org,false);
+        assertEquals(403,csrf.statusCode()); assertTrue(csrf.body().contains("CSRF_INVALID"));
+        var anonymous=new Browser().send("GET",path,null,org,false);
+        assertEquals(401,anonymous.statusCode()); assertTrue(anonymous.body().contains("SESSION_EXPIRED"));
+        assertTrue(anonymous.body().contains("fieldErrors")); assertTrue(anonymous.body().contains("requestId"));
     }
     @Test void staleVersionAndLockedDraftCannotBeEdited() throws Exception {
         var d=create();
         assertEquals(409,browser.send("PATCH",path+"/"+d.demandId(),new UpdateDemand(0L,input),org,true).statusCode());
-        jdbc.update("UPDATE t5_demands SET state='READY' WHERE id=?",d.demandId());
+        jdbc.update("UPDATE demands SET state='READY' WHERE id=?",d.demandId());
         var r=browser.send("PATCH",path+"/"+d.demandId(),new UpdateDemand(1L,input),org,true);
         assertEquals(409,r.statusCode()); assertTrue(r.body().contains("DEMAND_LOCKED"));
     }
@@ -123,10 +126,10 @@ class DemandIT {
     }
     @Test void invalidCatalogDoesNotPersistCommandOrDemand() throws Exception {
         var bad=new DemandInput(school,input.termId(),input.title(),5,input.description(),null,null,input.deadline(),
-            new RequiredCriteria(List.of("UNKNOWN"),List.of(),input.required().dateRange()),List.of(),"v1","v1");
+            new RequiredCriteria(List.of("UNKNOWN"),List.of(),input.required().dateRange()),List.of(),input.academicCatalogVersion(),input.taxonomyVersion());
         assertEquals(422,browser.send("POST",path,bad,org,true).statusCode());
-        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM t5_demands WHERE enterprise_org_id=?",Integer.class,org));
-        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM t5_demand_commands WHERE enterprise_org_id=?",Integer.class,org));
+        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM demands WHERE enterprise_org_id=?",Integer.class,org));
+        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM demand_commands WHERE enterprise_org_id=?",Integer.class,org));
     }
     @Test void unverifiedOrganizationLosesEffectiveGrantAndDemandAccess() throws Exception {
         jdbc.update("UPDATE organizations SET status='PENDING' WHERE id=?",org);
@@ -145,22 +148,22 @@ class DemandIT {
             var statuses=new ArrayList<>(List.of(first.get(30,java.util.concurrent.TimeUnit.SECONDS),next.get(30,java.util.concurrent.TimeUnit.SECONDS)));
             Collections.sort(statuses); assertEquals(List.of(200,409),statuses);
         }
-        assertEquals(2,jdbc.queryForObject("SELECT count(*) FROM t5_demand_revisions WHERE demand_id=?",Integer.class,d.demandId()));
+        assertEquals(2,jdbc.queryForObject("SELECT count(*) FROM demand_revisions WHERE demand_id=?",Integer.class,d.demandId()));
     }
     @Test void auditFailureRollsBackDraftAndCommand() throws Exception {
         jdbc.execute("ALTER TABLE audit_logs ADD CONSTRAINT demand_test_audit CHECK (actor_id <> '"+user.id+"' OR reason_code IS NULL OR reason_code <> 'DEMAND_CREATE')");
         try {
             var r=browser.send("POST",path,input,org,true); assertEquals(500,r.statusCode(),r.body());
-            assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM t5_demands WHERE enterprise_org_id=?",Integer.class,org));
-            assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM t5_demand_commands WHERE enterprise_org_id=?",Integer.class,org));
+            assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM demands WHERE enterprise_org_id=?",Integer.class,org));
+            assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM demand_commands WHERE enterprise_org_id=?",Integer.class,org));
         } finally { jdbc.execute("ALTER TABLE audit_logs DROP CHECK demand_test_audit"); }
     }
     @Test void expiredReplayDoesNotCreateAnotherDemand() throws Exception {
         create();
-        jdbc.update("UPDATE t5_demand_commands SET created_at=DATE_SUB(UTC_TIMESTAMP(), INTERVAL 25 HOUR) WHERE enterprise_org_id=?",org);
+        jdbc.update("UPDATE demand_commands SET created_at=DATE_SUB(UTC_TIMESTAMP(), INTERVAL 25 HOUR) WHERE enterprise_org_id=?",org);
         var r=browser.send("POST",path,input,org,true);
         assertEquals(409,r.statusCode()); assertTrue(r.body().contains("IDEMPOTENCY_RESPONSE_EXPIRED"));
-        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM t5_demands WHERE enterprise_org_id=?",Integer.class,org));
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM demands WHERE enterprise_org_id=?",Integer.class,org));
     }
     @Test void paginationFiltersAndSoftDeleteAreApplied() throws Exception {
         var d=create();
@@ -169,7 +172,7 @@ class DemandIT {
         assertFalse(browser.send("GET",path+"?page=1&size=1",null,org,false).body().contains(d.demandId()));
         assertFalse(browser.send("GET",path+"?state=READY",null,org,false).body().contains(d.demandId()));
         assertEquals(400,browser.send("GET",path+"?size=101",null,org,false).statusCode());
-        jdbc.update("UPDATE t5_demands SET soft_deleted_at=UTC_TIMESTAMP() WHERE id=?",d.demandId());
+        jdbc.update("UPDATE demands SET soft_deleted_at=UTC_TIMESTAMP() WHERE id=?",d.demandId());
         assertFalse(browser.send("GET",path,null,org,false).body().contains(d.demandId()));
         assertTrue(browser.send("GET",path+"?includeDeleted=true",null,org,false).body().contains(d.demandId()));
     }
@@ -183,11 +186,13 @@ class DemandIT {
         var env=builder.environment(); env.put("API_PROXY_TARGET","http://localhost:"+port);
         env.put("DEMAND_E2E_EMAIL",user.email); env.put("DEMAND_E2E_PASSWORD",password);
         env.put("DEMAND_E2E_SCHOOL",school); env.put("DEMAND_E2E_TERM",input.termId());
+        env.put("DEMAND_E2E_TAXONOMY",input.taxonomyVersion());
+        env.put("DEMAND_E2E_ACADEMIC",input.academicCatalogVersion());
         builder.redirectErrorStream(true).redirectOutput(new java.io.File("target/demand-live-e2e.log"));
         var process=builder.start();
         if(!process.waitFor(180,java.util.concurrent.TimeUnit.SECONDS)) { process.destroyForcibly(); fail("Browser timed out"); }
         assertEquals(0,process.exitValue(),"See target/demand-live-e2e.log");
-        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM t5_demands WHERE enterprise_org_id=?",Integer.class,org));
-        assertEquals(2,jdbc.queryForObject("SELECT version FROM t5_demands WHERE enterprise_org_id=?",Integer.class,org));
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM demands WHERE enterprise_org_id=?",Integer.class,org));
+        assertEquals(2,jdbc.queryForObject("SELECT version FROM demands WHERE enterprise_org_id=?",Integer.class,org));
     }
 }

@@ -32,6 +32,44 @@ async function fill(page: Page) {
 }
 const empty = { content: [], page: 0, size: 25, totalElements: 0, totalPages: 0 };
 
+test('T4 lookup selects canonical skills and version without duplicates across groups', async ({ page }) => {
+  await session(page);
+  await page.route('**/api/v1/enterprise/demands**', route => route.fulfill({ json: empty }));
+  await page.route('**/api/v1/taxonomy/skills?**', route => route.fulfill({ json: {
+    taxonomyVersion: 'skills-v7', skills: { ...empty, totalElements: 1, totalPages: 1,
+      content: [{ skillCode: 'JAVA', name: 'Java', status: 'ACTIVE', categoryCode: 'IT', parentSkillCode: null, version: 1 }] }
+  } }));
+  await open(page); await fill(page);
+  await page.getByRole('button', { name: 'Tra cứu kỹ năng', exact: true }).click();
+  await page.getByRole('button', { name: 'Chọn JAVA bắt buộc', exact: true }).click();
+  await expect(page.getByLabel('Bắt buộc: mã kỹ năng 1', { exact: true })).toHaveValue('JAVA');
+  await expect(page.getByLabel('Phiên bản danh mục kỹ năng', { exact: true })).toHaveValue('skills-v7');
+  await expect(page.getByRole('button', { name: 'Chọn JAVA ưu tiên', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'Xóa kỹ năng bắt buộc 1', exact: true }).click();
+  await page.getByRole('button', { name: 'Chọn JAVA ưu tiên', exact: true }).click();
+  await expect(page.getByLabel('Ưu tiên: mã kỹ năng 1', { exact: true })).toHaveValue('JAVA');
+  await expect(page.getByLabel('Tên nhu cầu', { exact: true })).toHaveValue('Java internship');
+});
+
+test('T4 lookup failure preserves draft and can be retried', async ({ page }) => {
+  await session(page);
+  await page.route('**/api/v1/enterprise/demands**', route => route.fulfill({ json: empty }));
+  let fail = true;
+  await page.route('**/api/v1/taxonomy/skills?**', route => fail
+    ? route.fulfill({ status: 503, json: { errorCode: 'DEPENDENCY_UNAVAILABLE' } })
+    : route.fulfill({ json: { taxonomyVersion: 'skills-v2', skills: empty } }));
+  await open(page); await fill(page);
+  await page.getByRole('button', { name: 'Tra cứu kỹ năng', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Thử tải kỹ năng lại' })).toBeVisible();
+  await expect(page.getByLabel('Tên nhu cầu', { exact: true })).toHaveValue('Java internship');
+  await expect(page.getByLabel('Phiên bản danh mục kỹ năng', { exact: true })).toHaveValue('v1');
+  fail = false;
+  await page.getByRole('button', { name: 'Thử tải kỹ năng lại' }).click();
+  await expect(page.getByText('Danh mục kỹ năng chưa có dữ liệu. Cần bổ sung kỹ năng trước khi chọn.')).toBeVisible();
+  await page.getByRole('button', { name: 'Dùng phiên bản kỹ năng này' }).click();
+  await expect(page.getByLabel('Phiên bản danh mục kỹ năng', { exact: true })).toHaveValue('skills-v2');
+});
+
 test('expired session removes editor without persisting draft in browser storage', async ({ page }) => {
   await session(page);
   await page.route('**/api/v1/enterprise/demands**', route => route.request().method() === 'GET'
@@ -112,6 +150,16 @@ test('contract rejection displays explanation and allows preparing form', async 
   await open(page);
   await expect(page.getByText(/Chức năng nhu cầu chưa được bật trong môi trường này/)).toBeVisible();
   await fill(page); await expect(page.getByLabel('Tên nhu cầu')).toHaveValue('Java internship');
+});
+
+test('deployment disabled is a known rejection, so form stays editable', async ({ page }) => {
+  await session(page);
+  await page.route('**/api/v1/enterprise/demands**', route => route.fulfill({ status: 503, json: { errorCode: 'FEATURE_DISABLED' } }));
+  await open(page); await fill(page);
+  await page.getByRole('button', { name: 'Lưu bản nháp', exact: true }).click();
+  await expect(page.getByLabel('Tên nhu cầu')).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Thử lưu lại', exact: true })).toHaveCount(0);
+  await expect(page.getByText(/Chức năng nhu cầu chưa được bật trong môi trường này/).first()).toBeVisible();
 });
 
 test('create then edit preserves scope and sends expected version', async ({ page }) => {

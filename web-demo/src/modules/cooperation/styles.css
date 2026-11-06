@@ -20,9 +20,17 @@
 .cooperation-skills > button { margin-top: 18px; }
 .cooperation-skill-row { display: grid; grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)) auto; align-items: end; gap: 12px; }
 .cooperation-actions { margin-top: 22px; }
+.cooperation-summary { margin: 12px 0; }
+.cooperation-summary summary { cursor: pointer; color: var(--brand-dark); font-weight: 600; }
+.cooperation-summary dl { display: grid; grid-template-columns: minmax(110px, 1fr) minmax(0, 3fr); gap: 10px 16px; }
+.cooperation-summary dt { font-weight: 600; }
+.cooperation-summary dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.cooperation-catalog input { width: 100%; min-width: 0; box-sizing: border-box; padding: 10px; font: inherit; border: 1px solid var(--line); border-radius: 8px; }
+.cooperation-catalog .button-row { flex-wrap: wrap; }
 .cooperation-field-errors { color: #9e384d; font-size: var(--text-sm); overflow-wrap: anywhere; }
 .cooperation-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (max-width: 650px) {
+  .cooperation-summary dl { grid-template-columns: minmax(0, 1fr); }
   .cooperation-form-grid, .cooperation-skill-row { grid-template-columns: minmax(0, 1fr); }
   .cooperation-skill-row { padding-bottom: 18px; border-bottom: 1px solid var(--line); }
   .cooperation-skill-row > button { justify-self: start; }

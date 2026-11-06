@@ -26,7 +26,17 @@ public class AuditService {
     public void securityDenied(String actor,String reasonCode) {
         store(actor,"ACCESS_DENIED","http_request",null,"DENIED",null,reasonCode);
     }
-    private void store(String actor,String action,String resourceType,String resourceId,
+    /** Typed allowlist for Demand; callers cannot inject arbitrary metadata or payloads. */
+    @Transactional
+    public void demandChanged(String actor,String demandId,String org,String operation,long demandVersion,long criteriaVersion) {
+        if(!java.util.Set.of("CREATE","UPDATE","REOPEN","SOFT_DELETE","RESTORE").contains(operation)
+                || demandVersion<1 || criteriaVersion<1 || criteriaVersion>demandVersion
+                || demandVersion>9_007_199_254_740_991L) throw new IllegalArgumentException("Invalid demand audit metadata");
+        var event=store(actor,"DEMAND_CHANGED","demand",demandId,"SUCCESS",org,"DEMAND_"+operation);
+        event.metadataJson=new tools.jackson.databind.ObjectMapper().writeValueAsString(java.util.Map.of(
+            "operation",operation,"demandVersion",demandVersion,"criteriaVersion",criteriaVersion));
+    }
+    private AuditLog store(String actor,String action,String resourceType,String resourceId,
                        String result,String organizationId,String reasonCode) {
         AuditAction.valueOf(action);
         if(resourceType==null || !resourceType.matches("[a-z][a-z0-9_]{0,79}")
@@ -45,7 +55,7 @@ public class AuditService {
             if(id instanceof String s) event.requestId=s;
         }
         if(event.requestId==null) event.requestId=java.util.UUID.randomUUID().toString();
-        repository.save(event);
+        return repository.save(event);
     }
     private void validateId(String id) {
         if(id!=null && !id.matches("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"))

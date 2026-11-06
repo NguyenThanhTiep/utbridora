@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
-/** Candidate contract types. Production use is disabled until owner/consumer signoff. */
+/** Contract v1.0 wire types; runtime readiness and source integration are separate. */
 public final class DemandModels {
     private DemandModels() {}
     public record DateRange(LocalDate startDate, LocalDate endDate) {}
@@ -23,7 +23,12 @@ public final class DemandModels {
             String termId, int quantity, long demandVersion, long criteriaVersion, String validationState,
             RequiredCriteria required, List<SkillCriterion> preferred, String criteriaHash,
             String academicCatalogVersion, String taxonomyVersion, String cooperationId,
-            String cooperationState, Instant capturedAt) {}
+            String cooperationState, Instant capturedAt) {
+        public DemandCriteriaSnapshot {
+            required = new RequiredCriteria(List.copyOf(required.majorCodes()), List.copyOf(required.skills()), required.dateRange());
+            preferred = List.copyOf(preferred);
+        }
+    }
     public record Page<T>(List<T> content, int page, int size, long totalElements, int totalPages) {}
     public record FieldError(String field, String code, String message) {}
 }

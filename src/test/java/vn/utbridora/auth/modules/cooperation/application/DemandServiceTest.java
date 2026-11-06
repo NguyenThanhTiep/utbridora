@@ -56,7 +56,7 @@ class DemandServiceTest {
     }
     @Test void unsignedContractBlocksEvenAuthorizedUser() {
         service=new DemandService(repository,references,policy,users,audit,false);
-        assertEquals("CONTRACT_PENDING_SIGNOFF",assertThrows(DemandFailure.class,()->service.create(auth,org,key,input)).code());
+        assertEquals("FEATURE_DISABLED",assertThrows(DemandFailure.class,()->service.create(auth,org,key,input)).code());
         verifyNoInteractions(repository,references);
     }
     @Test void createsDraftAndRevisionWithEnterpriseScope() {

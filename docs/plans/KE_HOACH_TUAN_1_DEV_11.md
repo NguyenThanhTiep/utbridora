@@ -2,9 +2,11 @@
 
 Ngày lập: **04/11/2026**. Trạng thái: **kế hoạch đề xuất để thực hiện**, chưa phải báo cáo hoàn thành.
 
-**Cập nhật 05/11/2026:** đã triển khai bản code candidate cho Demand DRAFT, criteria, version/snapshot, audit/history, idempotency và FE thô. Người dùng chọn nhập đủ schema khi lưu nháp; signoff liên team chưa xác nhận nên runtime mặc định giữ gate chờ. Xem [bàn giao implementation](../guides/T5_DEMAND_HANDOFF.md) và [kết quả kiểm thử](../testing/T5_DEMAND_TEST_REPORT.md). Các checkbox nghiệm thu dưới đây vẫn cần QA05/Leader đánh giá.
+**Phạm vi người dùng xác nhận 06/11/2026:** cùng một người đảm nhiệm Dev11 **T5-02** và Dev12 **T5-03** tuần 1. Phân chia BE/FE là cách tổ chức code, không phải hai người cần bàn giao qua lại. Theo dõi phần đã làm và phụ thuộc ngoài phạm vi tại [bàn giao chung](../guides/T5_DEMAND_HANDOFF.md). Không nhận thêm các nhiệm vụ tuần 2 hoặc module T1/T2/T4/Dev10.
 
-**Điều chỉnh sau triển khai:** đã xóa các test Demand mới theo yêu cầu người dùng; giữ test core. Báo cáo kiểm thử là bằng chứng lịch sử trước khi xóa, checklist dưới đây vẫn là kế hoạch tham chiếu.
+**Cập nhật 06/11/2026:** đã có Demand DRAFT, criteria, version/snapshot, audit/history, idempotency và FE thô. Contract v1.0 đã được người dùng chốt theo [review T1-01](../contracts/T1_01_TECHNICAL_REVIEW.md); không chờ ký lại. Cờ `contract-approved` giữ tên để tương thích cấu hình nhưng là công tắc triển khai. Đã ghép nguồn kỹ năng T4 và bổ sung nguồn kỳ từ nhánh Dev10; vẫn thiếu provider danh mục ngành chính thức T2 và bằng chứng consumer BC31 chung. Xem [cấu trúc và ranh giới module](../../web-demo/src/modules/cooperation/README.md), [kết quả kiểm thử](../testing/T5_DEMAND_TEST_REPORT.md). Chưa đánh dấu hoàn thành/nghiệm thu toàn bộ tuần 1.
+
+**Kiểm thử:** đã khôi phục và bổ sung test theo yêu cầu tiếp theo của người dùng. Báo cáo ghi riêng từng lượt chạy và phần dùng fixture. Các mục kế hoạch phía dưới mô tả baseline ngày lập; các nhận định Candidate/chưa có source cần đọc cùng cập nhật trên. Checkbox nghiệm thu vẫn do QA05/Leader đánh giá.
 
 **Mục tiêu cuối tuần:** Dev 11 bàn giao phần backend tạo/chỉnh sửa/đọc nhu cầu thực tập ở trạng thái DRAFT, bộ tiêu chí REQUIRED/PREFERRED hợp lệ và snapshot tiêu chí bất biến có phiên bản để T4 sử dụng. Dev 12 dùng API này cho form nhu cầu; QA05 kiểm thử và Leader duyệt kết quả.
 

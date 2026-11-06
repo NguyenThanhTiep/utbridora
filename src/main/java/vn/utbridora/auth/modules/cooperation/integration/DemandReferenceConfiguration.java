@@ -10,6 +10,8 @@ public class DemandReferenceConfiguration {
     @Bean
     @ConditionalOnMissingBean(DemandReferencePort.class)
     DemandReferencePort unavailableDemandReferences() {
-        return (org,input) -> { throw new DemandFailure(503,"DEPENDENCY_UNAVAILABLE","Chưa có bộ xác minh trường, kỳ và danh mục đã được tích hợp."); };
+        return (org,input) -> {
+            throw new DemandFailure(503, "DEPENDENCY_UNAVAILABLE", "Chưa tích hợp danh mục kỹ năng.");
+        };
     }
 }
