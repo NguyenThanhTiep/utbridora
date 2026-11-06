@@ -2,9 +2,12 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'rea
 import { api, send, login, logout, whoAmI, ApiError, type Me, type Grant } from './api';
 import { Brand, EmptyState, Field, Icon, Notice, useAction, roleNames, permissionNames } from './components';
 import { UserManagement, OrganizationManagement, AuditViewer } from './management';
+import { InternshipWorkspace } from './modules/internship/pages/InternshipWorkspace';
+import { canDiscoverWorkspace } from './modules/internship/access';
 
 const screens = [
   { id: 'account', title: 'Tài khoản của tôi', description: 'Thông tin cá nhân, vai trò và bảo mật tài khoản.', icon: 'grid', permission: null },
+  { id: 'internship', title: 'Không gian thực tập', description: 'Theo dõi đợt và nhóm thực tập trong phạm vi HR/Mentor được phân công.', icon: 'briefcase', permission: null },
   { id: 'users', title: 'Tài khoản & phân quyền', description: 'Quản lý thành viên và quyền truy cập trong hệ thống.', icon: 'users', permission: 'account:admin:status' },
   { id: 'organizations', title: 'Tổ chức & lời mời', description: 'Kết nối các tổ chức và mời thành viên tham gia.', icon: 'building', permission: 'membership:admin:write' },
   { id: 'audit', title: 'Nhật ký hệ thống', description: 'Theo dõi và tra cứu các hoạt động quan trọng.', icon: 'activity', permission: 'audit:global:read' }
@@ -31,7 +34,8 @@ export default function App() {
   const menuButton = useRef<HTMLButtonElement>(null);
   const action = useAction();
   const permissions = new Set(grants.filter(grant => grant.role === 'ADMIN' && grant.organizationId === null).flatMap(grant => grant.permissions));
-  const menus = screens.filter(item => item.permission === null || permissions.has(item.permission));
+  const menus = screens.filter(item => item.id === 'internship' ? !!me && canDiscoverWorkspace(me)
+    : item.permission === null || permissions.has(item.permission));
   const current = screens.find(item => item.id === screen) || screens[0];
 
   useEffect(() => {
@@ -132,10 +136,10 @@ export default function App() {
         <button className="btn-icon sidebar-close" aria-label="Đóng menu điều hướng" onClick={() => setMobileOpen(false)}><Icon name="close" /></button></div>
       <nav aria-label="Điều hướng chính">
         <p className="nav-group-label">KHÔNG GIAN CỦA BẠN</p>
-        {menus.filter(item => item.id === 'account').map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
+        {menus.filter(item => ['account', 'internship'].includes(item.id)).map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
           aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
-        {menus.some(item => item.id !== 'account') && <p className="nav-group-label nav-group-admin">QUẢN TRỊ HỆ THỐNG</p>}
-        {menus.filter(item => item.id !== 'account').map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
+        {menus.some(item => !['account', 'internship'].includes(item.id)) && <p className="nav-group-label nav-group-admin">QUẢN TRỊ HỆ THỐNG</p>}
+        {menus.filter(item => !['account', 'internship'].includes(item.id)).map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
           aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
       </nav>
       <div className="sidebar-bottom">
@@ -154,7 +158,7 @@ export default function App() {
           <button className="profile-shortcut" aria-label="Mở tài khoản của tôi" onClick={() => navigate('account')}><span className="avatar avatar-small">{initials(me.displayName)}</span><span>{me.displayName}</span><Icon name="chevron-down" size={14} /></button></div>
       </header>
       <main className="content" id="main-content">
-        <div className="page-header"><div><p className="section-kicker">{screen === 'account' ? 'KHÔNG GIAN CÁ NHÂN' : 'QUẢN TRỊ NỀN TẢNG'}</p>
+        <div className="page-header"><div><p className="section-kicker">{screen === 'account' ? 'KHÔNG GIAN CÁ NHÂN' : screen === 'internship' ? 'QUẢN LÝ THỰC TẬP' : 'QUẢN TRỊ NỀN TẢNG'}</p>
           <h1 ref={heading} tabIndex={-1}>{current.title}</h1><p className="page-description">{current.description}</p></div>
           <span className="workspace-label"><span className="live-dot" />UT.Bridora</span></div>
         <Notice message={action.message} tone={action.error ? 'error' : 'info'} />
@@ -162,6 +166,7 @@ export default function App() {
           : screen === 'users' ? <UserManagement me={me} permissions={permissions} />
           : screen === 'organizations' ? <OrganizationManagement permissions={permissions} />
           : screen === 'audit' ? <AuditViewer />
+          : screen === 'internship' ? <InternshipWorkspace key={me.userId} me={me} grants={grants} />
           : <AccountOverview me={me} grants={grants} context={context} setContext={setContext}
             signedOut={() => { generation.current += 1; setMe(null); setGrants([]); setAuthScreen('login'); setSessionMessage('Đổi mật khẩu thành công. Vui lòng đăng nhập lại.'); }} />}
         <footer className="app-footer"><span>© {new Date().getFullYear()} UT.Bridora</span><span>Kết nối giáo dục với cơ hội nghề nghiệp.</span></footer>

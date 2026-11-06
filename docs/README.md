@@ -50,6 +50,7 @@ docs/
 - [Phát triển backend, frontend và migration cho các team và AI](guides/HUONG_DAN_PHAT_TRIEN_BE_FE_CHO_CAC_TEAM.md).
 - [Chạy local, chuẩn bị staging và backup](guides/DEPLOYMENT_GUIDE.md).
 - [Làm việc với GitHub: nhánh, commit, pull request, review và xử lý xung đột](guides/HUONG_DAN_LAM_VIEC_VOI_GITHUB.md).
+- [T3-03: khung UI HR/Mentor, nhóm thực tập và điểm chờ tích hợp](guides/T3_03_HR_MENTOR_WORKSPACE.md).
 
 ## Trạng thái và kiểm thử
 
@@ -57,6 +58,7 @@ docs/
 - [Checklist bàn giao](status/HANDOFF_CHECKLIST.md).
 - [Lịch sử nâng cấp giao diện và kiểm chứng đã ghi nhận](archive/UI_UPGRADE.md).
 - [Báo cáo kiểm thử](testing/TEST_REPORT.md).
+- [T3-03: kiểm thử DEV và daily report ngày 05/11/2026](testing/T3_03_TEST_REPORT.md).
 - Evidence gốc: [backend và tích hợp](testing/evidence/TEST_EVIDENCE.json), [giao diện](testing/evidence/UI_TEST_EVIDENCE.json), [trước push](testing/evidence/PREPUSH_TEST_EVIDENCE.json).
 
 Evidence JSON được giữ nguyên nội dung. Đường dẫn source/log hoặc checksum bên trong phản ánh snapshot lúc chạy, không phải kết quả được chạy lại khi tổ chức tài liệu.
