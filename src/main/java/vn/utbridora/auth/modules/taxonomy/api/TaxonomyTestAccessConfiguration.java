@@ -31,7 +31,7 @@ public class TaxonomyTestAccessConfiguration {
     SecurityFilterChain taxonomyTestAccessFilterChain(HttpSecurity http, UserRepository users,
             SecurityContextRepository contexts, CsrfTokenRepository csrfTokens, AuditService audit) throws Exception {
         http
-            .securityMatcher("/api/v1/taxonomy/**")
+            .securityMatcher("/api/v1/taxonomy/**", "/api/taxonomy/**")
             .csrf(csrf -> csrf.csrfTokenRepository(csrfTokens))
             .securityContext(context -> context.securityContextRepository(contexts))
             .requestCache(cache -> cache.disable())
@@ -40,8 +40,7 @@ public class TaxonomyTestAccessConfiguration {
             .logout(logout -> logout.disable())
             .authorizeHttpRequests(auth -> auth
                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-                // DEV08: quyền ảo taxonomy:skills:read (đọc danh mục kỹ năng) chỉ có trong cấu hình kiểm thử này; cần phiên hợp lệ.
-                // DEV08: quyền ảo taxonomy:skills:write (sửa danh mục kỹ năng) tạm giới hạn ở ADMIN (quản trị viên) tại controller.
+                // Filter validates the session; write access is checked against the T1 permission catalog.
                 .anyRequest().authenticated())
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint((request, response, failure) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED))

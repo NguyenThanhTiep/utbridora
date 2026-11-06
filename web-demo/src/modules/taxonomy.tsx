@@ -80,7 +80,7 @@ export function SkillTaxonomy() {
 
   async function refresh() {
     const [categoryItems, skillData] = await Promise.all([
-      loadAllPages(page => api<TaxonomyPage<TaxonomyCategory>>(`/taxonomy/categories?page=${page}&size=100`)),
+      loadAllPages(page => api<TaxonomyPage<TaxonomyCategory>>(`/taxonomy/categories/page?page=${page}&size=100`)),
       (async () => {
         const first = await api<{ taxonomyVersion: string; skills: TaxonomyPage<TaxonomySkill> }>(
           '/taxonomy/skills?includeDeprecated=true&page=0&size=100');

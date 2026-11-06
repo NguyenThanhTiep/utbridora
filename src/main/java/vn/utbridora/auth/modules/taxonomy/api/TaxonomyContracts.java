@@ -22,8 +22,16 @@ public final class TaxonomyContracts {
             String parentSkillCode, String status, long version) {
     }
 
-    public record CategoryDto(String categoryCode, String name, String parentCategoryCode,
+    public record CategoryDto(String id, String categoryCode, String name, String parentCategoryCode,
             String status, long version) {
+    }
+
+    public record CategoryTreeNode(String id, String categoryCode, String name, String status,
+            long version, List<CategoryTreeNode> children) {
+    }
+
+    public record UpdateCategoryStatus(@Min(1) long expectedVersion,
+            @Pattern(regexp = "ACTIVE|DEPRECATED") String status) {
     }
 
     public record SkillAliasDto(String aliasId, String skillCode, String alias, long version) {
@@ -33,7 +41,7 @@ public final class TaxonomyContracts {
     }
 
     public record SkillResolution(String input, String normalizedInput, String status,
-            String skillCode) {
+            String skillCode, String skillId) {
     }
 
     public record ResolveSkillsRequest(@NotEmpty @Size(max = 100) List<@NotBlank @Size(max = 128) String> values) {
@@ -46,7 +54,7 @@ public final class TaxonomyContracts {
     }
 
     public record CreateCategory(@NotBlank @Pattern(regexp = "[A-Z][A-Z0-9_]{0,63}") String categoryCode,
-            @NotBlank @Size(max = 128) String name, String parentCategoryCode) {
+            @NotBlank @Size(max = 128) String name, String parentCategoryCode, String parentId) {
     }
 
     public record UpdateCategory(@Min(1) long expectedVersion, @NotBlank @Size(max = 128) String name,

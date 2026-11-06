@@ -48,6 +48,32 @@ public class SkillTaxonomyService implements SkillTaxonomyPort {
                 result.getNumber(), result.getSize(), result.getTotalElements(), result.getTotalPages());
     }
 
+    @Transactional(readOnly = true)
+    public List<CategoryTreeNode> categoryTree(AppPrincipal actor) {
+        requireActor(actor);
+        List<SkillCategory> all = categories.findAllByOrderByCategoryCodeAsc();
+        Map<String, List<SkillCategory>> children = new HashMap<>();
+        for (SkillCategory item : all) {
+            String parentId = item.parentCategory == null ? null : item.parentCategory.id;
+            children.computeIfAbsent(parentId, ignored -> new ArrayList<>()).add(item);
+        }
+        return children.getOrDefault(null, List.of()).stream()
+                .map(item -> treeNode(item, children)).toList();
+    }
+
+    private CategoryTreeNode treeNode(SkillCategory item, Map<String, List<SkillCategory>> children) {
+        return new CategoryTreeNode(item.id, item.categoryCode, item.name, item.status.name(), item.version,
+                children.getOrDefault(item.id, List.of()).stream()
+                        .map(child -> treeNode(child, children)).toList());
+    }
+
+    @Transactional
+    public CategoryDto updateCategoryStatus(AppPrincipal actor, String code, UpdateCategoryStatus request) {
+        SkillCategory current = category(code);
+        return updateCategory(actor, code, new UpdateCategory(request.expectedVersion(), current.name,
+                request.status()));
+    }
+
     @Override
     @Transactional(readOnly = true)
     public SkillCatalogPage list(AppPrincipal actor, String query, boolean includeDeprecated, int page, int size) {
@@ -76,8 +102,8 @@ public class SkillTaxonomyService implements SkillTaxonomyPort {
             Skill skill = skills.findByNormalizedName(key).orElseGet(() -> aliases.findByNormalizedAlias(key)
                     .map(alias -> alias.skill).orElse(null));
             if (skill == null || skill.status != SkillStatus.ACTIVE)
-                return new SkillResolution(value, key, "UNKNOWN", null);
-            return new SkillResolution(value, key, "RESOLVED", skill.skillCode);
+                return new SkillResolution(value, key, "UNKNOWN", null, null);
+            return new SkillResolution(value, key, "RESOLVED", skill.skillCode, skill.id);
         }).toList();
         return new ResolveSkillsResponse(version(), resolved);
     }
@@ -98,7 +124,13 @@ public class SkillTaxonomyService implements SkillTaxonomyPort {
         category.name = name;
         category.normalizedName = nameKey;
         category.status = SkillStatus.ACTIVE;
-        if (request.parentCategoryCode() != null && !request.parentCategoryCode().isBlank())
+        if (request.parentId() != null && !request.parentId().isBlank()
+                && request.parentCategoryCode() != null && !request.parentCategoryCode().isBlank())
+            throw new IllegalArgumentException("Provide parentId or parentCategoryCode, not both");
+        if (request.parentId() != null && !request.parentId().isBlank())
+            category.parentCategory = categories.findById(request.parentId())
+                    .orElseThrow(() -> notFound("Parent category not found"));
+        else if (request.parentCategoryCode() != null && !request.parentCategoryCode().isBlank())
             category.parentCategory = category(request.parentCategoryCode());
         categories.saveAndFlush(category);
         bump(state);
@@ -336,7 +368,7 @@ public class SkillTaxonomyService implements SkillTaxonomyPort {
     }
 
     private CategoryDto categoryDto(SkillCategory category) {
-        return new CategoryDto(category.categoryCode, category.name,
+        return new CategoryDto(category.id, category.categoryCode, category.name,
                 category.parentCategory == null ? null : category.parentCategory.categoryCode, category.status.name(),
                 category.version);
     }

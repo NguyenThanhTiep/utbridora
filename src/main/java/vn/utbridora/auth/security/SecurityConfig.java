@@ -50,6 +50,7 @@ public class SecurityConfig {
                .requestMatchers(HttpMethod.GET,"/actuator/health", "/actuator/health/liveness", "/actuator/health/readiness").permitAll()
                .requestMatchers(HttpMethod.POST,"/api/v1/auth/login","/api/v1/auth/password/forgot",
                        "/api/v1/auth/password/reset","/api/v1/auth/invitations/accept").permitAll()
+               .requestMatchers("/api/v1/taxonomy/**", "/api/taxonomy/**").authenticated()
                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                .requestMatchers("/api/v1/auth/**", "/api/v1/demo/**").authenticated()
                .anyRequest().denyAll())

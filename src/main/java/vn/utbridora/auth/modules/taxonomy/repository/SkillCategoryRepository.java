@@ -10,6 +10,8 @@ import vn.utbridora.auth.modules.taxonomy.domain.SkillCategory;
 public interface SkillCategoryRepository extends JpaRepository<SkillCategory,String> {
     @EntityGraph(attributePaths="parentCategory")
     Page<SkillCategory> findAllByOrderByCreatedAtDescIdAsc(Pageable pageable);
+    @EntityGraph(attributePaths="parentCategory")
+    java.util.List<SkillCategory> findAllByOrderByCategoryCodeAsc();
     java.util.Optional<SkillCategory> findByCategoryCode(String categoryCode);
     boolean existsByNormalizedName(String normalizedName);
     boolean existsByNormalizedNameAndIdNot(String normalizedName,String id);
