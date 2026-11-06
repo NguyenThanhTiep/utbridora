@@ -1,0 +1,104 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Segoe UI
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #EFF6FF
+  BorderColor #2563EB
+  DiamondBackgroundColor #FFFBEB
+  DiamondBorderColor #D97706
+}
+title UT.Bridora — Lời mời và thiết lập tài khoản
+
+|Quản trị viên|
+start
+:Nhập email, role và organization;
+|Frontend|
+:Gửi POST /api/v1/admin/invitations\ncùng cookie và CSRF;
+|Backend|
+if (Phiên hợp lệ?) then (Có)
+else (Không)
+  :Trả 401;
+  stop
+endif
+if (CSRF + ADMIN global +\nmembership:admin:write hợp lệ?) then (Có)
+else (Không)
+  :Trả 403;
+  stop
+endif
+if (Email chưa có tài khoản và\nrole / organization hợp lệ?) then (Có)
+else (Không)
+  :Từ chối; tài khoản đã có cần\nluồng cấp membership;
+  stop
+endif
+note right
+  ADMIN: organization null.
+  ENTERPRISE: tổ chức ENTERPRISE.
+  STUDENT / SCHOOL_STAFF: tổ chức UNIVERSITY.
+  Bước gửi lời mời không bắt buộc tổ chức VERIFIED.
+end note
+|Cơ sở dữ liệu|
+:Bắt đầu transaction;\nlưu hash token INVITATION, hạn 48 giờ;
+|Dịch vụ email|
+:Gửi liên kết chấp nhận lời mời;
+|Backend|
+:Ghi INVITATION_CREATED / SUCCESS;
+if (Gửi email, ghi audit và commit thành công?) then (Có)
+else (Không)
+  |Cơ sở dữ liệu|
+  :Rollback transaction;
+  |Backend|
+  :Trả lỗi; không báo lời mời thành công;
+  stop
+endif
+|Frontend|
+:Thông báo đã gửi lời mời;
+|Người nhận lời mời|
+:Mở liên kết từ email;\nnhập tên và mật khẩu;
+|Frontend|
+:Lấy CSRF; POST /api/v1/auth/invitations/accept;
+|Backend|
+if (CSRF hợp lệ?) then (Có)
+else (Không)
+  :Trả 403;
+  stop
+endif
+if (Dữ liệu và mật khẩu hợp lệ?) then (Có)
+else (Không)
+  :Trả 400;
+  stop
+endif
+|Cơ sở dữ liệu|
+:Khóa token theo hash và purpose;
+|Backend|
+if (Token tồn tại, chưa dùng, chưa hết hạn\nvà email chưa có tài khoản?) then (Có)
+else (Không)
+  :Từ chối; rollback nếu có thay đổi;
+  stop
+endif
+|Cơ sở dữ liệu|
+:Trong cùng transaction:\ntạo user ACTIVE với mật khẩu BCrypt;\ntạo membership; đánh dấu token đã dùng;
+|Backend|
+:Ghi ACCOUNT_ACTIVATED / SUCCESS;
+if (Commit thành công?) then (Có)
+  |Frontend|
+  :Thông báo thiết lập tài khoản thành công;
+  |Người nhận lời mời|
+  :Đăng nhập bằng tài khoản mới;
+  stop
+else (Không)
+  |Cơ sở dữ liệu|
+  :Rollback user, membership, token và audit;
+  |Frontend|
+  :Hiển thị lỗi; không báo kích hoạt thành công;
+  stop
+endif
+
+legend bottom
+  Hiện hành: tài khoản mới được tạo ACTIVE khi chấp nhận lời mời; không tự đăng nhập.
+  Kích hoạt riêng tài khoản PENDING_ACTIVATION import sẵn: chưa triển khai.
+  SMTP đồng bộ nằm trước commit: email có thể đã gửi dù transaction sau đó rollback.
+  Outbox/retry là công việc còn lại; không xem gửi email là transaction nguyên tử với database.
+endlegend
+@enduml

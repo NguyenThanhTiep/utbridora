@@ -1,0 +1,56 @@
+name: utbridora-local
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: utbridora
+      MYSQL_USER: bridora
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Run run-local.cmd first}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Run run-local.cmd first}
+      TZ: UTC
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci", "--default-time-zone=+00:00"]
+    ports: ["127.0.0.1:3307:3306"] # Workbench trên máy kết nối MySQL Docker qua cổng 3307.
+    volumes: ["local_mysql:/var/lib/mysql"]
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=$$MYSQL_PASSWORD mysql -h 127.0.0.1 -u$$MYSQL_USER -D$$MYSQL_DATABASE -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  mailpit:
+    image: axllent/mailpit:latest
+    ports: ["127.0.0.1:${MAILPIT_HTTP_PORT:-8026}:8025"]
+  backend:
+    build: .
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/utbridora?connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true
+      DB_USER: bridora
+      DB_PASSWORD: ${DB_PASSWORD:?Run run-local.cmd first}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:?Set local admin email}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:?Set local admin password}
+      APP_PUBLIC_URL: http://localhost:${LOCAL_HTTP_PORT:-8088}
+      COOKIE_SECURE: 'false' # HTTP loopback only; staging still requires Secure=true.
+      ALLOW_DEMO_VERIFICATION: 'false'
+      MAIL_HOST: mailpit
+      MAIL_PORT: '1025'
+      MAIL_FROM: no-reply@utbridora.local
+      MAIL_AUTH: 'false'
+      MAIL_STARTTLS: 'false'
+      DEBUG: 'false'
+      TZ: UTC
+    depends_on:
+      mysql: {condition: service_healthy}
+      mailpit: {condition: service_started}
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    logging: {driver: json-file, options: {max-size: 10m, max-file: '3'}}
+  frontend:
+    build: ./web-demo
+    ports: ["127.0.0.1:${LOCAL_HTTP_PORT:-8088}:8080"]
+    depends_on:
+      backend: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    logging: {driver: json-file, options: {max-size: 10m, max-file: '3'}}
+volumes:
+  local_mysql:

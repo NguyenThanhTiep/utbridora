@@ -1,0 +1,106 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Segoe UI
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #EFF6FF
+  BorderColor #2563EB
+  DiamondBackgroundColor #FFFBEB
+  DiamondBorderColor #D97706
+}
+title UT.Bridora — Truy cập tài nguyên và hồ sơ sinh viên\nLuồng hợp đồng tích hợp T2–T5
+
+|Người dùng|
+start
+:Yêu cầu truy cập tài nguyên;
+|Backend (Core + module tích hợp)|
+:Nhận request qua route được đăng ký chính xác;
+note right
+  Guard nền tảng đã có.
+  Route, bản ghi, owner/assignment, consent và projection
+  nghiệp vụ thật cần các module T2–T5 triển khai.
+  Giữ anyRequest().denyAll() ở SecurityConfig.
+end note
+|Backend (Core + module tích hợp)|
+if (Có session hợp lệ; account ACTIVE;\nsecurity_version hiện hành?) then (Có)
+else (Không)
+  :Trả 401; yêu cầu đăng nhập lại;
+  stop
+endif
+|Backend (Core + module tích hợp)|
+:Tải tài nguyên trong phạm vi truy vấn phù hợp;\nlấy owner và organization từ bản ghi thực tế;
+if (Là hồ sơ sinh viên?) then (Có)
+  :Lấy studentUserId từ hồ sơ thực tế;\nkhông nhầm users.id với profile.id;
+  |Backend (Core + module tích hợp)|
+  if (isSelf với studentUserId?) then (Có)
+    :Cho phép theo nhánh chủ sở hữu;
+    note right
+      Chủ sở hữu được xét trước.
+      Nhánh này không bắt buộc membership,
+      organization VERIFIED hoặc quyết định chia sẻ.
+    end note
+  else (Không)
+    if (ENTERPRISE hoặc SCHOOL_STAFF có membership active,\npermission và org VERIFIED đúng loại/phạm vi?) then (Có)
+    else (Không)
+      :Trả 403; không có ADMIN bypass;
+      stop
+    endif
+    |Backend (Core + module tích hợp)|
+    :Đối chiếu organization URL/body với\nphạm vi và bản ghi liên quan;
+    if (Phạm vi thực tế phù hợp?) then (Có)
+    else (Không)
+      :Từ chối truy cập chéo phạm vi;
+      stop
+    endif
+    |Backend (Core + module tích hợp)|
+    :ProfileVisibilityPort kiểm tra\nchia sẻ enterprise hoặc ủy quyền trường;
+    note right
+      Adapter mặc định trả false.
+      Quyết định thật cần consent, thời hạn, mục đích
+      và phạm vi dữ liệu do T2/T5 xác nhận.
+    end note
+    if (Có quyết định chia sẻ / ủy quyền hợp lệ?) then (Có)
+    else (Không hoặc chưa có adapter)
+      |Backend (Core + module tích hợp)|
+      :Trả 403 theo deny-by-default;
+      stop
+    endif
+  endif
+else (Tài nguyên theo tổ chức khác)
+  |Backend (Core + module tích hợp)|
+  :hasOrganization hoặc hasOrganizationForRequest;
+  if (Role/permission, membership active,\norg VERIFIED, đúng loại và scope hợp lệ?) then (Có)
+  else (Không)
+    :Trả 403; ADMIN không tự có quyền nghiệp vụ;
+    stop
+  endif
+  |Backend (Core + module tích hợp)|
+  :Đối chiếu org URL/body với org của bản ghi;\nkiểm tra owner, assignment và trạng thái nghiệp vụ;
+  if (Thỏa điều kiện trên bản ghi thực tế?) then (Có)
+  else (Không)
+    :Từ chối truy cập;
+    stop
+  endif
+endif
+|Backend (Core + module tích hợp)|
+:Áp dụng quy tắc nghiệp vụ còn lại;\ntạo DTO / projection chỉ gồm field được phép;
+:Ghi audit truy cập nhạy cảm\nbằng AuditService theo chính sách đã thống nhất;
+if (Xử lý dữ liệu và audit thành công?) then (Có)
+  :Trả dữ liệu được phép;
+  |Người dùng|
+  :Xem dữ liệu;
+  stop
+else (Không)
+  |Backend (Core + module tích hợp)|
+  :Không trả dữ liệu nhạy cảm; xử lý lỗi;
+  stop
+endif
+
+legend bottom
+  Sơ đồ tích hợp dự kiến, không phải bằng chứng endpoint nghiệp vụ T2–T5 đã hoạt động.
+  Boolean cho phép của ProfileVisibilityPort không thay thế việc lọc field.
+  Nhiều membership không cho phép chuyển tài nguyên sang organization khác.
+  Module lựa chọn 403/404 phù hợp để hạn chế lộ sự tồn tại tài nguyên; chưa có record API chung.
+endlegend
+@enduml

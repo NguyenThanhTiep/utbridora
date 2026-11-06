@@ -1,0 +1,45 @@
+name: Core platform verification
+on: [push, pull_request]
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: scripts/contracts/requirements.txt
+      - run: python -m pip install -r scripts/contracts/requirements.txt
+      - run: python scripts/contracts/build_contract_bundle.py --check
+      - run: python scripts/contracts/verify_contracts.py --output target/contract-verification.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: contract-results
+          path: target/contract-verification.json
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '21', cache: maven}
+      - uses: actions/setup-node@v4
+        with: {node-version: '24', cache: npm, cache-dependency-path: web-demo/package-lock.json}
+      - run: npm ci && npm run build
+        working-directory: web-demo
+      - run: npx playwright install --with-deps chromium
+        working-directory: web-demo
+      - run: mvn -B -Dfrontend.e2e=true verify
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            target/surefire-reports/
+            target/failsafe-reports/
+            web-demo/test-results/

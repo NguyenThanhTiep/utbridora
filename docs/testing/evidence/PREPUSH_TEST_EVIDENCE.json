@@ -1,0 +1,133 @@
+{
+    "date":  "2026-10-30",
+    "timezone":  "Asia/Bangkok",
+    "finishedLocal":  "2026-10-30T11:07:57+07:00",
+    "repository":  "https://github.com/NguyenThanhTiep/utbridora",
+    "visibility":  "private",
+    "command":  "./mvnw.cmd -Dfrontend.e2e=true verify -B",
+    "result":  "PASS",
+    "unit":  {
+                 "skipped":  0,
+                 "errors":  0,
+                 "tests":  28,
+                 "failures":  0
+             },
+    "integration":  {
+                        "skipped":  0,
+                        "errors":  0,
+                        "tests":  49,
+                        "failures":  0
+                    },
+    "chromium":  {
+                     "uiMockTests":  3,
+                     "cases":  [
+                                   {
+                                       "file":  "core.spec.ts",
+                                       "name":  "Quản trị viên đăng nhập, tra cứu tài khoản, audit và đăng xuất",
+                                       "seconds":  5.191,
+                                       "uiMock":  false
+                                   },
+                                   {
+                                       "file":  "core.spec.ts",
+                                       "name":  "Sai mật khẩu có lỗi chung và khôi phục không tiết lộ email",
+                                       "seconds":  2.172,
+                                       "uiMock":  false
+                                   },
+                                   {
+                                       "file":  "core.spec.ts",
+                                       "name":  "Kích hoạt lời mời và đăng nhập bằng tài khoản mới",
+                                       "seconds":  2.99,
+                                       "uiMock":  false
+                                   },
+                                   {
+                                       "file":  "core.spec.ts",
+                                       "name":  "Đặt lại mật khẩu một lần, liên kết cũ bị từ chối",
+                                       "seconds":  3.942,
+                                       "uiMock":  false
+                                   },
+                                   {
+                                       "file":  "core.spec.ts",
+                                       "name":  "Sinh viên bị chặn API quản trị và giao diện vừa màn hình di động",
+                                       "seconds":  1.75,
+                                       "uiMock":  false
+                                   },
+                                   {
+                                       "file":  "core.spec.ts",
+                                       "name":  "Khóa, mở tài khoản và quản lý membership trên giao diện",
+                                       "seconds":  4.805,
+                                       "uiMock":  false
+                                   },
+                                   {
+                                       "file":  "core.spec.ts",
+                                       "name":  "Phiên bị thu hồi đưa người dùng về đăng nhập khi gọi API",
+                                       "seconds":  4.27,
+                                       "uiMock":  false
+                                   },
+                                   {
+                                       "file":  "ux.spec.ts",
+                                       "name":  "UX: hiện mật khẩu có trạng thái truy cập và đăng nhập được bằng bàn phím",
+                                       "seconds":  1.837,
+                                       "uiMock":  false
+                                   },
+                                   {
+                                       "file":  "ux.spec.ts",
+                                       "name":  "UX: menu di động mở, đóng bằng Escape và đóng sau khi chọn chức năng",
+                                       "seconds":  2.598,
+                                       "uiMock":  false
+                                   },
+                                   {
+                                       "file":  "ux.spec.ts",
+                                       "name":  "UX: bốn màn quản trị vừa màn hình 320px và 390px",
+                                       "seconds":  7.848,
+                                       "uiMock":  false
+                                   },
+                                   {
+                                       "file":  "ux.spec.ts",
+                                       "name":  "UX UI mock: kết quả tìm kiếm cũ không ghi đè truy vấn mới",
+                                       "seconds":  2.006,
+                                       "uiMock":  true
+                                   },
+                                   {
+                                       "file":  "ux.spec.ts",
+                                       "name":  "UX: liên kết kích hoạt và đặt lại thiếu mã giải thích được cách tiếp tục",
+                                       "seconds":  0.733,
+                                       "uiMock":  false
+                                   },
+                                   {
+                                       "file":  "ux.spec.ts",
+                                       "name":  "UX UI mock: danh sách rỗng có hướng dẫn, lỗi tải có thể thử lại",
+                                       "seconds":  1.545,
+                                       "uiMock":  true
+                                   },
+                                   {
+                                       "file":  "ux.spec.ts",
+                                       "name":  "UX UI mock: yêu cầu đăng nhập chậm chặn gửi trùng và khôi phục sau lỗi",
+                                       "seconds":  0.769,
+                                       "uiMock":  true
+                                   }
+                               ],
+                     "errors":  0,
+                     "tests":  14,
+                     "failures":  0,
+                     "skipped":  0
+                 },
+    "frontendBuild":  {
+                          "cssBytesApprox":  39680,
+                          "command":  "npm run build",
+                          "result":  "PASS",
+                          "javascriptBytesApprox":  281400
+                      },
+    "sourceReview":  {
+                         "tokenAndPrivateKeyPatternsChecked":  true,
+                         "result":  "PASS",
+                         "knownPrivateEnvironmentSecretsChecked":  true,
+                         "buildArtifactsAndDatabaseDumpsExcluded":  true,
+                         "independentSecurityAudit":  false
+                     },
+    "sourceReports":  [
+                          "target/surefire-reports/",
+                          "target/failsafe-reports/",
+                          "web-demo/test-results/e2e.xml"
+                      ],
+    "evidenceScope":  "Local execution before push; GitHub Actions results must be checked separately."
+}

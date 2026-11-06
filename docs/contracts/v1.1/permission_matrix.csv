@@ -1,0 +1,52 @@
+code,legacy,action,roles,scope,grantor,owner,catalogImplemented
+account:self:read,account:self:read,Đọc danh tính bản thân,ALL,SELF; không áp org guard vào auth/self,CORE/SELF,T1,True
+account:self:password_change,account:self:password_change,Đổi mật khẩu bản thân,ALL,SELF; xác minh mật khẩu hiện tại,CORE/SELF,T1,True
+account:admin:status,account:admin:status,Đọc identity/status history; đổi trạng thái account,ADMIN,GLOBAL; transition/reason; admin cuối cùng,CORE,T1,True
+account:admin:revoke,account:admin:revoke,Thu hồi session,ADMIN,GLOBAL; account đích hợp lệ,CORE,T1,True
+membership:admin:write,membership:admin:write,Account invitation; grant/revoke membership,ADMIN,GLOBAL; role/org hợp lệ; admin cuối cùng,CORE,T1,True
+organization:admin:create,organization:admin:create,Tạo identity tổ chức; demo operational verification hiện hữu,ADMIN,GLOBAL; tạo PENDING; demo verification không thay T5,CORE,T1,True
+audit:global:read,audit:global:read,Tra cứu audit,ADMIN,"GLOBAL; phân trang, không kéo theo quyền profile/file",CORE,T1,True
+student_profile:self:read,student_profile:self:read,Đọc profile bản thân,STUDENT,SELF: studentUserId=principal,SELF,T2,True
+student_profile:self:write,student_profile:self:write,Sửa profile/skills/project/evidence,STUDENT,SELF; version; file binding,SELF,T2,True
+student_profile:shared:read,student_profile:shared:read,Enterprise đọc profile được chia sẻ,ENTERPRISE,Đúng enterprise + consent/share/policy còn hiệu lực,CORE+RESOURCE,T1/T2/T5,True
+student_profile:school:read,student_profile:school:read,School đọc profile,SCHOOL_STAFF,Delegation đúng school/term + profileReadFields,SD,T1/T2,True
+cooperation:enterprise:create,cooperation:enterprise:create,Demand authoring,ENTERPRISE,Owner; allowed state/version; không gồm school decision,CORE,T5,True
+cooperation:school:review,cooperation:school:review,Review Cooperation,SCHOOL_STAFF,Delegation school/term; current submission/version,SD,T5,True
+placement:school:write,placement:school:write,Create/approve/manual activate/cancel Placement,SCHOOL_STAFF,Delegation; command gates; quota/eligibility/unique active-key,SD,T5,True
+internship:enterprise:task_write,internship:enterprise:task_write,Task; review submission/report,ENTERPRISE,MENTOR đúng group/case; Placement ACTIVE,HR→MENTOR,T3,True
+internship:student:submission_write,internship:student:submission_write,Task status/submission/weekly report,STUDENT,Own case IN_PROGRESS; file/version; terminal cấm ghi,SELF,T3,True
+internship:enterprise:evaluate,internship:enterprise:evaluate,Draft/submit rubric evaluation,ENTERPRISE,MENTOR đúng case; không tự publish,HR→MENTOR,T3,True
+matching:enterprise:aggregate_read,matching:enterprise:aggregate_read,Protected aggregate/release,ENTERPRISE,Own demand/release; privacy ledger; band only,CORE,T4,True
+school:delegation:manage,Không có code đã lưu; alias nếu có ở D.3,Grant/revoke school capabilities,SCHOOL_STAFF,Đúng school/term; subset quyền và thời hạn được grant; cấm self escalation,ADMIN demo bootstrap; SD,T1,False
+schoolRosterImport:manage,Không có code đã lưu; alias nếu có ở D.3,Preview/confirm/read/resume/resend import,SCHOOL_STAFF,School suy từ term/job; current delegation/version/cooldown,SD,T1,False
+student:preference:self:manage,Không có code đã lưu; alias nếu có ở D.3,Submit/withdraw Preference,STUDENT,Owner; withdraw trước REVIEWED,SELF,T2,False
+student:preference:school:review,Không có code đã lưu; alias nếu có ở D.3,Review Preference,SCHOOL_STAFF,Delegation school/term; current intent/version,SD,T2,False
+student:consent:self:manage,Không có code đã lưu; alias nếu có ở D.3,Grant/revoke consent,STUDENT,Owner; recipient/purpose/fields/expiry; không consent thay SV,SELF,T2,False
+student:eligibility:school:approve,Không có code đã lưu; alias nếu có ở D.3,Đặt/thu hồi schoolApproved,SCHOOL_STAFF,School/term; reason/decisionRef/version,SD,T2,False
+opportunity:school:publish,Không có code đã lưu; alias nếu có ở D.3,Publish/close Opportunity projection,SCHOOL_STAFF,Cooperation APPROVED; school/term; version/window,SD,T5,False
+t5:proposal:manage,Không có code đã lưu; alias nếu có ở D.3,Reservation/issue/revoke invitation,SCHOOL_STAFF,School/term; quota/eligibility/state/version,SD,T5,False
+student_profile:share:school:manage,Không có code đã lưu; alias nếu có ở D.3,School policy; grant/revoke explicit share,SCHOOL_STAFF,School/term; consent hiện hành; subset fields,SD,T5,False
+enterprise:cooperation:submit,Không có code đã lưu; alias nếu có ở D.3,Submit/resubmit/reopen Cooperation,ENTERPRISE,Owner; org VERIFIED; school verification APPROVED; version,CORE,T5,False
+enterprise_verification:enterprise:manage,Không có code đã lưu; alias nếu có ở D.3,Draft/update/submit verification,ENTERPRISE,Owner; immutable school; attempt/state/version,CORE,T5,False
+enterprise_verification:school:review,Không có code đã lưu; alias nếu có ở D.3,Approve/reject/request changes verification,SCHOOL_STAFF,Assigned school; current submission; reason/version,SD,T5,False
+proposal:enterprise:decide,Không có code đã lưu; alias nếu có ở D.3,Enterprise accept/decline proposal,ENTERPRISE,Owner; valid share/consent; item version,CORE,T5,False
+matching:run:execute,Không có code đã lưu; alias nếu có ở D.3,Evaluate matching,ENTERPRISE hoặc SCHOOL_STAFF,Own demand hoặc delegated school/term; VALID criteria,CORE hoặc SD,T4,False
+matching:school:detail_read,Không có code đã lưu; alias nếu có ở D.3,Đọc MatchResult chi tiết,SCHOOL_STAFF,Delegation school/term; không enterprise/admin fallback,SD,T4,False
+matching:school:nominate,Không có code đã lưu; alias nếu có ở D.3,MATCH → proposal T5,SCHOOL_STAFF,Delegation; current run/criteria/profile; quota; đồng thời t5:proposal:manage,SD,T4/T5,False
+taxonomy:skills:read,Không có code đã lưu; alias nếu có ở D.3,Đọc skill/alias,ALL,Authenticated; không trả dữ liệu sinh viên,CORE,T4,False
+taxonomy:skills:write,Không có code đã lưu; alias nếu có ở D.3,CRUD category/skill/alias,SCHOOL_STAFF hoặc ADMIN,Named global TAX assignment; không role mặc định,TAX,T4,False
+t3:coordinator:confirm,Không có code đã lưu; alias nếu có ở D.3,Xác nhận enterprise coordinator,SCHOOL_STAFF,Delegation + T5 school verification + enterprise/term,SD,T3,False
+t3:hr:manage,Không có code đã lưu; alias nếu có ở D.3,Grant/revoke HR,ENTERPRISE,Confirmed coordinator đúng enterprise/school/term; không tự grant,EC,T3,False
+t3:cohorts:manage,Không có code đã lưu; alias nếu có ở D.3,Cohort/Placement import/grouping,ENTERPRISE,HR đúng enterprise/school/term/group,EC→HR,T3,False
+t3:mentors:manage,Không có code đã lưu; alias nếu có ở D.3,Assign/revoke/handover Mentor,ENTERPRISE,HR đúng group/case; active ENTERPRISE membership,EC→HR,T3,False
+t3:mentor:invite,Không có code đã lưu; alias nếu có ở D.3,Mời Mentor qua scoped port,ENTERPRISE,HR; mọi group thuộc scope; không mời ADMIN,EC→HR,T1/T3,False
+t3:workspace:read,Không có code đã lưu; alias nếu có ở D.3,Cohort/case/task/report/result/dashboard,STUDENT hoặc ENTERPRISE hoặc SCHOOL_STAFF,Self case; assigned HR/Mentor; school delegate; result visibility gate,SELF/HR/SD,T3,False
+t3:comments:write,Không có code đã lưu; alias nếu có ở D.3,Append task comment,STUDENT hoặc ENTERPRISE,Self assignment hoặc assigned Mentor; case active,SELF/HR,T3,False
+t3:grades:publish,Không có code đã lưu; alias nếu có ở D.3,Publish; authorize evaluation revision,SCHOOL_STAFF,Delegation school/term; current evaluation,SD,T3,False
+t3:grade_visibility:manage,Không có code đã lưu; alias nếu có ở D.3,HR bật/tắt hiển thị điểm,ENTERPRISE,HR đúng org/term/case; không sửa điểm/school policy,EC→HR,T3,False
+t3:result_policy:manage,Không có code đã lưu; alias nếu có ở D.3,School result visibility,SCHOOL_STAFF,Delegation school/term; default false; version,SD,T3,False
+t3:cases:close,Không có code đã lưu; alias nếu có ở D.3,Normal/early close Case,SCHOOL_STAFF,Delegation; close gates; decisionRef/reason/version,SD,T3,False
+t3:enterprise_quality:school:write,Không có code đã lưu; alias nếu có ở D.3,Enterprise quality feedback,SCHOOL_STAFF,School/collaboration scope; rubric riêng,SD,T3,False
+t3:coordination:manage,Không có code đã lưu; alias nếu có ở D.3,Coordination issue,ENTERPRISE hoặc SCHOOL_STAFF,HR hoặc delegate đúng case; không sửa Cooperation,HR/SD,T3,False
+file:upload,Không có code đã lưu; alias nếu có ở D.3,Private multipart upload,ALL,RESOURCE authorizer xác nhận quyền ghi/purpose,RESOURCE,T1,False
+file:download,Không có code đã lưu; alias nếu có ở D.3,Metadata/content/Range,ALL,RESOURCE read; CLEAN cho bytes; consent/share/assignment hiện hành,RESOURCE,T1,False
