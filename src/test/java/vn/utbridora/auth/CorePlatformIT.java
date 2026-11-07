@@ -178,6 +178,19 @@ class CorePlatformIT {
         assertEquals(200,b.me().statusCode());assertEquals(200,b.send("POST","/api/v1/auth/logout",null,true).statusCode());
         assertEquals(401,b.me().statusCode());assertEquals(401,replay(cookie,"/api/v1/auth/me").statusCode());
     }
+    @Test void invalidCsrfTokenCannotLogout() throws Exception {
+        Browser browser = signedIn(student);
+        String validCsrf = browser.csrf;
+
+        browser.csrf = "qa01-invalid-csrf-token";
+        assertEquals(403, browser.send("POST", "/api/v1/auth/logout", null, true).statusCode());
+        assertEquals(200, browser.me().statusCode());
+
+        browser.csrf = validCsrf;
+        assertEquals(200, browser.send("POST", "/api/v1/auth/logout", null, true).statusCode());
+        assertEquals(401, browser.me().statusCode());
+    }
+
     @Test void expiredJdbcSessionCannotCallMe() throws Exception {
         Browser b=signedIn(student);jdbc.update("UPDATE SPRING_SESSION SET EXPIRY_TIME=1, LAST_ACCESS_TIME=1");
         assertEquals(401,b.me().statusCode());
