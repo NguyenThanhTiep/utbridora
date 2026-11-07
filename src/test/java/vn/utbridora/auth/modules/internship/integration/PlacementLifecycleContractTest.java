@@ -136,6 +136,7 @@ class PlacementLifecycleContractTest {
     @ValueSource(strings = {"PlacementApproved", "PlacementActivated", "PlacementCancelled", "PlacementCompleted"})
     void acceptsExactlyTheFourLifecycleTypesAtVersionBoundaries(String type) {
         for (long version : new long[]{0, 1, MAX_VERSION}) {
+            assertTrue(PlacementLifecycleEvent.hasSupportedTypeAndVersions(type, 1, version, version));
             assertDoesNotThrow(() -> new PlacementLifecycleEvent(EVENT_ID, type, 1, event().placementId(),
                     version, version, event().studentUserId(), event().schoolOrgId(), event().enterpriseOrgId(),
                     event().termId(), EFFECTIVE_AT, event().occurredAt(), REQUEST_ID, null, null));
@@ -146,6 +147,7 @@ class PlacementLifecycleContractTest {
     @NullAndEmptySource
     @ValueSource(strings = {"CaseClosed", "UNKNOWN", "placementActivated", " PlacementActivated", "PlacementActivated "})
     void rejectsInvalidEventTypes(String type) {
+        assertFalse(PlacementLifecycleEvent.hasSupportedTypeAndVersions(type, 1, 3L, 3L));
         assertThrows(IllegalArgumentException.class, () -> with(event(), "eventType", type));
     }
 
@@ -153,6 +155,7 @@ class PlacementLifecycleContractTest {
     @NullSource
     @ValueSource(ints = {Integer.MIN_VALUE, -1, 0, 2, Integer.MAX_VALUE})
     void rejectsSchemaVersionsOtherThanOne(Integer version) {
+        assertFalse(PlacementLifecycleEvent.hasSupportedTypeAndVersions("PlacementActivated", version, 3L, 3L));
         assertThrows(IllegalArgumentException.class, () -> with(event(), "schemaVersion", version));
     }
 
@@ -160,12 +163,16 @@ class PlacementLifecycleContractTest {
     @NullSource
     @ValueSource(longs = {Long.MIN_VALUE, -1, 9_007_199_254_740_992L, Long.MAX_VALUE})
     void rejectsInvalidVersionOnEitherSide(Long version) {
+        assertFalse(PlacementLifecycleEvent.hasSupportedTypeAndVersions("PlacementActivated", 1, version, 3L));
+        assertFalse(PlacementLifecycleEvent.hasSupportedTypeAndVersions("PlacementActivated", 1, 3L, version));
+        assertFalse(PlacementLifecycleEvent.hasSupportedTypeAndVersions("PlacementActivated", 1, version, version));
         assertThrows(IllegalArgumentException.class, () -> with(event(), "aggregateVersion", version));
         assertThrows(IllegalArgumentException.class, () -> with(event(), "placementVersion", version));
     }
 
     @Test
     void unequalVersionsFailBeforePortDeliveryWithoutFabricatingAResult() {
+        assertFalse(PlacementLifecycleEvent.hasSupportedTypeAndVersions("PlacementActivated", 1, 3L, 4L));
         var called = new AtomicBoolean();
         PlacementLifecycleConsumer port = (context, event) -> {
             called.set(true);

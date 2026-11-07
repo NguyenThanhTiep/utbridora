@@ -1,8 +1,8 @@
 package vn.utbridora.auth.contracts.placement;
 
 import java.time.Instant;
+import java.util.Set;
 import java.util.regex.Pattern;
-import vn.utbridora.auth.modules.internship.domain.PlacementEventEnvelopePolicy;
 
 /**
  * Canonical lifecycle payload from Contract Pack v1.0, C.0/BC41.
@@ -30,6 +30,9 @@ public record PlacementLifecycleEvent(
         String reasonCode,
         String decisionRef) {
 
+    private static final long MAX_VERSION = 9_007_199_254_740_991L;
+    private static final Set<String> EVENT_TYPES = Set.of(
+            "PlacementApproved", "PlacementActivated", "PlacementCancelled", "PlacementCompleted");
     private static final Pattern UUID_PATTERN = Pattern.compile(
             "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
     private static final Pattern REASON_PATTERN = Pattern.compile("[A-Z0-9_]{3,64}");
@@ -42,7 +45,7 @@ public record PlacementLifecycleEvent(
         requireUuid(enterpriseOrgId, "enterpriseOrgId");
         requireUuid(termId, "termId");
         requireUuid(traceId, "traceId");
-        if (!PlacementEventEnvelopePolicy.hasSupportedTypeAndVersions(
+        if (!hasSupportedTypeAndVersions(
                 eventType, schemaVersion, aggregateVersion, placementVersion)) {
             throw new IllegalArgumentException("Invalid lifecycle event type, schema or versions");
         }
@@ -59,6 +62,26 @@ public record PlacementLifecycleEvent(
                 throw new IllegalArgumentException("Invalid decisionRef");
             }
         }
+    }
+
+    /**
+     * Shared C.0/BC41 type/version prerequisite. Missing inputs fail closed.
+     * This pure predicate neither validates the full payload nor establishes
+     * trust, current Placement state, approval or permission to apply an event.
+     */
+    public static boolean hasSupportedTypeAndVersions(
+            String eventType, Integer schemaVersion, Long aggregateVersion, Long placementVersion) {
+        return eventType != null
+                && EVENT_TYPES.contains(eventType)
+                && schemaVersion != null
+                && schemaVersion == 1
+                && aggregateVersion != null
+                && placementVersion != null
+                && aggregateVersion >= 0
+                && aggregateVersion <= MAX_VERSION
+                && placementVersion >= 0
+                && placementVersion <= MAX_VERSION
+                && aggregateVersion.equals(placementVersion);
     }
 
     // Shared only within this canonical package; no additional public contract type.
