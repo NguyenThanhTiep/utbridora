@@ -46,6 +46,8 @@ final class ProfileInputParser {
         String majorCode=text(root,"","majorCode",1,64,true);
         Boolean skillsDeclared=bool(root,"","skillsDeclared");
         List<CanonicalSkillInput> skills=list(root,"","skills",this::canonical);
+        Set<String> skillCodes=new HashSet<>(); // K.2 line 1845: UNIQUE(profile_id, skill_code)
+        for(int i=0;i<skills.size();i++) if(!skillCodes.add(skills.get(i).skillCode())) error("skills["+i+"].skillCode","Giá trị bị trùng.");
         List<CustomSkillInput> customSkills=list(root,"","customSkills",this::custom);
         Boolean availabilityDeclared=bool(root,"","availabilityDeclared");
         List<DateRange> periods=list(root,"","availablePeriods",this::period);
@@ -164,11 +166,14 @@ final class ProfileInputParser {
     }
     private BigDecimal decimal(Map<?,?> m,String path,String name) {
         if(!m.containsKey(name)) return null;
+        // Stored as DECIMAL(5,2), the precision T2 chose for years of practice (K.2 line 1845).
         if(m.get(name) instanceof Number number) {
-            try { BigDecimal value=new BigDecimal(number.toString()); if(value.signum()>=0) return value; }
-            catch (NumberFormatException ignored) { /* Infinity/NaN from overflowing input; reported below */ }
+            try {
+                BigDecimal value=new BigDecimal(number.toString());
+                if(value.signum()>=0 && value.compareTo(new BigDecimal("999.99"))<=0 && value.stripTrailingZeros().scale()<=2) return value;
+            } catch (NumberFormatException ignored) { /* Infinity/NaN from overflowing input; reported below */ }
         }
-        error(join(path,name),"Phải là số không âm."); return null;
+        error(join(path,name),"Phải là số từ 0 đến 999,99, tối đa 2 chữ số thập phân."); return null;
     }
     private Long version(Map<?,?> m,String name) {
         if(!m.containsKey(name)) return null;
@@ -177,7 +182,7 @@ final class ProfileInputParser {
         error(name,"Phải là số nguyên không âm."); return null;
     }
     private String httpsUrl(Map<?,?> m,String path) {
-        String value=text(m,path,"url",1,Integer.MAX_VALUE,true);
+        String value=text(m,path,"url",1,2048,true); // column limit; the contract sets no length for HTTPSUrl
         if(value==null) return null;
         try {
             URI uri=new URI(value);

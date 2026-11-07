@@ -4,18 +4,24 @@ import java.net.*;
 import java.net.http.*;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 import com.jayway.jsonpath.JsonPath;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import vn.utbridora.auth.modules.student.application.StudentTermScopePort;
+import vn.utbridora.auth.modules.student.application.UnavailableStudentTermScope;
 import vn.utbridora.auth.organization.*;
 import vn.utbridora.auth.user.*;
 
@@ -36,6 +42,15 @@ class StudentProfileIT {
     static final String TERM="44444444-4444-4444-8444-444444444444";
     static final String PROFILE="/api/v1/students/me/profile";
     static final List<String> CHECKS=List.of("MAJOR_VALID","STUDENT_TERM_PRESENT","SKILLS_DECLARED","SKILLS_VALID","AVAILABILITY_DECLARED","AVAILABILITY_VALID");
+    /** Stands in for the T5 TermReference and T2 student-term link adapter; production keeps the fail-closed default. */
+    @TestConfiguration static class LinkedTerms {
+        static final Map<String,String> LINKS=new ConcurrentHashMap<>();
+        static volatile boolean available=true;
+        @Bean @Primary StudentTermScopePort fixtureStudentTerms() {
+            return (student,term)->available ? Optional.ofNullable(LINKS.get(student+"|"+term))
+                : new UnavailableStudentTermScope().schoolOfLinkedTerm(student,term);
+        }
+    }
     @LocalServerPort int port;
     @Autowired JdbcTemplate jdbc;
     @Autowired UserRepository users;
@@ -49,8 +64,11 @@ class StudentProfileIT {
 
     @BeforeAll void hash() { passwordHash=encoder.encode(password); }
     @BeforeEach void seed() {
-        for(String table:List.of("student_profiles","SPRING_SESSION_ATTRIBUTES","SPRING_SESSION","audit_logs","account_status_history",
+        for(String table:List.of("student_project_files","student_project_skills","student_projects","student_certificates",
+                "student_custom_skills","student_profile_skills","student_profile_term_codes","student_profile_term_periods",
+                "student_profile_terms","student_profiles","SPRING_SESSION_ATTRIBUTES","SPRING_SESSION","audit_logs","account_status_history",
                 "one_time_tokens","files","memberships","users","organizations")) jdbc.update("DELETE FROM "+table);
+        LinkedTerms.LINKS.clear();LinkedTerms.available=true;
         university=university(Organization.Status.VERIFIED);
         student=student(university.id);
     }
@@ -62,7 +80,7 @@ class StudentProfileIT {
         UserAccount user=new UserAccount();user.email=UUID.randomUUID()+"@example.test";
         user.displayName="Sinh viên kiểm thử";user.passwordHash=passwordHash;user.status=AccountStatus.ACTIVE;
         users.saveAndFlush(user);Membership m=new Membership();m.userId=user.id;m.role=Role.STUDENT;m.organizationId=schoolId;
-        memberships.saveAndFlush(m);return user;
+        memberships.saveAndFlush(m);LinkedTerms.LINKS.put(user.id+"|"+TERM,schoolId);return user;
     }
     static Map<String,Object> obj(Object... pairs) {
         Map<String,Object> map=new LinkedHashMap<>();
@@ -146,6 +164,54 @@ class StudentProfileIT {
         assertFalse((Boolean)read(none,"$.completeness.complete"));
         assertEquals(List.of("MAJOR_MISSING","STUDENT_TERM_MISSING","OK","OK","OK","OK"),read(none,"$.completeness.checks[*].reasonCode"));
     }
+    /** Review P1-2: a term without an authoritative student link is rejected, and nothing is created while the source is down. */
+    @Test void unverifiedTermIsRejectedAndCreatesNoProfile() throws Exception {
+        Browser b=signedIn(student);
+        var unlinked=input(0);unlinked.put("termId",UUID.randomUUID().toString());
+        assertEnvelope(b.put(unlinked),404,"RESOURCE_NOT_FOUND");
+        assertEnvelope(b.get(UUID.randomUUID().toString()),404,"RESOURCE_NOT_FOUND");
+        LinkedTerms.available=false;
+        assertEnvelope(b.put(input(0)),503,"DEPENDENCY_UNAVAILABLE");
+        assertEnvelope(b.get(TERM),503,"DEPENDENCY_UNAVAILABLE");
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM student_profiles",Integer.class));
+    }
+    @Test void schoolComesFromTheLinkedTermNotTheFirstMembership() throws Exception {
+        Organization second=university(Organization.Status.VERIFIED);
+        Membership m=new Membership();m.userId=student.id;m.role=Role.STUDENT;m.organizationId=second.id;memberships.saveAndFlush(m);
+        String secondTerm="55555555-5555-4555-8555-555555555555";
+        LinkedTerms.LINKS.put(student.id+"|"+secondTerm,second.id);
+        var body=input(0);body.put("termId",secondTerm);
+        var saved=signedIn(student).put(body);
+        assertEquals(200,saved.statusCode(),saved.body());
+        assertEquals(second.id,read(saved,"$.schoolOrgId"));
+    }
+    /** K.2 line 1847: one aggregate per student; major, availability and academic selections are kept per term. */
+    @Test void sharedDataSpansTermsWhileTermDataStaysPerTerm() throws Exception {
+        Browser b=signedIn(student);
+        String nextTerm="66666666-6666-4666-8666-666666666666";
+        LinkedTerms.LINKS.put(student.id+"|"+nextTerm,university.id);
+        var first=input(0);first.put("projects",List.of(project(null)));
+        var created=b.put(first);
+        assertEquals(200,created.statusCode(),created.body());
+        String projectId=read(created,"$.profile.projects[0].projectId");
+        var fresh=b.get(nextTerm);
+        assertEquals(200,fresh.statusCode(),fresh.body());
+        assertEquals(1,(int)read(fresh,"$.profileVersion"));
+        assertNull(read(fresh,"$.profile.majorCode"));assertFalse((Boolean)read(fresh,"$.profile.availabilityDeclared"));
+        assertEquals(List.of(),read(fresh,"$.profile.availablePeriods"));assertEquals(List.of(),read(fresh,"$.profile.orientationCodes"));
+        assertEquals("0901234567",read(fresh,"$.profile.phone"));assertEquals(List.of(projectId),read(fresh,"$.profile.projects[*].projectId"));
+        assertEquals(List.of("JAVA"),read(fresh,"$.profile.skills[*].skillCode"));
+        var second=input(1);second.put("termId",nextTerm);second.put("majorCode","AI");second.put("projects",List.of(project(projectId)));
+        second.put("availablePeriods",List.of(obj("startDate","2027-06-01","endDate","2027-08-31")));
+        var saved=b.put(second);
+        assertEquals(200,saved.statusCode(),saved.body());assertEquals(2,(int)read(saved,"$.profileVersion"));
+        var firstTerm=b.get(TERM);
+        assertEquals("SE",read(firstTerm,"$.profile.majorCode"));assertEquals(2,(int)read(firstTerm,"$.profileVersion"));
+        assertEquals("2027-02-28",read(firstTerm,"$.profile.availablePeriods[0].endDate"));
+        assertEquals(List.of("BACKEND"),read(firstTerm,"$.profile.orientationCodes"));
+        assertEquals("AI",read(b.get(nextTerm),"$.profile.majorCode"));
+        assertEquals(1.5,((Number)read(firstTerm,"$.profile.skills[0].yearsPractice")).doubleValue());
+    }
     @Test void staleVersionIs409AndDoesNotOverwrite() throws Exception {
         Browser b=signedIn(student);
         assertEquals(200,b.put(input(0)).statusCode());
@@ -170,6 +236,11 @@ class StudentProfileIT {
         assertEquals(List.of("availablePeriods[0]"),fields(b.put(reversed)));
         var schoolVerified=input(0);schoolVerified.put("skills",List.of(obj("skillCode","JAVA","level",3,"yearsPractice",1,"note",null,"source","SCHOOL_VERIFIED")));
         assertEquals(List.of("skills[0].source"),fields(b.put(schoolVerified)));
+        var duplicated=input(0);duplicated.put("skills",List.of(obj("skillCode","JAVA","level",3,"yearsPractice",1,"note",null),
+            obj("skillCode","JAVA","level",4,"yearsPractice",2,"note",null)));
+        assertEquals(List.of("skills[1].skillCode"),fields(b.put(duplicated)));
+        var precise=input(0);precise.put("skills",List.of(obj("skillCode","JAVA","level",3,"yearsPractice",1000,"note",null)));
+        assertEquals(List.of("skills[0].yearsPractice"),fields(b.put(precise)));
         var noKey=b.send("PUT",PROFILE,new tools.jackson.databind.ObjectMapper().writeValueAsString(input(0)),true,null);
         assertEnvelope(noKey,400,"INVALID_REQUEST");
         assertEnvelope(b.get("not-a-uuid"),400,"INVALID_REQUEST");
