@@ -65,11 +65,19 @@ public class EnterpriseVerification {
     @Column(name = "decision_ref", length = 120)
     public String decisionRef;
 
+    /** Who submitted the verification (enterprise user). */
+    @Column(name = "submitter_id", length = 36)
+    public String submitterId;
+
     @Column(name = "submitted_at")
     public Instant submittedAt;
 
-    @Column(name = "decided_at")
-    public Instant decidedAt;
+    /** Who reviewed (school staff). */
+    @Column(name = "reviewer_id", length = 36)
+    public String reviewerId;
+
+    @Column(name = "reviewed_at")
+    public Instant reviewedAt;
 
     /** Optimistic-lock version. */
     @Version

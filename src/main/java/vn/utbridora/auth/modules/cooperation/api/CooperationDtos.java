@@ -86,7 +86,6 @@ public final class CooperationDtos {
             VerificationState state,
             int submissionNo,
             long version,
-            // contact data (caller decides visibility before mapping)
             String registrationCode,
             String registeredName,
             String address,
@@ -96,7 +95,7 @@ public final class CooperationDtos {
             String missingFields,
             String decisionRef,
             Instant submittedAt,
-            Instant decidedAt,
+            Instant reviewedAt,   // thay decidedAt
             Instant createdAt,
             Instant updatedAt
     ) {}

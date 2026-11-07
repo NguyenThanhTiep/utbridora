@@ -33,18 +33,36 @@ CREATE TABLE enterprise_verifications (
   contact_name             VARCHAR(150) NULL,
   contact_email            VARCHAR(254) NULL,
   contact_phone            VARCHAR(20)  NULL,
-  missing_fields           VARCHAR(500) NULL,  -- comma-separated field names set by reviewer
+  missing_fields           VARCHAR(500) NULL,
   decision_ref             VARCHAR(120) NULL,
+  submitter_id             VARCHAR(36)  NULL,   -- enterprise user who submitted
   submitted_at             DATETIME(6)  NULL,
-  decided_at               DATETIME(6)  NULL,
+  reviewer_id              VARCHAR(36)  NULL,   -- school staff who reviewed
+  reviewed_at              DATETIME(6)  NULL,
   version                  BIGINT       NOT NULL DEFAULT 0,
   created_at               DATETIME(6)  NOT NULL,
   updated_at               DATETIME(6)  NOT NULL,
   CONSTRAINT fk_ev_enterprise FOREIGN KEY (enterprise_org_id) REFERENCES organizations(id),
   CONSTRAINT fk_ev_school     FOREIGN KEY (school_org_id)     REFERENCES organizations(id),
   CONSTRAINT fk_ev_previous   FOREIGN KEY (previous_verification_id) REFERENCES enterprise_verifications(id),
-  -- Only one open (non-terminal) attempt per enterprise+school allowed at a time.
-  -- Terminal states: APPROVED, REJECTED. Open states: DRAFT, SUBMITTED, NEEDS_CHANGES.
+  CONSTRAINT fk_ev_submitter  FOREIGN KEY (submitter_id) REFERENCES users(id),
+  CONSTRAINT fk_ev_reviewer   FOREIGN KEY (reviewer_id)  REFERENCES users(id),
   INDEX ix_ev_enterprise_school (enterprise_org_id, school_org_id, state),
   INDEX ix_ev_school_state      (school_org_id, state, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- History table: append-only record of every state change
+CREATE TABLE enterprise_verification_history (
+  id                  VARCHAR(36)  NOT NULL PRIMARY KEY,
+  verification_id     VARCHAR(36)  NOT NULL,
+  from_state          VARCHAR(32)  NOT NULL,
+  to_state            VARCHAR(32)  NOT NULL,
+  actor_id            VARCHAR(36)  NOT NULL,
+  reason_code         VARCHAR(64)  NULL,
+  missing_fields      VARCHAR(500) NULL,
+  decision_ref        VARCHAR(120) NULL,
+  changed_at          DATETIME(6)  NOT NULL,
+  CONSTRAINT fk_evh_verification FOREIGN KEY (verification_id) REFERENCES enterprise_verifications(id),
+  CONSTRAINT fk_evh_actor        FOREIGN KEY (actor_id) REFERENCES users(id),
+  INDEX ix_evh_verification_date (verification_id, changed_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
