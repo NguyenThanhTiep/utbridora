@@ -1,10 +1,12 @@
 # T3-01 — Kế hoạch kiểm thử tiếp nhận Placement
 
-Ngày: 06/11/2026. DEV05 thực hiện self-test; QA03 xác nhận QA.
+Ngày soạn: 06/11/2026; cập nhật: 07/11/2026 (Asia/Saigon). DEV05 thực hiện self-test; QA03 xác nhận QA.
 
 **PROPOSAL — PENDING CROSS-TEAM REVIEW**
 
-Đã có hai policy thuần tại commit `3eaa52c1c18ddf1a6bdfdf859d8dcfc76d1ba011` (`3eaa52c`) với 99 unit test PASS trong lượt DEV đã ghi nhận. Java service port, ba kiểu canonical và consumer runtime chưa triển khai. Kết quả policy không đồng nghĩa 27 nhóm acceptance/integration dưới đây đã PASS; T3-01 chưa DONE, chưa có QA signoff hoặc kết quả GitHub CI được xác minh.
+Checkpoint `3eaa52c` có hai policy/99 test; `53120d7` bổ sung design/test plan. Milestone `f28a318` đã có ba record canonical, interface PlacementLifecycleConsumer và 174 contract/value test, tổng 273 test T3 PASS. Lead báo cáo riêng 301 unit test trên bản sao f28a318 (thêm 28 Core). Kết quả chạy lại working tree sau refactor được ghi riêng tại mục 3. Consumer runtime và I11 chưa có evidence; 27 kịch bản đầy đủ bên dưới chưa được nâng thành PASS. T3-01 giữ IN PROGRESS, chưa QA signoff.
+
+Chỉ đạo bổ sung ngày 07/11/2026 xác nhận **T1 đã hoàn tất bàn giao nền tảng**. DEV05 tái sử dụng Core/Contract đã giao, không chờ bàn giao lại. Điểm nối chưa xác định phải ghi class/method, revision và ca bị chặn theo mục 2 của thiết kế; nguồn Placement/provider T5 được theo dõi riêng.
 
 Thiết kế và dependency: [T3_01_PLACEMENT_INBOX_DESIGN.md](../reviews/T3_01_PLACEMENT_INBOX_DESIGN.md). Nguồn expected behavior: [Contract v1.0](../contracts/UTBridora_Contract_Pack_B01_B06_v1.0_Candidate.md), C.0, BC41, CP-WS1/WS2, E/G. Không dùng schema v1.1 Candidate làm oracle được duyệt thay v1.0.
 
@@ -55,43 +57,49 @@ Ma trận giữ đủ 27 nhóm kiểm thử. **Kịch bản đầy đủ ở t�
 
 | Nhóm | Bằng chứng DEV hiện có | Chưa được chứng minh |
 |---|---|---|
-| C02, C03 | Policy envelope đã PASS cho event type, schemaVersion, khoảng version, equality và đầu vào thiếu/sai của bốn tham số này | Shape đầy đủ, UUID/timestamp, field lạ, kết quả REJECT/INVALID_SCHEMA và không ghi Case qua consumer |
+| C02, C03 | Tại f28a318: policy và constructor test PASS cho required-null, UUID, type/schema/version/equality, timestamp non-null, Reason/Ref. Sau refactor contract giữ rule thuần và policy T3 delegate; kiểm hồi quy tại mục 3 | Wire parser/field lạ/nullable field bị bỏ, kiểu số/timestamp wire; adapter map REJECT/INVALID_SCHEMA và không ghi Case. Constructor ném IllegalArgumentException trước delivery, không tự tạo result |
 | S01–S03 | Policy trạng thái/thời gian đã PASS, gồm APPROVED, ACTIVE, Case IN_PROGRESS và effectiveAt trước/đúng/sau now | Đọc nguồn T5, authorization và Task/Submission service gọi guard thật |
 | S05, S06, S08 | Policy từ chối các giá trị Placement/Case không đủ điều kiện, gồm CANCELLED, Case terminal và PENDING_APPROVAL | Đọc lại nguồn, không mở lại Case, race và bằng chứng approval cho ACTIVE; policy không nhận approval proof |
-| C01, C04, C05, S04, S07 | Chưa có test tiếp nhận/chuyển trạng thái hoặc kiểm trust/scope | Cần canonical types, Java port và runtime tương ứng |
+| C01, C04, C05, S04, S07 | Có test chữ ký/truyền fixture BC41 qua interface và validation syntax context; chưa kiểm nhận nguồn/chuyển Case hoặc trust/scope thật | Canonical types/port đã có; cần adapter xác minh T5, provider Placement T5, implementation consumer và nối Core đã bàn giao |
 | I01–I06, E01–E04, A01, A02, O02 | NOT_RUN; không thuộc bằng chứng của hai policy | Inbox/transaction, retry/DLQ, nguồn T5, service guard và phối hợp owner |
-| O01 | Review bốn file Java tại 3eaa52c: policy thuần không gọi mutation/repository T5 | Chưa có consumer hoặc integration để chứng minh luồng tiếp nhận không thay dữ liệu T5 |
+| O01 | Review chín file Java T3-01 tại f28a318: không gọi mutation/repository T5 | Chưa có consumer hoặc integration để chứng minh luồng tiếp nhận không thay dữ liệu T5 |
 
 ## 3. Kết quả DEV đã ghi nhận và giới hạn
 
-Lệnh của lượt kiểm thử hai policy đã ghi nhận:
+Lệnh DEV của milestone f28a318 đã ghi nhận:
 
 ```powershell
-.\mvnw.cmd '-Dtest=InternshipActivityPolicyTest,PlacementEventEnvelopePolicyTest' test
+.\mvnw.cmd '-Dtest=InternshipActivityPolicyTest,PlacementEventEnvelopePolicyTest,PlacementLifecycleContractTest' test
 ```
 
 | Test class | Tests / PASS | Failures | Errors | Skipped |
 |---|---|---|---|---|
 | InternshipActivityPolicyTest | 41 / 41 | 0 | 0 | 0 |
 | PlacementEventEnvelopePolicyTest | 58 / 58 | 0 | 0 | 0 |
-| Tổng | 99 / 99 | 0 | 0 | 0 |
+| PlacementLifecycleContractTest | 174 / 174 | 0 | 0 | 0 |
+| Tổng T3 tại f28a318 | 273 / 273 | 0 | 0 | 0 |
 
-Kết quả lượt DEV: **BUILD SUCCESS**. Source đối chiếu: commit `3eaa52c`. Phiên cập nhật tài liệu này không chạy lại Maven; đây là kết quả kiểm thử đã có, không phải kết quả mới hoặc GitHub CI.
+Kết quả lượt DEV milestone: **BUILD SUCCESS**, 0 failures/errors/skipped. Báo cáo Lead cho f28a318 có lệnh `.\mvnw.cmd test`: 301 PASS gồm 273 T3 + 28 Core. Đây là evidence của Lead trên bản sao, tách biệt lượt DEV milestone và lượt chạy sau refactor.
+
+Hồi quy DEV working tree sau f28a318 đã thực thi ngày 07/11/2026, kết thúc 10:16:22 +07:00: `.\mvnw.cmd test` — **301 PASS, 0 failures, 0 errors, 0 skipped, BUILD SUCCESS**. Gồm 41 activity + 58 envelope + 174 contract/value + 28 Core; đây là lượt DEV mới sau refactor, tách biệt báo cáo Lead trên milestone. Phạm vi sửa đúng event, policy envelope, contract test và hai tài liệu; giữ nguyên wire shape, nullable/int v1.0 và constructor exception.
+
+Kiểm độc lập dependency: biên dịch chỉ ba record bằng javac --release 21, classpath/sourcepath trống, output dưới target/contract-isolation/classes — PASS (exit 0). Không đưa source/class T3 hoặc dependency framework vào lệnh. Shared contract không còn import modules.*. Maven dùng JDK 24.0.1, compiler target release 21; chưa coi đây là lượt chạy local bằng JDK 21 hoặc CI của refactor.
 
 Report local của lượt DEV, không phải artifact CI đã công bố:
 
 - `target/surefire-reports/vn.utbridora.auth.modules.internship.domain.InternshipActivityPolicyTest.txt`
 - `target/surefire-reports/vn.utbridora.auth.modules.internship.domain.PlacementEventEnvelopePolicyTest.txt`
+- `target/surefire-reports/vn.utbridora.auth.modules.internship.integration.PlacementLifecycleContractTest.txt`
 
 Các report local không nằm trong danh sách file đề nghị commit. Reviewer có thể chạy lại lệnh trên tại commit tương ứng. Không đưa raw report chứa thông tin môi trường vào tài liệu review.
 
 | Bằng chứng | Chứng minh được | Không chứng minh được |
 |---|---|---|
-| Hai policy và 99 unit test đã chạy | Điều kiện trạng thái/thời gian và bốn tham số envelope | Nhận event thật, full DTO validation, đọc nguồn, authorization, cập nhật Case hoặc Task guard thực tế |
-| Contract test với test double — chưa triển khai | Sau khi được duyệt: chữ ký Java, mapping dữ liệu và lời gọi qua interface | Test double trả sẵn ACK/trạng thái không chứng minh runtime đã xử lý event |
+| Hai policy và 99 unit test đã chạy | Điều kiện trạng thái/thời gian và bốn tham số envelope | Nhận event thật, đọc nguồn, authorization, cập nhật Case hoặc Task guard thực tế |
+| 174 contract/value test đã chạy tại f28a318 | Constructor validation, 15/3/5 component, nullable/type, fixture và chữ ký consume; event type không thay trạng thái authoritative | Wire parser/unknown fields/trust và delivery error mapping; test double trả ACK fixture không chứng minh runtime xử lý event |
 | MySQL integration — NOT_RUN | Khi thực thi: constraint, transaction/rollback, concurrency trong harness | Delivery production hoặc permission chưa gắn vào service |
 | T3–T5 integration — NOT_RUN | Khi thực thi: adapter authoritative và guards trong phạm vi test | Nghiệm thu tự động toàn bộ hệ thống |
-| GitHub CI — chưa xác minh | Kết quả job của đúng commit khi có evidence | QA03 signoff |
+| GitHub CI tại f28a318 | verify SUCCESS; contracts FAILURE (run dẫn bên dưới) | CI tổng thể PASS, QA03 signoff hoặc kết quả cho working tree chưa push |
 
 Lệnh integration dự kiến, chỉ sau khi implementation, MySQL Testcontainers, migration và adapter cần thiết sẵn sàng trên môi trường được phép:
 
@@ -101,19 +109,23 @@ Lệnh integration dự kiến, chỉ sau khi implementation, MySQL Testcontaine
 
 Chưa chạy integration trong phạm vi bằng chứng này. Không thêm dependency hoặc sửa lỗi baseline ngoài task. Report integration chỉ được dẫn khi thực sự sinh từ lượt chạy tương ứng; không coi evidence T1-01 trước đây là kết quả T3-01.
 
+CI của f28a318: [PR run 42330544752](https://github.com/NguyenThanhTiep/utbridora/actions/runs/42330544752), [push run 42330538676](https://github.com/NguyenThanhTiep/utbridora/actions/runs/42330538676); verify SUCCESS, contracts FAILURE. Builder dùng sorted(Path), khác thứ tự Windows/POSIX; manifest thiếu đúng sáu production source (ba record, hai policy, interface), source cũ không đổi hash tại milestone. Sau refactor, hai source đã sửa phải có hash mới khi đồng bộ. Chờ T1 xác nhận cách đồng bộ manifest; không áp patch, sửa builder, chạy generator hoặc đổi bundle trong lượt này. Chưa tuyên bố contracts/CI tổng thể PASS.
+
+Retry result: test hiện giữ Integer nullable, kể cả số âm theo int|null v1.0; schema v1.1 có minimum:0. Không đổi test/contract để tự áp v1.1. Runner thực tế phải tuân lịch retry BC41 và không dùng số âm để hẹn delivery.
+
 ## 4. Bàn giao QA03
 
 Report sau triển khai phải ghi commit SHA/branch/PR nếu có, contract và hash, IDs test đã chạy, lệnh, số test/pass/fail/skip, report path, môi trường, fixture, blocker và cách tái hiện lỗi. Phân biệt gate trạng thái đơn lẻ với việc service Task thật gọi guard và không ghi dữ liệu khi bị deny.
 
-QA03 hoặc người được phân quyền xác nhận QA; DEV không tự đánh dấu QA PASS. CI phải đọc run đúng commit. Các ca bị chặn phải ghi BLOCKED với dependency thực tế khi bước chạy được yêu cầu; 27 kịch bản đầy đủ hiện vẫn là kế hoạch chưa chạy. Acceptance I11 về tiếp nhận và Task guard runtime chưa được xác nhận, không đánh dấu T3-01 DONE từ 99 unit test.
+QA03 hoặc người được phân quyền xác nhận QA; DEV không tự đánh dấu QA PASS. CI phải đọc run đúng commit. Các ca bị chặn phải ghi BLOCKED với dependency cụ thể khi bước chạy được yêu cầu; 27 kịch bản đầy đủ vẫn là kế hoạch chưa chạy. Không ghi chung là T1 chưa bàn giao. Acceptance I11 về tiếp nhận và Task guard runtime chưa được xác nhận; số test policy/value không chứng minh T3-01 DONE.
 
-## 5. Kiểm thử phần service port được đề xuất
+## 5. Service port đã có và phạm vi kiểm hồi quy
 
-Theo mục 3 và 8 của [thiết kế](../reviews/T3_01_PLACEMENT_INBOX_DESIGN.md), package canonical đề xuất là `vn.utbridora.auth.contracts.placement` cho PlacementLifecycleEvent, TrustedEventContext, EventConsumeResult; interface PlacementLifecycleConsumer dự kiến ở `vn.utbridora.auth.modules.internship.integration`. Tất cả đang chờ Lead/T1/T5 thống nhất vị trí, người cung cấp và mapping Java; chưa tạo các file này.
+Package `vn.utbridora.auth.contracts.placement` chứa ba record do DEV05 cung cấp theo xác nhận Lead/T1 và T5; interface ở `vn.utbridora.auth.modules.internship.integration`. Đã có source tại f28a318, không chờ tạo lại. Mapping và giới hạn tích hợp tại mục 2/3 của [thiết kế](../reviews/T3_01_PLACEMENT_INBOX_DESIGN.md).
 
-Sau khi được duyệt, contract test tối thiểu dự kiến kiểm chữ ký `consume(TrustedEventContext, PlacementLifecycleEvent): EventConsumeResult`, field/type/nullability theo BC41 v1.0 và truyền dữ liệu qua test double. Tái sử dụng hai policy hiện có để kiểm điều kiện envelope/trạng thái/thời gian; không tạo loại dùng chung thứ hai trong test. Record hoặc chữ ký interface không tự validate, xác thực context hoặc cập nhật Case; nếu cần validation mới phải duyệt rõ phạm vi và test trước khi code.
+Refactor giữ rule type/schema/version ở PlacementLifecycleEvent.hasSupportedTypeAndVersions; constructor và policy T3 sử dụng cùng rule. Test hiện có được bổ sung kiểm trực tiếp rule canonical: bốn event type ở version 0/1/MAX, schema thiếu/sai, version thiếu/âm/vượt MAX/khác nhau; vẫn kiểm constructor reject trước delivery. Bộ 58 policy test kiểm hành vi public cũ sau delegate. Bộ activity 41 test giữ điều kiện IN_PROGRESS/ACTIVE/effectiveAt, không suy state từ event type. Không tạo consumer runtime hoặc test giả Case đã cập nhật.
 
-1. Lead/T1/T5 giải quyết D01 và xác nhận ba kiểu canonical có tồn tại ở nhánh/PR khác hay không; Lead làm rõ phạm vi I11/D07.
-2. DEV05 duyệt danh sách file source/test cụ thể sau xác nhận canonical. Không tự mở rộng sang consumer, persistence, API hoặc migration.
-3. Runtime cần owner giải quyết D02–D06/D08 và có implementation để kiểm các kịch bản đầy đủ; Task service/guard thuộc DEV06 theo T3-02/T3-05, không giả bằng ACK hoặc trạng thái hard-code trong test.
-4. Hạ tầng T1/T5 và migration được cấp phải sẵn sàng trước integration. QA03 phối hợp owner và QA05 để kiểm I11, retry/rollback/race; 99 unit test chỉ là bằng chứng DEV của hai policy.
+1. Kiểm rule shared và cả ba lớp test T3, sau đó toàn bộ unit suite; kiểm contract package không import modules.* và có thể biên dịch bằng JDK độc lập source T3.
+2. Kiểm diff đúng năm file đã duyệt, không đổi record component, enum, nullable/retry constraint, contract hoặc Core. Không mở rộng consumer, persistence, API hoặc migration.
+3. Runtime T3 sẽ nối Core đã bàn giao theo phân công riêng: AuditService.write/writeScoped và guard/context theo API hiện hữu. Các điểm adapter trusted/inbox/dedup/action Case chưa xác định locator tại f28a318/0cc1daf phải được báo cụ thể; không tự quy thành T1 chưa bàn giao.
+4. Provider PlacementReadPort.readForInternship/readCurrentForGuard và PlacementView T5 chưa tìm thấy tại các refs đã kiểm, gồm T5 c299c4f. Ca đọc nguồn, stale/duplicate, Case transaction chưa có implementation để kiểm; Task guard thuộc DEV06. QA03/QA05 phối hợp kiểm I11 sau tích hợp, không giả bằng ACK hoặc state hard-code.

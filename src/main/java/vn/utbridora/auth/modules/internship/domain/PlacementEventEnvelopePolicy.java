@@ -1,13 +1,9 @@
 package vn.utbridora.auth.modules.internship.domain;
 
-import java.util.Set;
+import vn.utbridora.auth.contracts.placement.PlacementLifecycleEvent;
 
 /** Event type/version prerequisites from Contract Pack v1.0, C.0 and BC41. */
 public final class PlacementEventEnvelopePolicy {
-    private static final long MAX_VERSION = 9_007_199_254_740_991L;
-    private static final Set<String> EVENT_TYPES = Set.of(
-            "PlacementApproved", "PlacementActivated", "PlacementCancelled", "PlacementCompleted");
-
     private PlacementEventEnvelopePolicy() {}
 
     /**
@@ -28,16 +24,7 @@ public final class PlacementEventEnvelopePolicy {
      */
     public static boolean hasSupportedTypeAndVersions(
             String eventType, Integer schemaVersion, Long aggregateVersion, Long placementVersion) {
-        return eventType != null
-                && EVENT_TYPES.contains(eventType)
-                && schemaVersion != null
-                && schemaVersion == 1
-                && aggregateVersion != null
-                && placementVersion != null
-                && aggregateVersion >= 0
-                && aggregateVersion <= MAX_VERSION
-                && placementVersion >= 0
-                && placementVersion <= MAX_VERSION
-                && aggregateVersion.equals(placementVersion);
+        return PlacementLifecycleEvent.hasSupportedTypeAndVersions(
+                eventType, schemaVersion, aggregateVersion, placementVersion);
     }
 }
