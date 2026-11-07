@@ -1,6 +1,100 @@
 # T3-03 — Kiểm thử DEV và daily report
 
-## Cập nhật mới nhất — tích hợp nhánh DEV05/DEV06, 06/11/2026
+## Cập nhật mới nhất — chuẩn bị bàn giao QA, 07/11/2026
+
+**DEV07 — Lại Thái Thuận | Team 3 | T3-03 | UTC+7**
+
+Đã kiểm tra working tree sạch tại `50a238c` (người thực hiện đã commit/push lượt
+06/11), fetch/pull và ghép dependency mới **DEV05 `e256903` + DEV06 `c0850f5`**.
+`origin/main` vẫn ở `0cc1daf`. Không có conflict; merge hai nhánh dừng trước commit.
+Có nhánh dự phòng `backup/t3-03-before-dev-updates-20261107` tại `50a238c`.
+Không tạo stash mới vì không có thay đổi chưa commit; hai stash cũ vẫn được giữ.
+
+### Phần đã hoàn thiện trong phạm vi DEV07
+
+- Đọc contract/port lifecycle mới của DEV05 và domain/service/access/transaction
+  mới của DEV06; xác minh GET assignment/cohort/group runtime vẫn chưa tồn tại.
+- Bổ sung kiểm tra domain `Cohort/InternshipGroup.toDto()` của DEV06 với cùng
+  fixture JSON frontend đang dùng: scope IDs, Unicode, danh sách và version giữ
+  nguyên. Hai consumer tests không dùng provider production giả hoặc endpoint mới.
+- Cập nhật manifest bằng generator có sẵn: thêm **14 sourceHashes**, đổi **1 hash**
+  của PlacementEventEnvelopePolicy do DEV05 chuyển sang helper canonical. Không
+  sửa source owner, schema/registry/API/security/migration hoặc phê duyệt v1.1.
+- Chuẩn bị [gói bàn giao QA03](T3_03_QA_HANDOFF.md): cách chạy, Q01–Q08 có thể
+  kiểm ngay, B01–B04 còn phụ thuộc, nội dung người thực hiện gửi kèm sau push.
+- Không cần sửa DTO/UI production hiện tại: wire không đổi và chưa có HTTP
+  provider/context thật để thay `pendingWorkspaceGateway`.
+
+### Kết quả DEV mới nhất
+
+- **PASS — frontend build** và type-check strict test/harness trên Node 24.22.1.
+- **PASS — bundle check + 868/868 contract checks**, không failure.
+- **PASS — 429/429 backend unit:** 28 core + 273 DEV05 + 126 DEV06 + 2 consumer
+  compatibility DEV07. Một số test dùng mock/fake để kiểm domain/service; không
+  chứng minh persistence hoặc endpoint T3 chạy thật.
+- **PASS — 49/49 core integration/migration** với MySQL 8.4 Testcontainers.
+- **PASS — 49/49 Playwright:** 17 unit T3 + 18 UI/shell fixture T3 + 14 core/UX,
+  khoảng 38,7 giây. Không có failure/error/skipped trong các suite đã chạy.
+- **BUILD SUCCESS** với `mvnw.cmd -B -Dfrontend.e2e=true verify` trên JDK
+  Temurin 21.0.13+9, hoàn tất **13:43:32 UTC+7**, thời gian **1 phút 54 giây**.
+- **PASS — kiểm tra production bundle** không có marker fixture/test-only;
+  container kiểm thử đã tự dọn, không còn container chạy sau lượt verify.
+
+[Snapshot kiểm thử 07/11](evidence/T3_03_QA_VERIFICATION_2026_11_07.json) lưu
+revision nguồn, trạng thái merge, hash source và kết quả suite; không lưu secret
+hay system properties backend. Log local: `target/t3-03-qa-verify-2026-11-07.log`,
+`target/frontend-e2e.log`. Các snapshot 05/11–06/11 được giữ làm lịch sử.
+
+### Phạm vi bàn giao và các điểm chưa thể hoàn tất
+
+**Có thể bàn giao QA kiểm khung UI T3-03 và tương thích DTO/domain.** QA quyết định
+PASS/FAIL, Lead quyết định nghiệm thu. Không tự đánh dấu toàn bộ task/SRS DONE.
+
+Thông báo DEV06 qua người thực hiện: Case runtime và Case Read Port/provider để
+lại vì phụ thuộc phần Team 5 dự kiến tuần 3. Phần này được ghi **DEFERRED**, không
+phải test đã chạy PASS hoặc test bị tắt. Chưa có Case/Placement runtime để kiểm.
+
+Ngay cả khi tách Case ra, luồng UI dữ liệu thật vẫn **BLOCKED** bởi:
+
+- API đọc phân công HR/Mentor, parent/revoke/hiệu lực và transport chọn context.
+- API list cohort/group, scoped query/persistence và phân trang business Page.
+- Grant runtime `t3:workspace:read` cùng provider assignment có thẩm quyền.
+
+`WorkspaceService`/`CoreWorkspaceAccess` mới không phải Spring bean/controller;
+`BusinessAuthority` là consumer interface, `unavailableCases()` từ chối thao tác.
+Các lớp này không tạo API hay dữ liệu sẵn cho frontend. Không lấy mock test thành
+backend thật, không triển khai Case/DDL/provider ngoài phần DEV07 để vượt dependency.
+Chi tiết locator và điều kiện mở ca kiểm thử: [B01–B04](T3_03_QA_HANDOFF.md#các-ca-dữ-liệu-thật-chưa-thể-chạy).
+
+**Daily 07/11:** Đã cập nhật source DEV05/DEV06, kiểm tương thích domain → DTO →
+frontend, đồng bộ manifest, chạy full regression PASS và chuẩn bị gói QA. Còn
+chờ owner bàn giao assignment/context và cohort/group HTTP runtime; Case theo
+lịch Team 5. Tiếp theo: người thực hiện review/commit/push, cung cấp link commit/PR
+cho QA03 kiểm phạm vi hiện có; nối gateway và kiểm HTTP/IDOR/revoke sau khi đủ API.
+
+### Nhật ký Git 07/11
+
+```powershell
+git fetch origin
+git branch backup/t3-03-before-dev-updates-20261107
+git switch main
+git pull --ff-only origin main
+git switch feature/t3-03-hr-mentor-workspace
+git merge --ff-only main
+git merge --no-ff --no-commit origin/feature/t3-placement-inbox origin/feature/t3-cohort-group-domain
+# Generator chỉ đổi LF/CRLF ở 4 file dưới; đã kiểm Git blob khớp index rồi khôi phục:
+git restore --worktree -- docs/contracts/v1.1/audit_registry.csv docs/contracts/v1.1/examples.json docs/contracts/v1.1/permission_matrix.csv docs/contracts/v1.1/schemas.json
+```
+
+Merge hai dependency trong một lần giữ cả hai lịch sử, không tạo commit tự động.
+Git tự stage 25 file từ hai nhánh. Thay đổi DEV07 và manifest chưa stage; hướng
+dẫn commit/push hiện hành ở cuối tài liệu. Không pull/merge tiếp trước khi hoàn tất
+merge commit này; không apply lại stash cũ.
+
+## Lịch sử — tích hợp nhánh DEV05/DEV06, 06/11/2026
+
+Trạng thái merge chờ/“chưa push” trong mục lịch sử dưới đây là lúc chuẩn bị lượt
+06/11; người thực hiện sau đó đã tạo `bf41aed`, `50a238c` và push thành công.
 
 **DEV07 — Lại Thái Thuận | Team 3 | T3-03 | UTC+7**
 
@@ -310,7 +404,8 @@ Chưa commit/push/PR. Chưa nghiệm thu SRS.
 **Áp dụng cho trạng thái merge chờ commit hiện tại.** Làm từng bước, dừng nếu có
 lỗi. Đọc diff trước; file mới cần mở xem vì `git diff` không liệt kê nội dung file
 untracked. Đầu tiên hoàn tất merge dependency, giữ lịch sử/tác giả DEV05/DEV06.
-Hiện index chỉ có 6 file DEV06; thêm manifest 5 hash cho cùng commit tích hợp.
+Hiện index có 25 file từ DEV05/DEV06; thêm manifest (14 hash mới, 1 hash cập nhật)
+cho cùng commit tích hợp. Không chạy lại các lệnh commit của ngày 06/11.
 
 ```powershell
 git status --short --branch
@@ -320,25 +415,27 @@ git diff --cached
 git diff -- docs/contracts/v1.1/manifest.json
 git add -- docs/contracts/v1.1/manifest.json
 git diff --cached --check
-git commit -m "merge: integrate T3 placement and cohort group dependencies"
+git commit -m "merge: update T3 placement contracts and workspace services"
 ```
 
-Tiếp theo commit riêng phần DEV07 (gồm consumer test Java do DEV07 thêm). Không
+Tiếp theo commit riêng phần DEV07 (consumer test Java được cập nhật và gói QA). Không
 dùng `git commit -a` cho merge phía trên; không `git add .` để tránh gom lẫn việc.
 
 ```powershell
 git status --short --branch
-git diff -- web-demo/src/App.tsx web-demo/package.json docs/README.md
+git diff -- docs/README.md docs/guides/T3_03_HR_MENTOR_WORKSPACE.md docs/testing/T3_03_TEST_REPORT.md src/test/java/vn/utbridora/auth/modules/internship/contract/WorkspaceFrontendContractTest.java
 
-git add -- web-demo/src/App.tsx web-demo/package.json web-demo/src/modules/internship web-demo/tests/internship.unit.spec.ts web-demo/tests/internship.ui.spec.ts web-demo/tests/fixtures/internship.ts web-demo/tests/fixtures/internship-wire.json web-demo/tests/fixtures/internship.html web-demo/tests/fixtures/internship-harness.tsx src/test/java/vn/utbridora/auth/modules/internship/contract/WorkspaceFrontendContractTest.java docs/README.md docs/guides/T3_03_HR_MENTOR_WORKSPACE.md docs/testing/T3_03_TEST_REPORT.md docs/testing/evidence/T3_03_DEV_VERIFICATION.json docs/testing/evidence/T3_03_FULL_VERIFICATION_2026_11_06.json docs/testing/evidence/T3_03_DEPENDENCY_VERIFICATION_2026_11_06.json docs/testing/evidence/T3_03_UI_UNIT_RESULTS.xml docs/testing/evidence/t3-03
+git add -- src/test/java/vn/utbridora/auth/modules/internship/contract/WorkspaceFrontendContractTest.java
+git add -- docs/README.md docs/guides/T3_03_HR_MENTOR_WORKSPACE.md docs/testing/T3_03_TEST_REPORT.md docs/testing/T3_03_QA_HANDOFF.md docs/testing/evidence/T3_03_QA_VERIFICATION_2026_11_07.json
 git diff --cached --check
 git diff --cached --stat
 git diff --cached
 
-git commit -m "feat(internship): add scoped HR and mentor workspace shell"
+git commit -m "test(internship): verify domain compatibility and prepare QA handoff"
 git push -u origin feature/t3-03-hr-mentor-workspace
+git status
 ```
 
 Các lệnh stage/commit/push trong phần này chỉ là hướng dẫn, chưa được AI thực thi.
-Sáu file DEV06 có sẵn trong index do thao tác merge, không phải stage code DEV07.
+25 file dependency có sẵn trong index do thao tác merge, không phải stage code DEV07.
 PR/review/CI/merge lên main/xóa nhánh vẫn do người thực hiện xử lý sau.

@@ -58,7 +58,8 @@ docs/
 - [Checklist bàn giao](status/HANDOFF_CHECKLIST.md).
 - [Lịch sử nâng cấp giao diện và kiểm chứng đã ghi nhận](archive/UI_UPGRADE.md).
 - [Báo cáo kiểm thử](testing/TEST_REPORT.md).
-- [T3-03: kiểm thử DEV và daily report ngày 05/11/2026](testing/T3_03_TEST_REPORT.md).
+- [T3-03: kiểm thử DEV và daily report](testing/T3_03_TEST_REPORT.md).
+- [T3-03: bàn giao QA03, phạm vi kiểm thử và dependency](testing/T3_03_QA_HANDOFF.md).
 - Evidence gốc: [backend và tích hợp](testing/evidence/TEST_EVIDENCE.json), [giao diện](testing/evidence/UI_TEST_EVIDENCE.json), [trước push](testing/evidence/PREPUSH_TEST_EVIDENCE.json).
 
 Evidence JSON được giữ nguyên nội dung. Đường dẫn source/log hoặc checksum bên trong phản ánh snapshot lúc chạy, không phải kết quả được chạy lại khi tổ chức tài liệu.

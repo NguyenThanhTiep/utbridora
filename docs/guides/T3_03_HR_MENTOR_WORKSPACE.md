@@ -30,18 +30,25 @@ trace FR-07/FR-08. Không sửa workbook và không mở rộng sang task các t
 
 ## Trạng thái tích hợp hiện tại
 
-Ngày **06/11/2026**, đã lấy hai nhánh dependency vào nhánh T3-03:
+Ngày **07/11/2026**, đã cập nhật hai nhánh dependency vào nhánh T3-03:
 
-- DEV05 `feature/t3-placement-inbox` tại `53120d7`: hai policy thuần cùng unit
-  test và tài liệu thiết kế. Consumer/port/persistence còn chưa triển khai.
-- DEV06 `feature/t3-cohort-group-domain` tại `01f0c48`: Cohort/Group/Task DTO,
-  CohortGroupPolicy và unit test. Chưa có controller/service/repository/migration.
+- DEV05 `feature/t3-placement-inbox` tại `e256903`: canonical lifecycle values,
+  interface `PlacementLifecycleConsumer`, policy và contract/unit test. Interface
+  không phải consumer implementation; Case Read Port/provider/runtime vẫn chưa có.
+- DEV06 `feature/t3-cohort-group-domain` tại `c0850f5`: thêm domain Cohort/Group/Task,
+  `WorkspaceService`, consumer ports, access/transaction composition và test. Các
+  class chưa đăng ký Spring bean; chưa có REST controller, scoped list service,
+  persistence/provider hoặc migration. DDL trong tài liệu là proposal chưa duyệt.
 
-Hai nhánh được ghép local, không phải đã merge lên main. Git đang dừng trước
-merge commit để người thực hiện tự commit. `origin/main` vẫn ở `0cc1daf`.
-Checkout tổng hợp vẫn chưa có API đọc phân công/cohort/group, transport chọn
-context hoặc seed `t3:workspace:read` trong catalog runtime. DTO/policy không
-tự tạo HTTP endpoint để frontend gọi.
+Hai nhánh được ghép local và dừng trước commit để người thực hiện tự commit/push.
+Nền DEV07 đã push ngày 06/11 là `50a238c`; `origin/main` vẫn ở `0cc1daf`. Không
+suy tình trạng hoàn thành task của owner thành việc API đã sẵn sàng cho frontend.
+
+Thông báo DEV06 qua người thực hiện: Case runtime và Case Read Port/provider được
+để lại vì phụ thuộc phần Team 5 dự kiến tuần 3. T3-03 có thể bàn giao kiểm thử khung
+UI độc lập với Case runtime, nhưng vẫn chưa có **API đọc phân công/cohort/group,
+transport chọn context và quyền runtime `t3:workspace:read`** để nối dữ liệu thật.
+Đây là các điểm tích hợp riêng, không tự được giải quyết chỉ bằng việc bỏ qua Case.
 
 Vì vậy app thật sử dụng `pendingWorkspaceGateway`: hiển thị **Chờ tích hợp dữ liệu**,
 không tạo nhóm giả, không suy HR/Mentor từ role ENTERPRISE và không gửi request tới
@@ -67,24 +74,26 @@ core để ép hai giao thức thành một.
 
 ## Điểm bàn giao cho DEV05/DEV06 và T1
 
-Đối chiếu `origin/main` ngày **06/11/2026**: remote vẫn ở
-`0cc1daf`, không có commit mới hơn so với lần triển khai khung. Năm declaration
+Đối chiếu `origin/main` ngày **07/11/2026**: remote vẫn ở
+`0cc1daf`. Năm declaration
 `Scope`, `ContextAssignment`, `CohortDto`, `GroupDto`, `CohortQuery` giữ nguyên
 giữa v1.0 và v1.1. Bundle v1.1 vẫn ghi `t3:workspace:read` là
 `catalogImplemented: false`; không có GET đọc danh sách ContextAssignment hoặc
 transport chọn HR context mới. Không cần đổi DTO/UI chỉ vì thông báo cập nhật
-contract. Đã đọc thêm hai nhánh DEV05/DEV06 nêu trên: không có API mới để nối
-gateway. Giữ nguyên chữ ký endpoint đã công bố và trạng thái chờ tích hợp.
+contract. Hai nhánh mới có thêm domain/service/port nhưng vẫn không có GET runtime
+để nối gateway. Giữ nguyên chữ ký endpoint đã công bố và trạng thái chờ tích hợp.
 
 Thứ tự phối hợp để nối dữ liệu thật:
 
-- **T1-01 / T1:** contract và core auth hiện có; cần phối hợp thêm permission và
-  guard capability runtime. Contract PASS không có nghĩa các phần runtime đã có.
-- **T3-01 / DEV05:** Inbox/Case nhận Placement từ T5 và trạng thái thực tập hợp lệ.
-  T3 không tự tạo hay phê duyệt Placement.
-- **T3-02 / DEV06:** API cohort/group/task domain đúng scope. Cần thống nhất trong
-  Team 3 ai bàn giao API đọc assignment HR/Mentor và cơ chế chọn context, vì API
-  này chưa xuất hiện trong checkout/contract hiện tại.
+- **T1 / đầu mối Team 3:** tái sử dụng core auth đã có; cần xác nhận cách cấp
+  permission `t3:workspace:read` và provider authoritative cho assignment. Không
+  thay role core hoặc coi ENTERPRISE membership là quyền HR/Mentor.
+- **T3-01 / DEV05:** đã có chữ ký lifecycle; Case/Placement runtime là dependency
+  giai đoạn sau. T3-03 không tự tạo hay phê duyệt Placement, không giả Case provider.
+- **T3-02 / DEV06 và owner assignment:** cần HTTP GET danh sách cohort/group đúng
+  scope, phân trang business Page, API đọc assignment của actor hiện tại và cách
+  chọn context phía server. `CoreWorkspaceAccess.BusinessAuthority` mới là
+  consumer interface, không phải provider hoặc endpoint sẵn dùng.
 - **T5 (gián tiếp):** Placement/Term và dữ liệu nguồn để nghiệm thu luồng thực tập
   thật; chỉ ACTIVE mới mở thao tác Task theo contract.
 - **QA03:** kiểm thử lại với backend thật trước nghiệm thu. Trong thời gian chờ,
@@ -131,7 +140,8 @@ stale response; không catch lỗi quyền thành mảng rỗng hoặc fallback 
 
 `web-demo/tests/fixtures/internship-wire.json` chứa dữ liệu tổng hợp dùng chung
 cho test frontend và `WorkspaceFrontendContractTest` phía Java. Java đọc/serialize
-qua chính `CohortGroupDtos.CohortDto/GroupDto` của DEV06; frontend dùng cùng fixture
+qua chính `CohortGroupDtos.CohortDto/GroupDto` của DEV06, rồi kiểm cả chuyển đổi
+`Cohort/InternshipGroup.toDto()` mới tại `c0850f5`; frontend dùng cùng fixture
 trong kiểm tra scope và UI. Có nhóm bình thường, nhóm rỗng, Mentor trùng ID và
 version 0 / 9007199254740991. Test này phát hiện lệch tên/kiểu field hoặc mất dữ
 liệu giữa owner/consumer; không chứng minh REST API, context, auth hoặc DB T3.
@@ -166,6 +176,9 @@ backend, Docker hoặc tài khoản thật.
 Không truy cập fixture thủ công rồi coi đó là demo dữ liệu thật. Xem
 [báo cáo và daily report](../testing/T3_03_TEST_REPORT.md) để phân biệt kết quả DEV,
 phần NOT RUN và dependency còn thiếu.
+
+[Gói bàn giao QA03](../testing/T3_03_QA_HANDOFF.md) ghi lệnh chạy, các nhóm ca
+khung UI có thể kiểm ngay và điều kiện mở các ca HTTP/data thật còn bị chặn.
 
 ## Kiểm tra sau khi có backend thật
 

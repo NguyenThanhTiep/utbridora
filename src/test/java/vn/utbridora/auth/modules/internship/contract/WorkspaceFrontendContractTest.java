@@ -12,9 +12,12 @@ import tools.jackson.databind.json.JsonMapper;
 import vn.utbridora.auth.modules.internship.api.CohortGroupDtos.CohortDto;
 import vn.utbridora.auth.modules.internship.api.CohortGroupDtos.GroupDto;
 import vn.utbridora.auth.modules.internship.domain.CohortGroupPolicy;
+import vn.utbridora.auth.modules.internship.domain.Cohort;
+import vn.utbridora.auth.modules.internship.domain.InternshipGroup;
+import vn.utbridora.auth.modules.internship.domain.WorkspaceScope;
 import static org.junit.jupiter.api.Assertions.*;
 
-/** DEV07 consumer compatibility with DEV06 DTOs, not HTTP/authorization evidence.
+/** DEV07 consumer compatibility with DEV06 DTOs/domain, not HTTP/authorization evidence.
  * The same synthetic JSON is consumed by the frontend scope and browser tests.
  */
 class WorkspaceFrontendContractTest {
@@ -37,6 +40,12 @@ class WorkspaceFrontendContractTest {
         assertNotEquals(cohort.schoolOrgId(), cohort.termId());
         assertTrue(CohortGroupPolicy.matchesScope(cohort,
                 cohort.schoolOrgId(), cohort.enterpriseOrgId(), cohort.termId()));
+        // Exercise DEV06's new domain-to-wire conversion against the very same
+        // fixture used by frontend scope selection; swapped scope IDs fail here.
+        var domain = new Cohort(cohort.cohortId(),
+                new WorkspaceScope(cohort.enterpriseOrgId(), cohort.schoolOrgId(), cohort.termId()),
+                cohort.code(), cohort.name(), cohort.version());
+        assertEquals(expected, JSON.readTree(JSON.writeValueAsString(domain.toDto())));
     }
 
     @Test void frontendGroupFixturesPreserveListsAndVersionBoundariesOfOwnerDto() throws IOException {
@@ -47,6 +56,9 @@ class WorkspaceFrontendContractTest {
             var group = JSON.treeToValue(expected, GroupDto.class);
             assertEquals(expected, JSON.readTree(JSON.writeValueAsString(group)), name);
             assertTrue(CohortGroupPolicy.belongsToCohort(cohort, group), name);
+            var domain = new InternshipGroup(group.groupId(), group.cohortId(), group.code(),
+                    group.caseIds(), group.mentorUserIds(), group.version());
+            assertEquals(expected, JSON.readTree(JSON.writeValueAsString(domain.toDto())), name);
         }
         var repeated = JSON.treeToValue(examples.get("groupWithRepeatedMentors"), GroupDto.class);
         assertEquals(3, repeated.mentorUserIds().size());
