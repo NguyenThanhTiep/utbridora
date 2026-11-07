@@ -121,7 +121,7 @@ class StudentProfileIT {
         assertEquals(1,(int)read(created,"$.profileVersion"));
         assertEquals(student.id,read(created,"$.studentUserId"));assertEquals(university.id,read(created,"$.schoolOrgId"));
         assertEquals("demo-v1",read(created,"$.completeness.policyVersion"));assertEquals(CHECKS,read(created,"$.completeness.checks[*].code"));
-        assertTrue((Boolean)read(created,"$.completeness.complete"));
+        assertFalse((Boolean)read(created,"$.completeness.complete"));
         var reloaded=b.get(TERM);
         assertEquals(200,reloaded.statusCode(),reloaded.body());
         assertEquals("0901234567",read(reloaded,"$.profile.phone"));assertEquals("SELF_DECLARED",read(reloaded,"$.profile.skills[0].source"));
@@ -129,6 +129,22 @@ class StudentProfileIT {
         assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE action='STUDENT_PROFILE_UPDATED' AND actor_id=? AND organization_id=?",
             Integer.class,student.id,university.id));
         assertEnvelope(signedIn(student(university.id)).get(TERM),404,"RESOURCE_NOT_FOUND");
+    }
+    /** Review P1-3: without catalog, roster and taxonomy sources the interim result must never claim completeness. */
+    @Test void unverifiedMajorTermAndSkillsNeverReportComplete() throws Exception {
+        var unknown=input(0);unknown.put("majorCode","NO_SUCH_MAJOR");
+        unknown.put("skills",List.of(obj("skillCode","NO_SUCH_SKILL","level",3,"yearsPractice",1,"note",null)));
+        var res=signedIn(student).put(unknown);
+        assertEquals(200,res.statusCode(),res.body());
+        assertFalse((Boolean)read(res,"$.completeness.complete"));
+        assertEquals(CHECKS,read(res,"$.completeness.checks[*].code"));
+        assertEquals(List.of(false,false,true,false,true,true),read(res,"$.completeness.checks[*].passed"));
+        assertEquals(List.of("MAJOR_INVALID","STUDENT_TERM_MISSING","OK","SKILL_INVALID","OK","OK"),read(res,"$.completeness.checks[*].reasonCode"));
+        var empty=input(0);empty.put("majorCode",null);empty.put("skills",List.of());
+        var none=signedIn(student(university.id)).put(empty);
+        assertEquals(200,none.statusCode(),none.body());
+        assertFalse((Boolean)read(none,"$.completeness.complete"));
+        assertEquals(List.of("MAJOR_MISSING","STUDENT_TERM_MISSING","OK","OK","OK","OK"),read(none,"$.completeness.checks[*].reasonCode"));
     }
     @Test void staleVersionIs409AndDoesNotOverwrite() throws Exception {
         Browser b=signedIn(student);
