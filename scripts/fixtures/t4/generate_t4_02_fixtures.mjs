@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const outDir = dirname(fileURLToPath(import.meta.url));
-const fixtureSchema = 'utbridora_t4_fixture';
+const targetSchema = 'utbridora';
 const studentCount = 100;
 const enterpriseCount = 10;
 const schoolOrgId = 'f4a10001-0000-4000-8000-000000000001';
@@ -155,11 +155,11 @@ for (const enterprise of enterprises) {
 }
 
 const sql = [
-  '-- T4-02 synthetic fixture seed. TEST-ONLY: use an isolated schema with V1-V7 applied.',
+  '-- T4-02 synthetic mock data v1. TEAM TEST DATABASE ONLY: utbridora.',
   '-- Not a Flyway migration and not a T2/T5 runtime schema.',
   'SET NAMES utf8mb4;',
   '',
-  `CREATE TABLE IF NOT EXISTS ${fixtureSchema}.t4_fixture_cases (`,
+  `CREATE TABLE IF NOT EXISTS ${targetSchema}.t4_fixture_cases (`,
   '  case_id VARCHAR(40) NOT NULL PRIMARY KEY,',
   '  expected_outcome VARCHAR(20) NOT NULL,',
   '  student_user_id VARCHAR(36) NOT NULL,',
@@ -173,25 +173,25 @@ const sql = [
   '  demand_criteria JSON NOT NULL,',
   '  notes VARCHAR(500) NOT NULL,',
   "  CONSTRAINT chk_t4_fixture_outcome CHECK (expected_outcome IN ('MATCH','MISSING_DATA','NOT_MATCH')),",
-  `  CONSTRAINT fk_t4_fixture_student FOREIGN KEY (student_user_id) REFERENCES ${fixtureSchema}.users(id),`,
-  `  CONSTRAINT fk_t4_fixture_school FOREIGN KEY (school_org_id) REFERENCES ${fixtureSchema}.organizations(id),`,
-  `  CONSTRAINT fk_t4_fixture_enterprise FOREIGN KEY (enterprise_org_id) REFERENCES ${fixtureSchema}.organizations(id),`,
+  `  CONSTRAINT fk_t4_fixture_student FOREIGN KEY (student_user_id) REFERENCES ${targetSchema}.users(id),`,
+  `  CONSTRAINT fk_t4_fixture_school FOREIGN KEY (school_org_id) REFERENCES ${targetSchema}.organizations(id),`,
+  `  CONSTRAINT fk_t4_fixture_enterprise FOREIGN KEY (enterprise_org_id) REFERENCES ${targetSchema}.organizations(id),`,
   '  INDEX ix_t4_fixture_demand (demand_id),',
   '  INDEX ix_t4_fixture_expected (expected_outcome)',
   ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;',
   '',
   '-- Remove the three IDs from the initial small sample; generated case IDs below are stable/upsertable.',
-  `DELETE FROM ${fixtureSchema}.t4_fixture_cases WHERE case_id IN ('T4-02-MATCH','T4-02-MISSING','T4-02-NOT-MATCH');`,
+  `DELETE FROM ${targetSchema}.t4_fixture_cases WHERE case_id IN ('T4-02-MATCH','T4-02-MISSING','T4-02-NOT-MATCH');`,
   '',
   '-- Synthetic non-login users; IDs and emails are deterministic and reserved for this fixture.',
-  `INSERT INTO ${fixtureSchema}.users (id,email,password_hash,display_name,status,security_version,failed_attempts,locked_until,created_at,updated_at) VALUES`,
+  `INSERT INTO ${targetSchema}.users (id,email,password_hash,display_name,status,security_version,failed_attempts,locked_until,created_at,updated_at) VALUES`,
   students.map((s) => `(${[
     quoteSql(s.id), quoteSql(s.email), quoteSql('!T4_FIXTURE_NO_LOGIN!'), quoteSql(s.displayName),
     quoteSql('PENDING_ACTIVATION'), '0', '0', 'NULL', 'UTC_TIMESTAMP(6)', 'UTC_TIMESTAMP(6)',
   ].join(',')})`).join(',\n'),
   'AS incoming ON DUPLICATE KEY UPDATE email=incoming.email,password_hash=incoming.password_hash,display_name=incoming.display_name,status=incoming.status,security_version=incoming.security_version,failed_attempts=incoming.failed_attempts,locked_until=incoming.locked_until,updated_at=incoming.updated_at;',
   '',
-  `INSERT INTO ${fixtureSchema}.organizations (id,name,type,status,created_at) VALUES`,
+  `INSERT INTO ${targetSchema}.organizations (id,name,type,status,created_at) VALUES`,
   [`(${[quoteSql(school.id), quoteSql(school.name), quoteSql('UNIVERSITY'), quoteSql('VERIFIED'), 'UTC_TIMESTAMP(6)'].join(',')})`,
     ...enterprises.map((e) => `(${[quoteSql(e.id), quoteSql(e.name), quoteSql('ENTERPRISE'), quoteSql('VERIFIED'), 'UTC_TIMESTAMP(6)'].join(',')})`)].join(',\n'),
   'AS incoming ON DUPLICATE KEY UPDATE name=incoming.name,type=incoming.type,status=incoming.status;',
@@ -200,7 +200,7 @@ const sql = [
   ...Array.from({ length: Math.ceil(caseRows.length / 100) }, (_, chunk) => {
     const rows = caseRows.slice(chunk * 100, (chunk + 1) * 100);
     return [
-      `INSERT INTO ${fixtureSchema}.t4_fixture_cases (case_id,expected_outcome,student_user_id,school_org_id,enterprise_org_id,demand_id,term_id,student_code,display_name,profile_input,demand_criteria,notes) VALUES`,
+      `INSERT INTO ${targetSchema}.t4_fixture_cases (case_id,expected_outcome,student_user_id,school_org_id,enterprise_org_id,demand_id,term_id,student_code,display_name,profile_input,demand_criteria,notes) VALUES`,
       rows.join(',\n'),
       'AS incoming ON DUPLICATE KEY UPDATE expected_outcome=incoming.expected_outcome,student_user_id=incoming.student_user_id,school_org_id=incoming.school_org_id,enterprise_org_id=incoming.enterprise_org_id,demand_id=incoming.demand_id,term_id=incoming.term_id,student_code=incoming.student_code,display_name=incoming.display_name,profile_input=incoming.profile_input,demand_criteria=incoming.demand_criteria,notes=incoming.notes;',
       '',

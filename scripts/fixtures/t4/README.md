@@ -29,7 +29,7 @@ node scripts/fixtures/t4/generate_t4_02_fixtures.mjs
 
 Mã nguồn hiện tại có migration T1 cho `users` và `organizations`, nhưng chưa triển khai bảng hồ sơ T2 hoặc bảng nhu cầu T5. Vì vậy, `t4_fixture_cases` là **bảng trung gian chỉ phục vụ kiểm thử**, không phải bảng ứng dụng dùng khi vận hành hay migration Flyway. JSON trong bảng chứa dữ liệu giả lập cần cho Matching cùng ngữ cảnh doanh nghiệp/nhu cầu. Khi schema T2/T5 được cung cấp, hãy ánh xạ dữ liệu kiểm thử vào đúng bảng do các nhóm đó sở hữu; không đưa bảng trung gian này vào migration của ứng dụng.
 
-Seed luôn ghi rõ database đích là `utbridora_t4_fixture`, không phụ thuộc database đang được chọn trong connection. Hãy áp dụng V1–V7 trên schema này trước khi chạy. Không chạy seed trên database dùng chung hoặc môi trường thật. Nếu tài khoản kết nối không có quyền với schema fixture, MySQL sẽ từ chối lệnh thay vì ghi dữ liệu vào database khác. Có thể chạy lại seed với các ID kiểm thử ổn định: script xóa ba ID của bộ mẫu ban đầu rồi thêm hoặc cập nhật các ca đã sinh.
+Seed ghi rõ database đích là `utbridora`, cũng là database kiểm thử chung của nhóm. Chỉ chạy trên database kiểm thử của nhóm, không chạy trên production. Trước khi nạp, xác nhận migrations V1–V7 đã được áp dụng và các ID/email giả lập của T4 chưa được dữ liệu khác sử dụng. Seed tạo bảng trung gian `t4_fixture_cases`, thêm 100 user giả và 11 organization giả vào các bảng T1; các bản ghi này dùng ID/email cố định dành riêng cho T4. Có thể chạy lại seed với các ID kiểm thử ổn định: script xóa ba ID của bộ mẫu ban đầu rồi thêm hoặc cập nhật các ca đã sinh.
 
 Các khóa ngoại được khai báo trong SQL và MySQL sẽ kiểm tra khi nạp dữ liệu. QA có thể kiểm tra số lượng theo kết quả và tính toàn vẹn tham chiếu bằng các truy vấn sau:
 
