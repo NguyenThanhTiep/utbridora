@@ -276,6 +276,30 @@ test('UX UI mock: nhiều học kỳ đang mở thì cho chọn, chưa có hồ 
   await expect(select.locator('option')).toHaveText(['Chọn học kỳ', 'HK1-DEMO', 'HK2-DEMO']);
   expect(requested).toEqual([]);
   await select.selectOption(otherTerm);
-  await expect(page.getByRole('heading', { name: 'Chưa có hồ sơ cho học kỳ này', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Bạn chưa có hồ sơ sinh viên', exact: true })).toBeVisible();
   expect(requested).toEqual([otherTerm]);
+});
+
+test('UX UI mock: chưa có hồ sơ thì tạo bằng hồ sơ rỗng đủ 14 trường, version 0', async ({ page }) => {
+  const puts: { body: Record<string, unknown>; headers: Record<string, string> }[] = [];
+  const created = profileView(1, null);
+  created.profile = { ...created.profile, majorCode: null, skillsDeclared: false, skills: [], customSkills: [], availabilityDeclared: false,
+    availablePeriods: [], orientationCodes: [], subjectCodes: [], projects: [], certificates: [], cvFileId: null };
+  await page.route('**/api/v1/terms?**', route => route.fulfill({ json: termsPage([term(TERM_ID, 'HK1-DEMO', 'ACTIVE')]) }));
+  await page.route('**/api/v1/students/me/profile**', route => {
+    const request = route.request();
+    if (request.method() !== 'PUT') return route.fulfill({ status: 404, json: envelope('RESOURCE_NOT_FOUND', 'Không tìm thấy.') });
+    puts.push({ body: request.postDataJSON(), headers: request.headers() });
+    return route.fulfill({ json: created });
+  });
+  await openProfile(page);
+  await expect(page.getByRole('heading', { name: 'Bạn chưa có hồ sơ sinh viên', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Tạo hồ sơ', exact: true }).click();
+  await expect(page.getByText('Đã tạo hồ sơ.', { exact: false })).toBeVisible();
+  await expect(page.getByLabel('Số điện thoại', { exact: true })).toHaveValue('');
+  await expect(page.getByRole('button', { name: 'Lưu thông tin chung', exact: true })).toBeDisabled();
+  expect(puts).toHaveLength(1);
+  expect(puts[0].body).toEqual({ expectedProfileVersion: 0, termId: TERM_ID, majorCode: null, skillsDeclared: false, skills: [], customSkills: [],
+    availabilityDeclared: false, availablePeriods: [], orientationCodes: [], subjectCodes: [], projects: [], certificates: [], cvFileId: null, phone: null });
+  expect(puts[0].headers['idempotency-key']).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
 });

@@ -31,6 +31,12 @@ function validate(draft: Draft): DraftErrors {
   return errors;
 }
 const hasErrors = (errors: DraftErrors) => Boolean(errors.phone) || Object.keys(errors.periods).length > 0;
+// Tạo hồ sơ lần đầu (GET 404): đủ 14 trường, chưa khai gì, danh sách rỗng thay vì null; version 0 là đề xuất chờ leader ghi vào contract.
+const emptyInput = (termId: string): ProfileInput => ({
+  expectedProfileVersion: 0, termId, majorCode: null, skillsDeclared: false, skills: [], customSkills: [],
+  availabilityDeclared: false, availablePeriods: [], orientationCodes: [], subjectCodes: [], projects: [], certificates: [],
+  cvFileId: null, phone: null
+});
 // Lỗi server chỉ gắn vào ô khi `field` trùng đúng tên trường ProfileInput; định dạng đường dẫn lồng chưa được contract quy định.
 // Không hiển thị nguyên văn message của server: dùng câu cố định theo ô, lỗi khác kèm mã yêu cầu để tra cứu.
 const PHONE_FIELDS = ['phone'], AVAILABILITY_FIELDS = ['availabilityDeclared', 'availablePeriods'];
@@ -48,6 +54,7 @@ export function MyProfilePage({ me, schools }: { me: Me; schools: Grant[] }) {
   const [conflict, setConflict] = useState(false);
   const [rejected, setRejected] = useState<Rejected | null>(null);
   const save = useAction();
+  const create = useAction();
   const pending = useRef<{ body: string; key: string } | null>(null);
   const saving = useRef(false);
   const generation = useRef(0);
@@ -68,7 +75,8 @@ export function MyProfilePage({ me, schools }: { me: Me; schools: Grant[] }) {
   useEffect(() => {
     if (!termId) return;
     const current = ++generation.current;
-    setProfile({ status: 'loading' }); setDraft(null); setErrors({ periods: {} }); setRejected(null); setConflict(false); save.setMessage(''); pending.current = null;
+    setProfile({ status: 'loading' }); setDraft(null); setErrors({ periods: {} }); setRejected(null); setConflict(false);
+    save.setMessage(''); create.setMessage(''); pending.current = null;
     getMyProfile(termId).then(view => {
       if (generation.current !== current) return;
       setProfile({ status: 'ready', view }); setDraft(draftOf(view));
@@ -79,7 +87,7 @@ export function MyProfilePage({ me, schools }: { me: Me; schools: Grant[] }) {
       else setProfile({ status: 'error', message: failure instanceof Error ? failure.message : 'Không thể tải hồ sơ. Vui lòng thử lại.' });
     });
     return () => { generation.current += 1; };
-  }, [termId, profileAttempt, save.setMessage]);
+  }, [termId, profileAttempt, save.setMessage, create.setMessage]);
 
   const view = profile.status === 'ready' ? profile.view : null;
   const term = terms?.find(item => item.termId === termId) || null;
@@ -92,6 +100,31 @@ export function MyProfilePage({ me, schools }: { me: Me; schools: Grant[] }) {
   const reload = () => {
     if ((dirty || conflict) && !window.confirm('Thay đổi chưa lưu sẽ được thay bằng dữ liệu mới nhất. Tiếp tục?')) return;
     setProfileAttempt(previous => previous + 1);
+  };
+  const createProfile = () => {
+    if (saving.current || !termId) return;
+    const input = emptyInput(termId), body = JSON.stringify(input);
+    if (pending.current?.body !== body) pending.current = { body, key: newIdempotencyKey() };
+    const key = pending.current.key, current = generation.current;
+    saving.current = true;
+    void create.run(async () => {
+      try {
+        const created = await saveMyProfile(input, key);
+        if (generation.current !== current) return;
+        pending.current = null;
+        setProfile({ status: 'ready', view: created }); setDraft(draftOf(created));
+        save.setMessage('Đã tạo hồ sơ. Bạn có thể khai thông tin chung bên dưới.');
+      } catch (failure) {
+        if (generation.current !== current) return;
+        if (failure instanceof ApiError && failure.status === 409) {
+          if (failure.errorCode === 'REQUEST_IN_PROGRESS') throw new Error('Yêu cầu tạo hồ sơ vẫn đang được xử lý. Vui lòng thử lại sau giây lát.');
+          // Hồ sơ vừa được tạo ở nơi khác: tải lại để dùng đúng phiên bản đang có.
+          setProfileAttempt(previous => previous + 1);
+          return;
+        }
+        throw failure;
+      } finally { saving.current = false; }
+    });
   };
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -141,8 +174,11 @@ export function MyProfilePage({ me, schools }: { me: Me; schools: Grant[] }) {
       <button type="button" className="secondary" onClick={() => setTermsAttempt(previous => previous + 1)}><Icon name="refresh" size={16} />Thử lại</button></EmptyState>
     : !termId ? <EmptyState icon="calendar" title="Chọn học kỳ" description="Trường có nhiều học kỳ đang mở. Chọn học kỳ để xem hồ sơ tương ứng." />
     : profile.status === 'loading' ? <LoadingState label="Đang tải hồ sơ…" />
-    : profile.status === 'missing' ? <EmptyState icon="user" title="Chưa có hồ sơ cho học kỳ này"
-      description="Hồ sơ của bạn cho học kỳ này chưa được khởi tạo. Chức năng tạo hồ sơ lần đầu sẽ có khi hệ thống xác nhận cách khởi tạo." />
+    : profile.status === 'missing' ? <EmptyState icon="user" title="Bạn chưa có hồ sơ sinh viên"
+      description="Tạo hồ sơ để bắt đầu khai thông tin chung cho học kỳ này. Hồ sơ mới chưa có ngành, kỹ năng hay thời gian tham gia; bạn bổ sung sau khi tạo.">
+      <Notice message={create.message} tone="error" />
+      <button type="button" disabled={create.busy} onClick={createProfile}>
+        {create.busy ? <span className="spinner spinner-light" /> : <Icon name="plus" size={16} />}Tạo hồ sơ</button></EmptyState>
     : profile.status === 'error' ? <EmptyState icon="alert" title="Không tải được hồ sơ" description={profile.message}>
       <button type="button" className="secondary" onClick={() => setProfileAttempt(previous => previous + 1)}><Icon name="refresh" size={16} />Thử lại</button></EmptyState>
     : view && draft && <form className="student-profile-form" noValidate aria-busy={save.busy} onSubmit={submit}>
