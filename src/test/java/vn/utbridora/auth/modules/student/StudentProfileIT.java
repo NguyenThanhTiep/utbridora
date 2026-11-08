@@ -75,6 +75,23 @@ class StudentProfileIT {
     UserAccount student;
 
     @BeforeAll void hash() { passwordHash=encoder.encode(password); }
+    @Test
+    @org.junit.jupiter.api.condition.EnabledIfSystemProperty(named="frontend.e2e",matches="true")
+    void realStudentProfileBrowserFlow() throws Exception {
+        boolean windows=System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win");
+        ProcessBuilder builder=windows?new ProcessBuilder("cmd.exe","/c","npm.cmd run test:e2e -- student-runtime.spec.ts")
+            :new ProcessBuilder("npm","run","test:e2e","--","student-runtime.spec.ts");
+        builder.directory(new java.io.File("web-demo"));
+        builder.environment().put("API_PROXY_TARGET","http://localhost:"+port);
+        builder.environment().put("E2E_PROFILE_STUDENT_EMAIL",student.email);
+        builder.environment().put("E2E_PASSWORD",password);
+        builder.redirectErrorStream(true).redirectOutput(new java.io.File("target/student-browser.log"));
+        Process process=builder.start();
+        if(!process.waitFor(120,java.util.concurrent.TimeUnit.SECONDS)) {process.destroyForcibly();fail("See target/student-browser.log");}
+        assertEquals(0,process.exitValue(),"See target/student-browser.log");
+        assertEquals(2,jdbc.queryForObject("SELECT profile_version FROM student_profiles WHERE user_id=?",Integer.class,student.id));
+        assertEquals(2,jdbc.queryForObject("SELECT COUNT(*) FROM operation_records WHERE state='DONE'",Integer.class));
+    }
     @BeforeEach void seed() {
         for(String table:List.of("operation_records","student_term_eligibilities","student_rosters","student_project_files","student_project_skills","student_projects","student_certificates",
                 "student_custom_skills","student_profile_skills","student_profile_term_codes","student_profile_term_periods",

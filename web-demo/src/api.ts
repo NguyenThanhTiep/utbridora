@@ -9,8 +9,10 @@ export type Audit = { id: string; actorId: string | null; action: string; result
 export type History = { id: string; actorId: string; fromStatus: string; toStatus: string; reasonCode: string; changedAt: string };
 type Csrf = { headerName: string; token: string };
 let csrf: Csrf | null = null;
+export type FieldError = { field: string; code: string; message: string };
 export class ApiError extends Error {
-  constructor(public status: number, message: string, public requestId: string | null) { super(message); }
+  constructor(public status: number, message: string, public requestId: string | null,
+    public errorCode: string | null = null, public fieldErrors: FieldError[] = []) { super(message); }
 }
 const messages: Record<string, string> = {
   INVALID_CREDENTIALS: 'Email, mật khẩu không đúng hoặc tài khoản chưa sẵn sàng.',
@@ -18,13 +20,19 @@ const messages: Record<string, string> = {
   CONFLICT: 'Dữ liệu vừa thay đổi hoặc đã tồn tại. Vui lòng tải lại.',
   SESSION_EXPIRED: 'Phiên đã hết hạn hoặc bị thu hồi. Vui lòng đăng nhập lại.'
 };
+// ErrorEnvelope (Contract C.0) adds errorCode/fieldErrors; legacy core bodies only carry error/message.
+const reasonOf = (value: unknown) => typeof value === 'string' && /^[A-Z0-9_]{3,64}$/.test(value) ? value : null;
+const isFieldError = (value: unknown): value is FieldError => typeof value === 'object' && value !== null
+  && ['field', 'code', 'message'].every(key => typeof (value as Record<string, unknown>)[key] === 'string');
 async function errorOf(response: Response): Promise<ApiError> {
-  const body: { error?: string; message?: string } = await response.json().catch(() => ({}));
+  const parsed: unknown = await response.json().catch(() => null);
+  const body = (typeof parsed === 'object' && parsed !== null ? parsed : {}) as { errorCode?: unknown; error?: string; fieldErrors?: unknown };
   const message = response.status === 401 ? messages[body.error || 'SESSION_EXPIRED'] || messages.SESSION_EXPIRED
     : response.status === 403 ? 'Bạn không có quyền hoặc mã bảo vệ đã hết hạn. Tải lại trang trước khi thử lại.'
     : response.status === 429 ? 'Có quá nhiều yêu cầu. Vui lòng thử lại sau.'
     : messages[body.error || ''] || 'Không thể xử lý yêu cầu. Vui lòng thử lại sau.';
-  return new ApiError(response.status, message, response.headers.get('X-Request-ID'));
+  return new ApiError(response.status, message, response.headers.get('X-Request-ID'),
+    reasonOf(body.errorCode) || reasonOf(body.error), Array.isArray(body.fieldErrors) && body.fieldErrors.every(isFieldError) ? body.fieldErrors : []);
 }
 export async function getCsrf(): Promise<Csrf> {
   const response = await fetch('/api/v1/auth/csrf', { credentials: 'include', cache: 'no-store' });
