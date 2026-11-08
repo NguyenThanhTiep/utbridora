@@ -8,8 +8,14 @@ export const saveMyProfile = (input: ProfileInput, idempotencyKey: string) =>
   api<SelfProfileView>('/students/me/profile', { method: 'PUT', headers: { 'Idempotency-Key': idempotencyKey }, body: JSON.stringify(input) });
 
 // BC21 (v1.0 dòng 865): T5 sở hữu TermReference; size tối đa 100 theo PageQuery (C.0 dòng 89).
-export const listTerms = (schoolOrgId: string) =>
-  api<ContractPage<TermReference>>('/terms?schoolOrgId=' + encodeURIComponent(schoolOrgId) + '&page=0&size=100');
+export async function listTerms(schoolOrgId: string): Promise<TermReference[]> {
+  const read = (page: number) => api<ContractPage<TermReference>>(
+    '/terms?' + new URLSearchParams({ schoolOrgId, page: String(page), size: '100' }));
+  const first = await read(0);
+  const terms = [...first.content];
+  for (let page = 1; page < first.totalPages; page++) terms.push(...(await read(page)).content);
+  return terms;
+}
 
 // crypto.randomUUID chỉ có trong secure context (localhost/HTTPS); dự phòng UUID v4 từ getRandomValues.
 export function newIdempotencyKey() {

@@ -66,7 +66,7 @@ export function MyProfilePage({ me, schools }: { me: Me; schools: Grant[] }) {
     setTerms(null); setTermsFailed(false); setTermId('');
     void Promise.all(schoolIds.split(',').filter(Boolean).map(listTerms)).then(pages => {
       if (!active) return;
-      const open = pages.flatMap(page => page.content).filter(term => term.status === 'ACTIVE');
+      const open = pages.flat().filter(term => term.status === 'ACTIVE');
       setTerms(open); setTermId(open.length === 1 ? open[0].termId : '');
     }, () => { if (active) { setTerms([]); setTermsFailed(true); } });
     return () => { active = false; };
