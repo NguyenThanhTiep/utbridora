@@ -32,7 +32,7 @@ CREATE TABLE student_term_eligibilities (
     user_id VARCHAR(36) NULL,
     school_org_id VARCHAR(36) NULL,
     term_id VARCHAR(36) NULL,
-    version BIGINT NOT NULL DEFAULT 0,
+    version BIGINT NOT NULL DEFAULT 1,
     approved_by VARCHAR(36) NULL,
     approved_at DATETIME(6) NULL,
     reason_code VARCHAR(64) NULL,
@@ -52,7 +52,7 @@ CREATE TABLE student_term_eligibilities (
         (user_id IS NOT NULL AND school_org_id IS NOT NULL AND term_id IS NOT NULL)),
     CONSTRAINT ck_student_eligibility_approval CHECK (
         school_approved=b'0' OR (approved_by IS NOT NULL AND approved_at IS NOT NULL)),
-    CONSTRAINT ck_student_eligibility_version CHECK (version BETWEEN 0 AND 9007199254740991),
+    CONSTRAINT ck_student_eligibility_version CHECK (version BETWEEN 1 AND 9007199254740991),
 
     CONSTRAINT fk_eligibility_roster
         FOREIGN KEY (student_roster_id)

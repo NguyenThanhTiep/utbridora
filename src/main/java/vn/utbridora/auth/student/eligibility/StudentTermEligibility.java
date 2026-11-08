@@ -28,7 +28,7 @@ public class StudentTermEligibility {
     @Column(name="user_id",length=36) public String userId;
     @Column(name="school_org_id",length=36) public String schoolOrgId;
     @Column(name="term_id",length=36) public String termId;
-    @Version @Column(nullable=false) public long version;
+    @Version @Column(nullable=false) public long version=1;
     @Column(name="approved_by",length=36) public String approvedBy;
     @Column(name="approved_at") public Instant approvedAt;
     @Column(name="reason_code",length=64) public String reasonCode;

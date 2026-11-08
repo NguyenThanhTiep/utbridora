@@ -139,7 +139,7 @@ class StudentDataConstraintsIT {
                     sql.setString(1,user);sql.setString(2,user+"@example.test");sql.executeUpdate();
                 }
                 try(var sql=c.prepareStatement("UPDATE student_rosters SET user_id=? WHERE id=?")) {sql.setString(1,user);sql.setString(2,rosterA);sql.executeUpdate();}
-                try(var sql=c.prepareStatement("INSERT INTO terms (id,school_org_id,term_code,start_date,end_date,status,version,created_at,updated_at) VALUES (?,?,'2027-A','2027-01-01','2027-04-01','ACTIVE',0,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))")) {
+                try(var sql=c.prepareStatement("INSERT INTO terms (id,school_org_id,term_code,start_date,end_date,status,version,created_at,updated_at) VALUES (?,?,'2027-A','2027-01-01','2027-04-01','ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))")) {
                     sql.setString(1,termA);sql.setString(2,schoolA);sql.executeUpdate();
                     sql.setString(1,termB);sql.setString(2,schoolB);sql.executeUpdate();
                 }

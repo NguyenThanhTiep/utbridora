@@ -40,7 +40,7 @@ public class Term {
     /** Optimistic-lock version. Incremented on every mutation. */
     @Version
     @Column(nullable = false)
-    public long version = 0;
+    public long version = 1;
 
     @Column(name = "created_at", nullable = false)
     public Instant createdAt;

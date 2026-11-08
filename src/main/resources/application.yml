@@ -44,6 +44,10 @@ server:
         secure: ${COOKIE_SECURE:false} # true behind HTTPS in production
         same-site: lax
 app:
+  t5:
+    demand:
+      # Deployment switch only. Access still requires current authorization and authoritative references.
+      enabled: ${T5_DEMAND_ENABLED:true}
   public-url: ${APP_PUBLIC_URL:http://localhost:5173}
   mail-from: ${MAIL_FROM:no-reply@utbridora.local}
   bootstrap:

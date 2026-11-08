@@ -32,13 +32,14 @@ class TaxonomyIT {
     @Autowired UserRepository users;
     @Autowired MembershipRepository memberships;
     @Autowired OrganizationRepository organizations;
+    @Autowired vn.utbridora.auth.modules.cooperation.persistence.TermRepository terms;
     @Autowired PasswordEncoder encoder;
     String password="Test-"+UUID.randomUUID(),hash;
     UserAccount editor,admin,student;
     @BeforeAll void hash() {hash=encoder.encode(password);}
     @BeforeEach void seed() {
         jdbc.update("UPDATE skills SET parent_skill_id=NULL");jdbc.update("UPDATE skill_categories SET parent_category_id=NULL");
-        for(String table:List.of("operation_records","skill_implies","skill_aliases","skills","skill_categories","taxonomy_editor_assignments","SPRING_SESSION_ATTRIBUTES","SPRING_SESSION","audit_logs","memberships","users","organizations")) jdbc.update("DELETE FROM "+table);
+        for(String table:List.of("operation_records","demand_revisions","demands","skill_implies","skill_aliases","skills","skill_categories","taxonomy_editor_assignments","SPRING_SESSION_ATTRIBUTES","SPRING_SESSION","audit_logs","memberships","terms","users","organizations")) jdbc.update("DELETE FROM "+table);
         jdbc.update("UPDATE taxonomy_catalog_state SET taxonomy_version=1");
         editor=user(Role.ADMIN);admin=user(Role.ADMIN);student=user(Role.STUDENT);
         grant(editor);
@@ -47,7 +48,7 @@ class TaxonomyIT {
         UserAccount user=new UserAccount();user.email=UUID.randomUUID()+"@example.test";user.displayName="Taxonomy Test";user.passwordHash=hash;user.status=AccountStatus.ACTIVE;user=users.saveAndFlush(user);
         Membership m=new Membership();m.userId=user.id;m.role=role;
         if(role!=Role.ADMIN) {
-            Organization school=new Organization();school.name="Test School";school.type=Organization.Type.UNIVERSITY;school.status=Organization.Status.VERIFIED;
+            Organization school=new Organization();school.name="Test School";school.type=role==Role.ENTERPRISE?Organization.Type.ENTERPRISE:Organization.Type.UNIVERSITY;school.status=Organization.Status.VERIFIED;
             m.organizationId=organizations.saveAndFlush(school).id;
         }
         memberships.saveAndFlush(m);return user;
@@ -70,6 +71,19 @@ class TaxonomyIT {
     }
     static final String CATEGORY="{\"categoryCode\":\"PROGRAMMING\",\"name\":\"Programming\",\"parentCategoryCode\":null}";
     static void code(HttpResponse<String> r,int status,String code) {assertEquals(status,r.statusCode(),r.body());assertEquals(code,JsonPath.read(r.body(),"$.errorCode"));}
+    @Test void productionDemandReferencesFailClosedWhenAcademicCatalogIsAbsent() throws Exception {
+        UserAccount enterprise=user(Role.ENTERPRISE);Browser b=login(enterprise);
+        String enterpriseId=jdbc.queryForObject("SELECT organization_id FROM memberships WHERE user_id=?",String.class,enterprise.id);
+        String schoolId=jdbc.queryForObject("SELECT organization_id FROM memberships WHERE user_id=?",String.class,student.id);
+        var term=new vn.utbridora.auth.modules.cooperation.domain.Term();term.schoolOrgId=schoolId;term.termCode="TERM-1";
+        term.startDate=java.time.LocalDate.parse("2027-01-01");term.endDate=java.time.LocalDate.parse("2027-06-01");term.status=vn.utbridora.auth.modules.cooperation.domain.TermStatus.ACTIVE;terms.saveAndFlush(term);
+        String data="{\"schoolOrgId\":\""+schoolId+"\",\"termId\":\""+term.id+"\",\"title\":\"Internship\",\"quantity\":5,\"description\":\"Development\",\"location\":null,\"benefits\":null,\"deadline\":\"2027-01-01T00:00:00Z\",\"required\":{\"majorCodes\":[],\"skills\":[],\"dateRange\":{\"startDate\":\"2027-02-01\",\"endDate\":\"2027-05-01\"}},\"preferred\":[],\"academicCatalogVersion\":\"v1\",\"taxonomyVersion\":\"skills-v1\"}";
+        var request=HttpRequest.newBuilder(URI.create("http://localhost:"+port+"/api/v1/enterprise/demands")).header("Content-Type","application/json")
+            .header("X-Organization-Id",enterpriseId).header("Idempotency-Key",UUID.randomUUID().toString()).header("X-CSRF-TOKEN",b.csrf)
+            .POST(HttpRequest.BodyPublishers.ofString(data)).build();
+        code(b.client.send(request,HttpResponse.BodyHandlers.ofString()),503,"DEPENDENCY_UNAVAILABLE");
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM operation_records WHERE actor_id=?",Integer.class,enterprise.id));
+    }
     @Test void authenticatedStudentCanReadButCannotBecomeATaxEditor() throws Exception {
         Browser b=login(student);
         assertEquals(200,b.send("GET","/api/v1/taxonomy/skills",null,null,false).statusCode());

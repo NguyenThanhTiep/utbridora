@@ -115,7 +115,7 @@ class StudentProfileIT {
         var existing=jdbc.queryForList("SELECT school_org_id FROM terms WHERE id=?",String.class,term);
         if(!existing.isEmpty() && !existing.get(0).equals(school)) return;
         String code="TEST-"+term.substring(0,8);
-        jdbc.update("INSERT IGNORE INTO terms (id,school_org_id,term_code,start_date,end_date,status,version,created_at,updated_at) VALUES (?,?,?,'2026-12-01','2027-08-31','ACTIVE',0,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",term,school,code);
+        jdbc.update("INSERT IGNORE INTO terms (id,school_org_id,term_code,start_date,end_date,status,version,created_at,updated_at) VALUES (?,?,?,'2026-12-01','2027-08-31','ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",term,school,code);
         var rosters=jdbc.queryForList("SELECT id FROM student_rosters WHERE user_id=? AND school_org_id=?",String.class,user,school);
         String roster=rosters.isEmpty()?UUID.randomUUID().toString():rosters.get(0);
         if(rosters.isEmpty()) jdbc.update("INSERT INTO student_rosters (id,school_org_id,student_code,user_id,full_name,email,major_code,term_code,created_at) VALUES (?,?,?,?,? ,?,'SE',?,UTC_TIMESTAMP(6))",
