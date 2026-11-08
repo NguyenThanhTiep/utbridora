@@ -109,9 +109,11 @@ class OperationLedgerIT {
         assertEquals("IDEMPOTENCY_RESPONSE_EXPIRED",assertThrows(OperationFailure.class,()->run(command,this::write)).code);
         assertEquals(1,count("ledger_test_effects"));
     }
-    @Test void secretResponseIsNotCachedAndItsEffectRollsBack() {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"token","resetToken","passwordHash","credentials"})
+    void secretResponseIsNotCachedAndItsEffectRollsBack(String field) {
         assertThrows(OperationFailure.class,()->transactions.execute(status->ledger.execute(command(UUID.randomUUID().toString(),Map.of("x",1)),Map.class,
-                ()->{write();return Map.of("token","not-a-real-secret");},value->null)));
+                ()->{write();return Map.of(field,"not-a-real-secret");},value->null)));
         assertEquals(0,count("operation_records"));assertEquals(0,count("ledger_test_effects"));
     }
     @Test void requiresAnExistingDomainTransaction() {

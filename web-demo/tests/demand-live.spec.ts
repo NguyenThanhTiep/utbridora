@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('real API: sign in, create, reload, edit, reload', async ({ page }) => {
-  test.skip(!process.env.DEMAND_E2E_EMAIL, 'Run through DemandIT with -Ddemand.e2e=true');
+  test.skip(!process.env.DEMAND_E2E_EMAIL, 'Run through DemandIT with -Dfrontend.e2e=true');
   await page.goto('/');
   await page.getByLabel('Email', { exact: true }).fill(process.env.DEMAND_E2E_EMAIL!);
   await page.getByLabel('Mật khẩu', { exact: true }).fill(process.env.DEMAND_E2E_PASSWORD!);

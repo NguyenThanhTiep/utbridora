@@ -83,6 +83,7 @@ class StudentProfileIT {
             :new ProcessBuilder("npm","run","test:e2e","--","student-runtime.spec.ts");
         builder.directory(new java.io.File("web-demo"));
         builder.environment().put("API_PROXY_TARGET","http://localhost:"+port);
+        builder.environment().put("E2E_REPORT_FILE","../target/student-browser-results.xml");
         builder.environment().put("E2E_PROFILE_STUDENT_EMAIL",student.email);
         builder.environment().put("E2E_PASSWORD",password);
         builder.redirectErrorStream(true).redirectOutput(new java.io.File("target/student-browser.log"));

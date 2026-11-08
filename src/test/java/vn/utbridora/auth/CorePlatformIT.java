@@ -393,6 +393,7 @@ class CorePlatformIT {
         ProcessBuilder builder=windows?new ProcessBuilder("cmd.exe","/c","npm.cmd run test:e2e"):new ProcessBuilder("npm","run","test:e2e");
         builder.directory(new java.io.File("web-demo"));
         Map<String,String> env=builder.environment();env.put("API_PROXY_TARGET","http://localhost:"+port);
+        env.put("E2E_REPORT_FILE","../target/core-browser-results.xml");
         env.put("E2E_PASSWORD",password);env.put("E2E_NEW_PASSWORD","Next-"+UUID.randomUUID());
         env.put("E2E_ADMIN_EMAIL",admin.email);env.put("E2E_STUDENT_EMAIL",student.email);env.put("E2E_ENTERPRISE_EMAIL",enterprise.email);
         env.put("E2E_INVITATION_TOKEN",invitation);env.put("E2E_INVITATION_EMAIL",invitationEmail);

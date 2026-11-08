@@ -40,4 +40,3 @@ CREATE TABLE demand_revisions (
   CONSTRAINT fk_revision_actor FOREIGN KEY (actor_id) REFERENCES users(id),
   CONSTRAINT ck_revision_operation CHECK (operation IN ('CREATE','UPDATE'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-

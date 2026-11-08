@@ -270,6 +270,8 @@ public class SkillTaxonomyService implements SkillTaxonomyPort {
                 .orElseThrow(() -> new IllegalStateException("Taxonomy catalog is not initialized")).taxonomyVersion;
         return "skills-v" + current;
     }
+    String categoryId(CategoryDto value) {return category(value.categoryCode()).id;}
+    String skillId(SkillCatalogItem value) {return skill(value.skillCode()).id;}
 
     private TaxonomyCatalogState lockState() {
         return catalogState.findLockedById(STATE_ID)

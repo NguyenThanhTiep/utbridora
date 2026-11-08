@@ -11,7 +11,9 @@ final class DemandSecurityErrors {
     private DemandSecurityErrors() {}
     static boolean applies(HttpServletRequest request) {
         String path=request.getServletPath();
-        return path.equals("/api/v1/enterprise/demands") || path.startsWith("/api/v1/enterprise/demands/");
+        return java.util.List.of("/api/v1/enterprise/demands","/api/v1/enterprise/verifications","/api/v1/school/verifications",
+            "/api/v1/taxonomy","/api/v1/students/me/profile","/api/v1/terms")
+            .stream().anyMatch(prefix->path.equals(prefix) || path.startsWith(prefix+"/"));
     }
     static void write(HttpServletRequest request,HttpServletResponse response,int status,String code,String message) throws IOException {
         Object attribute=request.getAttribute("bridora.request_id");

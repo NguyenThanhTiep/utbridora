@@ -20,16 +20,16 @@ public class TaxonomyCommands {
         this.taxonomy=taxonomy;this.access=access;this.ledger=ledger;
     }
     public CategoryDto createCategory(AppPrincipal a,String key,CreateCategory request) {
-        return execute(a,key,"CATEGORY_CREATE",request,201,CategoryDto.class,()->taxonomy.createCategory(a,request),r->null);
+        return execute(a,key,"CATEGORY_CREATE",request,201,CategoryDto.class,()->taxonomy.createCategory(a,request),taxonomy::categoryId);
     }
     public CategoryDto updateCategory(AppPrincipal a,String key,String code,UpdateCategory request) {
-        return execute(a,key,"CATEGORY_UPDATE",Map.of("code",code,"data",request),200,CategoryDto.class,()->taxonomy.updateCategory(a,code,request),r->null);
+        return execute(a,key,"CATEGORY_UPDATE",Map.of("code",code,"data",request),200,CategoryDto.class,()->taxonomy.updateCategory(a,code,request),taxonomy::categoryId);
     }
     public SkillCatalogItem createSkill(AppPrincipal a,String key,CreateSkill request) {
-        return execute(a,key,"SKILL_CREATE",request,201,SkillCatalogItem.class,()->taxonomy.createSkill(a,request),r->null);
+        return execute(a,key,"SKILL_CREATE",request,201,SkillCatalogItem.class,()->taxonomy.createSkill(a,request),taxonomy::skillId);
     }
     public SkillCatalogItem updateSkill(AppPrincipal a,String key,String code,UpdateSkill request) {
-        return execute(a,key,"SKILL_UPDATE",Map.of("code",code,"data",request),200,SkillCatalogItem.class,()->taxonomy.updateSkill(a,code,request),r->null);
+        return execute(a,key,"SKILL_UPDATE",Map.of("code",code,"data",request),200,SkillCatalogItem.class,()->taxonomy.updateSkill(a,code,request),taxonomy::skillId);
     }
     public SkillAliasDto createAlias(AppPrincipal a,String key,String code,CreateAlias request) {
         return execute(a,key,"ALIAS_CREATE",Map.of("code",code,"data",request),201,SkillAliasDto.class,()->taxonomy.createAlias(a,code,request),SkillAliasDto::aliasId);

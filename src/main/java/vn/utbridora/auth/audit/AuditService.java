@@ -47,6 +47,22 @@ public class AuditService {
         event.metadataJson=new tools.jackson.databind.ObjectMapper().writeValueAsString(java.util.Map.of(
             "operation",operation,"demandVersion",demandVersion,"criteriaVersion",criteriaVersion));
     }
+    @Transactional
+    public void verificationChanged(String actor,String id,String action,String school,int submission,long version,
+                                    String reason,String decisionRef,java.util.List<String> missing) {
+        if(!java.util.Set.of("ENTERPRISE_VERIFICATION_DRAFT_SAVED","ENTERPRISE_VERIFICATION_SUBMITTED",
+            "ENTERPRISE_VERIFICATION_REJECTED","ENTERPRISE_VERIFICATION_CHANGES_REQUESTED","ENTERPRISE_VERIFIED").contains(action)
+            || submission<0 || version<1 || version>9_007_199_254_740_991L
+            || decisionRef!=null && !decisionRef.matches("[A-Za-z0-9][A-Za-z0-9._:/-]{0,119}")
+            || missing.stream().anyMatch(field->!java.util.Set.of("registrationCode","registeredName","address","contactName","contactEmail","contactPhone","evidenceFileIds").contains(field)))
+            throw new IllegalArgumentException("Invalid verification audit metadata");
+        validateId(school);
+        var data=new java.util.LinkedHashMap<String,Object>();data.put("schoolOrgId",school);data.put("submissionNo",submission);data.put("version",version);
+        if(action.equals("ENTERPRISE_VERIFIED")) data.put("decisionRef",decisionRef);
+        if(action.equals("ENTERPRISE_VERIFICATION_REJECTED") || action.equals("ENTERPRISE_VERIFICATION_CHANGES_REQUESTED")) data.put("reasonCode",reason);
+        if(action.equals("ENTERPRISE_VERIFICATION_CHANGES_REQUESTED")) data.put("missingFieldCodes",missing);
+        store(actor,action,"enterprise_verification",id,"SUCCESS",school,reason).metadataJson=new tools.jackson.databind.ObjectMapper().writeValueAsString(data);
+    }
     private AuditLog store(String actor,String action,String resourceType,String resourceId,
                        String result,String organizationId,String reasonCode) {
         AuditAction.valueOf(action);

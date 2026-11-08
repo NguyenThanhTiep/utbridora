@@ -119,7 +119,8 @@ public class OperationLedger {
     private static void rejectSecrets(Object value) {
         if (value instanceof Map<?,?> object) {
             object.forEach((key,item)->{
-                if (SECRET_FIELDS.contains(key.toString().toLowerCase(Locale.ROOT))) {
+                String name=key.toString().toLowerCase(Locale.ROOT);
+                if (SECRET_FIELDS.contains(name) || name.contains("password") || name.endsWith("token") || name.contains("credential") || name.endsWith("secret")) {
                     throw new OperationFailure(500,"INTERNAL_ERROR","Kết quả thao tác không được phép lưu vào bộ nhớ phản hồi.",null);
                 }
                 rejectSecrets(item);

@@ -44,4 +44,7 @@ jobs:
           path: |
             target/surefire-reports/
             target/failsafe-reports/
+            target/*browser-results.xml
+            target/*e2e.log
+            target/student-browser.log
             web-demo/test-results/

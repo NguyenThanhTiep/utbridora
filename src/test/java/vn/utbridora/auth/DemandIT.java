@@ -212,6 +212,7 @@ class DemandIT {
             new ProcessBuilder("npx","playwright","test","tests/demand-live.spec.ts");
         builder.directory(new java.io.File("web-demo"));
         var env=builder.environment(); env.put("API_PROXY_TARGET","http://localhost:"+port);
+        env.put("E2E_REPORT_FILE","../target/demand-browser-results.xml");
         env.put("DEMAND_E2E_EMAIL",user.email); env.put("DEMAND_E2E_PASSWORD",password);
         env.put("DEMAND_E2E_SCHOOL",school); env.put("DEMAND_E2E_TERM",input.termId());
         env.put("DEMAND_E2E_TAXONOMY",input.taxonomyVersion());
