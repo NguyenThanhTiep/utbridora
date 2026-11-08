@@ -1,8 +1,7 @@
 -- T2-01 own student profile (Contract Pack v1.1 BC11; data dictionary G.1 line 1682 and K.2 lines 1839-1854).
 -- One aggregate per student (UNIQUE user_id); major, availability and academic selections are kept per term
 -- (K.2 line 1847). Collections are relations, not JSON (G line 1667).
--- V9 is a provisional branch number (DEV01 review 11.4): it also exists on other branches; T1 sets the final order.
--- term_id has no FK yet: TermReference (T5) is not on main.
+-- Integrated order: V8 common ledger, V9 T5 terms, V10 T2 roster/eligibility, V11 profiles.
 CREATE TABLE student_profiles (
   id VARCHAR(36) NOT NULL PRIMARY KEY,
   user_id VARCHAR(36) NOT NULL,
@@ -28,6 +27,7 @@ CREATE TABLE student_profile_terms (
   PRIMARY KEY (profile_id, term_id),
   CONSTRAINT fk_student_profile_terms_profile FOREIGN KEY (profile_id) REFERENCES student_profiles(id),
   CONSTRAINT fk_student_profile_terms_school FOREIGN KEY (school_org_id) REFERENCES organizations(id)
+  ,CONSTRAINT fk_student_profile_terms_term FOREIGN KEY (term_id,school_org_id) REFERENCES terms(id,school_org_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE student_profile_term_periods (

@@ -22,6 +22,10 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import vn.utbridora.auth.modules.student.application.StudentTermScopePort;
 import vn.utbridora.auth.modules.student.application.UnavailableStudentTermScope;
+import vn.utbridora.auth.modules.student.application.LinkedStudentTermScope;
+import vn.utbridora.auth.modules.student.application.ProfileReferenceValidator;
+import vn.utbridora.auth.modules.student.application.ProfileReferenceConfiguration;
+import vn.utbridora.auth.modules.student.application.StudentProfileException;
 import vn.utbridora.auth.organization.*;
 import vn.utbridora.auth.user.*;
 
@@ -42,13 +46,21 @@ class StudentProfileIT {
     static final String TERM="44444444-4444-4444-8444-444444444444";
     static final String PROFILE="/api/v1/students/me/profile";
     static final List<String> CHECKS=List.of("MAJOR_VALID","STUDENT_TERM_PRESENT","SKILLS_DECLARED","SKILLS_VALID","AVAILABILITY_DECLARED","AVAILABILITY_VALID");
-    /** Stands in for the T5 TermReference and T2 student-term link adapter; production keeps the fail-closed default. */
+    /** Positive paths use real T5/T2 providers. Only the availability-failure switch is a test wrapper. */
     @TestConfiguration static class LinkedTerms {
-        static final Map<String,String> LINKS=new ConcurrentHashMap<>();
         static volatile boolean available=true;
-        @Bean @Primary StudentTermScopePort fixtureStudentTerms() {
-            return (student,term)->available ? Optional.ofNullable(LINKS.get(student+"|"+term))
+        @Bean @Primary StudentTermScopePort fixtureStudentTerms(LinkedStudentTermScope authoritative) {
+            return (student,term)->available ? authoritative.schoolOfLinkedTerm(student,term)
                 : new UnavailableStudentTermScope().schoolOfLinkedTerm(student,term);
+        }
+        /** Catalog fixture for write/DTO cases only, not evidence of a production T4 provider or completeness policy. */
+        @Bean @Primary ProfileReferenceValidator fixtureProfileReferences() {
+            return (school,input)->{
+                if(input.majorCode()!=null && !Set.of("SE","AI").contains(input.majorCode()))
+                    throw new StudentProfileException(422,"INVALID_CATALOG_REFERENCE","Mã ngành không hợp lệ.",List.of());
+                if(input.skills().stream().anyMatch(skill->!Set.of("JAVA","PYTHON").contains(skill.skillCode())))
+                    throw new StudentProfileException(422,"INVALID_SKILL","Mã kỹ năng không hợp lệ.",List.of());
+            };
         }
     }
     @LocalServerPort int port;
@@ -64,11 +76,11 @@ class StudentProfileIT {
 
     @BeforeAll void hash() { passwordHash=encoder.encode(password); }
     @BeforeEach void seed() {
-        for(String table:List.of("operation_records","student_project_files","student_project_skills","student_projects","student_certificates",
+        for(String table:List.of("operation_records","student_term_eligibilities","student_rosters","student_project_files","student_project_skills","student_projects","student_certificates",
                 "student_custom_skills","student_profile_skills","student_profile_term_codes","student_profile_term_periods",
                 "student_profile_terms","student_profiles","SPRING_SESSION_ATTRIBUTES","SPRING_SESSION","audit_logs","account_status_history",
-                "one_time_tokens","files","memberships","users","organizations")) jdbc.update("DELETE FROM "+table);
-        LinkedTerms.LINKS.clear();LinkedTerms.available=true;
+                "one_time_tokens","files","memberships","terms","users","organizations")) jdbc.update("DELETE FROM "+table);
+        LinkedTerms.available=true;
         university=university(Organization.Status.VERIFIED);
         student=student(university.id);
     }
@@ -80,7 +92,19 @@ class StudentProfileIT {
         UserAccount user=new UserAccount();user.email=UUID.randomUUID()+"@example.test";
         user.displayName="Sinh viên kiểm thử";user.passwordHash=passwordHash;user.status=AccountStatus.ACTIVE;
         users.saveAndFlush(user);Membership m=new Membership();m.userId=user.id;m.role=Role.STUDENT;m.organizationId=schoolId;
-        memberships.saveAndFlush(m);LinkedTerms.LINKS.put(user.id+"|"+TERM,schoolId);return user;
+        memberships.saveAndFlush(m);linkTerm(user.id,TERM,schoolId);return user;
+    }
+    void linkTerm(String user,String term,String school) {
+        var existing=jdbc.queryForList("SELECT school_org_id FROM terms WHERE id=?",String.class,term);
+        if(!existing.isEmpty() && !existing.get(0).equals(school)) return;
+        String code="TEST-"+term.substring(0,8);
+        jdbc.update("INSERT IGNORE INTO terms (id,school_org_id,term_code,start_date,end_date,status,version,created_at,updated_at) VALUES (?,?,?,'2026-12-01','2027-08-31','ACTIVE',0,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",term,school,code);
+        var rosters=jdbc.queryForList("SELECT id FROM student_rosters WHERE user_id=? AND school_org_id=?",String.class,user,school);
+        String roster=rosters.isEmpty()?UUID.randomUUID().toString():rosters.get(0);
+        if(rosters.isEmpty()) jdbc.update("INSERT INTO student_rosters (id,school_org_id,student_code,user_id,full_name,email,major_code,term_code,created_at) VALUES (?,?,?,?,? ,?,'SE',?,UTC_TIMESTAMP(6))",
+                roster,school,"00"+user.replace("-","").substring(0,24),user,"Synthetic student",user+"@example.test",code);
+        jdbc.update("INSERT IGNORE INTO student_term_eligibilities (id,student_roster_id,term_code,user_id,school_org_id,term_id,school_approved,created_at) VALUES (?,?,?,?,?,?,b'0',UTC_TIMESTAMP(6))",
+                UUID.randomUUID().toString(),roster,code,user,school,term);
     }
     static Map<String,Object> obj(Object... pairs) {
         Map<String,Object> map=new LinkedHashMap<>();
@@ -143,6 +167,18 @@ class StudentProfileIT {
         assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE action='STUDENT_PROFILE_UPDATED'",Integer.class));
     }
 
+    @Test void termListIsScopedAndARealLinkedTermDoesNotApproveTheStudent() throws Exception {
+        Browser b=signedIn(student);
+        var page=b.send("GET","/api/v1/terms?schoolOrgId="+university.id,null,false,null);
+        assertEquals(200,page.statusCode(),page.body());assertEquals(List.of(TERM),read(page,"$.content[*].termId"));
+        var foreign=university(Organization.Status.VERIFIED);
+        assertEnvelope(b.send("GET","/api/v1/terms?schoolOrgId="+foreign.id,null,false,null),404,"RESOURCE_NOT_FOUND");
+        assertEquals(200,b.put(input(0)).statusCode());
+        assertFalse(jdbc.queryForObject("SELECT school_approved FROM student_term_eligibilities WHERE user_id=? AND term_id=?",Boolean.class,student.id,TERM));
+        jdbc.update("UPDATE terms SET status='CLOSED' WHERE id=?",TERM);
+        assertEnvelope(b.get(TERM),404,"RESOURCE_NOT_FOUND");
+    }
+
     @Test void replayRechecksMembershipAndNeverReturnsCachedDataToRevokedActor() throws Exception {
         Browser b=signedIn(student);String key=UUID.randomUUID().toString();
         String body=new tools.jackson.databind.ObjectMapper().writeValueAsString(input(0));
@@ -181,21 +217,17 @@ class StudentProfileIT {
             Integer.class,student.id,university.id));
         assertEnvelope(signedIn(student(university.id)).get(TERM),404,"RESOURCE_NOT_FOUND");
     }
-    /** Review P1-3: without catalog, roster and taxonomy sources the interim result must never claim completeness. */
+    /** Unknown codes are rejected; valid linkage is no longer replaced with a hard-coded failure. */
     @Test void unverifiedMajorTermAndSkillsNeverReportComplete() throws Exception {
         var unknown=input(0);unknown.put("majorCode","NO_SUCH_MAJOR");
         unknown.put("skills",List.of(obj("skillCode","NO_SUCH_SKILL","level",3,"yearsPractice",1,"note",null)));
         var res=signedIn(student).put(unknown);
-        assertEquals(200,res.statusCode(),res.body());
-        assertFalse((Boolean)read(res,"$.completeness.complete"));
-        assertEquals(CHECKS,read(res,"$.completeness.checks[*].code"));
-        assertEquals(List.of(false,false,true,false,true,true),read(res,"$.completeness.checks[*].passed"));
-        assertEquals(List.of("MAJOR_INVALID","STUDENT_TERM_MISSING","OK","SKILL_INVALID","OK","OK"),read(res,"$.completeness.checks[*].reasonCode"));
+        assertEnvelope(res,422,"INVALID_CATALOG_REFERENCE");
         var empty=input(0);empty.put("majorCode",null);empty.put("skills",List.of());
         var none=signedIn(student(university.id)).put(empty);
         assertEquals(200,none.statusCode(),none.body());
         assertFalse((Boolean)read(none,"$.completeness.complete"));
-        assertEquals(List.of("MAJOR_MISSING","STUDENT_TERM_MISSING","OK","OK","OK","OK"),read(none,"$.completeness.checks[*].reasonCode"));
+        assertEquals(List.of("MAJOR_MISSING","OK","OK","OK","OK","OK"),read(none,"$.completeness.checks[*].reasonCode"));
     }
     /** Review P1-2: a term without an authoritative student link is rejected, and nothing is created while the source is down. */
     @Test void unverifiedTermIsRejectedAndCreatesNoProfile() throws Exception {
@@ -212,7 +244,7 @@ class StudentProfileIT {
         Organization second=university(Organization.Status.VERIFIED);
         Membership m=new Membership();m.userId=student.id;m.role=Role.STUDENT;m.organizationId=second.id;memberships.saveAndFlush(m);
         String secondTerm="55555555-5555-4555-8555-555555555555";
-        LinkedTerms.LINKS.put(student.id+"|"+secondTerm,second.id);
+        linkTerm(student.id,secondTerm,second.id);
         var body=input(0);body.put("termId",secondTerm);
         var saved=signedIn(student).put(body);
         assertEquals(200,saved.statusCode(),saved.body());
@@ -222,7 +254,7 @@ class StudentProfileIT {
     @Test void sharedDataSpansTermsWhileTermDataStaysPerTerm() throws Exception {
         Browser b=signedIn(student);
         String nextTerm="66666666-6666-4666-8666-666666666666";
-        LinkedTerms.LINKS.put(student.id+"|"+nextTerm,university.id);
+        linkTerm(student.id,nextTerm,university.id);
         var first=input(0);first.put("projects",List.of(project(null)));
         var created=b.put(first);
         assertEquals(200,created.statusCode(),created.body());

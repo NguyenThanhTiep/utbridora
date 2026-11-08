@@ -32,12 +32,15 @@ public class StudentProfileService {
     private final AuditService audit;
     private final StudentTermScopePort terms;
     private final OperationLedger operations;
+    private final ProfileReferenceValidator references;
     @jakarta.persistence.PersistenceContext private jakarta.persistence.EntityManager entityManager;
 
     public StudentProfileService(StudentProfileRepository profiles,MembershipRepository memberships,
-                                 AuthorizationPolicy policy,AuditService audit,StudentTermScopePort terms,OperationLedger operations) {
+                                 AuthorizationPolicy policy,AuditService audit,StudentTermScopePort terms,OperationLedger operations,
+                                 ProfileReferenceValidator references) {
         this.profiles=profiles;this.memberships=memberships;this.policy=policy;this.audit=audit;this.terms=terms;
         this.operations=operations;
+        this.references=references;
     }
 
     @Transactional(readOnly=true)
@@ -65,6 +68,7 @@ public class StudentProfileService {
     }
 
     private SelfProfileView saveAuthorized(String actor,String school,ProfileInput input) {
+        references.validate(school,input);
         ProfileRow current=profiles.lockByUser(actor).orElse(null);
         // First save uses expectedProfileVersion 0 (proposal pending the leader); later saves must match exactly.
         long version=current==null?0:current.version();
@@ -186,7 +190,8 @@ public class StudentProfileService {
             profiles.skills(profile.id()),profiles.customSkills(profile.id()),term!=null && term.availabilityDeclared(),
             profiles.periods(profile.id(),termId),profiles.codes(profile.id(),termId,"ORIENTATION"),profiles.codes(profile.id(),termId,"SUBJECT"),
             profiles.projects(profile.id()),profiles.certificates(profile.id()),profile.cvFileId(),profile.phone());
-        return new SelfProfileView(profile.userId(),school,profile.version(),data,InterimCompleteness.evaluate(data));
+        boolean studentTermPresent=terms.schoolOfLinkedTerm(profile.userId(),termId).filter(school::equals).isPresent();
+        return new SelfProfileView(profile.userId(),school,profile.version(),data,InterimCompleteness.evaluate(data,studentTermPresent));
     }
     private static String actor(Authentication auth) { return auth!=null && auth.getPrincipal() instanceof AppPrincipal p ? p.userId() : null; }
     private static StudentProfileException notFound() { return StudentProfileException.of(404,"RESOURCE_NOT_FOUND","Không tìm thấy hồ sơ."); }
