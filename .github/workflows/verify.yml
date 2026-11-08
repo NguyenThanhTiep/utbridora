@@ -15,6 +15,7 @@ jobs:
           cache-dependency-path: scripts/contracts/requirements.txt
       - run: python -m pip install -r scripts/contracts/requirements.txt
       - run: python scripts/contracts/test_bundle_portability.py
+      - run: python scripts/contracts/test_audit_registry.py
       - run: python scripts/contracts/build_contract_bundle.py --check
       - run: python scripts/contracts/verify_contracts.py --output target/contract-verification.json
       - uses: actions/upload-artifact@v4
