@@ -193,7 +193,7 @@ class StudentProfileIT {
         assertEquals(200,b.put(input(0)).statusCode());
         assertFalse(jdbc.queryForObject("SELECT school_approved FROM student_term_eligibilities WHERE user_id=? AND term_id=?",Boolean.class,student.id,TERM));
         jdbc.update("UPDATE terms SET status='CLOSED' WHERE id=?",TERM);
-        assertEnvelope(b.get(TERM),404,"RESOURCE_NOT_FOUND");
+        assertEquals(200,b.get(TERM).statusCode());
     }
 
     @Test void replayRechecksMembershipAndNeverReturnsCachedDataToRevokedActor() throws Exception {

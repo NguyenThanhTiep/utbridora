@@ -49,7 +49,7 @@ public class StudentProfileService {
         if(!ProfileInputParser.isUuid(termId)) throw new StudentProfileException(400,"INVALID_REQUEST","Mã học kỳ chưa hợp lệ.",
             List.of(new FieldErrorView("termId","INVALID_REQUEST","Phải là UUID.")));
         String term=termId.toLowerCase(Locale.ROOT), school=schoolOf(auth,term,READ);
-        // 404 only while the student's aggregate does not exist (proposal pending the leader); a new term of an
+        // 404 only while the student's aggregate does not exist; a new term of an
         // existing profile returns that term's empty part with the current profileVersion.
         ProfileRow profile=profiles.findByUser(actor(auth)).orElseThrow(StudentProfileService::notFound);
         return view(profile,term,school);
@@ -70,7 +70,7 @@ public class StudentProfileService {
     private SelfProfileView saveAuthorized(String actor,String school,ProfileInput input) {
         references.validate(school,input);
         ProfileRow current=profiles.lockByUser(actor).orElse(null);
-        // First save uses expectedProfileVersion 0 (proposal pending the leader); later saves must match exactly.
+        // First save uses expectedProfileVersion 0; later saves must match exactly.
         long version=current==null?0:current.version();
         if(input.expectedProfileVersion()!=version) throw StudentProfileException.of(409,"PROFILE_STALE","Hồ sơ đã thay đổi, vui lòng tải lại.");
         SelfProfileData before=current==null?null:view(current,input.termId(),school).profile();

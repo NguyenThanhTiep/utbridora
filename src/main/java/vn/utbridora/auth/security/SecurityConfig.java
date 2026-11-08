@@ -50,6 +50,10 @@ public class SecurityConfig {
                .requestMatchers(HttpMethod.GET,"/actuator/health", "/actuator/health/liveness", "/actuator/health/readiness").permitAll()
                .requestMatchers(HttpMethod.POST,"/api/v1/auth/login","/api/v1/auth/password/forgot",
                        "/api/v1/auth/password/reset","/api/v1/auth/invitations/accept").permitAll()
+               .requestMatchers(HttpMethod.GET,"/api/v1/taxonomy/**").authenticated()
+               .requestMatchers(HttpMethod.POST,"/api/v1/taxonomy/categories","/api/v1/taxonomy/skills","/api/v1/taxonomy/skills/resolve","/api/v1/taxonomy/skills/*/aliases").authenticated()
+               .requestMatchers(HttpMethod.PATCH,"/api/v1/taxonomy/categories/*","/api/v1/taxonomy/skills/*").authenticated()
+               .requestMatchers(HttpMethod.DELETE,"/api/v1/taxonomy/skills/*/aliases/*").authenticated()
                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                .requestMatchers("/api/v1/auth/**", "/api/v1/demo/**").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/terms","/api/v1/terms/*").authenticated()

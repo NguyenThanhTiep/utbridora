@@ -17,6 +17,7 @@ public class AuditLog {
     @Column(name="reason_code",length=64) public String reasonCode;
     @Column(nullable=false,length=32) public String source="APPLICATION";
     @Column(name="event_version",nullable=false) public short eventVersion=1;
+    @Column(name="metadata_json",columnDefinition="json") public String metadataJson;
     @Column(name="created_at",nullable=false) public Instant createdAt;
     @PrePersist void onCreate(){if(id==null) id=UUID.randomUUID().toString();if(createdAt==null)createdAt=Instant.now();}
 }

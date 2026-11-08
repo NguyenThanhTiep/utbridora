@@ -14,7 +14,7 @@ public class LinkedStudentTermScope implements StudentTermScopePort {
     public LinkedStudentTermScope(TermReferencePort terms,StudentTermLinkService links) { this.terms=terms;this.links=links; }
     @Override @Transactional(readOnly=true)
     public Optional<String> schoolOfLinkedTerm(String userId,String termId) {
-        return terms.findById(termId).filter(term->term.status()==TermReferencePort.Status.ACTIVE)
-                .filter(term->links.linked(userId,term.schoolOrgId(),term.termId())).map(TermReferencePort.TermReference::schoolOrgId);
+        return terms.findById(termId).filter(term->links.linked(userId,term.schoolOrgId(),term.termId()))
+                .map(TermReferencePort.TermReference::schoolOrgId);
     }
 }

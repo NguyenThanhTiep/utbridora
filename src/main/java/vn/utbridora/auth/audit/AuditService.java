@@ -26,7 +26,18 @@ public class AuditService {
     public void securityDenied(String actor,String reasonCode) {
         store(actor,"ACCESS_DENIED","http_request",null,"DENIED",null,reasonCode);
     }
-    private void store(String actor,String action,String resourceType,String resourceId,
+    @Transactional
+    public void taxonomyChanged(String actor,String id,String entityType,String operation,String skillCode,String taxonomyVersion) {
+        if(!java.util.Set.of("CATEGORY","SKILL","ALIAS").contains(entityType)
+            || !java.util.Set.of("CREATE","UPDATE","DEPRECATE","DELETE_ALIAS").contains(operation)
+            || skillCode!=null && !skillCode.matches("[A-Z][A-Z0-9_]{0,63}")
+            || taxonomyVersion==null || !taxonomyVersion.matches("skills-v[1-9][0-9]*")) throw new IllegalArgumentException("Invalid taxonomy audit metadata");
+        var metadata=new java.util.LinkedHashMap<String,Object>();
+        metadata.put("entityType",entityType);metadata.put("operation",operation);metadata.put("skillCode",skillCode);metadata.put("taxonomyVersion",taxonomyVersion);
+        var event=store(actor,"TAXONOMY_CHANGED","skill_taxonomy_entry",id,"SUCCESS",null,operation);
+        event.metadataJson=new tools.jackson.databind.ObjectMapper().writeValueAsString(metadata);
+    }
+    private AuditLog store(String actor,String action,String resourceType,String resourceId,
                        String result,String organizationId,String reasonCode) {
         AuditAction.valueOf(action);
         if(resourceType==null || !resourceType.matches("[a-z][a-z0-9_]{0,79}")
@@ -45,7 +56,7 @@ public class AuditService {
             if(id instanceof String s) event.requestId=s;
         }
         if(event.requestId==null) event.requestId=java.util.UUID.randomUUID().toString();
-        repository.save(event);
+        return repository.save(event);
     }
     private void validateId(String id) {
         if(id!=null && !id.matches("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"))
