@@ -81,7 +81,7 @@ public class OperationLedger {
             String effect=effectReference.apply(result);
             if (effect!=null) effect=uuid(effect);
             jdbc.update("UPDATE operation_records SET state='DONE',effect_ref=?,response_status=?,response_json=?,response_expires_at=? WHERE id=?",
-                    effect,command.responseStatus(),JSON.writeValueAsString(response),Timestamp.from(clock.instant().plus(Duration.ofHours(24))),reservation);
+                    effect,command.responseStatus(),JSON.writeValueAsString(result),Timestamp.from(clock.instant().plus(Duration.ofHours(24))),reservation);
             return result;
         } catch (DataAccessException failure) {
             for (Throwable cause=failure;cause!=null;cause=cause.getCause()) {

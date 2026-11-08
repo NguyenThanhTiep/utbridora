@@ -52,6 +52,9 @@ public class SecurityConfig {
                        "/api/v1/auth/password/reset","/api/v1/auth/invitations/accept").permitAll()
                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                .requestMatchers("/api/v1/auth/**", "/api/v1/demo/**").authenticated()
+               // T2-01 own student profile (BC11); the VERIFIED school scope is checked in StudentProfileService.
+               .requestMatchers(HttpMethod.GET,"/api/v1/students/me/profile").authenticated()
+               .requestMatchers(HttpMethod.PUT,"/api/v1/students/me/profile").authenticated()
                .anyRequest().denyAll())
            .exceptionHandling(ex->ex
                .authenticationEntryPoint((req,res,error)->res.sendError(HttpServletResponse.SC_UNAUTHORIZED))
