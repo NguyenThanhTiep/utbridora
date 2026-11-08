@@ -153,13 +153,13 @@ export default function App() {
         <button className="btn-icon sidebar-close" aria-label="Đóng menu điều hướng" onClick={() => setMobileOpen(false)}><Icon name="close" /></button></div>
       <nav aria-label="Điều hướng chính">
         <p className="nav-group-label">KHÔNG GIAN CỦA BẠN</p>
-        {menus.filter(item => ['account', 'internship', 'demands', 'school'].includes(item.id)).map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
+        {menus.filter(item => ['account', 'internship', 'demands', 'school', 'taxonomy'].includes(item.id)).map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
           aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
         {menus.some(item => item.group === 'student') && <p className="nav-group-label student-nav-group">SINH VIÊN</p>}
         {menus.filter(item => item.group === 'student').map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
           aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
-        {menus.some(item => !['account', 'internship', 'demands', 'school'].includes(item.id) && item.group !== 'student') && <p className="nav-group-label nav-group-admin">QUẢN TRỊ HỆ THỐNG</p>}
-        {menus.filter(item => !['account', 'internship', 'demands', 'school'].includes(item.id) && item.group !== 'student').map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
+        {menus.some(item => !['account', 'internship', 'demands', 'school', 'taxonomy'].includes(item.id) && item.group !== 'student') && <p className="nav-group-label nav-group-admin">QUẢN TRỊ HỆ THỐNG</p>}
+        {menus.filter(item => !['account', 'internship', 'demands', 'school', 'taxonomy'].includes(item.id) && item.group !== 'student').map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
           aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
       </nav>
       <div className="sidebar-bottom">

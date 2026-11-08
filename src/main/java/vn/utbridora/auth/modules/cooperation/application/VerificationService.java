@@ -87,6 +87,7 @@ public class VerificationService implements OrganizationSchoolVerificationPort {
         return operations.execute(new OperationLedger.Command(actor,school,"VERIFICATION_DECIDE",key,Map.of("id",recordId,"data",request),200),VerificationView.class,()->{
             var row=find(recordId,school,true,true);version(row,request.expectedVersion());
             if(row.state!=VerificationState.SUBMITTED) throw failure(409,"STATE_CONFLICT");
+            if(request.decision()==DecisionType.APPROVE) files.requireVerificationEvidence(row.submitterId,row.enterpriseOrgId,row.id,evidence(row));
             if(request.missingFields().size()!=new HashSet<>(request.missingFields()).size() || !FIELDS.containsAll(request.missingFields())) throw failure(422,"VERIFICATION_DATA_INVALID");
             if(request.decision()!=DecisionType.APPROVE && request.reasonCode()==null
                 || request.decision()==DecisionType.REQUEST_INFO && request.missingFields().isEmpty()

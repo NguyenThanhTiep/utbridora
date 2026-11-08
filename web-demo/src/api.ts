@@ -26,7 +26,9 @@ const reasonOf = (value: unknown) => typeof value === 'string' && /^[A-Z0-9_]{3,
 const isFieldError = (value: unknown): value is FieldError => typeof value === 'object' && value !== null
   && ['field', 'code', 'message'].every(key => typeof (value as Record<string, unknown>)[key] === 'string');
 async function errorOf(response: Response): Promise<ApiError> {
-  const body: { error?: string; errorCode?: string; requestId?: string; message?: string; fieldErrors?: unknown } = await response.json().catch(() => ({}));
+  const parsed: unknown = await response.json().catch(() => null);
+  const body = (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed) ? parsed : {}) as
+    { error?: unknown; errorCode?: unknown; requestId?: unknown; fieldErrors?: unknown };
   const code = reasonOf(body.errorCode) || reasonOf(body.error);
   const message = response.status === 401 ? messages[code || 'SESSION_EXPIRED'] || messages.SESSION_EXPIRED
     : response.status === 403 ? code === 'CSRF_INVALID'

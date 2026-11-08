@@ -123,10 +123,13 @@ class BusinessModulesIT {
         var r=s.owner.verify("POST","enterprise/verifications",verificationInput(s.schoolId,List.of()),UUID.randomUUID().toString());assertEquals(201,r.statusCode(),r.body());return JsonPath.read(r.body(),"$.verificationId");
     }
     String evidence(VerificationSetup s,String record) {
+        return evidence(s,record,"VERIFICATION");
+    }
+    String evidence(VerificationSetup s,String record,String purpose) {
         // Owner metadata and binding fixture; does not claim an uploader/scanner was exercised.
         String id=UUID.randomUUID().toString();
         jdbc.update("INSERT INTO files(id,owner_user_id,organization_id,storage_key,original_name,content_type,size_bytes,sha256,classification,scan_status,created_at) VALUES (?,?,?,?,'evidence.pdf','application/pdf',10,REPEAT('a',64),'PRIVATE','CLEAN',UTC_TIMESTAMP(6))",id,s.enterprise.id,s.enterpriseId,"isolated/"+id);
-        jdbc.update("INSERT INTO file_bindings(id,file_id,binding_kind,resource_id,created_at) VALUES (?,?,'ENTERPRISE_VERIFICATION',?,UTC_TIMESTAMP(6))",UUID.randomUUID().toString(),id,record);return id;
+        jdbc.update("INSERT INTO file_bindings(id,file_id,binding_kind,purpose,resource_id,created_at) VALUES (?,?,'ENTERPRISE_VERIFICATION',?,?,UTC_TIMESTAMP(6))",UUID.randomUUID().toString(),id,purpose,record);return id;
     }
     String submitted(VerificationSetup s) throws Exception {
         String id=createVerification(s),file=evidence(s,id);
@@ -134,7 +137,7 @@ class BusinessModulesIT {
         var submit=s.owner.verify("PATCH","enterprise/verifications/"+id+"/submit",Map.of("expectedVersion",2),UUID.randomUUID().toString());assertEquals(200,submit.statusCode(),submit.body());return id;
     }
     Map<String,Object> decision(long version,String action,List<String> missing) {
-        var data=new LinkedHashMap<String,Object>();data.put("expectedVersion",version);data.put("decision",action);data.put("reasonCode",action.equals("APPROVE")?null:"MISSING_DATA");data.put("decisionRef","DEMO-DECISION-1");data.put("missingFields",missing);return data;
+        var data=new LinkedHashMap<String,Object>();data.put("expectedVersion",version);data.put("decision",action);data.put("reasonCode",action.equals("APPROVE")?null:"MISSING_DATA");data.put("decisionRef","QĐ/DEMO-01");data.put("missingFields",missing);return data;
     }
     @Test void verificationUsesCanonicalStatesReplayImmutableHistoryAndScopedReadPort() throws Exception {
         var s=verificationSetup(true);String id=submitted(s),path="school/verifications/"+id+"/decision",key=UUID.randomUUID().toString();
@@ -155,6 +158,10 @@ class BusinessModulesIT {
         var context=vn.utbridora.auth.modules.cooperation.port.OrganizationSchoolVerificationPort.ReadContext.fromAuthenticatedWorkflow(auth,s.termId,vn.utbridora.auth.modules.cooperation.port.OrganizationSchoolVerificationPort.Purpose.CONFIRM_COORDINATOR);
         var proof=(vn.utbridora.auth.modules.cooperation.port.OrganizationSchoolVerificationPort.Success)verificationPort.get(context,s.enterpriseId,s.schoolId);
         assertTrue(proof.value().schoolApproved());assertNotNull(proof.value().approvedAt());
+        // An authorized history/reference read does not invent an ACTIVE-term write prerequisite.
+        jdbc.update("UPDATE terms SET status='CLOSED' WHERE id=?",s.termId);
+        assertEquals(200,s.reviewer.verify("GET","school/verifications/"+id,null,null).statusCode());
+        assertInstanceOf(vn.utbridora.auth.modules.cooperation.port.OrganizationSchoolVerificationPort.Success.class,verificationPort.get(context,s.enterpriseId,s.schoolId));
         assertEquals("VERIFIED",jdbc.queryForObject("SELECT status FROM organizations WHERE id=?",String.class,s.enterpriseId));
         assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE action='ENTERPRISE_VERIFIED'",Integer.class));
         assertInstanceOf(vn.utbridora.auth.modules.cooperation.port.OrganizationSchoolVerificationPort.DomainError.class,verificationPort.get(null,s.enterpriseId,s.schoolId));
@@ -169,6 +176,8 @@ class BusinessModulesIT {
         assertEquals(200,s.reviewer.verify("PATCH","school/verifications/"+id+"/decision",request,key).statusCode());
         jdbc.update("UPDATE school_delegations SET active=false WHERE user_id=?",s.staff.id);
         code(s.reviewer.verify("PATCH","school/verifications/"+id+"/decision",request,key),404,"RESOURCE_NOT_FOUND");
+        jdbc.update("UPDATE users SET security_version=security_version+1 WHERE id=?",s.staff.id);
+        code(s.reviewer.verify("PATCH","school/verifications/"+id+"/decision",request,key),401,"SESSION_EXPIRED");
         var foreign=verificationSetup(false);foreign.owner.organization=foreign.enterpriseId;
         code(foreign.owner.verify("GET","enterprise/verifications/"+id,null,null),404,"RESOURCE_NOT_FOUND");
         assertNotEquals(200,s.owner.send("GET","/api/v1/school-verification/"+s.enterpriseId+"/"+s.schoolId,null,null,false).statusCode());
@@ -178,12 +187,29 @@ class BusinessModulesIT {
         var input=Map.of("expectedVersion",1,"data",verificationInput(s.schoolId,List.of(file)));
         code(s.owner.verify("PATCH","enterprise/verifications/"+id,input,UUID.randomUUID().toString()),422,"VERIFICATION_DATA_INVALID");
         code(s.owner.verify("PATCH","enterprise/verifications/"+id+"/submit",Map.of("expectedVersion",1),UUID.randomUUID().toString()),422,"VERIFICATION_DATA_INVALID");
-        jdbc.update("UPDATE file_bindings SET resource_id=? WHERE file_id=?",id,file);
-        assertEquals(200,s.owner.verify("PATCH","enterprise/verifications/"+id,input,UUID.randomUUID().toString()).statusCode());
-        jdbc.update("UPDATE files SET scan_status='PENDING' WHERE id=?",file);
+        assertThrows(org.springframework.dao.DataAccessException.class,()->jdbc.update("INSERT INTO file_bindings(id,file_id,binding_kind,purpose,resource_id,created_at) VALUES (?,?,'ENTERPRISE_VERIFICATION','VERIFICATION',?,UTC_TIMESTAMP(6))",UUID.randomUUID().toString(),file,id));
+        String valid=evidence(s,id);var validInput=Map.of("expectedVersion",1,"data",verificationInput(s.schoolId,List.of(valid)));
+        assertEquals(200,s.owner.verify("PATCH","enterprise/verifications/"+id,validInput,UUID.randomUUID().toString()).statusCode());
+        jdbc.update("UPDATE files SET scan_status='PENDING' WHERE id=?",valid);
         code(s.owner.verify("PATCH","enterprise/verifications/"+id+"/submit",Map.of("expectedVersion",2),UUID.randomUUID().toString()),422,"VERIFICATION_DATA_INVALID");
         assertEquals("DRAFT",jdbc.queryForObject("SELECT state FROM enterprise_verifications WHERE id=?",String.class,id));
         assertEquals(2,jdbc.queryForObject("SELECT COUNT(*) FROM operation_records WHERE actor_id=?",Integer.class,s.enterprise.id));
+    }
+    @Test void verificationChecksPurposeMimeSizeAndCurrentEvidenceAgainAtApproval() throws Exception {
+        var s=verificationSetup(true);String id=createVerification(s),wrong=evidence(s,id,"EVIDENCE"),valid=evidence(s,id);
+        code(s.owner.verify("PATCH","enterprise/verifications/"+id,Map.of("expectedVersion",1,"data",verificationInput(s.schoolId,List.of(wrong))),UUID.randomUUID().toString()),422,"VERIFICATION_DATA_INVALID");
+        var update=Map.of("expectedVersion",1,"data",verificationInput(s.schoolId,List.of(valid)));
+        jdbc.update("UPDATE files SET content_type='application/zip' WHERE id=?",valid);
+        code(s.owner.verify("PATCH","enterprise/verifications/"+id,update,UUID.randomUUID().toString()),422,"VERIFICATION_DATA_INVALID");
+        jdbc.update("UPDATE files SET content_type='application/pdf',size_bytes=10485761 WHERE id=?",valid);
+        code(s.owner.verify("PATCH","enterprise/verifications/"+id,update,UUID.randomUUID().toString()),422,"VERIFICATION_DATA_INVALID");
+        jdbc.update("UPDATE files SET size_bytes=10 WHERE id=?",valid);
+        assertEquals(200,s.owner.verify("PATCH","enterprise/verifications/"+id,update,UUID.randomUUID().toString()).statusCode());
+        assertEquals(200,s.owner.verify("PATCH","enterprise/verifications/"+id+"/submit",Map.of("expectedVersion",2),UUID.randomUUID().toString()).statusCode());
+        jdbc.update("UPDATE files SET deleted_at=UTC_TIMESTAMP(6) WHERE id=?",valid);
+        code(s.reviewer.verify("PATCH","school/verifications/"+id+"/decision",decision(3,"APPROVE",List.of()),UUID.randomUUID().toString()),422,"VERIFICATION_DATA_INVALID");
+        assertEquals("SUBMITTED",jdbc.queryForObject("SELECT state FROM enterprise_verifications WHERE id=?",String.class,id));
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE action='ENTERPRISE_VERIFIED'",Integer.class));
     }
     @Test void verificationAuditFailureRollsBackDecisionHistoryAndLedger() throws Exception {
         var s=verificationSetup(true);String id=submitted(s),key=UUID.randomUUID().toString();var request=decision(3,"APPROVE",List.of());

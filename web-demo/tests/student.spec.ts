@@ -231,12 +231,13 @@ test('UX UI mock: 400 SCHEMA_VALIDATION có fieldErrors hiện dưới ô, 400 k
   expect(puts).toBe(2);
 });
 
-test('UX UI mock: lưu gặp 403, 429, response không phải JSON rồi 401', async ({ page }) => {
+test('UX UI mock: lưu gặp 403, 429, HTML, JSON null rồi 401', async ({ page }) => {
   const keys: string[] = [];
   const responses = [
     { status: 403, contentType: 'application/json', body: JSON.stringify(envelope('ACCESS_DENIED', 'Thông điệp gốc từ server.')) },
     { status: 429, contentType: 'application/json', body: JSON.stringify(envelope('RESEND_RATE_LIMITED', 'Thông điệp gốc từ server.')) },
     { status: 500, contentType: 'text/html', body: '<html><body>Thông điệp gốc từ server.</body></html>' },
+    { status: 500, contentType: 'application/json', body: 'null' },
     { status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'SESSION_EXPIRED', message: 'Thông điệp gốc từ server.' }) }];
   await page.route('**/api/v1/terms?**', route => route.fulfill({ json: termsPage([term(TERM_ID, 'HK1-DEMO', 'ACTIVE')]) }));
   await page.route('**/api/v1/students/me/profile**', route => {
@@ -247,7 +248,7 @@ test('UX UI mock: lưu gặp 403, 429, response không phải JSON rồi 401', a
   await openProfile(page);
   await page.getByLabel('Số điện thoại', { exact: true }).fill('0901234567');
   const save = page.getByRole('button', { name: 'Lưu thông tin chung', exact: true });
-  for (const expected of ['Bạn không có quyền hoặc mã bảo vệ đã hết hạn', 'Có quá nhiều yêu cầu', 'Không thể xử lý yêu cầu']) {
+  for (const expected of ['Bạn không có quyền thực hiện thao tác', 'Có quá nhiều yêu cầu', 'Không thể xử lý yêu cầu', 'Không thể xử lý yêu cầu']) {
     await save.click();
     await expect(page.getByText(expected, { exact: false })).toBeVisible();
     await expect(page.getByText('Thông điệp gốc từ server', { exact: false })).toHaveCount(0);
@@ -257,7 +258,7 @@ test('UX UI mock: lưu gặp 403, 429, response không phải JSON rồi 401', a
   await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible();
   await expect(page.getByText('Phiên đã hết hạn hoặc bị thu hồi', { exact: false })).toBeVisible();
   // Cùng nội dung bản nháp thì thử lại bằng cùng Idempotency-Key (C.0 v1.0 dòng 92-94).
-  expect(keys).toHaveLength(4);
+  expect(keys).toHaveLength(5);
   expect(new Set(keys).size).toBe(1);
 });
 

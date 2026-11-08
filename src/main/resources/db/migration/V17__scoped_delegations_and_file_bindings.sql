@@ -42,8 +42,11 @@ CREATE TABLE file_bindings (
  id VARCHAR(36) NOT NULL PRIMARY KEY,
  file_id VARCHAR(36) NOT NULL,
  binding_kind VARCHAR(64) NOT NULL,
+ purpose VARCHAR(32) NOT NULL,
  resource_id VARCHAR(36) NOT NULL,
  created_at DATETIME(6) NOT NULL,
- UNIQUE KEY uk_file_binding(file_id,binding_kind,resource_id),
+ UNIQUE KEY uk_file_binding(file_id),
  CONSTRAINT fk_binding_file FOREIGN KEY(file_id) REFERENCES files(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- The owner API only inserts bindings; it has no rebind operation. One file can
+-- never acquire a second resource/purpose. Do not require SUPER/trigger privileges.

@@ -53,7 +53,7 @@ public class AuditService {
         if(!java.util.Set.of("ENTERPRISE_VERIFICATION_DRAFT_SAVED","ENTERPRISE_VERIFICATION_SUBMITTED",
             "ENTERPRISE_VERIFICATION_REJECTED","ENTERPRISE_VERIFICATION_CHANGES_REQUESTED","ENTERPRISE_VERIFIED").contains(action)
             || submission<0 || version<1 || version>9_007_199_254_740_991L
-            || decisionRef!=null && !decisionRef.matches("[A-Za-z0-9][A-Za-z0-9._:/-]{0,119}")
+            || decisionRef!=null && (decisionRef.isBlank() || decisionRef.length()>120)
             || missing.stream().anyMatch(field->!java.util.Set.of("registrationCode","registeredName","address","contactName","contactEmail","contactPhone","evidenceFileIds").contains(field)))
             throw new IllegalArgumentException("Invalid verification audit metadata");
         validateId(school);

@@ -27,7 +27,7 @@ public final class CooperationDtos {
     public enum DecisionType { APPROVE,REJECT,REQUEST_INFO }
     public record VerificationDecision(@Min(1) @Max(9007199254740991L) long expectedVersion,@NotNull DecisionType decision,
         @Pattern(regexp="[A-Z0-9_]{3,64}") String reasonCode,
-        @NotNull @Pattern(regexp="[A-Za-z0-9][A-Za-z0-9._:/-]{0,119}") String decisionRef,
+        @NotBlank @Size(max=120) String decisionRef,
         @NotNull @Size(max=20) List<@NotBlank @Size(max=64) String> missingFields) {
         public VerificationDecision {if(missingFields!=null)missingFields=List.copyOf(missingFields);}
     }
