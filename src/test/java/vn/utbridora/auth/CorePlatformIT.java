@@ -197,12 +197,36 @@ class CorePlatformIT {
     }
     @Test void roleAndOrganizationIdorAreDeniedWithCorrelatedAudit() throws Exception {
         Browser b=signedIn(enterprise);
-        var own=b.send("GET","/api/v1/demo/organizations/"+orgA.id+"/private",null,false);assertEquals(200,own.statusCode());
-        var denied=b.send("GET","/api/v1/demo/organizations/"+orgB.id+"/private",null,false);assertEquals(403,denied.statusCode());
-        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE action='ACCESS_DENIED' AND request_id=?",Integer.class,denied.headers().firstValue("X-Request-ID").orElseThrow()));
+        var own=b.send("GET","/api/v1/demo/organizations/"+orgA.id+"/private",null,false);
+        assertEquals(200,own.statusCode(),own.body());
+        assertEquals(orgA.id,JsonPath.read(own.body(),"$.organizationId"));
+        var denied=b.send("GET","/api/v1/demo/organizations/"+orgB.id+"/private",null,false);
+        assertAccessDenied(denied);
+        assertFalse(denied.body().contains(orgB.id));
+        assertFalse(denied.body().contains(orgB.name));
+        assertEquals(1,jdbc.queryForObject("""
+                SELECT COUNT(*) FROM audit_logs
+                WHERE action='ACCESS_DENIED' AND result='DENIED' AND actor_id=? AND request_id=?
+                """,Integer.class,enterprise.id,denied.headers().firstValue("X-Request-ID").orElseThrow()));
         assertEquals(403,b.send("POST","/api/v1/admin/memberships",Map.of("userId",enterprise.id,"role","ADMIN"),true).statusCode());
         assertEquals(403,b.send("GET","/api/v1/admin/audit-logs",null,false).statusCode());
-        assertEquals(403,signedIn(student).send("PATCH","/api/v1/admin/users/"+enterprise.id+"/status",Map.of("status","SUSPENDED","reasonCode","SECURITY_REVIEW"),true).statusCode());
+        UserAccount before=users.findById(enterprise.id).orElseThrow();
+        var studentDenied=signedIn(student).send("PATCH","/api/v1/admin/users/"+enterprise.id+"/status",
+                Map.of("status","SUSPENDED","reasonCode","SECURITY_REVIEW"),true);
+        assertAccessDenied(studentDenied);
+        assertFalse(studentDenied.body().contains(enterprise.id));
+        assertFalse(studentDenied.body().contains(enterprise.email));
+        UserAccount after=users.findById(enterprise.id).orElseThrow();
+        assertEquals(before.status,after.status);
+        assertEquals(before.securityVersion,after.securityVersion);
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM account_status_history WHERE user_id=?",
+                Integer.class,enterprise.id));
+    }
+    private void assertAccessDenied(HttpResponse<String> response) {
+        assertEquals(403,response.statusCode(),response.body());
+        Map<String,Object> body=JsonPath.parse(response.body()).read("$");
+        assertEquals(Set.of("error","message"),body.keySet());
+        assertEquals("ACCESS_DENIED",body.get("error"));
     }
     @Test void changedOrganizationStateAndMultipleMembershipsAreRechecked() throws Exception {
         Membership m=new Membership();m.userId=enterprise.id;m.organizationId=orgB.id;m.role=Role.ENTERPRISE;memberships.saveAndFlush(m);
@@ -261,12 +285,37 @@ class CorePlatformIT {
     }
     @Test void statusHistoryAndAuditCommitTogetherAndOldSessionDoesNotReturn() throws Exception {
         Browser a=signedIn(admin),b=signedIn(student);
-        assertEquals(200,a.send("PATCH","/api/v1/admin/users/"+student.id+"/status",Map.of("status","SUSPENDED","reasonCode","SECURITY_REVIEW"),true).statusCode());
+        assertEquals(200,b.me().statusCode());
+        String oldSession=b.session();
+        assertFalse(oldSession.isBlank());
+        long initialVersion=users.findById(student.id).orElseThrow().securityVersion;
+        String statusPath="/api/v1/admin/users/"+student.id+"/status";
+        var suspended=a.send("PATCH",statusPath,Map.of("status","SUSPENDED","reasonCode","SECURITY_REVIEW"),true);
+        assertEquals(200,suspended.statusCode(),suspended.body());
+        assertStatusTransition(AccountStatus.ACTIVE,AccountStatus.SUSPENDED,"SECURITY_REVIEW",initialVersion+1,suspended);
         assertEquals(401,b.me().statusCode());assertEquals(401,new Browser().login(student).statusCode());
-        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM account_status_history WHERE user_id=? AND actor_id=? AND reason_code='SECURITY_REVIEW'",Integer.class,student.id,admin.id));
-        assertEquals(200,a.send("PATCH","/api/v1/admin/users/"+student.id+"/status",Map.of("status","ACTIVE","reasonCode","REVIEW_COMPLETE"),true).statusCode());
-        assertEquals(401,b.me().statusCode());assertEquals(200,new Browser().login(student).statusCode());
+        var reactivated=a.send("PATCH",statusPath,Map.of("status","ACTIVE","reasonCode","REVIEW_COMPLETE"),true);
+        assertEquals(200,reactivated.statusCode(),reactivated.body());
+        assertStatusTransition(AccountStatus.SUSPENDED,AccountStatus.ACTIVE,"REVIEW_COMPLETE",initialVersion+2,reactivated);
+        Browser newSession=signedIn(student);
+        assertEquals(200,newSession.me().statusCode());
+        assertEquals(401,replay(oldSession,"/api/v1/auth/me").statusCode());
         assertEquals(200,a.send("GET","/api/v1/admin/users/"+student.id+"/status-history",null,false).statusCode());
+    }
+    private void assertStatusTransition(AccountStatus from,AccountStatus to,String reason,long expectedVersion,
+            HttpResponse<String> response) {
+        UserAccount persisted=users.findById(student.id).orElseThrow();
+        assertEquals(to,persisted.status);
+        assertEquals(expectedVersion,persisted.securityVersion);
+        assertEquals(1,jdbc.queryForObject("""
+                SELECT COUNT(*) FROM account_status_history
+                WHERE user_id=? AND actor_id=? AND from_status=? AND to_status=? AND reason_code=?
+                """,Integer.class,student.id,admin.id,from.name(),to.name(),reason));
+        assertEquals(1,jdbc.queryForObject("""
+                SELECT COUNT(*) FROM audit_logs
+                WHERE action='ACCOUNT_STATUS_CHANGED' AND result='SUCCESS'
+                AND resource_type='user' AND resource_id=? AND actor_id=? AND reason_code=? AND request_id=?
+                """,Integer.class,student.id,admin.id,reason,response.headers().firstValue("X-Request-ID").orElseThrow()));
     }
     @Test void invalidTransitionsSelfDisableAndSelfAdminRevokeAreRejected() throws Exception {
         Browser a=signedIn(admin);
