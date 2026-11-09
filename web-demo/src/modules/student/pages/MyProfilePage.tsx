@@ -1,23 +1,23 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { ApiError, type Grant, type Me } from '../../../api';
 import { EmptyState, Field, Icon, LoadingState, Notice, useAction } from '../../../components';
-import { getMyProfile, listTerms, newIdempotencyKey, saveMyProfile, toProfileInput } from '../api';
+import { getMyProfile, listMajors, listTerms, newIdempotencyKey, saveMyProfile, toProfileInput, type AcademicCatalogItem } from '../api';
 import { AvailabilityEditor } from '../components/AvailabilityEditor';
 import type { DateRange, ProfileInput, SelfProfileView, TermReference } from '../types';
 import '../styles.css';
 
-// S02 chỉ sửa số điện thoại và thời gian tham gia; ngành chờ catalog BC12, kỹ năng/dự án/chứng chỉ/CV thuộc S03/S04.
-type Draft = { phone: string; availabilityDeclared: boolean; availablePeriods: DateRange[] };
+// S02 dùng ngành từ BC12; kỹ năng/dự án/chứng chỉ/CV thuộc S03/S04.
+type Draft = { phone: string; majorCode: string | null; availabilityDeclared: boolean; availablePeriods: DateRange[] };
 type DraftErrors = { phone?: string; periods: Record<number, string> };
 type ProfileState = { status: 'loading' } | { status: 'missing' } | { status: 'error'; message: string } | { status: 'ready'; view: SelfProfileView };
 
 const draftOf = (view: SelfProfileView): Draft => ({
-  phone: view.profile.phone ?? '', availabilityDeclared: view.profile.availabilityDeclared,
+  phone: view.profile.phone ?? '', majorCode: view.profile.majorCode, availabilityDeclared: view.profile.availabilityDeclared,
   availablePeriods: view.profile.availablePeriods.map(({ startDate, endDate }) => ({ startDate, endDate }))
 });
 // PUT thay toàn bộ hồ sơ: các trường S02 không sửa được chép nguyên từ dữ liệu đã tải.
 const inputOf = (view: SelfProfileView, draft: Draft): ProfileInput => ({
-  ...toProfileInput(view), phone: draft.phone.trim() || null, availabilityDeclared: draft.availabilityDeclared,
+  ...toProfileInput(view), phone: draft.phone.trim() || null, majorCode: draft.majorCode, availabilityDeclared: draft.availabilityDeclared,
   availablePeriods: draft.availabilityDeclared ? draft.availablePeriods.map(({ startDate, endDate }) => ({ startDate, endDate })) : []
 });
 function validate(draft: Draft): DraftErrors {
@@ -31,7 +31,7 @@ function validate(draft: Draft): DraftErrors {
   return errors;
 }
 const hasErrors = (errors: DraftErrors) => Boolean(errors.phone) || Object.keys(errors.periods).length > 0;
-// Tạo hồ sơ lần đầu (GET 404): đủ 14 trường, chưa khai gì, danh sách rỗng thay vì null; version 0 là đề xuất chờ leader ghi vào contract.
+// Tạo lần đầu dùng version 0; PUT vẫn kiểm quan hệ student–school–term ở server.
 const emptyInput = (termId: string): ProfileInput => ({
   expectedProfileVersion: 0, termId, majorCode: null, skillsDeclared: false, skills: [], customSkills: [],
   availabilityDeclared: false, availablePeriods: [], orientationCodes: [], subjectCodes: [], projects: [], certificates: [],
@@ -47,6 +47,8 @@ export function MyProfilePage({ me, schools }: { me: Me; schools: Grant[] }) {
   const [termsFailed, setTermsFailed] = useState(false);
   const [termsAttempt, setTermsAttempt] = useState(0);
   const [termId, setTermId] = useState('');
+  const [majors, setMajors] = useState<AcademicCatalogItem[] | null>(null);
+  const [majorsFailed, setMajorsFailed] = useState(false);
   const [profile, setProfile] = useState<ProfileState>({ status: 'loading' });
   const [profileAttempt, setProfileAttempt] = useState(0);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -59,6 +61,7 @@ export function MyProfilePage({ me, schools }: { me: Me; schools: Grant[] }) {
   const saving = useRef(false);
   const generation = useRef(0);
   const phoneErrorId = useId();
+  const majorInputId = useId();
   const schoolIds = schools.flatMap(school => school.organizationId ? [school.organizationId] : []).join(',');
 
   useEffect(() => {
@@ -71,6 +74,15 @@ export function MyProfilePage({ me, schools }: { me: Me; schools: Grant[] }) {
     }, () => { if (active) { setTerms([]); setTermsFailed(true); } });
     return () => { active = false; };
   }, [schoolIds, termsAttempt]);
+
+  useEffect(() => {
+    let active = true;
+    setMajors(null); setMajorsFailed(false);
+    if (termId) void listMajors(termId).then(items => { if (active) setMajors(items); }, () => {
+      if (active) { setMajors([]); setMajorsFailed(true); }
+    });
+    return () => { active = false; };
+  }, [termId, profileAttempt]);
 
   useEffect(() => {
     if (!termId) return;
@@ -174,18 +186,22 @@ export function MyProfilePage({ me, schools }: { me: Me; schools: Grant[] }) {
       <button type="button" className="secondary" onClick={() => setTermsAttempt(previous => previous + 1)}><Icon name="refresh" size={16} />Thử lại</button></EmptyState>
     : !termId ? <EmptyState icon="calendar" title="Chọn học kỳ" description="Trường có nhiều học kỳ đang mở. Chọn học kỳ để xem hồ sơ tương ứng." />
     : profile.status === 'loading' ? <LoadingState label="Đang tải hồ sơ…" />
-    : profile.status === 'missing' ? <EmptyState icon="user" title="Bạn chưa có hồ sơ sinh viên"
-      description="Tạo hồ sơ để bắt đầu khai thông tin chung cho học kỳ này. Hồ sơ mới chưa có ngành, kỹ năng hay thời gian tham gia; bạn bổ sung sau khi tạo.">
+    : profile.status === 'missing' ? <EmptyState icon="user" title="Chưa thể đọc hồ sơ trong học kỳ này"
+      description="Hồ sơ có thể chưa được tạo hoặc bạn chưa có quyền trong học kỳ này. Nếu đây là lần khai đầu, chọn Tạo hồ sơ; hệ thống sẽ kiểm tra liên kết sinh viên–trường–kỳ trước khi tạo.">
       <Notice message={create.message} tone="error" />
       <button type="button" disabled={create.busy} onClick={createProfile}>
         {create.busy ? <span className="spinner spinner-light" /> : <Icon name="plus" size={16} />}Tạo hồ sơ</button></EmptyState>
     : profile.status === 'error' ? <EmptyState icon="alert" title="Không tải được hồ sơ" description={profile.message}>
       <button type="button" className="secondary" onClick={() => setProfileAttempt(previous => previous + 1)}><Icon name="refresh" size={16} />Thử lại</button></EmptyState>
     : view && draft && <form className="student-profile-form" noValidate aria-busy={save.busy} onSubmit={submit}>
-      <div className="student-readonly">
-        <span className="identity-label"><Icon name="graduation" size={15} />Ngành đào tạo</span><strong>{view.profile.majorCode || 'Chưa khai báo'}</strong>
-        <p className="field-hint">Chọn ngành từ danh mục của trường sẽ có khi danh mục học vụ sẵn sàng.</p>
-      </div>
+      <div className="field"><label htmlFor={majorInputId}>Ngành đào tạo</label><select id={majorInputId} value={draft.majorCode ?? ''} disabled={save.busy || majors === null || majorsFailed}
+        onChange={event => change({ ...draft, majorCode: event.target.value || null })}>
+        <option value="">Chưa khai báo</option>
+        {draft.majorCode && !majors?.some(item => item.code === draft.majorCode) && <option value={draft.majorCode}>{draft.majorCode} (đã lưu)</option>}
+        {majors?.map(item => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}
+      </select></div>
+      {majorsFailed && <p className="field-hint">Chưa tải được danh mục ngành. Bạn có thể sửa thông tin khác và tải lại danh mục.</p>}
+      {rejectedFields.includes('majorCode') && <p className="student-field-error">Ngành đã chọn không còn hợp lệ. Tải lại danh mục rồi chọn lại.</p>}
       <Field label="Số điện thoại" type="tel" autoComplete="tel" required={false} value={draft.phone} disabled={save.busy}
         onChange={phone => change({ ...draft, phone })} {...(phoneError ? { 'aria-invalid': true, 'aria-describedby': phoneErrorId } : {})} />
       {phoneError && <p className="student-field-error" id={phoneErrorId}>{phoneError}</p>}

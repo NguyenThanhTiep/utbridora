@@ -277,7 +277,7 @@ test('UX UI mock: nhiều học kỳ đang mở thì cho chọn, chưa có hồ 
   await expect(select.locator('option')).toHaveText(['Chọn học kỳ', 'HK1-DEMO', 'HK2-DEMO']);
   expect(requested).toEqual([]);
   await select.selectOption(otherTerm);
-  await expect(page.getByRole('heading', { name: 'Bạn chưa có hồ sơ sinh viên', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Chưa thể đọc hồ sơ trong học kỳ này', exact: true })).toBeVisible();
   expect(requested).toEqual([otherTerm]);
 });
 
@@ -294,7 +294,7 @@ test('UX UI mock: chưa có hồ sơ thì tạo bằng hồ sơ rỗng đủ 14 
     return route.fulfill({ json: created });
   });
   await openProfile(page);
-  await expect(page.getByRole('heading', { name: 'Bạn chưa có hồ sơ sinh viên', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Chưa thể đọc hồ sơ trong học kỳ này', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Tạo hồ sơ', exact: true }).click();
   await expect(page.getByText('Đã tạo hồ sơ.', { exact: false })).toBeVisible();
   await expect(page.getByLabel('Số điện thoại', { exact: true })).toHaveValue('');

@@ -6,8 +6,8 @@ import java.util.function.Function;
 import org.springframework.security.core.Authentication;
 import vn.utbridora.auth.modules.internship.domain.*;
 
-/** DEV06 consumer-side abstractions, NOT canonical T1/T3-01/T5 contracts or providers.
- * No implementation is registered in Spring. Adapters require separate integration review.
+/** DEV06 consumer-side abstractions, distinct from canonical T1/T3-01/T5 wire contracts.
+ * Runtime providers are registered in WorkspaceConfiguration.
  */
 public final class WorkspacePorts {
     private WorkspacePorts() {}

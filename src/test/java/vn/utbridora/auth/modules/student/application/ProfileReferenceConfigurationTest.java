@@ -11,7 +11,11 @@ class ProfileReferenceConfigurationTest {
                 false,List.of(),List.of(),List.of(),List.of(),List.of(),null,"0901234567");
     }
     @Test void unconfiguredCatalogAllowsAnUndeclaredProfileButCannotCertifyANewMajor() {
-        var validator=new ProfileReferenceConfiguration().unavailableProfileReferences();
+        var catalogs=org.mockito.Mockito.mock(AcademicCatalogService.class);
+        org.mockito.Mockito.when(catalogs.forProfile("school",input("SE").termId())).thenThrow(
+            StudentProfileException.of(503,"DEPENDENCY_UNAVAILABLE","Unavailable"));
+        var validator=new ProfileReferenceConfiguration().profileReferences(catalogs,
+            org.mockito.Mockito.mock(vn.utbridora.auth.modules.taxonomy.port.TaxonomyReferencePort.class));
         assertDoesNotThrow(()->validator.validate("school",input(null)));
         var failure=assertThrows(StudentProfileException.class,()->validator.validate("school",input("SE")));
         assertEquals(503,failure.status);assertEquals("DEPENDENCY_UNAVAILABLE",failure.errorCode);

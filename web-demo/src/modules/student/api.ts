@@ -7,6 +7,17 @@ export const getMyProfile = (termId: string) =>
 export const saveMyProfile = (input: ProfileInput, idempotencyKey: string) =>
   api<SelfProfileView>('/students/me/profile', { method: 'PUT', headers: { 'Idempotency-Key': idempotencyKey }, body: JSON.stringify(input) });
 
+export type AcademicCatalogItem = { code: string; name: string; majorCodes: string[]; status: 'ACTIVE' | 'INACTIVE' };
+export async function listMajors(termId: string): Promise<AcademicCatalogItem[]> {
+  type Catalog = { catalogVersion: string; entries: ContractPage<AcademicCatalogItem> };
+  const read = (page: number, version?: string) => api<Catalog>('/students/me/catalogs?' + new URLSearchParams({
+    termId, kind: 'MAJOR', page: String(page), size: '100', ...(version ? { expectedCatalogVersion: version } : {})
+  }));
+  const first = await read(0), entries = [...first.entries.content];
+  for (let page = 1; page < first.entries.totalPages; page++) entries.push(...(await read(page, first.catalogVersion)).entries.content);
+  return entries.filter(entry => entry.status === 'ACTIVE');
+}
+
 // BC21 (v1.0 dòng 865): T5 sở hữu TermReference; size tối đa 100 theo PageQuery (C.0 dòng 89).
 export async function listTerms(schoolOrgId: string): Promise<TermReference[]> {
   const read = (page: number) => api<ContractPage<TermReference>>(
@@ -27,7 +38,7 @@ export function newIdempotencyKey() {
 }
 
 // Chép đủ 14 trường để PUT không làm mất dữ liệu đã khai. Kỹ năng ghi không có `source`;
-// server xử lý kỹ năng SCHOOL_VERIFIED được gửi lại thế nào vẫn chờ DEV02 xác nhận.
+// Server xác định nguồn xác minh; client không gửi trường source.
 export function toProfileInput(view: SelfProfileView): ProfileInput {
   const profile = view.profile;
   return {

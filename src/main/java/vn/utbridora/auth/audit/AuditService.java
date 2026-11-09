@@ -63,6 +63,45 @@ public class AuditService {
         if(action.equals("ENTERPRISE_VERIFICATION_CHANGES_REQUESTED")) data.put("missingFieldCodes",missing);
         store(actor,action,"enterprise_verification",id,"SUCCESS",school,reason).metadataJson=new tools.jackson.databind.ObjectMapper().writeValueAsString(data);
     }
+    @Transactional
+    public void placementPublished(String actor,vn.utbridora.auth.contracts.placement.PlacementReadPort.PlacementView p,String operation,String reason) {
+        validateId(operation);validateId(p.termId());
+        String action=switch(p.state()) {case "APPROVED"->"PLACEMENT_APPROVED";case "ACTIVE"->"PLACEMENT_ACTIVATED";
+            case "CANCELLED"->"PLACEMENT_CANCELLED";default->throw new IllegalArgumentException("Closure proof required for completed placement");};
+        var data=new java.util.LinkedHashMap<String,Object>();data.put("termId",p.termId());data.put("placementVersion",p.version());data.put("operationId",operation);
+        if(p.state().equals("ACTIVE")) data.put("effectiveAt",p.effectiveAt().toString());
+        else data.put("decisionRef",p.decisionRef());
+        if(p.state().equals("CANCELLED")) data.put("reasonCode",reason);
+        store(actor,action,"placement",p.placementId(),"SUCCESS",p.schoolOrgId(),reason).metadataJson=new tools.jackson.databind.ObjectMapper().writeValueAsString(data);
+        flushRequiredAudit();
+    }
+    @Transactional
+    public void cohortCreated(String actor,String id,String enterprise,String school,String term,long version) {
+        validateId(enterprise);validateId(term);
+        store(actor,"COHORT_CREATED","internship_cohort",id,"SUCCESS",school,null).metadataJson=
+            new tools.jackson.databind.ObjectMapper().writeValueAsString(java.util.Map.of("enterpriseOrgId",enterprise,"termId",term,"cohortVersion",version));
+        flushRequiredAudit();
+    }
+    @Transactional
+    public void groupMembershipChanged(String actor,String caseId,String school,String cohort,String from,String to,long version,String reason) {
+        validateId(cohort);validateId(from);validateId(to);
+        var data=new java.util.LinkedHashMap<String,Object>();data.put("cohortId",cohort);data.put("fromGroupId",from);data.put("toGroupId",to);data.put("version",version);data.put("reasonCode",reason);
+        store(actor,"GROUP_MEMBERSHIP_CHANGED","internship_case",caseId,"SUCCESS",school,reason).metadataJson=new tools.jackson.databind.ObjectMapper().writeValueAsString(data);
+        flushRequiredAudit();
+    }
+    @Transactional
+    public void taskAssigned(String actor,String assignment,String school,String task,String caseId,String group,long version) {
+        validateId(task);validateId(caseId);validateId(group);
+        store(actor,"TASK_ASSIGNED","task_assignment",assignment,"SUCCESS",school,null).metadataJson=new tools.jackson.databind.ObjectMapper().writeValueAsString(
+            java.util.Map.of("taskId",task,"caseId",caseId,"groupId",group,"assignmentVersion",version));
+        flushRequiredAudit();
+    }
+    private void flushRequiredAudit() {
+        try {repository.flush();}
+        catch(org.springframework.dao.DataAccessException failure) {
+            throw new vn.utbridora.auth.operations.OperationFailure(500,"AUDIT_WRITE_FAILED","Không thể lưu nhật ký; thao tác chưa được thực hiện.",null);
+        }
+    }
     private AuditLog store(String actor,String action,String resourceType,String resourceId,
                        String result,String organizationId,String reasonCode) {
         AuditAction.valueOf(action);

@@ -12,7 +12,7 @@ import vn.utbridora.auth.modules.internship.domain.*;
 import static vn.utbridora.auth.modules.internship.application.WorkspacePorts.*;
 import static vn.utbridora.auth.modules.internship.domain.WorkspaceRuleException.Kind.*;
 
-/** T3-02 application logic. Not a Spring bean/API until real transactional adapters are reviewed. */
+/** T3-02 application logic, wired by WorkspaceConfiguration to the transactional runtime adapters. */
 public final class WorkspaceService {
     private final UnitOfWork transactions;
     private final Access access;

@@ -1,5 +1,5 @@
 // DTO theo BC11 (Contract Pack v1.0 Candidate, dòng 753-770; trùng nguyên văn v1.1 dòng 721-738).
-// BC11 còn ghi PROPOSED: khi contract đổi, chỉ sửa tại file này.
+// Binding dùng chung cho API thật và UI; thay đổi schema phải đối chiếu contract hiện hành.
 export type Code = string;
 export type DateRange = { startDate: string; endDate: string };
 export type SkillSource = 'SELF_DECLARED' | 'SCHOOL_VERIFIED';

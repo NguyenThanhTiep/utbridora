@@ -1,5 +1,7 @@
 # T3-03 — Bàn giao kiểm thử khung UI HR/Mentor
 
+> Ghi chú 09/11/2026: giữ nguyên biên bản lịch sử bên dưới. Runtime/gateway mới và phép kiểm hiện hành ở [ma trận tuần 1](WEEK1_ACCEPTANCE.md); ghi chú này không thay chữ ký QA hoặc sửa kết quả checkpoint cũ.
+
 Ngày chuẩn bị: **07/11/2026**, UTC+7. DEV07 — Lại Thái Thuận.
 Người kiểm thử phụ trách: QA03 — Phạm Lâm Phương Bảo.
 

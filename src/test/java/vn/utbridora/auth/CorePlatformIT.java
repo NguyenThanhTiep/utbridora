@@ -67,6 +67,7 @@ class CorePlatformIT {
     @Autowired ProfileVisibilityPort visibility;
     @Autowired TransactionTemplate transactions;
     @Autowired MockMvc mvc;
+    @Autowired jakarta.persistence.EntityManagerFactory entityManagerFactory;
     @MockitoBean EmailService email;
     final String password="Test-"+UUID.randomUUID();
     String passwordHash;
@@ -325,6 +326,25 @@ class CorePlatformIT {
         assertEquals(200,logs.statusCode());assertEquals(1,((Number)JsonPath.read(logs.body(),"$.totalElements")).intValue());
         assertFalse(logs.body().contains(password));assertFalse(logs.body().contains("token"));assertFalse(logs.body().contains("SESSION"));
         assertEquals(400,a.send("GET","/api/v1/admin/audit-logs?from=2100-01-01T00:00:00Z&until=2000-01-01T00:00:00Z",null,false).statusCode());
+    }
+    @Test void adminUserPageLoadsMembershipsInOneBoundedQuery() throws Exception {
+        for(int i=0;i<30;i++) user(Role.STUDENT,university.id);
+        Browser browser=signedIn(admin);
+        var statistics=entityManagerFactory.unwrap(org.hibernate.SessionFactory.class).getStatistics();
+        boolean previouslyEnabled=statistics.isStatisticsEnabled();
+        statistics.setStatisticsEnabled(true);
+        try {
+            statistics.clear();
+            assertEquals(200,browser.send("GET","/api/v1/admin/users?size=1",null,false).statusCode());
+            long single=statistics.getPrepareStatementCount();
+            statistics.clear();
+            var page=browser.send("GET","/api/v1/admin/users?size=25",null,false);
+            long full=statistics.getPrepareStatementCount();
+            assertEquals(200,page.statusCode());
+            assertEquals(25,((List<?>)JsonPath.read(page.body(),"$.content")).size());
+            assertEquals(25,((List<?>)JsonPath.read(page.body(),"$.content[*].memberships[0].role")).size());
+            assertTrue(full<=single+1,"Query count must stay bounded: size1="+single+", size25="+full);
+        } finally { statistics.setStatisticsEnabled(previouslyEnabled); }
     }
     @Test void businessRollbackRollsBackAuditAndPasswordChange() {
         assertThrows(IllegalStateException.class,()->transactions.executeWithoutResult(tx->{

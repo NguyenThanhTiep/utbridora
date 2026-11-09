@@ -1,0 +1,8 @@
+{
+    auto_https disable_redirects
+    default_sni {$DEMO_HOST}
+}
+https://{$DEMO_HOST}:8443 {
+    tls internal
+    reverse_proxy frontend:8080
+}

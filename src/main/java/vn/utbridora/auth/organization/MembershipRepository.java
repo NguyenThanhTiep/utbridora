@@ -6,6 +6,7 @@ import vn.utbridora.auth.user.Role;
 
 public interface MembershipRepository extends JpaRepository<Membership,String> {
     List<Membership> findByUserIdAndActiveTrue(String userId);
+    List<Membership> findByUserIdInAndActiveTrue(java.util.Collection<String> userIds);
     boolean existsByUserIdAndOrganizationIdIsNullAndRoleAndActiveTrue(String userId, Role role);
     java.util.Optional<Membership> findByUserIdAndOrganizationIdAndRole(String userId,String organizationId,Role role);
     java.util.Optional<Membership> findByUserIdAndOrganizationIdIsNullAndRole(String userId,Role role);

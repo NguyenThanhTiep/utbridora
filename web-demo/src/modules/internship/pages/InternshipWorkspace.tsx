@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ApiError, type Grant, type Me } from '../../../api';
 import { EmptyState, Icon, LoadingState, Notice } from '../../../components';
 import { cohortInScope, groupInScope, usableAssignments } from '../access';
-import { pendingWorkspaceGateway, WorkspacePendingError, WorkspaceScopeError } from '../api';
+import { liveWorkspaceGateway, WorkspacePendingError, WorkspaceScopeError } from '../api';
 import type { Cohort, ContextAssignment, InternshipGroup, WorkspaceAssignment, WorkspaceGateway } from '../types';
 import '../styles.css';
 
@@ -24,7 +24,7 @@ function Failure({ error, retry }: { error: unknown; retry: () => void }) {
   </div>;
 }
 
-export function InternshipWorkspace({ me, grants, gateway = pendingWorkspaceGateway }: {
+export function InternshipWorkspace({ me, grants, gateway = liveWorkspaceGateway }: {
   me: Me; grants: Grant[]; gateway?: WorkspaceGateway;
 }) {
   const [attempt, setAttempt] = useState(0);

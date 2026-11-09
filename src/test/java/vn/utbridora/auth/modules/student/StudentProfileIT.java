@@ -53,15 +53,6 @@ class StudentProfileIT {
             return (student,term)->available ? authoritative.schoolOfLinkedTerm(student,term)
                 : new UnavailableStudentTermScope().schoolOfLinkedTerm(student,term);
         }
-        /** Catalog fixture for write/DTO cases only, not evidence of a production T4 provider or completeness policy. */
-        @Bean @Primary ProfileReferenceValidator fixtureProfileReferences() {
-            return (school,input)->{
-                if(input.majorCode()!=null && !Set.of("SE","AI").contains(input.majorCode()))
-                    throw new StudentProfileException(422,"INVALID_CATALOG_REFERENCE","Mã ngành không hợp lệ.",List.of());
-                if(input.skills().stream().anyMatch(skill->!Set.of("JAVA","PYTHON").contains(skill.skillCode())))
-                    throw new StudentProfileException(422,"INVALID_SKILL","Mã kỹ năng không hợp lệ.",List.of());
-            };
-        }
     }
     @LocalServerPort int port;
     @Autowired JdbcTemplate jdbc;
@@ -94,13 +85,15 @@ class StudentProfileIT {
         assertEquals(2,jdbc.queryForObject("SELECT COUNT(*) FROM operation_records WHERE state='DONE'",Integer.class));
     }
     @BeforeEach void seed() {
-        for(String table:List.of("operation_records","student_term_eligibilities","student_rosters","student_project_files","student_project_skills","student_projects","student_certificates",
+        for(String table:List.of("academic_catalog_entries","academic_catalogs","operation_records","student_term_eligibilities","student_rosters","student_project_files","student_project_skills","student_projects","student_certificates",
                 "student_custom_skills","student_profile_skills","student_profile_term_codes","student_profile_term_periods",
                 "student_profile_terms","student_profiles","SPRING_SESSION_ATTRIBUTES","SPRING_SESSION","audit_logs","account_status_history",
                 "one_time_tokens","files","memberships","terms","users","organizations")) jdbc.update("DELETE FROM "+table);
         LinkedTerms.available=true;
         university=university(Organization.Status.VERIFIED);
         student=student(university.id);
+        jdbc.update("INSERT IGNORE INTO skill_categories(id,category_code,name,normalized_name,status,version,created_at,updated_at) VALUES ('11111111-1111-4111-8111-111111111111','DESIGN','Design','design','ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))");
+        for(String code:List.of("JAVA","PYTHON")) jdbc.update("INSERT IGNORE INTO skills(id,skill_code,name,normalized_name,category_id,status,version,created_at,updated_at) VALUES (?,?,?,?,'11111111-1111-4111-8111-111111111111','ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",UUID.randomUUID().toString(),code,code,code.toLowerCase(Locale.ROOT));
     }
     Organization university(Organization.Status status) {
         Organization org=new Organization();org.name="Trường thử nghiệm "+UUID.randomUUID();
@@ -117,6 +110,8 @@ class StudentProfileIT {
         if(!existing.isEmpty() && !existing.get(0).equals(school)) return;
         String code="TEST-"+term.substring(0,8);
         jdbc.update("INSERT IGNORE INTO terms (id,school_org_id,term_code,start_date,end_date,status,version,created_at,updated_at) VALUES (?,?,?,'2026-12-01','2027-08-31','ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",term,school,code);
+        jdbc.update("INSERT IGNORE INTO academic_catalogs(term_id,school_org_id,catalog_version) VALUES (?,?,'school-v1')",term,school);
+        for(String entryCode:List.of("SE","AI","BACKEND","OOP")) jdbc.update("INSERT IGNORE INTO academic_catalog_entries(term_id,kind,code,name,major_codes,status) VALUES (?,?,?,?,JSON_ARRAY(),'ACTIVE')",term,entryCode.equals("BACKEND")?"ORIENTATION":entryCode.equals("OOP")?"SUBJECT":"MAJOR",entryCode,entryCode);
         var rosters=jdbc.queryForList("SELECT id FROM student_rosters WHERE user_id=? AND school_org_id=?",String.class,user,school);
         String roster=rosters.isEmpty()?UUID.randomUUID().toString():rosters.get(0);
         if(rosters.isEmpty()) jdbc.update("INSERT INTO student_rosters (id,school_org_id,student_code,user_id,full_name,email,major_code,term_code,created_at) VALUES (?,?,?,?,? ,?,'SE',?,UTC_TIMESTAMP(6))",
@@ -184,6 +179,33 @@ class StudentProfileIT {
         assertEquals(1,jdbc.queryForObject("SELECT profile_version FROM student_profiles WHERE user_id=?",Integer.class,student.id));
         assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE action='STUDENT_PROFILE_UPDATED'",Integer.class));
     }
+    @Test void academicCatalogIsVersionedScopedAndUsesTheSameCodesAsProfileWrites() throws Exception {
+        Browser b=signedIn(student);
+        String path="/api/v1/students/me/catalogs?termId="+TERM+"&kind=MAJOR&size=1";
+        var first=b.send("GET",path,null,false,null);
+        assertEquals(200,first.statusCode(),first.body());
+        assertEquals("school-v1",read(first,"$.catalogVersion"));
+        assertEquals(2,(int)read(first,"$.entries.totalElements"));
+        assertEquals(List.of("AI"),read(first,"$.entries.content[*].code"));
+        assertEnvelope(b.send("GET",path+"&expectedCatalogVersion=old",null,false,null),409,"CATALOG_CHANGED");
+        assertEnvelope(b.send("GET",path.replace(TERM,UUID.randomUUID().toString()),null,false,null),404,"RESOURCE_NOT_FOUND");
+        jdbc.update("UPDATE academic_catalog_entries SET status='INACTIVE' WHERE term_id=? AND code='SE'",TERM);
+        jdbc.update("UPDATE academic_catalogs SET catalog_version='school-v2' WHERE term_id=?",TERM);
+        assertEnvelope(b.put(input(0)),422,"CATALOG_CODE_INVALID");
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM student_profiles",Integer.class));
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM operation_records",Integer.class));
+    }
+    @Test void actualTaxonomyRejectsUnknownDeprecatedAndWrongCaseReferences() throws Exception {
+        Browser b=signedIn(student);
+        for(String code:List.of("UNKNOWN","java")) {
+            var bad=input(0);bad.put("skills",List.of(obj("skillCode",code,"level",2,"yearsPractice",1,"note",null)));
+            assertEnvelope(b.put(bad),422,"CATALOG_CODE_INVALID");
+        }
+        jdbc.update("UPDATE skills SET status='DEPRECATED' WHERE skill_code='JAVA'");
+        try { assertEnvelope(b.put(input(0)),422,"CATALOG_CODE_INVALID"); }
+        finally { jdbc.update("UPDATE skills SET status='ACTIVE' WHERE skill_code='JAVA'"); }
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM student_profiles",Integer.class));
+    }
 
     @Test void termListIsScopedAndARealLinkedTermDoesNotApproveTheStudent() throws Exception {
         Browser b=signedIn(student);
@@ -240,7 +262,7 @@ class StudentProfileIT {
         var unknown=input(0);unknown.put("majorCode","NO_SUCH_MAJOR");
         unknown.put("skills",List.of(obj("skillCode","NO_SUCH_SKILL","level",3,"yearsPractice",1,"note",null)));
         var res=signedIn(student).put(unknown);
-        assertEnvelope(res,422,"INVALID_CATALOG_REFERENCE");
+        assertEnvelope(res,422,"CATALOG_CODE_INVALID");
         var empty=input(0);empty.put("majorCode",null);empty.put("skills",List.of());
         var none=signedIn(student(university.id)).put(empty);
         assertEquals(200,none.statusCode(),none.body());

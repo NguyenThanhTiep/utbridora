@@ -1,5 +1,7 @@
 # T3-01 — Thiết kế tiếp nhận Placement vào Inbox/Case
 
+> Ghi chú 09/11/2026: tài liệu dưới đây lưu checkpoint lịch sử. Runtime inbox/Case và điểm nối hiện hành xem [WEEK1_RUNTIME](../guides/WEEK1_RUNTIME.md) và [ma trận kiểm chứng](../testing/WEEK1_ACCEPTANCE.md); không dùng nhãn PENDING cũ để yêu cầu bàn giao lại Core.
+
 Ngày soạn: 06/11/2026; cập nhật: 07/11/2026 (Asia/Saigon). DEV05 — Đoàn Phan Vĩnh Phú; QA03 — Phạm Lâm Phương Bảo.
 
 **PROPOSAL — PENDING CROSS-TEAM REVIEW**

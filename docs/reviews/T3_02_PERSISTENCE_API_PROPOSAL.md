@@ -1,5 +1,7 @@
 # T3-02 — Đề xuất persistence và điểm nối API
 
+> Ghi chú 09/11/2026: nội dung dưới đây là đề xuất tại checkpoint cũ. Adapter/API và migration runtime đã có trong [WEEK1_RUNTIME](../guides/WEEK1_RUNTIME.md); đối chiếu kiểm chứng tại [ma trận tuần 1](../testing/WEEK1_ACCEPTANCE.md).
+
 DEV06 — 07/11/2026, Asia/Saigon. **PROPOSED / CHƯA DUYỆT / CHƯA CHẠY DDL.**
 Tài liệu review, không là migration, quyết định status hoặc xác nhận QA.
 

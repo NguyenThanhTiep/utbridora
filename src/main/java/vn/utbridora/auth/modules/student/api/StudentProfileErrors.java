@@ -17,7 +17,7 @@ import vn.utbridora.auth.modules.student.application.StudentProfileException;
  * C.0 error envelope for the student profile API only (Contract Pack v1.0 lines 97-103): error equals errorCode,
  * requestId is the RequestIdFilter UUID. The core ApiErrorHandler keeps its legacy body for other routes.
  */
-@RestControllerAdvice(assignableTypes=StudentProfileController.class)
+@RestControllerAdvice(assignableTypes={StudentProfileController.class,AcademicCatalogController.class})
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class StudentProfileErrors {
     @ExceptionHandler(StudentProfileException.class)
@@ -28,6 +28,10 @@ public class StudentProfileErrors {
     ResponseEntity<ErrorEnvelope> missingParameter(MissingServletRequestParameterException e,HttpServletRequest request) {
         return envelope(request,400,"INVALID_REQUEST","Yêu cầu chưa hợp lệ.",
             List.of(new FieldErrorView(e.getParameterName(),"INVALID_REQUEST","Thiếu tham số bắt buộc.")));
+    }
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    ResponseEntity<ErrorEnvelope> wrongParameter(Exception e,HttpServletRequest request) {
+        return envelope(request,400,"INVALID_REQUEST","Tham số chưa hợp lệ.",List.of());
     }
     /** A concurrent first save of the same term loses on the unique key or the row lock. */
     @ExceptionHandler({DataIntegrityViolationException.class,ConcurrencyFailureException.class})

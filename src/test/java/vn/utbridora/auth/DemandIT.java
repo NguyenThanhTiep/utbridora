@@ -33,12 +33,6 @@ class DemandIT {
         r.add("spring.datasource.username",MYSQL::getUsername);
         r.add("spring.datasource.password",MYSQL::getPassword);
     }
-    /** Only T2 academic entries are a test fixture; terms, taxonomy and the ledger are real providers. */
-    @org.springframework.boot.test.context.TestConfiguration static class AcademicFixture {
-        @org.springframework.context.annotation.Bean vn.utbridora.auth.modules.cooperation.integration.DemandMajorCatalogPort academic() {
-            return (enterprise,school,term)->new vn.utbridora.auth.modules.cooperation.integration.DemandMajorCatalogPort.Catalog(school,term,"v1",Set.of("IT"));
-        }
-    }
     @Autowired vn.utbridora.auth.modules.cooperation.persistence.TermRepository terms;
     @LocalServerPort int port;
     @Autowired JdbcTemplate jdbc;
@@ -58,6 +52,8 @@ class DemandIT {
         var term=new vn.utbridora.auth.modules.cooperation.domain.Term();term.schoolOrgId=school;term.termCode="TEST-"+UUID.randomUUID();
         term.startDate=LocalDate.parse("2027-01-01");term.endDate=LocalDate.parse("2027-06-01");term.status=vn.utbridora.auth.modules.cooperation.domain.TermStatus.ACTIVE;
         terms.saveAndFlush(term);
+        jdbc.update("INSERT INTO academic_catalogs(term_id,school_org_id,catalog_version) VALUES (?,?,'v1')",term.id,school);
+        jdbc.update("INSERT INTO academic_catalog_entries(term_id,kind,code,name,major_codes,status) VALUES (?,'MAJOR','IT','Information technology',JSON_ARRAY(),'ACTIVE')",term.id);
         jdbc.update("INSERT IGNORE INTO skill_categories(id,category_code,name,normalized_name,status,version,created_at,updated_at) VALUES ('11111111-1111-4111-8111-111111111111','PROGRAMMING','Programming','programming','ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))");
         jdbc.update("INSERT IGNORE INTO skills(id,skill_code,name,normalized_name,category_id,status,version,created_at,updated_at) VALUES ('22222222-2222-4222-8222-222222222222','JAVA','Java','java','11111111-1111-4111-8111-111111111111','ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))");
         input=new DemandInput(school,term.id,"Java internship",5,"Build APIs",null,null,

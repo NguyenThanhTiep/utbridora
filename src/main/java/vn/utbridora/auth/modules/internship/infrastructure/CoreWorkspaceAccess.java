@@ -10,7 +10,7 @@ import vn.utbridora.auth.user.Role;
 import static vn.utbridora.auth.modules.internship.domain.WorkspaceRuleException.Kind.*;
 
 /** DEV06 adapter using existing Core API plus authoritative business checks.
- * Not a Spring bean: assignment/Term providers and T3 permission seeds are not yet wired.
+ * Registered by WorkspaceConfiguration with real assignment/Term providers and scoped permissions.
  * ENTERPRISE membership, ADMIN or a client authority string never substitutes for assignment.
  */
 public final class CoreWorkspaceAccess implements Access {

@@ -1,5 +1,7 @@
 # T3-03 — Khung UI HR/Mentor và nhóm thực tập
 
+> Cập nhật 09/11/2026: hướng dẫn dưới đây lưu thiết kế/checkpoint UI ban đầu. Gateway runtime hiện dùng API thật; xem [WEEK1_RUNTIME](WEEK1_RUNTIME.md) và [ma trận kiểm chứng](../testing/WEEK1_ACCEPTANCE.md) để phân biệt bằng chứng mock với tích hợp.
+
 Owner: DEV07 — Lại Thái Thuận. QA phụ trách: QA03 — Phạm Lâm Phương Bảo.
 
 Phạm vi giao việc lấy từ `UTBridora_Plan.xlsm`, sheet `CAP NHAT CHUNG`, hàng 13,

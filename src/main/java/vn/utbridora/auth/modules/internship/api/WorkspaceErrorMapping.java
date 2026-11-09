@@ -5,7 +5,7 @@ import java.util.Objects;
 import java.util.UUID;
 import vn.utbridora.auth.modules.internship.domain.WorkspaceRuleException;
 
-/** C.0 mapping for a future T3 adapter; no ControllerAdvice or change to legacy Core errors. */
+/** C.0 mapping used by WorkspaceErrors; legacy Core responses retain their existing shape. */
 public final class WorkspaceErrorMapping {
     private WorkspaceErrorMapping() {}
     public record FieldError(String field, String code, String message) {}

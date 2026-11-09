@@ -31,6 +31,13 @@ public class SchoolDelegationAccess {
         var parent=jdbc.queryForList("SELECT user_id FROM school_delegations WHERE id=? AND valid_from<=(SELECT valid_from FROM school_delegations WHERE id=?) AND valid_until>=(SELECT valid_until FROM school_delegations WHERE id=?)"+lockSuffix(),String.class,grant.parent(),id,id);
         return parent.size()==1 && grant.grantor().equals(parent.getFirst()) && current(grant.parent(),school,grant.term(),permission,seen,depth+1);
     }
+    /** Revalidate the EXACT delegation referenced by a downstream confirmation, including its ancestry. */
+    public boolean currentAssignment(String id,String subject,String school,String term,String permission) {
+        var auth=access.currentSubject(subject).orElse(null);
+        return access.hasOrganization(auth,school,Role.SCHOOL_STAFF,permission)
+            && jdbc.queryForObject("SELECT COUNT(*) FROM school_delegations WHERE id=? AND user_id=?",Integer.class,id,subject)==1
+            && current(id,school,term,permission,new HashSet<>(),0);
+    }
     private static String lockSuffix() {
         return org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive()
             && !org.springframework.transaction.support.TransactionSynchronizationManager.isCurrentTransactionReadOnly()?" FOR UPDATE":"";

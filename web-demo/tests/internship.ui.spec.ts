@@ -176,16 +176,17 @@ test('T3 UI fixture: responsive group view and keyboard navigation', async ({ pa
   await expect(page.getByRole('button', { name: 'Về danh sách nhóm' })).toBeVisible();
 });
 
-test('T3 shell UI mock: enterprise enters pending workspace; logout removes it', async ({ page }) => {
+test('T3 shell UI mock: enterprise loads current assignments; logout removes it', async ({ page }) => {
   await page.route('**/api/v1/auth/me', route => route.fulfill({ json: me }));
   await page.route('**/api/v1/auth/me/permissions', route => route.fulfill({ json: grants }));
+  await page.route('**/api/v1/t3/context-assignments/me', route => route.fulfill({ json: [] }));
   await page.route('**/api/v1/auth/csrf', route => route.fulfill({ json: { headerName: 'X-CSRF-TOKEN', token: 'test-only' } }));
   await page.route('**/api/v1/auth/logout', route => route.fulfill({ status: 204 }));
-  let businessRequests = 0;
-  page.on('request', request => { if (request.url().includes('/api/v1/t3/')) businessRequests++; });
+  const businessRequests: string[] = [];
+  page.on('request', request => { const path = new URL(request.url()).pathname; if (path.startsWith('/api/v1/t3/')) businessRequests.push(path); });
   await page.goto('/'); await page.getByRole('button', { name: 'Không gian thực tập', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Chờ tích hợp dữ liệu' })).toBeVisible();
-  expect(businessRequests).toBe(0);
+  await expect(page.getByRole('heading', { name: 'Chưa có phân công phù hợp' })).toBeVisible();
+  expect([...new Set(businessRequests)]).toEqual(['/api/v1/t3/context-assignments/me']);
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Không gian thực tập', exact: true })).toHaveCount(0);
@@ -201,8 +202,9 @@ test('T3 shell UI mock: global ADMIN has no implicit internship menu', async ({ 
 test('T3 shell UI mock: session expiry leaves workspace and requires login', async ({ page }) => {
   await page.route('**/api/v1/auth/me', route => route.fulfill({ json: me }));
   await page.route('**/api/v1/auth/me/permissions', route => route.fulfill({ json: grants }));
+  await page.route('**/api/v1/t3/context-assignments/me', route => route.fulfill({ json: [] }));
   await page.goto('/'); await page.getByRole('button', { name: 'Không gian thực tập', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Chờ tích hợp dữ liệu' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Chưa có phân công phù hợp' })).toBeVisible();
   await page.evaluate(() => window.dispatchEvent(new Event('session-expired')));
   await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Chờ tích hợp dữ liệu' })).toHaveCount(0);
