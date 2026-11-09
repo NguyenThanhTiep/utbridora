@@ -25,13 +25,22 @@ try {
     $demoDirty=& git -c "safe.directory=$repoRoot" status --porcelain
     $env:DEMO_SOURCE_REVISION=$demoRevision+$(if ($demoDirty) {'-dirty'} else {''})
     $composeArgs=@('compose','--env-file',$configFile,'-f','compose.demo.yaml')
-    switch ($Action) {
-        'start' { & docker @composeArgs up -d --build }
-        'stop' { & docker @composeArgs stop }
-        'status' { & docker @composeArgs ps }
-        'logs' { & docker @composeArgs logs --tail 100 }
+    # Docker writes normal progress to stderr. Windows PowerShell 5 turns redirected
+    # stderr into error records; judge the command by its exit code instead.
+    $previousNativePreference=$ErrorActionPreference
+    try {
+        $ErrorActionPreference='Continue'
+        switch ($Action) {
+            'start' { & docker @composeArgs up -d --build 2>&1 | ForEach-Object { Write-Host "$_" } }
+            'stop' { & docker @composeArgs stop 2>&1 | ForEach-Object { Write-Host "$_" } }
+            'status' { & docker @composeArgs ps 2>&1 | ForEach-Object { Write-Host "$_" } }
+            'logs' { & docker @composeArgs logs --tail 100 2>&1 | ForEach-Object { Write-Host "$_" } }
+        }
+        $demoExitCode=$LASTEXITCODE
+    } finally {
+        $ErrorActionPreference=$previousNativePreference
     }
-    if ($LASTEXITCODE -ne 0) {throw "Demo command failed with exit code $LASTEXITCODE"}
+    if ($demoExitCode -ne 0) {throw "Demo command failed with exit code $demoExitCode"}
     if ($Action -eq 'start') {
         Write-Host "Synthetic demo started. Credentials are in $configFile (DEMO_PASSWORD)."
         Write-Host 'Only this separate Docker project is managed; stop preserves its database.'
