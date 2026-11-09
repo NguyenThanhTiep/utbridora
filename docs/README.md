@@ -51,6 +51,7 @@ docs/
 - [Chạy local, chuẩn bị staging và backup](guides/DEPLOYMENT_GUIDE.md).
 - [Làm việc với GitHub: nhánh, commit, pull request, review và xử lý xung đột](guides/HUONG_DAN_LAM_VIEC_VOI_GITHUB.md).
 - [T3-03: khung UI HR/Mentor, nhóm thực tập và điểm chờ tích hợp](guides/T3_03_HR_MENTOR_WORKSPACE.md).
+- [Docker local: tạo dữ liệu mẫu và hướng dẫn demo Student/HR/Mentor cho dev](guides/LOCAL_DEMO.md).
 
 ## Trạng thái và kiểm thử
 

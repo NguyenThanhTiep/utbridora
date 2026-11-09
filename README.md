@@ -14,7 +14,9 @@ Mở Docker Desktop ở chế độ **Linux containers**, chạy tại thư mụ
 .\run-local.cmd start
 ```
 
-Script tự tạo `.env.local` với mật khẩu ngẫu nhiên và chạy toàn bộ hệ thống; không cần cài riêng Java/Maven/Node. Có thể nhấp đúp `run-local.cmd`.
+Script tự tạo `.env.local` với mật khẩu ngẫu nhiên và chạy toàn bộ hệ thống; không cần cài riêng Java/Maven/Node. Với database mới, script bật seed local một lần để có tài khoản Student/HR/Mentor và dữ liệu mẫu. Database/cấu hình cũ được giữ nguyên. Có thể nhấp đúp `run-local.cmd`.
+
+Xem **[hướng dẫn demo cho dev: tài khoản, hồ sơ, nhu cầu và HR/Mentor](docs/guides/LOCAL_DEMO.md)**. Mật khẩu sáu tài khoản nghiệp vụ mới ở `DEMO_PASSWORD` trong `.env.local`; mật khẩu Admin dùng `BOOTSTRAP_ADMIN_PASSWORD` riêng.
 
 | Nội dung | Thông tin mặc định |
 |---|---|

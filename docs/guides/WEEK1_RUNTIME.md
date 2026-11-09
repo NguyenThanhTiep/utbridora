@@ -20,52 +20,45 @@ Contract nền đã có ContextAssignment/Scope và yêu cầu dùng context đ�
 ## Khởi động trên máy hiện tại
 
 ```powershell
-cd D:\HKDN-TTTV-UTH\.work\integration-20261108\repo
-.\scripts\start-week1-demo.ps1 -LanIp 192.168.1.241
+cd D:\HKDN-TTTV-UTH\UTBridora_SourceCode\utbridora-t1-full-foundation
+.\run-local.cmd start
 ```
 
-Stack `utbridora-week1-demo`, database `utbridora_week1_demo`, HTTPS `https://192.168.1.241:8443`. Không dùng volume/database của stack `utbridora-local` trên 8088/3307. MySQL và backend không mở cổng host. Hộp thư chỉ ở máy chủ: `http://localhost:8027`.
+Ứng dụng: **http://localhost:8088**. Hộp thư: **http://localhost:8026**. Stack `utbridora-local` dùng database `utbridora`, MySQL tại `127.0.0.1:3307`; backend không mở cổng host. Các cổng local chỉ bind loopback, không phải URL dùng chung từ máy khác.
 
-Mật khẩu ngẫu nhiên nằm ở `DEMO_PASSWORD` trong `.env.week1-demo` (file bị Git/Docker build context loại trừ). Tài khoản tổng hợp: `admin@example.test`, `school@example.test`, `student@example.test`, `hr@example.test`, `mentor@example.test`; coordinator và intern là tiền điều kiện fixture. Không dùng mật khẩu demo cho tài khoản thật.
+`run-local.cmd` đọc `.env.local`; lần đầu tạo cấu hình và mật khẩu ngẫu nhiên nếu chưa có cấu hình/volume cũ, đồng thời bật `LOCAL_DEMO_ENABLED=true`. Seed local tạo tài khoản/dữ liệu mẫu một lần. Mật khẩu admin khởi tạo nằm ở `BOOTSTRAP_ADMIN_PASSWORD`, sáu tài khoản nghiệp vụ dùng `DEMO_PASSWORD` riêng trong file đó. Tài khoản đã đổi mật khẩu tiếp tục dùng mật khẩu hiện hành; script không reset mật khẩu khi khởi động lại. Xem [hướng dẫn demo cho dev](LOCAL_DEMO.md).
 
-Profile `demo` và cờ `app.demo.week1.enabled=true` mới cho phép import. Import từ chối database khác tên hoặc database có dữ liệu nhưng chưa có receipt. Khởi động lại giữ nguyên chỉnh sửa. Verification APPROVED, Placement ACTIVE, delegation và invitation accepted trong database này là **tiền điều kiện tổng hợp**, không phải bằng chứng đã xây xong workflow phê duyệt/đăng ký/lời mời của tuần sau. Không tạo metadata CLEAN thay cho scan tệp.
+Trên máy demo đã chuẩn bị ngày 09/11/2026, dữ liệu tổng hợp đã được nhập bổ sung vào database chung sau khi thử migration/import trên bản sao và đối chiếu dữ liệu cũ. Sáu tài khoản `school`, `coordinator`, `hr`, `mentor`, `student`, `intern` tại miền `example.test` dùng mật khẩu trong `DEMO_PASSWORD` của `.env.local-demo`. Admin và tài khoản cũ giữ mật khẩu riêng. Hai file `.env.local`/`.env.local-demo` bị Git và Docker build context loại trừ; không chia sẻ hoặc in secret ra log.
 
-HTTPS dùng CA nội bộ theo [tài liệu Caddy](https://caddyserver.com/docs/automatic-https). Chỉ chia sẻ `root.crt` công khai và kiểm fingerprint trước khi cài vào Trusted Root của máy thử nghiệm; khóa riêng nằm trong volume Caddy, không xuất. Có thể xuất certificate bằng:
+Checkout mới dùng `LocalDemoBootstrap` và `demo/local.sql` trên database local mới; seed đòi profile `local` và cờ bật, từ chối database cũ chưa có receipt. File cấu hình local cũ không tự được bật cờ. Bộ triển khai HTTPS 8443 riêng đã được gỡ. Verification APPROVED, Placement ACTIVE, delegation và invitation accepted trong dữ liệu demo là **tiền điều kiện tổng hợp**, không phải bằng chứng hoàn thành workflow phê duyệt/đăng ký/lời mời của tuần sau. Không tạo metadata CLEAN thay cho scan tệp.
 
 ```powershell
-docker compose --env-file .env.week1-demo -f compose.demo.yaml cp caddy:/data/caddy/pki/authorities/local/root.crt demo-root.crt
+.\run-local.cmd logs
+.\run-local.cmd stop
 ```
 
-Nếu Windows chặn kết nối LAN, PowerShell **Administrator** chạy `.\scripts\enable-week1-demo-lan.ps1`. Lệnh chỉ mở TCP 8443 cho LocalSubnet trên Wi-Fi 2, không đổi mạng Public sang Private. Máy thử phải cùng mạng và máy chủ cần bật Docker, không Sleep; địa chỉ LAN có thể đổi theo DHCP. Chưa có phép thử từ máy thứ hai thì không ghi nhận cả 5 team đã truy cập.
+Stop giữ database và cấu hình. Không dùng `down -v` hoặc restore database demo đè lên database chung. Việc gỡ file triển khai 8443 không tự dừng/xóa container, volume, chứng chỉ hoặc firewall đã có trên máy.
 
-```powershell
-.\scripts\start-week1-demo.ps1 -Action status
-.\scripts\start-week1-demo.ps1 -Action logs
-.\scripts\start-week1-demo.ps1 -Action stop
-```
+## Cập nhật phiên bản bằng Docker cho các dev
 
-Stop giữ dữ liệu. Không dùng `down -v` nếu muốn giữ demo. Kiểm lại HTTPS/session/scope bằng `scripts/check-week1-demo.py --base-url ... --ca-file ...`; cờ `--exercise-profile` chỉ tạo hồ sơ nếu chưa có, dùng trên database demo riêng.
-
-## Đồng bộ phiên bản bằng Docker cho các dev
-
-Mỗi dev clone repository, cài Git và Docker Desktop đang chạy Linux containers. Trong checkout sạch của `main`, cập nhật rồi dựng lại:
+Mỗi dev clone repository, cài Git và Docker Desktop đang chạy Linux containers. Trong checkout sạch có thể cập nhật rồi dựng lại:
 
 ```powershell
 git pull --ff-only
-.\scripts\start-week1-demo.ps1 -LanIp 127.0.0.1
+.\run-local.cmd start
 ```
 
-Lần đầu script sinh `.env.week1-demo` riêng; sau đó giữ nguyên mật khẩu và các volume khi build lại. Truy cập `https://127.0.0.1:8443`, xuất CA theo hướng dẫn trên để trình duyệt tin cậy HTTPS. Nếu đã có cấu hình, script dùng `DEMO_HOST` đang lưu; tham số `-LanIp` chỉ dùng lúc khởi tạo. Muốn chia sẻ LAN, đặt địa chỉ máy chủ trong `DEMO_HOST` rồi chạy lại script và mở firewall có giới hạn như trên. Không chép mật khẩu/volume của máy chủ vào Git.
+Giữ `.env.local` và volume cũ để giữ mật khẩu/dữ liệu. Nếu checkout có thay đổi hoặc lịch sử phân kỳ, xử lý Git trước khi cập nhật; không reset để ép đồng bộ. Để tái lập bản đã kiểm thử, dùng đúng commit có CI xanh. CI dựng frontend, chạy unit/integration và browser theo cấu hình `.github/workflows/verify.yml`.
 
-Để tái lập chính xác một bản đã kiểm thử, dùng cùng commit đã có CI xanh; image backend/frontend ghi SHA ở label `org.opencontainers.image.revision`. Checkout có thay đổi sẽ được ghi hậu tố `-dirty`. Nếu `git pull --ff-only` báo xung đột/lịch sử phân kỳ, giữ thay đổi và xử lý Git trước khi dựng; không reset để ép đồng bộ.
-
-Docker đồng bộ ứng dụng/cấu hình dựng và fixture ban đầu, **không tự đồng bộ dữ liệu MySQL giữa các máy**. Mỗi máy giữ database riêng; nhóm cần cùng xem/sửa một dữ liệu thì dùng URL máy chủ `https://192.168.1.241:8443` trong cùng LAN. Cần máy chủ bật Docker và không Sleep. Chưa cấu hình truy cập từ Internet.
+Docker dựng cùng ứng dụng/cấu hình, **không tự đồng bộ dữ liệu MySQL giữa các máy**. Chia sẻ môi trường qua LAN/Internet cần cấu hình triển khai và URL riêng; có thể dùng `compose.staging.yaml` làm nền tảng. Kiểm chứng HTTPS, session và truy cập từ máy khác riêng; kết quả localhost không chứng minh các điều kiện đó.
 
 ## Demo nghiệp vụ
 
-1. `student@example.test`: Sinh viên → Thông tin chung → Tạo hồ sơ nếu chưa có → chọn SE, sửa điện thoại/thời gian → Lưu → tải lại. Trường VERIFIED, kỳ ACTIVE và liên kết sinh viên–trường–kỳ đã có; MSSV `00123` là chuỗi, schoolApproved vẫn false. Completeness đầy đủ thuộc tuần 2, không dùng kết quả này làm phê duyệt Placement.
+Các bước sau áp dụng cho máy đã có dữ liệu demo trong database chung:
+
+1. `student@example.test`: Sinh viên → Thông tin chung → sửa ngành, điện thoại/thời gian → Lưu thông tin chung → tải lại. Hồ sơ đã có ngành SE; trường VERIFIED, kỳ ACTIVE và liên kết sinh viên–trường–kỳ đã có; MSSV `00123` là chuỗi, schoolApproved vẫn false. Completeness đầy đủ thuộc tuần 2, không dùng kết quả này làm phê duyệt Placement.
 2. `hr@example.test` / `mentor@example.test`: Không gian thực tập → chọn phân công → DEMO-W1 → Xem nhóm DEMO-G1. Đây là read API và assignment thật trên dữ liệu tổng hợp. Các bảng công việc/lịch/đánh giá chưa xây của tuần sau vẫn ghi rõ trạng thái.
-3. Doanh nghiệp → Nhu cầu: tạo/sửa bản nháp. Dùng school `...0011`, term `...0021` theo UUID đầy đủ trong fixture; ngành `SE`/`AI`, catalog `school-demo-v1`, taxonomy `skills-v1`, kỹ năng `JAVA`. Snapshot nhu cầu giữ version cũ khi sửa. Form hiện nhận UUID/version; danh mục lựa chọn nâng cao thuộc phần UI tiếp theo.
+3. `hr@example.test`: Nhu cầu thực tập → bản nháp **DEMO - Java Internship** → sửa/lưu/tải lại hoặc tạo bản nháp mới. School `00000000-0000-4000-8000-000000000011`, term `00000000-0000-4000-8000-000000000021`; ngành `SE`/`AI`, catalog `school-demo-v1`, taxonomy `skills-v1`, kỹ năng `JAVA`. Snapshot nhu cầu giữ version cũ khi sửa. Form hiện nhận UUID/version; danh mục lựa chọn nâng cao thuộc phần UI tiếp theo.
 4. Nhà trường: khung tuần 1 và TermReference đã có. Giao diện phê duyệt verification đầy đủ là task tuần 2; không giới thiệu shell hiện tại như workflow hoàn chỉnh.
 
 Xem [ma trận nghiệm thu](../testing/WEEK1_ACCEPTANCE.md) để biết bằng chứng đã chạy và ca còn NOT RUN.

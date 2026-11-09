@@ -6,7 +6,7 @@
 |---|---|---|
 | T1-01 | Contract, schema/version/error dùng chung; giữ tương thích Core | `scripts/contracts/build_contract_bundle.py --check`, `verify_contracts.py`, portability/audit-registry regression |
 | T1-02 | Auth/session/CSRF, quyền và scope Core | `CorePlatformIT`, unit Core; N+1 admin được kiểm bằng số truy vấn MySQL/Hibernate thực tế |
-| T1-03 | Docker, CI, môi trường demo trên máy hiện tại | `compose.demo.yaml`, `Week1DemoIT`, probe HTTPS/cookie/scope, [hướng dẫn vận hành](../guides/WEEK1_RUNTIME.md); client từ máy khác ghi riêng |
+| T1-03 | Docker, CI, môi trường chạy trên máy hiện tại | `compose.local.yaml`, `LocalDemoIT` (MySQL/owner services, restart/resume/không ghi đè), `LocalDemoActivationTest`, `compose.staging.yaml`, `.github/workflows/verify.yml`, smoke API/giao diện trên đúng bản triển khai và [hướng dẫn demo local](../guides/LOCAL_DEMO.md); truy cập từ máy khác/HTTPS phải kiểm riêng, không suy từ localhost |
 | T2-01 | Lưu/tải hồ sơ, ngành/kỳ/trường, version và quyền | `StudentProfileIT`: term link thật, catalog T2/T4 thật, idempotency, rollback audit, trường khác/revoke, mã sai/deprecated; transaction snapshot cũ phải thấy mã vừa bị ngừng sử dụng |
 | T2-02 | UI tài khoản/hồ sơ, ngành, điện thoại/thời gian, lỗi theo trường | `student-runtime.spec.ts` chạy từ StudentProfileIT: tạo → chọn ngành → lưu → reload; mock UX là bộ riêng |
 | T2-03 | Schema/DTO/port roster và eligibility cơ bản | `StudentDataConstraintsIT`, `LinkedStudentTermScope`, V10; MSSV chuỗi, FK school/term/user và unique student-term. Import 5.000 dòng không phải gate tuần 1 |
@@ -32,4 +32,4 @@
 - UI shell trường không được báo thành UI xét duyệt hoàn chỉnh. Tuần 1 T5-03 cho phép màn chờ ở phần chưa thuộc output đó.
 - Human QA/Lead signoff và truy cập từ máy thật của 5 team chỉ ghi khi có bằng chứng tương ứng. Probe 5 tài khoản từ máy chủ không thay cho thử nghiệm từ 5 máy khác.
 
-Migration cũ V1–V18 được giữ nguyên. V19–V21 được thêm tuần tự; MigrationUpgradeIT giữ các assertion dữ liệu/constraint cũ và cập nhật số migration mới. Database/demo dùng volume riêng, không chỉnh dữ liệu của stack 8088/3307.
+Migration cũ V1–V18 được giữ nguyên. V19–V21 được thêm tuần tự; MigrationUpgradeIT giữ các assertion dữ liệu/constraint cũ và cập nhật số migration mới. Local mới có seed tổng hợp opt-in bằng cấu hình; receipt giữ chỉnh sửa qua restart và seed từ chối database cũ không có receipt. Máy đã nhập demo vào database chung tiếp tục giữ cấu hình/dữ liệu cũ, không tự bật seed. Bộ triển khai HTTPS 8443 và test seed riêng đã được gỡ; bằng chứng của bộ đó chỉ áp dụng cho commit cũ đã kiểm thử.

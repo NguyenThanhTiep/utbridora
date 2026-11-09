@@ -1,17 +1,17 @@
--- Synthetic Week 1 prerequisites, imported only into an EMPTY utbridora_week1_demo database.
+-- Synthetic Week 1 prerequisites, imported once into a NEW, explicitly opted-in local utbridora database.
 -- APPROVED verification/Placement and accepted Mentor invitation are fixtures, NOT a completed Week 2/3 workflow.
 -- No real users, school approvals, CLEAN file scans or team signatures are fabricated.
 INSERT INTO organizations(id,name,type,status,created_at) VALUES
  ('00000000-0000-4000-8000-000000000011','DEMO - School A','UNIVERSITY','VERIFIED',UTC_TIMESTAMP(6)),
  ('00000000-0000-4000-8000-000000000012','DEMO - Enterprise A','ENTERPRISE','VERIFIED',UTC_TIMESTAMP(6));
 INSERT INTO users(id,email,password_hash,display_name,status,created_at,updated_at) VALUES
- ('00000000-0000-4000-8000-000000000001','admin@example.test',:passwordHash,'DEMO Admin','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)),
- ('00000000-0000-4000-8000-000000000002','school@example.test',:passwordHash,'DEMO School Staff','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)),
- ('00000000-0000-4000-8000-000000000003','coordinator@example.test',:passwordHash,'DEMO Coordinator','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)),
- ('00000000-0000-4000-8000-000000000004','hr@example.test',:passwordHash,'DEMO HR','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)),
- ('00000000-0000-4000-8000-000000000005','mentor@example.test',:passwordHash,'DEMO Mentor','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)),
- ('00000000-0000-4000-8000-000000000006','student@example.test',:passwordHash,'DEMO Student - profile','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)),
- ('00000000-0000-4000-8000-000000000007','intern@example.test',:passwordHash,'DEMO Student - internship fixture','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6));
+ ('00000000-0000-4000-8000-000000000001',:adminEmail,:adminPasswordHash,'DEMO Admin','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)),
+ ('00000000-0000-4000-8000-000000000002','school@example.test',:demoPasswordHash,'DEMO School Staff','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)),
+ ('00000000-0000-4000-8000-000000000003','coordinator@example.test',:demoPasswordHash,'DEMO Coordinator','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)),
+ ('00000000-0000-4000-8000-000000000004','hr@example.test',:demoPasswordHash,'DEMO HR','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)),
+ ('00000000-0000-4000-8000-000000000005','mentor@example.test',:demoPasswordHash,'DEMO Mentor','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)),
+ ('00000000-0000-4000-8000-000000000006','student@example.test',:demoPasswordHash,'DEMO Student - profile','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)),
+ ('00000000-0000-4000-8000-000000000007','intern@example.test',:demoPasswordHash,'DEMO Student - internship fixture','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6));
 INSERT INTO memberships(id,user_id,organization_id,role,created_at) VALUES
  (UUID(),'00000000-0000-4000-8000-000000000001',NULL,'ADMIN',UTC_TIMESTAMP(6)),
  (UUID(),'00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000011','SCHOOL_STAFF',UTC_TIMESTAMP(6)),

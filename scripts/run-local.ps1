@@ -14,6 +14,16 @@ function New-LocalSecret {
     } finally { $random.Dispose() }
 }
 
+function Invoke-LocalDocker([string[]]$DockerArguments) {
+    # Docker build progress uses stderr on Windows PowerShell, even on success.
+    $previousPreference=$ErrorActionPreference
+    try {
+        $ErrorActionPreference='Continue'
+        & docker @DockerArguments
+        if ($LASTEXITCODE -ne 0) { throw 'Lenh Docker that bai; xem thong bao o tren.' }
+    } finally { $ErrorActionPreference=$previousPreference }
+}
+
 try {
     if (!(Get-Command docker -ErrorAction SilentlyContinue)) {
         throw 'Can cai Docker Desktop truoc khi chay. Khong can cai rieng Java, Maven hoac Node.'
@@ -35,6 +45,9 @@ try {
             '# Local demo only. Generated secrets: do not commit or share this file.',
             'LOCAL_HTTP_PORT=8088',
             'MAILPIT_HTTP_PORT=8026',
+            'LOCAL_MYSQL_PORT=3307',
+            'LOCAL_DEMO_ENABLED=true',
+            "DEMO_PASSWORD=$(New-LocalSecret)",
             "DB_PASSWORD=$(New-LocalSecret)",
             "DB_ROOT_PASSWORD=$(New-LocalSecret)",
             'BOOTSTRAP_ADMIN_EMAIL=admin@example.test',
@@ -53,18 +66,25 @@ try {
     Get-Content -LiteralPath $environmentFile | ForEach-Object {
         if ($_ -match '^([A-Z][A-Z0-9_]*)=(.*)$') { $settings[$matches[1]]=$matches[2] }
     }
-    $managedKeys=@('LOCAL_HTTP_PORT','MAILPIT_HTTP_PORT','DB_PASSWORD','DB_ROOT_PASSWORD','BOOTSTRAP_ADMIN_EMAIL','BOOTSTRAP_ADMIN_PASSWORD')
-    foreach ($key in $managedKeys) {
+    $requiredKeys=@('LOCAL_HTTP_PORT','MAILPIT_HTTP_PORT','DB_PASSWORD','DB_ROOT_PASSWORD','BOOTSTRAP_ADMIN_EMAIL','BOOTSTRAP_ADMIN_PASSWORD')
+    $managedKeys=$requiredKeys+@('LOCAL_MYSQL_PORT','LOCAL_DEMO_ENABLED','DEMO_PASSWORD')
+    foreach ($key in $requiredKeys) {
         if ([string]::IsNullOrWhiteSpace($settings[$key])) { throw "Thieu gia tri $key trong .env.local." }
     }
-    foreach ($key in @('LOCAL_HTTP_PORT','MAILPIT_HTTP_PORT')) {
+    if (!$settings.ContainsKey('LOCAL_MYSQL_PORT')) { $settings['LOCAL_MYSQL_PORT']='3307' }
+    if (!$settings.ContainsKey('LOCAL_DEMO_ENABLED')) { $settings['LOCAL_DEMO_ENABLED']='false' }
+    if ($settings['LOCAL_DEMO_ENABLED'] -notin @('true','false')) { throw 'LOCAL_DEMO_ENABLED phai la true hoac false.' }
+    if ($settings['LOCAL_DEMO_ENABLED'] -eq 'true' -and [string]::IsNullOrWhiteSpace($settings['DEMO_PASSWORD'])) {
+        throw 'Thieu DEMO_PASSWORD trong .env.local; khong tu doi mat khau database cu.'
+    }
+    foreach ($key in @('LOCAL_HTTP_PORT','MAILPIT_HTTP_PORT','LOCAL_MYSQL_PORT')) {
         $port=0
         if (![int]::TryParse($settings[$key],[ref]$port) -or $port -lt 1024 -or $port -gt 65535) {
             throw "Cong $key trong .env.local khong hop le."
         }
     }
-    if ($settings['LOCAL_HTTP_PORT'] -eq $settings['MAILPIT_HTTP_PORT']) {
-        throw 'LOCAL_HTTP_PORT va MAILPIT_HTTP_PORT phai khac nhau.'
+    if (@($settings['LOCAL_HTTP_PORT'],$settings['MAILPIT_HTTP_PORT'],$settings['LOCAL_MYSQL_PORT'] | Select-Object -Unique).Count -ne 3) {
+        throw 'LOCAL_HTTP_PORT, MAILPIT_HTTP_PORT va LOCAL_MYSQL_PORT phai khac nhau.'
     }
 
     # Shell variables override --env-file in Compose. Isolate this local stack from
@@ -76,30 +96,27 @@ try {
             [Environment]::SetEnvironmentVariable($key,$null,'Process')
         }
         $compose=@('compose','--project-name',$projectName,'--env-file',$environmentFile,'-f',$configuration)
-        & docker @compose config --quiet
-        if ($LASTEXITCODE -ne 0) { throw 'Cau hinh Compose khong hop le. Kiem tra .env.local.' }
+        Invoke-LocalDocker ($compose+@('config','--quiet'))
         switch ($Action) {
             'start' {
                 Write-Host 'Dang build va khoi dong MySQL, Mailpit, backend, frontend. Lan dau can tai image/dependencies.'
-                & docker @compose up -d --build --wait --wait-timeout 300
-                if ($LASTEXITCODE -ne 0) {
-                    throw 'Khoi dong chua thanh cong. Kiem tra Docker, cong 8088/8026 hoac chay run-local.cmd logs.'
-                }
+                Invoke-LocalDocker ($compose+@('up','-d','--build','--wait','--wait-timeout','300'))
                 Write-Host ''
                 Write-Host "Ung dung: http://localhost:$($settings['LOCAL_HTTP_PORT'])"
                 Write-Host "Email thu nghiem: http://localhost:$($settings['MAILPIT_HTTP_PORT'])"
                 Write-Host "Tai khoan admin: $($settings['BOOTSTRAP_ADMIN_EMAIL'])"
                 Write-Host 'Mat khau: xem BOOTSTRAP_ADMIN_PASSWORD trong .env.local (khong in secret ra log).'
+                if ($settings['LOCAL_DEMO_ENABLED'] -eq 'true') {
+                    Write-Host 'Tai khoan nghiep vu demo: xem docs/guides/LOCAL_DEMO.md; mat khau DEMO_PASSWORD trong .env.local.'
+                }
                 Write-Host 'Dung ung dung: run-local.cmd stop. Du lieu database van duoc giu lai.'
             }
             'stop' {
-                & docker @compose stop
-                if ($LASTEXITCODE -ne 0) { throw 'Chua dung duoc mot so container.' }
+                Invoke-LocalDocker ($compose+@('stop'))
                 Write-Host 'Da dung cac container local; giu nguyen database va cau hinh.'
             }
             'logs' {
-                & docker @compose logs --tail=100 --follow
-                if ($LASTEXITCODE -ne 0) { throw 'Khong doc duoc log local.' }
+                Invoke-LocalDocker ($compose+@('logs','--tail=100','--follow'))
             }
         }
     } finally {

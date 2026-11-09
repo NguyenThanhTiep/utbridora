@@ -1,7 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
+import type { SelfProfileView } from '../src/modules/student/types';
 
-// T2-02: S01/S02 theo BC11 (Contract Pack v1.0). Backend hồ sơ (T2-01) và học kỳ (T5) chưa có,
-// nên test có nhãn “UI mock” dùng dữ liệu giả theo contract; chúng không thay thế tích hợp backend thật.
+// T2-02: các ca “UI mock” dùng dữ liệu tổng hợp theo BC11, không thay thế tích hợp thật.
+// Luồng browser qua backend nằm riêng trong student-runtime.spec.ts.
 const fixture = (name: string) => {
   const value = process.env[name];
   if (!value) throw new Error('Missing test fixture: ' + name);
@@ -30,7 +31,7 @@ const SCHOOL_ID = '00000000-0000-4000-8000-000000000011';
 const term = (termId: string, termCode: string, status: string) =>
   ({ termId, termCode, schoolOrgId: SCHOOL_ID, startDate: '2026-09-01', endDate: '2027-01-15', status, version: 1 });
 const termsPage = (content: unknown[]) => ({ content, page: 0, size: 100, totalElements: content.length, totalPages: content.length ? 1 : 0 });
-const profileView = (profileVersion: number, phone: string | null) => ({
+const profileView = (profileVersion: number, phone: string | null): SelfProfileView => ({
   studentUserId: '00000000-0000-4000-8000-000000000002', schoolOrgId: SCHOOL_ID, profileVersion,
   profile: {
     termId: TERM_ID, majorCode: 'SE', skillsDeclared: true,
@@ -43,7 +44,7 @@ const profileView = (profileVersion: number, phone: string | null) => ({
     certificates: [{ certificateId: '00000000-0000-4000-8000-000000000061', title: 'Chứng chỉ thử nghiệm', issuer: 'Đơn vị thử nghiệm', issuedOn: '2026-06-01', expiresOn: null, fileId: null }],
     cvFileId: '00000000-0000-4000-8000-000000000071', phone
   },
-  completeness: { policyVersion: 'demo-v1', complete: true, checks: ['MAJOR_VALID', 'STUDENT_TERM_PRESENT', 'SKILLS_DECLARED', 'SKILLS_VALID', 'AVAILABILITY_DECLARED', 'AVAILABILITY_VALID']
+  completeness: { policyVersion: 'demo-v1', complete: true, checks: (['MAJOR_VALID', 'STUDENT_TERM_PRESENT', 'SKILLS_DECLARED', 'SKILLS_VALID', 'AVAILABILITY_DECLARED', 'AVAILABILITY_VALID'] as const)
     .map(code => ({ code, passed: true, reasonCode: 'OK' })) }
 });
 const envelope = (errorCode: string, message: string, fieldErrors: { field: string; code: string; message: string }[] = []) =>

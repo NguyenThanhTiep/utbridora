@@ -4991,7 +4991,7 @@
     "src/main/java/vn/utbridora/auth/authorization/ProfileVisibilityPort.java": "5ea5500929e33c14262f5cb10e8b31824e9cb8171dcb20f67335e247f3de895a",
     "src/main/java/vn/utbridora/auth/authorization/SchoolDelegationAccess.java": "48b4bde77271c788c6f49b071f49699a868f6aebd292d487033f881658446f56",
     "src/main/java/vn/utbridora/auth/bootstrap/AdminBootstrap.java": "3c6180e7852d6d8ec4e8959a6bbfe9bbe557090ed7009df4cd9a95771abfd3c0",
-    "src/main/java/vn/utbridora/auth/bootstrap/Week1DemoBootstrap.java": "dff6c0961b3011b07ffdeec3320eda8b210aeb5359200527a47f4043b3730e51",
+    "src/main/java/vn/utbridora/auth/bootstrap/LocalDemoBootstrap.java": "9a9efa7f45f42a15bd4ccc8c3adb5fc8bdda0bf37bfb555b1ff9a46f647c5c5d",
     "src/main/java/vn/utbridora/auth/contracts/placement/EventConsumeResult.java": "eaf0e29c6870103b044813553463bea54144adb416ee7dbfda18317870bd3b87",
     "src/main/java/vn/utbridora/auth/contracts/placement/PlacementLifecycleEvent.java": "5edf73e45d0bdae4465a157847b7d7bd3674d77d564d67c012a8dd966ee3fafe",
     "src/main/java/vn/utbridora/auth/contracts/placement/PlacementReadPort.java": "e720a482ef2186ee1edaf214678a6e6b8cc523dfc0e50c5173c3cce5450801d6",
