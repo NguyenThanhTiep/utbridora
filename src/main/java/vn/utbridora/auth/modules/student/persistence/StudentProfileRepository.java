@@ -29,11 +29,11 @@ public class StudentProfileRepository {
             .stream().findFirst();
     }
     public Optional<TermRow> findTerm(String profileId,String termId) {
-        return jdbc.query("SELECT school_org_id,major_code,availability_declared FROM student_profile_terms WHERE profile_id=? AND term_id=?",
+        return jdbc.query("SELECT school_org_id,major_code,availability_declared FROM student_profile_terms WHERE profile_id=? AND term_id=?"+currentRead(),
             (rs,i)->new TermRow(rs.getString(1),rs.getString(2),rs.getBoolean(3)),profileId,termId).stream().findFirst();
     }
     public List<SelfSkillView> skills(String profileId) {
-        return jdbc.query("SELECT skill_code,level,years_practice,source,note FROM student_profile_skills WHERE profile_id=? ORDER BY ordinal",
+        return jdbc.query("SELECT skill_code,level,years_practice,source,note FROM student_profile_skills WHERE profile_id=? ORDER BY ordinal"+currentRead(),
             (rs,i)->new SelfSkillView(rs.getString(1),rs.getInt(2),plain(rs.getBigDecimal(3)),rs.getString(4),rs.getString(5)),profileId);
     }
     public List<CustomSkillView> customSkills(String profileId) {
@@ -52,7 +52,7 @@ public class StudentProfileRepository {
             (rs,i)->new Certificate(rs.getString(1),rs.getString(2),rs.getString(3),rs.getString(4),rs.getString(5),rs.getString(6)),profileId);
     }
     public List<DateRange> periods(String profileId,String termId) {
-        return jdbc.query("SELECT start_date,end_date FROM student_profile_term_periods WHERE profile_id=? AND term_id=? ORDER BY ordinal",
+        return jdbc.query("SELECT start_date,end_date FROM student_profile_term_periods WHERE profile_id=? AND term_id=? ORDER BY ordinal"+currentRead(),
             (rs,i)->new DateRange(rs.getString(1),rs.getString(2)),profileId,termId);
     }
     public List<String> codes(String profileId,String termId,String kind) {
@@ -126,6 +126,10 @@ public class StudentProfileRepository {
             jdbc.update("INSERT INTO student_profile_term_codes (profile_id,term_id,kind,ordinal,code) VALUES (?,?,?,?,?)",profileId,termId,kind,i,codes.get(i));
     }
     /** DECIMAL(5,2) comes back as 1.50; return the plain value the client sent (1.5, 2). */
+    private static String currentRead() {
+        return org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive()
+            && !org.springframework.transaction.support.TransactionSynchronizationManager.isCurrentTransactionReadOnly()?" FOR SHARE":"";
+    }
     private static BigDecimal plain(BigDecimal value) {
         BigDecimal stripped=value.stripTrailingZeros();
         return stripped.scale()<0?stripped.setScale(0):stripped;

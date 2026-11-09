@@ -3,6 +3,7 @@ import { ApiError, type Grant, type Me } from '../../../api';
 import { EmptyState, Field, Icon, LoadingState, Notice, useAction } from '../../../components';
 import { getMyProfile, listMajors, listTerms, newIdempotencyKey, saveMyProfile, toProfileInput, type AcademicCatalogItem } from '../api';
 import { AvailabilityEditor } from '../components/AvailabilityEditor';
+import { SkillsEditor } from '../components/SkillsEditor';
 import type { DateRange, ProfileInput, SelfProfileView, TermReference } from '../types';
 import '../styles.css';
 
@@ -242,5 +243,7 @@ export function MyProfilePage({ me, schools }: { me: Me; schools: Grant[] }) {
           {terms.map(item => <option key={item.termId} value={item.termId}>{item.termCode}</option>)}</select></label>}</div>
       {content}
     </section>
+    {profile.status === 'ready' && <SkillsEditor key={termId + ':' + profile.view.profileVersion} view={profile.view}
+      disabled={dirty || save.busy || conflict} onSaved={view => { setProfile({ status: 'ready', view }); setDraft(draftOf(view)); }} />}
   </div>;
 }

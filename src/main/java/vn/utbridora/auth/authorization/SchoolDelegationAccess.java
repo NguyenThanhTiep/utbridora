@@ -38,6 +38,17 @@ public class SchoolDelegationAccess {
             && jdbc.queryForObject("SELECT COUNT(*) FROM school_delegations WHERE id=? AND user_id=?",Integer.class,id,subject)==1
             && current(id,school,term,permission,new HashSet<>(),0);
     }
+    public Set<String> profileFields(Authentication actor,String school,String term) {
+        require(actor,school,term,"student_profile:school:read");String user=((AppPrincipal)actor.getPrincipal()).userId();
+        var result=new HashSet<String>();
+        for(String id:jdbc.queryForList("SELECT id FROM school_delegations WHERE user_id=? AND school_org_id=? AND term_id=?",String.class,user,school,term)) {
+            if(currentAssignment(id,user,school,term,"student_profile:school:read")) {
+                String value=jdbc.queryForObject("SELECT profile_read_fields_json FROM school_delegations WHERE id=? FOR SHARE",String.class,id);
+                result.addAll(List.of(vn.utbridora.auth.operations.WorkflowValues.JSON.readValue(value,String[].class)));
+            }
+        }
+        return Set.copyOf(result);
+    }
     private static String lockSuffix() {
         return org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive()
             && !org.springframework.transaction.support.TransactionSynchronizationManager.isCurrentTransactionReadOnly()?" FOR UPDATE":"";

@@ -5,6 +5,8 @@ import { cohortInScope, groupInScope, usableAssignments } from '../access';
 import { liveWorkspaceGateway, WorkspacePendingError, WorkspaceScopeError } from '../api';
 import type { Cohort, ContextAssignment, InternshipGroup, WorkspaceAssignment, WorkspaceGateway } from '../types';
 import '../styles.css';
+import { TaskBoard } from './TaskBoard';
+import { MentorInvitationForm } from './MentorInvitations';
 
 type ReadState<T> = { status: 'loading' } | { status: 'ready'; value: T } | { status: 'error'; error: unknown };
 
@@ -139,7 +141,8 @@ function GroupWorkspace({ assignment, cohort, gateway, reset }: {
         <h3>Nhóm {selected.code}</h3><p className="muted">{cohort.code} — {cohort.name}</p>
         <dl className="internship-facts"><div><dt>Hồ sơ thực tập</dt><dd>{selected.caseIds.length}</dd></div>
           <div><dt>Mentor được phân công</dt><dd>{new Set(selected.mentorUserIds).size}</dd></div></dl>
-        <Notice message="Bảng công việc, lịch và đánh giá sẽ được mở khi hoàn tất tích hợp. Hiện bạn có thể xem thông tin nhóm được phân công." />
+        {gateway === liveWorkspaceGateway && <TaskBoard assignment={assignment} group={selected} />}
+        {gateway === liveWorkspaceGateway && assignment.kind === 'HR' && <MentorInvitationForm assignment={assignment} group={selected} />}
       </div>
       : <><p className="internship-group-count">{state.value.length} nhóm trong phạm vi đã chọn</p>
         <div className="internship-group-grid">{state.value.map(group => <article className="internship-group-card" key={group.groupId}>

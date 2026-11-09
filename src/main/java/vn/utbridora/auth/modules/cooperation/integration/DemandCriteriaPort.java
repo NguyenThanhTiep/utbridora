@@ -8,4 +8,7 @@ import vn.utbridora.auth.modules.cooperation.domain.DemandModels.DemandCriteriaS
 public interface DemandCriteriaPort {
     enum Purpose { EVALUATE, NOMINATE, PLACEMENT }
     DemandCriteriaSnapshot read(Authentication actor,String enterpriseOrgId,String demandId,Long expectedCriteriaVersion,Purpose purpose);
+    default DemandCriteriaSnapshot readForSchool(Authentication actor,String demandId,Long expectedCriteriaVersion) {
+        throw vn.utbridora.auth.operations.WorkflowValues.failure(503,"DEPENDENCY_UNAVAILABLE");
+    }
 }

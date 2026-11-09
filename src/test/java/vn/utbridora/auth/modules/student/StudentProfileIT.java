@@ -284,7 +284,8 @@ class StudentProfileIT {
         assertEquals(1,(int)read(created,"$.profileVersion"));
         assertEquals(student.id,read(created,"$.studentUserId"));assertEquals(university.id,read(created,"$.schoolOrgId"));
         assertEquals("demo-v1",read(created,"$.completeness.policyVersion"));assertEquals(CHECKS,read(created,"$.completeness.checks[*].code"));
-        assertFalse((Boolean)read(created,"$.completeness.complete"));
+        assertTrue((Boolean)read(created,"$.completeness.complete"));
+        assertEquals(List.of(true,true,true,true,true,true),read(created,"$.completeness.checks[*].passed"));
         var reloaded=b.get(TERM);
         assertEquals(200,reloaded.statusCode(),reloaded.body());
         assertEquals("0901234567",read(reloaded,"$.profile.phone"));assertEquals("SELF_DECLARED",read(reloaded,"$.profile.skills[0].source"));

@@ -18,11 +18,17 @@ public class DemandRepository {
     private final JdbcTemplate jdbc;
     public DemandRepository(JdbcTemplate jdbc) { this.jdbc=jdbc; }
     public record StoredDemand(String id,String enterpriseOrgId,String state,long version,long criteriaVersion,
-            String criteriaHash,DemandInput data,Instant createdAt,Instant updatedAt,Instant deletedAt) {
-        public DemandDto dto() { return new DemandDto(id,enterpriseOrgId,state,version,criteriaVersion,"VALID",data,null,deletedAt); }
+            String criteriaHash,DemandInput data,Instant createdAt,Instant updatedAt,Instant deletedAt,String cooperationId) {
+        public StoredDemand(String id,String org,String state,long version,long criteriaVersion,String hash,DemandInput data,Instant created,Instant updated,Instant deleted) {
+            this(id,org,state,version,criteriaVersion,hash,data,created,updated,deleted,null);
+        }
+        public DemandDto dto() { return new DemandDto(id,enterpriseOrgId,state,version,criteriaVersion,"VALID",data,cooperationId,deletedAt); }
     }
     public Optional<StoredDemand> findLocked(String id,String org) {
         return jdbc.query("SELECT * FROM demands WHERE id=? AND enterprise_org_id=? FOR UPDATE",this::row,id,org).stream().findFirst();
+    }
+    public Optional<StoredDemand> findForSchool(String id) {
+        return jdbc.query("SELECT * FROM demands WHERE id=? FOR UPDATE",this::row,id).stream().findFirst();
     }
     public void insert(StoredDemand d) {
         jdbc.update("INSERT INTO demands(id,enterprise_org_id,school_org_id,term_id,state,validation_state,version,criteria_version,criteria_hash,data_json,created_at,updated_at,soft_deleted_at) VALUES(?,?,?,?,?,'VALID',?,?,?,?,?,?,NULL)",
@@ -54,6 +60,6 @@ public class DemandRepository {
     private StoredDemand row(ResultSet rs,int row) throws SQLException {
         Timestamp deleted=rs.getTimestamp("soft_deleted_at");
         return new StoredDemand(rs.getString("id"),rs.getString("enterprise_org_id"),rs.getString("state"),rs.getLong("version"),rs.getLong("criteria_version"),rs.getString("criteria_hash"),
-                DemandJson.read(rs.getString("data_json"),DemandInput.class),rs.getTimestamp("created_at").toInstant(),rs.getTimestamp("updated_at").toInstant(),deleted==null?null:deleted.toInstant());
+                DemandJson.read(rs.getString("data_json"),DemandInput.class),rs.getTimestamp("created_at").toInstant(),rs.getTimestamp("updated_at").toInstant(),deleted==null?null:deleted.toInstant(),rs.getString("cooperation_id"));
     }
 }

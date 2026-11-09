@@ -20,7 +20,7 @@ test('T3 UI fixture: HR selects assignment, cohort and group; navigation returns
   await expect(page.getByLabel('Đợt thực tập', { exact: true })).toHaveCount(0);
   await choose(page); await page.getByRole('button', { name: 'Xem nhóm N-01' }).click();
   await expect(page.getByRole('heading', { name: 'Nhóm N-01' })).toBeVisible();
-  await expect(page.getByText('Bảng công việc, lịch và đánh giá', { exact: false })).toBeVisible();
+  await expect(page.locator('.internship-facts dd').first()).toHaveText('1');
   await page.getByRole('button', { name: 'Về danh sách nhóm' }).click();
   await expect(page.getByRole('button', { name: 'Xem nhóm N-01' })).toBeVisible();
 });

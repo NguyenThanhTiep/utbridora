@@ -420,7 +420,10 @@ class CorePlatformIT {
         env.put("E2E_RESET_TOKEN",reset);env.put("E2E_RESET_EMAIL",resetUser.email);env.put("E2E_ORG_B_ID",orgB.id);
         builder.redirectErrorStream(true).redirectOutput(new java.io.File("target/frontend-e2e.log"));
         Process process=builder.start();
-        if(!process.waitFor(240,TimeUnit.SECONDS)) {process.destroyForcibly();fail("Frontend E2E timed out; see target/frontend-e2e.log");}
+        if(!process.waitFor(240,TimeUnit.SECONDS)) {
+            process.descendants().forEach(child->child.destroyForcibly());process.destroyForcibly();
+            fail("Frontend E2E timed out; see target/frontend-e2e.log");
+        }
         assertEquals(0,process.exitValue(),"See target/frontend-e2e.log and web-demo/test-results/e2e.xml");
     }
     HttpResponse<String> replay(String cookie,String path) throws Exception {

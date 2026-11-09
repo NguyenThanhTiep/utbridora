@@ -34,7 +34,7 @@ class DemandServiceTest {
         when(users.findByIdForUpdate(user.id)).thenReturn(Optional.of(user));
         when(policy.hasOrganization(auth,org,Role.ENTERPRISE,"cooperation:enterprise:create")).thenReturn(true);
         operations=mock(vn.utbridora.auth.operations.OperationLedger.class);
-        service=new DemandService(repository,references,policy,users,audit,operations,true);
+        service=new DemandService(repository,references,policy,users,audit,operations,mock(vn.utbridora.auth.authorization.SchoolDelegationAccess.class),true);
         ReflectionTestUtils.setField(service,"entityManager",mock(EntityManager.class));
         input=new DemandInput(UUID.randomUUID().toString(),UUID.randomUUID().toString(),"Internship",5,"Description",null,null,
             Instant.parse("2027-01-01T00:00:00Z"),new RequiredCriteria(List.of(),List.of(),
@@ -57,7 +57,7 @@ class DemandServiceTest {
         verifyNoInteractions(repository,references);
     }
     @Test void disabledRolloutBlocksEvenAuthorizedUser() {
-        service=new DemandService(repository,references,policy,users,audit,operations,false);
+        service=new DemandService(repository,references,policy,users,audit,operations,mock(vn.utbridora.auth.authorization.SchoolDelegationAccess.class),false);
         assertEquals("FEATURE_DISABLED",assertThrows(DemandFailure.class,()->service.create(auth,org,key,input)).code());
         verifyNoInteractions(repository,references);
     }

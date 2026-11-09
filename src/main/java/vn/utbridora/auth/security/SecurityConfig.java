@@ -68,6 +68,16 @@ public class SecurityConfig {
                .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/verifications","/api/v1/enterprise/verifications/*","/api/v1/school/verifications","/api/v1/school/verifications/*").authenticated()
                .requestMatchers(HttpMethod.POST,"/api/v1/enterprise/verifications").authenticated()
                .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/verifications/*","/api/v1/enterprise/verifications/*/submit","/api/v1/school/verifications/*/decision").authenticated()
+               .requestMatchers(HttpMethod.POST,"/api/v1/school/terms/*/delegations").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/invitations/me","/api/v1/invitations/*","/api/v1/students/me/consents","/api/v1/students/*/profile","/api/v1/school/terms/*/profile-sharing-policy").authenticated()
+               .requestMatchers(HttpMethod.POST,"/api/v1/invitations/*/decision","/api/v1/invitations/*/withdraw","/api/v1/students/me/consents","/api/v1/students/me/consents/*/revoke","/api/v1/school/proposals/*/shares","/api/v1/school/profile-shares/*/revoke","/api/v1/school/student-eligibilities/decisions").authenticated()
+               .requestMatchers(HttpMethod.PUT,"/api/v1/school/terms/*/profile-sharing-policy").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/cooperations/*").authenticated()
+               .requestMatchers(HttpMethod.POST,"/api/v1/matching/evaluate","/api/v1/matching/runs/*/nominate","/api/v1/enterprise/cooperations","/api/v1/enterprise/demands/submit-with-cooperation","/api/v1/school/proposals/*/invite").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/matching/runs/*/details","/api/v1/enterprise/cooperations","/api/v1/school/cooperations","/api/v1/school/cooperations/*","/api/v1/school/cooperations/*/submission-history","/api/v1/school/cooperations/*/capacity","/api/v1/school/cooperations/*/proposals").authenticated()
+               .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/cooperations/*/submit","/api/v1/enterprise/cooperations/*/reopen","/api/v1/school/cooperations/*/decision").authenticated()
+               .requestMatchers(HttpMethod.DELETE,"/api/v1/school/delegations/*","/api/v1/t3/context-assignments/*").authenticated()
+               .requestMatchers(HttpMethod.PATCH,"/api/v1/t3/assignments/*/status").authenticated()
                .anyRequest().denyAll())
            .exceptionHandling(ex->ex
                .authenticationEntryPoint((req,res,error)->{

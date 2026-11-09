@@ -6,6 +6,8 @@ import { canLeaveDemand } from '../navigation';
 import { DemandEditor } from './DemandEditor';
 import { failureMessage } from './errors';
 import { DemandSummary } from './DemandSummary';
+import { api } from '../../../api';
+import { newIdempotencyKey } from '../../student/api';
 
 export function ScopedDemands({ organizationId }: { organizationId: string }) {
   const [pageIndex, setPageIndex] = useState(0), [refresh, setRefresh] = useState(0);
@@ -14,6 +16,13 @@ export function ScopedDemands({ organizationId }: { organizationId: string }) {
   const [editor, setEditor] = useState<{ record: Demand | null; key: number } | null>(null);
   const [saving, setSaving] = useState(false), [unconfirmed, setUnconfirmed] = useState(false);
   const nextEditor = useRef(0);
+  const submitKeys = useRef(new Map<string, string>());
+  const submitCooperation = async (record: Demand) => {
+    const ref = record.demandId + ':' + record.version;
+    if (!submitKeys.current.has(ref)) submitKeys.current.set(ref, newIdempotencyKey()); setSaving(true); setListError('');
+    try { await api('/enterprise/demands/submit-with-cooperation', { method: 'POST', headers: { 'X-Organization-Id': organizationId, 'Idempotency-Key': submitKeys.current.get(ref)! }, body: JSON.stringify({ demandId: record.demandId, expectedDemandVersion: record.version }) }); submitKeys.current.delete(ref); setSuccess('Đã gửi đề nghị hợp tác.'); setRefresh(n => n + 1); window.dispatchEvent(new Event('cooperation-updated')); }
+    catch (error) { setListError(failureMessage(error)); } finally { setSaving(false); }
+  };
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
@@ -52,8 +61,9 @@ export function ScopedDemands({ organizationId }: { organizationId: string }) {
             <p className="section-description">{record.data.quantity} vị trí · Phiên bản {record.version} · Tiêu chí v{record.criteriaVersion}</p>
             <p className="field-hint">{record.validationState === 'VALID' ? 'Tiêu chí hợp lệ' : 'Tiêu chí cần kiểm tra'} · Mã nhu cầu: {record.demandId}</p>
             <DemandSummary demand={record} />
-            <button className="secondary" disabled={blocked || record.state !== 'DRAFT' || !!record.softDeletedAt || !!record.cooperationId}
+            <button className="secondary" disabled={blocked || record.state !== 'DRAFT' || !!record.softDeletedAt}
               onClick={() => open(record)}>Sửa bản nháp<span className="cooperation-sr-only"> {record.data.title}</span></button>
+            {!record.cooperationId && record.state === 'DRAFT' && <button disabled={blocked} onClick={() => void submitCooperation(record)}>Gửi yêu cầu hợp tác<span className="cooperation-sr-only"> {record.data.title}</span></button>}
           </li>)}
         </ul>
         <div className="pagination"><span className="pagination-summary">{page.totalElements} kết quả · Trang {page.page + 1}/{Math.max(1, page.totalPages)}</span>

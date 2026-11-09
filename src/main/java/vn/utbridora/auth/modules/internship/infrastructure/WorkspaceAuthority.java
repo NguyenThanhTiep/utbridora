@@ -68,11 +68,19 @@ public class WorkspaceAuthority implements CoreWorkspaceAccess.BusinessAuthority
         try {
             Assignment selected=selected(actor);
             return same(selected.scope,scope) && (selected.kind.equals("HR") || selected.kind.equals("MENTOR")
-                && String.valueOf(task.value().groupId()).equals(selected.scope.groupId)
                 && (selected.scope.caseId==null || selected.scope.caseId.equals(caseId.toString()))
-                // A new group's mentor has no authority over an old task-group snapshot.
-                && jdbc.queryForObject("SELECT COUNT(*) FROM internship_cohort_cases WHERE case_id=? AND group_id=?",Integer.class,caseId.toString(),task.value().groupId().toString())==1);
+                && (String.valueOf(task.value().groupId()).equals(selected.scope.groupId)
+                    && currentCaseGroup(caseId,task.value().groupId().toString())
+                    || handedOver(selected,task.value().groupId(),caseId)));
         } catch(WorkspaceRuleException unavailable) {return false;}
+    }
+    private boolean handedOver(Assignment mentor,UUID taskGroup,UUID caseId) {
+        if(!currentCaseGroup(caseId,mentor.scope().groupId())) return false;
+        var hrs=jdbc.queryForList("SELECT hr_assignment_id FROM internship_mentor_handovers WHERE mentor_assignment_id=? AND task_group_id=? AND case_id=? FOR SHARE",String.class,mentor.id(),taskGroup.toString(),caseId.toString());
+        return hrs.stream().map(this::load).filter(Objects::nonNull).anyMatch(hr->hr.value.kind().equals("HR") && same(hr.value.scope(),mentor.scope()) && valid(hr,new HashSet<>()));
+    }
+    private boolean currentCaseGroup(UUID caseId,String group) {
+        return !jdbc.queryForList("SELECT case_id FROM internship_cohort_cases WHERE case_id=? AND group_id=? FOR SHARE",String.class,caseId.toString(),group).isEmpty();
     }
     public boolean canReadScope(Authentication actor,WorkspaceScope scope,UUID group) {
         try {

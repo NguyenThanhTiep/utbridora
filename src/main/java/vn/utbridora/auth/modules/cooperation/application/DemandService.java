@@ -29,10 +29,12 @@ public class DemandService implements DemandCriteriaPort {
     private final AuditService audit;
     private final boolean enabled;
     private final OperationLedger operations;
+    private final vn.utbridora.auth.authorization.SchoolDelegationAccess schoolAccess;
     public DemandService(DemandRepository repository,DemandReferencePort references,AuthorizationPolicy authorization,
-            UserRepository users,AuditService audit,OperationLedger operations,@Value("${app.t5.demand.enabled:true}") boolean enabled) {
+            UserRepository users,AuditService audit,OperationLedger operations,vn.utbridora.auth.authorization.SchoolDelegationAccess schoolAccess,@Value("${app.t5.demand.enabled:true}") boolean enabled) {
         this.repository=repository; this.references=references; this.authorization=authorization;
         this.users=users; this.audit=audit;this.operations=operations;this.enabled=enabled;
+        this.schoolAccess=schoolAccess;
     }
     @Transactional
     public DemandDto create(Authentication authentication,String organization,String key,DemandInput request) {
@@ -62,7 +64,7 @@ public class DemandService implements DemandCriteriaPort {
         if(old.version()==DemandValidator.MAX_VERSION || old.criteriaVersion()==DemandValidator.MAX_VERSION)
             throw new DemandFailure(409,"VERSION_CONFLICT","Phiên bản không thể tăng thêm.");
         var demand=new StoredDemand(demandId,org,"DRAFT",old.version()+1,
-                old.criteriaVersion()+(old.criteriaHash().equals(criteriaHash)?0:1),criteriaHash,input,old.createdAt(),now,null);
+                old.criteriaVersion()+(old.criteriaHash().equals(criteriaHash)?0:1),criteriaHash,input,old.createdAt(),now,null,old.cooperationId());
         if(repository.update(demand,expected)!=1) throw new DemandFailure(409,"VERSION_CONFLICT","Dữ liệu đã thay đổi, vui lòng tải lại.");
         repository.addRevision(demand,snapshot(demand),actor,"UPDATE"); audit(actor,demand,"DEMAND_UPDATE");
         return demand.dto();
@@ -91,6 +93,16 @@ public class DemandService implements DemandCriteriaPort {
         if(expectedCriteriaVersion!=null && expectedCriteriaVersion.longValue()!=demand.criteriaVersion())
             throw new DemandFailure(409,"CRITERIA_STALE","Tiêu chí đã thay đổi, vui lòng lấy phiên bản mới.");
         references.validate(org,demand.data()); return repository.currentSnapshot(demand);
+    }
+    @Override @Transactional
+    public DemandCriteriaSnapshot readForSchool(Authentication auth,String id,Long expected) {
+        if(!enabled) throw new DemandFailure(503,"FEATURE_DISABLED","Chức năng nhu cầu chưa được bật.");
+        var demand=repository.findForSchool(DemandValidator.uuid(id,"demandId")).orElseThrow(()->new DemandFailure(404,"RESOURCE_NOT_FOUND","Không tìm thấy nhu cầu."));
+        schoolAccess.require(auth,demand.data().schoolOrgId(),demand.data().termId(),"matching:run:execute");
+        if(expected!=null && expected!=demand.criteriaVersion()) throw new DemandFailure(409,"CRITERIA_STALE","Tiêu chí đã thay đổi.");
+        if(demand.deletedAt()!=null) throw new DemandFailure(409,"DEMAND_LOCKED","Nhu cầu đã bị xóa.");
+        references.validate(demand.enterpriseOrgId(),demand.data());
+        return snapshot(demand);
     }
     private String authorize(Authentication authentication,String org) {
         if(authentication==null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof AppPrincipal principal))

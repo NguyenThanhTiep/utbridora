@@ -96,6 +96,15 @@ public class AuditService {
             java.util.Map.of("taskId",task,"caseId",caseId,"groupId",group,"assignmentVersion",version));
         flushRequiredAudit();
     }
+    /** Registry-checked metadata for new owner workflows; SUCCESS joins the domain transaction. */
+    @Transactional(propagation=Propagation.MANDATORY)
+    public void workflow(String actor,String action,String id,String org,java.util.Map<String,Object> metadata) {
+        var spec=WorkflowAuditRegistry.ACTIONS.get(action);
+        if(spec==null || !spec.fields().containsAll(metadata.keySet())) throw new IllegalArgumentException("Invalid workflow audit metadata");
+        var event=store(actor,action,spec.resourceType(),id,"SUCCESS",org,null);
+        event.metadataJson=new tools.jackson.databind.ObjectMapper().writeValueAsString(metadata);
+        flushRequiredAudit();
+    }
     private void flushRequiredAudit() {
         try {repository.flush();}
         catch(org.springframework.dao.DataAccessException failure) {

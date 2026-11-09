@@ -33,14 +33,21 @@ public class StudentProfileService {
     private final StudentTermScopePort terms;
     private final OperationLedger operations;
     private final ProfileReferenceValidator references;
+    private final AcademicCatalogService catalogs;
+    private final vn.utbridora.auth.modules.taxonomy.port.TaxonomyReferencePort taxonomy;
+    private final vn.utbridora.auth.modules.matching.port.CompletenessPort completeness;
     @jakarta.persistence.PersistenceContext private jakarta.persistence.EntityManager entityManager;
 
     public StudentProfileService(StudentProfileRepository profiles,MembershipRepository memberships,
                                  AuthorizationPolicy policy,AuditService audit,StudentTermScopePort terms,OperationLedger operations,
-                                 ProfileReferenceValidator references) {
+                                 ProfileReferenceValidator references,AcademicCatalogService catalogs,
+                                 vn.utbridora.auth.modules.taxonomy.port.TaxonomyReferencePort taxonomy,
+                                 vn.utbridora.auth.modules.matching.port.CompletenessPort completeness) {
         this.profiles=profiles;this.memberships=memberships;this.policy=policy;this.audit=audit;this.terms=terms;
         this.operations=operations;
         this.references=references;
+        this.catalogs=catalogs;this.taxonomy=taxonomy;
+        this.completeness=completeness;
     }
 
     @Transactional(readOnly=true)
@@ -191,7 +198,14 @@ public class StudentProfileService {
             profiles.periods(profile.id(),termId),profiles.codes(profile.id(),termId,"ORIENTATION"),profiles.codes(profile.id(),termId,"SUBJECT"),
             profiles.projects(profile.id()),profiles.certificates(profile.id()),profile.cvFileId(),profile.phone());
         boolean studentTermPresent=terms.schoolOfLinkedTerm(profile.userId(),termId).filter(school::equals).isPresent();
-        return new SelfProfileView(profile.userId(),school,profile.version(),data,InterimCompleteness.evaluate(data,studentTermPresent));
+        var catalog=catalogs.forProfile(school,termId);
+        boolean majorValid=catalog.entries().get(AcademicCatalogService.Kind.MAJOR).stream().anyMatch(i->i.code().equals(data.majorCode()) && i.status().equals("ACTIVE"));
+        var codes=data.skills().stream().map(SelfSkillView::skillCode).collect(Collectors.toSet());
+        var subject=(AppPrincipal)policy.currentSubject(profile.userId()).orElseThrow(StudentProfileService::notFound).getPrincipal();
+        var refs=taxonomy.read(subject,codes,Set.of());
+        boolean skillsValid=refs.activeSkillCodes().containsAll(codes);
+        return new SelfProfileView(profile.userId(),school,profile.version(),data,
+            completeness.evaluate(data,studentTermPresent,majorValid,skillsValid));
     }
     private static String actor(Authentication auth) { return auth!=null && auth.getPrincipal() instanceof AppPrincipal p ? p.userId() : null; }
     private static StudentProfileException notFound() { return StudentProfileException.of(404,"RESOURCE_NOT_FOUND","Không tìm thấy hồ sơ."); }

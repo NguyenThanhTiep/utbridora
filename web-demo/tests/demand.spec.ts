@@ -5,6 +5,9 @@ const org = '11111111-1111-4111-8111-111111111111';
 const school = '22222222-2222-4222-8222-222222222222';
 const term = '33333333-3333-4333-8333-333333333333';
 async function session(page: Page, grants = true) {
+  // New week-2 panels stay isolated in this UX-only harness; real workflows have a separate live test.
+  await page.route('**/api/v1/enterprise/verifications?**', route => route.fulfill({ json: { content: [], page: 0, size: 25, totalElements: 0, totalPages: 0 } }));
+  await page.route('**/api/v1/enterprise/cooperations?**', route => route.fulfill({ json: { content: [], page: 0, size: 25, totalElements: 0, totalPages: 0 } }));
   await page.route('**/api/v1/auth/**', route => {
     const path = new URL(route.request().url()).pathname;
     const json = path.endsWith('/permissions') ? (grants ? [{ role: 'ENTERPRISE', organizationId: org, permissions: ['cooperation:enterprise:create'] }] : [])
@@ -238,14 +241,17 @@ test('unsaved editor can cancel close, navigation and organization switch', asyn
   await expect(page.getByLabel('Tên nhu cầu')).toHaveValue('Java internship');
 });
 
-test('school workspace declares pending integration without approval actions', async ({ page }) => {
+test('school workspace loads API-backed panels and has no approval action for an empty queue', async ({ page }) => {
   await session(page);
+  await page.route('**/api/v1/school/verifications?**', route => route.fulfill({ json: empty }));
+  await page.route('**/api/v1/school/cooperations?**', route => route.fulfill({ json: empty }));
   await page.route('**/api/v1/auth/me/permissions', route => route.fulfill({ json: [{ role: 'SCHOOL_STAFF', organizationId: school, permissions: [] }] }));
   await page.goto('/');
   await page.getByRole('button', { name: 'Hợp tác doanh nghiệp', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Hợp tác với doanh nghiệp', exact: true })).toBeVisible();
-  await expect(page.getByRole('status')).toContainText('Đang chờ tích hợp');
-  await expect(page.getByRole('button', { name: 'Duyệt', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Xác minh doanh nghiệp', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Đề nghị hợp tác', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Lưu kết quả xét duyệt', exact: true })).toHaveCount(0);
 });
 
 test('version conflict explains reload without discarding input', async ({ page }) => {

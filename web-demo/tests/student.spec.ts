@@ -1,5 +1,10 @@
 import { test, expect, type Page } from '@playwright/test';
 import type { SelfProfileView } from '../src/modules/student/types';
+test.beforeEach(async ({ page }) => {
+  const empty = { content: [], page: 0, size: 100, totalElements: 0, totalPages: 0 };
+  await page.route('**/api/v1/taxonomy/categories?**', route => route.fulfill({ json: empty }));
+  await page.route('**/api/v1/taxonomy/skills?**', route => route.fulfill({ json: { taxonomyVersion: 'skills-v1', skills: empty } }));
+});
 
 // T2-02: các ca “UI mock” dùng dữ liệu tổng hợp theo BC11, không thay thế tích hợp thật.
 // Luồng browser qua backend nằm riêng trong student-runtime.spec.ts.

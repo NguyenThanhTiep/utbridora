@@ -124,7 +124,10 @@ public class VerificationService implements OrganizationSchoolVerificationPort {
             String permission=context.purpose==Purpose.CONFIRM_COORDINATOR?"t3:coordinator:confirm":"placement:school:write";
             delegations.require(context.actor,school,term,permission);
             return new Success(records.findFirstByEnterpriseOrgIdAndSchoolOrgIdOrderByCreatedAtDescIdAsc(enterprise,school)
-                .map(row->new SchoolVerificationView(enterprise,school,row.id,row.state.name(),row.version,row.state==VerificationState.APPROVED?row.reviewedAt:null,row.state==VerificationState.APPROVED))
+                .map(row->{
+                    if(!org.springframework.transaction.support.TransactionSynchronizationManager.isCurrentTransactionReadOnly()) entityManager.refresh(row,jakarta.persistence.LockModeType.PESSIMISTIC_READ);
+                    return new SchoolVerificationView(enterprise,school,row.id,row.state.name(),row.version,row.state==VerificationState.APPROVED?row.reviewedAt:null,row.state==VerificationState.APPROVED);
+                })
                 .orElseGet(()->new SchoolVerificationView(enterprise,school,null,null,null,null,false)));
         } catch(OperationFailure failure) {return new DomainError(failure.code);}
     }
