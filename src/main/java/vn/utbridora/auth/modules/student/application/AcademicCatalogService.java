@@ -65,7 +65,9 @@ public class AcademicCatalogService implements DemandMajorCatalogPort {
         if(versions.isEmpty()) throw failure(503,"DEPENDENCY_UNAVAILABLE");
         Map<Kind,List<Item>> entries=new EnumMap<>(Kind.class);
         for(Kind kind:Kind.values()) entries.put(kind,new ArrayList<>());
-        jdbc.query("SELECT kind,code,name,major_codes,status FROM academic_catalog_entries WHERE term_id=? ORDER BY kind,code",rs->{
+        // A locking header read does not refresh an earlier MySQL REPEATABLE READ snapshot.
+        // Guard entries must be current reads too, so they match the locked version.
+        jdbc.query("SELECT kind,code,name,major_codes,status FROM academic_catalog_entries WHERE term_id=? ORDER BY kind,code"+(lock?" FOR SHARE":""),rs->{
             entries.get(Kind.valueOf(rs.getString("kind"))).add(new Item(rs.getString("code"),rs.getString("name"),
                 List.of(json.readValue(rs.getString("major_codes"),String[].class)),rs.getString("status")));
         },term);

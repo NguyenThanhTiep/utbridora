@@ -7,7 +7,7 @@
 | T1-01 | Contract, schema/version/error dùng chung; giữ tương thích Core | `scripts/contracts/build_contract_bundle.py --check`, `verify_contracts.py`, portability/audit-registry regression |
 | T1-02 | Auth/session/CSRF, quyền và scope Core | `CorePlatformIT`, unit Core; N+1 admin được kiểm bằng số truy vấn MySQL/Hibernate thực tế |
 | T1-03 | Docker, CI, môi trường demo trên máy hiện tại | `compose.demo.yaml`, `Week1DemoIT`, probe HTTPS/cookie/scope, [hướng dẫn vận hành](../guides/WEEK1_RUNTIME.md); client từ máy khác ghi riêng |
-| T2-01 | Lưu/tải hồ sơ, ngành/kỳ/trường, version và quyền | `StudentProfileIT`: term link thật, catalog T2/T4 thật, idempotency, rollback audit, trường khác/revoke, mã sai/deprecated |
+| T2-01 | Lưu/tải hồ sơ, ngành/kỳ/trường, version và quyền | `StudentProfileIT`: term link thật, catalog T2/T4 thật, idempotency, rollback audit, trường khác/revoke, mã sai/deprecated; transaction snapshot cũ phải thấy mã vừa bị ngừng sử dụng |
 | T2-02 | UI tài khoản/hồ sơ, ngành, điện thoại/thời gian, lỗi theo trường | `student-runtime.spec.ts` chạy từ StudentProfileIT: tạo → chọn ngành → lưu → reload; mock UX là bộ riêng |
 | T2-03 | Schema/DTO/port roster và eligibility cơ bản | `StudentDataConstraintsIT`, `LinkedStudentTermScope`, V10; MSSV chuỗi, FK school/term/user và unique student-term. Import 5.000 dòng không phải gate tuần 1 |
 | T3-01 | Service Port tiếp nhận message, Case đúng trạng thái, chặn Task sớm | `InternshipRuntimeIT`: producer/source/audit/outbox cùng TX; inbox/Case/history cùng TX; duplicate/race/stale/out-of-order, rollback, scope sai, retry/DLQ, nguồn hủy chưa truyền event |

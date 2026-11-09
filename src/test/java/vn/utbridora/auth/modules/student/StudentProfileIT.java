@@ -60,6 +60,9 @@ class StudentProfileIT {
     @Autowired OrganizationRepository organizations;
     @Autowired MembershipRepository memberships;
     @Autowired PasswordEncoder encoder;
+    @Autowired org.springframework.transaction.PlatformTransactionManager transactions;
+    @Autowired vn.utbridora.auth.modules.student.application.AcademicCatalogService catalogs;
+    @Autowired vn.utbridora.auth.modules.taxonomy.port.TaxonomyReferencePort taxonomy;
     final String password="Test-"+UUID.randomUUID();
     String passwordHash;
     Organization university;
@@ -205,6 +208,39 @@ class StudentProfileIT {
         try { assertEnvelope(b.put(input(0)),422,"CATALOG_CODE_INVALID"); }
         finally { jdbc.update("UPDATE skills SET status='ACTIVE' WHERE skill_code='JAVA'"); }
         assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM student_profiles",Integer.class));
+    }
+
+    @Test void referenceGuardsSeeCommittedChangesAfterTheRequestSnapshotStarted() {
+        var request=new org.springframework.transaction.support.TransactionTemplate(transactions);
+        request.setIsolationLevel(org.springframework.transaction.TransactionDefinition.ISOLATION_REPEATABLE_READ);
+        var publisher=new org.springframework.transaction.support.TransactionTemplate(transactions);
+        publisher.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        long previous=jdbc.queryForObject("SELECT taxonomy_version FROM taxonomy_catalog_state WHERE id=1",Long.class);
+        var actor=new vn.utbridora.auth.security.AppPrincipal(student.id,student.email,null,student.securityVersion,List.of());
+        try {
+            request.executeWithoutResult(status->{
+                // Establish an older consistent-read snapshot, as the Core/profile guard does.
+                assertEquals("ACTIVE",jdbc.queryForObject("SELECT status FROM skills WHERE skill_code='JAVA'",String.class));
+                publisher.executeWithoutResult(update->{
+                    jdbc.update("UPDATE academic_catalogs SET catalog_version='school-v2' WHERE term_id=?",TERM);
+                    jdbc.update("UPDATE academic_catalog_entries SET status='INACTIVE' WHERE term_id=? AND code='SE'",TERM);
+                    jdbc.update("UPDATE taxonomy_catalog_state SET taxonomy_version=taxonomy_version+1 WHERE id=1");
+                    jdbc.update("UPDATE skills SET status='DEPRECATED' WHERE skill_code='JAVA'");
+                });
+                var academic=catalogs.forProfile(university.id,TERM);
+                var skills=taxonomy.read(actor,Set.of("JAVA"),Set.of());
+                assertAll(
+                    ()->assertEquals("school-v2",academic.version()),
+                    ()->assertEquals("INACTIVE",academic.entries().get(vn.utbridora.auth.modules.student.application.AcademicCatalogService.Kind.MAJOR)
+                        .stream().filter(item->item.code().equals("SE")).findFirst().orElseThrow().status()),
+                    ()->assertEquals("skills-v"+(previous+1),skills.taxonomyVersion()),
+                    ()->assertFalse(skills.activeSkillCodes().contains("JAVA"),"A newly deprecated code must not pass through an older request snapshot")
+                );
+            });
+        } finally {
+            jdbc.update("UPDATE skills SET status='ACTIVE' WHERE skill_code='JAVA'");
+            jdbc.update("UPDATE taxonomy_catalog_state SET taxonomy_version=? WHERE id=1",previous);
+        }
     }
 
     @Test void termListIsScopedAndARealLinkedTermDoesNotApproveTheStudent() throws Exception {
