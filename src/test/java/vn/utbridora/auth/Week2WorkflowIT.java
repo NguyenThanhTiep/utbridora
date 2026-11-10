@@ -22,6 +22,8 @@ import vn.utbridora.auth.operations.OperationFailure;
     "app.bootstrap.admin.email=admin@example.test","app.bootstrap.admin.password=Synthetic-week2-admin-password-456","app.t5.placement-delivery.enabled=false","logging.level.org.springframework.jdbc=WARN"})
 @ActiveProfiles("local")
 class Week2WorkflowIT {
+    @org.springframework.beans.factory.annotation.Value("${DEMO_PASSWORD}")
+    private String qaWeek2DemoPassword;
     static final MySQLContainer<?> MYSQL=new MySQLContainer<>("mysql:8.4").withDatabaseName("utbridora");
     static {MYSQL.start();}
     @DynamicPropertySource static void database(DynamicPropertyRegistry r) {r.add("spring.datasource.url",MYSQL::getJdbcUrl);r.add("spring.datasource.username",MYSQL::getUsername);r.add("spring.datasource.password",MYSQL::getPassword);}
@@ -48,7 +50,16 @@ class Week2WorkflowIT {
     @Test void actualDelegationPolicyMatchingAndCooperationUseOwnerSourcesAndRollback() throws Exception {
         var admin=core.currentSubject(jdbc.queryForObject("SELECT id FROM users WHERE email='admin@example.test'",String.class)).orElseThrow();
         SecurityContextHolder.getContext().setAuthentication(admin);
-        var grant=delegations.bootstrap(admin,key(),new SchoolDelegationService.Bootstrap(id(2),id(11),id(21),List.of("school:delegation:manage","matching:run:execute","matching:school:detail_read","matching:school:nominate","cooperation:school:review","t5:proposal:manage","student:eligibility:school:approve","student_profile:share:school:manage"),List.of(),Instant.now().minusSeconds(60),Instant.now().plusSeconds(86400),"DEMO-WEEK2-TEST"));
+                var grant = delegations.bootstrap(admin, key(), new SchoolDelegationService.Bootstrap(
+                id(2), id(11), id(21),
+                List.of("school:delegation:manage", "matching:run:execute",
+                        "matching:school:detail_read", "matching:school:nominate",
+                        "cooperation:school:review", "t5:proposal:manage",
+                        "student:eligibility:school:approve", "student_profile:share:school:manage",
+                        "student_profile:school:read"),
+                List.of("displayName"),
+                Instant.now().minusSeconds(60), Instant.now().plusSeconds(86400),
+                "DEMO-WEEK2-TEST"));
         var school=as(2);var student=as(6);assertTrue(profiles.read(student,id(21)).completeness().checks().stream().filter(c->c.code().equals("MAJOR_VALID")).findFirst().orElseThrow().passed());
         String demand=jdbc.queryForObject("SELECT id FROM demands LIMIT 1",String.class);
         school=as(2);var evaluated=matching.evaluate(school,key(),new MatchingService.Evaluate(demand,1L,1L));
@@ -237,11 +248,126 @@ enterpriseIsolationTC03(
         var beforeGrant = login(subject.email, delegatePassword);
         assertEquals(404, http(beforeGrant, "GET", detailsPath, null, false, null),
             "TC04: Staff with execute-only grant must not read matching details");
+String rejectedDecisionRef = "DEMO-W2-TC05-EXPIRY";
+String grantAuditCountSql =
+        "SELECT COUNT(*) FROM audit_logs WHERE action = 'CAPABILITY_GRANTED'";
+Integer grantAuditCountBefore = jdbc.queryForObject(grantAuditCountSql, Integer.class);
 
-        var child = delegations.grant(as(2), id(21), key(), new SchoolDelegationService.Grant(
-            subject.id, List.of("matching:school:detail_read"), List.of(),
-            Instant.now(), Instant.now().plusSeconds(1800), "DEMO-W2-CHILD"));
+var expiryDenied = assertThrows(OperationFailure.class, () ->
+        delegations.grant(as(2), id(21), key(), new SchoolDelegationService.Grant(
+                subject.id, List.of("matching:school:detail_read"), List.of(),
+                Instant.now(), parent.validUntil().plusSeconds(1), rejectedDecisionRef)));
 
+assertEquals(403, expiryDenied.status);
+assertEquals("ACCESS_DENIED", expiryDenied.code);
+assertEquals(0, jdbc.queryForObject(
+        "SELECT COUNT(*) FROM school_delegations WHERE decision_ref = ?",
+        Integer.class, rejectedDecisionRef));
+assertEquals(grantAuditCountBefore, jdbc.queryForObject(grantAuditCountSql, Integer.class));
+        String apiDecisionRef = "DEMO-W2-TC05-HTTP-EXPIRY";
+        var schoolSession = login("school@example.test", qaWeek2DemoPassword);
+        String apiGrantBody = vn.utbridora.auth.operations.WorkflowValues.JSON.writeValueAsString(Map.of(
+                "userId", subject.id,
+                "permissionCodes", List.of("matching:school:detail_read"),
+                "profileReadFields", List.of(),
+                "validFrom", Instant.now().toString(),
+                "validUntil", parent.validUntil().plusSeconds(1).toString(),
+                "decisionRef", apiDecisionRef));
+
+        assertEquals(403, http(schoolSession, "POST",
+                "/school/terms/" + id(21) + "/delegations", apiGrantBody, true, null),
+                "TC05: API must reject a grant that outlasts its parent");
+        assertEquals(0, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM school_delegations WHERE decision_ref = ?",
+                Integer.class, apiDecisionRef));
+        assertEquals(grantAuditCountBefore, jdbc.queryForObject(grantAuditCountSql, Integer.class));
+        String permissionDecisionRef = "DEMO-W2-TC05-HTTP-PERMISSION";
+        String permissionGrantBody = vn.utbridora.auth.operations.WorkflowValues.JSON.writeValueAsString(Map.of(
+                "userId", subject.id,
+                "permissionCodes", List.of("enterprise_verification:school:review"),
+                "profileReadFields", List.of(),
+                "validFrom", Instant.now().toString(),
+                "validUntil", parent.validUntil().minusSeconds(1).toString(),
+                "decisionRef", permissionDecisionRef));
+
+        assertEquals(403, http(schoolSession, "POST",
+                "/school/terms/" + id(21) + "/delegations", permissionGrantBody, true, null),
+                "TC05: API must reject a permission missing from the parent grant");
+        assertEquals(0, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM school_delegations WHERE decision_ref = ?",
+                Integer.class, permissionDecisionRef));
+        assertEquals(grantAuditCountBefore, jdbc.queryForObject(grantAuditCountSql, Integer.class));
+        String fieldDecisionRef = "DEMO-W2-TC05-HTTP-FIELD";
+        String fieldGrantBody = vn.utbridora.auth.operations.WorkflowValues.JSON.writeValueAsString(Map.of(
+                "userId", subject.id,
+                "permissionCodes", List.of("student_profile:school:read"),
+                "profileReadFields", List.of("majorCode"),
+                "validFrom", Instant.now().toString(),
+                "validUntil", parent.validUntil().minusSeconds(1).toString(),
+                "decisionRef", fieldDecisionRef));
+
+        assertEquals(403, http(schoolSession, "POST",
+                "/school/terms/" + id(21) + "/delegations", fieldGrantBody, true, null),
+                "TC05: API must reject a profile field missing from the parent grant");
+        assertEquals(0, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM school_delegations WHERE decision_ref = ?",
+                Integer.class, fieldDecisionRef));
+        assertEquals(grantAuditCountBefore, jdbc.queryForObject(grantAuditCountSql, Integer.class));
+
+              String validDecisionRef = "DEMO-W2-CHILD";
+        String validGrantBody = vn.utbridora.auth.operations.WorkflowValues.JSON.writeValueAsString(Map.of(
+                "userId", subject.id,
+                "permissionCodes", List.of("matching:school:detail_read"),
+                "profileReadFields", List.of(),
+                "validFrom", Instant.now().toString(),
+                "validUntil", parent.validUntil().minusSeconds(1).toString(),
+                "decisionRef", validDecisionRef));
+        String otherTermId = key();
+        jdbc.update("""
+                INSERT INTO terms(id, school_org_id, term_code, start_date, end_date,
+                                  status, version, created_at, updated_at)
+                VALUES (?, ?, ?, CURRENT_DATE - INTERVAL 1 DAY,
+                        CURRENT_DATE + INTERVAL 30 DAY, 'ACTIVE', 1,
+                        UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))
+                """, otherTermId, id(11), "QA01-W2-OTHER-TERM");
+
+        assertEquals(404, http(schoolSession, "POST",
+                "/school/terms/" + otherTermId + "/delegations", validGrantBody, true, null),
+                "TC05: API must reject a grant in another term of the same school");
+        assertEquals(0, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM school_delegations WHERE term_id = ?",
+                Integer.class, otherTermId));
+        assertEquals(grantAuditCountBefore, jdbc.queryForObject(grantAuditCountSql, Integer.class));
+        String foreignSchoolId = key();
+        String foreignTermId = key();
+        jdbc.update("""
+                INSERT INTO organizations(id, name, type, status, created_at)
+                VALUES (?, ?, 'UNIVERSITY', 'VERIFIED', UTC_TIMESTAMP(6))
+                """, foreignSchoolId, "QA01 TC05 Foreign School");
+
+        jdbc.update("""
+                INSERT INTO terms(id, school_org_id, term_code, start_date, end_date,
+                                  status, version, created_at, updated_at)
+                VALUES (?, ?, ?, CURRENT_DATE - INTERVAL 1 DAY,
+                        CURRENT_DATE + INTERVAL 30 DAY, 'ACTIVE', 1,
+                        UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))
+                """, foreignTermId, foreignSchoolId, "QA01-TC05-FOREIGN-TERM");
+
+        assertEquals(404, http(schoolSession, "POST",
+                "/school/terms/" + foreignTermId + "/delegations", validGrantBody, true, null),
+                "TC05: API must reject a grant in another school");
+        assertEquals(0, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM school_delegations WHERE term_id = ?",
+                Integer.class, foreignTermId));
+        assertEquals(grantAuditCountBefore, jdbc.queryForObject(grantAuditCountSql, Integer.class));
+
+        assertEquals(201, http(schoolSession, "POST",
+                "/school/terms/" + id(21) + "/delegations", validGrantBody, true, null),
+                "TC05: API must accept a grant within its parent's validity");
+        String childId = jdbc.queryForObject(
+                "SELECT id FROM school_delegations WHERE decision_ref = ?",
+                String.class, validDecisionRef);
+        assertNotNull(childId);
         var session = login(subject.email, delegatePassword);
         assertEquals(200, http(session, "GET", detailsPath, null, false, null),
             "TC04: The same staff can read the same run after receiving detail_read");
@@ -250,7 +376,7 @@ enterpriseIsolationTC03(
         admin=as(1);delegations.revoke(admin,parent.id(),key(),new SchoolDelegationService.Revoke(parent.version(),"ROOT_REVOKED"));
         assertEquals(401,http(session,"GET","/matching/runs/"+run+"/details?overallStatus=MATCH",null,false,null));
         var newSession=login(subject.email,"Synthetic-week2-delegate-password-123");assertEquals(404,http(newSession,"GET","/matching/runs/"+run+"/details?overallStatus=MATCH",null,false,null));
-        assertTrue(jdbc.queryForObject("SELECT active FROM school_delegations WHERE id=?",Boolean.class,child.id()),"Child row may remain active but its revoked parent must deny access");
+        assertTrue(jdbc.queryForObject("SELECT active FROM school_delegations WHERE id=?",Boolean.class,childId),"Child row may remain active but its revoked parent must deny access");
         var hr=login("hr@example.test","Synthetic-week2-test-password-123");String coordinator=jdbc.queryForObject("SELECT id FROM internship_context_assignments WHERE kind='COORDINATOR'",String.class);
         assignments.revoke(as(2),coordinator,key(),new vn.utbridora.auth.modules.internship.infrastructure.WorkspaceAssignmentService.Revoke(1L,"SCHOOL_REVOKED"));
         assertEquals(401,http(hr,"GET","/t3/context-assignments/me",null,false,null));assertEquals(0,workspace.assignments(as(4)).size());assertEquals(0,workspace.assignments(as(5)).size());
