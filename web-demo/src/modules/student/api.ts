@@ -1,5 +1,8 @@
 import { api } from '../../api';
-import type { ContractPage, ProfileInput, SelfProfileView, TermReference } from './types';
+import type {
+  ConsentGrant, ContractPage, GrantConsent, InternshipInvitation, InvitationDecision, InvitationWithdrawal, OpportunityView,
+  PreferenceView, ProfileInput, RevokeConsent, SchoolSharingPolicy, SelfProfileView, SubmitPreference, TermReference, WithdrawPreference
+} from './types';
 
 // BC11 (Contract Pack v1.0, dòng 778). CSRF do api() của core tự thêm cho PUT.
 export const getMyProfile = (termId: string) =>
@@ -27,6 +30,51 @@ export async function listTerms(schoolOrgId: string): Promise<TermReference[]> {
   for (let page = 1; page < first.totalPages; page++) terms.push(...(await read(page)).content);
   return terms;
 }
+
+// Đọc đủ mọi trang; size tối đa 100 theo PageQuery (C.0 dòng 89).
+async function readAllPages<T>(path: string, signal?: AbortSignal): Promise<T[]> {
+  const items: T[] = [];
+  for (let page = 0, total = 1; page < total; page++) {
+    const result = await api<ContractPage<T>>(path + '?' + new URLSearchParams({ page: String(page), size: '100' }), { signal });
+    items.push(...result.content);
+    total = result.totalPages;
+  }
+  return items;
+}
+// Lệnh ghi dùng Idempotency-Key do trang giữ để thử lại cùng nội dung không tạo hiệu ứng thứ hai.
+const command = <T,>(path: string, body: unknown, idempotencyKey: string) =>
+  api<T>(path, { method: 'POST', headers: { 'Idempotency-Key': idempotencyKey }, body: JSON.stringify(body) });
+
+// BC23 (v1.0 dòng 940): chủ lời mời lấy từ phiên đăng nhập, không gửi trong body.
+export const listMyInvitations = (signal?: AbortSignal) => readAllPages<InternshipInvitation>('/invitations/me', signal);
+export const getInvitation = (invitationId: string, signal?: AbortSignal) =>
+  api<InternshipInvitation>('/invitations/' + encodeURIComponent(invitationId), { signal });
+export const decideInvitation = (invitationId: string, decision: InvitationDecision, idempotencyKey: string) =>
+  command<InternshipInvitation>('/invitations/' + encodeURIComponent(invitationId) + '/decision', decision, idempotencyKey);
+export const withdrawInvitation = (invitationId: string, withdrawal: InvitationWithdrawal, idempotencyKey: string) =>
+  command<InternshipInvitation>('/invitations/' + encodeURIComponent(invitationId) + '/withdraw', withdrawal, idempotencyKey);
+
+// BC24 (v1.0 dòng 964): consent độc lập với quyết định nhận lời mời.
+export const listMyConsents = (signal?: AbortSignal) => readAllPages<ConsentGrant>('/students/me/consents', signal);
+export const grantConsent = (request: GrantConsent, idempotencyKey: string) =>
+  command<ConsentGrant>('/students/me/consents', request, idempotencyKey);
+export const revokeConsent = (consentId: string, request: RevokeConsent, idempotencyKey: string) =>
+  command<ConsentGrant>('/students/me/consents/' + encodeURIComponent(consentId) + '/revoke', request, idempotencyKey);
+export const getSharingPolicy = (termId: string, signal?: AbortSignal) =>
+  api<SchoolSharingPolicy>('/school/terms/' + encodeURIComponent(termId) + '/profile-sharing-policy', { signal });
+
+// BC22 (v1.0 dòng 902): T5 chỉ trả cơ hội đã công bố, đúng trường/kỳ và còn trong khoảng [publishedAt, closedAt).
+export type OpportunityFilter = { termId: string; q: string; majorCode: string; page: number };
+export const listOpportunities = ({ termId, q, majorCode, page }: OpportunityFilter, signal?: AbortSignal) =>
+  api<ContractPage<OpportunityView>>('/opportunities?' + new URLSearchParams({
+    termId, ...(q ? { q } : {}), ...(majorCode ? { majorCode } : {}), page: String(page), size: '20'
+  }), { signal });
+export const getOpportunity = (opportunityId: string, signal?: AbortSignal) =>
+  api<OpportunityView>('/opportunities/' + encodeURIComponent(opportunityId), { signal });
+// BC22 (v1.0 dòng 904): T2 sở hữu Preference; POST cùng route nhận SUBMIT hoặc WITHDRAW, chủ thể lấy từ phiên đăng nhập.
+export const listMyPreferences = (signal?: AbortSignal) => readAllPages<PreferenceView>('/students/me/preferences', signal);
+export const sendPreference = (request: SubmitPreference | WithdrawPreference, idempotencyKey: string) =>
+  command<PreferenceView>('/students/me/preferences', request, idempotencyKey);
 
 // crypto.randomUUID chỉ có trong secure context (localhost/HTTPS); dự phòng UUID v4 từ getRandomValues.
 export function newIdempotencyKey() {

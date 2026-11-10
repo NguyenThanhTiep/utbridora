@@ -35,3 +35,42 @@ export type SelfProfileView = { studentUserId: string; schoolOrgId: string; prof
 export type TermReference = { termId: string; termCode: Code; schoolOrgId: string; startDate: string; endDate: string; status: 'DRAFT' | 'ACTIVE' | 'CLOSED'; version: number };
 // Page theo C.0 (v1.0 dòng 89); khác Page của core vốn dùng `number`.
 export type ContractPage<T> = { content: T[]; page: number; size: number; totalElements: number; totalPages: number };
+
+// BC23 (v1.0 dòng 928): T5 sở hữu lời mời; T2 chỉ hiển thị và gửi quyết định của chính sinh viên.
+export type InvitationState = 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED' | 'WITHDRAWN';
+export type InternshipInvitation = {
+  invitationId: string; proposalItemId: string; placementCandidateId: string; studentUserId: string; schoolOrgId: string;
+  enterpriseOrgId: string; termId: string; opportunityId: string; title: string; enterpriseName: string; state: InvitationState;
+  expiresAt: string; decidedAt: string | null; decisionReasonCode: Code | null; version: number; placementId: string | null;
+};
+export type InvitationDecision = { decision: 'ACCEPT' | 'DECLINE'; expectedVersion: number; reasonCode: Code | null; reasonText: string | null };
+export type InvitationWithdrawal = { expectedVersion: number; reasonCode: Code; reasonText: string | null };
+
+// BC24 (v1.0 dòng 964): consent do T2 sở hữu; danh sách mục được chia sẻ do trường quy định theo kỳ.
+export type ProfileField = 'displayName' | 'studentCode' | 'majorCode' | 'skills' | 'projects' | 'certificates' | 'cv' | 'evidence' | 'email' | 'phone' | 'gpa' | 'transcript';
+export type SchoolSharingPolicy = { schoolOrgId: string; termId: string; version: number; allowedFields: ProfileField[]; updatedAt: string | null; updatedByUserId: string | null };
+export type GrantConsent = {
+  invitationId: string; purpose: 'INTERNSHIP_SELECTION'; fieldWhitelist: ProfileField[]; expiresAt: string; policyVersion: Code;
+  expectedSchoolPolicyVersion: number; expectedLineageVersion: number;
+};
+export type ConsentGrant = {
+  consentId: string; consentVersion: number; lineageVersion: number; studentUserId: string; schoolOrgId: string; termId: string;
+  recipientOrgId: string; invitationId: string; purpose: 'INTERNSHIP_SELECTION'; fieldWhitelist: ProfileField[]; grantedAt: string;
+  expiresAt: string; revokedAt: string | null; policyVersion: Code; replacedByConsentId: string | null;
+};
+export type RevokeConsent = { expectedLineageVersion: number; reasonCode: Code };
+
+// BC22 (v1.0 dòng 889): T5 sở hữu Opportunity (opportunityId=cooperationId); T2 sở hữu Preference.
+export type OpportunityView = {
+  opportunityId: string; cooperationId: string; demandId: string; schoolOrgId: string; enterpriseOrgId: string; termId: string;
+  enterpriseName: string; title: string; majorCodes: Code[]; dateRange: DateRange; benefits: string | null; location: string | null;
+  publishedAt: string; closedAt: string; version: number;
+};
+export type PreferenceStatus = 'SUBMITTED' | 'WITHDRAWN' | 'REVIEWED';
+export type PreferenceView = {
+  preferenceId: string; studentUserId: string; schoolOrgId: string; termId: string; opportunityId: string; intentVersion: number;
+  version: number; status: PreferenceStatus; message: string | null; createdAt: string; withdrawnAt: string | null;
+  reviewedAt: string | null; reviewedByUserId: string | null;
+};
+export type SubmitPreference = { action: 'SUBMIT'; opportunityId: string; message: string | null; expectedIntentVersion: number };
+export type WithdrawPreference = { action: 'WITHDRAW'; preferenceId: string; expectedVersion: number; reasonCode: Code };

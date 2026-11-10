@@ -25,9 +25,32 @@
 .student-error-note { margin-top: 10px; color: #a5364c; font-size: var(--text-sm); line-height: 1.7; overflow-wrap: anywhere; }
 .student-profile-form .button-row { margin-top: 22px; }
 
+.student-invitation-detail { margin-top: 12px; }
+.student-invitation-detail dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 20px; margin: 12px 0 0; }
+.student-invitation-detail dt { color: var(--muted); font-size: var(--text-xs); font-weight: 600; }
+.student-invitation-detail dd { margin: 3px 0 0; font-size: var(--text-sm); overflow-wrap: anywhere; }
+
+.student-filter { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; gap: 0 16px; align-items: end; margin-bottom: 22px; }
+.student-filter > button { margin-top: 16px; }
+.student-list { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.student-list-item { min-width: 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: 10px; }
+.student-list-item h3 { overflow-wrap: anywhere; }
+.student-list-meta { margin: 6px 0 0; color: var(--muted); font-size: var(--text-sm); line-height: 1.6; overflow-wrap: anywhere; }
+.student-list-item .button-row, .student-page form .button-row { margin-top: 12px; }
+.student-status { display: inline-block; margin: 8px 0 0; padding: 3px 8px; color: #5e7180; font-size: var(--text-xs); font-weight: 600; border: 1px solid var(--line); border-radius: 6px; }
+.student-status.submitted { color: #966614; background: #fff8e9; border-color: #f3e7c7; }
+.student-status.reviewed { color: #28775c; background: #edf8f2; border-color: #d6ecdf; }
+.student-detail { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; margin: 14px 0 0; }
+.student-detail dt { color: var(--muted); font-size: var(--text-xs); font-weight: 600; }
+.student-detail dd { margin: 3px 0 0; font-size: var(--text-sm); overflow-wrap: anywhere; white-space: pre-line; }
+.student-detail ul { margin: 0; padding-left: 18px; }
+.student-detail-wide { grid-column: 1 / -1; }
+.student-page textarea { display: block; width: 100%; max-width: 100%; min-width: 0; min-height: 96px; margin-top: 7px; padding: 11px 13px; font: inherit; color: var(--ink); background: #fff; border: 1px solid #dbe4ea; border-radius: 8px; resize: vertical; }
+.student-page textarea:focus { outline: 0; border-color: #209c9c; box-shadow: 0 0 0 3px #e3f4f1; }
+
 @media (max-width: 700px) {
   .student-page { gap: 18px; }
   .student-term-panel .section-heading { flex-wrap: wrap; }
   .student-term-select { width: 100%; }
-  .student-period-fields, .student-kept ul { grid-template-columns: 1fr; }
+  .student-period-fields, .student-kept ul, .student-invitation-detail dl, .student-filter, .student-detail { grid-template-columns: 1fr; }
 }

@@ -93,11 +93,12 @@ test('week 2 skills, cooperation, consent and tasks use real authenticated APIs'
   const declined = decisions.page.locator('section.panel').filter({ has: decisions.page.getByRole('heading', { name: 'W2 UI decline invitation', exact: true }) });
   await accepted.getByRole('button', { name: 'Nhận lời mời', exact: true }).click();
   await expect(accepted.getByRole('button', { name: 'Rút nhận lời', exact: true })).toBeVisible();
+  decisions.page.once('dialog', dialog => void dialog.accept());
   await declined.getByRole('button', { name: 'Từ chối', exact: true }).click();
-  await expect(declined.getByText(/ · DECLINED$/)).toBeVisible();
+  await expect(declined.getByText(/ · Đã từ chối$/)).toBeVisible();
   await decisions.page.reload(); await decisions.page.getByRole('button', { name: 'Lời mời và chia sẻ', exact: true }).click();
   await expect(accepted.getByRole('button', { name: 'Rút nhận lời', exact: true })).toBeVisible();
-  await expect(declined.getByText(/ · DECLINED$/)).toBeVisible();
+  await expect(declined.getByText(/ · Đã từ chối$/)).toBeVisible();
   await expect(decisions.page.getByText('Đang có hiệu lực', { exact: true })).toHaveCount(0);
   await decisions.context.close();
 });
