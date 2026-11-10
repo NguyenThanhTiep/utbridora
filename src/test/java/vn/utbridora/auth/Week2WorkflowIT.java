@@ -269,6 +269,17 @@ class Week2WorkflowIT {
         assertEquals(200, allowed.statusCode(), "Staff from the owning school must be able to read the run");
         var details = vn.utbridora.auth.operations.WorkflowValues.JSON.readTree(allowed.body());
         assertEquals(run, details.get("run").get("matchRunId").asString());
+// QA01 - TC01: Kiem tra school va term cua run
+var scope = jdbc.queryForMap(
+    "SELECT school_org_id, term_id FROM match_runs WHERE id = ?",
+    run
+);
+
+assertEquals(id(11), scope.get("school_org_id"),
+    "Run phai thuoc dung truong A");
+
+assertEquals(id(21), scope.get("term_id"),
+    "Run phai thuoc dung hoc ky A");
 
         var denied = otherSchool.client().send(request, bodyHandler);
         assertEquals(404, denied.statusCode(), "Staff with detail-read delegation in another school must be denied");
