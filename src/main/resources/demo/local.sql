@@ -1,4 +1,4 @@
--- Synthetic Week 1 prerequisites, imported once into a NEW, explicitly opted-in local utbridora database.
+-- Synthetic prerequisites: new local DB startup, or explicit seed-demo import after collision checks.
 -- APPROVED verification/Placement and accepted Mentor invitation are fixtures, NOT a completed Week 2/3 workflow.
 -- No real users, school approvals, CLEAN file scans or team signatures are fabricated.
 INSERT INTO organizations(id,name,type,status,created_at) VALUES
