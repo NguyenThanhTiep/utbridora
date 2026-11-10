@@ -268,7 +268,7 @@ class SubmissionControllerTest {
         };
         mvc = mvc(new SubmissionService(work, access, cases, Clock.fixed(NOW, ZoneOffset.UTC), UUID::randomUUID));
         error(submit(BODY), 404, "RESOURCE_NOT_FOUND");
-        verifyNoInteractions(access, cases);verify(session, never()).idempotent(any(), any());
+        verifyNoInteractions(access, cases);verify(session, never()).idempotent(any(), any(), any(), any());
         verify(session, never()).appendFirst(any(), any());
     }
 

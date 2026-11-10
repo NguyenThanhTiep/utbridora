@@ -9,16 +9,19 @@ import java.util.UUID;
 import java.util.function.Supplier;
 import org.springframework.security.core.Authentication;
 import vn.utbridora.auth.audit.AuditAction;
+import vn.utbridora.auth.modules.internship.api.SubmissionDtos.ReviewDto;
+import vn.utbridora.auth.modules.internship.api.SubmissionDtos.ReviewInput;
 import vn.utbridora.auth.modules.internship.api.SubmissionDtos.SubmissionDto;
 import vn.utbridora.auth.modules.internship.api.SubmissionDtos.SubmissionInput;
+import vn.utbridora.auth.modules.internship.api.TaskDtos.AssignmentDto;
 import vn.utbridora.auth.modules.internship.application.SubmissionPorts.*;
 import vn.utbridora.auth.modules.internship.application.WorkspacePorts.CaseChecks;
 import vn.utbridora.auth.modules.internship.domain.SubmissionPolicy;
 import vn.utbridora.auth.operations.OperationLedger;
 import static vn.utbridora.auth.operations.WorkflowValues.*;
 
-/** M2 URL v1 + history application flow. Deliberately not registered with Spring or exposed as HTTP.
- * Revisions, review, comments, file acceptance and runtime persistence are separate milestones.
+/** URL v1/history and M3A Mentor Review application flows. No production bean is registered here.
+ * Submission v2, FR-17 Task Comment, file acceptance and runtime persistence remain separate.
  */
 public final class SubmissionService {
     private final UnitOfWork transactions;
@@ -50,7 +53,7 @@ public final class SubmissionService {
             }
             var command = new OperationLedger.Command(actorId.toString(), target.cohort().scope().schoolOrgId().toString(),
                     "T3_SUBMISSION_CREATE", key, Map.of("assignmentId", assignmentId, "request", input), 201);
-            return session.idempotent(command, () -> {
+            return session.idempotent(command, SubmissionDto.class, () -> {
                 var guardNow = clock.instant();
                 UUID student = cases.requireTaskParticipant(auth, target.cohort(), target.group(),
                         target.assignment().caseId(), guardNow);
@@ -70,11 +73,51 @@ public final class SubmissionService {
                 var created = new SubmissionDto(Objects.requireNonNull(identifiers.get()), assignmentId, 1,
                         List.of(), input.url(), input.note(), now, late);
                 session.appendFirst(assignment, created);
-                session.audit(AuditAction.SUBMISSION_CREATED, actorId, current.cohort().scope().schoolOrgId(),
+                session.audit(AuditAction.SUBMISSION_CREATED.name(), actorId, current.cohort().scope().schoolOrgId(),
                         created.submissionId(), Map.of("assignmentId", assignmentId.toString(), "versionNo", 1,
                                 "fileIds", List.of(), "lateFlag", late));
                 return created;
-            });
+            }, result -> result.submissionId().toString());
+        });
+    }
+
+    /** CP-WS2/FR-16/R21. Authorization precedes replay; guards/version/CAS/audit join the mutation.
+     * Review comment is part of immutable ReviewDto, never an FR-17 Task Comment or audit field.
+     */
+    public ReviewDto review(Authentication auth, UUID submissionId, String key, ReviewInput input) {
+        UUID reviewerId = UUID.fromString(actor(auth));
+        Objects.requireNonNull(submissionId);
+        Objects.requireNonNull(input);
+        return transactions.execute(session -> {
+            var submitted = loadSubmission(session.submission(submissionId), submissionId);
+            var target = load(session.assignment(submitted.assignmentId()), submitted.assignmentId());
+            access.requireReview(auth, target);
+            var command = new OperationLedger.Command(reviewerId.toString(), target.cohort().scope().schoolOrgId().toString(),
+                    "T3_SUBMISSION_REVIEW", key, Map.of("submissionId", submissionId, "request", input), 201);
+            return session.idempotent(command, ReviewDto.class, () -> {
+                UUID student = cases.requireTaskParticipant(auth, target.cohort(), target.group(),
+                        target.assignment().caseId(), clock.instant());
+                if (student == null || !student.equals(target.assignment().studentUserId())) throw unavailable();
+                var current = load(session.lockAssignment(submitted.assignmentId()), submitted.assignmentId());
+                requireSameResource(target, current);
+                access.requireReview(auth, current);
+                var artifact = loadSubmission(session.submission(submissionId), submissionId);
+                if (!submitted.equals(artifact)) throw unavailable();
+                var assignment = current.assignment();
+                SubmissionPolicy.requireReview(assignment.state(), assignment.version(), input.expectedAssignmentVersion(),
+                        submissionId, assignment.currentSubmissionId());
+                if (session.hasReview(submissionId)) throw failure(409, "STATE_CONFLICT");
+                var reviewed = new ReviewDto(Objects.requireNonNull(identifiers.get()), submissionId, artifact.versionNo(),
+                        input.verdict(), input.comment(), reviewerId, clock.instant(), assignment.version() + 1);
+                var updated = new AssignmentDto(assignment.assignmentId(), assignment.caseId(), assignment.studentUserId(),
+                        SubmissionPolicy.reviewedState(input.verdict()), reviewed.assignmentVersion(), submissionId);
+                session.appendReview(assignment, updated, reviewed);
+                session.audit("SUBMISSION_REVIEWED", reviewerId, current.cohort().scope().schoolOrgId(), submissionId,
+                        Map.of("assignmentId", assignment.assignmentId().toString(),
+                                "reviewedVersion", reviewed.reviewedVersionNo(), "verdict", reviewed.verdict().name(),
+                                "assignmentVersion", reviewed.assignmentVersion()));
+                return reviewed;
+            }, result -> result.reviewId().toString());
         });
     }
 
@@ -106,6 +149,12 @@ public final class SubmissionService {
         if (target == null) throw failure(404, "RESOURCE_NOT_FOUND");
         if (!expectedId.equals(target.assignment().assignmentId())) throw unavailable();
         return target;
+    }
+
+    private static SubmissionDto loadSubmission(SubmissionDto value, UUID expectedId) {
+        if (value == null) throw failure(404, "RESOURCE_NOT_FOUND");
+        if (!expectedId.equals(value.submissionId())) throw unavailable();
+        return value;
     }
 
     private static void requireSameResource(AssignmentContext before, AssignmentContext after) {

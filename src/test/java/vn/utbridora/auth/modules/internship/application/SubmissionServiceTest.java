@@ -44,7 +44,9 @@ class SubmissionServiceTest {
             GROUP = id(5), COHORT = id(6), SCHOOL = id(7), ENTERPRISE = id(8), TERM = id(9), SUBMISSION = id(10);
     private static final Instant NOW = Instant.parse("2026-11-10T03:00:00Z");
     private static final String KEY = id(20).toString();
+    private static final UUID MENTOR = id(80);
     private final Authentication auth = authentication(STUDENT);
+    private final Authentication mentor = authentication(MENTOR);
     private final Access access = mock(Access.class);
     private final CaseChecks cases = mock(CaseChecks.class);
     private final MemoryBoundary memory = new MemoryBoundary();
@@ -57,6 +59,11 @@ class SubmissionServiceTest {
         });
         doAnswer(call -> { memory.events.add("submit-authorization"); return null; })
                 .when(access).requireSubmit(eq(auth), any());
+        when(cases.requireTaskParticipant(eq(mentor), any(), any(), eq(CASE), any())).thenAnswer(call -> {
+            memory.events.add("case-placement-guard");return STUDENT;
+        });
+        doAnswer(call -> { memory.events.add("review-authorization");return null; })
+                .when(access).requireReview(eq(mentor), any());
         var sequence = new java.util.concurrent.atomic.AtomicLong(10);
         service = new SubmissionService(memory, access, cases, Clock.fixed(NOW, ZoneOffset.UTC),
                 () -> id(sequence.getAndIncrement()));
@@ -96,7 +103,7 @@ class SubmissionServiceTest {
         service.submitUrlV1(auth, ASSIGNMENT, KEY,
                 new SubmissionInput(2L, List.of(), "https://example.test/private", "Private note"));
         var audit = memory.audits.getFirst();
-        assertEquals(AuditAction.SUBMISSION_CREATED, audit.action());
+        assertEquals(AuditAction.SUBMISSION_CREATED.name(), audit.action());
         assertEquals(STUDENT, audit.actor());assertEquals(SCHOOL, audit.school());assertEquals(SUBMISSION, audit.resource());
         assertEquals(Map.of("assignmentId", ASSIGNMENT.toString(), "versionNo", 1, "fileIds", List.of(), "lateFlag", false), audit.metadata());
         assertFalse(audit.metadata().toString().contains("private"));
@@ -390,6 +397,275 @@ class SubmissionServiceTest {
         assertThrows(IllegalArgumentException.class, () -> new HistoryPage(List.of(), -1));
     }
 
+    private void prepareReview() {
+        memory.rows.add(row(1, SUBMISSION));
+        memory.target = context(ASSIGNMENT, STUDENT, AssignmentState.SUBMITTED, 3, SUBMISSION, NOW, false);
+        service = new SubmissionService(memory, access, cases, Clock.fixed(NOW, ZoneOffset.UTC), () -> id(81));
+    }
+    private static ReviewInput reviewInput() { return new ReviewInput(3L, ReviewVerdict.REQUEST_REVISION, "Please revise"); }
+    private ReviewDto review() { return service.review(mentor, SUBMISSION, KEY, reviewInput()); }
+    private void noReviewEffects() {
+        assertTrue(memory.reviews.isEmpty());assertTrue(memory.audits.isEmpty());assertTrue(memory.ledger.isEmpty());
+        assertEquals(AssignmentState.SUBMITTED, memory.target.assignment().state());
+        assertEquals(3L, memory.target.assignment().version());assertEquals(SUBMISSION, memory.target.assignment().currentSubmissionId());
+    }
+
+    @ParameterizedTest @EnumSource(ReviewVerdict.class)
+    void mentorReviewTransitionsOnceAndPreservesImmutableArtifact(ReviewVerdict verdict) {
+        prepareReview();var original = List.copyOf(memory.rows);
+        var result = service.review(mentor, SUBMISSION, KEY, new ReviewInput(3L, verdict, " Reviewed "));
+        assertEquals(new ReviewDto(id(81), SUBMISSION, 1, verdict, "Reviewed", MENTOR, NOW, 4L), result);
+        assertEquals(verdict == ReviewVerdict.ACCEPT ? AssignmentState.COMPLETED : AssignmentState.REVISION_REQUIRED,
+                memory.target.assignment().state());
+        assertEquals(4L, memory.target.assignment().version());assertEquals(SUBMISSION, memory.target.assignment().currentSubmissionId());
+        assertEquals(original, memory.rows);assertEquals(List.of(result), memory.reviews);
+        assertEquals(List.of("read-submission", "read-assignment", "review-authorization", "ledger", "case-placement-guard",
+                "lock-assignment", "review-authorization", "read-submission", "append-review", "audit"), memory.events);
+        verify(access, never()).requireSubmit(any(), any());
+    }
+
+    @Test void reviewUsesTypedCoreLedgerAndCanonicalAuditWithoutFreeText() {
+        prepareReview();var result = review();var command = memory.commands.getFirst();
+        assertEquals(MENTOR.toString(), command.actorId());assertEquals(SCHOOL.toString(), command.organizationId());
+        assertEquals("T3_SUBMISSION_REVIEW", command.operationCode());assertEquals(KEY, command.key());assertEquals(201, command.responseStatus());
+        assertEquals(Map.of("submissionId", SUBMISSION, "request", reviewInput()), command.payload());
+        assertEquals(List.of(ReviewDto.class), memory.responseTypes);assertEquals(List.of(result.reviewId().toString()), memory.effectRefs);
+        var audit = memory.audits.getFirst();
+        assertEquals("SUBMISSION_REVIEWED", audit.action());assertEquals(MENTOR, audit.actor());
+        assertEquals(SCHOOL, audit.school());assertEquals(SUBMISSION, audit.resource());
+        assertNotEquals(result.reviewId(), audit.resource());
+        assertEquals(Map.of("assignmentId", ASSIGNMENT.toString(), "reviewedVersion", 1,
+                "verdict", "REQUEST_REVISION", "assignmentVersion", 4L), audit.metadata());
+        assertFalse(audit.metadata().toString().contains("Please revise"));
+        assertFalse(audit.metadata().toString().contains("https://"));
+    }
+
+    static Stream<Arguments> missingReviewComments() {
+        return Stream.of(ReviewVerdict.values()).flatMap(verdict -> Stream.<String>of(null, "", " \t", "\u00a0\u3000")
+                .map(comment -> Arguments.of(verdict, comment)));
+    }
+    @ParameterizedTest @MethodSource("missingReviewComments")
+    void bothReviewVerdictsRejectMissingOrBlankCommentsBeforeSideEffects(ReviewVerdict verdict, String comment) {
+        prepareReview();
+        assertThrows(IllegalArgumentException.class, () -> service.review(mentor, SUBMISSION, KEY, new ReviewInput(3L, verdict, comment)));
+        noReviewEffects();verifyNoInteractions(access, cases);assertTrue(memory.commands.isEmpty());
+    }
+
+    @ParameterizedTest @ValueSource(strings = {"ACCEPT", "REQUEST_REVISION"})
+    void reviewParserMissingCommentCannotEnterTheApplication(String verdict) {
+        prepareReview();
+        error(400, "SCHEMA_VALIDATION", () -> service.review(mentor, SUBMISSION, KEY,
+                vn.utbridora.auth.modules.internship.api.SubmissionJson.review(
+                        "{\"expectedAssignmentVersion\":3,\"verdict\":\"" + verdict + "\"}")));
+        noReviewEffects();verifyNoInteractions(access, cases);
+    }
+
+    @ParameterizedTest @ValueSource(strings = {"STUDENT", "HR", "ADMIN"})
+    void nonMentorRolesCannotBypassTheReviewAuthorizationBoundary(String role) {
+        prepareReview();
+        var deniedActor = UsernamePasswordAuthenticationToken.authenticated(
+                new AppPrincipal(id(82).toString(), "synthetic@example.test", null, 1, List.of()), null,
+                List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+        doThrow(new WorkspaceRuleException(WorkspaceRuleException.Kind.DENIED)).when(access).requireReview(eq(deniedActor), any());
+        assertEquals(WorkspaceRuleException.Kind.DENIED, assertThrows(WorkspaceRuleException.class,
+                () -> service.review(deniedActor, SUBMISSION, KEY, reviewInput())).kind());
+        noReviewEffects();verifyNoInteractions(cases);assertTrue(memory.commands.isEmpty());
+    }
+
+    @ParameterizedTest @EnumSource(value = WorkspaceRuleException.Kind.class, names = {"SCOPE_MISMATCH", "DENIED", "UNAVAILABLE"})
+    void reviewCurrentScopeRevocationOrUnavailableAuthorityStopsBeforeLedger(WorkspaceRuleException.Kind kind) {
+        prepareReview();doThrow(new WorkspaceRuleException(kind)).when(access).requireReview(eq(mentor), any());
+        assertEquals(kind, assertThrows(WorkspaceRuleException.class, this::review).kind());
+        noReviewEffects();verifyNoInteractions(cases);assertTrue(memory.commands.isEmpty());
+    }
+
+    @Test void reviewAnonymousAndUntrustedPrincipalNeverReachPorts() {
+        prepareReview();
+        var anonymous = new AnonymousAuthenticationToken("key", "anonymous", List.of(new SimpleGrantedAuthority("ROLE_ANONYMOUS")));
+        for (Authentication actor : java.util.Arrays.asList(null, anonymous,
+                UsernamePasswordAuthenticationToken.unauthenticated("mentor", null),
+                UsernamePasswordAuthenticationToken.authenticated("browser-mentor", null, List.of()))) {
+            error(401, "SESSION_EXPIRED", () -> service.review(actor, SUBMISSION, KEY, reviewInput()));
+        }
+        noReviewEffects();verifyNoInteractions(access, cases);assertTrue(memory.events.isEmpty());
+    }
+
+    static Stream<Arguments> reviewSourceStates() {
+        return Stream.of(Arguments.of("WAITING_START", "ACTIVE", -1L), Arguments.of("COMPLETED", "ACTIVE", -1L),
+                Arguments.of("IN_PROGRESS", "APPROVED", -1L), Arguments.of("IN_PROGRESS", "CANCELLED", -1L),
+                Arguments.of("IN_PROGRESS", "COMPLETED", -1L), Arguments.of("IN_PROGRESS", "ACTIVE", 1L));
+    }
+    @ParameterizedTest @MethodSource("reviewSourceStates")
+    void reviewPropagatesTheExistingCasePlacementGate(String caseState, String placementState, long effectiveOffset) {
+        prepareReview();
+        // Synthetic source behind the mocked port; actual JDBC/T5 locking still needs integration.
+        when(cases.requireTaskParticipant(eq(mentor), any(), any(), eq(CASE), any())).thenAnswer(call -> {
+            if (!InternshipActivityPolicy.hasRequiredStateAndStartTime(caseState, placementState,
+                    NOW.plusSeconds(effectiveOffset), call.getArgument(4))) {
+                throw new WorkspaceRuleException(WorkspaceRuleException.Kind.STATE_CONFLICT);
+            }
+            return STUDENT;
+        });
+        assertEquals(WorkspaceRuleException.Kind.STATE_CONFLICT, assertThrows(WorkspaceRuleException.class, this::review).kind());
+        noReviewEffects();assertFalse(memory.events.contains("lock-assignment"));
+    }
+
+    @ParameterizedTest @ValueSource(booleans = {false, true})
+    void reviewRejectsMissingOrMismatchedSourceStudent(boolean mismatched) {
+        prepareReview();
+        when(cases.requireTaskParticipant(eq(mentor), any(), any(), eq(CASE), any())).thenReturn(mismatched ? id(99) : null);
+        error(503, "DEPENDENCY_UNAVAILABLE", this::review);noReviewEffects();
+        assertFalse(memory.events.contains("lock-assignment"));
+    }
+
+    @ParameterizedTest @EnumSource(value = AssignmentState.class, names = "SUBMITTED", mode = EnumSource.Mode.EXCLUDE)
+    void reviewCannotRunFromAnyOtherAssignmentState(AssignmentState state) {
+        prepareReview();memory.target = context(ASSIGNMENT, STUDENT, state, 3L, SUBMISSION, NOW, false);
+        error(409, "STATE_CONFLICT", this::review);
+        assertEquals(state, memory.target.assignment().state());assertEquals(3L, memory.target.assignment().version());
+        assertTrue(memory.reviews.isEmpty());assertTrue(memory.audits.isEmpty());assertTrue(memory.ledger.isEmpty());
+    }
+
+    @ParameterizedTest @ValueSource(longs = {0, 2, 4})
+    void reviewRejectsStaleExpectedAssignmentVersion(long expected) {
+        prepareReview();
+        error(409, "VERSION_CONFLICT", () -> service.review(mentor, SUBMISSION, KEY,
+                new ReviewInput(expected, ReviewVerdict.ACCEPT, "Accepted")));noReviewEffects();
+    }
+
+    @Test void reviewCannotAdvanceMaxVersion() {
+        prepareReview();long max = 9_007_199_254_740_991L;
+        memory.target = context(ASSIGNMENT, STUDENT, AssignmentState.SUBMITTED, max, SUBMISSION, NOW, false);
+        error(409, "VERSION_CONFLICT", () -> service.review(mentor, SUBMISSION, KEY,
+                new ReviewInput(max, ReviewVerdict.ACCEPT, "Accepted")));
+        assertTrue(memory.reviews.isEmpty());assertTrue(memory.audits.isEmpty());assertEquals(max, memory.target.assignment().version());
+    }
+
+    @Test void reviewOldSubmissionUsesStaleSubmissionEvenWhenVersionAlsoChanged() {
+        prepareReview();memory.target = context(ASSIGNMENT, STUDENT, AssignmentState.SUBMITTED, 5L, id(91), NOW, false);
+        error(409, "STALE_SUBMISSION", this::review);
+        assertTrue(memory.reviews.isEmpty());assertTrue(memory.audits.isEmpty());assertTrue(memory.ledger.isEmpty());
+        assertEquals(id(91), memory.target.assignment().currentSubmissionId());
+    }
+
+    @Test void reviewRechecksCurrentPointerAndVersionUnderAssignmentLock() {
+        prepareReview();memory.lockedOverride = context(ASSIGNMENT, STUDENT, AssignmentState.SUBMITTED, 4L, SUBMISSION, NOW, false);
+        error(409, "VERSION_CONFLICT", this::review);noReviewEffects();
+        memory.lockedOverride = context(ASSIGNMENT, STUDENT, AssignmentState.SUBMITTED, 5L, id(91), NOW, false);
+        error(409, "STALE_SUBMISSION", this::review);noReviewEffects();
+    }
+
+    @Test void reviewRevalidatesMentorAfterLocksAndDetectsChangedResourceIdentity() {
+        prepareReview();
+        doNothing().doThrow(failure(403, "ACCESS_DENIED")).when(access).requireReview(eq(mentor), any());
+        error(403, "ACCESS_DENIED", this::review);noReviewEffects();
+        doNothing().when(access).requireReview(eq(mentor), any());
+        memory.lockedOverride = context(ASSIGNMENT, id(99), AssignmentState.SUBMITTED, 3L, SUBMISSION, NOW, false);
+        error(503, "DEPENDENCY_UNAVAILABLE", this::review);noReviewEffects();
+    }
+
+    @Test void sequentialReviewRetriesHaveOneImmutableReviewAuditAndVersionIncrementInTheDouble() {
+        prepareReview();var original = List.copyOf(memory.rows);var first = review();
+        for (int i = 1; i < 20; i++) assertEquals(first, review());
+        assertEquals(List.of(first), memory.reviews);assertEquals(1, memory.audits.size());assertEquals(1, memory.callbacks);
+        assertEquals(4L, memory.target.assignment().version());assertEquals(original, memory.rows);
+        verify(access, times(21)).requireReview(eq(mentor), any());
+        verify(cases, times(1)).requireTaskParticipant(eq(mentor), any(), any(), eq(CASE), any());
+    }
+
+    @Test void revokedMentorCannotReadCachedReviewResponse() {
+        prepareReview();review();
+        doThrow(new WorkspaceRuleException(WorkspaceRuleException.Kind.DENIED)).when(access).requireReview(eq(mentor), any());
+        assertEquals(WorkspaceRuleException.Kind.DENIED, assertThrows(WorkspaceRuleException.class, this::review).kind());
+        assertEquals(1, memory.commands.size());assertEquals(1, memory.reviews.size());assertEquals(1, memory.audits.size());
+    }
+
+    @ParameterizedTest @ValueSource(strings = {"verdict", "comment", "version"})
+    void changedReviewPayloadCannotReuseTheIdempotencyKey(String field) {
+        prepareReview();review();
+        var changed = new ReviewInput(field.equals("version") ? 4L : 3L,
+                field.equals("verdict") ? ReviewVerdict.ACCEPT : ReviewVerdict.REQUEST_REVISION,
+                field.equals("comment") ? "Different comment" : "Please revise");
+        error(409, "IDEMPOTENCY_KEY_REUSED", () -> service.review(mentor, SUBMISSION, KEY, changed));
+        assertEquals(1, memory.reviews.size());assertEquals(1, memory.audits.size());assertEquals(4L, memory.target.assignment().version());
+    }
+
+    @ParameterizedTest @EnumSource(ReviewVerdict.class)
+    void duplicateReviewWithFreshKeyCannotChangeTerminalReviewState(ReviewVerdict verdict) {
+        prepareReview();var first = service.review(mentor, SUBMISSION, KEY, new ReviewInput(3L, verdict, "Reviewed"));
+        error(409, "STATE_CONFLICT", () -> service.review(mentor, SUBMISSION, id(21).toString(),
+                new ReviewInput(4L, verdict, "Another review")));
+        assertEquals(List.of(first), memory.reviews);assertEquals(1, memory.audits.size());assertEquals(4L, memory.target.assignment().version());
+    }
+
+    @Test void existingReviewCannotBeOverwrittenEvenIfStoredAssignmentStillSaysSubmitted() {
+        prepareReview();var old = new ReviewDto(id(90), SUBMISSION, 1, ReviewVerdict.ACCEPT, "Original", MENTOR, NOW, 4L);
+        memory.reviews.add(old);error(409, "STATE_CONFLICT", this::review);
+        assertEquals(List.of(old), memory.reviews);assertTrue(memory.audits.isEmpty());assertTrue(memory.ledger.isEmpty());
+        assertEquals(3L, memory.target.assignment().version());
+    }
+
+    @Test void reviewCasFailureDoesNotWriteAuditOrLedgerDone() {
+        prepareReview();memory.reviewAppendFailure = failure(409, "VERSION_CONFLICT");
+        error(409, "VERSION_CONFLICT", this::review);noReviewEffects();
+    }
+
+    @Test void reviewAuditFailureRollsBackTheDoubleAndRetryWithSameKeyCanSucceed() {
+        prepareReview();var original = List.copyOf(memory.rows);memory.auditFailure = failure(500, "AUDIT_WRITE_FAILED");
+        error(500, "AUDIT_WRITE_FAILED", this::review);noReviewEffects();assertEquals(original, memory.rows);
+        memory.auditFailure = null;assertEquals(4L, review().assignmentVersion());
+        assertEquals(1, memory.reviews.size());assertEquals(1, memory.audits.size());
+    }
+
+    @Test void absentCoreReviewAuditSupportFailsClosedAtThePortWithoutInventingAnAlias() {
+        prepareReview();memory.auditFailure = failure(503, "DEPENDENCY_UNAVAILABLE");
+        error(503, "DEPENDENCY_UNAVAILABLE", this::review);noReviewEffects();
+        assertTrue(memory.events.contains("audit")); // The adapter cannot skip a mandatory audit.
+    }
+
+    @ParameterizedTest @MethodSource("ledgerErrors")
+    void reviewLedgerFailuresDoNotRunTheMutation(int status, String code) {
+        prepareReview();memory.ledgerFailure = failure(status, code);
+        error(status, code, this::review);noReviewEffects();verifyNoInteractions(cases);
+    }
+
+    @Test void reviewMissingOrWrongSubmissionFromAdapterNeverReachesAuthorization() {
+        prepareReview();error(404, "RESOURCE_NOT_FOUND", () -> service.review(mentor, id(99), KEY, reviewInput()));
+        noReviewEffects();verifyNoInteractions(access, cases);
+        memory.submissionOverride = row(1, id(99));
+        error(503, "DEPENDENCY_UNAVAILABLE", this::review);noReviewEffects();verifyNoInteractions(access, cases);
+    }
+
+    @Test void immutableArtifactChangedDuringTheGuardCannotBeReviewed() {
+        prepareReview();memory.onLock = () -> memory.rows.set(0,
+                new SubmissionDto(SUBMISSION, ASSIGNMENT, 1, List.of(), "https://example.test/changed", "Changed", NOW, false));
+        error(503, "DEPENDENCY_UNAVAILABLE", this::review);noReviewEffects();
+        assertEquals("https://example.test/v1", memory.rows.getFirst().url());
+    }
+
+    @Test void reviewUsesCurrentSubmissionVersionAndLeavesOlderVersionsIntact() {
+        prepareReview();var old = memory.rows.getFirst();var current = row(2, id(91));memory.rows.add(current);
+        memory.target = context(ASSIGNMENT, STUDENT, AssignmentState.SUBMITTED, 5L, current.submissionId(), NOW, false);
+        var reviewed = service.review(mentor, current.submissionId(), KEY, new ReviewInput(5L, ReviewVerdict.ACCEPT, "Accepted v2"));
+        assertEquals(2, reviewed.reviewedVersionNo());assertEquals(6L, reviewed.assignmentVersion());
+        assertEquals(List.of(old, current), memory.rows);assertEquals(AssignmentState.COMPLETED, memory.target.assignment().state());
+        // Fixture proves Review of current v2 only; submission-v2 runtime is not implemented here.
+    }
+
+    @Test void submissionAndReviewUseTheSameTypedLedgerPortWithoutSharingResponses() {
+        var submitted = submit();var reviewed = review();
+        assertEquals(submitted.submissionId(), reviewed.submissionId());assertNotEquals(submitted.submissionId(), reviewed.reviewId());
+        assertEquals(List.of(SubmissionDto.class, ReviewDto.class), memory.responseTypes);
+        assertEquals(List.of(submitted.submissionId().toString(), reviewed.reviewId().toString()), memory.effectRefs);
+        assertEquals(2, memory.ledger.size());assertEquals(2, memory.audits.size());assertEquals(4L, memory.target.assignment().version());
+    }
+
+    @Test void reviewTimestampUsesServerClockAfterGuardAndAssignmentLock() {
+        prepareReview();var clock = mock(Clock.class);when(clock.instant()).thenReturn(NOW, NOW.plusSeconds(1));
+        service = new SubmissionService(memory, access, cases, clock, () -> id(81));
+        assertEquals(NOW.plusSeconds(1), review().createdAt());
+    }
+
     private static SubmissionDto row(int version, UUID id) {
         return new SubmissionDto(id, ASSIGNMENT, version, List.of(), "https://example.test/v" + version,
                 "Note " + version, NOW.minusSeconds(10L - version), false);
@@ -399,46 +675,57 @@ class SubmissionServiceTest {
         assertEquals(status, error.status);assertEquals(code, error.code);
     }
 
-    private record Audit(AuditAction action, UUID actor, UUID school, UUID resource, Map<String, Object> metadata) {}
-    private record Cached(String hash, SubmissionDto response) {}
+    private record Audit(String action, UUID actor, UUID school, UUID resource, Map<String, Object> metadata) {}
+    private record Cached(String hash, Object response) {}
 
     /** Test-only sequential transaction/ledger model. Runtime must use Core OperationLedger + real DB. */
     private static final class MemoryBoundary implements UnitOfWork, Session {
         AssignmentContext target, lockedOverride;
+        SubmissionDto submissionOverride;
+        Runnable onLock;
         final List<SubmissionDto> rows = new ArrayList<>();
+        final List<ReviewDto> reviews = new ArrayList<>();
         final List<Audit> audits = new ArrayList<>();
         final List<String> events = new ArrayList<>();
         final Map<String, Cached> ledger = new HashMap<>();
         final List<OperationLedger.Command> commands = new ArrayList<>();
-        RuntimeException auditFailure, appendFailure, ledgerFailure;
+        final List<Class<?>> responseTypes = new ArrayList<>();
+        final List<String> effectRefs = new ArrayList<>();
+        RuntimeException auditFailure, appendFailure, ledgerFailure, reviewAppendFailure;
         HistoryPage historyOverride;
         List<Integer> lastPage;
         int commits, rollbacks, callbacks, historyReads;
 
         public <T> T execute(Function<Session, T> operation) {
             var beforeTarget = target;var beforeRows = List.copyOf(rows);
-            var beforeAudits = List.copyOf(audits);var beforeLedger = Map.copyOf(ledger);
+            var beforeAudits = List.copyOf(audits);var beforeLedger = Map.copyOf(ledger);var beforeReviews = List.copyOf(reviews);
             try { T result = operation.apply(this);commits++;return result; }
             catch (RuntimeException failure) {
                 target = beforeTarget;rows.clear();rows.addAll(beforeRows);audits.clear();audits.addAll(beforeAudits);
-                ledger.clear();ledger.putAll(beforeLedger);rollbacks++;throw failure;
+                ledger.clear();ledger.putAll(beforeLedger);reviews.clear();reviews.addAll(beforeReviews);rollbacks++;throw failure;
             }
         }
         public AssignmentContext assignment(UUID id) { events.add("read-assignment");return target; }
         public AssignmentContext lockAssignment(UUID id) {
-            events.add("lock-assignment");return lockedOverride == null ? target : lockedOverride;
+            events.add("lock-assignment");if (onLock != null) onLock.run();return lockedOverride == null ? target : lockedOverride;
         }
-        public SubmissionDto idempotent(OperationLedger.Command command, Supplier<SubmissionDto> mutation) {
-            events.add("ledger");commands.add(command);
+        public SubmissionDto submission(UUID id) {
+            events.add("read-submission");return submissionOverride != null ? submissionOverride
+                    : rows.stream().filter(row -> row.submissionId().equals(id)).findFirst().orElse(null);
+        }
+        public <T> T idempotent(OperationLedger.Command command, Class<T> responseType,
+                                Supplier<T> mutation, Function<T, String> effectReference) {
+            events.add("ledger");commands.add(command);responseTypes.add(responseType);
             if (ledgerFailure != null) throw ledgerFailure;
             String scope = command.actorId() + "|" + command.organizationId() + "|" + command.operationCode() + "|" + command.key();
             String hash = OperationLedger.payloadHash(command.payload());
             var previous = ledger.get(scope);
             if (previous != null) {
                 if (!previous.hash().equals(hash)) throw failure(409, "IDEMPOTENCY_KEY_REUSED");
-                return previous.response();
+                return responseType.cast(previous.response());
             }
-            callbacks++;var result = mutation.get();ledger.put(scope, new Cached(hash, result));return result;
+            callbacks++;var result = mutation.get();String effect = effectReference.apply(result);UUID.fromString(effect);effectRefs.add(effect);
+            ledger.put(scope, new Cached(hash, result));return result;
         }
         public boolean hasHistory(UUID id) { return rows.stream().anyMatch(row -> id.equals(row.assignmentId())); }
         public void appendFirst(AssignmentDto expected, SubmissionDto submission) {
@@ -450,7 +737,18 @@ class SubmissionServiceTest {
             target = context(expected.assignmentId(), expected.studentUserId(), AssignmentState.SUBMITTED,
                     expected.version() + 1, submission.submissionId(), target.task().value().dueAt(), target.task().value().lateAllowed());
         }
-        public void audit(AuditAction action, UUID actorId, UUID schoolOrgId, UUID submissionId, Map<String, Object> metadata) {
+        public boolean hasReview(UUID id) { return reviews.stream().anyMatch(review -> id.equals(review.submissionId())); }
+        public void appendReview(AssignmentDto expected, AssignmentDto updated, ReviewDto review) {
+            events.add("append-review");if (reviewAppendFailure != null) throw reviewAppendFailure;
+            assertEquals(target.assignment(), expected);assertFalse(hasReview(review.submissionId()));
+            assertEquals(AssignmentState.SUBMITTED, expected.state());assertEquals(expected.currentSubmissionId(), review.submissionId());
+            assertEquals(expected.version() + 1, review.assignmentVersion());reviews.add(review);
+            assertEquals(expected.assignmentId(), updated.assignmentId());assertEquals(expected.caseId(), updated.caseId());
+            assertEquals(expected.studentUserId(), updated.studentUserId());assertEquals(expected.currentSubmissionId(), updated.currentSubmissionId());
+            target = context(updated.assignmentId(), updated.studentUserId(), updated.state(),
+                    updated.version(), updated.currentSubmissionId(), target.task().value().dueAt(), target.task().value().lateAllowed());
+        }
+        public void audit(String action, UUID actorId, UUID schoolOrgId, UUID submissionId, Map<String, Object> metadata) {
             events.add("audit");if (auditFailure != null) throw auditFailure;
             audits.add(new Audit(action, actorId, schoolOrgId, submissionId, Map.copyOf(metadata)));
         }

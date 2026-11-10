@@ -7,7 +7,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import org.springframework.security.core.Authentication;
-import vn.utbridora.auth.audit.AuditAction;
+import vn.utbridora.auth.modules.internship.api.SubmissionDtos.ReviewDto;
 import vn.utbridora.auth.modules.internship.api.SubmissionDtos.SubmissionDto;
 import vn.utbridora.auth.modules.internship.api.TaskDtos.AssignmentDto;
 import vn.utbridora.auth.modules.internship.domain.Cohort;
@@ -64,6 +64,13 @@ public final class SubmissionPorts {
          * Deny with existing Core/domain errors; artifact download authorization stays separate.
          */
         void requireRead(Authentication actor, AssignmentContext target);
+
+        /** Exact internship:enterprise:task_write permission in the stored enterprise scope AND
+         * current Mentor assignment/handover for this Task/group/Case. Revalidate account,
+         * membership, security version, parent grants/revocation and scope through commit.
+         * Student ownership, HR membership or ADMIN alone never grants Review authority.
+         */
+        void requireReview(Authentication actor, AssignmentContext target);
     }
 
     public interface Session {
@@ -75,11 +82,15 @@ public final class SubmissionPorts {
          */
         AssignmentContext lockAssignment(UUID assignmentId);
 
-        /** Delegate to OperationLedger.execute(command, SubmissionDto.class, mutation,
-         * result -> result.submissionId().toString()) in the SAME transaction.
+        /** Stored immutable artifact version, not a browser snapshot; null means not found. */
+        SubmissionDto submission(UUID submissionId);
+
+        /** Delegate to OperationLedger.execute(command, responseType, mutation, effectReference)
+         * in the SAME transaction. Submission uses submissionId, Review uses reviewId as effect ref.
          * Never implement a second production ledger/cache; no mutation callback on replay.
          */
-        SubmissionDto idempotent(OperationLedger.Command command, Supplier<SubmissionDto> mutation);
+        <T> T idempotent(OperationLedger.Command command, Class<T> responseType,
+                         Supplier<T> mutation, Function<T, String> effectReference);
 
         /** Detect existing history even if a corrupt/stale currentSubmissionId is null. */
         boolean hasHistory(UUID assignmentId);
@@ -91,11 +102,24 @@ public final class SubmissionPorts {
          */
         void appendFirst(AssignmentDto expected, SubmissionDto submission);
 
-        /** Mandatory AuditService adapter using existing AuditAction and E allowlisted metadata.
+        /** True after any committed Review of this submission; never overwrite/reuse a Review row. */
+        boolean hasReview(UUID submissionId);
+
+        /** INSERT immutable Review, enforce uniqueness per submission, then CAS expected assignment
+         * version + SUBMITTED + currentSubmissionId=review.submissionId. Increment version once;
+         * ACCEPT -> COMPLETED, REQUEST_REVISION -> REVISION_REQUIRED. Keep artifact/history and
+         * currentSubmissionId unchanged. Conflict/audit failure must roll back every effect.
+         */
+        void appendReview(AssignmentDto expected, AssignmentDto updated, ReviewDto review);
+
+        /** Mandatory AuditService adapter using canonical E action names and allowlisted metadata.
          * Fail closed/roll back if registry support is missing or audit persistence fails.
          * No URL, note, free text or request payload in metadata.
+         * String matches AuditService.workflow's boundary; it does not add a Core enum/registry entry.
+         * SUBMISSION_REVIEWED is specified by v1.0 but unsupported in this baseline's Core:
+         * real wiring must wait for owner support, never alias it to another action or skip audit.
          */
-        void audit(AuditAction action, UUID actorId, UUID schoolOrgId, UUID submissionId,
+        void audit(String action, UUID actorId, UUID schoolOrgId, UUID submissionId,
                    Map<String, Object> metadata);
 
         /** Immutable stored snapshots, assignment-filtered, ORDER BY versionNo DESC,submissionId ASC,
