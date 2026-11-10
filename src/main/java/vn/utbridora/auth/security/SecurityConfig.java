@@ -57,6 +57,12 @@ public class SecurityConfig {
                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                .requestMatchers("/api/v1/auth/**", "/api/v1/demo/**").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/terms","/api/v1/terms/*").authenticated()
+               // T5-07: Placement state machine
+               .requestMatchers(HttpMethod.POST,"/api/v1/school/*/placements").authenticated()
+               .requestMatchers(HttpMethod.POST,"/api/v1/placements/*/approve","/api/v1/placements/*/activate","/api/v1/placements/*/cancel").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/school/*/placements","/api/v1/school/*/placements/summary").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/*/placements").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/school/*/placements/*/internship-link").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/t3/**").authenticated()
                .requestMatchers(HttpMethod.POST,"/api/v1/t3/**").authenticated()
                // T2-01 own student profile (BC11); the VERIFIED school scope is checked in StudentProfileService.

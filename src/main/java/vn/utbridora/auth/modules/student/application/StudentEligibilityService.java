@@ -37,6 +37,22 @@ public class StudentEligibilityService implements StudentEligibilityPort {
         if(!e.schoolApproved()) throw failure(422,"SCHOOL_APPROVAL_REQUIRED");
         if(!"ACTIVE".equals(jdbc.queryForObject("SELECT status FROM terms WHERE id=? AND school_org_id=? FOR SHARE",String.class,term,school))) throw failure(422,"TERM_INVALID");
     }
+    @Override @Transactional(propagation=Propagation.MANDATORY)
+    public void assertEligibleForPlacement(Authentication auth, String student, String school,
+                                            String term, long expectedVersion) {
+        var e = read(student, term);
+        if (!school.equals(e.schoolOrgId())) throw failure(404, "RESOURCE_NOT_FOUND");
+        if (e.version() != expectedVersion) throw failure(409, "ELIGIBILITY_CHANGED");
+        if (!e.schoolApproved()) throw failure(422, "SCHOOL_APPROVAL_REQUIRED");
+        String termStatus = jdbc.queryForObject(
+            "SELECT status FROM terms WHERE id=? AND school_org_id=? FOR SHARE",
+            String.class, term, school);
+        if (!"ACTIVE".equals(termStatus)) throw failure(422, "TERM_INVALID");
+        // Verify student account is ACTIVE and has STUDENT membership in this school
+        var subject = core.currentSubject(student).orElseThrow(() -> failure(404, "RESOURCE_NOT_FOUND"));
+        if (!core.holdOrganization(subject, school, Role.STUDENT, "student_profile:self:read"))
+            throw failure(422, "STUDENT_TERM_MISMATCH");
+    }
     private StudentTermEligibility read(String user,String term) {
         return jdbc.query("SELECT e.*,r.student_code,r.major_code FROM student_term_eligibilities e JOIN student_rosters r ON r.id=e.student_roster_id WHERE e.user_id=? AND e.term_id=? FOR UPDATE",(r,n)->new StudentTermEligibility(r.getString("user_id"),r.getString("school_org_id"),r.getString("term_id"),r.getString("student_code"),r.getString("major_code"),r.getBoolean("school_approved"),r.getLong("version"),r.getString("approved_by"),r.getTimestamp("approved_at")==null?null:instant(r,"approved_at"),r.getString("reason_code")),user,term).stream().findFirst().orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
     }
