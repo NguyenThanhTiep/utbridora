@@ -1,0 +1,38 @@
+/* DEV08 đã tạo kiểu hiển thị cho cây danh mục kỹ năng và biểu mẫu quản lý. */
+.taxonomy-module { display: grid; gap: 20px; min-width: 0; }
+.taxonomy-summary { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.taxonomy-summary h1, .taxonomy-heading h2 { margin: 0; }
+.taxonomy-version { display: grid; gap: 4px; min-width: 150px; padding: 13px 16px; border: 1px solid #dcebea; border-radius: 12px; background: #f3faf9; }
+.taxonomy-version span { color: var(--muted); font-size: var(--text-xs); }
+.taxonomy-version strong { color: var(--brand-dark); font-family: "Cascadia Code", Consolas, monospace; }
+.taxonomy-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, .82fr); align-items: start; gap: 20px; }
+.taxonomy-tree-panel, .taxonomy-side, .taxonomy-editor { min-width: 0; }
+.taxonomy-side { display: grid; gap: 20px; }
+.taxonomy-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.taxonomy-tree { list-style: none; padding: 0; margin: 0; }
+.taxonomy-tree ul { list-style: none; padding: 0 0 0 22px; margin: 4px 0 4px 11px; border-left: 1px solid #dce7ea; }
+.taxonomy-tree li { min-width: 0; }
+.taxonomy-tree details > summary { list-style: none; cursor: pointer; }
+.taxonomy-tree details > summary::-webkit-details-marker { display: none; }
+.taxonomy-node { width: 100%; min-height: 52px; justify-content: flex-start; padding: 8px 11px; text-align: left; color: var(--ink); background: transparent; border: 1px solid transparent; }
+.taxonomy-node:hover, .taxonomy-node.selected { background: #eff8f7; border-color: #d4eae7; color: var(--brand-dark); }
+.taxonomy-node > span { display: grid; min-width: 0; text-align: left; }
+.taxonomy-node small { font-size: var(--text-xs); color: var(--muted); font-weight: 450; }
+.skill-node { min-height: 46px; }
+.taxonomy-empty { margin: 14px 0 0; color: var(--muted); font-size: var(--text-sm); }
+.taxonomy-success { padding: 12px 15px; border: 1px solid #b8e1d7; border-radius: 10px; background: #effaf6; color: #14634e; }
+.taxonomy-module form { display: grid; gap: 13px; margin-top: 12px; }
+.taxonomy-module form label { margin: 0; }
+.taxonomy-module form button { justify-self: start; margin-top: 2px; }
+.taxonomy-module textarea { display: block; width: 100%; min-height: 90px; padding: 11px 13px; margin-top: 7px; border: 1px solid #dbe4ea; border-radius: 8px; resize: vertical; font: inherit; }
+.taxonomy-module textarea:focus { outline: 0; border-color: #209c9c; box-shadow: 0 0 0 3px #e3f4f1; }
+.taxonomy-aliases { padding-top: 18px; margin-top: 22px; border-top: 1px solid var(--line); }
+.taxonomy-aliases h3 { margin-bottom: 8px; }
+.taxonomy-aliases ul { list-style: none; padding: 0; margin: 0; }
+.taxonomy-aliases li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid #edf1f3; }
+.taxonomy-resolver .section-description { margin-bottom: 12px; }
+.taxonomy-results { display: grid; gap: 8px; margin-top: 17px; }
+.taxonomy-results > div { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 9px; background: #fbfdfd; }
+.taxonomy-results strong { color: var(--brand-dark); text-align: right; }
+@media (max-width: 900px) { .taxonomy-layout { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .taxonomy-summary { align-items: flex-start; flex-direction: column; } .taxonomy-version { width: 100%; } .taxonomy-heading { align-items: flex-start; } .taxonomy-results > div { align-items: flex-start; flex-direction: column; } .taxonomy-results strong { text-align: left; } }

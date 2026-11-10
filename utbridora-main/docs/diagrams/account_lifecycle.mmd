@@ -1,0 +1,11 @@
+stateDiagram-v2
+[*] --> ACTIVE: Valid invitation accepted (creates user)
+[*] --> PENDING_ACTIVATION: Pre-provisioned account (future)
+PENDING_ACTIVATION --> ACTIVE: Approved activation (not yet coded)
+PENDING_ACTIVATION --> SUSPENDED: ADMIN with reason
+PENDING_ACTIVATION --> DEACTIVATED: ADMIN with reason
+ACTIVE --> SUSPENDED: ADMIN with reason
+ACTIVE --> DEACTIVATED: ADMIN with reason
+SUSPENDED --> ACTIVE: ADMIN with reason
+SUSPENDED --> DEACTIVATED: ADMIN with reason
+DEACTIVATED --> [*]: No automatic recovery

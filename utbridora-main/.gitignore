@@ -1,0 +1,17 @@
+.env
+*.iml
+.idea/
+.vscode/
+target/
+*.log
+.DS_Store
+node_modules/
+dist/
+*.tsbuildinfo
+playwright-report/
+test-results/
+__pycache__/
+~$*.xlsx
+.env.*
+!.env.example
+/demo-root.crt

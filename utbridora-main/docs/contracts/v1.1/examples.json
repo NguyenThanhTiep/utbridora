@@ -1,0 +1,1231 @@
+[
+  {
+    "id": "EX-01",
+    "schema": "ErrorEnvelope",
+    "section": "C.0. Quy ước schema, lỗi và mutation dùng chung",
+    "line": 67,
+    "value": {
+      "errorCode": "VERSION_CONFLICT",
+      "error": "VERSION_CONFLICT",
+      "message": "Dữ liệu đã thay đổi, vui lòng tải lại.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-02",
+    "schema": "MeDto",
+    "section": "CP-AUTH1 — Danh tính và core API (T1 → T2, T3, T4, T5), version 1.0",
+    "line": 143,
+    "value": {
+      "userId": "00000000-0000-4000-8000-000000000001",
+      "email": "student001@example.test",
+      "displayName": "Sinh viên Demo 001",
+      "memberships": [
+        {
+          "role": "STUDENT",
+          "organizationId": "00000000-0000-4000-8000-000000000011"
+        }
+      ]
+    }
+  },
+  {
+    "id": "EX-03",
+    "schema": "ActivationRequestV11",
+    "section": "CP-AUTH1 — Danh tính và core API (T1 → T2, T3, T4, T5), version 1.0",
+    "line": 149,
+    "value": {
+      "token": "<SERVER_ISSUED_ONE_TIME_TOKEN>",
+      "newPassword": "<USER_CHOSEN_PASSWORD_MEETING_POLICY>"
+    }
+  },
+  {
+    "id": "EX-04",
+    "schema": "MessageDto",
+    "section": "CP-AUTH1 — Danh tính và core API (T1 → T2, T3, T4, T5), version 1.0",
+    "line": 155,
+    "value": {
+      "message": "Account activated; please sign in"
+    }
+  },
+  {
+    "id": "EX-05",
+    "schema": "ErrorEnvelope",
+    "section": "CP-AUTH1 — Danh tính và core API (T1 → T2, T3, T4, T5), version 1.0",
+    "line": 161,
+    "value": {
+      "errorCode": "TOKEN_EXPIRED",
+      "error": "TOKEN_EXPIRED",
+      "message": "Liên kết đã hết hạn. Vui lòng yêu cầu gửi lại.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-06",
+    "schema": "GrantHrAssignment",
+    "section": "CP-AUTHZ1 — School delegation và capability (T1 ↔ T3/T5), version 1.0",
+    "line": 209,
+    "value": {
+      "userId": "00000000-0000-4000-8000-000000000002",
+      "scope": {
+        "schoolOrgId": "00000000-0000-4000-8000-000000000011",
+        "enterpriseOrgId": "00000000-0000-4000-8000-000000000012",
+        "termId": "00000000-0000-4000-8000-000000000021",
+        "groupId": null,
+        "caseId": null
+      },
+      "validFrom": "2026-11-03T00:00:00Z",
+      "validUntil": "2027-03-01T00:00:00Z",
+      "decisionRef": "DEMO-HR-001"
+    }
+  },
+  {
+    "id": "EX-07",
+    "schema": "ContextAssignment",
+    "section": "CP-AUTHZ1 — School delegation và capability (T1 ↔ T3/T5), version 1.0",
+    "line": 215,
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000061",
+      "kind": "HR",
+      "userId": "00000000-0000-4000-8000-000000000002",
+      "scope": {
+        "schoolOrgId": "00000000-0000-4000-8000-000000000011",
+        "enterpriseOrgId": "00000000-0000-4000-8000-000000000012",
+        "termId": "00000000-0000-4000-8000-000000000021",
+        "groupId": null,
+        "caseId": null
+      },
+      "active": true,
+      "validFrom": "2026-11-03T00:00:00Z",
+      "validUntil": "2027-03-01T00:00:00Z",
+      "version": 1,
+      "grantedBy": "00000000-0000-4000-8000-000000000003",
+      "decisionRef": "DEMO-HR-001"
+    }
+  },
+  {
+    "id": "EX-08",
+    "schema": "ErrorEnvelope",
+    "section": "CP-AUTHZ1 — School delegation và capability (T1 ↔ T3/T5), version 1.0",
+    "line": 221,
+    "value": {
+      "errorCode": "ACCESS_DENIED",
+      "error": "ACCESS_DENIED",
+      "message": "Bạn không có quyền cấp phân công trong phạm vi này.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-09",
+    "schema": "FileDto",
+    "section": "CP-FILE1 — File upload/metadata/content và authorizer (T1 ↔ T2/T3/T5), version 1.0",
+    "line": 271,
+    "value": {
+      "fileId": "00000000-0000-4000-8000-000000000041",
+      "resource": {
+        "resourceType": "TASK_ASSIGNMENT",
+        "resourceId": "00000000-0000-4000-8000-000000000031"
+      },
+      "purpose": "SUBMISSION",
+      "originalName": "synthetic.pdf",
+      "contentType": "application/pdf",
+      "sizeBytes": 1200,
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "scanStatus": "PENDING",
+      "createdAt": "2026-11-03T03:00:00Z",
+      "deletedAt": null
+    }
+  },
+  {
+    "id": "EX-10",
+    "schema": "ErrorEnvelope",
+    "section": "CP-FILE1 — File upload/metadata/content và authorizer (T1 ↔ T2/T3/T5), version 1.0",
+    "line": 277,
+    "value": {
+      "errorCode": "FILE_NOT_CLEAN",
+      "error": "FILE_NOT_CLEAN",
+      "message": "Tệp chưa đủ điều kiện để tải xuống.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-11",
+    "schema": "MentorInviteRequest",
+    "section": "CP-MENTOR1 — MentorInvitationPort và owner acceptance (T3 ↔ T1), version 1.0",
+    "line": 322,
+    "value": {
+      "email": "mentor@example.test",
+      "enterpriseOrgId": "00000000-0000-4000-8000-000000000012",
+      "groupIds": [
+        "00000000-0000-4000-8000-000000000022"
+      ],
+      "termId": "00000000-0000-4000-8000-000000000021",
+      "decisionRef": "DEMO-MENTOR-001"
+    }
+  },
+  {
+    "id": "EX-12",
+    "schema": "MentorInviteDto",
+    "section": "CP-MENTOR1 — MentorInvitationPort và owner acceptance (T3 ↔ T1), version 1.0",
+    "line": 328,
+    "value": {
+      "invitationId": "00000000-0000-4000-8000-000000000051",
+      "version": 1,
+      "state": "MEMBERSHIP_PENDING",
+      "enterpriseOrgId": "00000000-0000-4000-8000-000000000012",
+      "groupIds": [
+        "00000000-0000-4000-8000-000000000022"
+      ],
+      "termId": "00000000-0000-4000-8000-000000000021",
+      "expiresAt": "2026-11-05T03:00:00Z"
+    }
+  },
+  {
+    "id": "EX-13",
+    "schema": "AcceptMentorMembership",
+    "section": "CP-MENTOR1 — MentorInvitationPort và owner acceptance (T3 ↔ T1), version 1.0",
+    "line": 334,
+    "value": {
+      "expectedVersion": 1
+    }
+  },
+  {
+    "id": "EX-14",
+    "schema": "MentorInviteDto",
+    "section": "CP-MENTOR1 — MentorInvitationPort và owner acceptance (T3 ↔ T1), version 1.0",
+    "line": 340,
+    "value": {
+      "invitationId": "00000000-0000-4000-8000-000000000051",
+      "version": 2,
+      "state": "ACCEPTED",
+      "enterpriseOrgId": "00000000-0000-4000-8000-000000000012",
+      "groupIds": [
+        "00000000-0000-4000-8000-000000000022"
+      ],
+      "termId": "00000000-0000-4000-8000-000000000021",
+      "expiresAt": "2026-11-05T03:00:00Z"
+    }
+  },
+  {
+    "id": "EX-15",
+    "schema": "ErrorEnvelope",
+    "section": "CP-MENTOR1 — MentorInvitationPort và owner acceptance (T3 ↔ T1), version 1.0",
+    "line": 346,
+    "value": {
+      "errorCode": "ACCESS_DENIED",
+      "error": "ACCESS_DENIED",
+      "message": "Bạn không có quyền mời Mentor cho nhóm này.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-16",
+    "schema": "ErrorEnvelope",
+    "section": "CP-MENTOR1 — MentorInvitationPort và owner acceptance (T3 ↔ T1), version 1.0",
+    "line": 352,
+    "value": {
+      "errorCode": "INVITATION_EXPIRED",
+      "error": "INVITATION_EXPIRED",
+      "message": "Lời mời Mentor đã hết hạn.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-17",
+    "schema": "CreateCohort",
+    "section": "CP-WS1 — Cohort, nhóm và tiếp nhận Placement (T3 → T2/T5 UI), version 1.0",
+    "line": 404,
+    "value": {
+      "termId": "00000000-0000-4000-8000-000000000021",
+      "code": "DEMO-2026-A",
+      "name": "Đợt thực tập Demo"
+    }
+  },
+  {
+    "id": "EX-18",
+    "schema": "CohortDto",
+    "section": "CP-WS1 — Cohort, nhóm và tiếp nhận Placement (T3 → T2/T5 UI), version 1.0",
+    "line": 408,
+    "value": {
+      "cohortId": "00000000-0000-4000-8000-000000000061",
+      "enterpriseOrgId": "00000000-0000-4000-8000-000000000012",
+      "schoolOrgId": "00000000-0000-4000-8000-000000000011",
+      "termId": "00000000-0000-4000-8000-000000000021",
+      "code": "DEMO-2026-A",
+      "name": "Đợt thực tập Demo",
+      "version": 1
+    }
+  },
+  {
+    "id": "EX-19",
+    "schema": "ErrorEnvelope",
+    "section": "CP-WS1 — Cohort, nhóm và tiếp nhận Placement (T3 → T2/T5 UI), version 1.0",
+    "line": 412,
+    "value": {
+      "errorCode": "DUPLICATE_COHORT",
+      "error": "DUPLICATE_COHORT",
+      "message": "Mã đợt đã tồn tại trong phạm vi quản lý.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-20",
+    "schema": "SubmissionInput",
+    "section": "CP-WS2 — Task, assignment, submission, review và comment (T3 → T2 UI), version 1.0",
+    "line": 456,
+    "value": {
+      "expectedAssignmentVersion": 2,
+      "fileIds": [
+        "00000000-0000-4000-8000-000000000041",
+        "00000000-0000-4000-8000-000000000042"
+      ],
+      "url": null,
+      "note": "Bộ nộp demo gồm báo cáo và mã nguồn"
+    }
+  },
+  {
+    "id": "EX-21",
+    "schema": "SubmissionDto",
+    "section": "CP-WS2 — Task, assignment, submission, review và comment (T3 → T2 UI), version 1.0",
+    "line": 460,
+    "value": {
+      "submissionId": "00000000-0000-4000-8000-000000000071",
+      "assignmentId": "00000000-0000-4000-8000-000000000031",
+      "versionNo": 1,
+      "fileIds": [
+        "00000000-0000-4000-8000-000000000041",
+        "00000000-0000-4000-8000-000000000042"
+      ],
+      "url": null,
+      "note": "Bộ nộp demo gồm báo cáo và mã nguồn",
+      "submittedAt": "2026-11-03T03:00:00Z",
+      "lateFlag": false
+    }
+  },
+  {
+    "id": "EX-22",
+    "schema": "ErrorEnvelope",
+    "section": "CP-WS2 — Task, assignment, submission, review và comment (T3 → T2 UI), version 1.0",
+    "line": 464,
+    "value": {
+      "errorCode": "STALE_SUBMISSION",
+      "error": "STALE_SUBMISSION",
+      "message": "Bản nộp này không còn là phiên bản hiện hành.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-23",
+    "schema": "ReportInput",
+    "section": "CP-WS3 — Báo cáo tuần (T3 → T2 UI), version 1.0",
+    "line": 502,
+    "value": {
+      "caseId": "00000000-0000-4000-8000-000000000081",
+      "weekStart": "2026-11-02",
+      "completedWork": "Hoàn thành API demo",
+      "difficulties": "",
+      "nextPlan": "Kiểm thử phân quyền",
+      "evidenceFileIds": []
+    }
+  },
+  {
+    "id": "EX-24",
+    "schema": "ReportDto",
+    "section": "CP-WS3 — Báo cáo tuần (T3 → T2 UI), version 1.0",
+    "line": 513,
+    "value": {
+      "reportId": "00000000-0000-4000-8000-000000000082",
+      "caseId": "00000000-0000-4000-8000-000000000081",
+      "weekStart": "2026-11-02",
+      "revisionNo": 1,
+      "version": 1,
+      "state": "DRAFT",
+      "completedWork": "Hoàn thành API demo",
+      "difficulties": "",
+      "nextPlan": "Kiểm thử phân quyền",
+      "evidenceFileIds": [],
+      "dueAt": "2026-11-10T16:59:59Z",
+      "submittedAt": null,
+      "reviewedAt": null,
+      "lateFlag": false
+    }
+  },
+  {
+    "id": "EX-25",
+    "schema": "ErrorEnvelope",
+    "section": "CP-WS3 — Báo cáo tuần (T3 → T2 UI), version 1.0",
+    "line": 532,
+    "value": {
+      "errorCode": "REPORT_WEEK_INVALID",
+      "error": "REPORT_WEEK_INVALID",
+      "message": "Tuần báo cáo không hợp lệ đối với kỳ thực tập.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [
+        {
+          "field": "weekStart",
+          "code": "REPORT_WEEK_INVALID",
+          "message": "Chọn thứ Hai của một tuần có giao với thời gian thực tập."
+        }
+      ],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-26",
+    "schema": "EvaluationInput",
+    "section": "CP-WS4 — Rubric, evaluation, hiển thị điểm và đóng case (T3 ↔ T2/T5), version 1.0",
+    "line": 593,
+    "value": {
+      "caseId": "00000000-0000-4000-8000-000000000081",
+      "templateId": "00000000-0000-4000-8000-000000000091",
+      "templateVersion": 1,
+      "scores": [
+        {
+          "criterionCode": "QUALITY",
+          "score": 5.0,
+          "comment": null,
+          "evidenceFileIds": []
+        },
+        {
+          "criterionCode": "PROCESS",
+          "score": 3.0,
+          "comment": null,
+          "evidenceFileIds": []
+        }
+      ]
+    }
+  },
+  {
+    "id": "EX-27",
+    "schema": "EvaluationDto",
+    "section": "CP-WS4 — Rubric, evaluation, hiển thị điểm và đóng case (T3 ↔ T2/T5), version 1.0",
+    "line": 605,
+    "value": {
+      "evaluationId": "00000000-0000-4000-8000-000000000093",
+      "caseId": "00000000-0000-4000-8000-000000000081",
+      "template": {
+        "templateId": "00000000-0000-4000-8000-000000000091",
+        "templateVersion": 1,
+        "criteria": [
+          {
+            "criterionCode": "QUALITY",
+            "label": "Chất lượng công việc",
+            "weight": 40.0
+          },
+          {
+            "criterionCode": "PROCESS",
+            "label": "Quy trình thực hiện",
+            "weight": 60.0
+          }
+        ]
+      },
+      "scores": [
+        {
+          "criterionCode": "QUALITY",
+          "score": 5.0,
+          "comment": null,
+          "evidenceFileIds": []
+        },
+        {
+          "criterionCode": "PROCESS",
+          "score": 3.0,
+          "comment": null,
+          "evidenceFileIds": []
+        }
+      ],
+      "total100": 76.0,
+      "state": "DRAFT",
+      "revisionNo": 1,
+      "version": 1,
+      "publishedAt": null,
+      "decisionRef": null
+    }
+  },
+  {
+    "id": "EX-28",
+    "schema": "ErrorEnvelope",
+    "section": "CP-WS4 — Rubric, evaluation, hiển thị điểm và đóng case (T3 ↔ T2/T5), version 1.0",
+    "line": 626,
+    "value": {
+      "errorCode": "RUBRIC_INVALID",
+      "error": "RUBRIC_INVALID",
+      "message": "Phiếu đánh giá chưa có đủ tiêu chí của rubric.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [
+        {
+          "field": "scores",
+          "code": "MISSING_CRITERION",
+          "message": "Phải cung cấp đúng một điểm cho mỗi tiêu chí."
+        }
+      ],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-29",
+    "schema": "EnterpriseQualityInput",
+    "section": "CP-WS5 — Dashboard, lịch, đánh giá doanh nghiệp và phối hợp (T3 → T2/T5 UI), version 1.0",
+    "line": 679,
+    "value": {
+      "enterpriseOrgId": "00000000-0000-4000-8000-000000000012",
+      "termId": "00000000-0000-4000-8000-000000000021",
+      "templateId": "00000000-0000-4000-8000-000000000092",
+      "templateVersion": 1,
+      "ratings": [
+        {
+          "criterionCode": "MENTOR_SUPPORT",
+          "stars": 4,
+          "comment": null
+        }
+      ],
+      "note": null
+    }
+  },
+  {
+    "id": "EX-30",
+    "schema": "EnterpriseQualityDto",
+    "section": "CP-WS5 — Dashboard, lịch, đánh giá doanh nghiệp và phối hợp (T3 → T2/T5 UI), version 1.0",
+    "line": 690,
+    "value": {
+      "id": "00000000-0000-4000-8000-000000000094",
+      "input": {
+        "enterpriseOrgId": "00000000-0000-4000-8000-000000000012",
+        "termId": "00000000-0000-4000-8000-000000000021",
+        "templateId": "00000000-0000-4000-8000-000000000092",
+        "templateVersion": 1,
+        "ratings": [
+          {
+            "criterionCode": "MENTOR_SUPPORT",
+            "stars": 4,
+            "comment": null
+          }
+        ],
+        "note": null
+      },
+      "schoolOrgId": "00000000-0000-4000-8000-000000000011",
+      "version": 1,
+      "createdAt": "2026-11-03T03:00:00Z"
+    }
+  },
+  {
+    "id": "EX-31",
+    "schema": "ErrorEnvelope",
+    "section": "CP-WS5 — Dashboard, lịch, đánh giá doanh nghiệp và phối hợp (T3 → T2/T5 UI), version 1.0",
+    "line": 706,
+    "value": {
+      "errorCode": "RESOURCE_NOT_FOUND",
+      "error": "RESOURCE_NOT_FOUND",
+      "message": "Không tìm thấy tài nguyên trong phạm vi được phép.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-32",
+    "schema": "CaptureProfilesRequest",
+    "section": "BC11 — Profile/self editor, immutable snapshot và completeness (T2↔T4/T5), version1.0",
+    "line": 758,
+    "value": {
+      "termId": "44444444-4444-4444-8444-444444444444",
+      "expectedAcademicCatalogVersion": "school-demo-v1",
+      "expectedTaxonomyVersion": "skills-demo-v1"
+    }
+  },
+  {
+    "id": "EX-33",
+    "schema": "SnapshotSet",
+    "section": "BC11 — Profile/self editor, immutable snapshot và completeness (T2↔T4/T5), version1.0",
+    "line": 763,
+    "value": {
+      "datasetSnapshotId": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      "schoolOrgId": "22222222-2222-4222-8222-222222222222",
+      "termId": "44444444-4444-4444-8444-444444444444",
+      "profileSnapshotVersion": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "academicCatalogVersion": "school-demo-v1",
+      "taxonomyVersion": "skills-demo-v1",
+      "capturedAt": "2026-11-03T08:00:00Z",
+      "profileCount": 400
+    }
+  },
+  {
+    "id": "EX-34",
+    "schema": "ErrorEnvelope",
+    "section": "BC11 — Profile/self editor, immutable snapshot và completeness (T2↔T4/T5), version1.0",
+    "line": 768,
+    "value": {
+      "errorCode": "PROFILE_STALE",
+      "error": "PROFILE_STALE",
+      "message": "Hồ sơ đã thay đổi, cần đánh giá lại trước khi đề xuất.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-35",
+    "schema": "ResolveSkillsRequest",
+    "section": "BC12 — Skill taxonomy và academic catalogs (T4/T2→T2/T5/T1), version1.0",
+    "line": 807,
+    "value": {
+      "values": [
+        " JAVA Core ",
+        "Spring Boot",
+        "skill-khong-co"
+      ]
+    }
+  },
+  {
+    "id": "EX-36",
+    "schema": "ResolveSkillsResponse",
+    "section": "BC12 — Skill taxonomy và academic catalogs (T4/T2→T2/T5/T1), version1.0",
+    "line": 811,
+    "value": {
+      "taxonomyVersion": "skills-demo-v1",
+      "items": [
+        {
+          "input": " JAVA Core ",
+          "normalizedInput": "java core",
+          "status": "RESOLVED",
+          "skillCode": "JAVA"
+        },
+        {
+          "input": "Spring Boot",
+          "normalizedInput": "spring boot",
+          "status": "RESOLVED",
+          "skillCode": "SPRING_BOOT"
+        },
+        {
+          "input": "skill-khong-co",
+          "normalizedInput": "skill-khong-co",
+          "status": "UNKNOWN",
+          "skillCode": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "EX-37",
+    "schema": "ErrorEnvelope",
+    "section": "BC12 — Skill taxonomy và academic catalogs (T4/T2→T2/T5/T1), version1.0",
+    "line": 816,
+    "value": {
+      "errorCode": "TAXONOMY_CONFLICT",
+      "error": "TAXONOMY_CONFLICT",
+      "message": "Alias đã được sử dụng bởi kỹ năng khác.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [
+        {
+          "field": "alias",
+          "code": "ALIAS_ALREADY_EXISTS",
+          "message": "Alias phải duy nhất sau chuẩn hóa."
+        }
+      ],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-38",
+    "schema": "AssertEligibilityRequest",
+    "section": "BC21 — TermReference và Eligibility (T5/T2→T1/T3/T4/T5), version1.0",
+    "line": 839,
+    "value": {
+      "studentUserId": "11111111-1111-4111-8111-111111111111",
+      "termId": "44444444-4444-4444-8444-444444444444",
+      "expectedVersion": 3
+    }
+  },
+  {
+    "id": "EX-39",
+    "schema": "StudentTermEligibility",
+    "section": "BC21 — TermReference và Eligibility (T5/T2→T1/T3/T4/T5), version1.0",
+    "line": 845,
+    "value": {
+      "studentUserId": "11111111-1111-4111-8111-111111111111",
+      "schoolOrgId": "22222222-2222-4222-8222-222222222222",
+      "termId": "44444444-4444-4444-8444-444444444444",
+      "studentCode": "000001",
+      "majorCode": "SE",
+      "schoolApproved": true,
+      "version": 3,
+      "approvedByUserId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "approvedAt": "2026-11-03T08:00:00Z",
+      "decisionReasonCode": "DEMO_ELIGIBLE"
+    }
+  },
+  {
+    "id": "EX-40",
+    "schema": "ErrorEnvelope",
+    "section": "BC21 — TermReference và Eligibility (T5/T2→T1/T3/T4/T5), version1.0",
+    "line": 851,
+    "value": {
+      "errorCode": "SCHOOL_APPROVAL_REQUIRED",
+      "error": "SCHOOL_APPROVAL_REQUIRED",
+      "message": "Sinh viên chưa được trường xác nhận đủ điều kiện trong kỳ này.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-41",
+    "schema": "SubmitPreference",
+    "section": "BC22 — Opportunity/Preference (T5/T2), version1.0",
+    "line": 878,
+    "value": {
+      "action": "SUBMIT",
+      "opportunityId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "message": "Đăng ký vị trí demo",
+      "expectedIntentVersion": 0
+    }
+  },
+  {
+    "id": "EX-42",
+    "schema": "PreferenceView",
+    "section": "BC22 — Opportunity/Preference (T5/T2), version1.0",
+    "line": 884,
+    "value": {
+      "preferenceId": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+      "studentUserId": "11111111-1111-4111-8111-111111111111",
+      "schoolOrgId": "22222222-2222-4222-8222-222222222222",
+      "termId": "44444444-4444-4444-8444-444444444444",
+      "opportunityId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "intentVersion": 1,
+      "version": 1,
+      "status": "SUBMITTED",
+      "message": "Đăng ký vị trí demo",
+      "createdAt": "2026-11-03T08:00:00Z",
+      "withdrawnAt": null,
+      "reviewedAt": null,
+      "reviewedByUserId": null
+    }
+  },
+  {
+    "id": "EX-43",
+    "schema": "ErrorEnvelope",
+    "section": "BC22 — Opportunity/Preference (T5/T2), version1.0",
+    "line": 890,
+    "value": {
+      "errorCode": "PREFERENCE_REVIEWED",
+      "error": "PREFERENCE_REVIEWED",
+      "message": "Nguyện vọng đã được xét; cần gửi phiên bản nguyện vọng mới để thay đổi.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-44",
+    "schema": "InvitationDecision",
+    "section": "BC23 — Internship Invitation (T5 canonical → UI T2), version 1.0",
+    "line": 914,
+    "value": {
+      "decision": "ACCEPT",
+      "expectedVersion": 2,
+      "reasonCode": null,
+      "reasonText": null
+    }
+  },
+  {
+    "id": "EX-45",
+    "schema": "InternshipInvitation",
+    "section": "BC23 — Internship Invitation (T5 canonical → UI T2), version 1.0",
+    "line": 920,
+    "value": {
+      "invitationId": "77777777-7777-4777-8777-777777777777",
+      "proposalItemId": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+      "placementCandidateId": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+      "studentUserId": "11111111-1111-4111-8111-111111111111",
+      "schoolOrgId": "22222222-2222-4222-8222-222222222222",
+      "enterpriseOrgId": "33333333-3333-4333-8333-333333333333",
+      "termId": "44444444-4444-4444-8444-444444444444",
+      "opportunityId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "title": "Thực tập Java demo",
+      "enterpriseName": "Doanh nghiệp Demo A",
+      "state": "ACCEPTED",
+      "expiresAt": "2026-11-10T08:00:00Z",
+      "decidedAt": "2026-11-03T08:00:00Z",
+      "decisionReasonCode": null,
+      "version": 3,
+      "placementId": null
+    }
+  },
+  {
+    "id": "EX-46",
+    "schema": "ErrorEnvelope",
+    "section": "BC23 — Internship Invitation (T5 canonical → UI T2), version 1.0",
+    "line": 926,
+    "value": {
+      "errorCode": "INVITATION_EXPIRED",
+      "error": "INVITATION_EXPIRED",
+      "message": "Lời mời đã hết hạn phản hồi.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-47",
+    "schema": "GrantConsent",
+    "section": "BC24 — Consent/share/policy và ProfileAccess (T2/T5→T1 facade), version1.0",
+    "line": 976,
+    "value": {
+      "invitationId": "77777777-7777-4777-8777-777777777777",
+      "purpose": "INTERNSHIP_SELECTION",
+      "fieldWhitelist": [
+        "majorCode",
+        "skills"
+      ],
+      "expiresAt": "2026-11-20T08:00:00Z",
+      "policyVersion": "demo-consent-v1",
+      "expectedSchoolPolicyVersion": 0,
+      "expectedLineageVersion": 0
+    }
+  },
+  {
+    "id": "EX-48",
+    "schema": "ConsentGrant",
+    "section": "BC24 — Consent/share/policy và ProfileAccess (T2/T5→T1 facade), version1.0",
+    "line": 981,
+    "value": {
+      "consentId": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      "consentVersion": 1,
+      "lineageVersion": 1,
+      "studentUserId": "11111111-1111-4111-8111-111111111111",
+      "schoolOrgId": "22222222-2222-4222-8222-222222222222",
+      "termId": "44444444-4444-4444-8444-444444444444",
+      "recipientOrgId": "33333333-3333-4333-8333-333333333333",
+      "invitationId": "77777777-7777-4777-8777-777777777777",
+      "purpose": "INTERNSHIP_SELECTION",
+      "fieldWhitelist": [
+        "majorCode",
+        "skills"
+      ],
+      "grantedAt": "2026-11-03T08:00:00Z",
+      "expiresAt": "2026-11-20T08:00:00Z",
+      "revokedAt": null,
+      "policyVersion": "demo-consent-v1",
+      "replacedByConsentId": null
+    }
+  },
+  {
+    "id": "EX-49",
+    "schema": "ErrorEnvelope",
+    "section": "BC24 — Consent/share/policy và ProfileAccess (T2/T5→T1 facade), version1.0",
+    "line": 987,
+    "value": {
+      "errorCode": "CONSENT_FIELDS_NOT_ALLOWED",
+      "error": "CONSENT_FIELDS_NOT_ALLOWED",
+      "message": "Danh sách trường dữ liệu vượt chính sách chia sẻ của trường.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [
+        {
+          "field": "fieldWhitelist",
+          "code": "FIELD_DENIED",
+          "message": "email chưa được chính sách hiện hành cho phép."
+        }
+      ],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-50",
+    "schema": "NominateCandidates",
+    "section": "BC31 — DemandCriteria và ProposalNomination (T5↔T4), version1.0",
+    "line": 1014,
+    "value": {
+      "cooperationId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "matchRunId": "66666666-6666-4666-8666-666666666666",
+      "candidates": [
+        {
+          "studentUserId": "11111111-1111-4111-8111-111111111111",
+          "profileSnapshotId": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+          "profileVersion": 3,
+          "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "expectedDemandVersion": 4,
+      "expectedCriteriaVersion": 3,
+      "expectedCooperationVersion": 2,
+      "expectedBatchVersion": null
+    }
+  },
+  {
+    "id": "EX-51",
+    "schema": "NominationResult",
+    "section": "BC31 — DemandCriteria và ProposalNomination (T5↔T4), version1.0",
+    "line": 1020,
+    "value": {
+      "batchId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "batchVersion": 1,
+      "items": [
+        {
+          "proposalItemId": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+          "studentUserId": "11111111-1111-4111-8111-111111111111",
+          "state": "RESERVED",
+          "reservationUntil": "2026-11-04T08:00:00Z"
+        }
+      ],
+      "quantity": 2,
+      "placedCount": 1,
+      "activeReservations": 1,
+      "openForNomination": 0
+    }
+  },
+  {
+    "id": "EX-52",
+    "schema": "ErrorEnvelope",
+    "section": "BC31 — DemandCriteria và ProposalNomination (T5↔T4), version1.0",
+    "line": 1026,
+    "value": {
+      "errorCode": "CAPACITY_EXCEEDED",
+      "error": "CAPACITY_EXCEEDED",
+      "message": "Chỉ tiêu còn trống không đủ cho danh sách đề xuất.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-53",
+    "schema": "EvaluateMatchRequest",
+    "section": "BC32 — MatchRun/MatchResult/ProtectedAggregate (T4→T5/T2UI), version1.0",
+    "line": 1059,
+    "value": {
+      "demandId": "55555555-5555-4555-8555-555555555555",
+      "expectedDemandVersion": 4,
+      "expectedCriteriaVersion": 3
+    }
+  },
+  {
+    "id": "EX-54",
+    "schema": "EvaluateMatchResponse",
+    "section": "BC32 — MatchRun/MatchResult/ProtectedAggregate (T4→T5/T2UI), version1.0",
+    "line": 1062,
+    "value": {
+      "audience": "ENTERPRISE",
+      "release": {
+        "releaseId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        "matchRunId": "66666666-6666-4666-8666-666666666666",
+        "eligibleBand": "5-9"
+      }
+    }
+  },
+  {
+    "id": "EX-55",
+    "schema": "ErrorEnvelope",
+    "section": "BC32 — MatchRun/MatchResult/ProtectedAggregate (T4→T5/T2UI), version1.0",
+    "line": 1067,
+    "value": {
+      "errorCode": "PRIVACY_RELEASE_LOCKED",
+      "error": "PRIVACY_RELEASE_LOCKED",
+      "message": "Đợt demo đã có bản thống kê được bảo vệ cho phạm vi này.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-56",
+    "schema": "PlacementLifecycleEvent",
+    "section": "BC41 — PlacementRead/lifecycle events/CaseClosed (T5↔T3), version1.0",
+    "line": 1097,
+    "value": {
+      "eventId": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+      "eventType": "PlacementActivated",
+      "schemaVersion": 1,
+      "placementId": "99999999-9999-4999-8999-999999999999",
+      "aggregateVersion": 3,
+      "placementVersion": 3,
+      "studentUserId": "11111111-1111-4111-8111-111111111111",
+      "schoolOrgId": "22222222-2222-4222-8222-222222222222",
+      "enterpriseOrgId": "33333333-3333-4333-8333-333333333333",
+      "termId": "44444444-4444-8444-4444-444444444444",
+      "effectiveAt": "2026-11-03T00:00:00Z",
+      "occurredAt": "2026-11-03T00:00:01Z",
+      "traceId": "00000000-0000-4000-8000-000000000099",
+      "reasonCode": null,
+      "decisionRef": null
+    }
+  },
+  {
+    "id": "EX-57",
+    "schema": "EventConsumeResult",
+    "section": "BC41 — PlacementRead/lifecycle events/CaseClosed (T5↔T3), version1.0",
+    "line": 1102,
+    "value": {
+      "eventId": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+      "outcome": "ACK_APPLIED",
+      "appliedAggregateVersion": 3,
+      "reasonCode": "APPLIED",
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-58",
+    "schema": "EventConsumeResult",
+    "section": "BC41 — PlacementRead/lifecycle events/CaseClosed (T5↔T3), version1.0",
+    "line": 1108,
+    "value": {
+      "eventId": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+      "outcome": "REJECT",
+      "appliedAggregateVersion": null,
+      "reasonCode": "INVALID_SCHEMA",
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-59",
+    "schema": "SchoolVerificationView",
+    "section": "BC42 — Organization-school verification read (T5→T1/T3), version1.0",
+    "line": 1124,
+    "value": {
+      "enterpriseOrgId": "33333333-3333-4333-8333-333333333333",
+      "schoolOrgId": "22222222-2222-4222-8222-222222222222",
+      "verificationId": null,
+      "status": null,
+      "version": null,
+      "approvedAt": null,
+      "schoolApproved": false
+    }
+  },
+  {
+    "id": "EX-60",
+    "schema": "ErrorEnvelope",
+    "section": "BC42 — Organization-school verification read (T5→T1/T3), version1.0",
+    "line": 1130,
+    "value": {
+      "errorCode": "RESOURCE_NOT_FOUND",
+      "error": "RESOURCE_NOT_FOUND",
+      "message": "Không tìm thấy tài nguyên trong phạm vi truy cập.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-61",
+    "schema": "SubmitCooperationRequest",
+    "section": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
+    "line": 1203,
+    "value": {
+      "demandId": "55555555-5555-4555-8555-555555555555",
+      "expectedDemandVersion": 4
+    }
+  },
+  {
+    "id": "EX-62",
+    "schema": "CooperationDto",
+    "section": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
+    "line": 1206,
+    "value": {
+      "cooperationId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "demandId": "55555555-5555-4555-8555-555555555555",
+      "schoolOrgId": "22222222-2222-4222-8222-222222222222",
+      "enterpriseOrgId": "33333333-3333-4333-8333-333333333333",
+      "termId": "44444444-4444-4444-8444-444444444444",
+      "state": "DRAFT",
+      "submissionNo": 0,
+      "version": 1,
+      "submittedAt": null,
+      "decisionRef": null
+    }
+  },
+  {
+    "id": "EX-63",
+    "schema": "ErrorEnvelope",
+    "section": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
+    "line": 1212,
+    "value": {
+      "errorCode": "SCHOOL_VERIFICATION_REQUIRED",
+      "error": "SCHOOL_VERIFICATION_REQUIRED",
+      "message": "Doanh nghiệp chưa được trường phê duyệt.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-64",
+    "schema": "ImportPreviewDto",
+    "section": "F.3. Ví dụ đủ field và lỗi xác định",
+    "line": 1542,
+    "value": {
+      "job": {
+        "importJobId": "11111111-1111-4111-8111-111111111111",
+        "jobVersion": 1,
+        "jobState": "PREVIEW_READY",
+        "fileHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "termId": "44444444-4444-4444-8444-444444444444",
+        "previewExpiresAt": "2026-11-03T03:30:00Z",
+        "totalRows": 2,
+        "validRows": 1,
+        "invalidRows": 1,
+        "previewNeedsReviewRows": 0,
+        "selectedRows": 0,
+        "queuedRows": 0,
+        "processingRows": 0,
+        "transientFailedRows": 0,
+        "provisionedRows": 0,
+        "alreadyLinkedRows": 0,
+        "needsReviewRows": 0,
+        "permanentFailedRows": 0,
+        "processedRows": 0,
+        "successRows": 0,
+        "startedAt": null,
+        "finishedAt": null,
+        "observedAt": "2026-11-03T03:00:00Z"
+      },
+      "rows": {
+        "content": [
+          {
+            "rowId": "33333333-3333-4333-8333-333333333333",
+            "rowNo": 2,
+            "rowVersion": 1,
+            "sourceData": {
+              "studentCode": "000001",
+              "email": "student001@example.test",
+              "fullName": "Sinh viên Demo 001",
+              "majorCode": "SE",
+              "termCode": "2026-T1",
+              "cohortCode": null,
+              "classCode": null
+            },
+            "validationState": "VALID",
+            "selected": false,
+            "rowState": "NOT_SELECTED",
+            "errorCodes": [],
+            "rosterId": null,
+            "provisioningEffectId": null,
+            "userId": null,
+            "provisioningOutcome": null,
+            "activationState": "NOT_REQUIRED",
+            "invitationVersion": null,
+            "currentMailId": null,
+            "mailState": "NOT_REQUIRED"
+          },
+          {
+            "rowId": "44444444-4444-4444-8444-444444444444",
+            "rowNo": 3,
+            "rowVersion": 1,
+            "sourceData": {
+              "studentCode": null,
+              "email": "student002@example.test",
+              "fullName": "Sinh viên Demo 002",
+              "majorCode": "SE",
+              "termCode": "2026-T1",
+              "cohortCode": null,
+              "classCode": null
+            },
+            "validationState": "INVALID",
+            "selected": false,
+            "rowState": "NOT_SELECTED",
+            "errorCodes": [
+              "STUDENT_CODE_MUST_BE_TEXT"
+            ],
+            "rosterId": null,
+            "provisioningEffectId": null,
+            "userId": null,
+            "provisioningOutcome": null,
+            "activationState": "NOT_REQUIRED",
+            "invitationVersion": null,
+            "currentMailId": null,
+            "mailState": "NOT_REQUIRED"
+          }
+        ],
+        "page": 0,
+        "size": 25,
+        "totalElements": 2,
+        "totalPages": 1
+      }
+    }
+  },
+  {
+    "id": "EX-65",
+    "schema": "ConfirmImport",
+    "section": "F.3. Ví dụ đủ field và lỗi xác định",
+    "line": 1548,
+    "value": {
+      "expectedJobVersion": 1,
+      "fileHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "selectedRowIds": [
+        "33333333-3333-4333-8333-333333333333"
+      ]
+    }
+  },
+  {
+    "id": "EX-66",
+    "schema": "ImportAccepted",
+    "section": "F.3. Ví dụ đủ field và lỗi xác định",
+    "line": 1551,
+    "value": {
+      "importJobId": "11111111-1111-4111-8111-111111111111",
+      "jobVersion": 2,
+      "jobState": "PROCESSING",
+      "selectedRows": 1
+    }
+  },
+  {
+    "id": "EX-67",
+    "schema": "ErrorEnvelope",
+    "section": "F.3. Ví dụ đủ field và lỗi xác định",
+    "line": 1557,
+    "value": {
+      "errorCode": "FILE_STRUCTURE_INVALID",
+      "error": "FILE_STRUCTURE_INVALID",
+      "message": "Tệp thiếu cột studentCode.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [
+        {
+          "field": "columns.studentCode",
+          "code": "REQUIRED_COLUMN_MISSING",
+          "message": "Thiếu cột bắt buộc."
+        }
+      ],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-68",
+    "schema": "ErrorEnvelope",
+    "section": "F.3. Ví dụ đủ field và lỗi xác định",
+    "line": 1563,
+    "value": {
+      "errorCode": "PREVIEW_EXPIRED",
+      "error": "PREVIEW_EXPIRED",
+      "message": "Bản xem trước đã hết hạn. Vui lòng tải lại tệp.",
+      "requestId": "00000000-0000-4000-8000-000000000099",
+      "fieldErrors": [],
+      "retryAfterSeconds": null
+    }
+  },
+  {
+    "id": "EX-69",
+    "schema": "ResendAccepted",
+    "section": "F.5. Claim, token và mail recovery",
+    "line": 1641,
+    "value": {
+      "rowId": "33333333-3333-4333-8333-333333333333",
+      "rowVersion": 4,
+      "invitationVersion": 2,
+      "mailId": "00000000-0000-4000-8000-000000000301",
+      "mailState": "QUEUED",
+      "acceptedAt": "2026-11-03T04:00:00Z"
+    }
+  }
+]

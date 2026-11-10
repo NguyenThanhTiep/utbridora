@@ -1,0 +1,53 @@
+/* Module sinh viên: chỉ dùng class tiền tố .student-, không ghi đè style chung. */
+.nav-group-label.student-nav-group { margin-top: 31px; }
+.student-page { display: grid; gap: 24px; min-width: 0; }
+.student-scope { padding-top: 19px; border-top: 1px solid #edf1f4; }
+.student-scope-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.student-scope-list code { display: inline-block; padding: 3px 7px; color: #6b8290; font-size: var(--text-caption); background: #edf2f5; border-radius: 4px; }
+.student-term-panel .empty-state { min-height: 180px; }
+.student-term-select { flex-shrink: 0; min-width: 200px; margin: 0; }
+
+.student-profile-form { min-width: 0; }
+.student-readonly { padding-top: 19px; border-top: 1px solid #edf1f4; }
+.student-readonly > strong { display: block; font-size: var(--text-sm); font-weight: 550; overflow-wrap: anywhere; }
+.student-field-error { margin-top: 7px; color: #a5364c; font-size: var(--text-xs); line-height: 1.6; }
+.student-fieldset { min-width: 0; margin: 24px 0 0; padding: 0; border: 0; }
+.student-fieldset > legend { padding: 0; color: #314d5e; font-size: var(--text-sm); font-weight: 600; line-height: 1.6; }
+.student-checkbox { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-weight: 500; }
+.student-checkbox input { flex-shrink: 0; width: 18px; height: 18px; min-height: 0; margin: 0; padding: 0; accent-color: var(--brand); }
+.student-period { min-width: 0; margin: 14px 0 0; padding: 2px 16px 12px; border: 1px solid var(--line); border-radius: 10px; }
+.student-period > legend { padding: 0 6px; color: var(--muted); font-size: var(--text-xs); font-weight: 600; }
+.student-period-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+.student-period .text-button { margin-top: 6px; }
+.student-add-period { margin-top: 14px; }
+.student-kept { margin-top: 24px; padding-top: 17px; border-top: 1px dashed #e3eaee; }
+.student-kept ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 20px; margin: 10px 0; padding: 0; list-style: none; color: var(--muted); font-size: var(--text-sm); }
+.student-error-note { margin-top: 10px; color: #a5364c; font-size: var(--text-sm); line-height: 1.7; overflow-wrap: anywhere; }
+.student-profile-form .button-row { margin-top: 22px; }
+.student-opportunity-period { margin-top: 8px; color: var(--muted); font-size: var(--text-sm); }
+.student-opportunity-filters { display: grid; grid-template-columns: minmax(0, 2fr) minmax(150px, 1fr) auto; align-items: end; gap: 12px; margin-top: 20px; }
+.student-opportunity-filters label, .student-opportunity-detail form > label { display: grid; gap: 6px; color: #314d5e; font-size: var(--text-sm); font-weight: 550; }
+.student-opportunity-filters input, .student-opportunity-filters select, .student-opportunity-detail textarea { width: 100%; }
+.student-opportunity-suggestions, .student-major-error { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 10px; color: var(--muted); font-size: var(--text-xs); }
+.student-opportunity-suggestions .text-button, .student-major-error .text-button { padding: 0; }
+.student-major-error { color: #a5364c; }
+.student-invitation-link { margin-top: 16px; }
+.student-opportunity-layout { display: grid; grid-template-columns: minmax(250px, 0.8fr) minmax(0, 1.5fr); align-items: start; gap: 20px; }
+.student-opportunity-list-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.student-opportunity-list-heading h2 { margin: 0; }
+.student-opportunity-item { display: grid; width: 100%; gap: 5px; margin-top: 12px; padding: 14px; text-align: left; color: var(--ink); background: #fff; border: 1px solid var(--line); border-radius: 10px; }
+.student-opportunity-item.selected { border-color: var(--brand); box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 13%, transparent); }
+.student-opportunity-item span, .student-opportunity-item small { color: var(--muted); }
+.student-opportunity-detail h2 { margin-top: 4px; }
+.student-opportunity-detail form { display: grid; gap: 12px; margin-top: 20px; }
+.student-preference-status { display: grid; gap: 7px; margin-top: 20px; padding: 14px; background: #f3f7f5; border-radius: 10px; }
+.student-preference-status span { color: var(--muted); font-size: var(--text-sm); }
+.student-preference-status p { margin: 0; overflow-wrap: anywhere; }
+
+@media (max-width: 700px) {
+  .student-page { gap: 18px; }
+  .student-term-panel .section-heading { flex-wrap: wrap; }
+  .student-term-select { width: 100%; }
+  .student-opportunity-filters, .student-opportunity-layout { grid-template-columns: 1fr; }
+  .student-period-fields, .student-kept ul { grid-template-columns: 1fr; }
+}

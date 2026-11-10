@@ -1,0 +1,643 @@
+{
+    "date":  "2026-10-29",
+    "timezone":  "Asia/Bangkok",
+    "command":  "./mvnw.cmd -Dfrontend.e2e=true verify -B",
+    "build":  "SUCCESS",
+    "gitCommit":  null,
+    "java":  "21.0.11",
+    "springBoot":  "4.1.2",
+    "mysql":  "8.4",
+    "unitTestCount":  28,
+    "failsafeTestCount":  49,
+    "e2eIncludedInOneFailsafeTest":  true,
+    "suites":  [
+                   {
+                       "suite":  "vn.utbridora.auth.security.AccountStatusPolicyTest",
+                       "tests":  18,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0,
+                       "timestamp":  null,
+                       "cases":  [
+                                     {
+                                         "name":  "suspensionAndReactivationAreAllowed",
+                                         "class":  "vn.utbridora.auth.security.AccountStatusPolicyTest",
+                                         "seconds":  0.113,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "allAdminTransitionsFollowSrs(AccountStatus, AccountStatus, boolean)[1]",
+                                         "class":  "vn.utbridora.auth.security.AccountStatusPolicyTest",
+                                         "seconds":  0.07,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "allAdminTransitionsFollowSrs(AccountStatus, AccountStatus, boolean)[2]",
+                                         "class":  "vn.utbridora.auth.security.AccountStatusPolicyTest",
+                                         "seconds":  0.006,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "allAdminTransitionsFollowSrs(AccountStatus, AccountStatus, boolean)[3]",
+                                         "class":  "vn.utbridora.auth.security.AccountStatusPolicyTest",
+                                         "seconds":  0.003,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "allAdminTransitionsFollowSrs(AccountStatus, AccountStatus, boolean)[4]",
+                                         "class":  "vn.utbridora.auth.security.AccountStatusPolicyTest",
+                                         "seconds":  0.002,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "allAdminTransitionsFollowSrs(AccountStatus, AccountStatus, boolean)[5]",
+                                         "class":  "vn.utbridora.auth.security.AccountStatusPolicyTest",
+                                         "seconds":  0.002,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "allAdminTransitionsFollowSrs(AccountStatus, AccountStatus, boolean)[6]",
+                                         "class":  "vn.utbridora.auth.security.AccountStatusPolicyTest",
+                                         "seconds":  0.003,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "allAdminTransitionsFollowSrs(AccountStatus, AccountStatus, boolean)[7]",
+                                         "class":  "vn.utbridora.auth.security.AccountStatusPolicyTest",
+                                         "seconds":  0.003,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "allAdminTransitionsFollowSrs(AccountStatus, AccountStatus, boolean)[8]",
+                                         "class":  "vn.utbridora.auth.security.AccountStatusPolicyTest",
+                                         "seconds":  0.002,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "allAdminTransitionsFollowSrs(AccountStatus, AccountStatus, boolean)[9]",
+                                         "class":  "vn.utbridora.auth.security.AccountStatusPolicyTest",
+                                         "seconds":  0.005,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "allAdminTransitionsFollowSrs(AccountStatus, AccountStatus, boolean)[10]",
+                                         "class":  "vn.utbridora.auth.security.AccountStatusPolicyTest",
+                                         "seconds":  0.003,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "allAdminTransitionsFollowSrs(AccountStatus, AccountStatus, boolean)[11]",
+                                         "class":  "vn.utbridora.auth.security.AccountStatusPolicyTest",
+                                         "seconds":  0.003,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "allAdminTransitionsFollowSrs(AccountStatus, AccountStatus, boolean)[12]",
+                                         "class":  "vn.utbridora.auth.security.AccountStatusPolicyTest",
+                                         "seconds":  0.003,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "allAdminTransitionsFollowSrs(AccountStatus, AccountStatus, boolean)[13]",
+                                         "class":  "vn.utbridora.auth.security.AccountStatusPolicyTest",
+                                         "seconds":  0.002,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "allAdminTransitionsFollowSrs(AccountStatus, AccountStatus, boolean)[14]",
+                                         "class":  "vn.utbridora.auth.security.AccountStatusPolicyTest",
+                                         "seconds":  0.003,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "allAdminTransitionsFollowSrs(AccountStatus, AccountStatus, boolean)[15]",
+                                         "class":  "vn.utbridora.auth.security.AccountStatusPolicyTest",
+                                         "seconds":  0.004,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "allAdminTransitionsFollowSrs(AccountStatus, AccountStatus, boolean)[16]",
+                                         "class":  "vn.utbridora.auth.security.AccountStatusPolicyTest",
+                                         "seconds":  0.002,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "deactivationIsTerminalAndActivationNeedsInvitation",
+                                         "class":  "vn.utbridora.auth.security.AccountStatusPolicyTest",
+                                         "seconds":  0.005,
+                                         "result":  "PASS"
+                                     }
+                                 ]
+                   },
+                   {
+                       "suite":  "vn.utbridora.auth.security.AppPrincipalSerializationTest",
+                       "tests":  1,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0,
+                       "timestamp":  null,
+                       "cases":  [
+                                     {
+                                         "name":  "jdbcSessionSerializationDoesNotContainCredentialHash",
+                                         "class":  "vn.utbridora.auth.security.AppPrincipalSerializationTest",
+                                         "seconds":  0.079,
+                                         "result":  "PASS"
+                                     }
+                                 ]
+                   },
+                   {
+                       "suite":  "vn.utbridora.auth.security.AuthorizationPolicyTest",
+                       "tests":  7,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0,
+                       "timestamp":  null,
+                       "cases":  [
+                                     {
+                                         "name":  "defaultAdapterAlwaysDeniesOtherProfiles",
+                                         "class":  "vn.utbridora.auth.security.AuthorizationPolicyTest",
+                                         "seconds":  0.008,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "staleOrSuspendedPrincipalCannotEvenUseSelfPermission",
+                                         "class":  "vn.utbridora.auth.security.AuthorizationPolicyTest",
+                                         "seconds":  0.114,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "administratorDoesNotInheritBusinessAccess",
+                                         "class":  "vn.utbridora.auth.security.AuthorizationPolicyTest",
+                                         "seconds":  0.02,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "foreignEnterpriseIsAlwaysDeniedEvenWhenPermissionExists",
+                                         "class":  "vn.utbridora.auth.security.AuthorizationPolicyTest",
+                                         "seconds":  0.033,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "explicitShareStillRequiresScopeAndPermission",
+                                         "class":  "vn.utbridora.auth.security.AuthorizationPolicyTest",
+                                         "seconds":  0.014,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "inactiveOrgDeniedEvenWithMatchingMembership",
+                                         "class":  "vn.utbridora.auth.security.AuthorizationPolicyTest",
+                                         "seconds":  0.005,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "ownerCanSeeOwnProfile",
+                                         "class":  "vn.utbridora.auth.security.AuthorizationPolicyTest",
+                                         "seconds":  0.003,
+                                         "result":  "PASS"
+                                     }
+                                 ]
+                   },
+                   {
+                       "suite":  "vn.utbridora.auth.security.TokenCodecTest",
+                       "tests":  2,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0,
+                       "timestamp":  null,
+                       "cases":  [
+                                     {
+                                         "name":  "tokensAreUniqueAndStoredHashed",
+                                         "class":  "vn.utbridora.auth.security.TokenCodecTest",
+                                         "seconds":  0.013,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "rejectTooShortOrTooLongBcryptSecrets",
+                                         "class":  "vn.utbridora.auth.security.TokenCodecTest",
+                                         "seconds":  0.019,
+                                         "result":  "PASS"
+                                     }
+                                 ]
+                   },
+                   {
+                       "suite":  "vn.utbridora.auth.CorePlatformIT",
+                       "tests":  48,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0,
+                       "timestamp":  null,
+                       "cases":  [
+                                     {
+                                         "name":  "failedAuditRollsBackCredentialMutation",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  3.015,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "adminReadsAreBoundedFilteredAndNeverExposeSecrets",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  3.837,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "frontendMustFlowsInChromium",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  55.686,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "roleAndOrganizationIdorAreDeniedWithCorrelatedAudit",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  4.416,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "businessRollbackRollsBackAuditAndPasswordChange",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  2.95,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "passwordChangeRequiresCurrentSecretAndRevokesOtherSessions",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  5.406,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "concurrentAdminRevocationsRetainOneActiveAdministrator",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  0.584,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "organizationTamperingInBodyAndAdminBusinessAccessAreDenied",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  2.883,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "noMembershipAndDefaultProfileSharingAreDeniedIncludingAdmin",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  1.608,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "statusHistoryAndAuditCommitTogetherAndOldSessionDoesNotReturn",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  4.343,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "fiveFailuresTemporarilyLockCredentialWithoutChangingStatus",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  4.967,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "resetTokenIsOneTimeExpiresAndRevokesSessions",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  3.017,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "concurrentResetCanConsumeTokenOnlyOnce",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  1.566,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "expiredJdbcSessionCannotCallMe",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  1.68,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "logoutInvalidatesSessionAndMissingCsrfCannotLogout",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  1.763,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "grantIsIdempotentWrongTypeIsRejectedAndRevokeInvalidatesSessions",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  2.978,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "allFourRolesUseTheSameAuthenticationAndPermissionApi(Role)[1]",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  1.477,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "allFourRolesUseTheSameAuthenticationAndPermissionApi(Role)[2]",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  1.602,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "allFourRolesUseTheSameAuthenticationAndPermissionApi(Role)[3]",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  1.366,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "allFourRolesUseTheSameAuthenticationAndPermissionApi(Role)[4]",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  1.263,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "failedLoginUnknownLockedAndSuspendedReturnSameResponse",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  1.776,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "concurrentAdminSuspensionsRetainOneActiveAdministrator",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  0.677,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "changedOrganizationStateAndMultipleMembershipsAreRechecked",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  1.199,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "explicitSessionRevocationKeepsAccountActive",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  1.436,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "forgotResponseDoesNotRevealAccountOrSmtpFailure",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  0.712,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "auditRejectsUnregisteredEventsAndSensitiveFreeText",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  0.354,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "invalidTransitionsSelfDisableAndSelfAdminRevokeAreRejected",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  2.497,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "anonymousPrivateApiIs401AndMockMvcCsrfIs403",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  0.994,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "healthIsMinimalAndDemoVerificationIsDisabled",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  1.392,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "loginRotatesSessionStoresJdbcContextAndReturnsSafeMe",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  0.913,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "lifecycleTransitionMatrixIsEnforcedInDatabase(AccountStatus, AccountStatus, boolean)[1]",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  0.748,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "lifecycleTransitionMatrixIsEnforcedInDatabase(AccountStatus, AccountStatus, boolean)[2]",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  0.488,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "lifecycleTransitionMatrixIsEnforcedInDatabase(AccountStatus, AccountStatus, boolean)[3]",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  0.412,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "lifecycleTransitionMatrixIsEnforcedInDatabase(AccountStatus, AccountStatus, boolean)[4]",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  0.539,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "lifecycleTransitionMatrixIsEnforcedInDatabase(AccountStatus, AccountStatus, boolean)[5]",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  0.574,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "lifecycleTransitionMatrixIsEnforcedInDatabase(AccountStatus, AccountStatus, boolean)[6]",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  0.656,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "lifecycleTransitionMatrixIsEnforcedInDatabase(AccountStatus, AccountStatus, boolean)[7]",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  0.498,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "lifecycleTransitionMatrixIsEnforcedInDatabase(AccountStatus, AccountStatus, boolean)[8]",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  0.536,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "lifecycleTransitionMatrixIsEnforcedInDatabase(AccountStatus, AccountStatus, boolean)[9]",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  0.762,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "lifecycleTransitionMatrixIsEnforcedInDatabase(AccountStatus, AccountStatus, boolean)[10]",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  0.466,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "lifecycleTransitionMatrixIsEnforcedInDatabase(AccountStatus, AccountStatus, boolean)[11]",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  0.703,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "lifecycleTransitionMatrixIsEnforcedInDatabase(AccountStatus, AccountStatus, boolean)[12]",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  0.678,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "lifecycleTransitionMatrixIsEnforcedInDatabase(AccountStatus, AccountStatus, boolean)[13]",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  1.027,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "lifecycleTransitionMatrixIsEnforcedInDatabase(AccountStatus, AccountStatus, boolean)[14]",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  0.712,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "lifecycleTransitionMatrixIsEnforcedInDatabase(AccountStatus, AccountStatus, boolean)[15]",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  0.586,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "lifecycleTransitionMatrixIsEnforcedInDatabase(AccountStatus, AccountStatus, boolean)[16]",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  0.403,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "csrfTokenBeforeLoginIsRejectedAfterAuthentication",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  1.713,
+                                         "result":  "PASS"
+                                     },
+                                     {
+                                         "name":  "invitationCreatesOneAccountAndExpiredInvitationIsRejected",
+                                         "class":  "vn.utbridora.auth.CorePlatformIT",
+                                         "seconds":  1.527,
+                                         "result":  "PASS"
+                                     }
+                                 ]
+                   },
+                   {
+                       "suite":  "vn.utbridora.auth.MigrationUpgradeIT",
+                       "tests":  1,
+                       "failures":  0,
+                       "errors":  0,
+                       "skipped":  0,
+                       "timestamp":  null,
+                       "cases":  [
+                                     {
+                                         "name":  "upgradesV2DataWithoutChangingIdentityAndEnforcesCoreConstraints",
+                                         "class":  "vn.utbridora.auth.MigrationUpgradeIT",
+                                         "seconds":  76.352,
+                                         "result":  "PASS"
+                                     }
+                                 ]
+                   }
+               ],
+    "browser":  {
+                    "tests":  7,
+                    "failures":  0,
+                    "errors":  0,
+                    "skipped":  0,
+                    "cases":  [
+                                  {
+                                      "name":  "Quản trị viên đăng nhập, tra cứu tài khoản, audit và đăng xuất",
+                                      "result":  "PASS"
+                                  },
+                                  {
+                                      "name":  "Sai mật khẩu có lỗi chung và khôi phục không tiết lộ email",
+                                      "result":  "PASS"
+                                  },
+                                  {
+                                      "name":  "Kích hoạt lời mời và đăng nhập bằng tài khoản mới",
+                                      "result":  "PASS"
+                                  },
+                                  {
+                                      "name":  "Đặt lại mật khẩu một lần, liên kết cũ bị từ chối",
+                                      "result":  "PASS"
+                                  },
+                                  {
+                                      "name":  "Sinh viên bị chặn API quản trị và giao diện vừa màn hình di động",
+                                      "result":  "PASS"
+                                  },
+                                  {
+                                      "name":  "Khóa, mở tài khoản và quản lý membership trên giao diện",
+                                      "result":  "PASS"
+                                  },
+                                  {
+                                      "name":  "Phiên bị thu hồi đưa người dùng về đăng nhập khi gọi API",
+                                      "result":  "PASS"
+                                  }
+                              ]
+                },
+    "v1ToV6Unchanged":  true,
+    "migrations":  [
+                       {
+                           "file":  "V1__foundation.sql",
+                           "sha256":  "1BEBA8FC551734659CB6953FF6E4587E242BEF34D0F56D2014383E4560660273"
+                       },
+                       {
+                           "file":  "V2__spring_sessions.sql",
+                           "sha256":  "3A961ADB7AC577A0C7FED30CA18F436FF8A4803ECE2CBCE45EB1A288C662E616"
+                       },
+                       {
+                           "file":  "V3__permissions_and_membership_integrity.sql",
+                           "sha256":  "27C715667D66E362248314C32B582DD0BF26F7F10CEF04D40EBCC2006893CEE6"
+                       },
+                       {
+                           "file":  "V4__audit_expansion.sql",
+                           "sha256":  "20F9D708B0DDF99EC5F78DE01DCA361FEB2768567EDD52EEE2EECCEB14DC6A28"
+                       },
+                       {
+                           "file":  "V5__files_metadata.sql",
+                           "sha256":  "7FC22062BBACA4AB5ACE160ABF8E7F6375C5656D833647C93F24DA61285E8030"
+                       },
+                       {
+                           "file":  "V6__membership_status_audit.sql",
+                           "sha256":  "935D13FD318BA02FEB73B18B0B2A02846DFF3B1D4A209134D0B3139337F9CD14"
+                       },
+                       {
+                           "file":  "V7__administration_lock_and_query_indexes.sql",
+                           "sha256":  "389C9433BB3BA410A919869F251AF82DFE7A95EB4C9CA961558F0A8B6E57B7AC"
+                       }
+                   ],
+    "notRun":  [
+                   "Server staging HTTPS",
+                   "GitHub CI remote",
+                   "Full OpenAPI schema validation",
+                   "Shared database clone migration",
+                   "Backup restore drill",
+                   "T2-T5 business adapters",
+                   "Backend vulnerability scan/load test"
+               ],
+    "npmAudit":  {
+                     "moderate":  0,
+                     "high":  0,
+                     "total":  0,
+                     "low":  0,
+                     "info":  0,
+                     "critical":  0
+                 },
+    "wrapperVerification":  {
+                                "wrapper":  "3.3.4",
+                                "unitTestCount":  28,
+                                "finishedLocal":  "2026-10-29T17:54:01+07:00",
+                                "unitTestExitCode":  0,
+                                "sandboxRetry":  "Offline cache not visible in sandbox; passed outside sandbox",
+                                "maven":  "3.9.15",
+                                "versionExitCode":  0
+                            },
+    "localLauncher":  {
+                          "compose":  "compose.local.yaml",
+                          "httpSmoke":  "PASS: frontend, generated admin, HttpOnly session, admin API, CSRF 403, logout 401, Mailpit",
+                          "environmentFilePreserved":  true,
+                          "restart":  "PASS",
+                          "inheritedCredentialsIsolated":  true,
+                          "command":  "./run-local.cmd start",
+                          "frontendUrl":  "http://localhost:8088",
+                          "secretsPrinted":  false,
+                          "healthyServices":  4,
+                          "deployment":  "local loopback only",
+                          "mailUrl":  "http://localhost:8026"
+                      }
+}
