@@ -1,0 +1,536 @@
+{
+  "task": "T1-06",
+  "kind": "DEV_VERIFICATION_NOT_HUMAN_QA",
+  "observedAtUtc": "2026-11-10T02:51:33.018799+00:00",
+  "branch": "feature/t1-06-private-files",
+  "baseCommit": "f1ef2176041c5b0892d5bb107f01d601616755c2",
+  "publication": {
+    "committed": false,
+    "pushed": false,
+    "newRemoteCI": "NOT_RUN",
+    "dailyDockerDeployed": false
+  },
+  "unit": {
+    "totals": {
+      "tests": 508,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "passed": 507
+    },
+    "suites": [
+      {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.files.FileByteRangeTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.files.FileByteRangeTest.xml",
+        "sha256": "1253073739e2e5168ab7a6595bd055f561d93d3c6257f8b03e6cf6c5869a48c3",
+        "skips": []
+      },
+      {
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1,
+        "suite": "vn.utbridora.auth.files.PrivateFileStorageTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.files.PrivateFileStorageTest.xml",
+        "sha256": "b0426c79cf7ca3cb6d22387df8038e8e5c4a9d1cc4ef436840f7b1f6fa868d6f",
+        "skips": [
+          {
+            "case": "rejectsSymlinkObjectAndRoot",
+            "reason": ""
+          }
+        ]
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.LocalDemoActivationTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.LocalDemoActivationTest.xml",
+        "sha256": "eb76ad3f93356e9b95947ea9021c5721204ffea874766a63846dcd942058f8bf",
+        "skips": []
+      },
+      {
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.modules.cooperation.application.DemandServiceTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.modules.cooperation.application.DemandServiceTest.xml",
+        "sha256": "f1ad2899f9bad1991fae128123f0e2bec2128cb745675549513b731c8920722d",
+        "skips": []
+      },
+      {
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.modules.cooperation.domain.DemandDomainTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.modules.cooperation.domain.DemandDomainTest.xml",
+        "sha256": "df6037e4142294741641a4e798c8c64903e7d560728595247151e56a5b0af2dd",
+        "skips": []
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.modules.cooperation.integration.DemandReferenceConfigurationTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.modules.cooperation.integration.DemandReferenceConfigurationTest.xml",
+        "sha256": "ad7c6d854dba8bce3c9c23088863ffe6abde4bae3fdb9b764d3f58c040d3c899",
+        "skips": []
+      },
+      {
+        "tests": 26,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.modules.internship.api.CohortGroupDtosTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.api.CohortGroupDtosTest.xml",
+        "sha256": "1b9f7d041a66a714b3c2ccfbc1e7fe577da796c2118156ac967eaa6a13170f22",
+        "skips": []
+      },
+      {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.modules.internship.api.TaskDtosTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.api.TaskDtosTest.xml",
+        "sha256": "d0d4e15bc71dbc560ee80863e0d191edfccb4daf20e8741f42b8a63262aa41bb",
+        "skips": []
+      },
+      {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.modules.internship.api.WorkspaceErrorMappingTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.api.WorkspaceErrorMappingTest.xml",
+        "sha256": "25e6b781cedc2ada6c95e09e0f3fabd9d5897b130405a68b991e2325abb23000",
+        "skips": []
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.modules.internship.application.WorkspaceConcurrencyTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.application.WorkspaceConcurrencyTest.xml",
+        "sha256": "414bb65c5ff0151b70fe09f37f7d49b450fa7434f193904c5ae421d781fd6047",
+        "skips": []
+      },
+      {
+        "tests": 33,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.modules.internship.application.WorkspaceServiceTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.application.WorkspaceServiceTest.xml",
+        "sha256": "26e9ba82dfb300595bb6aadd840f29c136c733e8a7f90f3f3b7edffdf0c1d984",
+        "skips": []
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.modules.internship.contract.WorkspaceFrontendContractTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.contract.WorkspaceFrontendContractTest.xml",
+        "sha256": "f4e4156084aeabab2ecb645d674dd7a911a9d4195a852c2419b55164e7fd36ed",
+        "skips": []
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.modules.internship.domain.CohortGroupPolicyTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.domain.CohortGroupPolicyTest.xml",
+        "sha256": "1079874869ceedfd821d1cf08851e82bdedc337f29057e8a9ffc43cd6ef0a4ca",
+        "skips": []
+      },
+      {
+        "tests": 41,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.modules.internship.domain.InternshipActivityPolicyTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.domain.InternshipActivityPolicyTest.xml",
+        "sha256": "71ea9e234c69e6c3431d851044c46e8ce53e4aa652d3db38d61dc71d24bed14c",
+        "skips": []
+      },
+      {
+        "tests": 58,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.modules.internship.domain.PlacementEventEnvelopePolicyTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.domain.PlacementEventEnvelopePolicyTest.xml",
+        "sha256": "34e3205091ec75a7aaf0ae84e9c5d15567542d77cb50dc8a7f13ab9a16b21e6e",
+        "skips": []
+      },
+      {
+        "tests": 17,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.modules.internship.domain.WorkspaceDomainTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.domain.WorkspaceDomainTest.xml",
+        "sha256": "9690bf8d5720716253d4208a14577fb02d8635c95897f1d3c93b5bb7c7f5d07f",
+        "skips": []
+      },
+      {
+        "tests": 14,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.modules.internship.infrastructure.CoreWorkspaceAccessTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.infrastructure.CoreWorkspaceAccessTest.xml",
+        "sha256": "b3cf931452fd7950bedf1800cf0dda401e98310758abcd40d576f220e456d9a8",
+        "skips": []
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.modules.internship.infrastructure.TransactionalWorkspaceUnitOfWorkTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.infrastructure.TransactionalWorkspaceUnitOfWorkTest.xml",
+        "sha256": "f9a0c959c07cd896e265fc91f7aea74bdcf1d959d87b1170367ed6ffa66a52cd",
+        "skips": []
+      },
+      {
+        "tests": 174,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.modules.internship.integration.PlacementLifecycleContractTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.integration.PlacementLifecycleContractTest.xml",
+        "sha256": "72f921adb16b936dc6a5fa60e76a2dee84f165175e3c45eb08388ff9bb2df113",
+        "skips": []
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.modules.matching.StrictClassifierTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.modules.matching.StrictClassifierTest.xml",
+        "sha256": "91084e091ef032effa108c349d0a0d0bd4af02b56ee333b92b20adc14f15102f",
+        "skips": []
+      },
+      {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.modules.student.application.ProfileReferenceConfigurationTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.modules.student.application.ProfileReferenceConfigurationTest.xml",
+        "sha256": "c4d93579dc3534bb69ce75a6d8ba61d4b7acef526f13a54e4cef92f9f3424605",
+        "skips": []
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.modules.taxonomy.application.SkillTaxonomyServiceTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.modules.taxonomy.application.SkillTaxonomyServiceTest.xml",
+        "sha256": "7eb1de35e1c358cf7ed6522f41a705ba857ae6aa4031f8dcc0a5442c9fcec36d",
+        "skips": []
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.modules.taxonomy.domain.SkillNameNormalizerTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.modules.taxonomy.domain.SkillNameNormalizerTest.xml",
+        "sha256": "ed0aa6f217976adb9d45ad0dc68b2ffb25f767bcf5415f931954b831b9812734",
+        "skips": []
+      },
+      {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.operations.OperationLedgerTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.operations.OperationLedgerTest.xml",
+        "sha256": "43a07611405ee10ff02346545cf57b7384d5649f7de5824b034fc18668b3a1de",
+        "skips": []
+      },
+      {
+        "tests": 18,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.security.AccountStatusPolicyTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.security.AccountStatusPolicyTest.xml",
+        "sha256": "f3a392896b56e54948d65ed9da8b7aa00c538d923c1dc53de30cb32a3237b071",
+        "skips": []
+      },
+      {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.security.AppPrincipalSerializationTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.security.AppPrincipalSerializationTest.xml",
+        "sha256": "8f8a85655c83206b76a0ae129702e519d385f58c735a4c5fb15ed57317447537",
+        "skips": []
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.security.AuthorizationPolicyTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.security.AuthorizationPolicyTest.xml",
+        "sha256": "9713a6f87ab818cac3b1d40dc6fe7260d4ba5a4ec3ed88a18763e5fd9f9e7d3e",
+        "skips": []
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.security.DemandSecurityErrorsTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.security.DemandSecurityErrorsTest.xml",
+        "sha256": "05b56ffa0acf991a90a375be8fbcc050049a17c0ad5fa5982d293e09dfc54bc3",
+        "skips": []
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.security.TokenCodecTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.security.TokenCodecTest.xml",
+        "sha256": "4fa1fc52b419563e8059d3a8052b39f54847678cd63cfeea1d425acf304d2be7",
+        "skips": []
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.student.eligibility.StudentTermEligibilityTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.student.eligibility.StudentTermEligibilityTest.xml",
+        "sha256": "3aa9121ebde1620d848d87ba9a1009837c7523078aea3492c81f51b32f3dadc2",
+        "skips": []
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.student.roster.StudentRosterTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.student.roster.StudentRosterTest.xml",
+        "sha256": "4c7596db4b9b19282b15ec400b0cec4fecfe2034336cd33fa824ed1502000093",
+        "skips": []
+      },
+      {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.student.StudentEligibilityQueryServiceTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.student.StudentEligibilityQueryServiceTest.xml",
+        "sha256": "6db8a055ad9da0b792ba32c6a0c6f0258edfdaf2c3e1829b2385267364160079",
+        "skips": []
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.student.StudentRosterQueryServiceTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.student.StudentRosterQueryServiceTest.xml",
+        "sha256": "63258ac610f3545ed49a93fc141d42108b226b0725ebf9af6048b29e3e35ea66",
+        "skips": []
+      },
+      {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.student.StudentSchoolAccessGuardTest",
+        "report": "target/surefire-reports/TEST-vn.utbridora.auth.student.StudentSchoolAccessGuardTest.xml",
+        "sha256": "00f73c231ffb0b71eec4373488e7fa474b2f6d774f612321fa3a86fa19042169",
+        "skips": []
+      }
+    ]
+  },
+  "integration": {
+    "totals": {
+      "tests": 105,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "passed": 102
+    },
+    "suites": [
+      {
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.BusinessModulesIT",
+        "report": "target/failsafe-reports/TEST-vn.utbridora.auth.BusinessModulesIT.xml",
+        "sha256": "09f7ca465993666b89e8fd4884fb5da5b3a6ca2c8b898e8e28d92d804cd4687e",
+        "skips": []
+      },
+      {
+        "tests": 50,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1,
+        "suite": "vn.utbridora.auth.CorePlatformIT",
+        "report": "target/failsafe-reports/TEST-vn.utbridora.auth.CorePlatformIT.xml",
+        "sha256": "bd36731f6801d174fd855a2ad50c191aa2a1df9c0cff645413c794c0ada2629f",
+        "skips": [
+          {
+            "case": "frontendMustFlowsInChromium",
+            "reason": "System property [frontend.e2e] does not exist"
+          }
+        ]
+      },
+      {
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1,
+        "suite": "vn.utbridora.auth.InternshipRuntimeIT",
+        "report": "target/failsafe-reports/TEST-vn.utbridora.auth.InternshipRuntimeIT.xml",
+        "sha256": "253062e47aaaa9fe59bce2b60592f2703758f5aebe03fa209d19ac3f8273fc0f",
+        "skips": [
+          {
+            "case": "realHrAndMentorBrowserFlow",
+            "reason": "System property [frontend.e2e] does not exist"
+          }
+        ]
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.MigrationUpgradeIT",
+        "report": "target/failsafe-reports/TEST-vn.utbridora.auth.MigrationUpgradeIT.xml",
+        "sha256": "fbaeedcefa5798ffe9e6cd7189c8d84137d2bda462aaeddd314e3a5a712dceab",
+        "skips": []
+      },
+      {
+        "tests": 18,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1,
+        "suite": "vn.utbridora.auth.modules.student.StudentProfileIT",
+        "report": "target/failsafe-reports/TEST-vn.utbridora.auth.modules.student.StudentProfileIT.xml",
+        "sha256": "391165d42c5609ee7f943666aae9683e9a1d65adf355772505d960452a55c08a",
+        "skips": [
+          {
+            "case": "realStudentProfileBrowserFlow",
+            "reason": "System property [frontend.e2e] does not exist"
+          }
+        ]
+      },
+      {
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.PrivateFileServiceIT",
+        "report": "target/failsafe-reports/TEST-vn.utbridora.auth.PrivateFileServiceIT.xml",
+        "sha256": "e74a6ad23c1c91b98ca0a445e462c21759f16383365a34db873da96bcb0b268f",
+        "skips": []
+      },
+      {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "suite": "vn.utbridora.auth.FileProxyIT",
+        "report": "target/failsafe-reports/TEST-vn.utbridora.auth.FileProxyIT.xml",
+        "sha256": "7cf02c1970515dc9717ea8d1fae568b4f13b4b37e89c81e11eac4ddd907deda2",
+        "skips": []
+      }
+    ]
+  },
+  "contracts": {
+    "summary": "868/868 PASS, 0 FAIL",
+    "report": "target/contract-verification.json",
+    "sha256": "7856927145a3cb7e160ac49fc848e4c8eb7d268156c3c034af5cc80c1d3d8974",
+    "auditRegistryTests": 3,
+    "bundlePortabilityTests": 1,
+    "independentT4Expectations": 11
+  },
+  "sourceManifestSha256": "47a0ab321ad5e54f08e254e4173b5f30b61cdd6a1c66855cb9e377a0e8dfde0f",
+  "manifestOnlySourceHashesChanged": true,
+  "newGuideAndReportLocalLinksChecked": true,
+  "testSourceHashes": {
+    "src/test/java/vn/utbridora/auth/BusinessModulesIT.java": "00520f4c47c74aef7f652581d8cf292aae5b97cefc06894fc86704cbeb8e704f",
+    "src/test/java/vn/utbridora/auth/CorePlatformIT.java": "27e1768ce83792dca84fe5819df9f67795c49e7e5ba57e550aaa12ec9eb1f9a8",
+    "src/test/java/vn/utbridora/auth/InternshipRuntimeIT.java": "d0407ea9226340c9271f31a93e84bbee778669de20682174582ffac59bb1fd7c",
+    "src/test/java/vn/utbridora/auth/MigrationUpgradeIT.java": "81b4c1faa8945ee3f9593d0a65f8aadd1f044e7b900a586d5b47f99b340727a9",
+    "src/test/java/vn/utbridora/auth/modules/student/StudentProfileIT.java": "e59d314f2ed5d31dd5caee3c6e4f27d0f153ce90eca1315a65ba23b2ccf28e8e",
+    "src/test/java/vn/utbridora/auth/PrivateFileServiceIT.java": "0d8d1ad9833f3ba67c760157f3b58ffc60fb56aae8acc51201c709b009ec6ebe",
+    "src/test/java/vn/utbridora/auth/FileProxyIT.java": "ebf7736bb6646f9a40e3692e83f882b4c37762a5dbca719c56c7314a72aaffe3",
+    "src/test/java/vn/utbridora/auth/files/FileByteRangeTest.java": "2aa9a24007771daa2bc3eab2f7546f24d3d896fe64f3dbb906f46db0985c52b7",
+    "src/test/java/vn/utbridora/auth/files/PrivateFileStorageTest.java": "c0fb01aaba48785f40553ba75c59aae0391b4713e80bcd20d273d5de0a42ade0"
+  },
+  "configurationHashes": {
+    "Dockerfile": "f1c38ba51adea27f83623192618cc2f6d875acc04183b11a13ea34bd872a7d5f",
+    "compose.local.yaml": "c45c7586d2f32e2243da0b5d17b7efb688f2001abb2edcbf8edcc4c38d9b21a0",
+    "compose.staging.yaml": "6b2a512e93c7657754bf8a9425b70b12258124db5fc10ae8c30c46472c263fba",
+    "web-demo/nginx.conf": "d4a7a57aeb14962f43ac354141be4adc0ea1407183ba2920056672cd00c0dc82",
+    "src/main/resources/application.yml": "0e7eb21d95810870cd58cf1d283dca61604ed277490b0b0d4832c22299505134"
+  },
+  "frozenUnchanged": {
+    "docs/contracts/UTBridora_Contract_Pack_B01_B06_v1.0_Candidate.md": "9c62f229908f3c66f300455e33bdde6aef127f8e6edd99b286def0687ff9f2ef",
+    "docs/srs/UTBridora_SRS_Tong_The_v1.2.4.docx": "92efaaec4efb66bfe0fa69e5de6a706476f93f58f808575982b9d95662438bd4"
+  },
+  "runs": [
+    {
+      "log": "target/t1-06-verification.log",
+      "sha256": "16157cf2ddd48d5dce130c5fb7f016197034ae3089911eda014358d77b09d804",
+      "result": "Regression suites passed; file fixture failed because student_roster_id is NOT NULL. Private file suite rerun below."
+    },
+    {
+      "log": "target/t1-06-final.log",
+      "sha256": "0241257b0df0e159c38c51d3c8162734028ff9a3eb39fd5a5512a748b09f27c6",
+      "result": "All unit tests and FileProxyIT passed against final implementation; file fixture unlink was rejected by the composite roster FK. Replaced with a valid CLOSED-term scenario."
+    },
+    {
+      "log": "target/t1-06-api-final.log",
+      "sha256": "88d90e29b5bd5f37097c0f001e7c5ba3fd1d9d658767e675bd9cc12791f14052",
+      "result": "BUILD SUCCESS: PrivateFileServiceIT 9/9 after correcting the fixture; no implementation changes since the unit/proxy run."
+    },
+    {
+      "log": "target/t1-06-verify-gate.log",
+      "sha256": "31ccf1b608ad0ac5caec725464322a3504ec6bb52fb4cd5b7938c1d8cf422d7f",
+      "result": "Offline failsafe:verify using existing final API reports, explicit MAVEN_EXIT=0; no tests rerun."
+    }
+  ],
+  "scopeNotes": [
+    "Broad Core/T2/T3/T5/migration regression reports are reused from the first run. Final implementation changes were confined to the new file service and proxy; File/Proxy suites and all unit tests were rerun. The final API-only run corrected a fixture, with implementation/unit/proxy unchanged.",
+    "Concurrency: twenty service calls through transaction proxies with real MySQL/private storage. Real multipart/session/CSRF behavior is tested separately over HTTP.",
+    "Positive binary downloads use an explicit synthetic CLEAN transition only in a dedicated Testcontainers database. No real scanner, scan adapter, safety acceptance or shared file workflow is proven.",
+    "No frontend TypeScript/UI changes. Three conditional browser tests were skipped; prior week-2 remote Chromium evidence is historical.",
+    "Compose config validation passed using synthetic environment values. No shared DB importer/seed/migration/restart or volume/account/password changes.",
+    "Human QA01, Lead signoff and actual access by all teams remain unconfirmed."
+  ],
+  "remaining": [
+    "T1-07 scanner/retry/format safety",
+    "ZIP/CSV/XLSX validators",
+    "shared consent/share/mentor file policies",
+    "WeeklyReport/Evaluation/import/cohort policy providers",
+    "owner attachment/submission workflows",
+    "orphan/crash reconciliation, total quota and consistent DB+file volume backup"
+  ]
+}

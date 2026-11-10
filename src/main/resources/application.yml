@@ -3,6 +3,12 @@ spring:
     import: "optional:file:./.env.local[.properties]"
   application:
     name: utbridora-auth
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 21MB
+      file-size-threshold: 0
+      resolve-lazily: true
   datasource:
     url: ${DB_URL:jdbc:mysql://127.0.0.1:3307/utbridora?useUnicode=true&characterEncoding=utf8&connectionTimeZone=UTC}
     username: ${DB_USER:bridora} # IDE dùng MySQL Docker; Compose truyền địa chỉ mysql:3306 riêng.
@@ -35,6 +41,9 @@ spring:
         starttls.enable: ${MAIL_STARTTLS:false}
         starttls.required: ${MAIL_STARTTLS:false}
 server:
+  tomcat:
+    # Bounded drain lets clients receive 413 for requests just above the multipart limit.
+    max-swallow-size: 22MB
   servlet:
     session:
       timeout: 30m
@@ -44,6 +53,9 @@ server:
         secure: ${COOKIE_SECURE:false} # true behind HTTPS in production
         same-site: lax
 app:
+  files:
+    # Absolute private directory; missing configuration keeps uploads unavailable.
+    storage-root: ${FILE_STORAGE_ROOT:}
   t5:
     demand:
       # Deployment switch only. Access still requires current authorization and authoritative references.

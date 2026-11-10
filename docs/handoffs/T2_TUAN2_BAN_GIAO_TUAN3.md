@@ -1,5 +1,7 @@
 # Bàn giao T2 — kết quả tuần 2 và hướng dẫn tuần 3
 
+**Cập nhật T1-06 ngày 10/11/2026:** bản DEV trên nhánh bàn giao `feature/t1-06-private-files` có API upload SELF/metadata/content và FileReadPort tối thiểu; chưa deploy. File mới PENDING, chưa scanner hay gắn CV/dự án/chứng chỉ T2-09. Đọc [hướng dẫn và boundary mới](../guides/T1_06_PRIVATE_FILES.md) trước các ghi nhận dependency tại snapshot tuần 2 bên dưới.
+
 Ngày lập: 09/11/2026. Người nhận: Team Sinh viên, DEV02/DEV03/DEV04 và QA02. Tài liệu dành cho người tiếp nhận source hiện có; các phần ghi “cần triển khai” là công việc tiếp theo, chưa phải API đã chạy.
 
 ## 1. Nhận đúng phiên bản và đọc đúng nguồn
