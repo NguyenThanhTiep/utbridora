@@ -62,6 +62,9 @@ public class SecurityConfig {
                // T2-01 own student profile (BC11); the VERIFIED school scope is checked in StudentProfileService.
                .requestMatchers(HttpMethod.GET,"/api/v1/students/me/profile","/api/v1/students/me/catalogs").authenticated()
                .requestMatchers(HttpMethod.PUT,"/api/v1/students/me/profile").authenticated()
+               // T2-07 Preference (BC22); owner, school scope and delegation are checked in StudentPreferenceService.
+               .requestMatchers(HttpMethod.GET,"/api/v1/students/me/preferences").authenticated()
+               .requestMatchers(HttpMethod.POST,"/api/v1/students/me/preferences","/api/v1/school/preferences/*/review").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/demands").authenticated()
                .requestMatchers(HttpMethod.POST,"/api/v1/enterprise/demands").authenticated()
                .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/demands/{id}").authenticated()
