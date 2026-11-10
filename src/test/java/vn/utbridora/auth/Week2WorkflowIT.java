@@ -225,7 +225,8 @@ class Week2WorkflowIT {
         var executeOnly=matching.evaluate(as(22),key(),new MatchingService.Evaluate(demand,version,1L));assertEquals("COMPLETED",executeOnly.summary().run().state());
         final var limited=as(22);assertThrows(OperationFailure.class,()->matching.details(limited,executeOnly.summary().run().matchRunId(),"MATCH",0,25));
         var child=delegations.grant(as(2),id(21),key(),new SchoolDelegationService.Grant(subject.id,List.of("matching:school:detail_read"),List.of(),Instant.now(),Instant.now().plusSeconds(1800),"DEMO-W2-CHILD"));
-        var session=login(subject.email,"Synthetic-week2-delegate-password-123");assertEquals(200,http(session,"GET","/matching/runs/"+run+"/details?overallStatus=MATCH",null,false,null));
+        var session=login(subject.email,"Synthetic-week2-delegate-password-123");
+        matchingDetailsStayWithinSchool(session, run);
         admin=as(1);delegations.revoke(admin,parent.id(),key(),new SchoolDelegationService.Revoke(parent.version(),"ROOT_REVOKED"));
         assertEquals(401,http(session,"GET","/matching/runs/"+run+"/details?overallStatus=MATCH",null,false,null));
         var newSession=login(subject.email,"Synthetic-week2-delegate-password-123");assertEquals(404,http(newSession,"GET","/matching/runs/"+run+"/details?overallStatus=MATCH",null,false,null));
@@ -233,6 +234,49 @@ class Week2WorkflowIT {
         var hr=login("hr@example.test","Synthetic-week2-test-password-123");String coordinator=jdbc.queryForObject("SELECT id FROM internship_context_assignments WHERE kind='COORDINATOR'",String.class);
         assignments.revoke(as(2),coordinator,key(),new vn.utbridora.auth.modules.internship.infrastructure.WorkspaceAssignmentService.Revoke(1L,"SCHOOL_REVOKED"));
         assertEquals(401,http(hr,"GET","/t3/context-assignments/me",null,false,null));assertEquals(0,workspace.assignments(as(4)).size());assertEquals(0,workspace.assignments(as(5)).size());
+    }
+    private void matchingDetailsStayWithinSchool(HttpSession ownerSchool, String run) throws Exception {
+        String school = key();
+        String term = key();
+        jdbc.update("INSERT INTO organizations(id,name,type,status,created_at) VALUES(?,?,'UNIVERSITY','VERIFIED',UTC_TIMESTAMP(6))",
+            school, "QA01 cross-school fixture");
+        jdbc.update("""
+            INSERT INTO terms(id,school_org_id,term_code,start_date,end_date,status,version,created_at,updated_at)
+            VALUES(?,?,?,CURRENT_DATE - INTERVAL 1 DAY,CURRENT_DATE + INTERVAL 30 DAY,'ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))
+            """, term, school, "QA01-W2-CROSS-SCHOOL");
+
+        String password = "Qa01-" + key();
+        var staff = new vn.utbridora.auth.user.UserAccount();
+        staff.id = key();
+        staff.email = "qa01-" + staff.id + "@example.test";
+        staff.displayName = "QA01 staff from another school";
+        staff.passwordHash = passwords.encode(password);
+        staff.status = vn.utbridora.auth.user.AccountStatus.ACTIVE;
+        users.saveAndFlush(staff);
+        as(1);
+        memberships.grant(id(1), staff.id, vn.utbridora.auth.user.Role.SCHOOL_STAFF, school);
+        Instant now = Instant.now();
+        delegations.bootstrap(as(1), key(), new SchoolDelegationService.Bootstrap(
+            staff.id, school, term, List.of("matching:school:detail_read"), List.of(),
+            now.minusSeconds(10), now.plusSeconds(1800), "DEMO-QA01-CROSS-SCHOOL"));
+
+        var otherSchool = login(staff.email, password);
+        var request = java.net.http.HttpRequest.newBuilder(java.net.URI.create(
+            "http://localhost:" + port + "/api/v1/matching/runs/" + run + "/details?overallStatus=MATCH"))
+            .GET().build();
+        var bodyHandler = java.net.http.HttpResponse.BodyHandlers.ofString();
+        var allowed = ownerSchool.client().send(request, bodyHandler);
+        assertEquals(200, allowed.statusCode(), "Staff from the owning school must be able to read the run");
+        var details = vn.utbridora.auth.operations.WorkflowValues.JSON.readTree(allowed.body());
+        assertEquals(run, details.get("run").get("matchRunId").asString());
+
+        var denied = otherSchool.client().send(request, bodyHandler);
+        assertEquals(404, denied.statusCode(), "Staff with detail-read delegation in another school must be denied");
+        var error = vn.utbridora.auth.operations.WorkflowValues.JSON.readTree(denied.body());
+        assertEquals("RESOURCE_NOT_FOUND", error.get("errorCode").asString());
+        assertNull(error.get("run"));
+        assertNull(error.get("results"));
+        assertFalse(denied.body().contains(run), "The denial must not disclose the run identifier");
     }
     private record HttpSession(java.net.http.HttpClient client,String header,String token) {}
     private HttpSession login(String email,String password) throws Exception {
