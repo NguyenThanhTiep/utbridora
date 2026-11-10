@@ -22,6 +22,7 @@ final class WorkflowAuditRegistry {
         Map.entry("INVITATION_RESPONDED",new Spec("internship_invitation",Set.of("decision","invitationVersion","operationId"))),
         Map.entry("INTERNSHIP_INVITATION_REVOKED",new Spec("internship_invitation",Set.of("version","reasonCode"))),
         Map.entry("TASK_UPDATED",new Spec("task_assignment",Set.of("taskId","caseId","fromStatus","toStatus","assignmentVersion"))),
+        Map.entry("SUBMISSION_CREATED",new Spec("submission",Set.of("assignmentId","versionNo","fileId","fileIds","lateFlag"))),
         Map.entry("MATCH_RUN_REQUESTED",new Spec("match_run",Set.of("demandId","criteriaHash","criteriaVersion","ruleVersion","taxonomyVersion"))),
         Map.entry("MATCH_RUN_COMPLETED",new Spec("match_run",Set.of("demandId","runVersion","status","ruleVersion"))),
         Map.entry("MATCH_DETAILS_VIEWED",new Spec("match_run",Set.of("schoolOrgId","termId","page","size"))),
