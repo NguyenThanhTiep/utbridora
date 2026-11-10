@@ -1,0 +1,121 @@
+package vn.utbridora.auth.modules.internship.application;
+
+import java.time.Clock;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.function.Supplier;
+import org.springframework.security.core.Authentication;
+import vn.utbridora.auth.audit.AuditAction;
+import vn.utbridora.auth.modules.internship.api.SubmissionDtos.SubmissionDto;
+import vn.utbridora.auth.modules.internship.api.SubmissionDtos.SubmissionInput;
+import vn.utbridora.auth.modules.internship.application.SubmissionPorts.*;
+import vn.utbridora.auth.modules.internship.application.WorkspacePorts.CaseChecks;
+import vn.utbridora.auth.modules.internship.domain.SubmissionPolicy;
+import vn.utbridora.auth.operations.OperationLedger;
+import static vn.utbridora.auth.operations.WorkflowValues.*;
+
+/** M2 URL v1 + history application flow. Deliberately not registered with Spring or exposed as HTTP.
+ * Revisions, review, comments, file acceptance and runtime persistence are separate milestones.
+ */
+public final class SubmissionService {
+    private final UnitOfWork transactions;
+    private final Access access;
+    private final CaseChecks cases;
+    private final Clock clock;
+    private final Supplier<UUID> identifiers;
+
+    public SubmissionService(UnitOfWork transactions, Access access, CaseChecks cases, Clock clock,
+                             Supplier<UUID> identifiers) {
+        this.transactions = Objects.requireNonNull(transactions);
+        this.access = Objects.requireNonNull(access);
+        this.cases = Objects.requireNonNull(cases);
+        this.clock = Objects.requireNonNull(clock);
+        this.identifiers = Objects.requireNonNull(identifiers);
+    }
+
+    public SubmissionDto submitUrlV1(Authentication auth, UUID assignmentId, String key, SubmissionInput input) {
+        UUID actorId = UUID.fromString(actor(auth));
+        Objects.requireNonNull(assignmentId);
+        Objects.requireNonNull(input);
+        return transactions.execute(session -> {
+            var target = load(session.assignment(assignmentId), assignmentId);
+            requireOwner(actorId, target);
+            access.requireSubmit(auth, target); // Current auth is required even for cached replay.
+            if (input.url() == null || !input.fileIds().isEmpty()) {
+                // Valid file input must wait for CLEAN/binding integration, never pretend it is clean.
+                throw failure(503, "DEPENDENCY_UNAVAILABLE");
+            }
+            var command = new OperationLedger.Command(actorId.toString(), target.cohort().scope().schoolOrgId().toString(),
+                    "T3_SUBMISSION_CREATE", key, Map.of("assignmentId", assignmentId, "request", input), 201);
+            return session.idempotent(command, () -> {
+                var guardNow = clock.instant();
+                UUID student = cases.requireTaskParticipant(auth, target.cohort(), target.group(),
+                        target.assignment().caseId(), guardNow);
+                if (student == null || !student.equals(target.assignment().studentUserId())) throw unavailable();
+                var current = load(session.lockAssignment(assignmentId), assignmentId);
+                requireSameResource(target, current);
+                requireOwner(actorId, current);
+                access.requireSubmit(auth, current);
+                var assignment = current.assignment();
+                SubmissionPolicy.requireSubmission(assignment.state(), assignment.version(), input.expectedAssignmentVersion());
+                if (assignment.currentSubmissionId() != null || session.hasHistory(assignmentId)) {
+                    throw failure(409, "STATE_CONFLICT"); // Only first submission belongs to M2.
+                }
+                var task = current.task().value();
+                var now = clock.instant(); // Deadline uses server time after guards/lock waits.
+                boolean late = SubmissionPolicy.lateFlag(task.dueAt(), task.lateAllowed(), now);
+                var created = new SubmissionDto(Objects.requireNonNull(identifiers.get()), assignmentId, 1,
+                        List.of(), input.url(), input.note(), now, late);
+                session.appendFirst(assignment, created);
+                session.audit(AuditAction.SUBMISSION_CREATED, actorId, current.cohort().scope().schoolOrgId(),
+                        created.submissionId(), Map.of("assignmentId", assignmentId.toString(), "versionNo", 1,
+                                "fileIds", List.of(), "lateFlag", late));
+                return created;
+            });
+        });
+    }
+
+    public HistoryPage history(Authentication auth, UUID assignmentId, int page, int size) {
+        actor(auth);
+        Objects.requireNonNull(assignmentId);
+        page(page, size);
+        return transactions.execute(session -> {
+            var target = load(session.assignment(assignmentId), assignmentId);
+            access.requireRead(auth, target);
+            var result = session.history(assignmentId, page, size);
+            if (result == null || result.content().size() > size
+                    || result.content().stream().anyMatch(row -> !assignmentId.equals(row.assignmentId()))) {
+                throw unavailable();
+            }
+            var order = Comparator.comparing(SubmissionDto::versionNo).reversed()
+                    .thenComparing(row -> row.submissionId().toString());
+            if (!result.content().equals(result.content().stream().sorted(order).toList())) throw unavailable();
+            // History is readable after terminal Case/Placement state if current read authorization permits.
+            return result;
+        });
+    }
+
+    private void requireOwner(UUID actorId, AssignmentContext target) {
+        if (!actorId.equals(target.assignment().studentUserId())) throw failure(404, "RESOURCE_NOT_FOUND");
+    }
+
+    private static AssignmentContext load(AssignmentContext target, UUID expectedId) {
+        if (target == null) throw failure(404, "RESOURCE_NOT_FOUND");
+        if (!expectedId.equals(target.assignment().assignmentId())) throw unavailable();
+        return target;
+    }
+
+    private static void requireSameResource(AssignmentContext before, AssignmentContext after) {
+        if (!before.cohort().id().equals(after.cohort().id())
+                || !before.cohort().scope().equals(after.cohort().scope())
+                || !before.group().id().equals(after.group().id())
+                || !before.task().value().taskId().equals(after.task().value().taskId())
+                || !before.assignment().caseId().equals(after.assignment().caseId())
+                || !before.assignment().studentUserId().equals(after.assignment().studentUserId())) throw unavailable();
+    }
+
+    private static RuntimeException unavailable() { return failure(503, "DEPENDENCY_UNAVAILABLE"); }
+}
