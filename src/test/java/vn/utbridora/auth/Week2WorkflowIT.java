@@ -226,10 +226,26 @@ enterpriseIsolationTC03(
         memberships.grant(id(1),subject.id,vn.utbridora.auth.user.Role.SCHOOL_STAFF,id(11));
         delegations.grant(as(2),id(21),key(),new SchoolDelegationService.Grant(subject.id,List.of("matching:run:execute"),List.of(),Instant.now(),Instant.now().plusSeconds(1800),"DEMO-W2-EXECUTE-ONLY"));
         String demand=jdbc.queryForObject("SELECT demand_id FROM match_runs WHERE id=?",String.class,run);long version=jdbc.queryForObject("SELECT version FROM demands WHERE id=?",Long.class,demand);
-        var executeOnly=matching.evaluate(as(22),key(),new MatchingService.Evaluate(demand,version,1L));assertEquals("COMPLETED",executeOnly.summary().run().state());
-        final var limited=as(22);assertThrows(OperationFailure.class,()->matching.details(limited,executeOnly.summary().run().matchRunId(),"MATCH",0,25));
-        var child=delegations.grant(as(2),id(21),key(),new SchoolDelegationService.Grant(subject.id,List.of("matching:school:detail_read"),List.of(),Instant.now(),Instant.now().plusSeconds(1800),"DEMO-W2-CHILD"));
-        var session=login(subject.email,"Synthetic-week2-delegate-password-123");
+                var executeOnly = matching.evaluate(as(22), key(),
+            new MatchingService.Evaluate(demand, version, 1L));
+        assertEquals("COMPLETED", executeOnly.summary().run().state());
+
+        String executeOnlyRun = executeOnly.summary().run().matchRunId();
+        String detailsPath = "/matching/runs/" + executeOnlyRun + "/details?overallStatus=MATCH";
+        String delegatePassword = "Synthetic-week2-delegate-password-123";
+
+        var beforeGrant = login(subject.email, delegatePassword);
+        assertEquals(404, http(beforeGrant, "GET", detailsPath, null, false, null),
+            "TC04: Staff with execute-only grant must not read matching details");
+
+        var child = delegations.grant(as(2), id(21), key(), new SchoolDelegationService.Grant(
+            subject.id, List.of("matching:school:detail_read"), List.of(),
+            Instant.now(), Instant.now().plusSeconds(1800), "DEMO-W2-CHILD"));
+
+        var session = login(subject.email, delegatePassword);
+        assertEquals(200, http(session, "GET", detailsPath, null, false, null),
+            "TC04: The same staff can read the same run after receiving detail_read");
+
         matchingDetailsStayWithinSchool(session, run);
         admin=as(1);delegations.revoke(admin,parent.id(),key(),new SchoolDelegationService.Revoke(parent.version(),"ROOT_REVOKED"));
         assertEquals(401,http(session,"GET","/matching/runs/"+run+"/details?overallStatus=MATCH",null,false,null));
