@@ -24,7 +24,7 @@ import vn.utbridora.auth.modules.cooperation.domain.DemandModels.*;
 import vn.utbridora.auth.modules.internship.integration.PlacementLifecycleConsumer;
 import vn.utbridora.auth.modules.student.application.StudentProfileService;
 
-/** Synthetic prerequisites for a new, explicitly opted-in local database; never merge into existing data. */
+/** Synthetic prerequisites for an opted-in local database, optionally preserving its sole bootstrap admin. */
 @Configuration(proxyBeanMethods=false)
 @Profile("local")
 @ConditionalOnProperty(name="app.demo.local.enabled",havingValue="true")
@@ -39,7 +39,8 @@ public class LocalDemoBootstrap {
             StudentProfileService profiles,DemandService demands,AuthorizationPolicy authority,
             @Value("${app.bootstrap.admin.email:}") String adminEmail,
             @Value("${app.bootstrap.admin.password:}") String adminPassword,
-            @Value("${DEMO_PASSWORD:}") String demoPassword) {
+            @Value("${DEMO_PASSWORD:}") String demoPassword,
+            @Value("${app.demo.local.allow-existing-admin:false}") boolean allowExistingAdmin) {
         return args->{
             if(!"utbridora".equals(jdbc.queryForObject("SELECT DATABASE()",String.class)))
                 throw new IllegalStateException("Local demo requires database utbridora; no data was seeded");
@@ -52,18 +53,27 @@ public class LocalDemoBootstrap {
                 var receipt=jdbc.queryForList("SELECT state FROM local_demo_seed_receipts WHERE fixture_id=? FOR UPDATE",String.class,FIXTURE);
                 if(!receipt.isEmpty() && receipt.getFirst().equals("DONE")) return null;
                 if(receipt.isEmpty()) {
-                    if(jdbc.queryForObject("SELECT COUNT(*) FROM users",Long.class)!=0
-                        || jdbc.queryForObject("SELECT COUNT(*) FROM organizations",Long.class)!=0
-                        || jdbc.queryForObject("SELECT COUNT(*) FROM skill_categories",Long.class)!=0)
-                        throw new IllegalStateException("Local demo requires a new database; disable LOCAL_DEMO_ENABLED to keep existing data. No accounts or passwords were overwritten");
-                    PasswordPolicy.requireValid(adminPassword);
-                    PasswordPolicy.requireValid(demoPassword);
                     String email=adminEmail.trim().toLowerCase(Locale.ROOT);
                     if(!email.matches("[^\\s@]+@[^\\s@]+\\.[^\\s@]+")
                         || Set.of("school@example.test","coordinator@example.test","hr@example.test","mentor@example.test","student@example.test","intern@example.test").contains(email))
                         throw new IllegalStateException("Configure a distinct local bootstrap admin email");
-                    var params=Map.of("adminEmail",email,"adminPasswordHash",encoder.encode(adminPassword),
-                        "demoPasswordHash",encoder.encode(demoPassword));
+                    long userCount=jdbc.queryForObject("SELECT COUNT(*) FROM users",Long.class);
+                    var existingAdmins=allowExistingAdmin && userCount==1 ? jdbc.queryForList(
+                        "SELECT u.id FROM users u WHERE u.email=? AND u.status='ACTIVE' AND EXISTS "
+                        +"(SELECT 1 FROM memberships m WHERE m.user_id=u.id AND m.organization_id IS NULL AND m.role='ADMIN' AND m.active=true)",String.class,email) : List.<String>of();
+                    if((userCount!=0 && existingAdmins.size()!=1)
+                        || jdbc.queryForObject("SELECT COUNT(*) FROM organizations",Long.class)!=0
+                        || jdbc.queryForObject("SELECT COUNT(*) FROM skill_categories",Long.class)!=0)
+                        throw new IllegalStateException("Local demo requires a new database or an explicitly allowed sole bootstrap admin; disable LOCAL_DEMO_ENABLED to keep existing data. No accounts or passwords were overwritten");
+                    PasswordPolicy.requireValid(demoPassword);
+                    String adminId=existingAdmins.isEmpty()?id(1):existingAdmins.getFirst();
+                    if(existingAdmins.isEmpty()) {
+                        PasswordPolicy.requireValid(adminPassword);
+                        jdbc.update("INSERT INTO users(id,email,password_hash,display_name,status,created_at,updated_at) VALUES (?,?,?,'DEMO Admin','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",
+                            adminId,email,encoder.encode(adminPassword));
+                        jdbc.update("INSERT INTO memberships(id,user_id,organization_id,role,created_at) VALUES (UUID(),?,NULL,'ADMIN',UTC_TIMESTAMP(6))",adminId);
+                    }
+                    var params=Map.of("adminId",adminId,"demoPasswordHash",encoder.encode(demoPassword));
                     var named=new NamedParameterJdbcTemplate(jdbc);
                     for(String statement:sql.split(";")) if(!statement.isBlank()) named.update(statement,params);
                     createExamples(profiles,demands,authority);

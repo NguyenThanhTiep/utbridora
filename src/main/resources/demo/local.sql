@@ -1,11 +1,10 @@
--- Synthetic Week 1 prerequisites, imported once into a NEW, explicitly opted-in local utbridora database.
+-- Synthetic Week 1 prerequisites; the bootstrap creates or preserves the authorized local admin separately.
 -- APPROVED verification/Placement and accepted Mentor invitation are fixtures, NOT a completed Week 2/3 workflow.
 -- No real users, school approvals, CLEAN file scans or team signatures are fabricated.
 INSERT INTO organizations(id,name,type,status,created_at) VALUES
  ('00000000-0000-4000-8000-000000000011','DEMO - School A','UNIVERSITY','VERIFIED',UTC_TIMESTAMP(6)),
  ('00000000-0000-4000-8000-000000000012','DEMO - Enterprise A','ENTERPRISE','VERIFIED',UTC_TIMESTAMP(6));
 INSERT INTO users(id,email,password_hash,display_name,status,created_at,updated_at) VALUES
- ('00000000-0000-4000-8000-000000000001',:adminEmail,:adminPasswordHash,'DEMO Admin','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)),
  ('00000000-0000-4000-8000-000000000002','school@example.test',:demoPasswordHash,'DEMO School Staff','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)),
  ('00000000-0000-4000-8000-000000000003','coordinator@example.test',:demoPasswordHash,'DEMO Coordinator','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)),
  ('00000000-0000-4000-8000-000000000004','hr@example.test',:demoPasswordHash,'DEMO HR','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)),
@@ -13,7 +12,6 @@ INSERT INTO users(id,email,password_hash,display_name,status,created_at,updated_
  ('00000000-0000-4000-8000-000000000006','student@example.test',:demoPasswordHash,'DEMO Student - profile','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)),
  ('00000000-0000-4000-8000-000000000007','intern@example.test',:demoPasswordHash,'DEMO Student - internship fixture','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6));
 INSERT INTO memberships(id,user_id,organization_id,role,created_at) VALUES
- (UUID(),'00000000-0000-4000-8000-000000000001',NULL,'ADMIN',UTC_TIMESTAMP(6)),
  (UUID(),'00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000011','SCHOOL_STAFF',UTC_TIMESTAMP(6)),
  (UUID(),'00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000012','ENTERPRISE',UTC_TIMESTAMP(6)),
  (UUID(),'00000000-0000-4000-8000-000000000004','00000000-0000-4000-8000-000000000012','ENTERPRISE',UTC_TIMESTAMP(6)),
@@ -37,7 +35,7 @@ INSERT INTO skill_categories(id,category_code,name,normalized_name,status,versio
 INSERT INTO skills(id,skill_code,name,normalized_name,category_id,status,version,created_at,updated_at) VALUES
  ('00000000-0000-4000-8000-000000000042','JAVA','Java','java','00000000-0000-4000-8000-000000000041','ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6));
 INSERT INTO school_delegations(id,user_id,school_org_id,term_id,granted_by,decision_ref,profile_read_fields_json,valid_from,valid_until,active,version) VALUES
- ('00000000-0000-4000-8000-000000000051','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000011','00000000-0000-4000-8000-000000000021','00000000-0000-4000-8000-000000000001','SYNTHETIC_WEEK1_DEMO',JSON_ARRAY(),DATE_SUB(UTC_DATE(),INTERVAL 1 DAY),DATE_ADD(UTC_DATE(),INTERVAL 120 DAY),true,1);
+ ('00000000-0000-4000-8000-000000000051','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000011','00000000-0000-4000-8000-000000000021',:adminId,'SYNTHETIC_WEEK1_DEMO',JSON_ARRAY(),DATE_SUB(UTC_DATE(),INTERVAL 1 DAY),DATE_ADD(UTC_DATE(),INTERVAL 120 DAY),true,1);
 INSERT INTO school_delegation_permissions VALUES
  ('00000000-0000-4000-8000-000000000051','t3:coordinator:confirm'),
  ('00000000-0000-4000-8000-000000000051','enterprise_verification:school:review'),

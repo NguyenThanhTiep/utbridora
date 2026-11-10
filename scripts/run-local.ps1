@@ -1,9 +1,14 @@
-param([ValidateSet('start','stop','logs')][string]$Action='start')
+param([ValidateSet('start','stop','logs')][string]$Action='start',[switch]$Demo)
 $ErrorActionPreference='Stop'
 $project=Split-Path -Parent $PSScriptRoot
 $configuration=Join-Path $project 'compose.local.yaml'
-$environmentFile=Join-Path $project '.env.local'
-$projectName='utbridora-local'
+$environmentName=if ($Demo) { '.env.demo' } else { '.env.local' }
+$environmentFile=Join-Path $project $environmentName
+$projectName=if ($Demo) { 'utbridora-demo' } else { 'utbridora-local' }
+$httpPort=if ($Demo) { '18088' } else { '8088' }
+$mailpitPort=if ($Demo) { '18026' } else { '8026' }
+$mysqlPort=if ($Demo) { '13307' } else { '3307' }
+$commandSuffix=if ($Demo) { ' -Demo' } else { '' }
 
 function New-LocalSecret {
     $random=[Security.Cryptography.RandomNumberGenerator]::Create()
@@ -35,17 +40,17 @@ try {
     }
 
     if (!(Test-Path -LiteralPath $environmentFile)) {
-        if ($Action -ne 'start') { throw 'Chua co cau hinh local. Chay run-local.cmd start truoc.' }
+        if ($Action -ne 'start') { throw "Chua co cau hinh local. Chay run-local.cmd start$commandSuffix truoc." }
         $existingVolumes=@(& docker volume ls --filter "label=com.docker.compose.project=$projectName" --format '{{.Name}}')
         if ($LASTEXITCODE -ne 0) { throw 'Khong kiem tra duoc Docker volume.' }
         if ($existingVolumes.Count -gt 0) {
-            throw 'Con database local nhung thieu .env.local. Hay khoi phuc file cau hinh cu; script khong xoa database hoac tu doi mat khau.'
+            throw "Con database local nhung thieu $environmentName. Hay khoi phuc file cau hinh cu; script khong xoa database hoac tu doi mat khau."
         }
         $lines=@(
             '# Local demo only. Generated secrets: do not commit or share this file.',
-            'LOCAL_HTTP_PORT=8088',
-            'MAILPIT_HTTP_PORT=8026',
-            'LOCAL_MYSQL_PORT=3307',
+            "LOCAL_HTTP_PORT=$httpPort",
+            "MAILPIT_HTTP_PORT=$mailpitPort",
+            "LOCAL_MYSQL_PORT=$mysqlPort",
             'LOCAL_DEMO_ENABLED=true',
             "DEMO_PASSWORD=$(New-LocalSecret)",
             "DB_PASSWORD=$(New-LocalSecret)",
@@ -59,7 +64,7 @@ try {
             $bytes=[Text.UTF8Encoding]::new($false).GetBytes(($lines -join "`n")+"`n")
             $stream.Write($bytes,0,$bytes.Length)
         } finally { $stream.Dispose() }
-        Write-Host 'Da tao .env.local voi mat khau ngau nhien. File .env cu duoc giu nguyen.'
+        Write-Host "Da tao $environmentName voi mat khau ngau nhien."
     }
 
     $settings=@{}
@@ -67,20 +72,23 @@ try {
         if ($_ -match '^([A-Z][A-Z0-9_]*)=(.*)$') { $settings[$matches[1]]=$matches[2] }
     }
     $requiredKeys=@('LOCAL_HTTP_PORT','MAILPIT_HTTP_PORT','DB_PASSWORD','DB_ROOT_PASSWORD','BOOTSTRAP_ADMIN_EMAIL','BOOTSTRAP_ADMIN_PASSWORD')
-    $managedKeys=$requiredKeys+@('LOCAL_MYSQL_PORT','LOCAL_DEMO_ENABLED','DEMO_PASSWORD')
+    $managedKeys=$requiredKeys+@('LOCAL_MYSQL_PORT','LOCAL_DEMO_ENABLED','LOCAL_DEMO_ALLOW_EXISTING_ADMIN','DEMO_PASSWORD')
     foreach ($key in $requiredKeys) {
-        if ([string]::IsNullOrWhiteSpace($settings[$key])) { throw "Thieu gia tri $key trong .env.local." }
+        if ([string]::IsNullOrWhiteSpace($settings[$key])) { throw "Thieu gia tri $key trong $environmentName." }
     }
-    if (!$settings.ContainsKey('LOCAL_MYSQL_PORT')) { $settings['LOCAL_MYSQL_PORT']='3307' }
+    if (!$settings.ContainsKey('LOCAL_MYSQL_PORT')) { $settings['LOCAL_MYSQL_PORT']=$mysqlPort }
     if (!$settings.ContainsKey('LOCAL_DEMO_ENABLED')) { $settings['LOCAL_DEMO_ENABLED']='false' }
     if ($settings['LOCAL_DEMO_ENABLED'] -notin @('true','false')) { throw 'LOCAL_DEMO_ENABLED phai la true hoac false.' }
+    if ($settings.ContainsKey('LOCAL_DEMO_ALLOW_EXISTING_ADMIN') -and $settings['LOCAL_DEMO_ALLOW_EXISTING_ADMIN'] -notin @('true','false')) {
+        throw 'LOCAL_DEMO_ALLOW_EXISTING_ADMIN phai la true hoac false.'
+    }
     if ($settings['LOCAL_DEMO_ENABLED'] -eq 'true' -and [string]::IsNullOrWhiteSpace($settings['DEMO_PASSWORD'])) {
-        throw 'Thieu DEMO_PASSWORD trong .env.local; khong tu doi mat khau database cu.'
+        throw "Thieu DEMO_PASSWORD trong $environmentName; khong tu doi mat khau database cu."
     }
     foreach ($key in @('LOCAL_HTTP_PORT','MAILPIT_HTTP_PORT','LOCAL_MYSQL_PORT')) {
         $port=0
         if (![int]::TryParse($settings[$key],[ref]$port) -or $port -lt 1024 -or $port -gt 65535) {
-            throw "Cong $key trong .env.local khong hop le."
+            throw "Cong $key trong $environmentName khong hop le."
         }
     }
     if (@($settings['LOCAL_HTTP_PORT'],$settings['MAILPIT_HTTP_PORT'],$settings['LOCAL_MYSQL_PORT'] | Select-Object -Unique).Count -ne 3) {
@@ -105,11 +113,11 @@ try {
                 Write-Host "Ung dung: http://localhost:$($settings['LOCAL_HTTP_PORT'])"
                 Write-Host "Email thu nghiem: http://localhost:$($settings['MAILPIT_HTTP_PORT'])"
                 Write-Host "Tai khoan admin: $($settings['BOOTSTRAP_ADMIN_EMAIL'])"
-                Write-Host 'Mat khau: xem BOOTSTRAP_ADMIN_PASSWORD trong .env.local (khong in secret ra log).'
+                Write-Host "Mat khau: xem BOOTSTRAP_ADMIN_PASSWORD trong $environmentName (khong in secret ra log)."
                 if ($settings['LOCAL_DEMO_ENABLED'] -eq 'true') {
-                    Write-Host 'Tai khoan nghiep vu demo: xem docs/guides/LOCAL_DEMO.md; mat khau DEMO_PASSWORD trong .env.local.'
+                    Write-Host "Tai khoan nghiep vu demo: xem docs/guides/LOCAL_DEMO.md; mat khau DEMO_PASSWORD trong $environmentName."
                 }
-                Write-Host 'Dung ung dung: run-local.cmd stop. Du lieu database van duoc giu lai.'
+                Write-Host "Dung ung dung: run-local.cmd stop$commandSuffix. Du lieu database van duoc giu lai."
             }
             'stop' {
                 Invoke-LocalDocker ($compose+@('stop'))
