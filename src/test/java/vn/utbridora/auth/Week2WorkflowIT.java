@@ -121,6 +121,10 @@ class Week2WorkflowIT {
         }
         consentEdges(invitation.invitationId(),share.shareId());
         cooperationEdges(demandData.data());
+enterpriseIsolationTC03(
+    demandData.data(),
+    sent.cooperation().cooperationId()
+);
         invitationEdges(demandData.data());
         handoverBoundary(group,caseId,task.taskId());
         delegationRevocationBoundary(grant,matched.summary().run().matchRunId());
@@ -289,6 +293,78 @@ assertEquals(id(21), scope.get("term_id"),
         assertNull(error.get("results"));
         assertFalse(denied.body().contains(run), "The denial must not disclose the run identifier");
     }
+
+private void enterpriseIsolationTC03(
+    vn.utbridora.auth.modules.cooperation.domain.DemandModels.DemandInput input,
+    String cooperationA
+) throws Exception {
+    // Tao doanh nghiep B trong database test
+    String orgB = key();
+    jdbc.update(
+        "INSERT INTO organizations(id,name,type,status,created_at) " +
+        "VALUES(?,?,'ENTERPRISE','VERIFIED',UTC_TIMESTAMP(6))",
+        orgB, "QA01 Enterprise B"
+    );
+
+    // Tao tai khoan HR B
+    String passwordB = "Qa01-" + key();
+    var hrB = new vn.utbridora.auth.user.UserAccount();
+    hrB.id = key();
+    hrB.email = "qa01-hr-" + hrB.id + "@example.test";
+    hrB.displayName = "QA01 HR B";
+    hrB.passwordHash = passwords.encode(passwordB);
+    hrB.status = vn.utbridora.auth.user.AccountStatus.ACTIVE;
+    users.saveAndFlush(hrB);
+
+    // Cap role ENTERPRISE cho HR B
+    as(1);
+    memberships.grant(
+        id(1), hrB.id,
+        vn.utbridora.auth.user.Role.ENTERPRISE, orgB
+    );
+
+    // Tao cooperation thuoc doanh nghiep B
+    var authB = core.currentSubject(hrB.id).orElseThrow();
+    SecurityContextHolder.getContext().setAuthentication(authB);
+    var demandB = demands.create(authB, orgB, key(), input);
+    var cooperationB = cooperations.create(
+        authB, orgB, key(),
+        new CooperationService.Submit(
+            demandB.demandId(), demandB.version()
+        )
+    );
+
+    // Dang nhap va kiem tra qua API
+    var sessionA = login(
+        "hr@example.test", "Synthetic-week2-test-password-123"
+    );
+    var sessionB = login(hrB.email, passwordB);
+
+    String pathA = "/enterprise/cooperations/" + cooperationA;
+    String pathB = "/enterprise/cooperations/" +
+        cooperationB.cooperationId();
+
+    // HR A doc ban ghi A
+    assertEquals(200, http(
+        sessionA, "GET", pathA, null, false, id(12)
+    ));
+
+    // HR A khong duoc doc ban ghi B
+    assertEquals(404, http(
+        sessionA, "GET", pathB, null, false, id(12)
+    ));
+
+    // HR B doc ban ghi B
+    assertEquals(200, http(
+        sessionB, "GET", pathB, null, false, orgB
+    ));
+
+    // HR B khong duoc doc ban ghi A
+    assertEquals(404, http(
+        sessionB, "GET", pathA, null, false, orgB
+    ));
+}
+
     private record HttpSession(java.net.http.HttpClient client,String header,String token) {}
     private HttpSession login(String email,String password) throws Exception {
         var client=java.net.http.HttpClient.newBuilder().cookieHandler(new java.net.CookieManager(null,java.net.CookiePolicy.ACCEPT_ALL)).build();
