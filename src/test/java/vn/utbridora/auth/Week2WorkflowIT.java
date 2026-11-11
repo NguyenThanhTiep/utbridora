@@ -138,6 +138,8 @@ enterpriseIsolationTC03(
 );
         invitationEdges(demandData.data());
         handoverBoundary(group,caseId,task.taskId());
+        // QA01 T1-04-TC08: global ADMIN must not inherit business access or self-bootstrap.
+        adminBusinessAndSelfBootstrapTC08(matched.summary().run().matchRunId());
         delegationRevocationBoundary(grant,matched.summary().run().matchRunId());
     }
     private static void context(String id) {var request=new org.springframework.mock.web.MockHttpServletRequest();request.addHeader("X-Context-Assignment-Id",id);org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(new org.springframework.web.context.request.ServletRequestAttributes(request));}
@@ -383,6 +385,77 @@ assertEquals(grantAuditCountBefore, jdbc.queryForObject(grantAuditCountSql, Inte
         assignments.revoke(as(2),coordinator,key(),new vn.utbridora.auth.modules.internship.infrastructure.WorkspaceAssignmentService.Revoke(1L,"SCHOOL_REVOKED"));
         assertEquals(401,http(hr,"GET","/t3/context-assignments/me",null,false,null));assertEquals(0,workspace.assignments(as(4)).size());assertEquals(0,workspace.assignments(as(5)).size());
     }
+    /** QA01 T1-04-TC08: global ADMIN is not a scoped business actor and cannot self-grant. */
+    private void adminBusinessAndSelfBootstrapTC08(String run) throws Exception {
+        String adminId = jdbc.queryForObject(
+                "SELECT id FROM users WHERE email = ?", String.class, "admin@example.test");
+        Authentication adminAuth = core.currentSubject(adminId).orElseThrow();
+
+        // Global administration remains available, but does not imply school/enterprise memberships.
+        assertTrue(core.hasGlobal(adminAuth, "membership:admin:write"),
+                "TC08: test actor must have global ADMIN permission");
+        assertEquals(0, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM memberships WHERE user_id = ? AND organization_id IS NOT NULL AND active = true",
+                Integer.class, adminId),
+                "TC08: global ADMIN fixture must not have scoped business membership");
+        assertFalse(core.hasOrganization(adminAuth, id(11),
+                vn.utbridora.auth.user.Role.SCHOOL_STAFF, "matching:school:detail_read"),
+                "TC08: ADMIN cannot inherit SCHOOL_STAFF read permission");
+        assertFalse(core.hasOrganization(adminAuth, id(12),
+                vn.utbridora.auth.user.Role.ENTERPRISE, "student_profile:shared:read"),
+                "TC08: ADMIN cannot inherit ENTERPRISE business permission");
+
+        var adminSession = login("admin@example.test", "Synthetic-week2-admin-password-456");
+        // The route rejects a global ADMIN lacking a scoped business role at the HTTP security boundary (403).
+        assertEquals(403, http(adminSession, "GET",
+                "/matching/runs/" + run + "/details?overallStatus=MATCH", null, false, null),
+                "TC08: ADMIN without a school business role must be forbidden from reading matching details");
+
+        String serviceDecisionRef = "DEMO-W2-TC08-SELF-SERVICE-" + key();
+        String apiDecisionRef = "DEMO-W2-TC08-SELF-HTTP-" + key();
+        int delegationsBefore = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM school_delegations", Integer.class);
+        int grantAuditBefore = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM audit_logs WHERE action = 'CAPABILITY_GRANTED'", Integer.class);
+        Instant from = Instant.now().minusSeconds(30);
+        Instant until = Instant.now().plusSeconds(1800);
+
+        var selfBootstrap = new SchoolDelegationService.Bootstrap(
+                adminId, id(11), id(21),
+                List.of("matching:school:detail_read"), List.of(),
+                from, until, serviceDecisionRef);
+        var denied = assertThrows(OperationFailure.class,
+                () -> delegations.bootstrap(adminAuth, key(), selfBootstrap),
+                "TC08: self-bootstrap must be denied by service");
+        assertEquals(403, denied.status,
+                "TC08: service self-bootstrap denial must be HTTP 403");
+        assertEquals("ACCESS_DENIED", denied.code);
+
+        String apiBody = vn.utbridora.auth.operations.WorkflowValues.JSON.writeValueAsString(Map.of(
+                "userId", adminId,
+                "schoolOrgId", id(11),
+                "termId", id(21),
+                "permissionCodes", List.of("matching:school:detail_read"),
+                "profileReadFields", List.of(),
+                "validFrom", from.toString(),
+                "validUntil", until.toString(),
+                "decisionRef", apiDecisionRef));
+        assertEquals(403, http(adminSession, "POST", "/admin/school-delegations",
+                apiBody, true, null),
+                "TC08: HTTP bootstrap must reject ADMIN granting to themself");
+
+        // Both rejected requests must leave the grant table and successful-grant audit unchanged.
+        assertEquals(delegationsBefore, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM school_delegations", Integer.class),
+                "TC08: rejected self-bootstrap must not create delegations");
+        assertEquals(0, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM school_delegations WHERE decision_ref IN (?, ?)",
+                Integer.class, serviceDecisionRef, apiDecisionRef));
+        assertEquals(grantAuditBefore, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM audit_logs WHERE action = 'CAPABILITY_GRANTED'", Integer.class),
+                "TC08: rejected self-bootstrap must not write successful grant audit");
+    }
+
     /** QA01 T1-04-TC07: current grants are usable; expired and future grants are not. */
     private void delegationValidityTC07(HttpSession schoolSession, String detailsPath,
                                         SchoolDelegationService.Delegation parent) throws Exception {
