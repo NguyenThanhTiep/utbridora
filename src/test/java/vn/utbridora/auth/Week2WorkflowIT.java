@@ -377,6 +377,8 @@ assertEquals(grantAuditCountBefore, jdbc.queryForObject(grantAuditCountSql, Inte
         matchingDetailsStayWithinSchool(session, run);
         // QA01 T1-04-TC07: verify grant access for ACTIVE, EXPIRED, and FUTURE periods.
         delegationValidityTC07(schoolSession, detailsPath, parent);
+        // QA01 T1-05-TC01: verify successful HTTP grant/revoke audit, metadata and request correlation.
+        auditWorkflowMetadataTC01(schoolSession, subject.id, parent);
         admin=as(1);delegations.revoke(admin,parent.id(),key(),new SchoolDelegationService.Revoke(parent.version(),"ROOT_REVOKED"));
         assertEquals(401,http(session,"GET","/matching/runs/"+run+"/details?overallStatus=MATCH",null,false,null));
         var newSession=login(subject.email,"Synthetic-week2-delegate-password-123");assertEquals(404,http(newSession,"GET","/matching/runs/"+run+"/details?overallStatus=MATCH",null,false,null));
@@ -385,6 +387,119 @@ assertEquals(grantAuditCountBefore, jdbc.queryForObject(grantAuditCountSql, Inte
         assignments.revoke(as(2),coordinator,key(),new vn.utbridora.auth.modules.internship.infrastructure.WorkspaceAssignmentService.Revoke(1L,"SCHOOL_REVOKED"));
         assertEquals(401,http(hr,"GET","/t3/context-assignments/me",null,false,null));assertEquals(0,workspace.assignments(as(4)).size());assertEquals(0,workspace.assignments(as(5)).size());
     }
+    /** QA01 T1-05-TC01: compare actual HTTP request IDs with persisted Grant/Revoke audit events. */
+    private void auditWorkflowMetadataTC01(HttpSession schoolSession, String recipient,
+                                           SchoolDelegationService.Delegation parent) throws Exception {
+        String decisionRef = "DEMO-W2-T1-05-TC01-" + key();
+        Instant from = Instant.now().minusSeconds(5);
+        Instant until = Instant.now().plusSeconds(900);
+        assertFalse(from.isBefore(parent.validFrom()), "TC01: grant must remain within parent start");
+        assertFalse(until.isAfter(parent.validUntil()), "TC01: grant must remain within parent end");
+
+        String grantBody = vn.utbridora.auth.operations.WorkflowValues.JSON.writeValueAsString(Map.of(
+                "userId", recipient,
+                "permissionCodes", List.of("matching:school:detail_read"),
+                "profileReadFields", List.of(),
+                "validFrom", from.toString(),
+                "validUntil", until.toString(),
+                "decisionRef", decisionRef));
+        Instant grantBefore = Instant.now();
+        var granted = auditHttpTC01(schoolSession, "POST",
+                "/school/terms/" + id(21) + "/delegations", grantBody);
+        Instant grantAfter = Instant.now();
+        assertEquals(201, granted.statusCode(), "TC01: HTTP grant must succeed: " + granted.body());
+        String child = vn.utbridora.auth.operations.WorkflowValues.JSON.readTree(granted.body())
+                .get("id").asString();
+        assertEquals(child, jdbc.queryForObject(
+                "SELECT id FROM school_delegations WHERE decision_ref=?", String.class, decisionRef));
+        assertEquals(1, jdbc.queryForObject(
+                "SELECT version FROM school_delegations WHERE id=?", Integer.class, child));
+
+        assertAuditWorkflowTC01("CAPABILITY_GRANTED", child, id(2), id(11), granted,
+                grantBefore, grantAfter,
+                Map.of("scopeKind", "SCHOOL", "scopeId", id(11), "termId", id(21),
+                       "assignmentKind", "SCHOOL", "validFrom", from.toString(),
+                       "validUntil", until.toString(), "decisionRef", decisionRef));
+
+        String reason = "QA01_REVOKED";
+        String revokeBody = vn.utbridora.auth.operations.WorkflowValues.JSON.writeValueAsString(Map.of(
+                "expectedVersion", 1, "reasonCode", reason));
+        Instant revokeBefore = Instant.now();
+        var revoked = auditHttpTC01(schoolSession, "DELETE",
+                "/school/delegations/" + child, revokeBody);
+        Instant revokeAfter = Instant.now();
+        assertEquals(200, revoked.statusCode(), "TC01: HTTP revoke must succeed: " + revoked.body());
+        assertEquals(2, jdbc.queryForObject(
+                "SELECT version FROM school_delegations WHERE id=?", Integer.class, child));
+        assertFalse(jdbc.queryForObject(
+                "SELECT active FROM school_delegations WHERE id=?", Boolean.class, child));
+
+        assertAuditWorkflowTC01("CAPABILITY_REVOKED", child, id(2), id(11), revoked,
+                revokeBefore, revokeAfter,
+                Map.of("scopeKind", "SCHOOL", "scopeId", id(11), "termId", id(21),
+                       "assignmentKind", "SCHOOL", "reasonCode", reason));
+    }
+
+    private java.net.http.HttpResponse<String> auditHttpTC01(HttpSession session,
+            String method, String path, String body) throws Exception {
+        var request = java.net.http.HttpRequest.newBuilder(java.net.URI.create(
+                "http://localhost:" + port + "/api/v1" + path))
+                .header("Content-Type", "application/json")
+                .header("Idempotency-Key", key())
+                .header(session.header(), session.token())
+                .header("X-Request-ID", "untrusted-qa01-client-id")
+                .method(method, java.net.http.HttpRequest.BodyPublishers.ofString(body))
+                .build();
+        return session.client().send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
+    }
+
+    private void assertAuditWorkflowTC01(String action, String resourceId, String expectedActor,
+            String expectedOrg, java.net.http.HttpResponse<String> response,
+            Instant started, Instant ended, Map<String,String> expectedMetadata) {
+        String requestId = response.headers().firstValue("X-Request-ID").orElseThrow();
+        assertNotEquals("untrusted-qa01-client-id", requestId,
+                "TC01: request ID must be generated by server");
+        assertDoesNotThrow(() -> UUID.fromString(requestId),
+                "TC01: server request ID must be a UUID");
+        var records = jdbc.queryForList("""
+                SELECT actor_id, action, resource_type, resource_id, result,
+                       organization_id, request_id, event_version, metadata_json, created_at
+                FROM audit_logs WHERE action=? AND resource_id=?
+                """, action, resourceId);
+        assertEquals(1, records.size(), "TC01: exactly one successful audit per HTTP workflow");
+        var row = records.getFirst();
+        assertEquals(expectedActor, row.get("actor_id"), "TC01: actor ID");
+        assertEquals(action, row.get("action"), "TC01: action");
+        assertEquals("capability_assignment", row.get("resource_type"), "TC01: resource type");
+        assertEquals(resourceId, row.get("resource_id"), "TC01: resource ID");
+        assertEquals("SUCCESS", row.get("result"), "TC01: result");
+        assertEquals(expectedOrg, row.get("organization_id"), "TC01: organization ID");
+        assertEquals(requestId, row.get("request_id"), "TC01: HTTP request correlation");
+        assertEquals(1, ((Number)row.get("event_version")).intValue(), "TC01: audit schema version");
+
+        // JdbcTemplate returns DATETIME as LocalDateTime with MySQL Connector/J.
+        // The AuditLog entity writes an Instant in UTC; accept Timestamp as a fallback.
+        Object createdAtValue = row.get("created_at");
+        Instant created;
+        if (createdAtValue instanceof LocalDateTime dateTime) {
+            created = dateTime.toInstant(ZoneOffset.UTC);
+        } else if (createdAtValue instanceof java.sql.Timestamp timestamp) {
+            created = timestamp.toInstant();
+        } else {
+            throw new AssertionError("TC01: unexpected created_at type: " +
+                    (createdAtValue == null ? "null" : createdAtValue.getClass().getName()));
+        }
+        assertFalse(created.isBefore(started.minusSeconds(5)), "TC01: audit timestamp too early");
+        assertFalse(created.isAfter(ended.plusSeconds(5)), "TC01: audit timestamp too late");
+        var metadata = vn.utbridora.auth.operations.WorkflowValues.JSON.readTree(
+                String.valueOf(row.get("metadata_json")));
+        assertEquals(expectedMetadata.size(), metadata.size(), "TC01: metadata allowlist/field count");
+        expectedMetadata.forEach((field, value) -> {
+            assertNotNull(metadata.get(field), "TC01: missing audit field " + field);
+            assertEquals(value, metadata.get(field).asString(), "TC01: metadata field " + field);
+        });
+    }
+
     /** QA01 T1-04-TC08: global ADMIN is not a scoped business actor and cannot self-grant. */
     private void adminBusinessAndSelfBootstrapTC08(String run) throws Exception {
         String adminId = jdbc.queryForObject(
