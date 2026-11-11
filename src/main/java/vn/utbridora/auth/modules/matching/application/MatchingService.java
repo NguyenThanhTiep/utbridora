@@ -61,7 +61,7 @@ public class MatchingService {
             var stored=new StoredRun(run,criteria.schoolOrgId(),criteria.enterpriseOrgId(),criteria.termId());
             jdbc.update("INSERT INTO match_runs(id,demand_id,school_org_id,enterprise_org_id,term_id,dataset_id,data_json) VALUES(?,?,?,?,?,?,?)",id,run.demandId(),stored.schoolOrgId(),stored.enterpriseOrgId(),stored.termId(),run.datasetSnapshotId(),JSON.writeValueAsString(stored));
             for(var result:results) jdbc.update("INSERT INTO match_results VALUES(?,?,?,?,?)",id,result.studentUserId(),result.overallStatus(),result.fitScore(),JSON.writeValueAsString(result));
-            audit.workflow(actor(auth),"MATCH_RUN_COMPLETED",id,criteria.schoolOrgId(),Map.of("demandId",criteria.demandId(),"runVersion",1,"status","COMPLETED","ruleVersion",StrictClassifier.RULE_VERSION));
+            audit.matchingRunCompleted(actor(auth),criteria.demandId(),id,criteria.schoolOrgId(),Map.of("demandId",criteria.demandId(),"runVersion",1,"status","COMPLETED","ruleVersion",StrictClassifier.RULE_VERSION));
             return new Evaluated("SCHOOL",new Summary(run,(int)results.stream().filter(r->r.overallStatus().equals("MATCH")).count(),(int)results.stream().filter(r->r.overallStatus().equals("MISSING_DATA")).count(),(int)results.stream().filter(r->r.overallStatus().equals("NOT_MATCH")).count()),null);
         },r->r.summary().run().matchRunId());
     }
@@ -91,6 +91,8 @@ public class MatchingService {
             if(!fingerprint.equals(existing.getFirst()[0])) throw failure(409,"PRIVACY_RELEASE_LOCKED");
             var release=(ProtectedAggregatePolicy.ProtectedAggregate)existing.getFirst()[1];
             audit.write(actor(auth),"MATCH_AGGREGATE_VIEWED","match_run",release.matchRunId(),"SUCCESS");
+            audit.matchingRunCompleted(actor(auth),criteria.demandId(),release.matchRunId(),enterpriseOrg,Map.of(
+                "demandId",criteria.demandId(),"runVersion",1,"status","COMPLETED","ruleVersion",StrictClassifier.RULE_VERSION));
             return new Evaluated("ENTERPRISE",null,release);
         }
 
@@ -115,6 +117,8 @@ public class MatchingService {
         audit.workflow(actor(auth),"PRIVACY_RELEASE_CREATED",release.releaseId(),enterpriseOrg,Map.of(
             "enterpriseOrgId",enterpriseOrg,"schoolOrgId",criteria.schoolOrgId(),"termId",criteria.termId(),
             "demoBatchId",batchId,"eligibleBand",release.eligibleBand()));
+        audit.matchingRunCompleted(actor(auth),criteria.demandId(),runId,enterpriseOrg,Map.of(
+            "demandId",criteria.demandId(),"runVersion",1,"status","COMPLETED","ruleVersion",StrictClassifier.RULE_VERSION));
         return new Evaluated("ENTERPRISE",null,release);
     }
     /** Controller gọi sau khi giao dịch evaluate thất bại đã rollback để audit không bị rollback theo. */
