@@ -373,6 +373,8 @@ assertEquals(grantAuditCountBefore, jdbc.queryForObject(grantAuditCountSql, Inte
             "TC04: The same staff can read the same run after receiving detail_read");
 
         matchingDetailsStayWithinSchool(session, run);
+        // QA01 T1-04-TC07: verify grant access for ACTIVE, EXPIRED, and FUTURE periods.
+        delegationValidityTC07(schoolSession, detailsPath, parent);
         admin=as(1);delegations.revoke(admin,parent.id(),key(),new SchoolDelegationService.Revoke(parent.version(),"ROOT_REVOKED"));
         assertEquals(401,http(session,"GET","/matching/runs/"+run+"/details?overallStatus=MATCH",null,false,null));
         var newSession=login(subject.email,"Synthetic-week2-delegate-password-123");assertEquals(404,http(newSession,"GET","/matching/runs/"+run+"/details?overallStatus=MATCH",null,false,null));
@@ -381,6 +383,70 @@ assertEquals(grantAuditCountBefore, jdbc.queryForObject(grantAuditCountSql, Inte
         assignments.revoke(as(2),coordinator,key(),new vn.utbridora.auth.modules.internship.infrastructure.WorkspaceAssignmentService.Revoke(1L,"SCHOOL_REVOKED"));
         assertEquals(401,http(hr,"GET","/t3/context-assignments/me",null,false,null));assertEquals(0,workspace.assignments(as(4)).size());assertEquals(0,workspace.assignments(as(5)).size());
     }
+    /** QA01 T1-04-TC07: current grants are usable; expired and future grants are not. */
+    private void delegationValidityTC07(HttpSession schoolSession, String detailsPath,
+                                        SchoolDelegationService.Delegation parent) throws Exception {
+        Instant now = Instant.now();
+        String[] scenarios = {"ACTIVE", "EXPIRED", "FUTURE"};
+        Instant[] starts = {
+                now.minusSeconds(5),
+                parent.validFrom().plusSeconds(1),
+                now.plusSeconds(3600)
+        };
+        Instant[] ends = {
+                now.plusSeconds(1800),
+                parent.validFrom().plusSeconds(2),
+                now.plusSeconds(5400)
+        };
+        int[] expectedStatuses = {200, 404, 404};
+
+        // The expired interval is within the parent's bounds but already in the past.
+        assertTrue(ends[1].isBefore(now), "TC07: EXPIRED fixture must be in the past");
+        assertTrue(starts[2].isAfter(now), "TC07: FUTURE fixture must begin later");
+        for (int i = 0; i < scenarios.length; i++) {
+            String scenario = scenarios[i];
+            assertFalse(starts[i].isBefore(parent.validFrom()),
+                    "TC07 " + scenario + ": start must be inside parent interval");
+            assertFalse(ends[i].isAfter(parent.validUntil()),
+                    "TC07 " + scenario + ": end must be inside parent interval");
+
+            // Each case has its own user, so one grant cannot mask another.
+            String password = "Synthetic-week2-tc07-password-123";
+            var staff = new vn.utbridora.auth.user.UserAccount();
+            staff.id = key();
+            staff.email = "qa01-tc07-" + staff.id + "@example.test";
+            staff.displayName = "QA01 TC07 " + scenario;
+            staff.passwordHash = passwords.encode(password);
+            staff.status = vn.utbridora.auth.user.AccountStatus.ACTIVE;
+            users.saveAndFlush(staff);
+            as(1);
+            memberships.grant(id(1), staff.id, vn.utbridora.auth.user.Role.SCHOOL_STAFF, id(11));
+
+            String decisionRef = "DEMO-W2-TC07-" + scenario;
+            String grantBody = vn.utbridora.auth.operations.WorkflowValues.JSON.writeValueAsString(Map.of(
+                    "userId", staff.id,
+                    "permissionCodes", List.of("matching:school:detail_read"),
+                    "profileReadFields", List.of(),
+                    "validFrom", starts[i].toString(),
+                    "validUntil", ends[i].toString(),
+                    "decisionRef", decisionRef));
+
+            // A validly structured grant can be recorded even when not currently effective.
+            assertEquals(201, http(schoolSession, "POST",
+                    "/school/terms/" + id(21) + "/delegations", grantBody, true, null),
+                    "TC07 " + scenario + ": grant creation must succeed");
+            assertEquals(1, jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM school_delegations WHERE decision_ref = ? AND active = true",
+                    Integer.class, decisionRef),
+                    "TC07 " + scenario + ": grant must exist in database");
+
+            var staffSession = login(staff.email, password);
+            assertEquals(expectedStatuses[i],
+                    http(staffSession, "GET", detailsPath, null, false, null),
+                    "TC07 " + scenario + ": access must obey grant validity");
+        }
+    }
+
     private void matchingDetailsStayWithinSchool(HttpSession ownerSchool, String run) throws Exception {
         String school = key();
         String term = key();
