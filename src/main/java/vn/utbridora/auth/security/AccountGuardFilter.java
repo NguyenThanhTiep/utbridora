@@ -24,7 +24,8 @@ public final class AccountGuardFilter extends OncePerRequestFilter {
                 HttpSession session=request.getSession(false);
                 if(session!=null) session.invalidate();
                 SecurityContextHolder.clearContext();
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Session expired or revoked");
+                if(DemandSecurityErrors.applies(request)) DemandSecurityErrors.write(request,response,401,"SESSION_EXPIRED","Session expired or revoked");
+                else response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Session expired or revoked");
                 return;
             }
         }

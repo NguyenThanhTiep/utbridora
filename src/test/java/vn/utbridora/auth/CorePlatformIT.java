@@ -67,6 +67,7 @@ class CorePlatformIT {
     @Autowired ProfileVisibilityPort visibility;
     @Autowired TransactionTemplate transactions;
     @Autowired MockMvc mvc;
+    @Autowired jakarta.persistence.EntityManagerFactory entityManagerFactory;
     @MockitoBean EmailService email;
     final String password="Test-"+UUID.randomUUID();
     String passwordHash;
@@ -178,6 +179,19 @@ class CorePlatformIT {
         assertEquals(200,b.me().statusCode());assertEquals(200,b.send("POST","/api/v1/auth/logout",null,true).statusCode());
         assertEquals(401,b.me().statusCode());assertEquals(401,replay(cookie,"/api/v1/auth/me").statusCode());
     }
+    @Test void invalidCsrfTokenCannotLogout() throws Exception {
+        Browser browser = signedIn(student);
+        String validCsrf = browser.csrf;
+
+        browser.csrf = "qa01-invalid-csrf-token";
+        assertEquals(403, browser.send("POST", "/api/v1/auth/logout", null, true).statusCode());
+        assertEquals(200, browser.me().statusCode());
+
+        browser.csrf = validCsrf;
+        assertEquals(200, browser.send("POST", "/api/v1/auth/logout", null, true).statusCode());
+        assertEquals(401, browser.me().statusCode());
+    }
+
     @Test void expiredJdbcSessionCannotCallMe() throws Exception {
         Browser b=signedIn(student);jdbc.update("UPDATE SPRING_SESSION SET EXPIRY_TIME=1, LAST_ACCESS_TIME=1");
         assertEquals(401,b.me().statusCode());
@@ -313,6 +327,25 @@ class CorePlatformIT {
         assertFalse(logs.body().contains(password));assertFalse(logs.body().contains("token"));assertFalse(logs.body().contains("SESSION"));
         assertEquals(400,a.send("GET","/api/v1/admin/audit-logs?from=2100-01-01T00:00:00Z&until=2000-01-01T00:00:00Z",null,false).statusCode());
     }
+    @Test void adminUserPageLoadsMembershipsInOneBoundedQuery() throws Exception {
+        for(int i=0;i<30;i++) user(Role.STUDENT,university.id);
+        Browser browser=signedIn(admin);
+        var statistics=entityManagerFactory.unwrap(org.hibernate.SessionFactory.class).getStatistics();
+        boolean previouslyEnabled=statistics.isStatisticsEnabled();
+        statistics.setStatisticsEnabled(true);
+        try {
+            statistics.clear();
+            assertEquals(200,browser.send("GET","/api/v1/admin/users?size=1",null,false).statusCode());
+            long single=statistics.getPrepareStatementCount();
+            statistics.clear();
+            var page=browser.send("GET","/api/v1/admin/users?size=25",null,false);
+            long full=statistics.getPrepareStatementCount();
+            assertEquals(200,page.statusCode());
+            assertEquals(25,((List<?>)JsonPath.read(page.body(),"$.content")).size());
+            assertEquals(25,((List<?>)JsonPath.read(page.body(),"$.content[*].memberships[0].role")).size());
+            assertTrue(full<=single+1,"Query count must stay bounded: size1="+single+", size25="+full);
+        } finally { statistics.setStatisticsEnabled(previouslyEnabled); }
+    }
     @Test void businessRollbackRollsBackAuditAndPasswordChange() {
         assertThrows(IllegalStateException.class,()->transactions.executeWithoutResult(tx->{
             accounts.changePassword(student.id,0,password,"Next-"+UUID.randomUUID());
@@ -380,13 +413,17 @@ class CorePlatformIT {
         ProcessBuilder builder=windows?new ProcessBuilder("cmd.exe","/c","npm.cmd run test:e2e"):new ProcessBuilder("npm","run","test:e2e");
         builder.directory(new java.io.File("web-demo"));
         Map<String,String> env=builder.environment();env.put("API_PROXY_TARGET","http://localhost:"+port);
+        env.put("E2E_REPORT_FILE","../target/core-browser-results.xml");
         env.put("E2E_PASSWORD",password);env.put("E2E_NEW_PASSWORD","Next-"+UUID.randomUUID());
         env.put("E2E_ADMIN_EMAIL",admin.email);env.put("E2E_STUDENT_EMAIL",student.email);env.put("E2E_ENTERPRISE_EMAIL",enterprise.email);
         env.put("E2E_INVITATION_TOKEN",invitation);env.put("E2E_INVITATION_EMAIL",invitationEmail);
         env.put("E2E_RESET_TOKEN",reset);env.put("E2E_RESET_EMAIL",resetUser.email);env.put("E2E_ORG_B_ID",orgB.id);
         builder.redirectErrorStream(true).redirectOutput(new java.io.File("target/frontend-e2e.log"));
         Process process=builder.start();
-        if(!process.waitFor(240,TimeUnit.SECONDS)) {process.destroyForcibly();fail("Frontend E2E timed out; see target/frontend-e2e.log");}
+        if(!process.waitFor(240,TimeUnit.SECONDS)) {
+            process.descendants().forEach(child->child.destroyForcibly());process.destroyForcibly();
+            fail("Frontend E2E timed out; see target/frontend-e2e.log");
+        }
         assertEquals(0,process.exitValue(),"See target/frontend-e2e.log and web-demo/test-results/e2e.xml");
     }
     HttpResponse<String> replay(String cookie,String path) throws Exception {

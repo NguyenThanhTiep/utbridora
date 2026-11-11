@@ -50,12 +50,40 @@ public class SecurityConfig {
                .requestMatchers(HttpMethod.GET,"/actuator/health", "/actuator/health/liveness", "/actuator/health/readiness").permitAll()
                .requestMatchers(HttpMethod.POST,"/api/v1/auth/login","/api/v1/auth/password/forgot",
                        "/api/v1/auth/password/reset","/api/v1/auth/invitations/accept").permitAll()
-               .requestMatchers("/api/v1/taxonomy/**", "/api/taxonomy/**").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/taxonomy/**").authenticated()
+               .requestMatchers(HttpMethod.POST,"/api/v1/taxonomy/categories","/api/v1/taxonomy/skills","/api/v1/taxonomy/skills/resolve","/api/v1/taxonomy/skills/*/aliases").authenticated()
+               .requestMatchers(HttpMethod.PATCH,"/api/v1/taxonomy/categories/*","/api/v1/taxonomy/skills/*").authenticated()
+               .requestMatchers(HttpMethod.DELETE,"/api/v1/taxonomy/skills/*/aliases/*").authenticated()
                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                .requestMatchers("/api/v1/auth/**", "/api/v1/demo/**").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/terms","/api/v1/terms/*").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/t3/**").authenticated()
+               .requestMatchers(HttpMethod.POST,"/api/v1/t3/**").authenticated()
+               // T2-01 own student profile (BC11); the VERIFIED school scope is checked in StudentProfileService.
+               .requestMatchers(HttpMethod.GET,"/api/v1/students/me/profile","/api/v1/students/me/catalogs").authenticated()
+               .requestMatchers(HttpMethod.PUT,"/api/v1/students/me/profile").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/demands").authenticated()
+               .requestMatchers(HttpMethod.POST,"/api/v1/enterprise/demands").authenticated()
+               .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/demands/{id}").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/verifications","/api/v1/enterprise/verifications/*","/api/v1/school/verifications","/api/v1/school/verifications/*").authenticated()
+               .requestMatchers(HttpMethod.POST,"/api/v1/enterprise/verifications").authenticated()
+               .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/verifications/*","/api/v1/enterprise/verifications/*/submit","/api/v1/school/verifications/*/decision").authenticated()
+               .requestMatchers(HttpMethod.POST,"/api/v1/school/terms/*/delegations").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/invitations/me","/api/v1/invitations/*","/api/v1/students/me/consents","/api/v1/students/*/profile","/api/v1/school/terms/*/profile-sharing-policy").authenticated()
+               .requestMatchers(HttpMethod.POST,"/api/v1/invitations/*/decision","/api/v1/invitations/*/withdraw","/api/v1/students/me/consents","/api/v1/students/me/consents/*/revoke","/api/v1/school/proposals/*/shares","/api/v1/school/profile-shares/*/revoke","/api/v1/school/student-eligibilities/decisions").authenticated()
+               .requestMatchers(HttpMethod.PUT,"/api/v1/school/terms/*/profile-sharing-policy").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/cooperations/*").authenticated()
+               .requestMatchers(HttpMethod.POST,"/api/v1/matching/evaluate","/api/v1/matching/runs/*/nominate","/api/v1/enterprise/cooperations","/api/v1/enterprise/demands/submit-with-cooperation","/api/v1/school/proposals/*/invite").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/matching/runs/*/details","/api/v1/enterprise/cooperations","/api/v1/school/cooperations","/api/v1/school/cooperations/*","/api/v1/school/cooperations/*/submission-history","/api/v1/school/cooperations/*/capacity","/api/v1/school/cooperations/*/proposals").authenticated()
+               .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/cooperations/*/submit","/api/v1/enterprise/cooperations/*/reopen","/api/v1/school/cooperations/*/decision").authenticated()
+               .requestMatchers(HttpMethod.DELETE,"/api/v1/school/delegations/*","/api/v1/t3/context-assignments/*").authenticated()
+               .requestMatchers(HttpMethod.PATCH,"/api/v1/t3/assignments/*/status").authenticated()
                .anyRequest().denyAll())
            .exceptionHandling(ex->ex
-               .authenticationEntryPoint((req,res,error)->res.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+               .authenticationEntryPoint((req,res,error)->{
+                   if(DemandSecurityErrors.applies(req)) DemandSecurityErrors.write(req,res,401,"SESSION_EXPIRED","Phiên đăng nhập không hợp lệ.");
+                   else res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+               })
                .accessDeniedHandler((req,res,error)->{
                    var authentication=org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
                    String actor=authentication!=null && authentication.getPrincipal() instanceof AppPrincipal p
@@ -65,6 +93,12 @@ public class SecurityConfig {
                    catch (RuntimeException auditFailure) {
                        org.slf4j.LoggerFactory.getLogger(SecurityConfig.class)
                            .warn("Security audit write failed; access remains denied");
+                   }
+                   if(DemandSecurityErrors.applies(req)) {
+                       boolean csrf=error instanceof org.springframework.security.web.csrf.CsrfException;
+                       DemandSecurityErrors.write(req,res,403,csrf?"CSRF_INVALID":"ACCESS_DENIED",
+                           csrf?"Mã bảo vệ không hợp lệ.":"Bạn không có quyền thực hiện thao tác.");
+                       return;
                    }
                    res.setStatus(HttpServletResponse.SC_FORBIDDEN);
                    res.setContentType("application/json");

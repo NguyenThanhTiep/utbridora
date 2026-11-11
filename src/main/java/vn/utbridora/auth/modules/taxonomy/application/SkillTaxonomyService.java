@@ -28,14 +28,16 @@ public class SkillTaxonomyService implements SkillTaxonomyPort {
     private final SkillAliasRepository aliases;
     private final TaxonomyCatalogStateRepository catalogState;
     private final AuditService audit;
+    private final TaxonomyAccess access;
+    @jakarta.persistence.PersistenceContext private jakarta.persistence.EntityManager entityManager;
 
     public SkillTaxonomyService(SkillCategoryRepository categories, SkillRepository skills,
-            SkillAliasRepository aliases, TaxonomyCatalogStateRepository catalogState, AuditService audit) {
+            SkillAliasRepository aliases, TaxonomyCatalogStateRepository catalogState, AuditService audit, TaxonomyAccess access) {
         this.categories = categories;
         this.skills = skills;
         this.aliases = aliases;
         this.catalogState = catalogState;
-        this.audit = audit;
+        this.audit = audit;this.access=access;
     }
 
     @Override
@@ -68,7 +70,7 @@ public class SkillTaxonomyService implements SkillTaxonomyPort {
     }
 
     @Transactional
-    public CategoryDto updateCategoryStatus(AppPrincipal actor, String code, UpdateCategoryStatus request) {
+    CategoryDto updateCategoryStatus(AppPrincipal actor, String code, UpdateCategoryStatus request) {
         SkillCategory current = category(code);
         return updateCategory(actor, code, new UpdateCategory(request.expectedVersion(), current.name,
                 request.status()));
@@ -102,14 +104,14 @@ public class SkillTaxonomyService implements SkillTaxonomyPort {
             Skill skill = skills.findByNormalizedName(key).orElseGet(() -> aliases.findByNormalizedAlias(key)
                     .map(alias -> alias.skill).orElse(null));
             if (skill == null || skill.status != SkillStatus.ACTIVE)
-                return new SkillResolution(value, key, "UNKNOWN", null, null);
-            return new SkillResolution(value, key, "RESOLVED", skill.skillCode, skill.id);
+                return new SkillResolution(value, key, "UNKNOWN", null);
+            return new SkillResolution(value, key, "RESOLVED", skill.skillCode);
         }).toList();
         return new ResolveSkillsResponse(version(), resolved);
     }
 
     @Transactional
-    public CategoryDto createCategory(AppPrincipal actor, CreateCategory request) {
+    CategoryDto createCategory(AppPrincipal actor, CreateCategory request) {
         requireActor(actor);
         validateCode(request.categoryCode(), "categoryCode");
         String name = validatedName(request.name());
@@ -124,22 +126,16 @@ public class SkillTaxonomyService implements SkillTaxonomyPort {
         category.name = name;
         category.normalizedName = nameKey;
         category.status = SkillStatus.ACTIVE;
-        if (request.parentId() != null && !request.parentId().isBlank()
-                && request.parentCategoryCode() != null && !request.parentCategoryCode().isBlank())
-            throw new IllegalArgumentException("Provide parentId or parentCategoryCode, not both");
-        if (request.parentId() != null && !request.parentId().isBlank())
-            category.parentCategory = categories.findById(request.parentId())
-                    .orElseThrow(() -> notFound("Parent category not found"));
-        else if (request.parentCategoryCode() != null && !request.parentCategoryCode().isBlank())
+        if (request.parentCategoryCode() != null && !request.parentCategoryCode().isBlank())
             category.parentCategory = category(request.parentCategoryCode());
         categories.saveAndFlush(category);
         bump(state);
-        auditChange(actor, category.id, "CREATE");
+        auditChange(actor, category.id, "CATEGORY", "CREATE", null);
         return categoryDto(category);
     }
 
     @Transactional
-    public CategoryDto updateCategory(AppPrincipal actor, String categoryCode, UpdateCategory request) {
+    CategoryDto updateCategory(AppPrincipal actor, String categoryCode, UpdateCategory request) {
         requireActor(actor);
         TaxonomyCatalogState state = lockState();
         SkillCategory category = category(categoryCode);
@@ -153,13 +149,12 @@ public class SkillTaxonomyService implements SkillTaxonomyPort {
         category.version++;
         categories.saveAndFlush(category);
         bump(state);
-        auditChange(actor, category.id, category.status == SkillStatus.DEPRECATED ? "DEPRECATE" : "UPDATE");
+        auditChange(actor, category.id, "CATEGORY", category.status == SkillStatus.DEPRECATED ? "DEPRECATE" : "UPDATE", null);
         return categoryDto(category);
     }
 
-    @Override
     @Transactional
-    public SkillCatalogItem createSkill(AppPrincipal actor, CreateSkill request) {
+    SkillCatalogItem createSkill(AppPrincipal actor, CreateSkill request) {
         requireActor(actor);
         validateCode(request.skillCode(), "skillCode");
         TaxonomyCatalogState state = lockState();
@@ -179,13 +174,12 @@ public class SkillTaxonomyService implements SkillTaxonomyPort {
         }
         skills.saveAndFlush(skill);
         bump(state);
-        auditChange(actor, skill.id, "CREATE");
+        auditChange(actor, skill.id, "SKILL", "CREATE", skill.skillCode);
         return skillDto(skill);
     }
 
-    @Override
     @Transactional
-    public SkillCatalogItem updateSkill(AppPrincipal actor, String skillCode, UpdateSkill request) {
+    SkillCatalogItem updateSkill(AppPrincipal actor, String skillCode, UpdateSkill request) {
         requireActor(actor);
         TaxonomyCatalogState state = lockState();
         Skill skill = skill(skillCode);
@@ -209,13 +203,12 @@ public class SkillTaxonomyService implements SkillTaxonomyPort {
         skill.version++;
         skills.saveAndFlush(skill);
         bump(state);
-        auditChange(actor, skill.id, skill.status == SkillStatus.DEPRECATED ? "DEPRECATE" : "UPDATE");
+        auditChange(actor, skill.id, "SKILL", skill.status == SkillStatus.DEPRECATED ? "DEPRECATE" : "UPDATE", skill.skillCode);
         return skillDto(skill);
     }
 
-    @Override
     @Transactional
-    public SkillAliasDto createAlias(AppPrincipal actor, String skillCode, CreateAlias request) {
+    SkillAliasDto createAlias(AppPrincipal actor, String skillCode, CreateAlias request) {
         requireActor(actor);
         TaxonomyCatalogState state = lockState();
         Skill skill = skill(skillCode);
@@ -232,7 +225,7 @@ public class SkillTaxonomyService implements SkillTaxonomyPort {
         aliases.saveAndFlush(alias);
         skills.saveAndFlush(skill);
         bump(state);
-        auditChange(actor, alias.id, "CREATE");
+        auditChange(actor, alias.id, "ALIAS", "CREATE", skill.skillCode);
         return aliasDto(alias);
     }
 
@@ -244,9 +237,8 @@ public class SkillTaxonomyService implements SkillTaxonomyPort {
         return aliases.findAllBySkill_SkillCodeOrderByAliasAsc(skillCode).stream().map(this::aliasDto).toList();
     }
 
-    @Override
     @Transactional
-    public MutationAck deleteAlias(AppPrincipal actor, String skillCode, String aliasId, DeleteAlias request) {
+    MutationAck deleteAlias(AppPrincipal actor, String skillCode, String aliasId, DeleteAlias request) {
         requireActor(actor);
         TaxonomyCatalogState state = lockState();
         Skill skill = skill(skillCode);
@@ -258,7 +250,7 @@ public class SkillTaxonomyService implements SkillTaxonomyPort {
         skill.version++;
         skills.saveAndFlush(skill);
         bump(state);
-        auditChange(actor, alias.id, "DELETE_ALIAS");
+        auditChange(actor, alias.id, "ALIAS", "DELETE_ALIAS", skill.skillCode);
         return new MutationAck(alias.id, skill.version, Instant.now().toString());
     }
 
@@ -278,6 +270,8 @@ public class SkillTaxonomyService implements SkillTaxonomyPort {
                 .orElseThrow(() -> new IllegalStateException("Taxonomy catalog is not initialized")).taxonomyVersion;
         return "skills-v" + current;
     }
+    String categoryId(CategoryDto value) {return category(value.categoryCode()).id;}
+    String skillId(SkillCatalogItem value) {return skill(value.skillCode()).id;}
 
     private TaxonomyCatalogState lockState() {
         return catalogState.findLockedById(STATE_ID)
@@ -285,6 +279,7 @@ public class SkillTaxonomyService implements SkillTaxonomyPort {
     }
 
     private void bump(TaxonomyCatalogState state) {
+        if(state.taxonomyVersion>=9_007_199_254_740_991L) throw new IllegalStateException("Taxonomy version exhausted");
         state.taxonomyVersion++;
         state.changedAt = Instant.now();
         catalogState.save(state);
@@ -303,8 +298,7 @@ public class SkillTaxonomyService implements SkillTaxonomyPort {
     }
 
     private void requireActor(AppPrincipal actor) {
-        if (actor == null || actor.userId() == null)
-            throw new org.springframework.security.access.AccessDeniedException("Authenticated actor required");
+        access.requireReader(actor);
     }
 
     private void checkVersion(long current, long expected) {
@@ -363,12 +357,13 @@ public class SkillTaxonomyService implements SkillTaxonomyPort {
         return false;
     }
 
-    private void auditChange(AppPrincipal actor, String resourceId, String operation) {
-        audit.writeScoped(actor.userId(), "TAXONOMY_CHANGED", RESOURCE_TYPE, resourceId, "SUCCESS", null, operation);
+    private void auditChange(AppPrincipal actor,String id,String entity,String operation,String code) {
+        try { audit.taxonomyChanged(actor.userId(),id,entity,operation,code,version());entityManager.flush(); }
+        catch(RuntimeException failure) { throw new vn.utbridora.auth.operations.OperationFailure(500,"AUDIT_WRITE_FAILED","Không thể ghi nhật ký thay đổi.",null); }
     }
 
     private CategoryDto categoryDto(SkillCategory category) {
-        return new CategoryDto(category.id, category.categoryCode, category.name,
+        return new CategoryDto(category.categoryCode, category.name,
                 category.parentCategory == null ? null : category.parentCategory.categoryCode, category.status.name(),
                 category.version);
     }

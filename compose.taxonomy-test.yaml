@@ -1,6 +1,0 @@
-# DEV08 thêm cấu hình Compose (công cụ điều phối dịch vụ) riêng để người kiểm thử chủ động bật quyền tạm cho danh mục kỹ năng.
-# Chỉ dùng ở môi trường máy cá nhân; bỏ tập tin này khỏi lệnh chạy để trở về cấu hình bảo mật mặc định.
-services:
-  backend:
-    environment:
-      SPRING_PROFILES_ACTIVE: taxonomy-test-access

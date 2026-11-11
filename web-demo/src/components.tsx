@@ -57,9 +57,9 @@ export function Notice({ message, tone = 'info' }: { message: string; tone?: 'in
 }
 
 type FieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> & {
-  label: string; value: string; onChange: (value: string) => void; hint?: string; icon?: string;
+  label: string; value: string; onChange: (value: string) => void; hint?: string; icon?: string; error?: string;
 };
-export function Field({ label, value, onChange, type = 'text', required = true, hint, icon, ...props }: FieldProps) {
+export function Field({ label, value, onChange, type = 'text', required = true, hint, icon, error, ...props }: FieldProps) {
   const id = useId();
   const [visible, setVisible] = useState(false);
   const password = type === 'password';
@@ -69,11 +69,13 @@ export function Field({ label, value, onChange, type = 'text', required = true, 
       {icon && <Icon name={icon} size={18} className="input-leading-icon" />}
       <input id={id} value={value} onChange={event => onChange(event.target.value)}
         type={password && visible ? 'text' : type} required={required}
-        aria-describedby={hint ? id + '-hint' : undefined} {...props} />
+        aria-invalid={error ? true : undefined}
+        aria-describedby={[hint ? id + '-hint' : '', error ? id + '-error' : ''].filter(Boolean).join(' ') || undefined} {...props} />
       {password && <button className="password-toggle" type="button" disabled={props.disabled} aria-label={visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'} aria-pressed={visible}
         onClick={() => setVisible(previous => !previous)}><Icon name={visible ? 'eye-off' : 'eye'} size={19} /></button>}
     </div>
     {hint && <p className="field-hint" id={id + '-hint'}>{hint}</p>}
+    {error && <p className="field-error" id={id + '-error'}>{error}</p>}
   </div>;
 }
 

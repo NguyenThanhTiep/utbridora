@@ -162,6 +162,17 @@ def validate_value(bundle, name, value, semantic=True):
     return errors
 
 
+def check_audit_enum(enum_values, audit):
+    legacy = {a['action'] for a in audit if a['enumImplemented']}
+    canonical = {a['action'] for a in audit}
+    problems = []
+    if len(legacy) != 30 or not legacy <= enum_values:
+        problems.append('legacy audit actions missing from Java enum')
+    if enum_values - canonical:
+        problems.append('unregistered Java audit actions: ' + ', '.join(sorted(enum_values - canonical)))
+    return problems
+
+
 def check_registries(manifest):
     problems=[]
     perms=manifest['permissions'];audit=manifest['auditActions']
@@ -172,9 +183,9 @@ def check_registries(manifest):
     if core_codes != contract_core or len(core_codes) != 18:
         problems.append('core permission registry differs from V3')
     enum=(ROOT/'src/main/java/vn/utbridora/auth/audit/AuditAction.java').read_text(encoding='utf-8').split('public enum AuditAction {',1)[1].split('}',1)[0]
+    enum=re.sub(r'/\*.*?\*/|//[^\n]*', '', enum, flags=re.S)
     enum_values=set(re.findall(r'\b[A-Z][A-Z_]+\b',enum))
-    if enum_values != {a['action'] for a in audit if a['enumImplemented']} or len(enum_values) != 30:
-        problems.append('legacy audit actions differ from Java enum')
+    problems.extend(check_audit_enum(enum_values,audit))
     if len(perms)!=51 or len({p['code'] for p in perms})!=len(perms):
         problems.append('duplicate/missing permission')
     if len(audit)!=93 or len({a['action'] for a in audit})!=len(audit):

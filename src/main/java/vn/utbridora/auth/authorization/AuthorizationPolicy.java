@@ -14,6 +14,7 @@ public class AuthorizationPolicy {
     private final PermissionCatalog catalog;
     private final ProfileVisibilityPort profileVisibility;
     private final UserRepository users;
+    @jakarta.persistence.PersistenceContext private jakarta.persistence.EntityManager entityManager;
     public AuthorizationPolicy(MembershipRepository memberships,OrganizationRepository organizations,
                                PermissionCatalog catalog,ProfileVisibilityPort profileVisibility, UserRepository users) {
         this.memberships=memberships;this.organizations=organizations;
@@ -27,6 +28,21 @@ public class AuthorizationPolicy {
     }
     public boolean isSelf(Authentication auth,String userId) {
         String actor=userId(auth); return actor!=null && actor.equals(userId);
+    }
+    /** Internal authority-chain read. This is never accepted as HTTP authentication or a role grant. */
+    public java.util.Optional<Authentication> currentSubject(String subjectId) {
+        return users.findById(subjectId).filter(u->u.status==AccountStatus.ACTIVE).map(u->{
+            var p=new AppPrincipal(u.id,u.email,null,u.securityVersion,java.util.List.of());
+            return org.springframework.security.authentication.UsernamePasswordAuthenticationToken.authenticated(p,null,p.getAuthorities());
+        });
+    }
+    /** Current Core authority held through an internal business transaction's commit. */
+    @org.springframework.transaction.annotation.Transactional(propagation=org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public boolean holdOrganization(Authentication auth,String organizationId,Role role,String permission) {
+        if(!(auth!=null && auth.getPrincipal() instanceof AppPrincipal p) || role==null || role==Role.ADMIN) return false;
+        return !entityManager.createNativeQuery("SELECT m.id FROM memberships m JOIN users u ON u.id=m.user_id JOIN organizations o ON o.id=m.organization_id JOIN role_permissions rp ON rp.role=m.role WHERE u.id=?1 AND u.status='ACTIVE' AND u.security_version=?2 AND m.organization_id=?3 AND m.role=?4 AND m.active=true AND o.status='VERIFIED' AND o.type=?5 AND rp.permission_code=?6 FOR SHARE",String.class)
+            .setParameter(1,p.userId()).setParameter(2,p.securityVersion()).setParameter(3,organizationId).setParameter(4,role.name())
+            .setParameter(5,role==Role.ENTERPRISE?"ENTERPRISE":"UNIVERSITY").setParameter(6,permission).getResultList().isEmpty();
     }
     public boolean hasGlobal(Authentication auth,String permission) {
         String actor=userId(auth);

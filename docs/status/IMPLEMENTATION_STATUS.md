@@ -1,5 +1,9 @@
 # Trạng thái triển khai Core Platform
 
+## Tuần 2 — 09/11/2026
+
+Nhánh triển khai `feature/week2-implementation`, base `6687a94`: đã bổ sung luồng delegation/audit, skills/completeness/snapshot, strict matching, Cooperation/proposal/invitation/consent và Mentor/Task/calendar. Code, tests và bốn file bàn giao được đóng gói trong bản phát hành tuần 2 trên main. Xem [đối chiếu 18 task và kiểm chứng DEV](../testing/WEEK2_ACCEPTANCE.md), [hướng dẫn runtime](../guides/WEEK2_RUNTIME.md), [bàn giao T2–T5](../README.md#bàn-giao-tuần-2--tuần-3). Docker dùng chung chưa triển khai lại; không sửa trạng thái QA/Lead trong Plan. Evidence giữ nguyên thời điểm kiểm chứng trước commit, CI sau push xem theo đúng commit trong GitHub Actions. Các mục bên dưới là lịch sử tại ngày được ghi, không phủ định implementation mới và không chứng minh kiểm thử của source tuần 2.
+
 ## Rà soát kỹ thuật T1-01 — 05/11/2026
 
 Đã xuất [Contract v1.1 Candidate](../contracts/UTBridora_Contract_Pack_B01_B06_v1.1_Candidate.md), Data Dictionary bổ sung, 374 schema, Input/Value cho 62 port/consumer và CSV quyền/audit. **868/868 kiểm tra DEV PASS**: 69 ví dụ, 795 fixture và 4 kiểm tra tĩnh; không phải integration test của module chưa triển khai. Diff v1.1 chưa tự được phê duyệt theo quyết định v1.0.

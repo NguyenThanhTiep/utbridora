@@ -11,6 +11,7 @@ Mục lục tài liệu dùng chung cho năm team. Cập nhật cách sắp xế
 | Rà soát kỹ thuật T1-01 và schema | [Review T1-01](contracts/T1_01_TECHNICAL_REVIEW.md), [v1.1 Candidate](contracts/UTBridora_Contract_Pack_B01_B06_v1.1_Candidate.md), [checker DEV](../scripts/contracts/README.md) |
 | Biết source hiện đã có gì | [Trạng thái triển khai](status/IMPLEMENTATION_STATUS.md) và [báo cáo kiểm thử](testing/TEST_REPORT.md) |
 | Xem kế hoạch và phân công công việc | [Workbook kế hoạch UT.Bridora](plans/UTBridora_Plan.xlsx) |
+| Nhận kết quả tuần 2 và tiếp tục tuần 3 | [T2](handoffs/T2_TUAN2_BAN_GIAO_TUAN3.md), [T3](handoffs/T3_TUAN2_BAN_GIAO_TUAN3.md), [T4](handoffs/T4_TUAN2_BAN_GIAO_TUAN3.md), [T5](handoffs/T5_TUAN2_BAN_GIAO_TUAN3.md) |
 | Đưa module của team vào repository | [Hướng dẫn BE/FE cho các team và AI](guides/HUONG_DAN_PHAT_TRIEN_BE_FE_CHO_CAC_TEAM.md) |
 | Làm việc với GitHub | [Nhánh, commit theo chức năng, PR, review và xử lý xung đột](guides/HUONG_DAN_LAM_VIEC_VOI_GITHUB.md) |
 | Chạy local hoặc chuẩn bị staging | [Hướng dẫn triển khai](guides/DEPLOYMENT_GUIDE.md) |
@@ -28,6 +29,7 @@ docs/
 ├── contracts/                 # Contract liên team và ma trận quyền
 ├── core/                      # Kiến trúc, API, database, bảo mật của core
 ├── guides/                    # Hướng dẫn tích hợp, chạy và làm việc
+├── handoffs/                  # Bàn giao kết quả tuần 2 và hướng dẫn tuần 3 theo team
 ├── plans/                     # Workbook UTBridora_Plan.xlsx do nhóm cung cấp
 ├── status/                    # Trạng thái triển khai và bàn giao
 ├── testing/                   # Báo cáo và evidence kiểm thử
@@ -50,6 +52,18 @@ docs/
 - [Phát triển backend, frontend và migration cho các team và AI](guides/HUONG_DAN_PHAT_TRIEN_BE_FE_CHO_CAC_TEAM.md).
 - [Chạy local, chuẩn bị staging và backup](guides/DEPLOYMENT_GUIDE.md).
 - [Làm việc với GitHub: nhánh, commit, pull request, review và xử lý xung đột](guides/HUONG_DAN_LAM_VIEC_VOI_GITHUB.md).
+- [T3-03: khung UI HR/Mentor, nhóm thực tập và điểm chờ tích hợp](guides/T3_03_HR_MENTOR_WORKSPACE.md).
+- [Docker local: tạo dữ liệu mẫu và hướng dẫn demo Student/HR/Mentor cho dev](guides/LOCAL_DEMO.md).
+- [Tuần 2: luồng runtime, API và cách kiểm tra trên môi trường riêng](guides/WEEK2_RUNTIME.md).
+
+## Bàn giao tuần 2 → tuần 3
+
+- [T2 — Sinh viên: profile/skills/consent → Opportunity/Preference và UI](handoffs/T2_TUAN2_BAN_GIAO_TUAN3.md).
+- [T3 — Thực tập: assignment/Task/calendar → Submission/Review/Weekly Report](handoffs/T3_TUAN2_BAN_GIAO_TUAN3.md).
+- [T4 — Matching: classifier/MatchRun → protected aggregate và UI kết quả trường](handoffs/T4_TUAN2_BAN_GIAO_TUAN3.md).
+- [T5 — Hợp tác: Cooperation/proposal/invitation → share/enterprise decision/Placement](handoffs/T5_TUAN2_BAN_GIAO_TUAN3.md).
+
+Code, tests và bốn tài liệu bàn giao nằm trong cùng bản phát hành tuần 2 trên main. Mỗi tài liệu chỉ rõ phần đã triển khai, dependency còn thiếu, thứ tự làm và ca QA; không thay human QA/Lead signoff. Evidence DEV giữ nguyên trạng thái tại thời điểm chạy trước commit. Docker dùng hằng ngày chưa được triển khai lại.
 
 ## Trạng thái và kiểm thử
 
@@ -57,6 +71,9 @@ docs/
 - [Checklist bàn giao](status/HANDOFF_CHECKLIST.md).
 - [Lịch sử nâng cấp giao diện và kiểm chứng đã ghi nhận](archive/UI_UPGRADE.md).
 - [Báo cáo kiểm thử](testing/TEST_REPORT.md).
+- [Tuần 2: task, implementation, kiểm chứng DEV và giới hạn nghiệm thu](testing/WEEK2_ACCEPTANCE.md).
+- [T3-03: kiểm thử DEV và daily report](testing/T3_03_TEST_REPORT.md).
+- [T3-03: bàn giao QA03, phạm vi kiểm thử và dependency](testing/T3_03_QA_HANDOFF.md).
 - Evidence gốc: [backend và tích hợp](testing/evidence/TEST_EVIDENCE.json), [giao diện](testing/evidence/UI_TEST_EVIDENCE.json), [trước push](testing/evidence/PREPUSH_TEST_EVIDENCE.json).
 
 Evidence JSON được giữ nguyên nội dung. Đường dẫn source/log hoặc checksum bên trong phản ánh snapshot lúc chạy, không phải kết quả được chạy lại khi tổ chức tài liệu.

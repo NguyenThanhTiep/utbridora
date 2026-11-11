@@ -14,3 +14,5 @@ __pycache__/
 ~$*.xlsx
 .env.*
 !.env.example
+/demo-root.crt
+/.local-demo-backups/

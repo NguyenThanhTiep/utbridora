@@ -37,8 +37,12 @@ public class AdminReadController {
             filter=filter.and((root,query,cb)->cb.or(cb.like(cb.lower(root.get("email")),term,'!'),cb.like(cb.lower(root.get("displayName")),term,'!')));
         }
         if(status!=null) filter=filter.and((root,query,cb)->cb.equal(root.get("status"),status));
-        return users.findAll(filter,paging).map(u->new UserView(u.id,u.email,u.displayName,u.status,u.lockedUntil,
-            memberships.findByUserIdAndActiveTrue(u.id).stream().map(m->new ApiDtos.MembershipView(m.role,m.organizationId)).toList()));
+        Page<UserAccount> result=users.findAll(filter,paging);
+        var byUser=result.isEmpty() ? java.util.Map.<String,List<Membership>>of()
+            : memberships.findByUserIdInAndActiveTrue(result.getContent().stream().map(u->u.id).toList())
+                .stream().collect(java.util.stream.Collectors.groupingBy(m->m.userId));
+        return result.map(u->new UserView(u.id,u.email,u.displayName,u.status,u.lockedUntil,
+            byUser.getOrDefault(u.id,List.of()).stream().map(m->new ApiDtos.MembershipView(m.role,m.organizationId)).toList()));
     }
     @GetMapping("/organizations")
     @PreAuthorize("@authorizationPolicy.hasGlobal(authentication, 'membership:admin:write')")

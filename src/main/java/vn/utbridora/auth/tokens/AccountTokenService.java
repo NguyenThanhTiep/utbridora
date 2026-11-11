@@ -13,6 +13,8 @@ import vn.utbridora.auth.tokens.OneTimeToken.Purpose;
 
 @Service
 public class AccountTokenService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private org.springframework.beans.factory.ObjectProvider<MentorActivationPort> mentorActivation;
     private final TokenRepository tokens; private final UserRepository users;
     private final MembershipRepository memberships; private final OrganizationRepository organizations;
     private final PasswordEncoder encoder; private final EmailService email; private final AuditService audit;
@@ -56,6 +58,8 @@ public class AccountTokenService {
         Membership member=new Membership();member.userId=user.id;member.role=token.inviteRole;
         member.organizationId=token.organizationId;memberships.save(member);
         token.consumedAt=Instant.now();
+        users.flush();memberships.flush();
+        if(mentorActivation!=null) mentorActivation.ifAvailable(port->port.activated(token.id,user.id));
         audit.write(user.id,"ACCOUNT_ACTIVATED","user",user.id,"SUCCESS");
     }
     @Transactional

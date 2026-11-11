@@ -32,7 +32,7 @@ Lệnh đầu tái sinh JSON/CSV trong docs/contracts/v1.1. Review diff trước
 - JSON Schema Draft 2020-12 kiểm required/optional/null, enum, array, số, object đóng và format. Custom formats utb-utc-instant, utb-https-url, utb-java-password-input, utb-new-password được đăng ký trong verifier. Consumer dùng validator khác phải triển khai cùng format; không mặc định format tự được kiểm.
 - Format email dùng parser addr-spec của thư viện chuẩn để không chấp nhận trường hợp thiếu local/domain; không kiểm DNS hoặc khả năng nhận mail. JSON được đọc bằng Decimal để kiểm scale chính xác; type integer chấp nhận số có phần lẻ bằng 0 (như 1.0), vẫn từ chối boolean. Backend Java tiếp tục chịu trách nhiệm xác thực dữ liệu và kết quả HTTP thực tế.
 - Bộ fixture kiểm password UTF-8/codepoint, legacy/new activation shape, field mask, counter và event version. Đây là oracle tĩnh, không phải guard runtime của các module.
-- AuditEventInput dùng allowlist action/resource/result/metadata của producer mới; không áp schema này để phủ nhận log lịch sử cũ. 63 action mới và 33 permission mới chưa được thêm vào DB/source runtime.
+- AuditEventInput dùng allowlist action/resource/result/metadata của producer mới; không áp schema này để phủ nhận log lịch sử cũ. Tuần 2 chỉ đưa subset cần cho workflow đã triển khai vào WorkflowAuditRegistry/AuditService và V22; phần còn lại của registry không tự trở thành chức năng runtime. Xem [phạm vi tuần 2](../../docs/testing/WEEK2_ACCEPTANCE.md).
 - Các port Input/Value là mô hình cho tham số nghiệp vụ và giá trị Success. Actor/mutation/event context là server-only; không tự sinh endpoint hay JSON success wrapper.
 - Báo cáo tạo từ lệnh này là kết quả DEV; không sửa cột Tester hay xác nhận nghiệm thu SRS.
 

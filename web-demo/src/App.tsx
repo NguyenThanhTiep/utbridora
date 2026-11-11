@@ -2,16 +2,35 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'rea
 import { api, send, login, logout, whoAmI, ApiError, type Me, type Grant } from './api';
 import { Brand, EmptyState, Field, Icon, Notice, useAction, roleNames, permissionNames } from './components';
 import { UserManagement, OrganizationManagement, AuditViewer } from './management';
+import { InternshipWorkspace } from './modules/internship/pages/InternshipWorkspace';
+import { canDiscoverWorkspace } from './modules/internship/access';
+
+import { studentGrants } from './modules/student/access';
+import { StudentOverviewPage } from './modules/student/pages/StudentOverviewPage';
+import { MyProfilePage } from './modules/student/pages/MyProfilePage';
+import { InvitationConsentPage } from './modules/student/pages/InvitationConsentPage';
+import { TaskBoard } from './modules/internship/pages/TaskBoard';
+import { MentorInvitations } from './modules/internship/pages/MentorInvitations';
+import './modules/workflows.css';
 // DEV08 đã nối màn hình danh mục kỹ năng vào khung ứng dụng hiện có để người kiểm thử mở được giao diện US-T4-06.
 import { SkillTaxonomy } from './modules/taxonomy';
+import { DemandWorkspace, SchoolWorkspace, canAuthorDemands, canLeaveDemand } from './modules/cooperation';
 
 const screens = [
+  { id: 'school', title: 'Hợp tác doanh nghiệp', description: 'Không gian phối hợp thực tập dành cho nhà trường.', icon: 'building', permission: null },
   { id: 'account', title: 'Tài khoản của tôi', description: 'Thông tin cá nhân, vai trò và bảo mật tài khoản.', icon: 'grid', permission: null },
+  { id: 'mentor-invitations', title: 'Lời mời hướng dẫn', description: 'Xem và chấp thuận phân công hướng dẫn thực tập.', icon: 'mail', permission: null },
+  { id: 'internship', title: 'Không gian thực tập', description: 'Theo dõi đợt và nhóm thực tập trong phạm vi HR/Mentor được phân công.', icon: 'briefcase', permission: null },
+  { id: 'student-overview', title: 'Tổng quan', description: 'Lối vào nhanh tới hồ sơ và các bước tiếp theo của bạn.', icon: 'graduation', permission: 'student_profile:self:read', group: 'student' },
+  { id: 'student-profile', title: 'Thông tin chung', description: 'Thông tin cơ bản trong hồ sơ sinh viên của bạn.', icon: 'user', permission: 'student_profile:self:read', group: 'student' },
+  { id: 'student-invitations', title: 'Lời mời và chia sẻ', description: 'Phản hồi lời mời và quyết định chia sẻ hồ sơ.', icon: 'mail', permission: 'student_profile:self:read', group: 'student' },
+  { id: 'student-tasks', title: 'Công việc của tôi', description: 'Nhiệm vụ và lịch thực tập được giao cho bạn.', icon: 'calendar', permission: 'student_profile:self:read', group: 'student' },
+  { id: 'demands', title: 'Nhu cầu thực tập', description: 'Quản lý bản nháp nhu cầu và tiêu chí tuyển thực tập của doanh nghiệp.', icon: 'briefcase', permission: 'cooperation:enterprise:create' },
   { id: 'users', title: 'Tài khoản & phân quyền', description: 'Quản lý thành viên và quyền truy cập trong hệ thống.', icon: 'users', permission: 'account:admin:status' },
   { id: 'organizations', title: 'Tổ chức & lời mời', description: 'Kết nối các tổ chức và mời thành viên tham gia.', icon: 'building', permission: 'membership:admin:write' },
   { id: 'audit', title: 'Nhật ký hệ thống', description: 'Theo dõi và tra cứu các hoạt động quan trọng.', icon: 'activity', permission: 'audit:global:read' },
   // DEV08 cho phép quản trị viên toàn cục mở màn hình để kiểm thử; giao diện lập trình vẫn tự kiểm tra quyền ở máy chủ.
-  { id: 'taxonomy', title: 'Danh mục kỹ năng', description: 'Quản lý cây kỹ năng chuẩn, tên gọi khác và tra cứu mã.', icon: 'layers', permission: 'taxonomy:skills:write' }
+  { id: 'taxonomy', title: 'Danh mục kỹ năng', description: 'Quản lý cây kỹ năng chuẩn, tên gọi khác và tra cứu mã.', icon: 'layers', permission: 'taxonomy:skills:read' }
 ];
 function initials(name: string) {
   const words = name.trim().split(/\s+/);
@@ -35,10 +54,11 @@ export default function App() {
   const menuButton = useRef<HTMLButtonElement>(null);
   const action = useAction();
   const permissions = new Set(grants.filter(grant => grant.role === 'ADMIN' && grant.organizationId === null).flatMap(grant => grant.permissions));
-  const globalAdmin = grants.some(grant => grant.role === 'ADMIN' && grant.organizationId === null);
-  const menus = screens.filter(item => item.permission === null || permissions.has(item.permission)
-    // DEV08 chỉ mở lối vào giao diện cho quản trị viên toàn cục; đây không thay thế kiểm tra quyền tại máy chủ.
-    || item.id === 'taxonomy' && globalAdmin);
+  const schools = studentGrants(grants);
+  const menus = screens.filter(item => item.id === 'internship' ? !!me && canDiscoverWorkspace(me)
+    : item.id === 'school' ? grants.some(grant => grant.role === 'SCHOOL_STAFF' && !!grant.organizationId)
+    : item.id === 'demands' ? grants.some(canAuthorDemands)
+    : item.permission === null || (item.id === 'taxonomy' ? grants.some(grant => grant.permissions.includes('taxonomy:skills:read')) : (item.group === 'student' ? schools.length > 0 : permissions.has(item.permission))));
   const current = screens.find(item => item.id === screen) || screens[0];
 
   useEffect(() => {
@@ -99,8 +119,9 @@ export default function App() {
     };
   }, [mobileOpen]);
 
-  const navigate = (next: string) => { setScreen(next); setMobileOpen(false); };
+  const navigate = (next: string) => { if (next !== screen && !canLeaveDemand()) return; setScreen(next); setMobileOpen(false); };
   const signOut = async () => {
+    if (!canLeaveDemand()) return;
     await logout(); generation.current += 1;
     setMe(null); setGrants([]); setContext('0'); setMobileOpen(false);
     setAuthScreen('login'); setSessionMessage(''); history.replaceState(null, '', '/');
@@ -139,10 +160,13 @@ export default function App() {
         <button className="btn-icon sidebar-close" aria-label="Đóng menu điều hướng" onClick={() => setMobileOpen(false)}><Icon name="close" /></button></div>
       <nav aria-label="Điều hướng chính">
         <p className="nav-group-label">KHÔNG GIAN CỦA BẠN</p>
-        {menus.filter(item => item.id === 'account').map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
+        {menus.filter(item => ['account', 'mentor-invitations', 'internship', 'demands', 'school', 'taxonomy'].includes(item.id)).map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
           aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
-        {menus.some(item => item.id !== 'account') && <p className="nav-group-label nav-group-admin">QUẢN TRỊ HỆ THỐNG</p>}
-        {menus.filter(item => item.id !== 'account').map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
+        {menus.some(item => item.group === 'student') && <p className="nav-group-label student-nav-group">SINH VIÊN</p>}
+        {menus.filter(item => item.group === 'student').map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
+          aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
+        {menus.some(item => !['account', 'mentor-invitations', 'internship', 'demands', 'school', 'taxonomy'].includes(item.id) && item.group !== 'student') && <p className="nav-group-label nav-group-admin">QUẢN TRỊ HỆ THỐNG</p>}
+        {menus.filter(item => !['account', 'mentor-invitations', 'internship', 'demands', 'school', 'taxonomy'].includes(item.id) && item.group !== 'student').map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
           aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
       </nav>
       <div className="sidebar-bottom">
@@ -161,16 +185,26 @@ export default function App() {
           <button className="profile-shortcut" aria-label="Mở tài khoản của tôi" onClick={() => navigate('account')}><span className="avatar avatar-small">{initials(me.displayName)}</span><span>{me.displayName}</span><Icon name="chevron-down" size={14} /></button></div>
       </header>
       <main className="content" id="main-content">
-        <div className="page-header"><div><p className="section-kicker">{screen === 'account' ? 'KHÔNG GIAN CÁ NHÂN' : 'QUẢN TRỊ NỀN TẢNG'}</p>
+        <div className="page-header"><div><p className="section-kicker">{screen === 'account' || screen === 'mentor-invitations' ? 'KHÔNG GIAN CÁ NHÂN' : screen === 'demands' || screen === 'school' ? current.title : screen === 'internship' ? 'QUẢN LÝ THỰC TẬP' : current.group === 'student' ? 'KHÔNG GIAN SINH VIÊN' : 'QUẢN TRỊ NỀN TẢNG'}</p>
           <h1 ref={heading} tabIndex={-1}>{current.title}</h1><p className="page-description">{current.description}</p></div>
           <span className="workspace-label"><span className="live-dot" />UT.Bridora</span></div>
         <Notice message={action.message} tone={action.error ? 'error' : 'info'} />
+        {screen === 'account' && me.memberships.some(m => m.role === 'ENTERPRISE') && !grants.some(canAuthorDemands)
+          && <Notice message="Tài khoản có vai trò doanh nghiệp nhưng chưa được cấp quyền quản lý nhu cầu. Nhờ quản trị viên kiểm tra trạng thái xác minh tổ chức và liên kết vai trò." />}
         {!menus.some(item => item.id === screen) ? <section className="panel"><EmptyState icon="lock" title="Không có quyền truy cập" description="Chọn một chức năng trong menu để tiếp tục." /></section>
           : screen === 'users' ? <UserManagement me={me} permissions={permissions} />
           : screen === 'organizations' ? <OrganizationManagement permissions={permissions} />
           : screen === 'audit' ? <AuditViewer />
+          : screen === 'internship' ? <InternshipWorkspace key={me.userId} me={me} grants={grants} />
+          : screen === 'student-overview' ? <StudentOverviewPage me={me} schools={schools} openProfile={() => navigate('student-profile')} />
+          : screen === 'student-profile' ? <MyProfilePage me={me} schools={schools} />
+          : screen === 'student-invitations' ? <InvitationConsentPage />
+          : screen === 'student-tasks' ? <TaskBoard student />
+          : screen === 'mentor-invitations' ? <MentorInvitations />
           // DEV08 hiển thị mô-đun danh mục kỹ năng trong khung ứng dụng hiện có để người kiểm thử bắt đầu kiểm tra giao diện.
           : screen === 'taxonomy' ? <SkillTaxonomy />
+          : screen === 'demands' ? <DemandWorkspace key={me.userId} grants={grants} />
+          : screen === 'school' ? <SchoolWorkspace grants={grants} />
           : <AccountOverview me={me} grants={grants} context={context} setContext={setContext}
             signedOut={() => { generation.current += 1; setMe(null); setGrants([]); setAuthScreen('login'); setSessionMessage('Đổi mật khẩu thành công. Vui lòng đăng nhập lại.'); }} />}
         <footer className="app-footer"><span>© {new Date().getFullYear()} UT.Bridora</span><span>Kết nối giáo dục với cơ hội nghề nghiệp.</span></footer>

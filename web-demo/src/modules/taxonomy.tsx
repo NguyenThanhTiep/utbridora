@@ -1,5 +1,5 @@
 // DEV08 đã tạo giao diện cây danh mục và biểu mẫu quản lý kỹ năng, trạng thái, tên gọi khác và phân giải tên.
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { api, send } from '../api';
 import { Icon, Notice } from '../components';
 import './taxonomy.css';
@@ -55,6 +55,18 @@ function SkillBranch({ skill, allSkills, selected, choose }: {
 }
 
 export function SkillTaxonomy() {
+  const [canWrite, setCanWrite] = useState(false);
+  const pendingCommands = useRef(new Map<string, string>());
+  async function command<T = unknown>(path: string, method: string, body: unknown): Promise<T> {
+    if (!canWrite) throw new Error('Tài khoản chưa có quyền biên tập TAX.');
+    const payload = JSON.stringify(body), signature = method + path + payload;
+    const key = pendingCommands.current.get(signature) || crypto.randomUUID();
+    pendingCommands.current.set(signature, key);
+    const result = await api<T>(path, { method, body: payload, headers: { 'Idempotency-Key': key } });
+    pendingCommands.current.delete(signature);
+    return result;
+  }
+  useEffect(() => { void api<{ allowed: boolean }>('/taxonomy/editor-access').then(value => setCanWrite(value.allowed)).catch(() => setCanWrite(false)); }, []);
   const [categories, setCategories] = useState<TaxonomyCategory[]>([]);
   const [skills, setSkills] = useState<TaxonomySkill[]>([]);
   const [aliases, setAliases] = useState<TaxonomyAlias[]>([]);
@@ -80,7 +92,7 @@ export function SkillTaxonomy() {
 
   async function refresh() {
     const [categoryItems, skillData] = await Promise.all([
-      loadAllPages(page => api<TaxonomyPage<TaxonomyCategory>>(`/taxonomy/categories/page?page=${page}&size=100`)),
+      loadAllPages(page => api<TaxonomyPage<TaxonomyCategory>>(`/taxonomy/categories?page=${page}&size=100`)),
       (async () => {
         const first = await api<{ taxonomyVersion: string; skills: TaxonomyPage<TaxonomySkill> }>(
           '/taxonomy/skills?includeDeprecated=true&page=0&size=100');
@@ -121,44 +133,44 @@ export function SkillTaxonomy() {
 
   function createCategory(event: FormEvent) {
     event.preventDefault();
-    void act(() => send('/taxonomy/categories', 'POST', { categoryCode, name: categoryName, parentCategoryCode: parentCategoryCode || null }), 'Đã thêm danh mục.');
+    void act(() => command('/taxonomy/categories', 'POST', { categoryCode, name: categoryName, parentCategoryCode: parentCategoryCode || null }), 'Đã thêm danh mục.');
   }
   function saveCategory(event: FormEvent) {
     event.preventDefault(); if (!selectedCategory) return;
-    void act(() => send(`/taxonomy/categories/${encodeURIComponent(selectedCategory.categoryCode)}`, 'PATCH', {
+    void act(() => command(`/taxonomy/categories/${encodeURIComponent(selectedCategory.categoryCode)}`, 'PATCH', {
       expectedVersion: selectedCategory.version, name: categoryName, status: selectedCategory.status
     }), 'Đã cập nhật danh mục.');
   }
   function createSkill(event: FormEvent) {
     event.preventDefault();
-    void act(() => send('/taxonomy/skills', 'POST', { skillCode, name: skillName, categoryCode: skillCategoryCode, parentSkillCode: parentSkillCode || null }), 'Đã thêm kỹ năng.');
+    void act(() => command('/taxonomy/skills', 'POST', { skillCode, name: skillName, categoryCode: skillCategoryCode, parentSkillCode: parentSkillCode || null }), 'Đã thêm kỹ năng.');
   }
   function saveSkill(event: FormEvent) {
     event.preventDefault(); if (!selectedSkill) return;
-    void act(() => send(`/taxonomy/skills/${encodeURIComponent(selectedSkill.skillCode)}`, 'PATCH', {
+    void act(() => command(`/taxonomy/skills/${encodeURIComponent(selectedSkill.skillCode)}`, 'PATCH', {
       expectedVersion: selectedSkill.version, name: skillName, categoryCode: skillCategoryCode,
       parentSkillCode: parentSkillCode || null, status: selectedSkill.status
     }), 'Đã cập nhật kỹ năng.');
   }
   function toggleStatus() {
-    if (selectedCategory) void act(() => send(`/taxonomy/categories/${encodeURIComponent(selectedCategory.categoryCode)}`, 'PATCH', {
+    if (selectedCategory) void act(() => command(`/taxonomy/categories/${encodeURIComponent(selectedCategory.categoryCode)}`, 'PATCH', {
       expectedVersion: selectedCategory.version, name: selectedCategory.name,
       status: selectedCategory.status === 'ACTIVE' ? 'DEPRECATED' : 'ACTIVE'
     }), 'Đã đổi trạng thái danh mục.');
-    if (selectedSkill) void act(() => send(`/taxonomy/skills/${encodeURIComponent(selectedSkill.skillCode)}`, 'PATCH', {
+    if (selectedSkill) void act(() => command(`/taxonomy/skills/${encodeURIComponent(selectedSkill.skillCode)}`, 'PATCH', {
       expectedVersion: selectedSkill.version, name: selectedSkill.name, categoryCode: selectedSkill.categoryCode,
       parentSkillCode: selectedSkill.parentSkillCode, status: selectedSkill.status === 'ACTIVE' ? 'DEPRECATED' : 'ACTIVE'
     }), 'Đã đổi trạng thái kỹ năng.');
   }
   function createAlias(event: FormEvent) {
     event.preventDefault(); if (!selectedSkill) return;
-    void act(() => send(`/taxonomy/skills/${encodeURIComponent(selectedSkill.skillCode)}/aliases`, 'POST', {
+    void act(() => command(`/taxonomy/skills/${encodeURIComponent(selectedSkill.skillCode)}/aliases`, 'POST', {
       alias: aliasText, expectedVersion: selectedSkill.version
     }), 'Đã thêm tên gọi khác.');
   }
   function deleteAlias(alias: TaxonomyAlias) {
     if (!selectedSkill) return;
-    void act(() => send(`/taxonomy/skills/${encodeURIComponent(selectedSkill.skillCode)}/aliases/${alias.aliasId}`, 'DELETE', { expectedVersion: alias.version }), 'Đã gỡ tên gọi khác.');
+    void act(() => command(`/taxonomy/skills/${encodeURIComponent(selectedSkill.skillCode)}/aliases/${alias.aliasId}`, 'DELETE', { expectedVersion: alias.version }), 'Đã gỡ tên gọi khác.');
   }
   async function resolveNames(event: FormEvent) {
     event.preventDefault(); setError(''); setLookup([]);
@@ -180,29 +192,29 @@ export function SkillTaxonomy() {
         {roots.length === 0 ? <p className="taxonomy-empty">Chưa có danh mục. Có thể tạo danh mục đầu tiên ở bên cạnh.</p>
           : <ul className="taxonomy-tree">{roots.map(item => <CategoryBranch key={item.categoryCode} category={item} categories={categories} skills={skills} selected={selected} choose={setSelected} />)}</ul>}
       </section>
-      <div className="taxonomy-side">
+      <div className="taxonomy-side">{!canWrite && <Notice message="Bạn đang xem danh mục. Quyền biên tập TAX được cấp đích danh." tone="info" />}
         <section className="panel"><p className="section-kicker">THÊM MỚI</p><h2>Tạo danh mục</h2>
           <form onSubmit={createCategory}><label>Mã danh mục<input required pattern="[A-Z][A-Z0-9_]{0,63}" value={categoryCode} onChange={e => setCategoryCode(e.target.value)} placeholder="PROGRAMMING" /></label>
             <label>Tên danh mục<input required maxLength={128} value={categoryName} onChange={e => setCategoryName(e.target.value)} /></label>
             <label>Mã danh mục cha<select value={parentCategoryCode} onChange={e => setParentCategoryCode(e.target.value)}><option value="">Không có</option>{categories.map(item => <option key={item.categoryCode} value={item.categoryCode}>{item.name} · {item.categoryCode}</option>)}</select></label>
-            <button disabled={busy}>Thêm danh mục</button></form>
+            <button disabled={busy || !canWrite}>Thêm danh mục</button></form>
         </section>
         <section className="panel"><p className="section-kicker">THÊM MỚI</p><h2>Tạo kỹ năng</h2>
           <form onSubmit={createSkill}><label>Mã kỹ năng<input required pattern="[A-Z][A-Z0-9_]{0,63}" value={skillCode} onChange={e => setSkillCode(e.target.value)} placeholder="JAVA" /></label>
             <label>Tên chuẩn<input required maxLength={128} value={skillName} onChange={e => setSkillName(e.target.value)} /></label>
             <label>Danh mục<select required value={skillCategoryCode} onChange={e => setSkillCategoryCode(e.target.value)}><option value="">Chọn danh mục</option>{categories.map(item => <option key={item.categoryCode} value={item.categoryCode}>{item.name} · {item.categoryCode}</option>)}</select></label>
             <label>Mã kỹ năng cha (nếu có)<input value={parentSkillCode} onChange={e => setParentSkillCode(e.target.value)} /></label>
-            <button disabled={busy || categories.length === 0}>Thêm kỹ năng</button></form>
+            <button disabled={busy || !canWrite || categories.length === 0}>Thêm kỹ năng</button></form>
         </section>
       </div>
       {(selectedCategory || selectedSkill) && <section className="panel taxonomy-editor"><div className="taxonomy-heading"><div><p className="section-kicker">ĐANG CHỌN</p><h2>{selectedCategory ? selectedCategory.name : selectedSkill?.name}</h2></div>
-        <button className="secondary" disabled={busy} onClick={toggleStatus}>{(selectedCategory?.status || selectedSkill?.status) === 'ACTIVE' ? 'Ngừng sử dụng' : 'Kích hoạt lại'}</button></div>
-        {selectedCategory ? <form onSubmit={saveCategory}><label>Tên danh mục<input required value={categoryName} onChange={e => setCategoryName(e.target.value)} /></label><button disabled={busy}>Lưu thay đổi</button></form>
+        <button className="secondary" disabled={busy || !canWrite} onClick={toggleStatus}>{(selectedCategory?.status || selectedSkill?.status) === 'ACTIVE' ? 'Ngừng sử dụng' : 'Kích hoạt lại'}</button></div>
+        {selectedCategory ? <form onSubmit={saveCategory}><label>Tên danh mục<input required value={categoryName} onChange={e => setCategoryName(e.target.value)} /></label><button disabled={busy || !canWrite}>Lưu thay đổi</button></form>
           : <><form onSubmit={saveSkill}><label>Tên chuẩn<input required value={skillName} onChange={e => setSkillName(e.target.value)} /></label>
             <label>Danh mục<select value={skillCategoryCode} onChange={e => setSkillCategoryCode(e.target.value)}>{categories.map(item => <option key={item.categoryCode} value={item.categoryCode}>{item.name}</option>)}</select></label>
-            <label>Kỹ năng cha<input value={parentSkillCode} onChange={e => setParentSkillCode(e.target.value)} /></label><button disabled={busy}>Lưu thay đổi</button></form>
-            <div className="taxonomy-aliases"><h3>Tên gọi khác</h3>{aliases.length ? <ul>{aliases.map(alias => <li key={alias.aliasId}><span>{alias.alias}</span><button type="button" className="text-button" disabled={busy} onClick={() => deleteAlias(alias)}>Gỡ</button></li>)}</ul> : <p className="taxonomy-empty">Chưa có tên gọi khác.</p>}
-              <form onSubmit={createAlias}><label>Thêm tên gọi khác<input required maxLength={128} value={aliasText} onChange={e => setAliasText(e.target.value)} placeholder="Tên thường dùng" /></label><button disabled={busy}>Thêm alias</button></form></div></>}
+            <label>Kỹ năng cha<input value={parentSkillCode} onChange={e => setParentSkillCode(e.target.value)} /></label><button disabled={busy || !canWrite}>Lưu thay đổi</button></form>
+            <div className="taxonomy-aliases"><h3>Tên gọi khác</h3>{aliases.length ? <ul>{aliases.map(alias => <li key={alias.aliasId}><span>{alias.alias}</span><button type="button" className="text-button" disabled={busy || !canWrite} onClick={() => deleteAlias(alias)}>Gỡ</button></li>)}</ul> : <p className="taxonomy-empty">Chưa có tên gọi khác.</p>}
+              <form onSubmit={createAlias}><label>Thêm tên gọi khác<input required maxLength={128} value={aliasText} onChange={e => setAliasText(e.target.value)} placeholder="Tên thường dùng" /></label><button disabled={busy || !canWrite}>Thêm alias</button></form></div></>}
       </section>}
     </div>
     <section className="panel taxonomy-resolver"><p className="section-kicker">TRA CỨU</p><h2>Phân giải tên kỹ năng</h2><p className="section-description">Nhập mỗi cách viết trên một dòng để xem chúng cùng trỏ về mã kỹ năng nào.</p>

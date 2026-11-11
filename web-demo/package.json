@@ -1,6 +1,27 @@
 {
-  "name":"utbridora-auth-web-demo","version":"0.1.0","private":true,"type":"module",
-  "scripts":{"dev":"vite --host 127.0.0.1","build":"tsc -b && vite build","test:e2e":"playwright test"},
-  "dependencies":{"react":"^19.1.0","react-dom":"^19.1.0"},
-  "devDependencies":{"@playwright/test":"^1.56.0","@types/react":"^19.1.0","@types/react-dom":"^19.1.0","@vitejs/plugin-react":"^5.0.0","typescript":"~5.9.2","vite":"^7.1.0"}
+  "name": "utbridora-auth-web-demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc -b && npm run typecheck:tests && vite build",
+    "typecheck:tests": "tsc -p tests/tsconfig.json",
+    "test:e2e": "playwright test",
+    "test:internship": "playwright test internship",
+    "test:unit": "playwright test --config playwright.unit.config.ts"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.9.2",
+    "vite": "^7.1.0"
+  }
 }

@@ -29,7 +29,7 @@ class SkillTaxonomyServiceTest {
     private final SkillAliasRepository aliases = mock(SkillAliasRepository.class);
     private final TaxonomyCatalogStateRepository states = mock(TaxonomyCatalogStateRepository.class);
     private final AuditService audit = mock(AuditService.class);
-    private final SkillTaxonomyService service = new SkillTaxonomyService(categories, skills, aliases, states, audit);
+    private final SkillTaxonomyService service = new SkillTaxonomyService(categories, skills, aliases, states, audit, mock(TaxonomyAccess.class));
     private final AppPrincipal actor = new AppPrincipal("00000000-0000-4000-8000-000000000001",
             "tester@example.test", null, 1, List.of());
 
