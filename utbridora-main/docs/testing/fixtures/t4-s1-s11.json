@@ -1,0 +1,288 @@
+{
+  "source": {
+    "path": "docs/srs/UTBridora_SRS_Tong_The_v1.2.4.docx",
+    "sha256": "92efaaec4efb66bfe0fa69e5de6a706476f93f58f808575982b9d95662438bd4",
+    "section": "16.3",
+    "contractMode": "STRICT",
+    "dateNormalization": "SRS specifies day/month; this synthetic fixture uses year 2027."
+  },
+  "oracleType": "MANUAL_SRS_EXPECTATION",
+  "classifierExecutionStatus": "NOT_RUN_WEEK2_TASK",
+  "humanQaSignoff": "NOT_RECORDED",
+  "required": {
+    "majorCodes": [
+      "CNTT",
+      "KTPM"
+    ],
+    "skills": [
+      "JAVA",
+      "SQL",
+      "REST_API"
+    ],
+    "dateRange": {
+      "startDate": "2027-02-01",
+      "endDate": "2027-04-30"
+    }
+  },
+  "aliases": {
+    "Java Core": "JAVA"
+  },
+  "impliesEnabled": false,
+  "cases": [
+    {
+      "id": "S1",
+      "profile": {
+        "majorCode": "KTPM",
+        "skillsDeclared": true,
+        "skills": [
+          "JAVA",
+          "SQL",
+          "REST_API"
+        ],
+        "availabilityDeclared": true,
+        "availablePeriods": [
+          {
+            "startDate": "2027-02-01",
+            "endDate": "2027-04-30"
+          }
+        ]
+      },
+      "expectedCriteria": {
+        "major": "PASS",
+        "skills": "PASS",
+        "availability": "PASS"
+      },
+      "expectedOutcome": "MATCH"
+    },
+    {
+      "id": "S2",
+      "profile": {
+        "majorCode": "CNTT",
+        "skillsDeclared": true,
+        "skills": [
+          "JAVA",
+          "SQL",
+          "REST_API"
+        ],
+        "availabilityDeclared": true,
+        "availablePeriods": [
+          {
+            "startDate": "2027-02-01",
+            "endDate": "2027-04-30"
+          }
+        ]
+      },
+      "expectedCriteria": {
+        "major": "PASS",
+        "skills": "PASS",
+        "availability": "PASS"
+      },
+      "expectedOutcome": "MATCH"
+    },
+    {
+      "id": "S3",
+      "profile": {
+        "majorCode": "CNTT",
+        "skillsDeclared": true,
+        "skills": [
+          "JAVA",
+          "SQL"
+        ],
+        "availabilityDeclared": true,
+        "availablePeriods": [
+          {
+            "startDate": "2027-02-01",
+            "endDate": "2027-04-30"
+          }
+        ]
+      },
+      "expectedCriteria": {
+        "major": "PASS",
+        "skills": "FAIL",
+        "availability": "PASS"
+      },
+      "expectedOutcome": "NOT_MATCH"
+    },
+    {
+      "id": "S4",
+      "profile": {
+        "majorCode": "KTPM",
+        "skillsDeclared": false,
+        "skills": [],
+        "availabilityDeclared": true,
+        "availablePeriods": [
+          {
+            "startDate": "2027-02-01",
+            "endDate": "2027-04-30"
+          }
+        ]
+      },
+      "expectedCriteria": {
+        "major": "PASS",
+        "skills": "UNKNOWN",
+        "availability": "PASS"
+      },
+      "expectedOutcome": "MISSING_DATA"
+    },
+    {
+      "id": "S5",
+      "profile": {
+        "majorCode": "CNTT",
+        "skillsDeclared": true,
+        "skills": [
+          "PYTHON",
+          "SQL"
+        ],
+        "availabilityDeclared": true,
+        "availablePeriods": [
+          {
+            "startDate": "2027-02-01",
+            "endDate": "2027-04-30"
+          }
+        ]
+      },
+      "expectedCriteria": {
+        "major": "PASS",
+        "skills": "FAIL",
+        "availability": "PASS"
+      },
+      "expectedOutcome": "NOT_MATCH"
+    },
+    {
+      "id": "S6",
+      "profile": {
+        "majorCode": "LOGISTICS",
+        "skillsDeclared": true,
+        "skills": [
+          "JAVA",
+          "SQL",
+          "REST_API"
+        ],
+        "availabilityDeclared": true,
+        "availablePeriods": [
+          {
+            "startDate": "2027-02-01",
+            "endDate": "2027-04-30"
+          }
+        ]
+      },
+      "expectedCriteria": {
+        "major": "FAIL",
+        "skills": "PASS",
+        "availability": "PASS"
+      },
+      "expectedOutcome": "NOT_MATCH"
+    },
+    {
+      "id": "S7",
+      "profile": {
+        "majorCode": "CNTT",
+        "skillsDeclared": true,
+        "skills": [
+          "JAVA",
+          "SQL",
+          "REST_API"
+        ],
+        "availabilityDeclared": false,
+        "availablePeriods": []
+      },
+      "expectedCriteria": {
+        "major": "PASS",
+        "skills": "PASS",
+        "availability": "UNKNOWN"
+      },
+      "expectedOutcome": "MISSING_DATA"
+    },
+    {
+      "id": "S8",
+      "profile": {
+        "majorCode": "CNTT",
+        "skillsDeclared": true,
+        "skills": [
+          "JAVA",
+          "SQL",
+          "REST_API"
+        ],
+        "availabilityDeclared": true,
+        "availablePeriods": []
+      },
+      "expectedCriteria": {
+        "major": "PASS",
+        "skills": "PASS",
+        "availability": "FAIL"
+      },
+      "expectedOutcome": "NOT_MATCH"
+    },
+    {
+      "id": "S9",
+      "profile": {
+        "majorCode": "KTPM",
+        "skillsDeclared": true,
+        "skills": [
+          "SPRING_BOOT",
+          "SQL",
+          "REST_API"
+        ],
+        "availabilityDeclared": true,
+        "availablePeriods": [
+          {
+            "startDate": "2027-02-01",
+            "endDate": "2027-04-30"
+          }
+        ]
+      },
+      "expectedCriteria": {
+        "major": "PASS",
+        "skills": "FAIL",
+        "availability": "PASS"
+      },
+      "expectedOutcome": "NOT_MATCH"
+    },
+    {
+      "id": "S10",
+      "profile": {
+        "majorCode": "KTPM",
+        "skillsDeclared": true,
+        "skills": [
+          "Java Core",
+          "SQL",
+          "REST_API"
+        ],
+        "availabilityDeclared": true,
+        "availablePeriods": [
+          {
+            "startDate": "2027-02-01",
+            "endDate": "2027-04-30"
+          }
+        ]
+      },
+      "expectedCriteria": {
+        "major": "PASS",
+        "skills": "PASS",
+        "availability": "PASS"
+      },
+      "expectedOutcome": "MATCH"
+    },
+    {
+      "id": "S11",
+      "profile": {
+        "majorCode": "LOGISTICS",
+        "skillsDeclared": false,
+        "skills": [],
+        "availabilityDeclared": true,
+        "availablePeriods": [
+          {
+            "startDate": "2027-02-01",
+            "endDate": "2027-04-30"
+          }
+        ]
+      },
+      "expectedCriteria": {
+        "major": "FAIL",
+        "skills": "UNKNOWN",
+        "availability": "PASS"
+      },
+      "expectedOutcome": "NOT_MATCH"
+    }
+  ]
+}

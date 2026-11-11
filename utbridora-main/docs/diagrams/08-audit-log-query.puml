@@ -1,0 +1,75 @@
+@startuml
+title UT.Bridora — Tra cứu audit log
+skinparam backgroundColor white
+skinparam defaultFontName Segoe UI
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #EAF2FF
+  BorderColor #315B8A
+  DiamondBackgroundColor #FFF3D6
+  DiamondBorderColor #8A6820
+}
+
+|Quản trị viên|
+start
+:Mở màn hình audit log;
+:Nhập bộ lọc và phân trang;
+:Gửi GET /api/v1/admin/audit-logs\ncùng cookie phiên;
+note right
+  GET tra cứu không yêu cầu CSRF.
+  Không có thao tác sửa / xóa audit.
+end note
+
+|Backend|
+:Kiểm tra phiên, account ACTIVE\nvà security_version;
+if (Danh tính / phiên còn hợp lệ?) then (Không)
+  :Trả 401; yêu cầu đăng nhập lại;
+  stop
+else (Có)
+endif
+:Kiểm tra global ADMIN và\naudit:global:read;
+if (Có quyền tra cứu?) then (Không)
+  :Trả 403;
+  stop
+else (Có)
+endif
+:Kiểm tra page, size và định dạng bộ lọc;
+note right
+  page: 0..10000; size: 1..100 (mặc định 25).
+  Bộ lọc: action, actorId, organizationId,
+  result, from, until.
+  result: SUCCESS / FAILURE / DENIED.
+  Nếu có cả hai mốc: from < until.
+end note
+if (Tham số hợp lệ?) then (Không)
+  :Trả 400; thông báo tham số không hợp lệ;
+  stop
+else (Có)
+endif
+
+|Cơ sở dữ liệu|
+:Truy vấn theo các bộ lọc được cung cấp;\nfrom <= createdAt < until nếu có;
+:Sắp xếp createdAt giảm dần,\nid làm tie-breaker; áp dụng phân trang;
+if (Truy vấn thành công?) then (Không)
+  |Backend|
+  :Trả lỗi hạ tầng; không trả stacktrace;
+  stop
+else (Có)
+endif
+
+|Backend|
+:Chuyển entity thành AuditLogView\nvà trả kết quả phân trang;
+note right
+  Không trả password, raw session ID,
+  CSRF token, reset / invitation token,
+  API secret hoặc snapshot hồ sơ.
+end note
+|Quản trị viên|
+if (Có bản ghi?) then (Có)
+  :Xem danh sách và chuyển trang\nhoặc điều chỉnh bộ lọc;
+else (Không)
+  :Hiển thị danh sách rỗng;
+endif
+stop
+@enduml

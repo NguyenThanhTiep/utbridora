@@ -1,0 +1,100 @@
+@startuml
+!pragma layout smetana
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Segoe UI
+skinparam defaultFontSize 14
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecase {
+  BackgroundColor #EFF6FF
+  BorderColor #2563EB
+}
+skinparam note {
+  BackgroundColor #FFFBEB
+  BorderColor #D97706
+}
+title UT.Bridora — Use Case nền tảng dùng chung
+
+actor "Người sử dụng" as User
+actor "Sinh viên\nSTUDENT" as Student
+actor "Đại diện doanh nghiệp\nENTERPRISE" as Enterprise
+actor "Cán bộ nhà trường\nSCHOOL_STAFF" as Staff
+actor "Quản trị viên\nADMIN" as Admin
+actor "Người nhận lời mời" as Invitee
+actor "Dịch vụ email / SMTP" as Mail
+
+Student --|> User
+Enterprise --|> User
+Staff --|> User
+Admin --|> User
+
+rectangle "UT.Bridora — Core Platform" {
+  package "Tài khoản và xác thực" {
+    usecase "Đăng nhập" as Login
+    usecase "Đăng xuất" as Logout
+    usecase "Xem tài khoản,\nvai trò và quyền hiện tại" as Me
+    usecase "Đổi mật khẩu" as Change
+    usecase "Yêu cầu đặt lại\nmật khẩu" as Forgot
+    usecase "Đặt lại mật khẩu\nbằng liên kết email" as Reset
+    usecase "Chấp nhận lời mời\nvà thiết lập tài khoản" as Accept
+  }
+  package "Quản trị nền tảng" {
+    usecase "Tra cứu tài khoản" as Users
+    usecase "Tạo / tra cứu tổ chức" as Organizations
+    usecase "Gửi lời mời" as Invite
+    usecase "Cấp membership" as Grant
+    usecase "Thu hồi membership" as Revoke
+    usecase "Thay đổi trạng thái\ntài khoản" as Status
+    usecase "Xem lịch sử\ntrạng thái tài khoản" as History
+    usecase "Thu hồi phiên\nđăng nhập" as Sessions
+    usecase "Tra cứu audit log" as Audit
+  }
+}
+
+User -- Login
+User -- Logout
+User -- Me
+User -- Change
+User -- Forgot
+User -- Reset
+Invitee -- Accept
+Admin -- Users
+Admin -- Organizations
+Admin -- Invite
+Admin -- Grant
+Admin -- Revoke
+Admin -- Status
+Admin -- History
+Admin -- Sessions
+Admin -- Audit
+Mail -- Invite
+Mail -- Forgot
+
+note bottom of User
+  Actor tổng quát biểu diễn người sử dụng chức năng tài khoản.
+  Đăng xuất, xem tài khoản và đổi mật khẩu cần phiên hợp lệ.
+  Đăng nhập và khôi phục mật khẩu không cần phiên xác thực.
+end note
+note bottom of Admin
+  Quản trị cần ADMIN global đang active và permission tương ứng.
+  ADMIN không mặc nhiên có quyền nghiệp vụ hoặc xem hồ sơ.
+end note
+note bottom of Accept
+  Đã có: chấp nhận lời mời hợp lệ → tạo user ACTIVE + membership.
+  Chưa có: kích hoạt riêng tài khoản PENDING đã import sẵn.
+end note
+note as Integration
+  CHỜ TÍCH HỢP T2–T5
+  Guard role / organization / owner là thành phần nền tảng.
+  Hồ sơ, Placement, consent, chia sẻ và lọc field cần module thật.
+  Adapter chia sẻ mặc định từ chối.
+  Các team phát triển module trong cùng Modular Monolith.
+end note
+legend bottom
+  Chỉ dùng association và actor generalization ở sơ đồ tổng quan.
+  Đăng nhập là tiền điều kiện của use case được bảo vệ, không phải include bắt buộc.
+  CSRF, BCrypt, kiểm tra quyền và audit được chi tiết trong Activity Diagram.
+endlegend
+@enduml

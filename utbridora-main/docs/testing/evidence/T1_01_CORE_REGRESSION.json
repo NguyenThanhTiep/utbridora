@@ -1,0 +1,104 @@
+{
+  "date": "2026-11-05",
+  "sourceCommit": "151f16e355475025bc724d98fa28f8b63e799f57",
+  "provenance": "Actual DEV runtime run earlier in this same session; collecting existing reports does not rerun tests.",
+  "command": "./mvnw.cmd -o -Dfrontend.e2e=true verify -B",
+  "finishedAt": "2026-11-05T08:44:18+07:00",
+  "result": "PASS",
+  "groups": {
+    "unit": {
+      "reports": [
+        {
+          "file": "target/surefire-reports/TEST-vn.utbridora.auth.security.AccountStatusPolicyTest.xml",
+          "sha256": "5ae5d10c1cf7b4b816fedf20b9e95ae8ad25c47d82592d8af65c661522d3adca",
+          "tests": 18,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "suiteTimestamp": null,
+          "writtenAtUtc": "2026-11-05T01:40:57.863234+00:00"
+        },
+        {
+          "file": "target/surefire-reports/TEST-vn.utbridora.auth.security.AppPrincipalSerializationTest.xml",
+          "sha256": "212117080dd33504742ae96ff72e59a18daf077c76c0262ee34dce4ef03d58e6",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "suiteTimestamp": null,
+          "writtenAtUtc": "2026-11-05T01:40:58.066438+00:00"
+        },
+        {
+          "file": "target/surefire-reports/TEST-vn.utbridora.auth.security.AuthorizationPolicyTest.xml",
+          "sha256": "2e8b470d04f2b48d9a44f65942453f5f5ec9f6b1772ef1bc0652dae5c22d5fa9",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "suiteTimestamp": null,
+          "writtenAtUtc": "2026-11-05T01:41:04.353395+00:00"
+        },
+        {
+          "file": "target/surefire-reports/TEST-vn.utbridora.auth.security.TokenCodecTest.xml",
+          "sha256": "d01a456357c247a36b25426525777a9b0f1e4d43eb07c88757dce9c91fcad866",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "suiteTimestamp": null,
+          "writtenAtUtc": "2026-11-05T01:41:04.405298+00:00"
+        }
+      ],
+      "tests": 28,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "integration": {
+      "reports": [
+        {
+          "file": "target/failsafe-reports/TEST-vn.utbridora.auth.CorePlatformIT.xml",
+          "sha256": "70b659021c680e427c4202331b81f105d2b6d54591f44cac23483eec8d33ea99",
+          "tests": 48,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "suiteTimestamp": null,
+          "writtenAtUtc": "2026-11-05T01:43:52.379949+00:00"
+        },
+        {
+          "file": "target/failsafe-reports/TEST-vn.utbridora.auth.MigrationUpgradeIT.xml",
+          "sha256": "112824a7fa60e7f1c4634c68a3851f12bfdd9ce9f19e476252f20f52ab48e3d1",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "suiteTimestamp": null,
+          "writtenAtUtc": "2026-11-05T01:44:16.894164+00:00"
+        }
+      ],
+      "tests": 49,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "chromium": {
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "uiMockTests": 3,
+      "file": "web-demo/test-results/e2e.xml",
+      "sha256": "3c3867d275d281fe82010176803d29ecfc8afa3ec619b1253972f954a7f3cf56"
+    }
+  },
+  "frontendBuild": {
+    "command": "npm.cmd run build",
+    "result": "PASS",
+    "provenance": "Executed earlier in this same session; application source unchanged."
+  },
+  "applicationSourceUnchangedProof": "v1.1/manifest.json sourceHashes + contract verifier",
+  "newModules": "NOT_RUN",
+  "tester": "NOT_RUN_BY_CODEX",
+  "newContractCiJob": "NOT_RUN_ON_GITHUB"
+}
