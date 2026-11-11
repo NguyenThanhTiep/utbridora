@@ -39,7 +39,13 @@ INSERT INTO school_delegations(id,user_id,school_org_id,term_id,granted_by,decis
 INSERT INTO school_delegation_permissions VALUES
  ('00000000-0000-4000-8000-000000000051','t3:coordinator:confirm'),
  ('00000000-0000-4000-8000-000000000051','enterprise_verification:school:review'),
- ('00000000-0000-4000-8000-000000000051','t3:workspace:read');
+ ('00000000-0000-4000-8000-000000000051','t3:workspace:read'),
+ ('00000000-0000-4000-8000-000000000051','cooperation:school:review'),
+ ('00000000-0000-4000-8000-000000000051','t5:proposal:manage'),
+ ('00000000-0000-4000-8000-000000000051','opportunity:school:publish'),
+ ('00000000-0000-4000-8000-000000000051','student_profile:share:school:manage'),
+ ('00000000-0000-4000-8000-000000000051','student:eligibility:school:approve'),
+ ('00000000-0000-4000-8000-000000000051','placement:school:write');
 INSERT INTO enterprise_verifications(id,enterprise_org_id,school_org_id,state,submission_no,registration_code,registered_name,address,contact_name,contact_email,contact_phone,evidence_file_ids_json,missing_fields_json,decision_ref,submitter_id,submitted_at,reviewer_id,reviewed_at,version,created_at,updated_at) VALUES
  ('00000000-0000-4000-8000-000000000052','00000000-0000-4000-8000-000000000012','00000000-0000-4000-8000-000000000011','APPROVED',1,'SYNTHETIC','DEMO Enterprise','Synthetic address','Synthetic contact','coordinator@example.test','0901234567',JSON_ARRAY(),JSON_ARRAY(),'SYNTHETIC_WEEK1_DEMO','00000000-0000-4000-8000-000000000003',UTC_TIMESTAMP(6),'00000000-0000-4000-8000-000000000002',UTC_TIMESTAMP(6),1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6));
 INSERT INTO internship_cohorts VALUES ('00000000-0000-4000-8000-000000000061','00000000-0000-4000-8000-000000000012','00000000-0000-4000-8000-000000000011','00000000-0000-4000-8000-000000000021','DEMO-W1','DEMO Week 1',1);

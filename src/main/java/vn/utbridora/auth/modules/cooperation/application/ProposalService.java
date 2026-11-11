@@ -158,9 +158,10 @@ public class ProposalService implements InternshipInvitationPort {
             shareAccess.require(auth,current,c);
             String next="ACCEPT".equals(request.decision())?"ENTERPRISE_ACCEPTED":"DECLINED";
             jdbc.update("UPDATE proposal_items SET state=?,version=version+1 WHERE id=?",next,id);
-            var metadata=new HashMap<String,Object>();metadata.put("version",current.version()+1);metadata.put("decision",request.decision());
+            var metadata=new HashMap<String,Object>();metadata.put("version",current.version()+1);
+            metadata.put("fromStatus",current.state());metadata.put("toStatus",next);
             if(request.reasonCode()!=null) metadata.put("reasonCode",request.reasonCode());
-            audit.workflow(actor(auth),"ACCEPT".equals(request.decision())?"PROPOSAL_ENTERPRISE_ACCEPTED":"PROPOSAL_ENTERPRISE_DECLINED",id,org,metadata);
+            audit.workflow(actor(auth),"PROPOSAL_ITEM_DECIDED",id,org,metadata);
             return enterpriseView(item(id));
         },EnterpriseItem::proposalItemId);
     }

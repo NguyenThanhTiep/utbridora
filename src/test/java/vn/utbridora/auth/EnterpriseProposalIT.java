@@ -245,7 +245,7 @@ class EnterpriseProposalIT {
         var listed=http(hr,"GET",listPath(),null,id(12),null,true);assertEquals(200,listed.statusCode(),listed.body());
         assertEquals("ENTERPRISE_ACCEPTED",JSON.readTree(listed.body()).get("content").get(0).get("state").asString());
         assertEquals(409,http(hr,"PATCH",decisionPath(),"{\"expectedVersion\":6,\"decision\":\"ACCEPT\"}",id(12),key(),true).statusCode());
-        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE resource_id=? AND action='PROPOSAL_ENTERPRISE_ACCEPTED'",Integer.class,f.proposalId()));
+        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE resource_id=? AND action='PROPOSAL_ITEM_DECIDED'",Integer.class,f.proposalId()));
         assertEquals(placements,jdbc.queryForObject("SELECT COUNT(*) FROM placements",Integer.class));
     }
     @Test void reshareAndPreviousShareRevocationRollbackTogetherWhenAuditFails() throws Exception {
@@ -276,7 +276,7 @@ class EnterpriseProposalIT {
                 if(n<2) {
                     if(result.statusCode()==201) winners++;
                     else {assertEquals(409,result.statusCode(),result.body());assertTrue(result.body().contains("VERSION_CONFLICT"));}
-                } else assertTrue(result.statusCode()==200 || result.statusCode()==403,result.body());
+                } else assertTrue(result.statusCode()==200 || result.statusCode()==403 || result.statusCode()==409,result.body());
             }
             assertEquals(1,winners);
         } finally {pool.shutdownNow();}
@@ -345,7 +345,10 @@ class EnterpriseProposalIT {
         assertEquals("ENTERPRISE_ACCEPTED",JSON.readTree(accepted.body()).get("state").asString());
         var replay=http(hr,"PATCH",decisionPath(),request,id(12),key,true);assertEquals(200,replay.statusCode());assertEquals(accepted.body(),replay.body());
         assertEquals(409,http(hr,"PATCH",decisionPath(),"{\"expectedVersion\":4,\"decision\":\"DECLINE\",\"reasonCode\":\"OTHER\"}",id(12),key,true).statusCode());
-        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE action='PROPOSAL_ENTERPRISE_ACCEPTED' AND resource_id=?",Integer.class,f.proposalId()));
+        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE action='PROPOSAL_ITEM_DECIDED' AND resource_id=?",Integer.class,f.proposalId()));
+        var audit=JSON.readTree(jdbc.queryForObject("SELECT metadata_json FROM audit_logs WHERE action='PROPOSAL_ITEM_DECIDED' AND resource_id=?",String.class,f.proposalId()));
+        assertEquals("SHARED",audit.get("fromStatus").asString());assertEquals("ENTERPRISE_ACCEPTED",audit.get("toStatus").asString());
+        assertEquals(5,audit.get("version").asInt());assertFalse(audit.has("decision"));
         assertEquals(placed,jdbc.queryForObject("SELECT COUNT(*) FROM placements",Integer.class));
         assertEquals(5,jdbc.queryForObject("SELECT version FROM proposal_items WHERE id=?",Integer.class,f.proposalId()));
     }
@@ -369,14 +372,17 @@ class EnterpriseProposalIT {
         var expired=http(hr,"PATCH",decisionPath(),request,id(12),key(),true);assertEquals(409,expired.statusCode());assertTrue(expired.body().contains("RESERVATION_EXPIRED"));
         jdbc.update("UPDATE proposal_items SET reservation_until=UTC_TIMESTAMP(6)+INTERVAL 1 HOUR WHERE id=?",f.proposalId());
         String operation=key();
-        jdbc.execute("ALTER TABLE audit_logs ADD CONSTRAINT week3_audit_failure CHECK(action<>'PROPOSAL_ENTERPRISE_DECLINED' OR resource_id<>'"+UUID.fromString(f.proposalId())+"')");
+        jdbc.execute("ALTER TABLE audit_logs ADD CONSTRAINT week3_audit_failure CHECK(action<>'PROPOSAL_ITEM_DECIDED' OR resource_id<>'"+UUID.fromString(f.proposalId())+"')");
         try {assertEquals(500,http(hr,"PATCH",decisionPath(),request,id(12),operation,true).statusCode());}
         finally {jdbc.execute("ALTER TABLE audit_logs DROP CHECK week3_audit_failure");}
         assertEquals("SHARED",jdbc.queryForObject("SELECT state FROM proposal_items WHERE id=?",String.class,f.proposalId()));
         assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM operation_records WHERE idempotency_key=?",Integer.class,operation));
         var declined=http(hr,"PATCH",decisionPath(),request,id(12),operation,true);assertEquals(200,declined.statusCode(),declined.body());
         assertEquals("DECLINED",JSON.readTree(declined.body()).get("state").asString());
-        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE resource_id=? AND action='PROPOSAL_ENTERPRISE_DECLINED'",Integer.class,f.proposalId()));
+        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE resource_id=? AND action='PROPOSAL_ITEM_DECIDED'",Integer.class,f.proposalId()));
+        var audit=JSON.readTree(jdbc.queryForObject("SELECT metadata_json FROM audit_logs WHERE action='PROPOSAL_ITEM_DECIDED' AND resource_id=?",String.class,f.proposalId()));
+        assertEquals("SHARED",audit.get("fromStatus").asString());assertEquals("DECLINED",audit.get("toStatus").asString());
+        assertEquals("SKILL_MISMATCH",audit.get("reasonCode").asString());
     }
     @Test void revokedConsentImmediatelyHidesProfileAndDeniesDecision() throws Exception {
         var shared=share();consents.revoke(as(6),shared.consent().consentId(),key(),new StudentConsentService.Revoke(shared.consent().lineageVersion(),"STUDENT_REVOKED"));

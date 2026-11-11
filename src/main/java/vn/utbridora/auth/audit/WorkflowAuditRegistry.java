@@ -18,8 +18,6 @@ final class WorkflowAuditRegistry {
         Map.entry("COOPERATION_REVIEWED",new Spec("cooperation",Set.of("decision","submissionNo","version","reasonCode"))),
         Map.entry("PROPOSAL_ITEM_RESERVED",new Spec("proposal_item",Set.of("batchId","reservationUntil","version","operationId"))),
         Map.entry("PROPOSAL_ITEM_DECIDED",new Spec("proposal_item",Set.of("fromStatus","toStatus","version","reasonCode","operationId"))),
-        Map.entry("PROPOSAL_ENTERPRISE_ACCEPTED",new Spec("proposal_item",Set.of("version","decision"))),
-        Map.entry("PROPOSAL_ENTERPRISE_DECLINED",new Spec("proposal_item",Set.of("version","decision","reasonCode"))),
         Map.entry("OPPORTUNITY_PUBLICATION_CHANGED",new Spec("cooperation",Set.of("publishedAt","closedAt","version","operation"))),
         Map.entry("INTERNSHIP_INVITATION_ISSUED",new Spec("internship_invitation",Set.of("proposalItemId","expiresAt","version","operationId"))),
         Map.entry("INVITATION_RESPONDED",new Spec("internship_invitation",Set.of("decision","invitationVersion","operationId"))),
