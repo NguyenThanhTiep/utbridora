@@ -5,6 +5,18 @@ const org = '11111111-1111-4111-8111-111111111111';
 const school = '22222222-2222-4222-8222-222222222222';
 const term = '33333333-3333-4333-8333-333333333333';
 async function session(page: Page, grants = true) {
+  await page.route('**/api/v1/enterprise/demand-references/schools?**', route => route.fulfill({ json: {
+    content: [{ schoolOrgId: school, name: 'Trường kiểm thử' }], page: 0, size: 100, totalElements: 1, totalPages: 1,
+  } }));
+  await page.route('**/api/v1/enterprise/demand-references/terms?**', route => route.fulfill({ json: {
+    content: [{ termId: term, termCode: 'HK1-2027', startDate: '2027-01-01', endDate: '2027-06-30' }], page: 0, size: 100, totalElements: 1, totalPages: 1,
+  } }));
+  await page.route('**/api/v1/enterprise/demand-references/academic-catalog?**', route => route.fulfill({ json: {
+    schoolOrgId: school, termId: term, academicCatalogVersion: 'v1',
+  } }));
+  await page.route('**/api/v1/taxonomy/skills?**', route => route.fulfill({ json: {
+    taxonomyVersion: 'v1', skills: { content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 },
+  } }));
   // New week-2 panels stay isolated in this UX-only harness; real workflows have a separate live test.
   await page.route('**/api/v1/enterprise/verifications?**', route => route.fulfill({ json: { content: [], page: 0, size: 25, totalElements: 0, totalPages: 0 } }));
   await page.route('**/api/v1/enterprise/cooperations?**', route => route.fulfill({ json: { content: [], page: 0, size: 25, totalElements: 0, totalPages: 0 } }));
@@ -20,20 +32,49 @@ async function open(page: Page) {
   await page.goto('/');
   await page.getByRole('button', { name: 'Nhu cầu thực tập', exact: true }).click();
 }
-async function fill(page: Page) {
+async function fill(page: Page, selectTaxonomy = true) {
   await page.getByRole('button', { name: 'Tạo nhu cầu', exact: true }).click();
-  await page.getByLabel('Mã trường (UUID)', { exact: true }).fill(school);
-  await page.getByLabel('Mã kỳ thực tập (UUID)', { exact: true }).fill(term);
+  await page.getByLabel('Trường nhận nhu cầu', { exact: true }).selectOption(school);
+  await page.getByLabel('Kỳ thực tập', { exact: true }).selectOption(term);
   await page.getByLabel('Tên nhu cầu', { exact: true }).fill('Java internship');
   await page.getByLabel('Số lượng vị trí').fill('5');
   await page.getByLabel('Hạn tuyển').fill('2027-01-01T09:00');
   await page.getByLabel('Mô tả công việc').fill('Build APIs');
   await page.getByLabel('Ngày bắt đầu thực tập').fill('2027-02-01');
   await page.getByLabel('Ngày kết thúc thực tập').fill('2027-05-01');
-  await page.getByLabel('Phiên bản danh mục học vụ').fill('v1');
-  await page.getByLabel('Phiên bản danh mục kỹ năng').fill('v1');
+  await page.getByLabel('Phiên bản danh mục học vụ').selectOption('v1');
+  if (selectTaxonomy) {
+    const taxonomy = page.getByLabel('Phiên bản danh mục kỹ năng');
+    await expect(taxonomy).toBeEnabled();
+    await taxonomy.selectOption({ index: 1 });
+  }
 }
 const empty = { content: [], page: 0, size: 25, totalElements: 0, totalPages: 0 };
+
+test('demand references are choices and changing school clears the previous term and academic version', async ({ page }) => {
+  await session(page);
+  const otherSchool = '55555555-5555-4555-8555-555555555555';
+  await page.route('**/api/v1/enterprise/demands**', route => route.fulfill({ json: empty }));
+  await page.route('**/api/v1/enterprise/demand-references/schools?**', route => route.fulfill({ json: {
+    ...empty, content: [{ schoolOrgId: school, name: 'Trường A' }, { schoolOrgId: otherSchool, name: 'Trường B' }], totalElements: 2, totalPages: 1,
+  } }));
+  await page.route('**/api/v1/enterprise/demand-references/terms?**', route => route.fulfill({ json: {
+    ...empty, ...(new URL(route.request().url()).searchParams.get('schoolOrgId') === school ? {
+      content: [{ termId: term, termCode: 'HK1-2027', startDate: '2027-01-01', endDate: '2027-06-30' }], totalElements: 1, totalPages: 1,
+    } : {}),
+  } }));
+  await open(page);await fill(page);
+  for (const label of ['Trường nhận nhu cầu', 'Kỳ thực tập', 'Phiên bản danh mục học vụ', 'Phiên bản danh mục kỹ năng']) {
+    await expect(page.getByLabel(label, { exact: true })).toHaveJSProperty('tagName', 'SELECT');
+  }
+  await expect(page.getByLabel('Trường nhận nhu cầu')).toHaveValue(school);
+  await page.getByLabel('Trường nhận nhu cầu').selectOption({ label: 'Trường B' });
+  await expect(page.getByLabel('Kỳ thực tập', { exact: true })).toHaveValue('');
+  await expect(page.getByLabel('Phiên bản danh mục học vụ')).toHaveValue('');
+  await expect(page.getByLabel('Phiên bản danh mục học vụ')).toBeDisabled();
+  await expect(page.getByText('Trường này chưa có kỳ thực tập đang hoạt động.')).toBeVisible();
+  await expect(page.getByLabel('Tên nhu cầu', { exact: true })).toHaveValue('Java internship');
+});
 
 test('T4 lookup selects canonical skills and version without duplicates across groups', async ({ page }) => {
   await session(page);
@@ -61,11 +102,11 @@ test('T4 lookup failure preserves draft and can be retried', async ({ page }) =>
   await page.route('**/api/v1/taxonomy/skills?**', route => fail
     ? route.fulfill({ status: 503, json: { errorCode: 'DEPENDENCY_UNAVAILABLE' } })
     : route.fulfill({ json: { taxonomyVersion: 'skills-v2', skills: empty } }));
-  await open(page); await fill(page);
+  await open(page); await fill(page, false);
   await page.getByRole('button', { name: 'Tra cứu kỹ năng', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Thử tải kỹ năng lại' })).toBeVisible();
   await expect(page.getByLabel('Tên nhu cầu', { exact: true })).toHaveValue('Java internship');
-  await expect(page.getByLabel('Phiên bản danh mục kỹ năng', { exact: true })).toHaveValue('v1');
+  await expect(page.getByLabel('Phiên bản danh mục kỹ năng', { exact: true })).toHaveValue('');
   fail = false;
   await page.getByRole('button', { name: 'Thử tải kỹ năng lại' }).click();
   await expect(page.getByText('Danh mục kỹ năng chưa có dữ liệu. Cần bổ sung kỹ năng trước khi chọn.')).toBeVisible();
@@ -187,7 +228,7 @@ test('create then edit preserves scope and sends expected version', async ({ pag
   await page.getByRole('button', { name: 'Lưu bản nháp', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Java internship', exact: true })).toBeVisible();
   await page.getByRole('button', { name: /Sửa/ }).click();
-  await expect(page.getByLabel('Mã trường (UUID)', { exact: true })).toBeDisabled();
+  await expect(page.getByLabel('Trường nhận nhu cầu', { exact: true })).toBeDisabled();
   await page.getByLabel('Tên nhu cầu').fill('Updated internship');
   await page.getByRole('button', { name: 'Lưu bản nháp', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Updated internship', exact: true })).toBeVisible();

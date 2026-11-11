@@ -29,7 +29,8 @@ export function InvitationConsentPage() {
     {invitations.map(i => <section className="panel" key={i.invitationId}><h2>{i.title}</h2><p>{i.enterpriseName} · {i.state}</p><p>Hạn phản hồi: {new Date(i.expiresAt).toLocaleString('vi-VN')}</p>
       {i.state === 'PENDING' && <div className="button-row"><button disabled={busy || Date.now() >= Date.parse(i.expiresAt)} onClick={() => void command('/invitations/' + i.invitationId + '/decision', { decision: 'ACCEPT', expectedVersion: i.version, reasonCode: null, reasonText: null })}>Nhận lời mời</button>
         <button className="secondary" disabled={busy} onClick={() => void command('/invitations/' + i.invitationId + '/decision', { decision: 'DECLINE', expectedVersion: i.version, reasonCode: 'STUDENT_DECLINED', reasonText: null })}>Từ chối</button></div>}
-      {i.state === 'ACCEPTED' && <button className="secondary" disabled={busy} onClick={() => { if (window.confirm('Rút lại quyết định nhận lời mời này?')) void command('/invitations/' + i.invitationId + '/withdraw', { expectedVersion: i.version, reasonCode: 'STUDENT_WITHDREW', reasonText: null }); }}>Rút nhận lời</button>}
+      {i.state === 'ACCEPTED' && <div><p>Rút nhận lời sẽ hủy việc tham gia cơ hội thực tập này.</p><button className="secondary" disabled={busy} onClick={() => { if (window.confirm('CẢNH BÁO: Rút nhận lời sẽ HỦY BỎ hoàn toàn cơ hội thực tập này và không thể hoàn tác. Bạn có chắc chắn muốn hủy?')) void command('/invitations/' + i.invitationId + '/withdraw', { expectedVersion: i.version, reasonCode: 'STUDENT_WITHDREW', reasonText: null }); }}>Rút nhận lời</button></div>}
+      <p>Lưu ý: Để chỉ thu hồi quyền xem thông tin cá nhân của Doanh nghiệp mà vẫn giữ vị trí thực tập, hãy bấm “Thu hồi quyền chia sẻ” ở bảng bên dưới.</p>
       <ConsentForm key={i.invitationId + ':' + refresh} invitation={i} consents={consents} busy={busy} command={command} />
     </section>)}
     <section className="panel"><h2>Quyền chia sẻ đã cấp</h2>{consents.length === 0 && <p>Chưa cấp quyền chia sẻ.</p>}{consents.map(c => <article key={c.consentId}><p>{c.fieldWhitelist.map(f => labels[f]).join(', ')} · hết hạn {new Date(c.expiresAt).toLocaleString('vi-VN')}</p>
@@ -46,7 +47,7 @@ function ConsentForm({ invitation, consents, busy, command }: { invitation: Invi
     if (expiry.current?.days !== days) expiry.current = { days, value: new Date(Date.now() + days * 86400000).toISOString() };
     void command('/students/me/consents', { invitationId: invitation.invitationId, purpose: 'INTERNSHIP_SELECTION', fieldWhitelist: selected, expiresAt: expiry.current.value, policyVersion: 'demo-consent-v1', expectedSchoolPolicyVersion: policy.version, expectedLineageVersion: lineage });
   } }}>
-    <h3>Quyết định chia sẻ hồ sơ riêng</h3><p>Bạn tự chọn thông tin và thời hạn cho {invitation.enterpriseName}, phục vụ đánh giá thực tập. Nhận lời mời không tự cấp quyền chia sẻ.</p>
+    <h3>Quyết định chia sẻ hồ sơ riêng</h3><p>Bạn cho phép nhà trường chia sẻ các thông tin đã chọn với {invitation.enterpriseName} để đánh giá thực tập. Nhà trường sẽ cấp hoặc cập nhật chia sẻ sau khi bạn đồng ý. Nhận lời mời không tự cấp quyền xem hồ sơ cho doanh nghiệp.</p>
     <fieldset disabled={busy || !policy}>{policy?.allowedFields.map(f => <label key={f}><input type="checkbox" checked={selected.includes(f)} onChange={e => setSelected(e.target.checked ? [...selected, f] : selected.filter(v => v !== f))} />{labels[f] || f}</label>)}
       <label>Số ngày hiệu lực<input type="number" min="1" max="30" required value={days} onChange={e => setDays(Number(e.target.value))} /></label>
       <button disabled={!selected.length}>Đồng ý chia sẻ các mục đã chọn</button>

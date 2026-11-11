@@ -26,6 +26,7 @@ export function demandInput(form: FormData, existing: Demand | null): DemandInpu
     minYearsPractice: row.minYearsPractice === '' ? null : Number(row.minYearsPractice) }));
   const required = toSkills(form.required), preferred = toSkills(form.preferred);
   const codes = [...required, ...preferred].map(skill => skill.skillCode);
+  if (!form.schoolOrgId || !form.termId) throw new Error('Chọn trường và kỳ thực tập trước khi lưu bản nháp.');
   if (codes.some(code => !code)) throw new Error('Mã kỹ năng không được để trống hoặc chỉ có khoảng trắng.');
   if (new Set(codes).size !== codes.length) throw new Error('Mỗi mã kỹ năng chỉ xuất hiện một lần trong cả phần Bắt buộc và Ưu tiên.');
   if (form.endDate < form.startDate) throw new Error('Ngày kết thúc thực tập phải bằng hoặc sau ngày bắt đầu.');

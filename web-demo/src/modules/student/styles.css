@@ -24,10 +24,22 @@
 .student-kept ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 20px; margin: 10px 0; padding: 0; list-style: none; color: var(--muted); font-size: var(--text-sm); }
 .student-error-note { margin-top: 10px; color: #a5364c; font-size: var(--text-sm); line-height: 1.7; overflow-wrap: anywhere; }
 .student-profile-form .button-row { margin-top: 22px; }
+.student-opp-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+.student-opp-filters label { margin-top: 0; }
+.student-opp-list { display: grid; gap: 14px; margin-top: 14px; }
+.student-opp-card { padding: 18px 20px; border: 1px solid #dce6ec; border-radius: 12px; background: #fbfdfe; }
+.student-opp-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+.student-opp-card h3 { font-size: var(--text-lg); color: var(--ink); margin: 0; }
+.student-opp-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; background: var(--brand-light); color: var(--brand-dark); font-size: var(--text-xs); font-weight: 600; white-space: nowrap; }
+.student-opp-meta { color: #3d5869; font-size: var(--text-sm); margin: 5px 0; }
+.student-opp-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.student-opp-tag { padding: 3px 9px; border-radius: 6px; background: #eef4f7; color: #365060; font-size: var(--text-xs); font-weight: 600; }
+.student-opp-detail { margin-top: 12px; padding: 14px 16px; border-radius: 10px; background: #f2faf8; border: 1px solid #c9e6e1; font-size: var(--text-sm); color: #1d4e56; }
+.student-opp-detail p + p { margin-top: 6px; }
 
 @media (max-width: 700px) {
   .student-page { gap: 18px; }
   .student-term-panel .section-heading { flex-wrap: wrap; }
   .student-term-select { width: 100%; }
-  .student-period-fields, .student-kept ul { grid-template-columns: 1fr; }
+  .student-period-fields, .student-kept ul, .student-opp-filters { grid-template-columns: 1fr; }
 }
