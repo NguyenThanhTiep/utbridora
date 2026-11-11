@@ -11,12 +11,15 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-/** The one Core registry extension explicitly authorized by Lead for T3-07 M2B. */
+/** The exact Core subset authorized for T3-07; Task Comment remains DEV06's producer. */
 class SubmissionCreatedAuditTest {
-    @Test void approvedSpecIsExactAndDoesNotEnableReviewOrTaskComment() {
+    @Test void approvedSpecsAreExactAndDoNotEnableTaskComment() {
         assertEquals(new WorkflowAuditRegistry.Spec("submission",Set.of("assignmentId","versionNo","fileId","fileIds","lateFlag")),
                 WorkflowAuditRegistry.ACTIONS.get("SUBMISSION_CREATED"));
-        assertFalse(WorkflowAuditRegistry.ACTIONS.containsKey("SUBMISSION_REVIEWED"));
+        assertEquals(new WorkflowAuditRegistry.Spec("submission",Set.of("assignmentId","versionNo","previousSubmissionId","fileId","fileIds","lateFlag")),
+                WorkflowAuditRegistry.ACTIONS.get("SUBMISSION_REVISED"));
+        assertEquals(new WorkflowAuditRegistry.Spec("submission",Set.of("assignmentId","reviewedVersion","verdict","assignmentVersion")),
+                WorkflowAuditRegistry.ACTIONS.get("SUBMISSION_REVIEWED"));
         assertFalse(WorkflowAuditRegistry.ACTIONS.containsKey("TASK_COMMENTED"));
     }
     @Test void realAuditServiceStoresSubmissionResourceAndSafeMetadata() {
@@ -30,8 +33,20 @@ class SubmissionCreatedAuditTest {
     @ParameterizedTest @ValueSource(strings={"url","note","comment"})
     void freeTextIsRejectedBeforeSaving(String field) {
         var repository=repository();var service=new AuditService(repository);
-        assertThrows(IllegalArgumentException.class,()->service.workflow(id(1),"SUBMISSION_CREATED",id(2),id(3),Map.of(field,"not permitted")));
+        for(var action:List.of("SUBMISSION_CREATED","SUBMISSION_REVISED","SUBMISSION_REVIEWED")) {
+            assertThrows(IllegalArgumentException.class,()->service.workflow(id(1),action,id(2),id(3),Map.of(field,"not permitted")));
+        }
         verifyNoInteractions(repository);
+    }
+    @ParameterizedTest @ValueSource(strings={"SUBMISSION_REVISED","SUBMISSION_REVIEWED"})
+    void reviewAndRevisionUseCanonicalActionsAndMandatoryFlush(String action) {
+        var repository=repository();var service=new AuditService(repository);
+        var metadata=action.equals("SUBMISSION_REVIEWED")
+                ? Map.<String,Object>of("assignmentId",id(4),"reviewedVersion",2,"verdict","ACCEPT","assignmentVersion",7)
+                : Map.<String,Object>of("assignmentId",id(4),"versionNo",2,"previousSubmissionId",id(5),"fileIds",List.of(),"lateFlag",false);
+        service.workflow(id(1),action,id(2),id(3),metadata);
+        var event=ArgumentCaptor.forClass(AuditLog.class);verify(repository).save(event.capture());verify(repository).flush();
+        assertEquals(action,event.getValue().action);assertEquals("submission",event.getValue().resourceType);
     }
     @Test void mandatoryFlushFailurePropagatesForTheDomainTransactionToRollback() {
         var repository=repository();var service=new AuditService(repository);

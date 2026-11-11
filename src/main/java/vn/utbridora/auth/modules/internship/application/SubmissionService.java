@@ -20,8 +20,8 @@ import vn.utbridora.auth.modules.internship.domain.SubmissionPolicy;
 import vn.utbridora.auth.operations.OperationLedger;
 import static vn.utbridora.auth.operations.WorkflowValues.*;
 
-/** URL v1/history and M3A Mentor Review application flows. No production bean is registered here.
- * Submission v2, FR-17 Task Comment, file acceptance and runtime persistence remain separate.
+/** CP-WS2 URL version/history and Mentor Review flows. FR-17 belongs to DEV06.
+ * Runtime requires approved schema and canonical mandatory Core audit support; no file-mode fallback.
  */
 public final class SubmissionService {
     private final UnitOfWork transactions;
@@ -39,7 +39,12 @@ public final class SubmissionService {
         this.identifiers = Objects.requireNonNull(identifiers);
     }
 
+    /** Compatibility entry point for the earlier M2A consumer; uses the same versioned flow. */
     public SubmissionDto submitUrlV1(Authentication auth, UUID assignmentId, String key, SubmissionInput input) {
+        return submitUrl(auth, assignmentId, key, input);
+    }
+
+    public SubmissionDto submitUrl(Authentication auth, UUID assignmentId, String key, SubmissionInput input) {
         UUID actorId = UUID.fromString(actor(auth));
         Objects.requireNonNull(assignmentId);
         Objects.requireNonNull(input);
@@ -64,18 +69,40 @@ public final class SubmissionService {
                 access.requireSubmit(auth, current);
                 var assignment = current.assignment();
                 SubmissionPolicy.requireSubmission(assignment.state(), assignment.version(), input.expectedAssignmentVersion());
-                if (assignment.currentSubmissionId() != null || session.hasHistory(assignmentId)) {
-                    throw failure(409, "STATE_CONFLICT"); // Only first submission belongs to M2.
+                SubmissionDto previous = null;
+                int versionNo = 1;
+                if (assignment.currentSubmissionId() == null) {
+                    if (session.hasHistory(assignmentId)) throw failure(409, "STATE_CONFLICT");
+                } else {
+                    previous = session.submission(assignment.currentSubmissionId());
+                    if (previous == null || !assignmentId.equals(previous.assignmentId())) throw unavailable();
+                    var priorReview = session.reviewForSubmission(previous.submissionId());
+                    if (priorReview == null || priorReview.verdict() != vn.utbridora.auth.modules.internship.api.SubmissionDtos.ReviewVerdict.REQUEST_REVISION) {
+                        throw failure(409, "STATE_CONFLICT");
+                    }
+                    if (!priorReview.submissionId().equals(previous.submissionId())
+                            || !priorReview.reviewedVersionNo().equals(previous.versionNo())) throw unavailable();
+                    var latest = session.history(assignmentId, 0, 1);
+                    if (latest == null || latest.content().size() != 1 || !previous.equals(latest.content().getFirst())) throw unavailable();
+                    if (previous.versionNo() == Integer.MAX_VALUE) throw failure(409, "VERSION_CONFLICT");
+                    versionNo = previous.versionNo() + 1;
                 }
                 var task = current.task().value();
                 var now = clock.instant(); // Deadline uses server time after guards/lock waits.
                 boolean late = SubmissionPolicy.lateFlag(task.dueAt(), task.lateAllowed(), now);
-                var created = new SubmissionDto(Objects.requireNonNull(identifiers.get()), assignmentId, 1,
+                var created = new SubmissionDto(Objects.requireNonNull(identifiers.get()), assignmentId, versionNo,
                         List.of(), input.url(), input.note(), now, late);
-                session.appendFirst(assignment, created);
-                session.audit(AuditAction.SUBMISSION_CREATED.name(), actorId, current.cohort().scope().schoolOrgId(),
-                        created.submissionId(), Map.of("assignmentId", assignmentId.toString(), "versionNo", 1,
-                                "fileIds", List.of(), "lateFlag", late));
+                if (previous == null) {
+                    session.appendFirst(assignment, created);
+                    session.audit(AuditAction.SUBMISSION_CREATED.name(), actorId, current.cohort().scope().schoolOrgId(),
+                            created.submissionId(), Map.of("assignmentId", assignmentId.toString(), "versionNo", versionNo,
+                                    "fileIds", List.of(), "lateFlag", late));
+                } else {
+                    session.appendRevision(assignment, previous, created);
+                    session.audit(AuditAction.SUBMISSION_REVISED.name(), actorId, current.cohort().scope().schoolOrgId(),
+                            created.submissionId(), Map.of("assignmentId", assignmentId.toString(), "versionNo", versionNo,
+                                    "previousSubmissionId", previous.submissionId().toString(), "fileIds", List.of(), "lateFlag", late));
+                }
                 return created;
             }, result -> result.submissionId().toString());
         });

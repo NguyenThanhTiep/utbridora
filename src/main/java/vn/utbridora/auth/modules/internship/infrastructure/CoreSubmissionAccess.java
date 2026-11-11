@@ -14,10 +14,16 @@ import static vn.utbridora.auth.operations.WorkflowValues.*;
 public final class CoreSubmissionAccess implements Access {
     private final AuthorizationPolicy core;
     private final WorkspacePorts.Access workspace;
+    private final WorkspaceAuthority authority;
 
     public CoreSubmissionAccess(AuthorizationPolicy core, WorkspacePorts.Access workspace) {
+        this(core, workspace, null);
+    }
+
+    public CoreSubmissionAccess(AuthorizationPolicy core, WorkspacePorts.Access workspace, WorkspaceAuthority authority) {
         this.core = Objects.requireNonNull(core);
         this.workspace = Objects.requireNonNull(workspace);
+        this.authority = authority;
     }
 
     @Override public void requireSubmit(Authentication actor, AssignmentContext target) {
@@ -45,7 +51,19 @@ public final class CoreSubmissionAccess implements Access {
     }
 
     @Override public void requireReview(Authentication actor, AssignmentContext target) {
-        // M3A has a port contract only. No runtime Review grant until the owner supplies audit support.
-        throw failure(503, "DEPENDENCY_UNAVAILABLE");
+        actor(actor);
+        if (authority == null) throw failure(503, "DEPENDENCY_UNAVAILABLE");
+        var scope = target.cohort().scope();
+        if (!core.holdOrganization(actor, scope.enterpriseOrgId().toString(), Role.ENTERPRISE, "internship:enterprise:task_write")) {
+            throw failure(403, "ACCESS_DENIED");
+        }
+        var selected = authority.selected(actor); // Current, locked parent chain; browser header is only a selector.
+        if (!"MENTOR".equals(selected.kind())) throw failure(403, "ACCESS_DENIED");
+        if (!WorkspaceAuthority.same(selected.scope(), scope)
+                || selected.scope().caseId() != null && !target.assignment().caseId().toString().equals(selected.scope().caseId())) {
+            throw failure(404, "RESOURCE_NOT_FOUND");
+        }
+        // Existing owner logic covers the current group OR explicit historical Task handover.
+        if (!authority.canReadTask(actor, scope, target.task(), target.assignment().caseId())) throw failure(403, "ACCESS_DENIED");
     }
 }

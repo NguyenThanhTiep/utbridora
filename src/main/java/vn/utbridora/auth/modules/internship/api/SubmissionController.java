@@ -33,7 +33,7 @@ public final class SubmissionController {
         try { normalizedKey = uuid(key); }
         catch (OperationFailure invalid) { throw failure(400, "INVALID_REQUEST"); }
         // Resource ownership, current scoped permission and source guards belong to the service.
-        return service().submitUrlV1(auth, id, normalizedKey, input);
+        return service().submitUrl(auth, id, normalizedKey, input);
     }
 
     @GetMapping

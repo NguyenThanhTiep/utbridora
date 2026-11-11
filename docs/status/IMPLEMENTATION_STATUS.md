@@ -1,5 +1,9 @@
 # Trạng thái triển khai Core Platform
 
+## T1-06 tuần 3 — 10/11/2026
+
+Nhánh bàn giao `feature/t1-06-private-files`, base tuần 2 `f1ef2176041c5b0892d5bb107f01d601616755c2`: đã bổ sung private File Service tối thiểu với upload/metadata/content, owner policies cho StudentProfile/TaskAssignment/EnterpriseVerification, storage ngoài MySQL, immutable binding, ledger/audit và migration V28. Code, tests và tài liệu được đóng gói cùng bản DEV T1-06; chưa deploy. File mới PENDING; scanner T1-07, shared authorizer, các resource provider còn thiếu và workflow attachment của team khác chưa hoàn thành. Xem [hướng dẫn tích hợp](../guides/T1_06_PRIVATE_FILES.md) và [kiểm chứng DEV/giới hạn](../testing/T1_06_ACCEPTANCE.md). Evidence giữ snapshot trước commit; trạng thái phát hành hiện hành xem theo Git. Các ghi nhận “file chỉ có metadata/chưa có runtime” phía dưới là lịch sử, không phủ định phần mới này.
+
 ## Tuần 2 — 09/11/2026
 
 Nhánh triển khai `feature/week2-implementation`, base `6687a94`: đã bổ sung luồng delegation/audit, skills/completeness/snapshot, strict matching, Cooperation/proposal/invitation/consent và Mentor/Task/calendar. Code, tests và bốn file bàn giao được đóng gói trong bản phát hành tuần 2 trên main. Xem [đối chiếu 18 task và kiểm chứng DEV](../testing/WEEK2_ACCEPTANCE.md), [hướng dẫn runtime](../guides/WEEK2_RUNTIME.md), [bàn giao T2–T5](../README.md#bàn-giao-tuần-2--tuần-3). Docker dùng chung chưa triển khai lại; không sửa trạng thái QA/Lead trong Plan. Evidence giữ nguyên thời điểm kiểm chứng trước commit, CI sau push xem theo đúng commit trong GitHub Actions. Các mục bên dưới là lịch sử tại ngày được ghi, không phủ định implementation mới và không chứng minh kiểm thử của source tuần 2.

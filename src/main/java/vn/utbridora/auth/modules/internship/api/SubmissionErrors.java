@@ -17,7 +17,7 @@ import static vn.utbridora.auth.operations.WorkflowValues.failure;
 /** Scoped transport/domain mapping. Existing OperationErrors owns OperationFailure handling,
  * including Retry-After, server request IDs and denial audit. No legacy controller is affected.
  */
-@RestControllerAdvice(assignableTypes=SubmissionController.class)
+@RestControllerAdvice(assignableTypes={SubmissionController.class, SubmissionReviewController.class})
 @Order(Ordered.HIGHEST_PRECEDENCE + 5)
 public final class SubmissionErrors {
     private final OperationErrors operations;

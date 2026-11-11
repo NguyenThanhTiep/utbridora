@@ -198,12 +198,87 @@ class SubmissionRuntimeTest {
         error(500,"AUDIT_WRITE_FAILED",()->session.audit("SUBMISSION_CREATED",STUDENT,SCHOOL,SUBMISSION,metadata));
     }
 
-    @Test void reviewRuntimeCannotBeEnabledThroughTheSubmissionAdapter() {
+    @Test void absentReviewAuthorityCannotBeBypassed() {
         error(503,"DEPENDENCY_UNAVAILABLE",()->access.requireReview(actor,context()));
-        error(503,"DEPENDENCY_UNAVAILABLE",()->session.hasReview(SUBMISSION));
-        error(503,"DEPENDENCY_UNAVAILABLE",()->session.appendReview(context().assignment(),context().assignment(),null));
-        error(503,"DEPENDENCY_UNAVAILABLE",()->session.audit("SUBMISSION_REVIEWED",STUDENT,SCHOOL,SUBMISSION,Map.of()));
         verifyNoInteractions(jdbc,ledger,audit,core,workspace);
+    }
+
+    @Test void reviewedAuditUsesTheCanonicalActionWithoutAnAlias() {
+        var metadata=Map.<String,Object>of("assignmentId",ASSIGNMENT.toString(),"reviewedVersion",1,
+                "verdict","ACCEPT","assignmentVersion",4L);
+        session.audit("SUBMISSION_REVIEWED",STUDENT,SCHOOL,SUBMISSION,metadata);
+        verify(audit).workflow(STUDENT.toString(),"SUBMISSION_REVIEWED",SUBMISSION.toString(),SCHOOL.toString(),metadata);
+    }
+
+    private WorkspaceAuthority.Assignment mentorAssignment(String kind,UUID school,UUID enterprise,UUID term,UUID caseId) {
+        return new WorkspaceAuthority.Assignment(id(80).toString(),kind,STUDENT.toString(),
+                new WorkspaceAuthority.Scope(school.toString(),enterprise.toString(),term.toString(),GROUP.toString(),caseId==null?null:caseId.toString()),
+                true,NOW.minusSeconds(60),NOW.plusSeconds(60),1L,id(81).toString(),"SYNTHETIC");
+    }
+    @ParameterizedTest @ValueSource(booleans={false,true})
+    void reviewRequiresExactWritePermissionAndCurrentMentorOrHandover(boolean authorized) {
+        var authority=mock(WorkspaceAuthority.class);var reviewAccess=new CoreSubmissionAccess(core,workspace,authority);var target=context();
+        when(core.holdOrganization(actor,ENTERPRISE.toString(),Role.ENTERPRISE,"internship:enterprise:task_write")).thenReturn(true);
+        when(authority.selected(actor)).thenReturn(mentorAssignment("MENTOR",SCHOOL,ENTERPRISE,TERM,CASE));
+        when(authority.canReadTask(actor,target.cohort().scope(),target.task(),CASE)).thenReturn(authorized);
+        if(authorized)reviewAccess.requireReview(actor,target);else error(403,"ACCESS_DENIED",()->reviewAccess.requireReview(actor,target));
+        verify(authority).canReadTask(actor,target.cohort().scope(),target.task(),CASE);
+    }
+    @ParameterizedTest @ValueSource(strings={"HR","COORDINATOR","ADMIN","STUDENT"})
+    void nonMentorCannotReviewEvenWithAWritePermission(String kind) {
+        var authority=mock(WorkspaceAuthority.class);var reviewAccess=new CoreSubmissionAccess(core,workspace,authority);
+        when(core.holdOrganization(actor,ENTERPRISE.toString(),Role.ENTERPRISE,"internship:enterprise:task_write")).thenReturn(true);
+        when(authority.selected(actor)).thenReturn(mentorAssignment(kind,SCHOOL,ENTERPRISE,TERM,CASE));
+        error(403,"ACCESS_DENIED",()->reviewAccess.requireReview(actor,context()));
+        verify(authority,never()).canReadTask(any(),any(),any(),any());
+    }
+    @ParameterizedTest @ValueSource(strings={"school","enterprise","term","case"})
+    void mentorReviewRejectsEveryForeignScopeDimension(String dimension) {
+        var authority=mock(WorkspaceAuthority.class);var reviewAccess=new CoreSubmissionAccess(core,workspace,authority);
+        when(core.holdOrganization(actor,ENTERPRISE.toString(),Role.ENTERPRISE,"internship:enterprise:task_write")).thenReturn(true);
+        when(authority.selected(actor)).thenReturn(mentorAssignment("MENTOR",dimension.equals("school")?id(99):SCHOOL,
+                dimension.equals("enterprise")?id(99):ENTERPRISE,dimension.equals("term")?id(99):TERM,dimension.equals("case")?id(99):CASE));
+        error(404,"RESOURCE_NOT_FOUND",()->reviewAccess.requireReview(actor,context()));
+    }
+    @Test void missingReviewPermissionStopsBeforeResolvingAnyBusinessAssignment() {
+        var authority=mock(WorkspaceAuthority.class);var reviewAccess=new CoreSubmissionAccess(core,workspace,authority);
+        error(403,"ACCESS_DENIED",()->reviewAccess.requireReview(actor,context()));verifyNoInteractions(authority);
+    }
+    @Test void reviewInsertIsImmutableAndCasDoesNotChangeTheCurrentArtifactPointer() {
+        var expected=new AssignmentDto(ASSIGNMENT,CASE,STUDENT,AssignmentState.SUBMITTED,1001L,SUBMISSION);
+        var updated=new AssignmentDto(ASSIGNMENT,CASE,STUDENT,AssignmentState.COMPLETED,1002L,SUBMISSION);
+        var value=new ReviewDto(id(80),SUBMISSION,1,ReviewVerdict.ACCEPT,"Accepted",id(81),NOW,1002L);
+        when(jdbc.update(startsWith("UPDATE internship_task_assignments SET state=?"),any(),any(),any(),any())).thenReturn(1);
+        session.appendReview(expected,updated,value);
+        verify(jdbc).update(startsWith("INSERT INTO internship_submission_reviews"),eq(id(80).toString()),eq(SUBMISSION.toString()),eq(1),eq("ACCEPT"),eq("Accepted"),eq(id(81).toString()),eq(LocalDateTime.ofInstant(NOW,ZoneOffset.UTC)),eq(1002L));
+        verify(jdbc).update(contains("state='SUBMITTED' AND current_submission_id=?"),eq("COMPLETED"),eq(ASSIGNMENT.toString()),eq(1001L),eq(SUBMISSION.toString()));
+        verify(jdbc,never()).update(contains("UPDATE internship_submissions"),any(Object[].class));
+    }
+    @Test void duplicateReviewInsertCannotUpdateTheAssignment() {
+        var expected=new AssignmentDto(ASSIGNMENT,CASE,STUDENT,AssignmentState.SUBMITTED,3L,SUBMISSION);
+        var updated=new AssignmentDto(ASSIGNMENT,CASE,STUDENT,AssignmentState.COMPLETED,4L,SUBMISSION);
+        var value=new ReviewDto(id(80),SUBMISSION,1,ReviewVerdict.ACCEPT,"Accepted",id(81),NOW,4L);
+        when(jdbc.update(startsWith("INSERT INTO internship_submission_reviews"),any(),any(),any(),any(),any(),any(),any(),any())).thenThrow(new DuplicateKeyException("synthetic"));
+        error(409,"STATE_CONFLICT",()->session.appendReview(expected,updated,value));
+        verify(jdbc,never()).update(startsWith("UPDATE"),any(),any(),any(),any());
+    }
+    @Test void revisionCasComparesThePreviousPointerAndKeepsTheOlderRowUntouched() {
+        var expected=new AssignmentDto(ASSIGNMENT,CASE,STUDENT,AssignmentState.IN_PROGRESS,5L,SUBMISSION);
+        var next=new SubmissionDto(id(80),ASSIGNMENT,2,List.of(),"https://example.test/v2",null,NOW,false);
+        when(jdbc.update(startsWith("UPDATE internship_task_assignments"),any(),any(),any(),any())).thenReturn(1);
+        session.appendRevision(expected,submission(),next);
+        verify(jdbc).update(contains("state='IN_PROGRESS' AND current_submission_id=?"),eq(id(80).toString()),eq(ASSIGNMENT.toString()),eq(5L),eq(SUBMISSION.toString()));
+        verify(jdbc).update(startsWith("INSERT INTO internship_submissions"),eq(id(80).toString()),eq(ASSIGNMENT.toString()),eq(2),eq(next.url()),isNull(),eq(LocalDateTime.ofInstant(NOW,ZoneOffset.UTC)),eq(false));
+    }
+    @Test void revisionCasFailureMustEscapeToTheTransactionBoundary() {
+        var expected=new AssignmentDto(ASSIGNMENT,CASE,STUDENT,AssignmentState.IN_PROGRESS,5L,SUBMISSION);
+        var next=new SubmissionDto(id(80),ASSIGNMENT,2,List.of(),"https://example.test/v2",null,NOW,false);
+        error(409,"VERSION_CONFLICT",()->session.appendRevision(expected,submission(),next));verifyNoInteractions(audit);
+    }
+    @Test void revisionDoesNotAliasMissingCoreAuditMappingToCreated() {
+        doThrow(new IllegalArgumentException("Missing canonical mapping")).when(audit).workflow(anyString(),eq("SUBMISSION_REVISED"),anyString(),anyString(),anyMap());
+        error(503,"DEPENDENCY_UNAVAILABLE",()->session.audit("SUBMISSION_REVISED",STUDENT,SCHOOL,SUBMISSION,Map.of()));
+        verify(audit,never()).workflow(anyString(),eq("SUBMISSION_CREATED"),anyString(),anyString(),anyMap());
     }
 
     @Test void historyLocksAssignmentBeforeScopedCountAndPageAndNeverRebuildsFromPointer() throws Exception {
@@ -424,7 +499,7 @@ class SubmissionRuntimeTest {
         });
         if(stage.equals("cas")) when(jdbc.update(startsWith("UPDATE internship_task_assignments"),any(),any(),any())).thenReturn(0);
         if(stage.equals("audit")) doThrow(failure(500,"AUDIT_WRITE_FAILED")).when(audit).workflow(anyString(),anyString(),anyString(),anyString(),anyMap());
-        var service=new SubmissionConfiguration().submissionService(manager,session,core,authority,cases);
+        var service=new SubmissionConfiguration().submissionService(manager,session,core,authority,cases,new SubmissionConfiguration().submissionClock());
         Supplier<SubmissionDto> submit=()->service.submitUrlV1(actor,ASSIGNMENT,id(20).toString(),new SubmissionInput(2L,List.of(),"https://example.test/v1",null));
         if(stage.equals("success")) {
             var result=submit.get();assertEquals(1,result.versionNo());assertEquals(ASSIGNMENT,result.assignmentId());
