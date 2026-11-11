@@ -101,6 +101,8 @@ class Week2WorkflowIT {
         assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM student_consents",Integer.class));
         int placements=jdbc.queryForObject("SELECT COUNT(*) FROM placements",Integer.class);
         var grantConsent=consents.grant(as(6),key(),new vn.utbridora.auth.modules.student.application.StudentConsentService.GrantConsent(invitation.invitationId(),"INTERNSHIP_SELECTION",List.of("majorCode","skills"),Instant.now().plusSeconds(86400),"demo-consent-v1",0L,0L));
+        // QA01 T1-05-TC06: verify T2 owner ports with the same live consent before sharing/revoking.
+        qa01OwnerPortsScopeTC06(grantConsent);
         var item=proposals.list(as(2),approved.cooperationId(),0,25).content().getFirst();
         var share=shares.grant(as(2),item.proposalItemId(),key(),new ProfileShareService.GrantProfileShare(item.proposalItemId(),grantConsent.consentId(),grantConsent.consentVersion(),item.version(),List.of("majorCode","skills"),grantConsent.expiresAt()));
         var projection=shares.read(as(4),id(6),id(21),share.shareId(),List.of("majorCode","skills","email"),"INTERNSHIP_SELECTION");
@@ -167,6 +169,128 @@ enterpriseIsolationTC03(
         assertEquals("DRAFT",jdbc.queryForObject("SELECT state FROM demands WHERE id=?",String.class,rollbackDraft.demandId()));assertNull(jdbc.queryForObject("SELECT cooperation_id FROM demands WHERE id=?",String.class,rollbackDraft.demandId()));
         assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM cooperations WHERE demand_id=?",Integer.class,rollbackDraft.demandId()));assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM operation_records WHERE idempotency_key=?",Integer.class,operation));
     }
+    /**
+     * QA01 / T1-05-TC06 (R02/G02, R27/G27): the real T2 owner ports must
+     * accept the correct school/term/recipient/version and deny altered scope.
+     * Uses the already-approved student and the live consent created above;
+     * neither production data nor direct mutation of owner records is needed.
+     */
+    private void qa01OwnerPortsScopeTC06(
+            vn.utbridora.auth.modules.student.port.StudentConsentPort.ConsentGrant grant) {
+        var eligibilityPort = (vn.utbridora.auth.modules.student.port.StudentEligibilityPort) eligibility;
+        var consentPort = (vn.utbridora.auth.modules.student.port.StudentConsentPort) consents;
+        Authentication school = as(2);
+        Long eligibilityVersionBefore = jdbc.queryForObject(
+                "SELECT version FROM student_term_eligibilities WHERE user_id=? AND term_id=?",
+                Long.class, id(6), id(21));
+
+        // Correct delegated school + active term + approved student: accepted.
+        transactions.executeWithoutResult(tx ->
+                eligibilityPort.assertEligibleForNomination(school, id(6), id(11), id(21)));
+        // Same port must reject a different school, term or student ID.
+        assertEquals(404, assertThrows(OperationFailure.class, () ->
+                transactions.executeWithoutResult(tx ->
+                        eligibilityPort.assertEligibleForNomination(school, id(6), id(12), id(21)))).status,
+                "TC06: eligibility must reject a foreign school scope");
+        assertEquals(404, assertThrows(OperationFailure.class, () ->
+                transactions.executeWithoutResult(tx ->
+                        eligibilityPort.assertEligibleForNomination(school, id(6), id(11), key()))).status,
+                "TC06: eligibility must reject a foreign term scope");
+        assertEquals(404, assertThrows(OperationFailure.class, () ->
+                transactions.executeWithoutResult(tx ->
+                        eligibilityPort.assertEligibleForNomination(school, key(), id(11), id(21)))).status,
+                "TC06: eligibility must reject a foreign student");
+        assertEquals(eligibilityVersionBefore, jdbc.queryForObject(
+                "SELECT version FROM student_term_eligibilities WHERE user_id=? AND term_id=?",
+                Long.class, id(6), id(21)),
+                "TC06: eligibility port checks must not mutate approval version");
+
+        var enterpriseActor = vn.utbridora.auth.contracts.ActorContext
+                .fromAuthenticatedWorkflow(as(4), id(12));
+        var validRequest = new vn.utbridora.auth.modules.student.port.StudentConsentPort.GrantCheck(
+                grant.consentId(), grant.consentVersion(), null,
+                id(6), id(11), id(21), id(12), "INTERNSHIP_SELECTION",
+                List.of("majorCode", "skills"));
+        var allowed = transactions.execute(tx ->
+                consentPort.lockAndCheckForShare(enterpriseActor, validRequest));
+        assertNotNull(allowed);
+        assertTrue(allowed.valid(), "TC06: consent owner port must accept matching scope");
+        assertEquals("ALLOWED", allowed.reasonCode());
+        assertEquals(List.of("majorCode", "skills"), allowed.allowedFields());
+        assertEquals(grant.expiresAt(), allowed.validUntil());
+        assertEquals(Long.valueOf(grant.consentVersion()), allowed.currentVersion());
+
+        Long lineageVersionBefore = jdbc.queryForObject(
+                "SELECT version FROM student_consent_lineages WHERE student_user_id=? AND school_org_id=? AND term_id=? AND recipient_org_id=?",
+                Long.class, id(6), id(11), id(21), id(12));
+
+        // The same enterprise context is authorized, but altered school/term/student
+        // must be denied by the owner record instead of trusting caller-provided DTOs.
+        for (var invalid : List.of(
+                new vn.utbridora.auth.modules.student.port.StudentConsentPort.GrantCheck(
+                        grant.consentId(), grant.consentVersion(), null,
+                        id(6), key(), id(21), id(12), "INTERNSHIP_SELECTION", List.of("skills")),
+                new vn.utbridora.auth.modules.student.port.StudentConsentPort.GrantCheck(
+                        grant.consentId(), grant.consentVersion(), null,
+                        id(6), id(11), key(), id(12), "INTERNSHIP_SELECTION", List.of("skills")),
+                new vn.utbridora.auth.modules.student.port.StudentConsentPort.GrantCheck(
+                        grant.consentId(), grant.consentVersion(), null,
+                        key(), id(11), id(21), id(12), "INTERNSHIP_SELECTION", List.of("skills")))) {
+            var rejected = transactions.execute(tx ->
+                    consentPort.lockAndCheckForShare(enterpriseActor, invalid));
+            assertNotNull(rejected);
+            assertFalse(rejected.valid(), "TC06: mismatched owner scope must be denied");
+            assertEquals("SCOPE_MISMATCH", rejected.reasonCode());
+            assertTrue(rejected.allowedFields().isEmpty());
+        }
+
+        // School actor has share-management delegation but cannot change the consent's recipient.
+        var schoolActor = vn.utbridora.auth.contracts.ActorContext
+                .fromAuthenticatedWorkflow(as(2), id(11));
+        var wrongRecipient = new vn.utbridora.auth.modules.student.port.StudentConsentPort.GrantCheck(
+                grant.consentId(), grant.consentVersion(), null,
+                id(6), id(11), id(21), key(), "INTERNSHIP_SELECTION", List.of("skills"));
+        var recipientDenied = transactions.execute(tx ->
+                consentPort.lockAndCheckForShare(schoolActor, wrongRecipient));
+        assertNotNull(recipientDenied);
+        assertFalse(recipientDenied.valid());
+        assertEquals("SCOPE_MISMATCH", recipientDenied.reasonCode());
+
+        // Version, purpose and requested fields are validated by the same T2 port.
+        var staleVersion = new vn.utbridora.auth.modules.student.port.StudentConsentPort.GrantCheck(
+                grant.consentId(), grant.consentVersion() + 1, null,
+                id(6), id(11), id(21), id(12), "INTERNSHIP_SELECTION", List.of("skills"));
+        var stale = transactions.execute(tx ->
+                consentPort.lockAndCheckForShare(enterpriseActor, staleVersion));
+        assertNotNull(stale);
+        assertFalse(stale.valid());
+        assertEquals("REPLACED", stale.reasonCode(),
+                "TC06: a stale consent version must not grant sharing access");
+
+        var wrongPurpose = new vn.utbridora.auth.modules.student.port.StudentConsentPort.GrantCheck(
+                grant.consentId(), grant.consentVersion(), null,
+                id(6), id(11), id(21), id(12), "OTHER_PURPOSE", List.of("skills"));
+        var purposeDenied = transactions.execute(tx ->
+                consentPort.lockAndCheckForShare(enterpriseActor, wrongPurpose));
+        assertNotNull(purposeDenied);
+        assertFalse(purposeDenied.valid());
+        assertEquals("PURPOSE_MISMATCH", purposeDenied.reasonCode());
+
+        var extraField = new vn.utbridora.auth.modules.student.port.StudentConsentPort.GrantCheck(
+                grant.consentId(), grant.consentVersion(), null,
+                id(6), id(11), id(21), id(12), "INTERNSHIP_SELECTION", List.of("email"));
+        var fieldDenied = transactions.execute(tx ->
+                consentPort.lockAndCheckForShare(enterpriseActor, extraField));
+        assertNotNull(fieldDenied);
+        assertFalse(fieldDenied.valid());
+        assertEquals("FIELD_DENIED", fieldDenied.reasonCode());
+        assertTrue(fieldDenied.allowedFields().isEmpty());
+        assertEquals(lineageVersionBefore, jdbc.queryForObject(
+                "SELECT version FROM student_consent_lineages WHERE student_user_id=? AND school_org_id=? AND term_id=? AND recipient_org_id=?",
+                Long.class, id(6), id(11), id(21), id(12)),
+                "TC06: denied owner port checks must not advance the consent lineage");
+    }
+
     private void consentEdges(String invitation,String oldShare) throws Exception {
         long lineage=jdbc.queryForObject("SELECT version FROM student_consent_lineages WHERE student_user_id=? AND recipient_org_id=?",Long.class,id(6),id(12));
         var current=consents.grant(as(6),key(),new vn.utbridora.auth.modules.student.application.StudentConsentService.GrantConsent(invitation,"INTERNSHIP_SELECTION",List.of("skills"),Instant.now().plusSeconds(3600),"demo-consent-v1",0L,lineage));
