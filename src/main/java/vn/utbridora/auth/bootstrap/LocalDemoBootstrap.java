@@ -98,15 +98,25 @@ public class LocalDemoBootstrap {
         LocalDate start=LocalDate.now(ZoneOffset.UTC).plusDays(14),end=start.plusMonths(3);
         var body=new LinkedHashMap<String,Object>();
         body.put("expectedProfileVersion",0);body.put("termId",id(21));body.put("majorCode","SE");
-        body.put("phone","0901234567");body.put("skillsDeclared",false);body.put("availabilityDeclared",true);
+        body.put("phone","0901234567");body.put("skillsDeclared",true);body.put("availabilityDeclared",true);
         body.put("availablePeriods",List.of(Map.of("startDate",start.toString(),"endDate",end.toString())));
-        for(String field:List.of("skills","customSkills","orientationCodes","subjectCodes","projects","certificates")) body.put(field,List.of());
+        var skill=new LinkedHashMap<String,Object>();
+        skill.put("skillCode","JAVA");skill.put("level",2);skill.put("yearsPractice",1);skill.put("note",null);
+        body.put("skills",List.of(skill));
+        for(String field:List.of("customSkills","orientationCodes","subjectCodes","projects","certificates")) body.put(field,List.of());
         body.put("cvFileId",null);
-        profiles.save(authority.currentSubject(id(6)).orElseThrow(),UUID.randomUUID().toString(),DemandJson.write(body));
-        var criteria=new RequiredCriteria(List.of("SE"),List.of(new SkillCriterion("JAVA",2,null)),new DateRange(start,end));
-        var demand=new DemandInput(id(11),id(21),"DEMO - Java Internship",3,
-            "Synthetic internship demand for Java API development",null,null,
-            start.minusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant(),criteria,List.of(),"school-demo-v1","skills-v1");
-        demands.create(authority.currentSubject(id(4)).orElseThrow(),id(12),UUID.randomUUID().toString(),demand);
+        var previous=org.springframework.security.core.context.SecurityContextHolder.getContext();
+        var context=org.springframework.security.core.context.SecurityContextHolder.createEmptyContext();
+        org.springframework.security.core.context.SecurityContextHolder.setContext(context);
+        try {
+            context.setAuthentication(authority.currentSubject(id(6)).orElseThrow());
+            profiles.save(context.getAuthentication(),UUID.randomUUID().toString(),DemandJson.write(body));
+            var criteria=new RequiredCriteria(List.of("SE"),List.of(new SkillCriterion("JAVA",2,null)),new DateRange(start,end));
+            var demand=new DemandInput(id(11),id(21),"DEMO - Java Internship",3,
+                "Synthetic internship demand for Java API development",null,null,
+                start.minusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant(),criteria,List.of(),"school-demo-v1","skills-v1");
+            context.setAuthentication(authority.currentSubject(id(4)).orElseThrow());
+            demands.create(context.getAuthentication(),id(12),UUID.randomUUID().toString(),demand);
+        } finally {org.springframework.security.core.context.SecurityContextHolder.setContext(previous);}
     }
 }

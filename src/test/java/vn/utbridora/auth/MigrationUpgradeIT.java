@@ -45,8 +45,8 @@ class MigrationUpgradeIT {
                 s.executeUpdate("INSERT INTO memberships VALUES ('"+member+"','"+user+"',NULL,'ADMIN',1,UTC_TIMESTAMP(6))");
             }
             Flyway flyway=Flyway.configure().dataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword()).load();
-            // V3-V7, shared ledger, T5 terms, T2 relationship and profile schemas.
-            assertEquals(25,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
+            // V3-V7, shared ledger, T5 terms, T2 relationship and profile schemas, V28-V30 placement & proposal decisions.
+            assertEquals(28,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
             try(Connection c=DriverManager.getConnection(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword());Statement s=c.createStatement()) {
                 try(ResultSet r=s.executeQuery("SELECT email FROM users WHERE id='"+user+"'")) {assertTrue(r.next());assertEquals("upgrade@example.test",r.getString(1));}
                 assertThrows(SQLException.class,()->s.executeUpdate("INSERT INTO memberships (id,user_id,role,active,created_at) VALUES ('"+UUID.randomUUID()+"','"+user+"','ADMIN',1,UTC_TIMESTAMP(6))"));
