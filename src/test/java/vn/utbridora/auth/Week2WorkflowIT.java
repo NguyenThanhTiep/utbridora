@@ -42,6 +42,7 @@ class Week2WorkflowIT {
     @Autowired vn.utbridora.auth.authorization.MembershipService memberships;
     @Autowired org.springframework.security.crypto.password.PasswordEncoder passwords;
     @Autowired org.springframework.transaction.support.TransactionTemplate transactions;
+    @Autowired vn.utbridora.auth.audit.AuditService audit;
     @org.springframework.boot.test.web.server.LocalServerPort int port;
     static String id(int i) {return "00000000-0000-4000-8000-"+String.format("%012d",i);}
     static String key() {return UUID.randomUUID().toString();}
@@ -379,6 +380,8 @@ assertEquals(grantAuditCountBefore, jdbc.queryForObject(grantAuditCountSql, Inte
         delegationValidityTC07(schoolSession, detailsPath, parent);
         // QA01 T1-05-TC01: verify successful HTTP grant/revoke audit, metadata and request correlation.
         auditWorkflowMetadataTC01(schoolSession, subject.id, parent);
+        // QA01 T1-05-TC02: synthetic sensitive canaries must not be saved in audit rows.
+        auditSensitiveDataTC02(subject.id, parent);
         admin=as(1);delegations.revoke(admin,parent.id(),key(),new SchoolDelegationService.Revoke(parent.version(),"ROOT_REVOKED"));
         assertEquals(401,http(session,"GET","/matching/runs/"+run+"/details?overallStatus=MATCH",null,false,null));
         var newSession=login(subject.email,"Synthetic-week2-delegate-password-123");assertEquals(404,http(newSession,"GET","/matching/runs/"+run+"/details?overallStatus=MATCH",null,false,null));
@@ -498,6 +501,118 @@ assertEquals(grantAuditCountBefore, jdbc.queryForObject(grantAuditCountSql, Inte
             assertNotNull(metadata.get(field), "TC01: missing audit field " + field);
             assertEquals(value, metadata.get(field).asString(), "TC01: metadata field " + field);
         });
+    }
+
+    /**
+     * QA01 T1-05-TC02: exercise the real HTTP Grant/Revoke flows with synthetic
+     * secret-like values in an extra request header and a benign extra cookie.
+     * Check the actually persisted audit rows, then reject non-allowlisted
+     * workflow metadata in the centralized AuditService without a side effect.
+     * Never use actual passwords, cookies, or tokens as test input.
+     */
+    private void auditSensitiveDataTC02(String recipient,
+            SchoolDelegationService.Delegation parent) throws Exception {
+        String tag = UUID.randomUUID().toString().replace("-", "");
+        String passwordCanary = "QA01_TC02_PASSWORD_" + tag;
+        String tokenCanary = "QA01_TC02_TOKEN_" + tag;
+        String cookieCanary = "QA01_TC02_COOKIE_" + tag;
+        String bodyCanary = "QA01_TC02_BODY_" + tag;
+        String piiCanary = "QA01_TC02_PII_" + tag;
+        var canaries = List.of(passwordCanary, tokenCanary, cookieCanary, bodyCanary, piiCanary);
+        String headerCanary = String.join("_", canaries);
+
+        var privacySession = login("school@example.test", qaWeek2DemoPassword);
+        // Actual additional (synthetic) Cookie header; the normal session cookie remains intact.
+        var cookies = (java.net.CookieManager) privacySession.client().cookieHandler().orElseThrow();
+        var probeCookie = new java.net.HttpCookie("QA01_TC02", cookieCanary);
+        probeCookie.setPath("/");
+        cookies.getCookieStore().add(java.net.URI.create("http://localhost:" + port), probeCookie);
+
+        Instant start = Instant.now().minusSeconds(5);
+        Instant end = Instant.now().plusSeconds(600);
+        assertFalse(start.isBefore(parent.validFrom()), "TC02: child validity within parent");
+        assertFalse(end.isAfter(parent.validUntil()), "TC02: child validity within parent");
+
+        String decisionRef = "DEMO-W2-T1-05-TC02-" + key();
+        String grantBody = vn.utbridora.auth.operations.WorkflowValues.JSON.writeValueAsString(Map.of(
+                "userId", recipient,
+                "permissionCodes", List.of("matching:school:detail_read"),
+                "profileReadFields", List.of(),
+                "validFrom", start.toString(),
+                "validUntil", end.toString(),
+                "decisionRef", decisionRef));
+        var grant = auditHttpTC02(privacySession, "POST",
+                "/school/terms/" + id(21) + "/delegations", grantBody, headerCanary);
+        assertEquals(201, grant.statusCode(), "TC02: legitimate grant must succeed");
+        String childId = vn.utbridora.auth.operations.WorkflowValues.JSON.readTree(grant.body())
+                .get("id").asString();
+
+        String revokeBody = vn.utbridora.auth.operations.WorkflowValues.JSON.writeValueAsString(Map.of(
+                "expectedVersion", 1, "reasonCode", "QA01_REVOKED"));
+        var revoke = auditHttpTC02(privacySession, "DELETE",
+                "/school/delegations/" + childId, revokeBody, headerCanary);
+        assertEquals(200, revoke.statusCode(), "TC02: legitimate revoke must succeed");
+
+        var records = jdbc.queryForList("""
+                SELECT action, metadata_json, reason_code, request_id, resource_id
+                FROM audit_logs
+                WHERE resource_id=? AND action IN ('CAPABILITY_GRANTED','CAPABILITY_REVOKED')
+                """, childId);
+        assertEquals(2, records.size(), "TC02: expect one grant and one revoke audit row");
+        var allowed = Map.of(
+                "CAPABILITY_GRANTED", Set.of("permissionCode", "scopeKind", "scopeId", "termId",
+                        "assignmentKind", "validFrom", "validUntil", "securityVersion", "decisionRef"),
+                "CAPABILITY_REVOKED", Set.of("permissionCode", "scopeKind", "scopeId", "termId",
+                        "assignmentKind", "securityVersion", "reasonCode"));
+        assertEquals(Set.of("CAPABILITY_GRANTED", "CAPABILITY_REVOKED"),
+                records.stream().map(row -> String.valueOf(row.get("action")))
+                        .collect(java.util.stream.Collectors.toSet()),
+                "TC02: both successful audit actions must be present");
+
+        for (var row : records) {
+            String action = String.valueOf(row.get("action"));
+            String metadataRaw = String.valueOf(row.get("metadata_json"));
+            var metadata = vn.utbridora.auth.operations.WorkflowValues.JSON.readTree(metadataRaw);
+            assertTrue(metadata.isObject(), "TC02: metadata must be a JSON object");
+            // Jackson 3: JsonNode.propertyNames() replaces fieldNames().
+            for (String field : metadata.propertyNames()) {
+                assertTrue(allowed.get(action).contains(field),
+                        "TC02: non-allowlisted audit field: " + field);
+            }
+            String savedRow = row.values().stream().map(String::valueOf)
+                    .collect(java.util.stream.Collectors.joining("|"));
+            for (String canary : canaries)
+                assertFalse(savedRow.contains(canary), "TC02: synthetic secret leaked to audit row");
+            assertFalse(savedRow.contains(headerCanary), "TC02: request header leaked to audit row");
+            assertFalse(savedRow.contains(grantBody), "TC02: raw HTTP request body was persisted");
+            assertFalse(savedRow.contains(revokeBody), "TC02: raw HTTP revoke body was persisted");
+        }
+
+        // Non-allowlisted metadata must be rejected BEFORE AuditService persists an event.
+        for (String forbidden : List.of("password", "token", "cookie", "requestBody", "email")) {
+            String attemptId = key();
+            var unsafe = Map.<String,Object>of(forbidden, passwordCanary);
+            assertThrows(IllegalArgumentException.class,
+                    () -> transactions.executeWithoutResult(status ->
+                            audit.workflow(id(2), "CAPABILITY_GRANTED", attemptId, id(11), unsafe)),
+                    "TC02: AuditService must refuse metadata field " + forbidden);
+            assertEquals(0, jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM audit_logs WHERE resource_id=?", Integer.class, attemptId),
+                    "TC02: rejected metadata must not persist an audit row");
+        }
+    }
+
+    private java.net.http.HttpResponse<String> auditHttpTC02(HttpSession session, String method,
+            String path, String body, String canary) throws Exception {
+        var request = java.net.http.HttpRequest.newBuilder(java.net.URI.create(
+                        "http://localhost:" + port + "/api/v1" + path))
+                .header("Content-Type", "application/json")
+                .header("Idempotency-Key", key())
+                .header("X-QA01-Privacy-Canary", canary)
+                .header(session.header(), session.token())
+                .method(method, java.net.http.HttpRequest.BodyPublishers.ofString(body))
+                .build();
+        return session.client().send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
     }
 
     /** QA01 T1-04-TC08: global ADMIN is not a scoped business actor and cannot self-grant. */
