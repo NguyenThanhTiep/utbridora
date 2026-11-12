@@ -133,7 +133,9 @@ public class MatchingService {
         page(page,size);if(!Set.of("MATCH","NOT_MATCH","MISSING_DATA").contains(status)) throw failure(400,"SCHEMA_VALIDATION");
         var stored=read(auth,id,"matching:school:detail_read");
         long count=jdbc.queryForObject("SELECT COUNT(*) FROM match_results WHERE run_id=? AND overall_status=?",Long.class,id,status);
-        var rows=jdbc.query("SELECT data_json FROM match_results WHERE run_id=? AND overall_status=? ORDER BY fit_score DESC,student_user_id ASC LIMIT ? OFFSET ?",(r,n)->JSON.readValue(r.getString(1),MatchResult.class),id,status,size,page*size);
+        // DEV8 đã sửa từ ORDER BY fit_score cho mọi nhóm thành chỉ sắp điểm nhóm MATCH;
+        // nhóm NOT_MATCH/MISSING_DATA chỉ xếp studentUserId để không ngụ ý có xếp hạng, phục vụ R11.
+        var rows=jdbc.query("SELECT data_json FROM match_results WHERE run_id=? AND overall_status=? ORDER BY CASE WHEN overall_status='MATCH' THEN fit_score ELSE NULL END DESC,student_user_id ASC LIMIT ? OFFSET ?",(r,n)->JSON.readValue(r.getString(1),MatchResult.class),id,status,size,page*size);
         audit.workflow(actor(auth),"MATCH_DETAILS_VIEWED",id,stored.schoolOrgId(),Map.of("schoolOrgId",stored.schoolOrgId(),"termId",stored.termId(),"page",page,"size",size));
         return new Details(stored.run(),new Page<>(rows,page,size,count,(int)((count+size-1)/size)));
     }

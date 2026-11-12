@@ -22,6 +22,7 @@ import vn.utbridora.auth.operations.OperationFailure;
     "app.bootstrap.admin.email=admin@example.test","app.bootstrap.admin.password=Synthetic-week2-admin-password-456","app.t5.placement-delivery.enabled=false","logging.level.org.springframework.jdbc=WARN"})
 @ActiveProfiles("local")
 class Week2WorkflowIT {
+    // DEV8 đã sửa từ thiếu kiểm thử protected release runtime thành kiểm tra gate, replay/lock và JSON/CSV/chart ở cuối fixture để phục vụ chức năng mã SRS R03.
     static final MySQLContainer<?> MYSQL=new MySQLContainer<>("mysql:8.4").withDatabaseName("utbridora");
     static {MYSQL.start();}
     @DynamicPropertySource static void database(DynamicPropertyRegistry r) {r.add("spring.datasource.url",MYSQL::getJdbcUrl);r.add("spring.datasource.username",MYSQL::getUsername);r.add("spring.datasource.password",MYSQL::getPassword);}
@@ -124,6 +125,64 @@ class Week2WorkflowIT {
         invitationEdges(demandData.data());
         handoverBoundary(group,caseId,task.taskId());
         delegationRevocationBoundary(grant,matched.summary().run().matchRunId());
+        protectedReleaseR03(demand,evaluated.summary().run());
+    }
+    private void protectedReleaseR03(String demandId,MatchingService.MatchRunRef schoolRun) {
+        assertFalse(jdbc.queryForObject("SELECT enabled FROM matching_privacy_release_settings WHERE id=1",Boolean.class),"Enterprise release must default closed");
+        long demandVersion=jdbc.queryForObject("SELECT version FROM demands WHERE id=?",Long.class,demandId);
+        long criteriaVersion=jdbc.queryForObject("SELECT criteria_version FROM demands WHERE id=?",Long.class,demandId);
+        var input=new MatchingService.Evaluate(demandId,demandVersion,criteriaVersion);
+        assertEquals("PRIVACY_RELEASE_UNAVAILABLE",assertThrows(OperationFailure.class,()->matching.evaluate(as(4),key(),input)).code);
+
+        String batchId=UUID.randomUUID().toString();
+        jdbc.update("INSERT INTO matching_demo_batches(demo_batch_id,school_org_id,term_id,dataset_snapshot_id,created_at) VALUES(?,?,?,?,UTC_TIMESTAMP(6))",
+            batchId,id(11),id(21),schoolRun.datasetSnapshotId());
+        jdbc.update("INSERT INTO matching_active_demo_batches(school_org_id,term_id,demo_batch_id) VALUES(?,?,?)",id(11),id(21),batchId);
+        jdbc.update("UPDATE matching_privacy_release_settings SET enabled=true WHERE id=1");
+
+        var enterprise=as(4);
+        var first=matching.evaluate(enterprise,key(),input);
+        assertEquals("ENTERPRISE",first.audience());assertNull(first.summary());assertNotNull(first.release());
+        assertEquals("SUPPRESSED",first.release().eligibleBand());
+        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM matching_privacy_releases WHERE demo_batch_id=?",Integer.class,batchId));
+
+        var otherActor=as(3);
+        var replay=matching.evaluate(otherActor,key(),input);
+        assertEquals(first.release(),replay.release());
+        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM matching_privacy_releases WHERE demo_batch_id=?",Integer.class,batchId));
+
+        var original=demands.list(as(4),id(12),null,null,false,0,25).content().stream()
+            .filter(item->item.demandId().equals(demandId)).findFirst().orElseThrow();
+        var sameCriteria=new vn.utbridora.auth.modules.cooperation.domain.DemandModels.DemandInput(
+            original.data().schoolOrgId(),original.data().termId(),"R03 replay via another demand",original.data().quantity(),
+            original.data().description(),original.data().location(),original.data().benefits(),original.data().deadline(),
+            original.data().required(),original.data().preferred(),original.data().academicCatalogVersion(),original.data().taxonomyVersion());
+        var replayDemand=demands.create(as(4),id(12),key(),sameCriteria);
+        var replayViaOtherDemand=matching.evaluate(as(3),key(),new MatchingService.Evaluate(replayDemand.demandId(),replayDemand.version(),replayDemand.criteriaVersion()));
+        assertEquals(first.release(),replayViaOtherDemand.release());
+
+        var changedCriteria=new vn.utbridora.auth.modules.cooperation.domain.DemandModels.DemandInput(
+            sameCriteria.schoolOrgId(),sameCriteria.termId(),"R03 changed filter",sameCriteria.quantity(),
+            sameCriteria.description(),sameCriteria.location(),sameCriteria.benefits(),sameCriteria.deadline(),
+            new vn.utbridora.auth.modules.cooperation.domain.DemandModels.RequiredCriteria(
+                java.util.List.of("AI"),sameCriteria.required().skills(),sameCriteria.required().dateRange()),
+            sameCriteria.preferred(),sameCriteria.academicCatalogVersion(),sameCriteria.taxonomyVersion());
+        var changedDemand=demands.create(as(4),id(12),key(),changedCriteria);
+        var lock=assertThrows(OperationFailure.class,()->matching.evaluate(as(4),key(),
+            new MatchingService.Evaluate(changedDemand.demandId(),changedDemand.version(),changedDemand.criteriaVersion())));
+        assertEquals(409,lock.status);assertEquals("PRIVACY_RELEASE_LOCKED",lock.code);
+        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM matching_privacy_releases WHERE demo_batch_id=?",Integer.class,batchId));
+
+        var chart=new vn.utbridora.auth.modules.matching.api.MatchingController(matching).summaryChart(as(4),first.release().matchRunId());
+        assertEquals(java.util.List.of(first.release().eligibleBand()),chart.eligibleBands());
+        String summary=vn.utbridora.auth.operations.WorkflowValues.JSON.writeValueAsString(
+            new vn.utbridora.auth.modules.matching.api.MatchingController(matching).summary(as(4),first.release().matchRunId()));
+        var payload=vn.utbridora.auth.operations.WorkflowValues.JSON.readTree(summary);
+        assertEquals(3,payload.get("release").size());assertNull(payload.get("summary"));
+        assertFalse(summary.contains("rawCount"));assertFalse(summary.contains("total"));assertFalse(summary.contains("percent"));
+        String csv=matching.protectedReleaseCsv(as(4),first.release().matchRunId());
+        assertEquals(2,csv.lines().count());assertEquals(3,csv.lines().findFirst().orElseThrow().split(",").length);
+        assertTrue(csv.contains("eligibleBand"));assertFalse(csv.contains("rawCount"));assertFalse(csv.contains("total"));
     }
     private static void context(String id) {var request=new org.springframework.mock.web.MockHttpServletRequest();request.addHeader("X-Context-Assignment-Id",id);org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(new org.springframework.web.context.request.ServletRequestAttributes(request));}
     private void cooperationEdges(vn.utbridora.auth.modules.cooperation.domain.DemandModels.DemandInput input) {

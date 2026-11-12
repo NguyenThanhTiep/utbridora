@@ -7,6 +7,8 @@ import vn.utbridora.auth.modules.student.port.StudentProfileSnapshotPort.*;
 import vn.utbridora.auth.modules.cooperation.domain.DemandModels.*;
 
 /** Deterministic Strict matching; only exact owner-provided aliases are normalized. */
+// DEV8 đã sửa từ xếp hạng mọi trạng thái theo fitScore thành chỉ dùng fitScore cho MATCH,
+// các trạng thái còn lại không có điểm và xếp ổn định theo studentUserId, phục vụ R11.
 public final class StrictClassifier {
     public enum Status {PASS,FAIL,UNKNOWN}
     public record CriterionEvaluation(String criterionCode,String type,String kind,Status status,String reasonCode) {}
@@ -35,7 +37,8 @@ public final class StrictClassifier {
         return new MatchResult(profile.studentUserId(),profile.profileSnapshotId(),profile.profileVersion(),profile.relevantHash(),overall,score,List.copyOf(details));
     }
     public static Comparator<MatchResult> ranking() {
-        return Comparator.comparing(MatchResult::fitScore,Comparator.nullsLast(Comparator.reverseOrder())).thenComparing(MatchResult::studentUserId);
+        return Comparator.comparing((MatchResult result) -> "MATCH".equals(result.overallStatus()) ? result.fitScore() : null,
+            Comparator.nullsLast(Comparator.reverseOrder())).thenComparing(MatchResult::studentUserId);
     }
     private static Status skill(ProfileSnapshot profile,Map<String,SkillValue> skills,SkillCriterion c,Map<String,String> aliases) {
         if(!profile.skillsDeclared()) return Status.UNKNOWN;
