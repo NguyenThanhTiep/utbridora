@@ -429,4 +429,61 @@ class CorePlatformIT {
     HttpResponse<String> replay(String cookie,String path) throws Exception {
         return HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create("http://localhost:"+port+path)).header("Cookie","SESSION="+cookie).GET().build(),HttpResponse.BodyHandlers.ofString());
     }
+
+    @Test void qa01AuditGlobalTC05MatrixPagination() throws Exception {
+        final String endpoint = "/api/v1/admin/audit-logs";
+
+        // AUD-07/AUD-09: no session or a business-scoped role cannot read the global audit.
+        assertEquals(401, new Browser().send("GET", endpoint, null, false).statusCode());
+        Browser administrator = signedIn(admin);
+        Browser studentSession = signedIn(student);
+        Browser enterpriseSession = signedIn(enterprise);
+        UserAccount schoolStaff = user(Role.SCHOOL_STAFF, university.id);
+        Browser staffSession = signedIn(schoolStaff);
+        for (Browser actor : List.of(studentSession, enterpriseSession, staffSession)) {
+            assertEquals(403, actor.send("GET", endpoint, null, false).statusCode(),
+                    "Business roles must not inherit audit:global:read");
+        }
+
+        // Admin may read audit records but each page is bounded.
+        var first = administrator.send("GET", endpoint + "?page=0&size=1", null, false);
+        assertEquals(200, first.statusCode(), first.body());
+        assertEquals(0, ((Number) JsonPath.read(first.body(), "$.number")).intValue());
+        assertEquals(1, ((Number) JsonPath.read(first.body(), "$.size")).intValue());
+        assertEquals(1, ((List<?>) JsonPath.read(first.body(), "$.content")).size());
+        assertTrue(((Number) JsonPath.read(first.body(), "$.totalElements")).longValue() >= 1);
+
+        var second = administrator.send("GET", endpoint + "?page=1&size=1", null, false);
+        assertEquals(200, second.statusCode(), second.body());
+        assertEquals(1, ((Number) JsonPath.read(second.body(), "$.number")).intValue());
+        assertTrue(((List<?>) JsonPath.read(second.body(), "$.content")).size() <= 1);
+
+        var maximum = administrator.send("GET", endpoint + "?page=0&size=100", null, false);
+        assertEquals(200, maximum.statusCode(), maximum.body());
+        assertEquals(100, ((Number) JsonPath.read(maximum.body(), "$.size")).intValue());
+        assertTrue(((List<?>) JsonPath.read(maximum.body(), "$.content")).size() <= 100);
+        assertFalse(maximum.body().contains(password), "Audit response must never contain passwords");
+        assertFalse(maximum.body().contains("passwordHash"));
+        assertFalse(maximum.body().contains("sessionCookie"));
+
+        // Filter only the administrator's LOGIN audit events.
+        var filtered = administrator.send("GET", endpoint + "?page=0&size=100&action=LOGIN&actorId=" + admin.id,
+                null, false);
+        assertEquals(200, filtered.statusCode(), filtered.body());
+        List<?> actorIds = JsonPath.read(filtered.body(), "$.content[*].actorId");
+        List<?> actions = JsonPath.read(filtered.body(), "$.content[*].action");
+        assertFalse(actorIds.isEmpty(), "Administrator LOGIN audit must exist");
+        for (Object actorId : actorIds) assertEquals(admin.id, actorId);
+        for (Object action : actions) assertEquals("LOGIN", action);
+
+        // Invalid page/size and filters must be rejected, never silently expanded.
+        for (String query : List.of("page=-1", "page=10001", "size=0", "size=101",
+                "actorId=invalid", "organizationId=invalid", "action=invalid",
+                "result=INVALID", "from=2100-01-01T00:00:00Z&until=2000-01-01T00:00:00Z")) {
+            var invalid = administrator.send("GET", endpoint + "?" + query, null, false);
+            assertEquals(400, invalid.statusCode(), "Invalid query: " + query + " => " + invalid.body());
+        }
+    }
+
+
 }
