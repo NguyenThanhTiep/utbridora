@@ -1,5 +1,14 @@
 # Trạng thái triển khai Core Platform
 
+## T3-08 — DEV06 — 12/11/2026
+
+Đã triển khai Comment, Weekly Report draft/submit/revision/history, Mentor review và đọc
+nhận xét theo revision; V31 bổ sung schema Report và quyền Comment. API dùng transaction,
+audit/ledger, Case/Placement guard và FileService thật. Bổ sung CP-WS3 v1.1 giữ nguyên
+ReportDto v1.0. Xem [bằng chứng và giới hạn T3-08](../reviews/T3_08_COMPLETION_EVIDENCE.md).
+Dependency task theo Plan là T3-05; không chờ T3-07. Không tự xác nhận QA/Lead, UI T3-09
+hoặc scanner T1-07. Thay đổi hiện local, chưa commit/push/deploy.
+
 ## T1-06 tuần 3 — 10/11/2026
 
 Nhánh bàn giao `feature/t1-06-private-files`, base tuần 2 `f1ef2176041c5b0892d5bb107f01d601616755c2`: đã bổ sung private File Service tối thiểu với upload/metadata/content, owner policies cho StudentProfile/TaskAssignment/EnterpriseVerification, storage ngoài MySQL, immutable binding, ledger/audit và migration V28. Code, tests và tài liệu được đóng gói cùng bản DEV T1-06; chưa deploy. File mới PENDING; scanner T1-07, shared authorizer, các resource provider còn thiếu và workflow attachment của team khác chưa hoàn thành. Xem [hướng dẫn tích hợp](../guides/T1_06_PRIVATE_FILES.md) và [kiểm chứng DEV/giới hạn](../testing/T1_06_ACCEPTANCE.md). Evidence giữ snapshot trước commit; trạng thái phát hành hiện hành xem theo Git. Các ghi nhận “file chỉ có metadata/chưa có runtime” phía dưới là lịch sử, không phủ định phần mới này.

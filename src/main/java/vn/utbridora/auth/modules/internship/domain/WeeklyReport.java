@@ -61,6 +61,37 @@ public final class WeeklyReport {
                 List.of(new Revision(1, 1, State.DRAFT, content, null, null, null, false)));
     }
 
+    /** Rehydrate trusted storage values without replaying commands or creating a second root.
+     * Reject corrupt history before it can be projected or changed. This is not a database adapter
+     * or an authorization/file guard; callers must still resolve current Case/Placement/authority.
+     * Version gaps are valid (draft edits); revisions must be contiguous and versions increasing.
+     */
+    public static WeeklyReport restore(UUID id, Key key, Instant storedDueAt, long storedVersion,
+                                        List<Revision> storedRevisions) {
+        required(id, "reportId"); required(key, "key"); required(storedDueAt, "dueAt");
+        WeeklyReportPolicy.version(storedVersion); required(storedRevisions, "revisions");
+        if (storedRevisions.isEmpty() || storedRevisions.stream().anyMatch(Objects::isNull)) {
+            throw new IllegalArgumentException("Invalid stored report history");
+        }
+        var history = List.copyOf(storedRevisions);
+        Instant expectedDueAt = WeeklyReportPolicy.dueAt(key.weekStart());
+        if (!expectedDueAt.equals(storedDueAt)) throw new IllegalArgumentException("Inconsistent stored deadline");
+        long previousVersion = 0;
+        for (int index = 0; index < history.size(); index++) {
+            var revision = history.get(index);
+            if (revision.revisionNo() != index + 1 || revision.version() <= previousVersion
+                    || index == 0 && revision.reasonCode() != null
+                    || index < history.size() - 1 && revision.state() == State.DRAFT
+                    || revision.state() != State.DRAFT
+                        && revision.lateFlag() != WeeklyReportPolicy.lateFlag(storedDueAt, revision.submittedAt())) {
+                throw new IllegalArgumentException("Inconsistent stored revision");
+            }
+            previousVersion = revision.version();
+        }
+        if (previousVersion != storedVersion) throw new IllegalArgumentException("Inconsistent stored root version");
+        return new WeeklyReport(id, key, storedDueAt, history);
+    }
+
     public UUID reportId() { return reportId; }
     public Key key() { return key; }
     public Instant dueAt() { return dueAt; }

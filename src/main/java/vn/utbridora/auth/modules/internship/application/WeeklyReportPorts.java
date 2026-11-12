@@ -76,8 +76,10 @@ public final class WeeklyReportPorts {
     public interface Files {
         /** resourceType/purpose WEEKLY_REPORT, stable report root ID and owner must match.
          * Draft permits PENDING/CLEAN; submit requires every file CLEAN. Invalid binding ->422.
-         * Missing scanner/provider ->503. These checks do not grant download permission. */
-        void requireBound(UUID studentUserId, UUID reportId, List<UUID> fileIds, boolean requireClean);
+         * Missing scanner/provider ->503. These checks do not grant download permission.
+         * Preserve the actual caller Authentication/securityVersion when adapting to T1 ActorContext;
+         * never reconstruct a privileged/current subject merely from the owner UUID. */
+        void requireBound(Authentication actor, UUID studentUserId, UUID reportId, List<UUID> fileIds, boolean requireClean);
     }
     public enum Action {
         WEEKLY_REPORT_DRAFT_SAVED, WEEKLY_REPORT_REVISION_CREATED, WEEKLY_REPORT_SUBMITTED, WEEKLY_REPORT_REVIEWED

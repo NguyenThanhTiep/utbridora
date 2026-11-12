@@ -466,7 +466,10 @@ Response 409 khi mentor review v1 sau khi v2 đã là current submission:
 ```
 **AC-WS2:** Given SV B biết assignmentId của SV A; When PATCH/POST; Then 404 và không effect. Given một bộ nộp có hai file CLEAN cùng assignment; When submit; Then 201 với một version chứa đúng hai file refs; nếu một file PENDING hoặc thuộc assignment khác thì toàn bộ request thất bại, không có version/liên kết/audit-success mới. Given 21 file hoặc UUID lặp; Then 422 SUBMISSION_ARTIFACT_INVALID. Given 20 request submit cùng key/payload; When commit; Then một submission version và một success audit. Given nộp lại sau yêu cầu sửa; Then v1 giữ nguyên file list và v2 có file list riêng. Given mentor assignment bị revoke; When review request tiếp theo; Then deny. Trạng thái kiểm thử: NOT TESTED.
 
-### CP-WS3 — Báo cáo tuần (T3 → T2 UI), version 1.0
+### CP-WS3 — Báo cáo tuần (T3 → T2 UI), version 1.1
+
+Bổ sung tương thích T3-08 ngày 12/11/2026: GET nhận xét theo revision cho FR-19.
+Giữ nguyên ReportDto và các request/response v1.0; không sửa bản Contract Pack v1.0.
 
 **PROPOSED – CHỜ LEADER T1 PHÊ DUYỆT.** T3 sở hữu report root, revisions và review. T2 chỉ gửi request/hiển thị kết quả. Căn cứ: T39/R6, T90/R12.
 
@@ -480,6 +483,7 @@ ReportReview {expectedVersion:V,comment:Text(1..2000)}
 CreateReportRevision {expectedVersion:V,reasonCode:Reason}
 ReportQuery {caseId:U,state?:ReportState,page?:int[0..10000],size?:int[1..100]}
 ReportReadQuery {revisionNo?:int>=1}
+ReportReviewDto {reportId:U,revisionNo:int>=1,reviewerUserId:U,comment:Text(1..2000),reviewedAt:I}
 ```
 
 Report root có UNIQUE(caseId,weekStart); reportId giữ ổn định qua revisions. Bản SUBMITTED/REVIEWED bất biến; sửa nội dung phải tạo revision DRAFT mới với reason và giữ phiên bản cũ. Chỉ một current draft/report root. File bind vào report root, không mất binding khi tạo revision.
@@ -496,6 +500,7 @@ weekStart phải là thứ Hai theo Asia/Ho_Chi_Minh. Mọi tuần giao ít nh�
 | POST /api/v1/t3/reports/{reportId}/reviews | ReportReview →200 ReportDto, state REVIEWED | Assigned Mentor có internship:enterprise:task_write; chỉ current SUBMITTED; lưu comment và reviewer từ server. |
 | POST /api/v1/t3/reports/{reportId}/revisions | CreateReportRevision →201 ReportDto, revisionNo+1,state DRAFT | Student owner, case active; current SUBMITTED/REVIEWED; clone nội dung/file refs, reason+audit; không ghi đè bản đã review. |
 | GET /api/v1/t3/reports/{reportId} | ReportReadQuery →200 ReportDto | t3:workspace:read đúng case; bỏ revisionNo lấy current; revision cụ thể vẫn cùng row/scope guard. |
+| GET /api/v1/t3/reports/{reportId}/reviews | ReportReadQuery →200 ReportReviewDto | Cùng quyền đọc Report, recheck quyền hiện hành; bỏ revisionNo lấy current. Revision chưa có review hoặc resource ngoài scope trả404 RESOURCE_NOT_FOUND; không tìm review cũ thay current. |
 | GET /api/v1/t3/reports | ReportQuery →200 Page&lt;ReportDto&gt; | Same guard; mỗi root trả current revision; sort weekStart DESC,reportId ASC. |
 
 Ví dụ POST /api/v1/t3/reports; fixture case có startDate=2026-11-04 và endDate=2026-12-31:

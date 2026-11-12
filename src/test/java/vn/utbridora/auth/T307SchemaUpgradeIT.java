@@ -24,7 +24,7 @@ class T307SchemaUpgradeIT {
                 sql(c,"INSERT INTO internship_tasks(id,group_id,title,description,due_at,priority,late_allowed,version) VALUES (?,?,'Original task','Original description','2027-01-01','NORMAL',true,1)",task,group);
                 sql(c,"INSERT INTO internship_task_assignments(id,task_id,case_id,student_user_id,state,version) VALUES (?,?,?,?,'IN_PROGRESS',9)",assignment,task,caseId,user);
                 assertEquals(1,migrate(mysql,"28"));assertEquals(1,migrate(mysql,"29"));
-                var flyway=Flyway.configure().dataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword()).load();
+                var flyway=Flyway.configure().dataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword()).target("29").load();
                 flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
                 try(var s=c.createStatement();var r=s.executeQuery("SELECT state,version,current_submission_id FROM internship_task_assignments WHERE id='"+assignment+"'")) {
                     assertTrue(r.next());assertEquals("IN_PROGRESS",r.getString(1));assertEquals(9,r.getLong(2));assertNull(r.getString(3));

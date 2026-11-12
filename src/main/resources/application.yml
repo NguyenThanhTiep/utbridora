@@ -56,6 +56,10 @@ app:
   files:
     # Absolute private directory; missing configuration keeps uploads unavailable.
     storage-root: ${FILE_STORAGE_ROOT:}
+  t3:
+    week3:
+      http:
+        enabled: ${T3_WEEK3_HTTP_ENABLED:true}
   t5:
     demand:
       # Deployment switch only. Access still requires current authorization and authoritative references.

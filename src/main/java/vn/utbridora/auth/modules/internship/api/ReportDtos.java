@@ -6,7 +6,7 @@ import vn.utbridora.auth.modules.internship.domain.WeeklyReport;
 import vn.utbridora.auth.modules.internship.domain.WeeklyReport.State;
 import static vn.utbridora.auth.modules.internship.domain.WeeklyReportPolicy.*;
 
-/** CP-WS3 v1.0 wire values only. No controller/bean exposes these until runtime guards are integrated. */
+/** CP-WS3 wire values: frozen ReportDto plus the additive v1.1 review read resource. */
 public final class ReportDtos {
     private ReportDtos() {}
     public record ReportInput(UUID caseId, LocalDate weekStart, String completedWork, String difficulties,
@@ -48,6 +48,8 @@ public final class ReportDtos {
             if (revisionNo != null && revisionNo < 1) throw new IllegalArgumentException("Invalid revisionNo");
         }
     }
+    /** Additive FR-19 read resource; the frozen ReportDto shape is unchanged. */
+    public record ReportReviewDto(UUID reportId, int revisionNo, UUID reviewerUserId, String comment, Instant reviewedAt) {}
     public record ReportDto(UUID reportId, UUID caseId, LocalDate weekStart, Integer revisionNo, Long version,
                             State state, String completedWork, String difficulties, String nextPlan,
                             List<UUID> evidenceFileIds, Instant dueAt, Instant submittedAt, Instant reviewedAt,
@@ -68,6 +70,8 @@ public final class ReportDtos {
             }
         }
         public static ReportDto from(WeeklyReport report, WeeklyReport.Revision revision) {
+            required(report, "report"); required(revision, "revision");
+            if (!report.revisions().contains(revision)) throw new IllegalArgumentException("Revision does not belong to report");
             var c = revision.content();
             return new ReportDto(report.reportId(), report.key().caseId(), report.key().weekStart(),
                     revision.revisionNo(), revision.version(), revision.state(), c.completedWork(), c.difficulties(),

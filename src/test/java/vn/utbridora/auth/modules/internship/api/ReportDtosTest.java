@@ -83,4 +83,11 @@ class ReportDtosTest {
         assertEquals(reviewed.dueAt(), dto.submittedAt()); assertEquals(dto.submittedAt(), dto.reviewedAt());
         assertFalse(dto.lateFlag());
     }
+    @Test void responseCannotMixRevisionDataFromAnotherReport() {
+        var report = WeeklyReport.create(id, UUID.randomUUID(), week, week, week.plusWeeks(1),
+                new WeeklyReport.Content("Own work", "", "Next", List.of()));
+        var foreign = WeeklyReport.create(UUID.randomUUID(), UUID.randomUUID(), week, week, week.plusWeeks(1),
+                new WeeklyReport.Content("Other work", "", "Next", List.of()));
+        assertThrows(IllegalArgumentException.class, () -> ReportDto.from(report, foreign.current()));
+    }
 }

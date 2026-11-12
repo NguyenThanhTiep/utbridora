@@ -12,11 +12,7 @@ import vn.utbridora.auth.modules.internship.domain.InternshipActivityPolicy;
 import static vn.utbridora.auth.modules.internship.application.WeeklyReportPorts.*;
 import static vn.utbridora.auth.operations.WorkflowValues.failure;
 
-/** Independent CP-WS3 use cases, deliberately not a Spring bean/controller.
- * No persistence/authority fake is supplied. C.0 ledger and real transactional adapters are
- * required before exposing production mutations. Review comments stay in domain history;
- * ReportDto is kept exactly v1.0 pending a consumer decision about reading comment/reviewer.
- */
+/** Report use cases with current authorization, revision history, file enforcement and audit. Runtime composition is provided by Week3RuntimeConfiguration. */
 public final class WeeklyReportService {
     private static final String STUDENT_WRITE = "internship:student:submission_write";
     private static final String MENTOR_WRITE = "internship:enterprise:task_write";
@@ -45,6 +41,8 @@ public final class WeeklyReportService {
         return execute(actor, session -> {
             Instant now = clock.instant(); UUID user = user(actor); var scope = scope(input.caseId());
             student(actor, user, scope, now); active(scope, now); cases.holdForMutation(scope);
+            var checkedAt = clock.instant();
+            student(actor, user, scope, checkedAt); active(scope, checkedAt);
             var report = WeeklyReport.create(available(identifiers.get()), scope.caseId(), input.weekStart(),
                     scope.startDate(), scope.endDate(), input.content());
             if (!session.insertIfAbsent(report)) throw failure(409, "REPORT_ALREADY_EXISTS");
@@ -108,7 +106,19 @@ public final class WeeklyReportService {
         });
     }
 
-    /** History is obtained through read(..., revisionNo), as declared by CP-WS3; no extra wire route. */
+    public ReportReviewDto readReview(Authentication actor, UUID reportId, ReportReadQuery query) {
+        Objects.requireNonNull(query);
+        return execute(actor, session -> {
+            var report = load(session, reportId);
+            readable(actor, user(actor), scope(report.key().caseId()), clock.instant());
+            var revision = query.revisionNo() == null ? report.current() : report.revision(query.revisionNo());
+            var review = revision.review();
+            if (review == null) throw failure(404, "RESOURCE_NOT_FOUND");
+            return new ReportReviewDto(reportId, revision.revisionNo(), review.reviewerUserId(), review.comment(), review.createdAt());
+        });
+    }
+
+    /** History is obtained through read(..., revisionNo), as declared by CP-WS3. */
     public ReportPage list(Authentication actor, ReportQuery query) {
         Objects.requireNonNull(query);
         return execute(actor, session -> {
@@ -142,12 +152,17 @@ public final class WeeklyReportService {
             requireWriter(actor, user, scope, mentor, now);
             active(scope, now); cases.holdForMutation(scope);
             WeeklyReportPolicy.requireWeek(current.key().weekStart(), scope.startDate(), scope.endDate());
-            var updated = change.apply(current, user, now);
+            var updated = change.apply(current, user, clock.instant());
             // Preserve invalid state/version precedence; file checks never create partial writes.
             if (!mentor && !updated.current().content().evidenceFileIds().isEmpty()) {
-                available(files).requireBound(scope.studentUserId(), current.reportId(),
+                available(files).requireBound(actor, scope.studentUserId(), current.reportId(),
                         updated.current().content().evidenceFileIds(), action == Action.WEEKLY_REPORT_SUBMITTED);
             }
+            // Source/file guards may wait across dueAt. Persist the transition time after those
+            // checks, not the request-start time. Change is a pure immutable domain operation.
+            var checkedAt = clock.instant();
+            requireWriter(actor, user, scope, mentor, checkedAt); active(scope, checkedAt);
+            updated = change.apply(current, user, clock.instant());
             if (!session.replace(updated, expectedVersion)) throw failure(409, "VERSION_CONFLICT");
             record(action, user, updated, scope);
             return dto(updated);

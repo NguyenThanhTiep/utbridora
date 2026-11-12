@@ -79,7 +79,7 @@ public class SecurityConfig {
                .requestMatchers(HttpMethod.GET,"/api/v1/matching/runs/*/details","/api/v1/enterprise/cooperations","/api/v1/school/cooperations","/api/v1/school/cooperations/*","/api/v1/school/cooperations/*/submission-history","/api/v1/school/cooperations/*/capacity","/api/v1/school/cooperations/*/proposals").authenticated()
                .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/cooperations/*/submit","/api/v1/enterprise/cooperations/*/reopen","/api/v1/school/cooperations/*/decision").authenticated()
                .requestMatchers(HttpMethod.DELETE,"/api/v1/school/delegations/*","/api/v1/t3/context-assignments/*").authenticated()
-               .requestMatchers(HttpMethod.PATCH,"/api/v1/t3/assignments/*/status").authenticated()
+               .requestMatchers(HttpMethod.PATCH,"/api/v1/t3/assignments/*/status","/api/v1/t3/reports/*").authenticated()
                .anyRequest().denyAll())
            .exceptionHandling(ex->ex
                .authenticationEntryPoint((req,res,error)->{

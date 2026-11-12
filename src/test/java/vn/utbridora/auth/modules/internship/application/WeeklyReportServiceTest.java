@@ -75,7 +75,7 @@ class WeeklyReportServiceTest {
         assertEquals(Set.of("caseId", "weekStart", "revisionNo", "reportVersion", "reasonCode"), memory.events.get(3).metadata().keySet());
         assertEquals(mentor, memory.events.get(2).actorId());
         assertFalse(memory.events.get(2).metadata().containsKey("comment"));
-        verify(authority).requirePermission(mentorActor, scope, "internship:enterprise:task_write", now);
+        verify(authority, times(2)).requirePermission(mentorActor, scope, "internship:enterprise:task_write", now);
     }
     @Test void clockControlsInclusiveDeadlineRegardlessOfJvmOrClockZone() {
         var report = draft();
@@ -198,12 +198,12 @@ class WeeklyReportServiceTest {
     @Test void draftPermitsPendingButSubmitRequiresCleanForTheSameStableRootAndStudent() {
         var draft = draft(); var ids = List.of(UUID.randomUUID());
         service.update(actor, draft.reportId(), update(1, ids));
-        verify(files).requireBound(student, draft.reportId(), ids, false);
+        verify(files).requireBound(actor, student, draft.reportId(), ids, false);
         doThrow(new OperationFailure(422, "FILE_BINDING_INVALID", "Invalid file", null))
-                .when(files).requireBound(student, draft.reportId(), ids, true);
+                .when(files).requireBound(actor, student, draft.reportId(), ids, true);
         code(422, "FILE_BINDING_INVALID", () -> service.submit(actor, draft.reportId(), new SubmitReport(2L)));
         assertEquals(WeeklyReport.State.DRAFT, memory.rows.get(draft.reportId()).current().state());
-        doNothing().when(files).requireBound(student, draft.reportId(), ids, true);
+        doNothing().when(files).requireBound(actor, student, draft.reportId(), ids, true);
         var submitted = service.submit(actor, draft.reportId(), new SubmitReport(2L));
         service.createRevision(actor, draft.reportId(), new CreateReportRevision(submitted.version(), "FIX"));
         assertEquals(ids, memory.rows.get(draft.reportId()).current().content().evidenceFileIds());
@@ -274,6 +274,19 @@ class WeeklyReportServiceTest {
                 scope.startDate(), scope.endDate(), input().content());
         memory.overridePage = new PageSlice(List.of(forged, memory.rows.get(first.reportId())), 2);
         code(503, "DEPENDENCY_UNAVAILABLE", () -> service.list(actor, new ReportQuery(caseId, null, null, null)));
+    }
+    @Test void restoredHistoryStillRequiresCurrentAuthorityAndExpectedVersion() {
+        var original = WeeklyReport.create(UUID.randomUUID(), caseId, input().weekStart(), scope.startDate(), scope.endDate(), input().content())
+                .submit(1, now).review(2, mentor, "Preserved review", now).revise(3, "FIX");
+        var restored = WeeklyReport.restore(original.reportId(), original.key(), original.dueAt(), original.version(), original.revisions());
+        memory.rows.put(restored.reportId(), restored);
+        when(authority.currentUser(actor)).thenReturn(UUID.randomUUID());
+        code(404, "RESOURCE_NOT_FOUND", () -> service.read(actor, restored.reportId(), new ReportReadQuery(1)));
+        when(authority.currentUser(actor)).thenReturn(student);
+        code(409, "VERSION_CONFLICT", () -> service.update(actor, restored.reportId(), update(1, List.of())));
+        var updated = service.update(actor, restored.reportId(), update(4, List.of()));
+        assertEquals(5L, updated.version());
+        assertEquals("Preserved review", memory.rows.get(restored.reportId()).revision(1).review().comment());
     }
 
     private CaseScope changedScope(String caseState, String placementState, Instant effective, Instant approved) {

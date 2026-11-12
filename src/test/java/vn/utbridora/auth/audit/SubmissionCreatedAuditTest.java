@@ -13,14 +13,15 @@ import static org.mockito.Mockito.*;
 
 /** The exact Core subset authorized for T3-07; Task Comment remains DEV06's producer. */
 class SubmissionCreatedAuditTest {
-    @Test void approvedSpecsAreExactAndDoNotEnableTaskComment() {
+    @Test void approvedSubmissionSpecsRemainExactAlongsideDev06Comment() {
         assertEquals(new WorkflowAuditRegistry.Spec("submission",Set.of("assignmentId","versionNo","fileId","fileIds","lateFlag")),
                 WorkflowAuditRegistry.ACTIONS.get("SUBMISSION_CREATED"));
         assertEquals(new WorkflowAuditRegistry.Spec("submission",Set.of("assignmentId","versionNo","previousSubmissionId","fileId","fileIds","lateFlag")),
                 WorkflowAuditRegistry.ACTIONS.get("SUBMISSION_REVISED"));
         assertEquals(new WorkflowAuditRegistry.Spec("submission",Set.of("assignmentId","reviewedVersion","verdict","assignmentVersion")),
                 WorkflowAuditRegistry.ACTIONS.get("SUBMISSION_REVIEWED"));
-        assertFalse(WorkflowAuditRegistry.ACTIONS.containsKey("TASK_COMMENTED"));
+        assertEquals(new WorkflowAuditRegistry.Spec("task_assignment",Set.of("commentId","assignmentVersion")),
+                WorkflowAuditRegistry.ACTIONS.get("TASK_COMMENTED"));
     }
     @Test void realAuditServiceStoresSubmissionResourceAndSafeMetadata() {
         var repository=repository();var service=new AuditService(repository);
