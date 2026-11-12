@@ -149,6 +149,9 @@ class Week2WorkflowIT {
         mentorInvites.revoke(as(4),mentorInvite.invitationId(),key(),new vn.utbridora.auth.tokens.MentorInvitationService.Revoke(2L,"HR_REVOKED"));
         assertEquals(1,workspace.assignments(as(5)).stream().filter(a->a.kind().equals("MENTOR")).count());
         httpGuards(demand,matched.summary().run().matchRunId(),invitation.invitationId(),share.shareId(),task.taskId().toString());
+        // QA01 T1-05-TC11: tampered DTO fields, resource identity and side-effect guards.
+        qa01Tc11RejectForgedIdentityAndCrossScope(invitation.invitationId(),
+                matched.summary().run().matchRunId());
         if(Boolean.getBoolean("frontend.e2e")) {
             var d=demandData.data();var browserDemand=demands.create(as(4),id(12),key(),new vn.utbridora.auth.modules.cooperation.domain.DemandModels.DemandInput(d.schoolOrgId(),d.termId(),"W2 browser cooperation",d.quantity(),d.description(),d.location(),d.benefits(),d.deadline(),d.required(),d.preferred(),d.academicCatalogVersion(),d.taxonomyVersion()));
             cooperations.submitWithCooperation(as(4),id(12),key(),new CooperationService.Submit(browserDemand.demandId(),browserDemand.version()));
@@ -1251,6 +1254,108 @@ private void enterpriseIsolationTC03(
                 "SELECT data_json FROM profile_shares WHERE id=?", String.class, shareId),
                 "TC10: denied reads must not modify share state");
         // Existing httpGuards() checks the same HR's HTTP 403 after consent revocation.
+    }
+
+    /**
+     * QA01 T1-05-TC11 (AZ-10, R27/G27): a public DTO must not supply actor/role
+     * authority, and service authorization must be derived from the authenticated
+     * principal. All rejected attempts must leave invitation/nomination data intact.
+     * This reuses the accepted invitation and live matching run from the workflow.
+     */
+    private void qa01Tc11RejectForgedIdentityAndCrossScope(String invitationId, String runId)
+            throws Exception {
+        String currentState = jdbc.queryForObject(
+                "SELECT state FROM internship_invitations WHERE id=?", String.class, invitationId);
+        long currentVersion = jdbc.queryForObject(
+                "SELECT version FROM internship_invitations WHERE id=?", Long.class, invitationId);
+        int beforeHistory = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM internship_invitation_history WHERE invitation_id=?",
+                Integer.class, invitationId);
+        int beforeAudit = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM audit_logs WHERE resource_id=?",
+                Integer.class, invitationId);
+        int beforeBatches = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM proposal_batches", Integer.class);
+        int beforeItems = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM proposal_items", Integer.class);
+
+        HttpSession studentSession = login("student@example.test", "Synthetic-week2-test-password-123");
+        // Known public DTO fields are decision, expectedVersion, reasonCode, reasonText.
+        // Client-supplied actorId and role must fail schema validation, not be trusted.
+        for (String extra : List.of(
+                "\"actorId\":\"" + id(1) + "\"",
+                "\"role\":\"ADMIN\"")) {
+            String rejectedKey = key();
+            String tamperedJson = "{\"decision\":\"ACCEPT\",\"expectedVersion\":"
+                    + currentVersion + ",\"reasonCode\":null,\"reasonText\":null,"
+                    + extra + "}";
+            var resp = qa01Tc11Post(studentSession,
+                    "/invitations/" + invitationId + "/decision", tamperedJson, rejectedKey);
+            assertEquals(400, resp.statusCode(), "TC11 forged DTO: " + resp.body());
+            var error = vn.utbridora.auth.operations.WorkflowValues.JSON.readTree(resp.body());
+            assertEquals("SCHEMA_VALIDATION", error.path("errorCode").asText(),
+                    "TC11 forged DTO must be rejected before business logic");
+            assertEquals(0, jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM operation_records WHERE idempotency_key=?",
+                    Integer.class, rejectedKey), "TC11: no operation record for forged DTO");
+        }
+
+        // Wrong principal must not read or act on another student's invitation.
+        Authentication otherStudent = as(7);
+        var deniedRead = assertThrows(OperationFailure.class,
+                () -> proposals.readMine(otherStudent, invitationId));
+        assertEquals(404, deniedRead.status, "TC11 other user cannot read student invitation");
+        String deniedKey = key();
+        var deniedDecision = assertThrows(OperationFailure.class,
+                () -> proposals.decide(otherStudent, invitationId, deniedKey,
+                        new ProposalService.InvitationDecision("ACCEPT", currentVersion, null, null)));
+        assertEquals(404, deniedDecision.status, "TC11 forged resource target denied at service");
+        assertEquals(0, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM operation_records WHERE idempotency_key=?",
+                Integer.class, deniedKey), "TC11 denied service call cannot enter ledger");
+
+        // ADMIN has no implicit business ownership even when resource ID is known.
+        Authentication admin = as(1);
+        assertEquals(404, assertThrows(OperationFailure.class,
+                () -> proposals.readMine(admin, invitationId)).status,
+                "TC11 ADMIN must not impersonate a student");
+
+        // Enterprise HR cannot nominate on a school-owned matching run.
+        Authentication enterpriseHr = as(4);
+        String crossScopeKey = key();
+        var forbiddenNomination = assertThrows(OperationFailure.class,
+                () -> proposals.nominate(enterpriseHr, runId, crossScopeKey,
+                        new ProposalService.Nominate(List.of(id(6)), 2L, 1L, 2L, null)));
+        assertTrue(Set.of(403, 404).contains(forbiddenNomination.status),
+                "TC11 cross-scope nomination must be denied, actual=" + forbiddenNomination.status);
+        assertEquals(0, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM operation_records WHERE idempotency_key=?",
+                Integer.class, crossScopeKey), "TC11 denied nomination cannot enter ledger");
+
+        assertEquals(currentState, jdbc.queryForObject(
+                "SELECT state FROM internship_invitations WHERE id=?", String.class, invitationId));
+        assertEquals(currentVersion, jdbc.queryForObject(
+                "SELECT version FROM internship_invitations WHERE id=?", Long.class, invitationId));
+        assertEquals(beforeHistory, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM internship_invitation_history WHERE invitation_id=?",
+                Integer.class, invitationId));
+        assertEquals(beforeAudit, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM audit_logs WHERE resource_id=?", Integer.class, invitationId));
+        assertEquals(beforeBatches, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM proposal_batches", Integer.class));
+        assertEquals(beforeItems, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM proposal_items", Integer.class));
+    }
+
+    private java.net.http.HttpResponse<String> qa01Tc11Post(
+            HttpSession session, String path, String json, String idempotencyKey) throws Exception {
+        var request = java.net.http.HttpRequest.newBuilder(
+                java.net.URI.create("http://localhost:" + port + "/api/v1" + path))
+                .header("Content-Type", "application/json")
+                .header("Idempotency-Key", idempotencyKey)
+                .header(session.header(), session.token())
+                .POST(java.net.http.HttpRequest.BodyPublishers.ofString(json)).build();
+        return session.client().send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
     }
 
     private void httpGuards(String demand,String run,String invitation,String share,String task) throws Exception {
