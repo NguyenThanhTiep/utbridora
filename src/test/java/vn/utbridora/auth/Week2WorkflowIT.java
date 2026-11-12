@@ -165,7 +165,7 @@ enterpriseIsolationTC03(
         delegationRevocationBoundary(grant,matched.summary().run().matchRunId());
     }
     private static void context(String id) {var request=new org.springframework.mock.web.MockHttpServletRequest();request.addHeader("X-Context-Assignment-Id",id);org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(new org.springframework.web.context.request.ServletRequestAttributes(request));}
-    private void cooperationEdges(vn.utbridora.auth.modules.cooperation.domain.DemandModels.DemandInput input) {
+    private void cooperationEdges(vn.utbridora.auth.modules.cooperation.domain.DemandModels.DemandInput input) throws Exception {
         var draft=demands.create(as(4),id(12),key(),input);
         var submitted=cooperations.submitWithCooperation(as(4),id(12),key(),new CooperationService.Submit(draft.demandId(),1L));String id=submitted.cooperation().cooperationId();
         var changes=cooperations.decide(as(2),id(11),id,key(),new CooperationService.Decision(2L,"REQUEST_INFO","MISSING_INFORMATION","DEMO-REVISE",List.of("description")));
@@ -187,7 +187,178 @@ enterpriseIsolationTC03(
         } finally {jdbc.execute("ALTER TABLE audit_logs DROP CHECK week2_audit_failure");}
         assertEquals("DRAFT",jdbc.queryForObject("SELECT state FROM demands WHERE id=?",String.class,rollbackDraft.demandId()));assertNull(jdbc.queryForObject("SELECT cooperation_id FROM demands WHERE id=?",String.class,rollbackDraft.demandId()));
         assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM cooperations WHERE demand_id=?",Integer.class,rollbackDraft.demandId()));assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM operation_records WHERE idempotency_key=?",Integer.class,operation));
+        // QA01 T1-05-TC09: separate fresh fixture; verify replay/version guards in T5.
+        qa01Tc09CooperationReplayAndVersions(input);
+        qa01Tc09HttpErrorContract(input);
     }
+
+    /**
+     * QA01 / T1-05-TC09 (R02/G02, R19/G19, R27/G27), service/ledger portion.
+     * Covers stale version, successful atomic submit, same-key replay, and key reuse
+     * with a changed payload. HTTP error envelope is a separate unverified gap.
+     */
+    private void qa01Tc09CooperationReplayAndVersions(
+            vn.utbridora.auth.modules.cooperation.domain.DemandModels.DemandInput input) {
+        var draft = demands.create(as(4), id(12), key(), input);
+        var hr = as(4);
+        String enterpriseId = id(12);
+        String demandId = draft.demandId();
+        long expectedVersion = draft.version();
+
+        String staleKey = key();
+        var stale = assertThrows(OperationFailure.class,
+                () -> cooperations.submitWithCooperation(hr, enterpriseId, staleKey,
+                        new CooperationService.Submit(demandId, expectedVersion + 1)));
+        assertEquals(409, stale.status, "TC09: stale demand version must return 409");
+        assertEquals("VERSION_CONFLICT", stale.code, "TC09: stale demand version code");
+        assertEquals(0, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM cooperations WHERE demand_id=?", Integer.class, demandId));
+        assertEquals(0, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM operation_records WHERE idempotency_key=?", Integer.class, staleKey),
+                "TC09: failed mutation must not reserve an idempotency key");
+
+        String successKey = key();
+        var validRequest = new CooperationService.Submit(demandId, expectedVersion);
+        var submitted = cooperations.submitWithCooperation(hr, enterpriseId, successKey, validRequest);
+        assertEquals("SUBMITTED", submitted.cooperation().state());
+        assertEquals(demandId, submitted.cooperation().demandId());
+        assertEquals(submitted, cooperations.submitWithCooperation(hr, enterpriseId, successKey, validRequest),
+                "TC09: identical payload and key must replay the original response");
+
+        var differentPayload = assertThrows(OperationFailure.class,
+                () -> cooperations.submitWithCooperation(hr, enterpriseId, successKey,
+                        new CooperationService.Submit(demandId, expectedVersion + 1)));
+        assertEquals(409, differentPayload.status, "TC09: key reuse with new payload must be 409");
+        assertEquals("IDEMPOTENCY_KEY_REUSED", differentPayload.code,
+                "TC09: key reuse with new payload must be refused");
+        assertEquals(1, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM cooperations WHERE demand_id=?", Integer.class, demandId),
+                "TC09: replay and rejected request must not create another cooperation");
+        assertEquals(1, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM operation_records WHERE idempotency_key=?", Integer.class, successKey),
+                "TC09: one idempotency ledger record for a successful command");
+        assertEquals(1, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM cooperation_history WHERE cooperation_id=? AND operation='SUBMIT'",
+                Integer.class, submitted.cooperation().cooperationId()),
+                "TC09: replay must not duplicate a submission history event");
+        assertEquals(1, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM audit_logs WHERE action='COOPERATION_SUBMITTED' AND resource_id=?",
+                Integer.class, submitted.cooperation().cooperationId()),
+                "TC09: replay must not duplicate the success audit");
+    }
+    /**
+     * QA01 / T1-05-TC09 HTTP acceptance: check the CooperationController's
+     * actual response envelope and server-generated request correlation.
+     * Deliberately exercises only real, published Cooperation endpoints;
+     * do not assume every legacy API has the new C.0 envelope.
+     */
+    private void qa01Tc09HttpErrorContract(
+            vn.utbridora.auth.modules.cooperation.domain.DemandModels.DemandInput input) throws Exception {
+        HttpSession hrSession = login("hr@example.test", "Synthetic-week2-test-password-123");
+        String enterprise = id(12);
+
+        // Invalid schema is rejected BEFORE the cooperation command is executed.
+        String invalidKey = key();
+        var malformed = qa01Tc09Post(hrSession, "/enterprise/cooperations", "{}", enterprise, invalidKey);
+        qa01Tc09AssertErrorEnvelope(malformed, 400, "SCHEMA_VALIDATION");
+        assertEquals(0, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM operation_records WHERE idempotency_key=?", Integer.class, invalidKey),
+                "TC09 HTTP: invalid schema must not reserve an idempotency key");
+
+        // Existing valid demand, but forged actorId in JSON is not a public DTO field.
+        var draft = demands.create(as(4), enterprise, key(), input);
+        String demandId = draft.demandId();
+        long version = draft.version();
+        String forgedKey = key();
+        String forgedActor = "{\"demandId\":\"" + demandId
+                + "\",\"expectedDemandVersion\":" + version
+                + ",\"actorId\":\"" + id(1) + "\"}";
+        var forged = qa01Tc09Post(hrSession, "/enterprise/cooperations", forgedActor, enterprise, forgedKey);
+        qa01Tc09AssertErrorEnvelope(forged, 400, "SCHEMA_VALIDATION");
+        assertEquals(0, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM cooperations WHERE demand_id=?", Integer.class, demandId),
+                "TC09 HTTP: rejected unknown DTO field must not create a cooperation");
+
+        // Stale demand version must return a typed 409, not generic legacy CONFLICT.
+        String staleKey = key();
+        String staleJson = vn.utbridora.auth.operations.WorkflowValues.JSON.writeValueAsString(
+                new CooperationService.Submit(demandId, version + 1));
+        var stale = qa01Tc09Post(hrSession, "/enterprise/cooperations", staleJson, enterprise, staleKey);
+        qa01Tc09AssertErrorEnvelope(stale, 409, "VERSION_CONFLICT");
+        assertEquals(0, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM cooperations WHERE demand_id=?", Integer.class, demandId),
+                "TC09 HTTP: stale version must not create a cooperation");
+        assertEquals(0, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM operation_records WHERE idempotency_key=?", Integer.class, staleKey),
+                "TC09 HTTP: stale version must not reserve a key");
+
+        // Replaying the same valid HTTP command returns the original creation result.
+        String successKey = key();
+        String validJson = vn.utbridora.auth.operations.WorkflowValues.JSON.writeValueAsString(
+                new CooperationService.Submit(demandId, version));
+        var created = qa01Tc09Post(hrSession, "/enterprise/cooperations", validJson, enterprise, successKey);
+        assertEquals(201, created.statusCode(), "TC09 HTTP: valid cooperation create status");
+        var createdBody = vn.utbridora.auth.operations.WorkflowValues.JSON.readTree(created.body());
+        assertEquals(demandId, createdBody.get("demandId").asString(), "TC09 HTTP: created demand reference");
+        String cooperationId = createdBody.get("cooperationId").asString();
+        assertDoesNotThrow(() -> UUID.fromString(cooperationId), "TC09 HTTP: cooperation ID must be UUID");
+
+        var replay = qa01Tc09Post(hrSession, "/enterprise/cooperations", validJson, enterprise, successKey);
+        assertEquals(201, replay.statusCode(), "TC09 HTTP: identical replay HTTP status");
+        var replayBody = vn.utbridora.auth.operations.WorkflowValues.JSON.readTree(replay.body());
+        assertEquals(cooperationId, replayBody.get("cooperationId").asString(),
+                "TC09 HTTP: replay must reference original cooperation");
+
+        // Same idempotency key + changed payload must return 409 and do no mutation.
+        var reused = qa01Tc09Post(hrSession, "/enterprise/cooperations", staleJson, enterprise, successKey);
+        qa01Tc09AssertErrorEnvelope(reused, 409, "IDEMPOTENCY_KEY_REUSED");
+        assertEquals(1, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM cooperations WHERE demand_id=?", Integer.class, demandId),
+                "TC09 HTTP: replay/key reuse must not create duplicate cooperations");
+        assertEquals(1, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM operation_records WHERE idempotency_key=?", Integer.class, successKey),
+                "TC09 HTTP: replay/key reuse must not create a second ledger row");
+        assertEquals(1, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM audit_logs WHERE action='COOPERATION_DRAFT_SAVED' AND resource_id=?",
+                Integer.class, cooperationId),
+                "TC09 HTTP: replay/key reuse must not duplicate a success audit event");
+    }
+
+    private java.net.http.HttpResponse<String> qa01Tc09Post(
+            HttpSession session, String path, String json, String organizationId, String idempotencyKey)
+            throws Exception {
+        var request = java.net.http.HttpRequest.newBuilder(java.net.URI.create(
+                        "http://localhost:" + port + "/api/v1" + path))
+                .header("Content-Type", "application/json")
+                .header("X-Organization-Id", organizationId)
+                .header("Idempotency-Key", idempotencyKey)
+                .header("X-Request-ID", "qa01-forged-client-id")
+                .header(session.header(), session.token())
+                .POST(java.net.http.HttpRequest.BodyPublishers.ofString(json))
+                .build();
+        return session.client().send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
+    }
+
+    private void qa01Tc09AssertErrorEnvelope(
+            java.net.http.HttpResponse<String> response, int expectedStatus, String expectedCode)
+            throws Exception {
+        assertEquals(expectedStatus, response.statusCode(), "TC09 HTTP status; body=" + response.body());
+        var body = vn.utbridora.auth.operations.WorkflowValues.JSON.readTree(response.body());
+        assertEquals(expectedCode, body.get("errorCode").asString(), "TC09 HTTP errorCode");
+        assertEquals(expectedCode, body.get("error").asString(), "TC09 HTTP legacy-alias error");
+        assertNotNull(body.get("message"), "TC09 HTTP message must be present");
+        assertFalse(body.get("message").asString().isBlank(), "TC09 HTTP message must not be empty");
+        String requestId = body.get("requestId").asString();
+        assertDoesNotThrow(() -> UUID.fromString(requestId), "TC09 HTTP server requestId must be UUID");
+        assertNotEquals("qa01-forged-client-id", requestId,
+                "TC09 HTTP must not trust client-supplied X-Request-ID");
+        assertEquals(requestId, response.headers().firstValue("X-Request-ID").orElseThrow(),
+                "TC09 HTTP response header/body requestId must match");
+        assertTrue(body.get("fieldErrors").isArray(), "TC09 HTTP fieldErrors must be an array");
+        assertFalse(response.body().contains("Synthetic-week2-test-password-123"),
+                "TC09 HTTP must not expose authentication secrets");
+    }
+
     /**
      * QA01 / T1-05-TC06 (R02/G02, R27/G27): the real T2 owner ports must
      * accept the correct school/term/recipient/version and deny altered scope.
