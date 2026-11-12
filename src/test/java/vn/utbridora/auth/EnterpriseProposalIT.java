@@ -13,10 +13,14 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.*;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.containers.MySQLContainer;
 import vn.utbridora.auth.authorization.*;
+import vn.utbridora.auth.contracts.ActorContext;
 import vn.utbridora.auth.modules.cooperation.application.*;
 import vn.utbridora.auth.modules.cooperation.domain.DemandModels.*;
+import vn.utbridora.auth.modules.cooperation.port.OpportunityPort;
 import vn.utbridora.auth.modules.matching.application.MatchingService;
 import vn.utbridora.auth.modules.student.application.*;
 import vn.utbridora.auth.modules.student.api.StudentProfileDtos;
@@ -36,6 +40,7 @@ class EnterpriseProposalIT {
     @Autowired StudentProfileService profiles; @Autowired StudentEligibilityService eligibility;
     @Autowired MatchingService matching; @Autowired DemandService demands; @Autowired CooperationService cooperations;
     @Autowired ProposalService proposals; @Autowired StudentConsentService consents; @Autowired ProfileShareService shares;
+    @Autowired OpportunityPort opportunityPort; @Autowired PlatformTransactionManager transactions;
     @LocalServerPort int port;
     DemandInput input; Session hr,student,school; Fixture f;
     record Fixture(CooperationService.CooperationDto cooperation,String proposalId) {}
@@ -419,6 +424,71 @@ class EnterpriseProposalIT {
     @Test void revokedShareIsFilteredBeforePagination() throws Exception {
         var shared=share();shares.revoke(as(2),shared.share().shareId(),key(),new ProfileShareService.Revoke(1L,"SCHOOL_REVOKED"));
         assertHidden();assertEquals(403,http(hr,"GET",profilePath(),null,id(12),null,true).statusCode());
+    }
+    OpportunityPort.OpportunityReference preferenceOpportunity(Authentication auth,String org,String id) {
+        var context=ActorContext.fromAuthenticatedWorkflow(auth,org);
+        return new TransactionTemplate(transactions).execute(status->opportunityPort.readForPreference(context,id));
+    }
+    @Test void opportunityPortReturnsOpenScheduledAndClosedPublicationMetadata() throws Exception {
+        String id=f.cooperation().cooperationId();
+        var open=cooperations.publish(as(2),id(11),id,key(),new CooperationService.Publication(
+            Instant.now().minusSeconds(60),Instant.now().plusSeconds(3600),3L));
+        var reference=preferenceOpportunity(as(6),id(11),id);
+        assertEquals(open.opportunityId(),reference.opportunityId());
+        assertEquals(open.schoolOrgId(),reference.schoolOrgId());
+        assertEquals(open.enterpriseOrgId(),reference.enterpriseOrgId());
+        assertEquals(open.termId(),reference.termId());
+        assertEquals(open.publishedAt(),reference.publishedAt());
+        assertEquals(open.closedAt(),reference.closedAt());
+        assertEquals(open.version(),reference.version());
+        var scheduled=cooperations.publish(as(2),id(11),id,key(),new CooperationService.Publication(
+            Instant.now().plusSeconds(60),Instant.now().plusSeconds(3600),open.version()));
+        assertEquals(scheduled.publishedAt(),preferenceOpportunity(as(6),null,id).publishedAt());
+        var closed=cooperations.publish(as(2),id(11),id,key(),new CooperationService.Publication(
+            Instant.now().minusSeconds(3600),Instant.now().minusSeconds(60),scheduled.version()));
+        var closedReference=preferenceOpportunity(as(6),id(11),id);
+        assertEquals(closed.closedAt(),closedReference.closedAt());
+        assertEquals(closed.version(),closedReference.version());
+        assertTrue(closedReference.closedAt().isBefore(Instant.now()));
+        assertEquals(404,http(student,"GET","/opportunities/"+id,null,null,null,true).statusCode());
+    }
+    @Test void opportunityPortRejectsUnpublishedUnknownAndUnapprovedRecords() {
+        var studentAuth=as(6);String id=f.cooperation().cooperationId();
+        assertEquals(404,assertThrows(vn.utbridora.auth.operations.OperationFailure.class,
+            ()->preferenceOpportunity(studentAuth,id(11),id)).status);
+        assertEquals(404,assertThrows(vn.utbridora.auth.operations.OperationFailure.class,
+            ()->preferenceOpportunity(studentAuth,id(11),key())).status);
+        cooperations.publish(as(2),id(11),id,key(),new CooperationService.Publication(
+            Instant.now().minusSeconds(3600),Instant.now().minusSeconds(60),3L));
+        jdbc.update("UPDATE cooperations SET state='SUBMITTED' WHERE id=?",id);
+        assertEquals(404,assertThrows(vn.utbridora.auth.operations.OperationFailure.class,
+            ()->preferenceOpportunity(studentAuth,id(11),id)).status);
+    }
+    @Test void opportunityPortRejectsForeignScopeAndStudentsOutsideTheTerm() {
+        String id=f.cooperation().cooperationId();
+        cooperations.publish(as(2),id(11),id,key(),new CooperationService.Publication(
+            Instant.now().minusSeconds(3600),Instant.now().minusSeconds(60),3L));
+        var studentAuth=as(6);
+        assertEquals(404,assertThrows(vn.utbridora.auth.operations.OperationFailure.class,
+            ()->preferenceOpportunity(studentAuth,id(12),id)).status);
+        assertEquals(404,assertThrows(vn.utbridora.auth.operations.OperationFailure.class,
+            ()->preferenceOpportunity(as(4),null,id)).status);
+        String otherTerm=key();
+        jdbc.update("INSERT INTO terms(id,school_org_id,term_code,start_date,end_date,status,version,created_at,updated_at) VALUES(?,?,?,UTC_DATE(),DATE_ADD(UTC_DATE(),INTERVAL 6 MONTH),'ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",
+            otherTerm,id(11),key());
+        jdbc.update("UPDATE cooperations SET term_id=? WHERE id=?",otherTerm,id);
+        assertEquals(404,assertThrows(vn.utbridora.auth.operations.OperationFailure.class,
+            ()->preferenceOpportunity(studentAuth,id(11),id)).status);
+    }
+    @Test void opportunityPortRejectsDeletedDemandAndMissingActor() {
+        String id=f.cooperation().cooperationId();
+        cooperations.publish(as(2),id(11),id,key(),new CooperationService.Publication(
+            Instant.now().minusSeconds(3600),Instant.now().minusSeconds(60),3L));
+        jdbc.update("UPDATE demands SET soft_deleted_at=UTC_TIMESTAMP(6) WHERE id=?",f.cooperation().demandId());
+        assertEquals(404,assertThrows(vn.utbridora.auth.operations.OperationFailure.class,
+            ()->preferenceOpportunity(as(6),id(11),id)).status);
+        assertEquals(401,assertThrows(vn.utbridora.auth.operations.OperationFailure.class,
+            ()->new TransactionTemplate(transactions).execute(status->opportunityPort.readForPreference(null,id))).status);
     }
     @Test void publicationUsesApprovedCooperationIdentityWindowAndStudentTermScope() throws Exception {
         String id=f.cooperation().cooperationId(),publication="/school/cooperations/"+id+"/publication",detail="/opportunities/"+id;
