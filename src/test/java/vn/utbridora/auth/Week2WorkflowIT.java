@@ -83,6 +83,25 @@ class Week2WorkflowIT {
         var input=new vn.utbridora.auth.modules.student.api.StudentProfileDtos.ProfileInput(current.profileVersion(),id(21),before.majorCode(),true,skillInputs,List.of(),true,List.of(new vn.utbridora.auth.modules.student.api.StudentProfileDtos.DateRange(range.startDate().toString(),range.endDate().toString())),before.orientationCodes(),before.subjectCodes(),before.projects(),before.certificates(),before.cvFileId(),before.phone());
         assertTrue(profiles.save(as(6),key(),vn.utbridora.auth.operations.WorkflowValues.JSON.writeValueAsString(input)).completeness().complete());
         final var matchingSchool=as(2);var matched=matching.evaluate(matchingSchool,key(),new MatchingService.Evaluate(demand,2L,1L));assertEquals(1,matched.summary().matched());
+        // QA01 T1-05-TC08: stale T5 demand/criteria versions must not create a matching run.
+        assertEquals(2L, matched.summary().run().demandVersion(), "TC08: demand version in run");
+        assertEquals(1L, matched.summary().run().criteriaVersion(), "TC08: criteria version in run");
+        assertFalse(matched.summary().run().datasetSnapshotId().isBlank(), "TC08: dataset snapshot reference");
+        assertFalse(matched.summary().run().profileSnapshotVersion().isBlank(), "TC08: owner snapshot version");
+        assertEquals(vn.utbridora.auth.modules.matching.domain.StrictClassifier.RULE_VERSION,
+                matched.summary().run().ruleVersion());
+        int qa01Tc08RunsBefore = jdbc.queryForObject("SELECT COUNT(*) FROM match_runs", Integer.class);
+        var qa01Tc08StaleDemand = assertThrows(OperationFailure.class,
+                () -> matching.evaluate(matchingSchool, key(), new MatchingService.Evaluate(demand, 1L, 1L)));
+        assertEquals(409, qa01Tc08StaleDemand.status, "TC08: stale demand version status");
+        assertEquals("CRITERIA_STALE", qa01Tc08StaleDemand.code, "TC08: stale demand version code");
+        var qa01Tc08StaleCriteria = assertThrows(OperationFailure.class,
+                () -> matching.evaluate(matchingSchool, key(), new MatchingService.Evaluate(demand, 2L, 2L)));
+        assertEquals(409, qa01Tc08StaleCriteria.status, "TC08: stale criteria version status");
+        assertEquals("CRITERIA_STALE", qa01Tc08StaleCriteria.code, "TC08: stale criteria version code");
+        assertEquals(qa01Tc08RunsBefore,
+                jdbc.queryForObject("SELECT COUNT(*) FROM match_runs", Integer.class),
+                "TC08: rejected stale evaluations must not create matching runs");
         var nominate=new ProposalService.Nominate(List.of(id(6)),2L,1L,approved.version(),null);
         assertEquals("SCHOOL_APPROVAL_REQUIRED",assertThrows(OperationFailure.class,()->proposals.nominate(matchingSchool,matched.summary().run().matchRunId(),key(),nominate)).code);
         assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM proposal_batches",Integer.class));
