@@ -69,3 +69,144 @@ function VerificationEditor({ existing, busy, save }: { existing: Verification |
   const labels: Record<string, string> = { schoolOrgId: 'Mã trường nhận hồ sơ', registrationCode: 'Mã đăng ký doanh nghiệp', registeredName: 'Tên đăng ký', address: 'Địa chỉ', contactName: 'Người liên hệ', contactEmail: 'Email liên hệ', contactPhone: 'Điện thoại liên hệ' };
   return <form onSubmit={e => { e.preventDefault(); void save(data); }}><h3>{existing ? 'Bổ sung thông tin xác minh' : 'Hồ sơ xác minh mới'}</h3><fieldset disabled={busy}>{(Object.keys(labels) as (keyof VerificationInput)[]).map(f => <label key={f}>{labels[f]}<input required type={f === 'contactEmail' ? 'email' : 'text'} readOnly={f === 'schoolOrgId' && !!existing} value={String(data[f])} onChange={e => setData({ ...data, [f]: e.target.value })} /></label>)}<button>Lưu hồ sơ xác minh</button></fieldset></form>;
 }
+
+// ── T5-07 Placement UI ──────────────────────────────────────────────────────
+// Màn ENT-1366-15413 (Doanh nghiệp) và SCH-415-17670 (Nhà trường)
+// Phong cách: compact inline giống CooperationFlows/VerificationFlows
+
+type PlacementView = {
+  placementId: string; studentUserId: string; schoolOrgId: string;
+  enterpriseOrgId: string; termId: string; demandId: string;
+  cooperationId: string; proposalItemId: string;
+  state: 'PENDING_APPROVAL' | 'APPROVED' | 'ACTIVE' | 'CANCELLED' | 'COMPLETED';
+  version: number; effectiveAt: string; startDate: string; endDate: string;
+  approvedAt: string | null; cancelledAt: string | null; completedAt: string | null;
+  decisionRef: string | null;
+};
+
+const placementStates: Record<string, string> = {
+  PENDING_APPROVAL: 'Chờ phê duyệt',
+  APPROVED: 'Đã phê duyệt',
+  ACTIVE: 'Đang thực tập',
+  CANCELLED: 'Đã huỷ',
+  COMPLETED: 'Hoàn thành',
+};
+
+export function PlacementFlows({ org, school }: { org: string; school: boolean }) {
+  const [items, setItems] = useState<PlacementView[]>([]);
+  const [refresh, setRefresh] = useState(0);
+  const [page, setPage] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [error, setError] = useState('');
+  const changed = () => setRefresh(n => n + 1);
+  const action = useCommand(org, changed);
+  const side = school ? 'school' : 'enterprise';
+
+  useEffect(() => {
+    const c = new AbortController();
+    setError('');
+    void api<ContractPage<PlacementView>>(
+      '/' + side + '/' + org + '/placements?page=' + page + '&size=25',
+      { signal: c.signal, headers: { 'X-Organization-Id': org } }
+    ).then(p => {
+      if (!c.signal.aborted) { setItems(p.content); setTotal(p.totalPages); }
+    }).catch(() => {
+      if (!c.signal.aborted) setError('Chưa tải được danh sách tiếp nhận.');
+    });
+    return () => c.abort();
+  }, [org, side, refresh, page]);
+
+  const approve = (p: PlacementView) =>
+    action.command('/placements/' + p.placementId + '/approve', 'POST',
+      { expectedVersion: p.version, decisionRef: 'QD-' + Date.now(), reasonCode: 'SCHOOL_APPROVED' });
+
+  const activate = (p: PlacementView) =>
+    action.command('/placements/' + p.placementId + '/activate', 'POST',
+      { expectedVersion: p.version, decisionRef: null, reasonCode: 'EFFECTIVE_DATE_REACHED' });
+
+  const cancel = (p: PlacementView) => {
+    const reason = window.prompt('Lý do huỷ (bắt buộc):');
+    if (!reason) return;
+    void action.command('/placements/' + p.placementId + '/cancel', 'POST',
+      { expectedVersion: p.version, decisionRef: null, reasonCode: reason.toUpperCase().replace(/\s+/g, '_').slice(0, 64) });
+  };
+
+  const now = new Date().toISOString();
+
+  return (
+    <section className="panel workflow-surface">
+      <h2>Tiếp nhận thực tập (Placement)</h2>
+      <Notice message={error || action.message} tone="error" />
+      <button className="secondary" disabled={action.busy} onClick={changed}>Tải lại</button>
+
+      {items.length === 0 && <p>Chưa có tiếp nhận trong phạm vi này.</p>}
+
+      {items.map(p => (
+        <article key={p.placementId} className="placement-card">
+          <h3>
+            {placementStates[p.state] || p.state}
+            {p.state === 'APPROVED' && now < p.effectiveAt &&
+              <span className="badge badge-warning"> · Chờ bắt đầu {p.effectiveAt.slice(0, 10)}</span>}
+            {p.state === 'ACTIVE' &&
+              <span className="badge badge-success"> · Đang diễn ra</span>}
+          </h3>
+          <p>Sinh viên: {p.studentUserId.slice(0, 8)}…</p>
+          <p>Thời gian: {p.startDate} – {p.endDate}</p>
+          <p>Có hiệu lực từ: {p.effectiveAt.replace('T', ' ').slice(0, 16)} UTC</p>
+          {p.approvedAt && <p>Duyệt lúc: {p.approvedAt.replace('T', ' ').slice(0, 16)}</p>}
+          {p.cancelledAt && <p>Huỷ lúc: {p.cancelledAt.replace('T', ' ').slice(0, 16)}</p>}
+          {p.decisionRef && <p>Căn cứ: {p.decisionRef}</p>}
+
+          {/* School: approve PENDING_APPROVAL */}
+          {school && p.state === 'PENDING_APPROVAL' &&
+            <div className="button-row">
+              <button disabled={action.busy} onClick={() => void approve(p)}>
+                Phê duyệt tiếp nhận
+              </button>
+              <button className="danger" disabled={action.busy} onClick={() => cancel(p)}>
+                Huỷ
+              </button>
+            </div>}
+
+          {/* School: activate APPROVED khi effectiveAt đã tới */}
+          {school && p.state === 'APPROVED' && now >= p.effectiveAt &&
+            <div className="button-row">
+              <button disabled={action.busy} onClick={() => void activate(p)}>
+                Kích hoạt thực tập
+              </button>
+              <button className="danger" disabled={action.busy} onClick={() => cancel(p)}>
+                Huỷ
+              </button>
+            </div>}
+
+          {/* School: cancel APPROVED khi effectiveAt chưa tới */}
+          {school && p.state === 'APPROVED' && now < p.effectiveAt &&
+            <div className="button-row">
+              <small>Sẽ có thể kích hoạt sau {p.effectiveAt.slice(0, 10)}.</small>
+              <button className="danger" disabled={action.busy} onClick={() => cancel(p)}>
+                Huỷ trước khi bắt đầu
+              </button>
+            </div>}
+
+          {/* School: cancel ACTIVE */}
+          {school && p.state === 'ACTIVE' &&
+            <div className="button-row">
+              <button className="danger" disabled={action.busy} onClick={() => cancel(p)}>
+                Chấm dứt thực tập sớm
+              </button>
+            </div>}
+
+          {/* Enterprise: read-only view */}
+          {!school && p.state === 'ACTIVE' &&
+            <p><a href={'/workspace/cases/' + p.placementId}>→ Xem không gian thực tập</a></p>}
+        </article>
+      ))}
+
+      <div className="button-row">
+        <button className="secondary" disabled={page === 0} onClick={() => setPage(n => n - 1)}>Trước</button>
+        <span>Trang {page + 1}/{Math.max(1, total)}</span>
+        <button className="secondary" disabled={page + 1 >= total} onClick={() => setPage(n => n + 1)}>Sau</button>
+      </div>
+    </section>
+  );
+}
