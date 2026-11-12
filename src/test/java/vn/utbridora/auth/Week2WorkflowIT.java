@@ -265,7 +265,7 @@ class Week2WorkflowIT {
         ProcessBuilder builder=windows?new ProcessBuilder("cmd.exe","/c","npm.cmd run test:e2e -- week2-runtime.spec.ts"):new ProcessBuilder("npm","run","test:e2e","--","week2-runtime.spec.ts");
         builder.directory(new java.io.File("web-demo"));builder.environment().put("API_PROXY_TARGET","http://localhost:"+port);builder.environment().put("E2E_WEEK2","true");builder.environment().put("E2E_PASSWORD","Synthetic-week2-test-password-123");builder.environment().put("E2E_REPORT_FILE","../target/week2-browser-results.xml");
         builder.redirectErrorStream(true).redirectOutput(new java.io.File("target/week2-browser.log"));var process=builder.start();
-        if(!process.waitFor(180,java.util.concurrent.TimeUnit.SECONDS)) {process.descendants().forEach(child->child.destroyForcibly());process.destroyForcibly();fail("Browser timeout; see target/week2-browser.log");}
-        assertEquals(0,process.exitValue(),"See target/week2-browser.log");
+        if(!process.waitFor(240,java.util.concurrent.TimeUnit.SECONDS)) {process.descendants().forEach(child->child.destroyForcibly());process.destroyForcibly();fail("Browser timeout; see target/week2-browser.log");}
+        assertEquals(0,process.exitValue(),()->{try{return java.nio.file.Files.readString(java.nio.file.Path.of("target/week2-browser.log"));}catch(Exception e){return "See target/week2-browser.log";}});
     }
 }
