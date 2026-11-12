@@ -199,7 +199,7 @@ export default function App() {
           : screen === 'student-overview' ? <StudentOverviewPage me={me} schools={schools} openProfile={() => navigate('student-profile')} />
           : screen === 'student-profile' ? <MyProfilePage me={me} schools={schools} />
           : screen === 'student-invitations' ? <InvitationConsentPage />
-          : screen === 'student-tasks' ? <TaskBoard student />
+          : screen === 'student-tasks' ? <TaskBoard key={me.userId} student />
           : screen === 'mentor-invitations' ? <MentorInvitations />
           // DEV08 hiển thị mô-đun danh mục kỹ năng trong khung ứng dụng hiện có để người kiểm thử bắt đầu kiểm tra giao diện.
           : screen === 'taxonomy' ? <SkillTaxonomy />

@@ -40,7 +40,7 @@ Không tạo stash mới vì không có thay đổi chưa commit; hai stash cũ 
 - **PASS — kiểm tra production bundle** không có marker fixture/test-only;
   container kiểm thử đã tự dọn, không còn container chạy sau lượt verify.
 
-[Snapshot kiểm thử 07/11](evidence/T3_03_QA_VERIFICATION_2026_11_07.json) lưu
+[Snapshot kiểm thử 07/11](../evidence/T3_03_QA_VERIFICATION_2026_11_07.json) lưu
 revision nguồn, trạng thái merge, hash source và kết quả suite; không lưu secret
 hay system properties backend. Log local: `target/t3-03-qa-verify-2026-11-07.log`,
 `target/frontend-e2e.log`. Các snapshot 05/11–06/11 được giữ làm lịch sử.
@@ -144,7 +144,7 @@ Mọi file T3-03 trước lượt này đã được đối chiếu Git blob nga
   production bundle. Không thay dependency/lockfile hoặc bỏ test để đạt PASS.
 - **PASS — Docker cleanup:** không còn container chạy sau full verify.
 
-[Bằng chứng lượt tích hợp DEV05/DEV06](evidence/T3_03_DEPENDENCY_VERIFICATION_2026_11_06.json)
+[Bằng chứng lượt tích hợp DEV05/DEV06](../evidence/T3_03_DEPENDENCY_VERIFICATION_2026_11_06.json)
 ghi SHA hai nhánh, trạng thái merge chưa commit, hash source, môi trường và kết
 quả từng suite. Log cuối ở `target/t3-03-dev05-dev06-verify.log`,
 `target/frontend-e2e.log`; chỉ lưu báo cáo tổng hợp, không commit log/system properties.
@@ -263,7 +263,7 @@ kiểm thử. Python dependencies kiểm tra contract nằm trong venv riêng d�
 Các công cụ/log này được Git ignore. Testcontainers dùng DB tạm và đã tự dọn;
 không tạo bộ dữ liệu T3 thật hay chạy demo backend thường trực.
 
-[Bằng chứng tổng hợp ngày 06/11](evidence/T3_03_FULL_VERIFICATION_2026_11_06.json)
+[Bằng chứng tổng hợp ngày 06/11](../evidence/T3_03_FULL_VERIFICATION_2026_11_06.json)
 chỉ lưu kết quả suite, môi trường và hash source; không sao chép system properties
 hoặc log SQL vào repo. Log local: `target/t3-03-full-verify-2026-11-06.log`,
 `target/frontend-e2e.log`; XML local ở `target/surefire-reports`,
@@ -356,10 +356,10 @@ xong, chờ API phân công/tích hợp và QA**. Không sửa trạng thái tr�
 
 ## Bằng chứng
 
-- [Snapshot JSON: kết quả, môi trường và hash source](evidence/T3_03_DEV_VERIFICATION.json).
-- [JUnit XML của 33 test T3](evidence/T3_03_UI_UNIT_RESULTS.xml).
-- [Ảnh UI fixture desktop 1280px](evidence/t3-03/groups-1280.png).
-- [Ảnh UI fixture mobile 320px](evidence/t3-03/groups-320.png).
+- [Snapshot JSON: kết quả, môi trường và hash source](../evidence/T3_03_DEV_VERIFICATION.json).
+- [JUnit XML của 33 test T3](../evidence/T3_03_UI_UNIT_RESULTS.xml).
+- [Ảnh UI fixture desktop 1280px](../evidence/t3-03/groups-1280.png).
+- [Ảnh UI fixture mobile 320px](../evidence/t3-03/groups-320.png).
 
 Log đầy đủ có thể tạo lại bằng các lệnh trong [hướng dẫn T3-03](../guides/T3_03_HR_MENTOR_WORKSPACE.md).
 Kết quả Surefire local ở `target/surefire-reports`; không đưa system properties
@@ -423,10 +423,10 @@ dùng `git commit -a` cho merge phía trên; không `git add .` để tránh gom
 
 ```powershell
 git status --short --branch
-git diff -- docs/README.md docs/guides/T3_03_HR_MENTOR_WORKSPACE.md docs/testing/T3_03_TEST_REPORT.md src/test/java/vn/utbridora/auth/modules/internship/contract/WorkspaceFrontendContractTest.java
+git diff -- docs/README.md src/test/resources/vn/utbridora/auth/modules/internship/t3_03/guides/T3_03_HR_MENTOR_WORKSPACE.md src/test/resources/vn/utbridora/auth/modules/internship/t3_03/testing/T3_03_TEST_REPORT.md src/test/java/vn/utbridora/auth/modules/internship/contract/WorkspaceFrontendContractTest.java
 
 git add -- src/test/java/vn/utbridora/auth/modules/internship/contract/WorkspaceFrontendContractTest.java
-git add -- docs/README.md docs/guides/T3_03_HR_MENTOR_WORKSPACE.md docs/testing/T3_03_TEST_REPORT.md docs/testing/T3_03_QA_HANDOFF.md docs/testing/evidence/T3_03_QA_VERIFICATION_2026_11_07.json
+git add -- docs/README.md src/test/resources/vn/utbridora/auth/modules/internship/t3_03/guides/T3_03_HR_MENTOR_WORKSPACE.md src/test/resources/vn/utbridora/auth/modules/internship/t3_03/testing/T3_03_TEST_REPORT.md src/test/resources/vn/utbridora/auth/modules/internship/t3_03/testing/T3_03_QA_HANDOFF.md src/test/resources/vn/utbridora/auth/modules/internship/t3_03/evidence/T3_03_QA_VERIFICATION_2026_11_07.json
 git diff --cached --check
 git diff --cached --stat
 git diff --cached

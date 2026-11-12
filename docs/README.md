@@ -52,7 +52,8 @@ docs/
 - [Phát triển backend, frontend và migration cho các team và AI](guides/HUONG_DAN_PHAT_TRIEN_BE_FE_CHO_CAC_TEAM.md).
 - [Chạy local, chuẩn bị staging và backup](guides/DEPLOYMENT_GUIDE.md).
 - [Làm việc với GitHub: nhánh, commit, pull request, review và xử lý xung đột](guides/HUONG_DAN_LAM_VIEC_VOI_GITHUB.md).
-- [T3-03: khung UI HR/Mentor, nhóm thực tập và điểm chờ tích hợp](guides/T3_03_HR_MENTOR_WORKSPACE.md).
+- [T3-03: khung UI HR/Mentor, nhóm thực tập và điểm chờ tích hợp](../src/test/resources/vn/utbridora/auth/modules/internship/t3_03/guides/T3_03_HR_MENTOR_WORKSPACE.md).
+- [T3-09: UI nộp bài, nhận xét và báo cáo tuần — checkpoint chờ backend](../src/test/resources/vn/utbridora/auth/modules/internship/t3_09/README.md).
 - [Docker local: tạo dữ liệu mẫu và hướng dẫn demo Student/HR/Mentor cho dev](guides/LOCAL_DEMO.md).
 - [Tuần 2: luồng runtime, API và cách kiểm tra trên môi trường riêng](guides/WEEK2_RUNTIME.md).
 - [T1-06 tuần 3: private upload, owner guard, storage và boundary tích hợp](guides/T1_06_PRIVATE_FILES.md).
@@ -74,8 +75,8 @@ Code, tests và bốn tài liệu bàn giao nằm trong cùng bản phát hành 
 - [Báo cáo kiểm thử](testing/TEST_REPORT.md).
 - [Tuần 2: task, implementation, kiểm chứng DEV và giới hạn nghiệm thu](testing/WEEK2_ACCEPTANCE.md).
 - [T1-06: kiểm thử File Service tối thiểu và giới hạn scanner/QA](testing/T1_06_ACCEPTANCE.md).
-- [T3-03: kiểm thử DEV và daily report](testing/T3_03_TEST_REPORT.md).
-- [T3-03: bàn giao QA03, phạm vi kiểm thử và dependency](testing/T3_03_QA_HANDOFF.md).
+- [T3-03: kiểm thử DEV và daily report](../src/test/resources/vn/utbridora/auth/modules/internship/t3_03/testing/T3_03_TEST_REPORT.md).
+- [T3-03: bàn giao QA03, phạm vi kiểm thử và dependency](../src/test/resources/vn/utbridora/auth/modules/internship/t3_03/testing/T3_03_QA_HANDOFF.md).
 - Evidence gốc: [backend và tích hợp](testing/evidence/TEST_EVIDENCE.json), [giao diện](testing/evidence/UI_TEST_EVIDENCE.json), [trước push](testing/evidence/PREPUSH_TEST_EVIDENCE.json).
 
 Evidence JSON được giữ nguyên nội dung. Đường dẫn source/log hoặc checksum bên trong phản ánh snapshot lúc chạy, không phải kết quả được chạy lại khi tổ chức tài liệu.

@@ -48,11 +48,13 @@ export async function getCsrf(): Promise<Csrf> {
   csrf = await response.json() as Csrf;
   return csrf;
 }
-export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function apiResponse(path: string, init: RequestInit = {}): Promise<Response> {
   const mutation = !['GET', 'HEAD', 'OPTIONS'].includes((init.method || 'GET').toUpperCase());
   if (mutation && !csrf) await getCsrf();
   const headers = new Headers(init.headers);
-  if (init.body) headers.set('Content-Type', 'application/json');
+  // Multipart needs the browser-generated boundary; JSON callers retain their existing behavior.
+  if (init.body instanceof FormData) headers.delete('Content-Type');
+  else if (init.body) headers.set('Content-Type', 'application/json');
   if (mutation && csrf) headers.set(csrf.headerName, csrf.token);
   let response: Response;
   try { response = await fetch('/api/v1' + path, { ...init, credentials: 'include', cache: 'no-store', headers }); }
@@ -62,7 +64,14 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     if (response.status === 401 && !['/auth/login', '/auth/me'].includes(path)) window.dispatchEvent(new Event('session-expired'));
     throw await errorOf(response);
   }
+  return response;
+}
+export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const response = await apiResponse(path, init);
   return response.status === 204 ? undefined as T : response.json() as Promise<T>;
+}
+export async function apiBlob(path: string, init: RequestInit = {}): Promise<Blob> {
+  return (await apiResponse(path, init)).blob();
 }
 export const send = <T = { message: string }>(path: string, method: string, body?: unknown) =>
   api<T>(path, { method, body: body === undefined ? undefined : JSON.stringify(body) });

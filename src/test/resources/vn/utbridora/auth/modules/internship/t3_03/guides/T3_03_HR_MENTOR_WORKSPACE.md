@@ -1,6 +1,6 @@
 # T3-03 — Khung UI HR/Mentor và nhóm thực tập
 
-> Cập nhật 09/11/2026: hướng dẫn dưới đây lưu thiết kế/checkpoint UI ban đầu. Gateway runtime hiện dùng API thật; xem [WEEK1_RUNTIME](WEEK1_RUNTIME.md) và [ma trận kiểm chứng](../testing/WEEK1_ACCEPTANCE.md) để phân biệt bằng chứng mock với tích hợp.
+> Cập nhật 09/11/2026: hướng dẫn dưới đây lưu thiết kế/checkpoint UI ban đầu. Gateway runtime hiện dùng API thật; xem [WEEK1_RUNTIME](../../../../../../../../../../docs/guides/WEEK1_RUNTIME.md) và [ma trận kiểm chứng](../../../../../../../../../../docs/testing/WEEK1_ACCEPTANCE.md) để phân biệt bằng chứng mock với tích hợp.
 
 Owner: DEV07 — Lại Thái Thuận. QA phụ trách: QA03 — Phạm Lâm Phương Bảo.
 
@@ -65,11 +65,11 @@ trường/doanh nghiệp/kỳ; adapter thật có thể bổ sung lookup tên đ
 
 ## Căn cứ hợp đồng
 
-- [Contract v1.0](../contracts/UTBridora_Contract_Pack_B01_B06_v1.0_Candidate.md):
+- [Contract v1.0](../../../../../../../../../../docs/contracts/UTBridora_Contract_Pack_B01_B06_v1.0_Candidate.md):
   C.0 (business Page), CP-AUTHZ1 (ContextAssignment/Scope), CP-WS1 (CohortDto/GroupDto).
-- [Trạng thái contract](../contracts/README.md): v1.0 là căn cứ được ghi nhận trong repo;
+- [Trạng thái contract](../../../../../../../../../../docs/contracts/README.md): v1.0 là căn cứ được ghi nhận trong repo;
   v1.1 là diff kỹ thuật riêng. Thay đổi này không sửa hoặc tự ký nhận contract.
-- [Hướng dẫn BE/FE](HUONG_DAN_PHAT_TRIEN_BE_FE_CHO_CAC_TEAM.md), mục 9–10 và 14.
+- [Hướng dẫn BE/FE](../../../../../../../../../../docs/guides/HUONG_DAN_PHAT_TRIEN_BE_FE_CHO_CAC_TEAM.md), mục 9–10 và 14.
 
 `WorkspacePage<T>` dùng `page`, khác `Page<T>` core dùng `number`. Không sửa kiểu
 core để ép hai giao thức thành một.
