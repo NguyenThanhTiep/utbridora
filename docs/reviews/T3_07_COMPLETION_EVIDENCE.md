@@ -1,5 +1,9 @@
 # T3-07 - DEV completion evidence: URL versions and Mentor Review
 
+2026-11-12 correction: this checkpoint did not include a GET endpoint for persisted
+review feedback after reload. See the [review-read follow-up and new verification](T3_07_REVIEW_READ_HANDOFF.md)
+for the added endpoint and current evidence. Results below remain the historical 2026-11-11 run.
+
 Updated 2026-11-11. **DEV URL scope verified; QA03/Lead acceptance not recorded.**
 This supersedes the 10/11 PARTIAL/BLOCKED report. Current authorization resolved
 V29, T1-06 integration and the exact Review/Revision audit subset; those historical

@@ -52,6 +52,55 @@ class SubmissionServiceTest {
     private final MemoryBoundary memory = new MemoryBoundary();
     private SubmissionService service;
 
+    @ParameterizedTest @EnumSource(ReviewVerdict.class)
+    void readReviewReturnsStoredVerdictWithoutMutations(ReviewVerdict verdict) {
+        memory.rows.add(row(1, SUBMISSION));
+        var stored = new ReviewDto(id(90), SUBMISSION, 1, verdict, "Stored feedback", MENTOR, NOW, 4L);
+        memory.reviews.add(stored);
+        assertEquals(stored, service.readReview(auth, SUBMISSION));
+        verify(access).requireRead(eq(auth), eq(memory.target));
+        verifyNoInteractions(cases);
+        assertTrue(memory.commands.isEmpty());
+        assertTrue(memory.audits.isEmpty());
+        assertEquals(0, memory.callbacks);
+    }
+
+    @Test void unreviewedArtifactReturnsNullOnlyAfterAuthorization() {
+        memory.rows.add(row(1, SUBMISSION));
+        assertNull(service.readReview(auth, SUBMISSION));
+        verify(access).requireRead(eq(auth), eq(memory.target));
+        assertTrue(memory.events.contains("read-review"));
+    }
+
+    @Test void inaccessibleReviewIsNeverRead() {
+        memory.rows.add(row(1, SUBMISSION));
+        doThrow(failure(404, "RESOURCE_NOT_FOUND")).when(access).requireRead(eq(auth), any());
+        error(404, "RESOURCE_NOT_FOUND", () -> service.readReview(auth, SUBMISSION));
+        assertFalse(memory.events.contains("read-review"));
+        verifyNoInteractions(cases);
+    }
+
+    @Test void unknownSubmissionOrMissingAssignmentHasNoReviewLookup() {
+        error(404, "RESOURCE_NOT_FOUND", () -> service.readReview(auth, SUBMISSION));
+        memory.rows.add(row(1, SUBMISSION));
+        memory.target = null;
+        error(404, "RESOURCE_NOT_FOUND", () -> service.readReview(auth, SUBMISSION));
+        assertFalse(memory.events.contains("read-review"));
+        verifyNoInteractions(access);
+    }
+
+    @Test void reviewVersionMismatchFailsClosed() {
+        memory.rows.add(row(1, SUBMISSION));
+        memory.reviews.add(new ReviewDto(id(90), SUBMISSION, 2, ReviewVerdict.ACCEPT, "Wrong version", MENTOR, NOW, 4L));
+        error(503, "DEPENDENCY_UNAVAILABLE", () -> service.readReview(auth, SUBMISSION));
+    }
+
+    @Test void anonymousReviewReadDoesNotReachStorage() {
+        error(401, "SESSION_EXPIRED", () -> service.readReview(null, SUBMISSION));
+        assertTrue(memory.events.isEmpty());
+        verifyNoInteractions(access, cases);
+    }
+
     @BeforeEach void setup() {
         memory.target = context(ASSIGNMENT, STUDENT, AssignmentState.IN_PROGRESS, 2L, null, NOW, false);
         when(cases.requireTaskParticipant(eq(auth), any(), any(), eq(CASE), any())).thenAnswer(call -> {
@@ -848,7 +897,7 @@ class SubmissionServiceTest {
                     expected.version() + 1, submission.submissionId(), target.task().value().dueAt(), target.task().value().lateAllowed());
         }
         public boolean hasReview(UUID id) { return reviews.stream().anyMatch(review -> id.equals(review.submissionId())); }
-        public ReviewDto reviewForSubmission(UUID id) { return reviews.stream().filter(review->id.equals(review.submissionId())).findFirst().orElse(null); }
+        public ReviewDto reviewForSubmission(UUID id) { events.add("read-review");return reviews.stream().filter(review->id.equals(review.submissionId())).findFirst().orElse(null); }
         public void appendRevision(AssignmentDto expected,SubmissionDto previous,SubmissionDto next) {
             events.add("append-revision");if(appendFailure!=null) throw appendFailure;
             assertEquals(target.assignment(),expected);assertEquals(expected.currentSubmissionId(),previous.submissionId());

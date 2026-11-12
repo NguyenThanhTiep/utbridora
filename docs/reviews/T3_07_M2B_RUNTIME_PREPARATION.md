@@ -1,5 +1,9 @@
 # T3-07 runtime integration - DEV05
 
+2026-11-12 follow-up: [persisted review GET API and DEV07 handoff](T3_07_REVIEW_READ_HANDOFF.md).
+Use that document for the current endpoint, dependency findings and retest evidence.
+The integration checkpoint below records the original 2026-11-11 delivery.
+
 Updated 2026-11-11. This document supersedes the earlier URL-v1 Preparation checkpoint.
 The current user request authorizes implementation, local integration of T1-06, V29,
 and the exact Submission revision/review audit subset. Historical approval gates
@@ -48,6 +52,7 @@ current valid X-Context-Assignment-Id. The header selects a grant; it does not c
 | Submit URL | POST /api/v1/t3/assignments/{id}/submissions | {expectedAssignmentVersion, fileIds:[], url:https URL, note:null or string}; 201 SubmissionDto |
 | History | GET /api/v1/t3/assignments/{id}/submissions?page=0&size=25 | 200 Page<SubmissionDto>, versionNo DESC, submissionId ASC |
 | Review | POST /api/v1/t3/submissions/{id}/reviews | {expectedAssignmentVersion, verdict:ACCEPT or REQUEST_REVISION, comment:nonblank}; 201 ReviewDto |
+| Read persisted review | GET /api/v1/t3/submissions/{id}/reviews | 200 ReviewDto; 204 with empty body when not yet reviewed; see follow-up handoff |
 
 NEW -> start -> IN_PROGRESS -> submit v1 -> SUBMITTED -> REQUEST_REVISION ->
 REVISION_REQUIRED -> start -> IN_PROGRESS -> submit v2 -> SUBMITTED -> ACCEPT -> COMPLETED.

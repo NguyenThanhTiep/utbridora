@@ -3,6 +3,7 @@ package vn.utbridora.auth.modules.internship.api;
 import java.util.UUID;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import vn.utbridora.auth.modules.internship.application.SubmissionService;
@@ -16,6 +17,16 @@ import static vn.utbridora.auth.operations.WorkflowValues.*;
 public final class SubmissionReviewController {
     private final ObjectProvider<SubmissionService> services;
     public SubmissionReviewController(ObjectProvider<SubmissionService> services) { this.services = services; }
+
+    @GetMapping
+    public ResponseEntity<ReviewDto> read(Authentication auth, @PathVariable String submissionId) {
+        actor(auth);
+        var id = UUID.fromString(uuid(submissionId));
+        var service = services.getIfAvailable();
+        if (service == null) throw failure(503, "DEPENDENCY_UNAVAILABLE");
+        var review = service.readReview(auth, id);
+        return review == null ? ResponseEntity.noContent().build() : ResponseEntity.ok(review);
+    }
 
     @PostMapping @ResponseStatus(HttpStatus.CREATED)
     public ReviewDto review(Authentication auth, @PathVariable String submissionId,

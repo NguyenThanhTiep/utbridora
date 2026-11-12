@@ -148,6 +148,24 @@ public final class SubmissionService {
         });
     }
 
+    /** Read the immutable review of any visible artifact, including older versions.
+     * A null result means the authorized artifact has not been reviewed yet.
+     * Like history, this uses current read scope without mutation/state guards.
+     */
+    public ReviewDto readReview(Authentication auth, UUID submissionId) {
+        actor(auth);
+        Objects.requireNonNull(submissionId);
+        return transactions.execute(session -> {
+            var submitted = loadSubmission(session.submission(submissionId), submissionId);
+            var target = load(session.assignment(submitted.assignmentId()), submitted.assignmentId());
+            access.requireRead(auth, target);
+            var review = session.reviewForSubmission(submissionId);
+            if (review != null && (!submissionId.equals(review.submissionId())
+                    || !submitted.versionNo().equals(review.reviewedVersionNo()))) throw unavailable();
+            return review;
+        });
+    }
+
     public HistoryPage history(Authentication auth, UUID assignmentId, int page, int size) {
         actor(auth);
         Objects.requireNonNull(assignmentId);

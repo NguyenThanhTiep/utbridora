@@ -33,6 +33,40 @@ class SubmissionReviewControllerTest {
     private final AuditService audit=mock(AuditService.class);
     private MockMvc mvc;
     private static final String BODY="{\"expectedAssignmentVersion\":3,\"verdict\":\"ACCEPT\",\"comment\":\"Accepted\"}";
+    @ParameterizedTest @EnumSource(ReviewVerdict.class)
+    void getReturnsStoredReviewWithoutMutationHeaders(ReviewVerdict verdict) throws Exception {
+        var stored = new ReviewDto(review, submission, 1, verdict, "Stored feedback", mentor,
+                Instant.parse("2026-11-10T00:00:00Z"), 4L);
+        when(service.readReview(auth, submission)).thenReturn(stored);
+        var result = mvc.perform(get("/api/v1/t3/submissions/" + submission + "/reviews").principal(auth)).andReturn();
+        assertEquals(200, result.getResponse().getStatus());
+        var node = JsonMapper.builder().build().readTree(result.getResponse().getContentAsString());
+        assertEquals(8, node.size());
+        assertEquals("Stored feedback", node.get("comment").asString());
+        assertEquals(verdict.name(), node.get("verdict").asString());
+        assertEquals(review.toString(), node.get("reviewId").asString());
+        verify(service).readReview(auth, submission);
+        verifyNoMoreInteractions(service);
+    }
+
+    @Test void getUnreviewedReturns204WithEmptyBody() throws Exception {
+        var result = mvc.perform(get("/api/v1/t3/submissions/" + submission + "/reviews").principal(auth)).andReturn();
+        assertEquals(204, result.getResponse().getStatus());
+        assertEquals("", result.getResponse().getContentAsString());
+    }
+
+    @Test void getRejectsInvalidIdAndUnavailableService() throws Exception {
+        error(mvc.perform(get("/api/v1/t3/submissions/invalid/reviews").principal(auth)).andReturn(), 400, "SCHEMA_VALIDATION");
+        verifyNoInteractions(service);
+        mvc = mvc(null);
+        error(mvc.perform(get("/api/v1/t3/submissions/" + submission + "/reviews").principal(auth)).andReturn(), 503, "DEPENDENCY_UNAVAILABLE");
+    }
+
+    @Test void getUsesExistingHiddenResourceErrorEnvelope() throws Exception {
+        when(service.readReview(auth, submission)).thenThrow(failure(404, "RESOURCE_NOT_FOUND"));
+        error(mvc.perform(get("/api/v1/t3/submissions/" + submission + "/reviews").principal(auth)).andReturn(), 404, "RESOURCE_NOT_FOUND");
+    }
+
     @BeforeEach void setup() {SecurityContextHolder.getContext().setAuthentication(auth);mvc=mvc(service);}
     @AfterEach void clear() {SecurityContextHolder.clearContext();}
     private MockMvc mvc(SubmissionService supplied) {

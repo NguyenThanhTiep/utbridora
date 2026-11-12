@@ -119,12 +119,24 @@ class T307SubmissionRuntimeIT {
     @Test void realRevisionCycleKeepsV1V2AndRejectsOldReview() throws Exception {
         var owner=login(student,null);var reviewer=login(mentor,mentorGrant);
         var first=node(owner.call("POST",submissions(),input(2,"https://example.test/v1"),id(),true),201);String firstId=first.get("submissionId").asString();
-        node(reviewer.call("POST",reviews(firstId),Map.of("expectedAssignmentVersion",3,"verdict","REQUEST_REVISION","comment","Revise"),id(),true),201);
+        var pending=owner.call("GET",reviews(firstId),null,null,false);
+        assertEquals(204,pending.statusCode());assertEquals("",pending.body());
+        var firstReview=node(reviewer.call("POST",reviews(firstId),Map.of("expectedAssignmentVersion",3,"verdict","REQUEST_REVISION","comment","Revise"),id(),true),201);
+        assertEquals(firstReview,node(login(student,null).call("GET",reviews(firstId),null,null,false),200));
         node(owner.call("PATCH","/api/v1/t3/assignments/"+assignment+"/status",Map.of("expectedVersion",4,"state","IN_PROGRESS"),id(),true),200);
         var second=node(owner.call("POST",submissions(),input(5,"https://example.test/v2"),id(),true),201);String secondId=second.get("submissionId").asString();
         assertEquals(2,second.get("versionNo").asInt());
         assertEquals("STALE_SUBMISSION",node(reviewer.call("POST",reviews(firstId),Map.of("expectedAssignmentVersion",6,"verdict","ACCEPT","comment","Old"),id(),true),409).get("errorCode").asString());
-        node(reviewer.call("POST",reviews(secondId),Map.of("expectedAssignmentVersion",6,"verdict","ACCEPT","comment","Accepted"),id(),true),201);
+        assertEquals(204,owner.call("GET",reviews(secondId),null,null,false).statusCode());
+        var secondReview=node(reviewer.call("POST",reviews(secondId),Map.of("expectedAssignmentVersion",6,"verdict","ACCEPT","comment","Accepted"),id(),true),201);
+        var reloaded=login(student,null);
+        long operationsBefore=jdbc.queryForObject("SELECT COUNT(*) FROM operation_records",Long.class);
+        long auditsBefore=jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs",Long.class);
+        assertEquals(firstReview,node(reloaded.call("GET",reviews(firstId),null,null,false),200));
+        assertEquals(secondReview,node(reloaded.call("GET",reviews(secondId),null,null,false),200));
+        assertEquals(secondReview,node(reviewer.call("GET",reviews(secondId),null,null,false),200));
+        assertEquals(operationsBefore,jdbc.queryForObject("SELECT COUNT(*) FROM operation_records",Long.class));
+        assertEquals(auditsBefore,jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs",Long.class));
         var history=node(owner.call("GET",submissions(),null,null,false),200).get("content");assertEquals(second,history.get(0));assertEquals(first,history.get(1));
         assertEquals("COMPLETED",jdbc.queryForObject("SELECT state FROM internship_task_assignments WHERE id=?",String.class,assignment));
         assertEquals(2,count("internship_submission_reviews","submission_id",firstId)+count("internship_submission_reviews","submission_id",secondId));
@@ -135,6 +147,29 @@ class T307SubmissionRuntimeIT {
         assertEquals(2,page.get("totalElements").asInt());assertEquals(first,page.get("content").get(0));
         jdbc.update("UPDATE placements SET state='CANCELLED',cancelled_at=UTC_TIMESTAMP(6),version=version+1 WHERE id=?",placement);
         assertEquals(first,node(owner.call("GET",submissions()+"?page=1&size=1",null,null,false),200).get("content").get(0));
+        assertEquals(firstReview,node(reloaded.call("GET",reviews(firstId),null,null,false),200));
+        assertEquals(secondReview,node(reloaded.call("GET",reviews(secondId),null,null,false),200));
+    }
+
+    @Test void reviewReadProtectsPrivateFeedbackAndHandlesMissingResources() throws Exception {
+        var owner=login(student,null);
+        String submission=node(owner.call("POST",submissions(),input(2,"https://example.test/read"),id(),true),201).get("submissionId").asString();
+        var other=login(outsider,null);
+        node(other.call("GET",reviews(submission),null,null,false),404); // Even before a review exists.
+        var reviewer=login(mentor,mentorGrant);
+        node(reviewer.call("POST",reviews(submission),Map.of("expectedAssignmentVersion",3,"verdict","REQUEST_REVISION","comment","Private feedback"),id(),true),201);
+        var anonymous=new Browser();
+        node(anonymous.call("GET",reviews(submission),null,null,false),401);
+        var denied=node(other.call("GET",reviews(submission),null,null,false),404);
+        assertFalse(denied.toString().contains("Private feedback"));
+        node(owner.call("GET",reviews(id()),null,null,false),404);
+        node(owner.call("GET",reviews("invalid"),null,null,false),400);
+        String otherGroup=id();jdbc.update("INSERT INTO internship_groups(id,cohort_id,code,version) VALUES (?,?,'OTHER',1)",otherGroup,cohort);
+        var otherMentor=user(Role.ENTERPRISE,enterprise);
+        String otherGrant=grant("MENTOR",otherMentor.id,hr.id,hrGrant,null,otherGroup);
+        node(login(otherMentor,otherGrant).call("GET",reviews(submission),null,null,false),404);
+        jdbc.update("UPDATE internship_context_assignments SET active=false,version=version+1 WHERE id=?",hrGrant);
+        node(reviewer.call("GET",reviews(submission),null,null,false),404);
     }
 
     @ParameterizedTest @CsvSource({"0,false,201,false","1,true,201,true","1,false,422,false"})
@@ -198,9 +233,11 @@ class T307SubmissionRuntimeIT {
                 "expectedCaseVersion",3,"reasonCode","SYNTHETIC_HANDOVER"),id(),true),200);
         node(reviewer.call("POST",reviews(submission),review,id(),true),401); // Owner invalidates the old session.
         reviewer=login(mentor,nextGrant);String key=id();node(reviewer.call("POST",reviews(submission),review,key,true),201);
+        assertEquals("Historical task",node(reviewer.call("GET",reviews(submission),null,null,false),200).get("comment").asString());
         node(humanResources.call("POST","/api/v1/t3/groups/"+next+"/members:move",Map.of("caseId",caseId,"toGroupId",third,
                 "expectedCaseVersion",4,"expectedFromGroupVersion",2,"expectedToGroupVersion",1,"reasonCode","SYNTHETIC_MOVE_AGAIN"),id(),true),200);
         node(reviewer.call("POST",reviews(submission),review,key,true),403);
+        node(reviewer.call("GET",reviews(submission),null,null,false),404);
         assertEquals(1,count("internship_submission_reviews","submission_id",submission));
     }
 
