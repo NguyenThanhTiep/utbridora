@@ -31,6 +31,8 @@ test('week 2 skills, cooperation, consent and tasks use real authenticated APIs'
   await student.context.close();
 
   const school = await actor(browser, 'school@example.test');
+  const cooperationRead = await school.page.request.get('/api/v1/school/cooperations', { headers: { 'X-Organization-Id': '00000000-0000-4000-8000-000000000011' } });
+  expect(cooperationRead.status(), await cooperationRead.text()).toBe(200);
   await school.page.getByRole('button', { name: 'Hợp tác doanh nghiệp', exact: true }).click();
   await school.page.getByRole('button', { name: 'Xem nội dung đề nghị 1', exact: true }).click();
   await expect(school.page.getByRole('heading', { name: 'W2 browser cooperation', exact: true })).toBeVisible();

@@ -1,0 +1,130 @@
+{
+  "task": "T1-04-UI",
+  "date": "2026-11-12",
+  "branch": "main",
+  "baseCommit": "9ba090dadafc653be748197df8e9ada209e43bbc",
+  "sourceSnapshot": "working tree before commit; hashes identify tested files",
+  "unitEvidence": {
+    "firstFullRun": {
+      "tests": 485,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "logSha256": "e4aadea5b8ed9b4a2f638f9358956cb963934ae75f8005161bd96976f3cfe7aa"
+    },
+    "targetedSecurity": {
+      "AuthorizationPolicyTest": 7,
+      "DemandSecurityErrorsTest": 2
+    },
+    "note": "Full unit run reused; subsequent functional changes are scoped frontend CSS. Integration/browser reports come from separate targeted runs, not one full verify."
+  },
+  "integration": {
+    "SchoolDelegationManagementIT": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "report": "target\\failsafe-reports\\TEST-vn.utbridora.auth.SchoolDelegationManagementIT.xml",
+      "sha256": "99a3c3cc46fc86f1d461444cc4a1a28a79e10f0217e1a1562577826c08675ec8"
+    },
+    "CorePlatformIT": {
+      "tests": 50,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "report": "target\\failsafe-reports\\TEST-vn.utbridora.auth.CorePlatformIT.xml",
+      "sha256": "86ea8a4e8323bc884426870cd819caa3fb520f842e1c63942493784d35b33dcb"
+    },
+    "Week2WorkflowIT": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "report": "target\\failsafe-reports\\TEST-vn.utbridora.auth.Week2WorkflowIT.xml",
+      "sha256": "ff802a403f39b560364acda3c79c71d116a816141bcf714041b2bf02ace81953"
+    }
+  },
+  "browser": {
+    "delegations": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "report": "target\\delegations-browser-results.xml",
+      "sha256": "86e4e8bc33b7ca4f7942fe9b2a91087dd788cb129ac48106f2e29a6b2f506854"
+    },
+    "core": {
+      "tests": 88,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 5,
+      "report": "target\\core-browser-results.xml",
+      "sha256": "50f8d86031b15d0fdda658ce20f707a221f16bbe4696feda581fa8958c63d184"
+    },
+    "week2": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "report": "target\\week2-browser-results.xml",
+      "sha256": "0fb3c4b903d826ce1252a8c49209fa58e38e03a039658c592d89a89e4a7892df"
+    }
+  },
+  "contractReport": {
+    "path": "target/contract-verification.json",
+    "sha256": "3910fe4a978b5a62b773900d4e8672e1b90a156cefbe8ed9e08a1ccb653bb85a",
+    "counts": {
+      "schemas": 374,
+      "examples": 69,
+      "regressionCases": 795,
+      "checks": 868,
+      "passed": 868,
+      "failed": 0
+    }
+  },
+  "otherChecks": {
+    "frontendBuild": "PASS",
+    "bundlePortability": {
+      "tests": 1,
+      "status": "PASS"
+    },
+    "auditRegistry": {
+      "tests": 3,
+      "status": "PASS"
+    },
+    "plan": {
+      "originalTasksPreserved": 87,
+      "totalTasks": 88,
+      "week2Tasks": 19,
+      "newRow": 92,
+      "status": "Chờ QA",
+      "qa": "Chưa test",
+      "lead": "Chưa duyệt",
+      "srs": "Chưa nghiệm thu SRS",
+      "formulaGates": "PASS",
+      "nativePackagePreserved": true
+    }
+  },
+  "sourceHashes": {
+    "src/main/java/vn/utbridora/auth/authorization/SchoolDelegationManagement.java": "538f2c3e411b5320ae6d229cec0cb2bc49abde54987efd7dc4617d3ff5e74ce6",
+    "src/main/java/vn/utbridora/auth/authorization/SchoolDelegationReadController.java": "2ee5fbad3cdcc2e698777d74dfef8b8e07466e57ba60e7a5b75da6d6ff1e35b9",
+    "src/main/java/vn/utbridora/auth/authorization/SchoolDelegationService.java": "a26505e23341ccb7ae41c78b46c083514f469dd115b68b1934469fdce1b7a295",
+    "src/main/java/vn/utbridora/auth/security/SecurityConfig.java": "ad856073299d491651525326d75bc44bfa26685e8ac91823a079c253b8008812",
+    "web-demo/src/App.tsx": "25f1a8dcb41dc045dd6c80455daecba34cd690997dce01a8e9eca0d618fcb950",
+    "web-demo/src/components.tsx": "41e0c035f20f76040b89f724be24a947d6973608a8c7b3468ebcbd40d0f0ac0d",
+    "web-demo/src/modules/delegations/SchoolDelegations.tsx": "c1000306ebe56ac9d4bebd2e500bec3d876baadd18be70e9fe37363ffd6d92d2",
+    "web-demo/src/modules/delegations/styles.css": "dd05dac0de84376bac361eb4b24d0deeb281dfdf24ae7795d6ebc31aa6d3dc91",
+    "src/test/java/vn/utbridora/auth/SchoolDelegationManagementIT.java": "28bb8df80ca56c8b5f4ed6c86bfcd29238d86954e0862c987f5070d97e54a05c",
+    "web-demo/tests/delegations-live.spec.ts": "d9aef5c151d9d2e9c885877c2ca480be73121b42df8f940b7e22432d276fa79c",
+    "web-demo/tests/week2-runtime.spec.ts": "ce573b2f7ab9e3eac8e742782dc85efeb4e15f6dea1b2c4b28a48dc09043c249",
+    "docs/plans/UTBridora_Plan.xlsx": "d1b0ee2233f50d78b23a06ab99ab84fdab24616566ff43b2bd8df0be9a4c94af"
+  },
+  "limits": {
+    "qa01Signoff": false,
+    "leadSignoff": false,
+    "sharedDockerDeployed": false,
+    "sharedDatabaseModified": false,
+    "newMigration": false,
+    "fixtures": "Synthetic prerequisites on independent Testcontainers MySQL only"
+  }
+}

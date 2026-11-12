@@ -120,6 +120,17 @@ export function Pagination({ page, change, busy }: { page: Page<unknown> | null;
 export const roleNames: Record<string, string> = { STUDENT: 'Sinh viên', ENTERPRISE: 'Đại diện doanh nghiệp', SCHOOL_STAFF: 'Cán bộ trường', ADMIN: 'Quản trị viên' };
 export const statusNames: Record<string, string> = { ACTIVE: 'Đang hoạt động', SUSPENDED: 'Tạm khóa', DEACTIVATED: 'Đã vô hiệu hóa', PENDING_ACTIVATION: 'Chờ kích hoạt', PENDING: 'Chờ xác thực', VERIFIED: 'Đã xác thực' };
 export const permissionNames: Record<string, string> = {
+  'school:delegation:manage': 'Quản lý phân công quyền cán bộ',
+  'enterprise_verification:school:review': 'Xét duyệt xác minh doanh nghiệp',
+  'matching:run:execute': 'Chạy đối chiếu hồ sơ và nhu cầu',
+  'matching:school:detail_read': 'Xem kết quả đối chiếu chi tiết',
+  'matching:school:nominate': 'Đề cử sinh viên từ kết quả đối chiếu',
+  't5:proposal:manage': 'Quản lý đề cử sinh viên',
+  'opportunity:school:publish': 'Công bố cơ hội thực tập',
+  'student:eligibility:school:approve': 'Duyệt điều kiện thực tập sinh viên',
+  'student_profile:share:school:manage': 'Quản lý chia sẻ hồ sơ sinh viên',
+  't3:workspace:read': 'Xem không gian thực tập được phân công',
+  't3:coordinator:confirm': 'Xác nhận điều phối thực tập',
   'account:self:read': 'Xem tài khoản của tôi', 'account:self:password_change': 'Đổi mật khẩu của tôi',
   'account:admin:status': 'Quản lý trạng thái tài khoản', 'account:admin:revoke': 'Thu hồi phiên đăng nhập',
   'membership:admin:write': 'Quản lý vai trò theo tổ chức', 'organization:admin:create': 'Tạo tổ chức',

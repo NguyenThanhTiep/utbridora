@@ -55,6 +55,7 @@ docs/
 - [T3-03: khung UI HR/Mentor, nhóm thực tập và điểm chờ tích hợp](guides/T3_03_HR_MENTOR_WORKSPACE.md).
 - [Docker local: tạo dữ liệu mẫu và hướng dẫn demo Student/HR/Mentor cho dev](guides/LOCAL_DEMO.md).
 - [Tuần 2: luồng runtime, API và cách kiểm tra trên môi trường riêng](guides/WEEK2_RUNTIME.md).
+- [T1-04-UI: cấp và thu hồi quyền cán bộ theo trường/kỳ](guides/T1_04_UI_SCHOOL_DELEGATIONS.md).
 
 ## Bàn giao tuần 2 → tuần 3
 

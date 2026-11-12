@@ -69,6 +69,7 @@ public class SecurityConfig {
                .requestMatchers(HttpMethod.POST,"/api/v1/enterprise/verifications").authenticated()
                .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/verifications/*","/api/v1/enterprise/verifications/*/submit","/api/v1/school/verifications/*/decision").authenticated()
                .requestMatchers(HttpMethod.POST,"/api/v1/school/terms/*/delegations").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/school/school-delegations","/api/v1/school/school-delegations/*").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/invitations/me","/api/v1/invitations/*","/api/v1/students/me/consents","/api/v1/students/*/profile","/api/v1/school/terms/*/profile-sharing-policy").authenticated()
                .requestMatchers(HttpMethod.POST,"/api/v1/invitations/*/decision","/api/v1/invitations/*/withdraw","/api/v1/students/me/consents","/api/v1/students/me/consents/*/revoke","/api/v1/school/proposals/*/shares","/api/v1/school/profile-shares/*/revoke","/api/v1/school/student-eligibilities/decisions").authenticated()
                .requestMatchers(HttpMethod.PUT,"/api/v1/school/terms/*/profile-sharing-policy").authenticated()

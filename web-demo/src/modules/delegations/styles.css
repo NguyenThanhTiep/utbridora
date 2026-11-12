@@ -1,0 +1,10 @@
+.delegation-workspace .delegation-form { display: grid; gap: 1rem; border: 0; padding: 0; min-width: 0; }
+.delegation-workspace .table-wrap { width: 100%; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
+.delegation-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: .65rem; border: 1px solid var(--border, #dce3ed); border-radius: 8px; padding: 1rem; }
+.delegation-choices label { display: flex; align-items: flex-start; gap: .6rem; font-weight: 400; }
+.delegation-choices input[type="checkbox"] { width: 1rem; height: 1rem; flex: 0 0 auto; margin-top: .2rem; }
+.delegation-dates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.delegation-meta { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: .65rem 1rem; }
+.delegation-meta dt { font-weight: 600; }
+.delegation-meta dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 600px) { .delegation-dates { grid-template-columns: 1fr; } .delegation-meta { grid-template-columns: 1fr; gap: .35rem; } }

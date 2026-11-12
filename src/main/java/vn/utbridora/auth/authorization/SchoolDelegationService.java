@@ -22,7 +22,7 @@ public class SchoolDelegationService {
     public record Delegation(String id,String userId,String schoolOrgId,String termId,List<String> permissionCodes,
         List<String> profileReadFields,Instant validFrom,Instant validUntil,boolean active,long version,String grantedBy,String decisionRef) {}
     public record RevocationAck(String id,boolean active,long version) {}
-    private static final Set<String> FIELDS=Set.of("displayName","studentCode","majorCode","skills","projects","certificates","cv","evidence","email","phone");
+    static final Set<String> FIELDS=Set.of("displayName","studentCode","majorCode","skills","projects","certificates","cv","evidence","email","phone");
     private final JdbcTemplate jdbc;
     private final AuthorizationPolicy core;
     private final SchoolDelegationAccess access;

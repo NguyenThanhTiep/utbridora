@@ -15,6 +15,7 @@ import './modules/workflows.css';
 // DEV08 đã nối màn hình danh mục kỹ năng vào khung ứng dụng hiện có để người kiểm thử mở được giao diện US-T4-06.
 import { SkillTaxonomy } from './modules/taxonomy';
 import { DemandWorkspace, SchoolWorkspace, canAuthorDemands, canLeaveDemand } from './modules/cooperation';
+import { SchoolDelegations } from './modules/delegations/SchoolDelegations';
 
 const screens = [
   { id: 'school', title: 'Hợp tác doanh nghiệp', description: 'Không gian phối hợp thực tập dành cho nhà trường.', icon: 'building', permission: null },
@@ -27,6 +28,7 @@ const screens = [
   { id: 'student-tasks', title: 'Công việc của tôi', description: 'Nhiệm vụ và lịch thực tập được giao cho bạn.', icon: 'calendar', permission: 'student_profile:self:read', group: 'student' },
   { id: 'demands', title: 'Nhu cầu thực tập', description: 'Quản lý bản nháp nhu cầu và tiêu chí tuyển thực tập của doanh nghiệp.', icon: 'briefcase', permission: 'cooperation:enterprise:create' },
   { id: 'users', title: 'Tài khoản & phân quyền', description: 'Quản lý thành viên và quyền truy cập trong hệ thống.', icon: 'users', permission: 'account:admin:status' },
+  { id: 'delegations', title: 'Phân công quyền cán bộ', description: 'Cấp và thu hồi quyền trong từng trường và kỳ thực tập.', icon: 'shield', permission: null },
   { id: 'organizations', title: 'Tổ chức & lời mời', description: 'Kết nối các tổ chức và mời thành viên tham gia.', icon: 'building', permission: 'membership:admin:write' },
   { id: 'audit', title: 'Nhật ký hệ thống', description: 'Theo dõi và tra cứu các hoạt động quan trọng.', icon: 'activity', permission: 'audit:global:read' },
   // DEV08 cho phép quản trị viên toàn cục mở màn hình để kiểm thử; giao diện lập trình vẫn tự kiểm tra quyền ở máy chủ.
@@ -58,6 +60,7 @@ export default function App() {
   const menus = screens.filter(item => item.id === 'internship' ? !!me && canDiscoverWorkspace(me)
     : item.id === 'school' ? grants.some(grant => grant.role === 'SCHOOL_STAFF' && !!grant.organizationId)
     : item.id === 'demands' ? grants.some(canAuthorDemands)
+    : item.id === 'delegations' ? permissions.has('membership:admin:write') || grants.some(g => g.role === 'SCHOOL_STAFF' && g.permissions.includes('school:delegation:manage'))
     : item.permission === null || (item.id === 'taxonomy' ? grants.some(grant => grant.permissions.includes('taxonomy:skills:read')) : (item.group === 'student' ? schools.length > 0 : permissions.has(item.permission))));
   const current = screens.find(item => item.id === screen) || screens[0];
 
@@ -195,6 +198,7 @@ export default function App() {
           : screen === 'users' ? <UserManagement me={me} permissions={permissions} />
           : screen === 'organizations' ? <OrganizationManagement permissions={permissions} />
           : screen === 'audit' ? <AuditViewer />
+          : screen === 'delegations' ? <SchoolDelegations key={me.userId} grants={grants} />
           : screen === 'internship' ? <InternshipWorkspace key={me.userId} me={me} grants={grants} />
           : screen === 'student-overview' ? <StudentOverviewPage me={me} schools={schools} openProfile={() => navigate('student-profile')} />
           : screen === 'student-profile' ? <MyProfilePage me={me} schools={schools} />
