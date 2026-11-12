@@ -8,35 +8,43 @@ import type { DateRange, ProfileInput, SelfProfileView, TermReference } from '..
 import '../styles.css';
 
 // S02 dùng ngành từ BC12; kỹ năng/dự án/chứng chỉ/CV thuộc S03/S04.
-type Draft = { phone: string; majorCode: string | null; availabilityDeclared: boolean; availablePeriods: DateRange[] };
-type DraftErrors = { phone?: string; periods: Record<number, string> };
+type Draft = { phone: string; majorCode: string | null; availabilityDeclared: boolean; availablePeriods: DateRange[]; gpa: string };
+type DraftErrors = { phone?: string; gpa?: string; periods: Record<number, string> };
 type ProfileState = { status: 'loading' } | { status: 'missing' } | { status: 'error'; message: string } | { status: 'ready'; view: SelfProfileView };
 
 const draftOf = (view: SelfProfileView): Draft => ({
   phone: view.profile.phone ?? '', majorCode: view.profile.majorCode, availabilityDeclared: view.profile.availabilityDeclared,
-  availablePeriods: view.profile.availablePeriods.map(({ startDate, endDate }) => ({ startDate, endDate }))
+  availablePeriods: view.profile.availablePeriods.map(({ startDate, endDate }) => ({ startDate, endDate })),
+  // liên quan đến việc thêm lọc svien theo gpa là MVP: Khởi tạo trường nhập GPA từ dữ liệu hồ sơ hiện tại.
+  gpa: view.profile.gpa?.toFixed(2) ?? ''
 });
 // PUT thay toàn bộ hồ sơ: các trường S02 không sửa được chép nguyên từ dữ liệu đã tải.
 const inputOf = (view: SelfProfileView, draft: Draft): ProfileInput => ({
-  ...toProfileInput(view), phone: draft.phone.trim() || null, majorCode: draft.majorCode, availabilityDeclared: draft.availabilityDeclared,
+  ...toProfileInput(view), phone: draft.phone.trim() || null, majorCode: draft.majorCode,
+  // liên quan đến việc thêm lọc svien theo gpa là MVP: Chuyển GPA sinh viên nhập sang kiểu số để lưu hồ sơ.
+  gpa: draft.gpa === '' ? null : Number(draft.gpa), availabilityDeclared: draft.availabilityDeclared,
   availablePeriods: draft.availabilityDeclared ? draft.availablePeriods.map(({ startDate, endDate }) => ({ startDate, endDate })) : []
 });
 function validate(draft: Draft): DraftErrors {
   const errors: DraftErrors = { periods: {} };
   const phoneLength = [...draft.phone.trim()].length;
   if (phoneLength > 0 && (phoneLength < 8 || phoneLength > 20)) errors.phone = 'Số điện thoại cần từ 8 đến 20 ký tự.';
+  // liên quan đến việc thêm lọc svien theo gpa là MVP: Kiểm tra GPA tự khai báo nằm trong thang 0–4, tối đa hai số lẻ.
+  if (draft.gpa !== '' && (!/^\d+(\.\d{1,2})?$/.test(draft.gpa) || Number(draft.gpa) < 0 || Number(draft.gpa) > 4)) errors.gpa = 'GPA phải từ 0 đến 4, tối đa hai chữ số thập phân.';
   if (draft.availabilityDeclared) draft.availablePeriods.forEach((period, index) => {
     if (!period.startDate || !period.endDate) errors.periods[index] = 'Nhập đủ ngày bắt đầu và ngày kết thúc.';
     else if (period.startDate > period.endDate) errors.periods[index] = 'Ngày bắt đầu phải trước hoặc trùng ngày kết thúc.';
   });
   return errors;
 }
-const hasErrors = (errors: DraftErrors) => Boolean(errors.phone) || Object.keys(errors.periods).length > 0;
+const hasErrors = (errors: DraftErrors) => Boolean(errors.phone || errors.gpa) || Object.keys(errors.periods).length > 0;
 // Tạo lần đầu dùng version 0; PUT vẫn kiểm quan hệ student–school–term ở server.
 const emptyInput = (termId: string): ProfileInput => ({
   expectedProfileVersion: 0, termId, majorCode: null, skillsDeclared: false, skills: [], customSkills: [],
   availabilityDeclared: false, availablePeriods: [], orientationCodes: [], subjectCodes: [], projects: [], certificates: [],
-  cvFileId: null, phone: null
+  cvFileId: null, phone: null,
+  // liên quan đến việc thêm lọc svien theo gpa là MVP: Hồ sơ mới chưa khai GPA.
+  gpa: null
 });
 // Lỗi server chỉ gắn vào ô khi `field` trùng đúng tên trường ProfileInput; định dạng đường dẫn lồng chưa được contract quy định.
 // Không hiển thị nguyên văn message của server: dùng câu cố định theo ô, lỗi khác kèm mã yêu cầu để tra cứu.
@@ -206,6 +214,10 @@ export function MyProfilePage({ me, schools }: { me: Me; schools: Grant[] }) {
       <Field label="Số điện thoại" type="tel" autoComplete="tel" required={false} value={draft.phone} disabled={save.busy}
         onChange={phone => change({ ...draft, phone })} {...(phoneError ? { 'aria-invalid': true, 'aria-describedby': phoneErrorId } : {})} />
       {phoneError && <p className="student-field-error" id={phoneErrorId}>{phoneError}</p>}
+      {/* liên quan đến việc thêm lọc svien theo gpa là MVP: Cho sinh viên khai báo GPA để doanh nghiệp đặt ngưỡng lọc. */}
+      <Field label="GPA (thang 4.0, không bắt buộc)" type="number" min={0} max={4} step="0.01" required={false}
+        value={draft.gpa} disabled={save.busy} onChange={gpa => change({ ...draft, gpa })} />
+      {errors.gpa && <p className="student-field-error">{errors.gpa}</p>}
       <AvailabilityEditor declared={draft.availabilityDeclared} periods={draft.availablePeriods} errors={errors.periods} groupError={availabilityError} disabled={save.busy}
         setDeclared={availabilityDeclared => change({ ...draft, availabilityDeclared })} setPeriods={availablePeriods => change({ ...draft, availablePeriods })} />
       <div className="student-kept"><h3>Dữ liệu được giữ nguyên khi lưu</h3>

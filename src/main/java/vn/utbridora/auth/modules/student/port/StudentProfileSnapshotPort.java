@@ -10,7 +10,16 @@ public interface StudentProfileSnapshotPort {
     record SkillValue(String skillCode,int level,BigDecimal yearsPractice,String source) {}
     record ProfileSnapshot(String profileSnapshotId,String studentUserId,String schoolOrgId,String termId,String majorCode,
         boolean skillsDeclared,List<SkillValue> skills,boolean availabilityDeclared,List<DateRange> availablePeriods,
-        long profileVersion,String relevantHash,String completenessVersion,String academicCatalogVersion,String taxonomyVersion,Instant capturedAt) {}
+        long profileVersion,String relevantHash,String completenessVersion,String academicCatalogVersion,String taxonomyVersion,Instant capturedAt,
+        // liên quan đến việc thêm lọc svien theo gpa là MVP: Snapshot giữ GPA cùng phiên bản hồ sơ dùng cho matching.
+        BigDecimal gpa) {
+        public ProfileSnapshot(String profileSnapshotId,String studentUserId,String schoolOrgId,String termId,String majorCode,
+                boolean skillsDeclared,List<SkillValue> skills,boolean availabilityDeclared,List<DateRange> availablePeriods,
+                long profileVersion,String relevantHash,String completenessVersion,String academicCatalogVersion,String taxonomyVersion,Instant capturedAt) {
+            this(profileSnapshotId,studentUserId,schoolOrgId,termId,majorCode,skillsDeclared,skills,availabilityDeclared,availablePeriods,
+                profileVersion,relevantHash,completenessVersion,academicCatalogVersion,taxonomyVersion,capturedAt,null);
+        }
+    }
     record SnapshotSet(String datasetSnapshotId,String schoolOrgId,String termId,String profileSnapshotVersion,
         String academicCatalogVersion,String taxonomyVersion,Instant capturedAt,int profileCount) {}
     record SnapshotPage(String datasetSnapshotId,String profileSnapshotVersion,List<ProfileSnapshot> items,String nextCursor) {}

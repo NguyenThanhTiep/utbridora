@@ -23,7 +23,7 @@ final class ProfileInputParser {
     private static final long MAX_VERSION=9_007_199_254_740_991L;
     private static final JsonMapper JSON=JsonMapper.builder().build();
     private static final Set<String> INPUT_KEYS=Set.of("expectedProfileVersion","termId","majorCode","skillsDeclared","skills",
-        "customSkills","availabilityDeclared","availablePeriods","orientationCodes","subjectCodes","projects","certificates","cvFileId","phone");
+        "customSkills","availabilityDeclared","availablePeriods","orientationCodes","subjectCodes","projects","certificates","cvFileId","phone","gpa");
     private static final Set<String> CANONICAL_KEYS=Set.of("skillCode","level","yearsPractice","note");
     private static final Set<String> CUSTOM_KEYS=Set.of("customSkillId","name","categoryCode","level","yearsPractice","note");
     private static final Set<String> PERIOD_KEYS=Set.of("startDate","endDate");
@@ -57,6 +57,8 @@ final class ProfileInputParser {
         List<Certificate> certificates=list(root,"","certificates",this::certificate);
         String cvFileId=uuid(root,"","cvFileId",true);
         String phone=text(root,"","phone",8,20,true);
+        // liên quan đến việc thêm lọc svien theo gpa là MVP: Chỉ chấp nhận GPA từ 0 đến 4 với tối đa hai chữ số thập phân.
+        BigDecimal gpa=decimalRange(root,"gpa",new BigDecimal("0"),new BigDecimal("4"),2);
         // BC11 v1.0 line 784: an undeclared section must be empty; declared with [] is an intentional empty answer.
         if(Boolean.FALSE.equals(skillsDeclared)) {
             if(!skills.isEmpty()) error("skills",EMPTY_WHEN_UNDECLARED);
@@ -65,7 +67,7 @@ final class ProfileInputParser {
         if(Boolean.FALSE.equals(availabilityDeclared) && !periods.isEmpty()) error("availablePeriods",EMPTY_WHEN_UNDECLARED);
         if(!errors.isEmpty()) throw invalid();
         return new ProfileInput(version,termId,majorCode,skillsDeclared,skills,customSkills,availabilityDeclared,periods,
-            orientationCodes,subjectCodes,projects,certificates,cvFileId,phone);
+            orientationCodes,subjectCodes,projects,certificates,cvFileId,phone,gpa);
     }
 
     private CanonicalSkillInput canonical(Object raw,String path) {
@@ -104,7 +106,7 @@ final class ProfileInputParser {
 
     private Map<?,?> object(String path,Object raw,Set<String> keys) {
         if(!(raw instanceof Map<?,?> map)) { error(path.isEmpty()?"body":path,"Phải là một đối tượng JSON."); return null; }
-        for(String key:keys) if(!map.containsKey(key)) error(join(path,key),"Thiếu trường bắt buộc.");
+        for(String key:keys) if(!map.containsKey(key) && !(path.isEmpty() && key.equals("gpa"))) error(join(path,key),"Thiếu trường bắt buộc.");
         for(Object key:map.keySet()) if(!keys.contains(String.valueOf(key))) error(join(path,String.valueOf(key)),"Trường không được phép.");
         return map;
     }
@@ -174,6 +176,16 @@ final class ProfileInputParser {
             } catch (NumberFormatException ignored) { /* Infinity/NaN from overflowing input; reported below */ }
         }
         error(join(path,name),"Phải là số từ 0 đến 999,99, tối đa 2 chữ số thập phân."); return null;
+    }
+    // liên quan đến việc thêm lọc svien theo gpa là MVP: Parse và giới hạn GPA hồ sơ theo thang 0.00–4.00.
+    private BigDecimal decimalRange(Map<?,?> m,String name,BigDecimal minimum,BigDecimal maximum,int scale) {
+        if(!m.containsKey(name) || m.get(name)==null) return null;
+        if(m.get(name) instanceof Number number) try {
+            BigDecimal value=new BigDecimal(number.toString());
+            if(value.compareTo(minimum)>=0 && value.compareTo(maximum)<=0 && value.stripTrailingZeros().scale()<=scale)
+                return value.stripTrailingZeros();
+        } catch(NumberFormatException ignored) { /* Invalid non-finite numeric input is reported below. */ }
+        error(name,"GPA phải từ 0 đến 4, tối đa 2 chữ số thập phân."); return null;
     }
     private Long version(Map<?,?> m,String name) {
         if(!m.containsKey(name)) return null;

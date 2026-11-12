@@ -30,6 +30,10 @@
 .matching-criterion-status.unknown { color: #8b6414; }
 .matching-pagination { display: flex; align-items: center; justify-content: end; gap: 10px; margin-top: 18px; }
 .matching-pagination span { margin-right: auto; color: var(--muted); font-size: var(--text-sm); }
+/* liên quan đến việc thêm lọc svien theo gpa là MVP: Cách biệt panel chạy aggregate của doanh nghiệp và tóm tắt tiêu chí đã chọn. */
+.matching-enterprise-panel { display: grid; gap: 14px; }
+.matching-enterprise-criteria, .matching-enterprise-result { display: grid; gap: 8px; padding: 14px; border: 1px solid var(--line); border-radius: 10px; }
+.matching-enterprise-criteria p, .matching-enterprise-result p { margin: 0; }
 @media (max-width: 650px) {
   .matching-heading, .matching-controls { align-items: stretch; flex-direction: column; }
   .matching-counts { grid-template-columns: 1fr; }

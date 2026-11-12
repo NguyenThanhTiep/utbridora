@@ -113,7 +113,7 @@ public class StudentProfileService {
         rejectNewFileReferences(before,input,projects,certificates);
 
         ProfileRow next=new ProfileRow(current==null?UUID.randomUUID().toString():current.id(),actor,input.phone(),input.cvFileId(),
-            input.skillsDeclared(),version+1);
+            input.skillsDeclared(),version+1,input.gpa());
         if(current==null) profiles.insert(next); else profiles.update(next,version);
         profiles.saveTerm(next.id(),input.termId(),new TermRow(school,input.majorCode(),input.availabilityDeclared()));
         profiles.replaceSkills(next.id(),skills);
@@ -196,7 +196,7 @@ public class StudentProfileService {
         SelfProfileData data=new SelfProfileData(termId,term==null?null:term.majorCode(),profile.skillsDeclared(),
             profiles.skills(profile.id()),profiles.customSkills(profile.id()),term!=null && term.availabilityDeclared(),
             profiles.periods(profile.id(),termId),profiles.codes(profile.id(),termId,"ORIENTATION"),profiles.codes(profile.id(),termId,"SUBJECT"),
-            profiles.projects(profile.id()),profiles.certificates(profile.id()),profile.cvFileId(),profile.phone());
+            profiles.projects(profile.id()),profiles.certificates(profile.id()),profile.cvFileId(),profile.phone(),profile.gpa());
         boolean studentTermPresent=terms.schoolOfLinkedTerm(profile.userId(),termId).filter(school::equals).isPresent();
         var catalog=catalogs.forProfile(school,termId);
         boolean majorValid=catalog.entries().get(AcademicCatalogService.Kind.MAJOR).stream().anyMatch(i->i.code().equals(data.majorCode()) && i.status().equals("ACTIVE"));

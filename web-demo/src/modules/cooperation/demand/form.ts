@@ -3,6 +3,8 @@ export type SkillRow = { id: string; skillCode: string; minLevel: string; minYea
 export type FormData = {
   schoolOrgId: string; termId: string; title: string; quantity: string; description: string;
   location: string; benefits: string; deadline: string; majorCodes: string; startDate: string; endDate: string;
+  // liên quan đến việc thêm lọc svien theo gpa là MVP: Giữ lựa chọn ngưỡng GPA trong form Demand.
+  minGpa: string;
   academicCatalogVersion: string; taxonomyVersion: string; required: SkillRow[]; preferred: SkillRow[];
 };
 export const skillRow = (skill?: SkillCriterion): SkillRow => ({ id: crypto.randomUUID(), skillCode: skill?.skillCode || '',
@@ -17,6 +19,8 @@ export function initialForm(existing: Demand | null): FormData {
     description: data?.description || '', location: data?.location || '', benefits: data?.benefits || '',
     deadline: data ? localDateTime(data.deadline) : '', majorCodes: data?.required.majorCodes.join(', ') || '',
     startDate: data?.required.dateRange.startDate || '', endDate: data?.required.dateRange.endDate || '',
+    // liên quan đến việc thêm lọc svien theo gpa là MVP: Nạp lại ngưỡng GPA khi sửa bản nháp Demand.
+    minGpa: data?.required.minGpa?.toFixed(1) || '',
     academicCatalogVersion: data?.academicCatalogVersion || '', taxonomyVersion: data?.taxonomyVersion || '',
     required: data?.required.skills.map(skillRow) || [], preferred: data?.preferred.map(skillRow) || [] };
 }
@@ -35,6 +39,8 @@ export function demandInput(form: FormData, existing: Demand | null): DemandInpu
     description: form.description.trim(), location: form.location.trim() || null, benefits: form.benefits.trim() || null,
     deadline: existing && form.deadline === localDateTime(existing.data.deadline) ? existing.data.deadline : new Date(form.deadline).toISOString(),
     required: { majorCodes: form.majorCodes.split(/[,;]+/).map(code => code.trim()).filter(Boolean), skills: required,
-      dateRange: { startDate: form.startDate, endDate: form.endDate } }, preferred,
+      dateRange: { startDate: form.startDate, endDate: form.endDate },
+      // liên quan đến việc thêm lọc svien theo gpa là MVP: Lưu ngưỡng nhà tuyển dụng chọn cùng tiêu chí kỹ năng.
+      minGpa: form.minGpa === '' ? null : Number(form.minGpa) }, preferred,
     academicCatalogVersion: form.academicCatalogVersion.trim(), taxonomyVersion: form.taxonomyVersion.trim() };
 }

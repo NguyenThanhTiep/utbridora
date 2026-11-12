@@ -53,6 +53,25 @@ class DemandDomainTest {
         assertEquals(DemandJson.criteriaHash(original),DemandJson.criteriaHash(change("New title",5,original.required(),List.of())));
         assertNotEquals(DemandJson.criteriaHash(original),DemandJson.criteriaHash(change("New title",6,original.required(),List.of())));
     }
+    // liên quan đến việc thêm lọc svien theo gpa là MVP: Chấp nhận ngưỡng 1.0–4.0 theo bước 0.1 và version hóa thay đổi ngưỡng.
+    @Test void validatesEmployerGpaThresholdChoices() {
+        var source=input();
+        var at25=new RequiredCriteria(source.required().majorCodes(),source.required().skills(),source.required().dateRange(),new java.math.BigDecimal("2.5"));
+        var validated=DemandValidator.validate(change("Title",5,at25,List.of()));
+        assertEquals(new java.math.BigDecimal("2.5"),validated.required().minGpa());
+        assertNotEquals(DemandJson.criteriaHash(source),DemandJson.criteriaHash(change("Title",5,at25,List.of())));
+        for(String invalid:List.of("0.9","2.55","4.1")) {
+            var criteria=new RequiredCriteria(source.required().majorCodes(),source.required().skills(),source.required().dateRange(),new java.math.BigDecimal(invalid));
+            assertEquals("required.minGpa",assertThrows(DemandFailure.class,()->DemandValidator.validate(change("Title",5,criteria,List.of()))).fields().getFirst().field());
+        }
+    }
+    // liên quan đến việc thêm lọc svien theo gpa là MVP: Cũ client không gửi minGpa vẫn được hiểu là không lọc GPA.
+    @Test void oldDemandRequestWithoutMinGpaDefaultsToNoGpaFilter() {
+        var node=JsonMapper.builder().build().readTree(DemandJson.write(input()));
+        ((tools.jackson.databind.node.ObjectNode)node.get("required")).remove("minGpa");
+        var parsed=DemandJson.request(node,DemandInput.class);
+        assertNull(parsed.required().minGpa());
+    }
     @ParameterizedTest @ValueSource(strings={"numericTitle","missingTitle","unknownField","fractionalQuantity"})
     void strictRequestRejectsMalformedSchema(String mutation) {
         var node=JsonMapper.builder().build().createObjectNode();
