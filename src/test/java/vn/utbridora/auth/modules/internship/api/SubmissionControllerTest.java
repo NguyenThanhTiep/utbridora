@@ -92,7 +92,7 @@ class SubmissionControllerTest {
     }
 
     @Test void postReturns201AndExactSubmissionWireShapeIncludingNullableNote() throws Exception {
-        when(service.submitUrlV1(eq(auth), eq(ASSIGNMENT), eq(KEY), any())).thenReturn(submission());
+        when(service.submitUrl(eq(auth), eq(ASSIGNMENT), eq(KEY), any())).thenReturn(submission());
         var result = submit(BODY);
         assertEquals(201, result.getResponse().getStatus());
         var json = body(result);
@@ -101,7 +101,7 @@ class SubmissionControllerTest {
         assertEquals(0, json.get("fileIds").size());assertEquals("https://example.test/v1", json.get("url").asString());
         assertTrue(json.get("note").isNull());assertFalse(json.get("lateFlag").asBoolean());
         assertEquals(NOW, Instant.parse(json.get("submittedAt").asString()));
-        verify(service).submitUrlV1(auth, ASSIGNMENT, KEY, new SubmissionInput(2L, List.of(), "https://example.test/v1", null));
+        verify(service).submitUrl(auth, ASSIGNMENT, KEY, new SubmissionInput(2L, List.of(), "https://example.test/v1", null));
     }
 
     @Test void getMapsTheExistingPageEnvelopeAndDefaults() throws Exception {
@@ -176,7 +176,7 @@ class SubmissionControllerTest {
     }
 
     @Test void aValidFileRequestIsDelegatedForFailClosedDependencyHandlingNotClaimedClean() throws Exception {
-        when(service.submitUrlV1(any(), any(), anyString(), any())).thenThrow(failure(503, "DEPENDENCY_UNAVAILABLE"));
+        when(service.submitUrl(any(), any(), anyString(), any())).thenThrow(failure(503, "DEPENDENCY_UNAVAILABLE"));
         error(submit(BODY.replace("\"fileIds\":[]", "\"fileIds\":[\"" + id(30) + "\"]")
                 .replace("\"https://example.test/v1\"", "null")), 503, "DEPENDENCY_UNAVAILABLE");
     }
@@ -229,13 +229,13 @@ class SubmissionControllerTest {
     }
     @ParameterizedTest @MethodSource("applicationFailures")
     void preservesApplicationStatusAndErrorCode(int status, String code) throws Exception {
-        when(service.submitUrlV1(any(), any(), anyString(), any())).thenThrow(failure(status, code));
+        when(service.submitUrl(any(), any(), anyString(), any())).thenThrow(failure(status, code));
         error(submit(BODY), status, code);
         if (status == 403 || status == 404) verify(audit).securityDenied(OWNER.toString(), code);
     }
 
     @Test void preservesRetryAfterAndUsesServerRequestIdInsteadOfBrowserHeader() throws Exception {
-        when(service.submitUrlV1(any(), any(), anyString(), any()))
+        when(service.submitUrl(any(), any(), anyString(), any()))
                 .thenThrow(new OperationFailure(409, "REQUEST_IN_PROGRESS", "Retry safely", 1));
         var result = mvc.perform(post(PATH).principal(auth).header("Idempotency-Key", KEY).header("X-Request-ID", id(99).toString())
                 .contentType(MediaType.APPLICATION_JSON).content(BODY)).andReturn();
@@ -281,11 +281,11 @@ class SubmissionControllerTest {
     }
 
     @Test void unexpectedErrorsAreSafeAndConcurrencyKeepsVersionConflictMapping() throws Exception {
-        when(service.submitUrlV1(any(), any(), anyString(), any())).thenThrow(new IllegalStateException("SQL/private/secret"));
+        when(service.submitUrl(any(), any(), anyString(), any())).thenThrow(new IllegalStateException("SQL/private/secret"));
         var unexpected = submit(BODY);error(unexpected, 500, "INTERNAL_ERROR");
         assertFalse(unexpected.getResponse().getContentAsString().contains("SQL/private/secret"));
         doThrow(new org.springframework.dao.ConcurrencyFailureException("SQL/private/secret"))
-                .when(service).submitUrlV1(any(), any(), anyString(), any());
+                .when(service).submitUrl(any(), any(), anyString(), any());
         error(submit(BODY), 409, "VERSION_CONFLICT");
     }
 }

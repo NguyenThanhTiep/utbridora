@@ -29,6 +29,7 @@ services:
       BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:?Set local admin password}
       APP_PUBLIC_URL: http://localhost:${LOCAL_HTTP_PORT:-8088}
       COOKIE_SECURE: 'false' # HTTP loopback only; staging still requires Secure=true.
+      FILE_STORAGE_ROOT: /data/files
       ALLOW_DEMO_VERIFICATION: 'false'
       SPRING_PROFILES_ACTIVE: local
       APP_DEMO_LOCAL_ENABLED: ${LOCAL_DEMO_ENABLED:-false}
@@ -45,6 +46,7 @@ services:
       mysql: {condition: service_healthy}
       mailpit: {condition: service_started}
     read_only: true
+    volumes: ["local_files:/data/files"]
     tmpfs: [/tmp]
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
@@ -58,3 +60,4 @@ services:
     logging: {driver: json-file, options: {max-size: 10m, max-file: '3'}}
 volumes:
   local_mysql:
+  local_files:

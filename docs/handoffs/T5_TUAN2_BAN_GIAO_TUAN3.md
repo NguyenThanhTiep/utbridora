@@ -1,5 +1,7 @@
 # Bàn giao T5 — kết quả tuần 2 và hướng dẫn tuần 3
 
+**Cập nhật T1-06 ngày 10/11/2026:** bản DEV trên nhánh bàn giao `feature/t1-06-private-files` có private upload cho verification draft, owner read và FileReadPort tối thiểu; chưa deploy. Chưa có scanner, school/shared read hay consent/share authorizer cho CV/evidence; nhánh ProfileShare tương ứng vẫn fail closed. Xem [boundary tích hợp mới](../guides/T1_06_PRIVATE_FILES.md); không hiểu FileReadPort đã tồn tại là shared file flow đã hoàn thành.
+
 Ngày lập: 09/11/2026. Người nhận: Team Doanh nghiệp/Hợp tác, DEV10/DEV11/DEV12 và QA05. Tuần 3 tiếp tục Share/Enterprise decision → Placement → Case T3 và UI, sử dụng Cooperation/nomination/invitation đã triển khai.
 
 ## 1. Nhận đúng source và căn cứ

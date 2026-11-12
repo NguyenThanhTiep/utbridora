@@ -245,13 +245,13 @@ class SubmissionServiceTest {
         assertTrue(memory.rows.isEmpty());assertTrue(memory.audits.isEmpty());
     }
 
-    @Test void cannotAdvanceMaxVersionOrExpandToV2() {
+    @Test void cannotAdvanceMaxVersionOrUseADanglingCurrentPointer() {
         long max = 9_007_199_254_740_991L;
         memory.target = context(ASSIGNMENT, STUDENT, AssignmentState.IN_PROGRESS, max, null, NOW, false);
         error(409, "VERSION_CONFLICT", () -> service.submitUrlV1(auth, ASSIGNMENT, KEY,
                 new SubmissionInput(max, List.of(), input().url(), null)));
         memory.target = context(ASSIGNMENT, STUDENT, AssignmentState.IN_PROGRESS, 2, id(90), NOW, false);
-        error(409, "STATE_CONFLICT", this::submit);
+        error(503, "DEPENDENCY_UNAVAILABLE", this::submit);
         assertTrue(memory.rows.isEmpty());
     }
 
@@ -395,6 +395,116 @@ class SubmissionServiceTest {
         assertEquals(1, page.content().size());
         assertThrows(IllegalArgumentException.class, () -> new HistoryPage(page.content(), 0));
         assertThrows(IllegalArgumentException.class, () -> new HistoryPage(List.of(), -1));
+    }
+
+    /** Only a fixture transition for the existing Student Start API, not integration evidence. */
+    private void fixtureStartRevision() {
+        var a=memory.target.assignment();assertEquals(AssignmentState.REVISION_REQUIRED,a.state());
+        memory.target=context(ASSIGNMENT,STUDENT,AssignmentState.IN_PROGRESS,a.version()+1,a.currentSubmissionId(),NOW,false);
+    }
+    private SubmissionDto submitNext(String key) {
+        return service.submitUrl(auth,ASSIGNMENT,key,new SubmissionInput(memory.target.assignment().version(),List.of(),
+                "https://example.test/revised","Revision note"));
+    }
+    private SubmissionDto revisionReady() {
+        var first=submit();service.review(mentor,first.submissionId(),id(301).toString(),new ReviewInput(3L,ReviewVerdict.REQUEST_REVISION,"Revise"));
+        fixtureStartRevision();return first;
+    }
+
+    @Test void v1RevisionV2AcceptPreservesBothArtifactsAndReviewsInTheUnitModel() {
+        var first=revisionReady();var firstReview=memory.reviews.getFirst();var second=submitNext(id(302).toString());
+        assertEquals(2,second.versionNo());assertEquals(6L,memory.target.assignment().version());
+        assertEquals(AssignmentState.SUBMITTED,memory.target.assignment().state());
+        var accepted=service.review(mentor,second.submissionId(),id(303).toString(),new ReviewInput(6L,ReviewVerdict.ACCEPT,"Accepted"));
+        assertEquals(7L,accepted.assignmentVersion());assertEquals(AssignmentState.COMPLETED,memory.target.assignment().state());
+        assertEquals(List.of(first,second),memory.rows);assertEquals(firstReview,memory.reviews.getFirst());
+        assertEquals(List.of(second,first),service.history(auth,ASSIGNMENT,0,25).content());
+        var revised=memory.audits.get(2);assertEquals("SUBMISSION_REVISED",revised.action());assertEquals(second.submissionId(),revised.resource());
+        assertEquals(Map.of("assignmentId",ASSIGNMENT.toString(),"versionNo",2,"previousSubmissionId",first.submissionId().toString(),"fileIds",List.of(),"lateFlag",false),revised.metadata());
+        assertFalse(revised.metadata().toString().contains("Revision note"));assertFalse(revised.metadata().toString().contains("https://"));
+    }
+
+    @Test void repeatedRevisionCyclesSupportV3AndBeyondWithoutOverwritingOldRows() {
+        var first=revisionReady();var current=submitNext(id(302).toString());
+        for(int version=3;version<=5;version++) {
+            service.review(mentor,current.submissionId(),id(310+version).toString(),
+                    new ReviewInput(memory.target.assignment().version(),ReviewVerdict.REQUEST_REVISION,"Revise again"));
+            fixtureStartRevision();current=submitNext(id(320+version).toString());assertEquals(version,current.versionNo());
+        }
+        assertEquals(5,memory.rows.size());assertEquals(first,memory.rows.getFirst());assertEquals(4,memory.reviews.size());
+    }
+
+    @Test void oldV1ReviewIsStaleWhenV2IsCurrentEvenIfTheOldReviewAlreadyExists() {
+        var first=revisionReady();var second=submitNext(id(302).toString());
+        error(409,"STALE_SUBMISSION",()->service.review(mentor,first.submissionId(),id(303).toString(),new ReviewInput(6L,ReviewVerdict.ACCEPT,"Old")));
+        assertEquals(1,memory.reviews.size());assertEquals(second.submissionId(),memory.target.assignment().currentSubmissionId());
+    }
+
+    @Test void revisionReplayReturnsTheSameArtifactAndRejectsChangedPayload() {
+        revisionReady();var request=new SubmissionInput(5L,List.of(),"https://example.test/v2",null);String key=id(302).toString();
+        var second=service.submitUrl(auth,ASSIGNMENT,key,request);
+        assertEquals(second,service.submitUrl(auth,ASSIGNMENT,key,request));assertEquals(2,memory.rows.size());
+        error(409,"IDEMPOTENCY_KEY_REUSED",()->service.submitUrl(auth,ASSIGNMENT,key,new SubmissionInput(5L,List.of(),"https://example.test/changed",null)));
+    }
+
+    @Test void revisionRevalidatesOwnerAndScopeBeforeCachedReplay() {
+        revisionReady();var request=new SubmissionInput(5L,List.of(),"https://example.test/v2",null);String key=id(302).toString();
+        service.submitUrl(auth,ASSIGNMENT,key,request);
+        doThrow(failure(403,"ACCESS_DENIED")).when(access).requireSubmit(eq(auth),any());
+        error(403,"ACCESS_DENIED",()->service.submitUrl(auth,ASSIGNMENT,key,request));assertEquals(2,memory.rows.size());
+    }
+
+    @ParameterizedTest @ValueSource(strings={"missing","accepted"})
+    void previousArtifactRequiresARequestRevisionReview(String kind) {
+        var first=revisionReady();memory.reviews.clear();
+        if(kind.equals("accepted")) memory.reviews.add(new ReviewDto(id(390),first.submissionId(),1,ReviewVerdict.ACCEPT,"Accepted",MENTOR,NOW,4L));
+        error(409,"STATE_CONFLICT",()->submitNext(id(302).toString()));assertEquals(List.of(first),memory.rows);
+    }
+
+    @Test void revisionDoesNotSkipTheStudentStartTransition() {
+        var first=submit();service.review(mentor,first.submissionId(),id(301).toString(),new ReviewInput(3L,ReviewVerdict.REQUEST_REVISION,"Revise"));
+        error(409,"STATE_CONFLICT",()->submitNext(id(302).toString()));assertEquals(1,memory.rows.size());
+    }
+
+    @Test void competingRevisionWithOldExpectedVersionCannotCreateAnotherVersion() {
+        revisionReady();var request=new SubmissionInput(5L,List.of(),"https://example.test/v2",null);
+        service.submitUrl(auth,ASSIGNMENT,id(302).toString(),request);
+        error(409,"VERSION_CONFLICT",()->service.submitUrl(auth,ASSIGNMENT,id(303).toString(),request));assertEquals(2,memory.rows.size());
+    }
+
+    @ParameterizedTest @ValueSource(strings={"append","audit","ledger"})
+    void revisionFailureRollsBackAllEffectsInTheUnitDouble(String stage) {
+        var first=revisionReady();int audits=memory.audits.size(),records=memory.ledger.size();
+        if(stage.equals("append"))memory.appendFailure=failure(409,"VERSION_CONFLICT");
+        if(stage.equals("audit"))memory.auditFailure=failure(503,"DEPENDENCY_UNAVAILABLE");
+        if(stage.equals("ledger"))memory.ledgerFailure=failure(503,"TRANSIENT_FAILURE");
+        assertThrows(OperationFailure.class,()->submitNext(id(302).toString()));
+        assertEquals(List.of(first),memory.rows);assertEquals(audits,memory.audits.size());assertEquals(records,memory.ledger.size());
+        assertEquals(5L,memory.target.assignment().version());assertEquals(AssignmentState.IN_PROGRESS,memory.target.assignment().state());
+    }
+
+    @Test void revisionDeadlineUsesTheExistingInclusiveDueAtPolicy() {
+        var first=revisionReady();var a=memory.target.assignment();
+        memory.target=context(ASSIGNMENT,STUDENT,AssignmentState.IN_PROGRESS,a.version(),first.submissionId(),NOW.minusNanos(1),false);
+        error(422,"SUBMISSION_LATE",()->submitNext(id(302).toString()));assertEquals(1,memory.rows.size());
+        memory.target=context(ASSIGNMENT,STUDENT,AssignmentState.IN_PROGRESS,a.version(),first.submissionId(),NOW,false);
+        assertFalse(submitNext(id(302).toString()).lateFlag());
+    }
+
+    @Test void revisionRejectsAnOlderCurrentPointerInsteadOfFillingAHoleInHistory() {
+        var first=revisionReady();memory.rows.add(new SubmissionDto(id(399),ASSIGNMENT,3,List.of(),"https://example.test/v3",null,NOW,false));
+        error(503,"DEPENDENCY_UNAVAILABLE",()->submitNext(id(302).toString()));assertEquals(2,memory.rows.size());
+        assertEquals(first.submissionId(),memory.target.assignment().currentSubmissionId());
+    }
+
+    @ParameterizedTest @ValueSource(ints={128,1024,Integer.MAX_VALUE})
+    void artifactVersionsUseNumericEqualityAndCannotOverflow(int version) {
+        var previous=new SubmissionDto(SUBMISSION,ASSIGNMENT,version,List.of(),"https://example.test/previous",null,NOW,false);
+        memory.rows.add(previous);memory.reviews.add(new ReviewDto(id(401),SUBMISSION,Integer.valueOf(version),ReviewVerdict.REQUEST_REVISION,"Revise",MENTOR,NOW,4L));
+        memory.target=context(ASSIGNMENT,STUDENT,AssignmentState.IN_PROGRESS,5L,SUBMISSION,NOW,false);
+        if(version==Integer.MAX_VALUE)error(409,"VERSION_CONFLICT",()->submitNext(id(302).toString()));
+        else assertEquals(version+1,submitNext(id(302).toString()).versionNo());
+        assertEquals(previous,memory.rows.getFirst());
     }
 
     private void prepareReview() {
@@ -738,6 +848,14 @@ class SubmissionServiceTest {
                     expected.version() + 1, submission.submissionId(), target.task().value().dueAt(), target.task().value().lateAllowed());
         }
         public boolean hasReview(UUID id) { return reviews.stream().anyMatch(review -> id.equals(review.submissionId())); }
+        public ReviewDto reviewForSubmission(UUID id) { return reviews.stream().filter(review->id.equals(review.submissionId())).findFirst().orElse(null); }
+        public void appendRevision(AssignmentDto expected,SubmissionDto previous,SubmissionDto next) {
+            events.add("append-revision");if(appendFailure!=null) throw appendFailure;
+            assertEquals(target.assignment(),expected);assertEquals(expected.currentSubmissionId(),previous.submissionId());
+            assertEquals(previous.versionNo()+1,next.versionNo());rows.add(next);
+            target=context(expected.assignmentId(),expected.studentUserId(),AssignmentState.SUBMITTED,
+                    expected.version()+1,next.submissionId(),target.task().value().dueAt(),target.task().value().lateAllowed());
+        }
         public void appendReview(AssignmentDto expected, AssignmentDto updated, ReviewDto review) {
             events.add("append-review");if (reviewAppendFailure != null) throw reviewAppendFailure;
             assertEquals(target.assignment(), expected);assertFalse(hasReview(review.submissionId()));

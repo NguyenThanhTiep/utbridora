@@ -15,8 +15,8 @@ import vn.utbridora.auth.modules.internship.domain.InternshipGroup;
 import vn.utbridora.auth.modules.internship.domain.InternshipTask;
 import vn.utbridora.auth.operations.OperationLedger;
 
-/** T3-07 application boundaries only. No production adapter or Spring bean is supplied in M2.
- * Reuse the existing Core ledger, authorization and Case/Placement providers when wiring runtime.
+/** T3-07 application boundaries. Runtime adapters reuse Core ledger, current authorization
+ * and authoritative Case/Placement providers; their schema/audit dependencies remain mandatory.
  */
 public final class SubmissionPorts {
     private SubmissionPorts() {}
@@ -101,6 +101,14 @@ public final class SubmissionPorts {
          * Throw VERSION_CONFLICT / STATE_CONFLICT using existing error conventions on a race.
          */
         void appendFirst(AssignmentDto expected, SubmissionDto submission);
+
+        /** Append the next immutable URL artifact after REQUEST_REVISION + the existing Student
+         * Start transition. CAS the stored current pointer/version/state; never rewrite previous.
+         */
+        void appendRevision(AssignmentDto expected, SubmissionDto previous, SubmissionDto next);
+
+        /** Immutable authoritative Review of this artifact; null if it has not been reviewed. */
+        ReviewDto reviewForSubmission(UUID submissionId);
 
         /** True after any committed Review of this submission; never overwrite/reuse a Review row. */
         boolean hasReview(UUID submissionId);
