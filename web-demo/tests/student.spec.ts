@@ -88,10 +88,13 @@ test('Các màn sinh viên vừa màn hình 320px và 390px', async ({ page }) =
   await signIn(page, fixture('E2E_STUDENT_EMAIL'));
   for (const width of [320, 390]) {
     await page.setViewportSize({ width, height: 844 });
-    for (const title of ['Tổng quan', 'Thông tin chung', 'Cơ hội thực tập', 'Nguyện vọng của tôi', 'Lời mời và chia sẻ']) {
+    for (const title of ['Tổng quan', 'Thông tin chung', 'Cơ hội thực tập', 'Lời mời & nguyện vọng']) {
       await navigate(page, title);
       await expectNoPageOverflow(page);
     }
+    await page.getByRole('tab', { name: 'Nguyện vọng', exact: true }).click();
+    await expectNoPageOverflow(page);
+    await page.getByRole('tab', { name: 'Lời mời', exact: true }).click();
   }
 });
 
@@ -345,7 +348,7 @@ test('UX UI mock: lời mời hiện trạng thái tiếng Việt, quá hạn th
     return route.fulfill({ json: invitations[0] });
   });
   await signIn(page, fixture('E2E_STUDENT_EMAIL'));
-  await navigate(page, 'Lời mời và chia sẻ');
+  await navigate(page, 'Lời mời & nguyện vọng');
   const open = invitationPanel(page, 'Thực tập Java thử nghiệm'), late = invitationPanel(page, 'Lời mời đã quá hạn');
   const declined = invitationPanel(page, 'Lời mời đã từ chối');
   await expect(open.getByText(/ · Chờ phản hồi$/)).toBeVisible();
@@ -372,7 +375,7 @@ test('UX UI mock: từ chối cần xác nhận; 409 INVITATION_EXPIRED báo rõ
     return route.fulfill({ status: 409, json: envelope('INVITATION_EXPIRED', 'Nội dung máy chủ không hiển thị') });
   });
   await signIn(page, fixture('E2E_STUDENT_EMAIL'));
-  await navigate(page, 'Lời mời và chia sẻ');
+  await navigate(page, 'Lời mời & nguyện vọng');
   const panel = invitationPanel(page, 'Thực tập Java thử nghiệm');
   page.once('dialog', dialog => void dialog.dismiss());
   await panel.getByRole('button', { name: 'Từ chối', exact: true }).click();
@@ -397,7 +400,7 @@ test('UX UI mock: tải lỗi thì báo và cho tải lại; quyền chia sẻ h
   await page.route('**/api/v1/invitations/me?**', route => fail ? route.fulfill({ status: 500, json: envelope('INTERNAL_ERROR', 'Lỗi') }) : route.fallback());
   await page.route('**/api/v1/invitations/' + accepted.invitationId, route => route.fulfill({ json: accepted }));
   await signIn(page, fixture('E2E_STUDENT_EMAIL'));
-  await navigate(page, 'Lời mời và chia sẻ');
+  await navigate(page, 'Lời mời & nguyện vọng');
   await expect(page.getByText('Không tải được lời mời hoặc quyền chia sẻ.', { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Chưa có lời mời thực tập', exact: true })).toHaveCount(0);
   fail = false;
@@ -426,7 +429,7 @@ const preference = (id: string, opportunityId: string, intentVersion: number, ve
 });
 const preferenceItem = (page: Page, title: string) => page.locator('li.student-list-item').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
 
-test('UX UI mock: cơ hội lọc theo kỳ và ngành, xem chi tiết rồi gửi nguyện vọng lần đầu với version 0', async ({ page }) => {
+test('UX UI mock: cơ hội lọc theo kỳ và ngành, xem chi tiết, gửi nguyện vọng lần đầu với version 0 rồi mở tab Nguyện vọng', async ({ page }) => {
   const listQueries: URLSearchParams[] = [], posts: { body: Record<string, unknown>; key: string | undefined }[] = [];
   let preferences: PreferenceView[] = [];
   await page.route('**/api/v1/terms?**', route => route.fulfill({ json: termsPage([term(TERM_ID, 'HK1-DEMO', 'ACTIVE')]) }));
@@ -464,6 +467,10 @@ test('UX UI mock: cơ hội lọc theo kỳ và ngành, xem chi tiết rồi g�
   expect(posts).toHaveLength(1);
   expect(posts[0].body).toEqual({ action: 'SUBMIT', opportunityId: OPPORTUNITY_ID, message: 'Em mong muốn vị trí này', expectedIntentVersion: 0 });
   expect(posts[0].key).toMatch(UUID_V4);
+  await page.getByRole('button', { name: 'Xem hoặc rút nguyện vọng', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Lời mời & nguyện vọng', exact: true })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Nguyện vọng', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(preferenceItem(page, 'Thực tập Java thử nghiệm').getByText('Đã gửi, chờ nhà trường xét', { exact: true })).toBeVisible();
 });
 
 test('UX UI mock: dịch vụ cơ hội chưa sẵn sàng báo rõ; cơ hội vừa đóng thì không cho gửi nguyện vọng', async ({ page }) => {
@@ -504,7 +511,11 @@ test('UX UI mock: nguyện vọng hiện trạng thái và lịch sử, chỉ r�
   await page.route('**/api/v1/opportunities/' + OPPORTUNITY_ID, route => route.fulfill({ json: opportunity(OPPORTUNITY_ID, 'Thực tập Java thử nghiệm', FUTURE) }));
   await page.route('**/api/v1/opportunities/' + other, route => route.fulfill({ status: 404, json: envelope('RESOURCE_NOT_FOUND', 'Không có') }));
   await signIn(page, fixture('E2E_STUDENT_EMAIL'));
-  await navigate(page, 'Nguyện vọng của tôi');
+  await navigate(page, 'Lời mời & nguyện vọng');
+  // Mặc định mở tab Lời mời; mũi tên phải chuyển sang tab Nguyện vọng và giữ focus trên tab.
+  await page.getByRole('tab', { name: 'Lời mời', exact: true }).press('ArrowRight');
+  await expect(page.getByRole('tab', { name: 'Nguyện vọng', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tab', { name: 'Nguyện vọng', exact: true })).toBeFocused();
   const submitted = preferenceItem(page, 'Thực tập Java thử nghiệm'), reviewed = preferenceItem(page, 'Cơ hội đã đóng hoặc không còn hiển thị');
   await expect(submitted.getByText('Đã gửi, chờ nhà trường xét', { exact: true })).toBeVisible();
   await expect(reviewed.getByText('Nhà trường đã xét', { exact: true })).toBeVisible();

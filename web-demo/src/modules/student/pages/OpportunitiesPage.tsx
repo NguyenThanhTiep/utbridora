@@ -155,7 +155,7 @@ function OpportunityDetail({ opportunityId, majors, back, openPreferences }: {
             : preferences === null ? <LoadingState label="Đang tải nguyện vọng…" />
             : <>
               {current && <p className="student-list-meta">Nguyện vọng gần nhất (lần {current.intentVersion}): {preferenceLabels[current.status]} · gửi lúc {dateTime(current.createdAt)}</p>}
-              {current?.status === 'SUBMITTED' ? <div className="button-row"><button type="button" className="secondary" onClick={openPreferences}>Xem hoặc rút trong Nguyện vọng của tôi</button></div>
+              {current?.status === 'SUBMITTED' ? <div className="button-row"><button type="button" className="secondary" onClick={openPreferences}>Xem hoặc rút nguyện vọng</button></div>
                 : closed ? <p className="student-list-meta">Cơ hội đã hết hạn nhận nguyện vọng.</p>
                 : <form onSubmit={submit}>
                   <div className="field"><label htmlFor={messageId}>Lời nhắn cho nhà trường (không bắt buộc)</label>

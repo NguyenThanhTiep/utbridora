@@ -8,9 +8,8 @@ import { canDiscoverWorkspace } from './modules/internship/access';
 import { studentGrants } from './modules/student/access';
 import { StudentOverviewPage } from './modules/student/pages/StudentOverviewPage';
 import { MyProfilePage } from './modules/student/pages/MyProfilePage';
-import { InvitationConsentPage } from './modules/student/pages/InvitationConsentPage';
+import { InvitationsPreferencesPage, type StudentResponseTab } from './modules/student/pages/InvitationsPreferencesPage';
 import { OpportunitiesPage } from './modules/student/pages/OpportunitiesPage';
-import { PreferencesPage } from './modules/student/pages/PreferencesPage';
 import { TaskBoard } from './modules/internship/pages/TaskBoard';
 import { MentorInvitations } from './modules/internship/pages/MentorInvitations';
 import './modules/workflows.css';
@@ -26,8 +25,8 @@ const screens = [
   { id: 'student-overview', title: 'Tổng quan', description: 'Lối vào nhanh tới hồ sơ và các bước tiếp theo của bạn.', icon: 'graduation', permission: 'student_profile:self:read', group: 'student' },
   { id: 'student-profile', title: 'Thông tin chung', description: 'Thông tin cơ bản trong hồ sơ sinh viên của bạn.', icon: 'user', permission: 'student_profile:self:read', group: 'student' },
   { id: 'student-opportunities', title: 'Cơ hội thực tập', description: 'Tìm cơ hội đã được nhà trường công bố và gửi nguyện vọng.', icon: 'briefcase', permission: 'student_profile:self:read', group: 'student' },
-  { id: 'student-preferences', title: 'Nguyện vọng của tôi', description: 'Theo dõi nguyện vọng đã gửi và rút khi đổi ý.', icon: 'check-circle', permission: 'student_profile:self:read', group: 'student' },
-  { id: 'student-invitations', title: 'Lời mời và chia sẻ', description: 'Phản hồi lời mời và quyết định chia sẻ hồ sơ.', icon: 'mail', permission: 'student_profile:self:read', group: 'student' },
+  // S06 (SRS 14.1): lời mời và nguyện vọng chung một màn, 2 tab.
+  { id: 'student-invitations', title: 'Lời mời & nguyện vọng', description: 'Phản hồi lời mời, quyết định chia sẻ hồ sơ và theo dõi nguyện vọng đã gửi.', icon: 'mail', permission: 'student_profile:self:read', group: 'student' },
   { id: 'student-tasks', title: 'Công việc của tôi', description: 'Nhiệm vụ và lịch thực tập được giao cho bạn.', icon: 'calendar', permission: 'student_profile:self:read', group: 'student' },
   { id: 'demands', title: 'Nhu cầu thực tập', description: 'Quản lý bản nháp nhu cầu và tiêu chí tuyển thực tập của doanh nghiệp.', icon: 'briefcase', permission: 'cooperation:enterprise:create' },
   { id: 'users', title: 'Tài khoản & phân quyền', description: 'Quản lý thành viên và quyền truy cập trong hệ thống.', icon: 'users', permission: 'account:admin:status' },
@@ -46,6 +45,7 @@ export default function App() {
   const [grants, setGrants] = useState<Grant[]>([]);
   const [initializing, setInitializing] = useState(true);
   const [screen, setScreen] = useState('account');
+  const [studentTab, setStudentTab] = useState<StudentResponseTab>('invitations');
   const [authScreen, setAuthScreen] = useState(location.pathname === '/reset-password' ? 'reset'
     : location.pathname === '/accept-invitation' ? 'activate' : 'login');
   const [token, setToken] = useState(() => new URLSearchParams(location.hash.slice(1)).get('token') || '');
@@ -202,9 +202,8 @@ export default function App() {
           : screen === 'internship' ? <InternshipWorkspace key={me.userId} me={me} grants={grants} />
           : screen === 'student-overview' ? <StudentOverviewPage me={me} schools={schools} openProfile={() => navigate('student-profile')} />
           : screen === 'student-profile' ? <MyProfilePage me={me} schools={schools} />
-          : screen === 'student-opportunities' ? <OpportunitiesPage schools={schools} openPreferences={() => navigate('student-preferences')} />
-          : screen === 'student-preferences' ? <PreferencesPage />
-          : screen === 'student-invitations' ? <InvitationConsentPage />
+          : screen === 'student-opportunities' ? <OpportunitiesPage schools={schools} openPreferences={() => { setStudentTab('preferences'); navigate('student-invitations'); }} />
+          : screen === 'student-invitations' ? <InvitationsPreferencesPage tab={studentTab} setTab={setStudentTab} />
           : screen === 'student-tasks' ? <TaskBoard student />
           : screen === 'mentor-invitations' ? <MentorInvitations />
           // DEV08 hiển thị mô-đun danh mục kỹ năng trong khung ứng dụng hiện có để người kiểm thử bắt đầu kiểm tra giao diện.
