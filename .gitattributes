@@ -2,3 +2,4 @@
 docs/contracts/UTBridora_Contract_Pack_B01_B06_v1.0_Candidate.md -text
 docs/reviews/*.md -text
 docs/srs/*.docx -text
+scripts/*.sh text eol=lf
