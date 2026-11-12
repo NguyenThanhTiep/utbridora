@@ -4,7 +4,7 @@ import { EmptyState } from '../../components';
 import { ScopedDemands } from './demand/ScopedDemands';
 import { canLeaveDemand } from './navigation';
 import './styles.css';
-import { CooperationFlows, PlacementFlows, VerificationFlows } from './WorkflowViews';
+import { CooperationFlows, VerificationFlows } from './WorkflowViews';
 
 export const canAuthorDemands = (grant: Grant) => grant.role === 'ENTERPRISE'
   && !!grant.organizationId && grant.permissions.includes('cooperation:enterprise:create');
@@ -28,6 +28,5 @@ export function DemandWorkspace({ grants }: { grants: Grant[] }) {
     <ScopedDemands key={scope} organizationId={scope} />
     <VerificationFlows key={scope + ':v'} org={scope} school={false} />
     <CooperationFlows key={scope + ':c'} org={scope} school={false} />
-    <PlacementFlows key={scope + ':p'} org={scope} school={false} />
   </div>;
 }
