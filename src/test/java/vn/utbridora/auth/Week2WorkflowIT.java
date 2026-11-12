@@ -126,6 +126,8 @@ class Week2WorkflowIT {
         var share=shares.grant(as(2),item.proposalItemId(),key(),new ProfileShareService.GrantProfileShare(item.proposalItemId(),grantConsent.consentId(),grantConsent.consentVersion(),item.version(),List.of("majorCode","skills"),grantConsent.expiresAt()));
         var projection=shares.read(as(4),id(6),id(21),share.shareId(),List.of("majorCode","skills","email"),"INTERNSHIP_SELECTION");
         assertEquals(Set.of("majorCode","skills"),projection.data().keySet());assertFalse(projection.data().containsKey("email"));
+        // QA01 T1-05-TC10: real HTTP access before student consent is revoked.
+        qa01Tc10PrivateProfileAccessBeforeRevoke(share.shareId());
         consents.revoke(as(6),grantConsent.consentId(),key(),new vn.utbridora.auth.modules.student.application.StudentConsentService.Revoke(1L,"STUDENT_REVOKED"));
         final var enterprise=as(4);assertEquals(403,assertThrows(OperationFailure.class,()->shares.read(enterprise,id(6),id(21),share.shareId(),List.of("majorCode"),"INTERNSHIP_SELECTION")).status);
         assertEquals(placements,jdbc.queryForObject("SELECT COUNT(*) FROM placements",Integer.class));
@@ -1202,6 +1204,55 @@ private void enterpriseIsolationTC03(
         if(body!=null) request.header("Content-Type","application/json");if(csrf) request.header(session.header(),session.token());if(org!=null) request.header("X-Organization-Id",org);
         return session.client().send(request.method(method,body==null?java.net.http.HttpRequest.BodyPublishers.noBody():java.net.http.HttpRequest.BodyPublishers.ofString(body)).build(),java.net.http.HttpResponse.BodyHandlers.discarding()).statusCode();
     }
+    /** QA01 T1-05-TC10: verify actual private-profile routes while consent and share are live. */
+    private void qa01Tc10PrivateProfileAccessBeforeRevoke(String shareId) throws Exception {
+        HttpSession studentSession = login("student@example.test", "Synthetic-week2-test-password-123");
+        HttpSession hrSession = login("hr@example.test", "Synthetic-week2-test-password-123");
+        HttpSession adminSession = login("admin@example.test", "Synthetic-week2-admin-password-456");
+        String ownPath = "/students/me/profile?termId=" + id(21);
+        String sharedBase = "/students/" + id(6) + "/profile?termId=" + id(21)
+                + "&shareId=" + shareId;
+        String sharedPath = sharedBase + "&fields=majorCode&fields=skills&fields=email"
+                + "&purpose=INTERNSHIP_SELECTION";
+
+        // The student alone may read the self-profile route, even if ADMIN exists.
+        assertEquals(200, http(studentSession, "GET", ownPath, null, false, null),
+                "TC10: student owner must be able to read own profile");
+        assertEquals(403, http(adminSession, "GET", ownPath, null, false, null),
+                "TC10: ADMIN must not inherit student self-profile access");
+
+        // Enterprise HR may read only fields explicitly shared with this organization.
+        String shareBefore = jdbc.queryForObject(
+                "SELECT data_json FROM profile_shares WHERE id=?", String.class, shareId);
+        var allowedRequest = java.net.http.HttpRequest.newBuilder(
+                java.net.URI.create("http://localhost:" + port + "/api/v1" + sharedPath)).GET().build();
+        var allowedResponse = hrSession.client().send(allowedRequest,
+                java.net.http.HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, allowedResponse.statusCode(),
+                "TC10: HR with live share and consent must be allowed");
+        var allowedJson = vn.utbridora.auth.operations.WorkflowValues.JSON.readTree(
+                allowedResponse.body());
+        var allowedData = allowedJson.get("data");
+        assertNotNull(allowedData, "TC10: profile projection must include data object");
+        assertTrue(allowedData.has("majorCode"), "TC10: majorCode is in granted whitelist");
+        assertTrue(allowedData.has("skills"), "TC10: skills is in granted whitelist");
+        assertFalse(allowedData.has("email"), "TC10: unshared email must not leak");
+        assertFalse(allowedData.has("phone"), "TC10: unshared phone must not leak");
+
+        // Neither global ADMIN nor student identity grants enterprise share access.
+        assertEquals(404, http(adminSession, "GET", sharedPath, null, false, null),
+                "TC10: ADMIN must not read enterprise-shared profile");
+        assertEquals(404, http(studentSession, "GET", sharedPath, null, false, null),
+                "TC10: student identity is not an enterprise share credential");
+        String emailOnly = sharedBase + "&fields=email&purpose=INTERNSHIP_SELECTION";
+        assertEquals(403, http(hrSession, "GET", emailOnly, null, false, null),
+                "TC10: HR cannot request only unshared fields");
+        assertEquals(shareBefore, jdbc.queryForObject(
+                "SELECT data_json FROM profile_shares WHERE id=?", String.class, shareId),
+                "TC10: denied reads must not modify share state");
+        // Existing httpGuards() checks the same HR's HTTP 403 after consent revocation.
+    }
+
     private void httpGuards(String demand,String run,String invitation,String share,String task) throws Exception {
         HttpSession student=login("student@example.test","Synthetic-week2-test-password-123"),intern=login("intern@example.test","Synthetic-week2-test-password-123"),hr=login("hr@example.test","Synthetic-week2-test-password-123"),admin=login("admin@example.test","Synthetic-week2-admin-password-456");
         assertEquals(403,http(student,"POST","/matching/evaluate","{\"demandId\":\""+demand+"\",\"expectedDemandVersion\":2,\"expectedCriteriaVersion\":1}",false,null));
