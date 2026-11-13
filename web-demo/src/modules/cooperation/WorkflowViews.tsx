@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { api } from '../../api';
 import { Notice } from '../../components';
 import type { ContractPage } from '../student/types';
