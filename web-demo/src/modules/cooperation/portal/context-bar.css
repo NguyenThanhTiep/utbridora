@@ -1,0 +1,35 @@
+.portal-context-bar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.65fr) max-content; align-items: end; gap: 20px 24px; padding: 20px; background: #fff; border: 1px solid #e3eaf2; border-radius: 12px; box-shadow: 0 3px 14px #142f4003; min-width: 0; }
+.portal-context-group { display: contents; }
+.portal-context-bar.is-school { grid-template-columns: minmax(0, 1.5fr) minmax(0, .9fr) max-content; }
+.portal-organization-field { grid-column: 1; grid-row: 1; display: flex; align-items: end; gap: 12px; min-width: 0; }
+.portal-organization-icon { flex: 0 0 44px; display: grid; place-items: center; height: 48px; color: #0b927c; background: #e7f6f0; border: 1px solid #d6ebe3; border-radius: 12px; }
+.portal-context-select { flex: 1; min-width: 0; }
+.portal-context-select label, .notification-scope label { display: block; margin: 0 0 8px; font-size: 12px; line-height: 18px; font-weight: 500; color: #64788a; }
+.portal-context-select select, .notification-scope select { display: block; width: 100%; min-width: 0; height: 48px; margin: 0; padding: 11px 36px 11px 14px; font-size: 14px; line-height: 24px; color: #142f40; background-color: #fff; border: 1px solid #e3eaf2; border-radius: 12px; text-overflow: ellipsis; }
+.portal-context-select select { font-weight: 600; background-color: #f7fbf9; border-color: #d6e6df; }
+.portal-context-select select:hover, .notification-scope select:not(:disabled):hover { border-color: #91c5b7; }
+.portal-context-select select:focus-visible, .notification-scope select:focus-visible { outline: 3px solid #0b927c20; outline-offset: 2px; border-color: #0b927c; }
+.notification-scope { grid-column: 2; grid-row: 1; min-width: 0; }
+.notification-scope-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.notification-scope-fields > div { min-width: 0; }
+.notification-scope-fields > div:only-child { grid-column: 1 / -1; }
+.notification-scope select:disabled { color: #8b9eaa; background-color: #f5f7fa; opacity: 1; }
+.portal-context-error { grid-column: 1 / -1; min-width: 0; }
+.portal-context-error .notice { margin: 0; }
+.portal-context-actions { grid-column: 3; grid-row: 1; display: flex; align-items: center; align-self: end; gap: 12px; padding-left: 20px; border-left: 1px solid #e3eaf2; }
+.portal-context-actions .portal-notification-shortcut { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 48px; margin: 0; padding: 0 14px; border-color: #e3eaf2; color: #142f40; background: #fff; border-radius: 12px; white-space: nowrap; font-weight: 500; }
+.portal-context-actions .portal-notification-shortcut > .icon { color: #64788a; }
+.portal-context-actions .portal-notification-shortcut:hover { color: #087463; border-color: #b8dacf; background: #f3faf7; }
+.portal-role { display: inline-flex; align-items: center; justify-content: center; gap: 9px; height: 48px; margin: 0; padding: 6px 12px 6px 6px; border: 1px solid #e3eaf2; border-radius: 999px; white-space: nowrap; color: #142f40; font-size: 13px; }
+.portal-role > span { display: grid; place-items: center; flex: 0 0 32px; width: 32px; height: 32px; border-radius: 50%; background: #0b927c; color: #fff; font-size: 12px; font-weight: 700; }
+@media (max-width: 1280px) {
+  .portal-context-bar, .portal-context-bar.is-school { grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); }
+  .portal-context-actions { grid-column: 1 / -1; grid-row: 2; justify-self: end; padding-left: 0; border-left: 0; }
+}
+@media (max-width: 600px) {
+  .portal-context-bar, .portal-context-bar.is-school { grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 16px; }
+  .notification-scope { grid-column: 1; grid-row: 2; }
+  .portal-context-actions { grid-row: 3; justify-self: stretch; display: grid; grid-template-columns: minmax(0, 1fr) auto; padding-top: 16px; border-top: 1px solid #e3eaf2; }
+  .portal-context-actions .portal-notification-shortcut { width: 100%; }
+}
+@media (max-width: 360px) { .notification-scope-fields, .portal-context-actions { grid-template-columns: minmax(0, 1fr); } .portal-role { justify-self: start; } }

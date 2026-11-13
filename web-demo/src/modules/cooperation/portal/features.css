@@ -1,0 +1,52 @@
+.portal-pending { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; margin-bottom: 20px; background: #f7f9fc; border: 1px solid #e3eaf2; border-radius: 8px; }
+.portal-pending > span { flex-shrink: 0; padding: 3px 8px; color: #956213; background: #fff1d9; border-radius: 5px; font-size: 11px; font-weight: 600; }
+.portal-pending > p { margin: 2px 0 0; color: #64788a; font-size: 13px; line-height: 1.6; }
+.portal-tabbed-view { min-width: 0; }
+.portal-tabs { display: flex; gap: 12px; overflow-x: auto; border-bottom: 1px solid #e3eaf2; margin-bottom: 22px; }
+.portal-tabs > button { flex-shrink: 0; padding: 14px 12px; background: transparent; color: #64788a; border: 0; border-bottom: 2px solid transparent; border-radius: 0; font-weight: 500; }
+.portal-tabs > button:hover { color: #087463; background: #f3faf7; }
+.portal-tabs > button[aria-selected="true"] { color: #087463; border-bottom-color: #0b927c; }
+.portal-tabbed-view > [role="tabpanel"] { min-width: 0; }
+.portal-list-toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 16px; margin-bottom: 20px; }
+.portal-list-toolbar > div { flex: 1; min-width: 180px; }
+.portal-list-toolbar label { display: block; margin: 0; }
+.portal-list-toolbar label > span { display: block; }
+.portal-list-toolbar input, .portal-list-toolbar select { margin-bottom: 0; }
+.portal-search { flex: 2 !important; }
+.portal-list-toolbar > button { margin-bottom: 0; }
+.portal-statistics-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 20px; margin-inline: 24px; }
+.portal-statistics-grid > .panel { margin: 0; min-width: 0; }
+.portal-card-icon { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; margin-bottom: 10px; background: #e7f6f0; color: #087463; border-radius: 10px; }
+.portal-protected-result h3, .portal-privacy-card h3 { font-size: 16px; margin: 10px 0 16px; }
+.portal-result-placeholder { display: block; color: #087463; font-size: 40px; margin: 12px 0 20px; }
+.portal-protected-result .portal-pending { border: 0; padding: 0; background: transparent; flex-direction: column; gap: 8px; }
+.portal-privacy-card > .icon { color: #7750b9; }
+.portal-privacy-card p { color: #64788a; font-size: 13px; line-height: 1.8; }
+.portal-key-values { margin: 20px 0; }
+.portal-key-values > div { display: grid; grid-template-columns: minmax(130px, .7fr) minmax(0, 1.7fr); gap: 20px; padding: 10px 0; border-bottom: 1px solid #edf1f6; }
+.portal-key-values dt { color: #64788a; }
+.portal-key-values dd { margin: 0; overflow-wrap: anywhere; }
+.portal-batches > button { margin-top: 18px; }
+.portal-evidence { margin: 24px 0; }
+.portal-evidence-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.portal-evidence-heading h4 { margin: 0; }
+.portal-evidence-heading > .icon { color: #0b927c; }
+.portal-upload-placeholder { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 22px 16px; color: #64788a; background: #fafcfe; border: 1px dashed #c3d4df; border-radius: 8px; }
+.portal-evidence .portal-pending { margin-top: 12px; margin-bottom: 0; }
+.portal-upcoming-fields { margin: 20px 0; }
+.portal-upcoming-fields .portal-pending { margin-bottom: 12px; }
+.portal-workspace .portal-cooperation-composer { background: #fff; }
+.portal-workspace .portal-cooperation-composer fieldset { padding: 0; border: 0; background: transparent; }
+.portal-handoff { margin-top: 18px; padding-top: 16px; border-top: 1px solid #e3eaf2; }
+.portal-handoff-ready { display: flex; gap: 8px; align-items: center; color: #087463; }
+.portal-handoff-details { margin-top: 18px; padding: 18px; background: #f7fafc; border-radius: 10px; }
+.portal-handoff-details h4 { margin-top: 0; }
+.portal-handoff-details > p { color: #64788a; font-size: 13px; }
+@media (max-width: 900px) { .portal-statistics-grid { margin-inline: 0; grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 600px) {
+  .portal-pending { flex-direction: column; gap: 8px; }
+  .portal-key-values > div { grid-template-columns: minmax(0, 1fr); gap: 5px; }
+  .portal-list-toolbar { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .portal-list-toolbar > div { min-width: 0; }
+  .portal-handoff-details { padding: 14px; }
+}

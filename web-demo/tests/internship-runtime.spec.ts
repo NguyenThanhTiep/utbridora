@@ -9,8 +9,10 @@ test('HR and Mentor navigate their actual assigned cohort and group', async ({ p
     await page.getByLabel('Email', { exact: true }).fill(email);
     await page.getByLabel('Mật khẩu', { exact: true }).fill(process.env.E2E_PASSWORD!);
     await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Tài khoản của tôi', exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Không gian thực tập', exact: true }).click();
+    // ENTERPRISE accounts may land on their portal overview; enter T3 through its menu.
+    const workspace = page.getByRole('button', { name: 'Không gian thực tập', exact: true });
+    await expect(workspace).toBeVisible();
+    await workspace.click();
     await page.getByLabel('Phân công đang làm việc').selectOption(assignment);
     await page.getByLabel('Đợt thực tập', { exact: true }).selectOption(process.env.E2E_T3_COHORT!);
     await page.getByRole('button', { name: 'Xem nhóm G-' + process.env.E2E_T3_GROUP! }).click();

@@ -55,7 +55,7 @@ export function SkillsEditor({ view, disabled, onSaved }: { view: SelfProfileVie
         <div className="button-row">{catalog.filter(c => !skills.some(s => s.skillCode === c.skillCode)).map(c => <button key={c.skillCode} className="secondary" type="button" onClick={() => setSkills([...skills, { skillCode: c.skillCode, level: 1, yearsPractice: 0, note: null }])}>Thêm {c.name}</button>)}</div>
         {skills.map((s, i) => <fieldset key={s.skillCode}><legend>{s.skillCode} · Tự khai</legend>
           <label>Mức độ (1–5)<input type="number" min="1" max="5" required value={s.level} onChange={e => update(i, { level: Number(e.target.value) })} /></label>
-          <label>Số năm thực hành<input type="number" min="0" step="0.01" required value={s.yearsPractice} onChange={e => update(i, { yearsPractice: Number(e.target.value) })} /></label>
+          <label>Số năm thực hành<input type="number" min="0" step="any" required value={s.yearsPractice} onChange={e => update(i, { yearsPractice: Number(e.target.value) })} /></label>
           <label>Ghi chú<input maxLength={1000} value={s.note || ''} onChange={e => update(i, { note: e.target.value || null })} /></label>
           <button type="button" className="secondary" onClick={() => setSkills(skills.filter((_, n) => n !== i))}>Xóa {s.skillCode}</button>
         </fieldset>)}
@@ -64,7 +64,7 @@ export function SkillsEditor({ view, disabled, onSaved }: { view: SelfProfileVie
           <label>Tên<input required maxLength={128} value={s.name} onChange={e => updateCustom(i, { name: e.target.value })} /></label>
           <label>Nhóm<select required value={s.categoryCode} onChange={e => updateCustom(i, { categoryCode: e.target.value })}><option value="">Chọn nhóm</option>{categories.map(c => <option key={c.categoryCode} value={c.categoryCode}>{c.name}</option>)}</select></label>
           <label>Mức độ<input type="number" min="1" max="5" required value={s.level} onChange={e => updateCustom(i, { level: Number(e.target.value) })} /></label>
-          <label>Số năm<input type="number" min="0" step="0.01" required value={s.yearsPractice} onChange={e => updateCustom(i, { yearsPractice: Number(e.target.value) })} /></label>
+          <label>Số năm<input type="number" min="0" step="any" required value={s.yearsPractice} onChange={e => updateCustom(i, { yearsPractice: Number(e.target.value) })} /></label>
           <label>Ghi chú<input maxLength={1000} value={s.note || ''} onChange={e => updateCustom(i, { note: e.target.value || null })} /></label>
           <button type="button" className="secondary" onClick={() => setCustom(custom.filter((_, n) => n !== i))}>Xóa kỹ năng tự khai {i + 1}</button>
         </fieldset>)}<button type="button" className="secondary" onClick={() => setCustom([...custom, { customSkillId: null, name: '', categoryCode: '', level: 1, yearsPractice: 0, note: null }])}>Thêm kỹ năng ngoài danh mục</button>

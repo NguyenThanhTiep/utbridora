@@ -381,7 +381,7 @@ class StudentProfileIT {
         var duplicated=input(0);duplicated.put("skills",List.of(obj("skillCode","JAVA","level",3,"yearsPractice",1,"note",null),
             obj("skillCode","JAVA","level",4,"yearsPractice",2,"note",null)));
         assertEquals(List.of("skills[1].skillCode"),fields(b.put(duplicated)));
-        var precise=input(0);precise.put("skills",List.of(obj("skillCode","JAVA","level",3,"yearsPractice",1000,"note",null)));
+        var precise=input(0);precise.put("skills",List.of(obj("skillCode","JAVA","level",3,"yearsPractice",-0.001,"note",null)));
         assertEquals(List.of("skills[0].yearsPractice"),fields(b.put(precise)));
         var noKey=b.send("PUT",PROFILE,new tools.jackson.databind.ObjectMapper().writeValueAsString(input(0)),true,null);
         assertEnvelope(noKey,400,"INVALID_REQUEST");
@@ -424,4 +424,17 @@ class StudentProfileIT {
         assertEnvelope(b.get(TERM),403,"ACCESS_DENIED");
         assertEquals(401,new Browser().get(TERM).statusCode());
     }
+
+    @Test void approvedContractDecimalsPersistExactlyForCanonicalAndCustomSkills() throws Exception {
+        var b=signedIn(student);var value=input(0);
+        var years=new java.math.BigDecimal("1000.12345678901234567890123456789");
+        value.put("skills",List.of(obj("skillCode","JAVA","level",3,"yearsPractice",years,"note",null)));
+        value.put("customSkills",List.of(obj("customSkillId",null,"name","Precise custom","categoryCode","DESIGN","level",2,"yearsPractice",new java.math.BigDecimal("1.001"),"note",null)));
+        var saved=b.put(value);assertEquals(200,saved.statusCode(),saved.body());
+        assertTrue(saved.body().contains(years.toPlainString()),saved.body());
+        assertTrue(b.get(TERM).body().contains(years.toPlainString()));
+        assertEquals(0,years.compareTo(jdbc.queryForObject("SELECT s.years_practice FROM student_profile_skills s JOIN student_profiles p ON p.id=s.profile_id WHERE p.user_id=?",java.math.BigDecimal.class,student.id)));
+        assertEquals(0,new java.math.BigDecimal("1.001").compareTo(jdbc.queryForObject("SELECT s.years_practice FROM student_custom_skills s JOIN student_profiles p ON p.id=s.profile_id WHERE p.user_id=?",java.math.BigDecimal.class,student.id)));
+    }
+
 }

@@ -44,7 +44,9 @@ export function NominationPanel({ org, cooperationId, demand, locked, changed, p
   }, [org, cooperationId, run, filter, page, revision]);
   const rows = context?.candidates.content || [], available = rows.filter(selectable), slots = context?.capacity.openForNomination || 0;
   const disabled = locked || command.blocked || loading;
-  return <section className="proposal-nomination" aria-label="Chọn sinh viên đề xuất"><h4>Chọn sinh viên cho đề nghị đã duyệt</h4>
+  return <section className="proposal-nomination" aria-label="Chọn sinh viên đề xuất">
+    <span className="portal-eyebrow">ĐỐI CHIẾU ĐIỀU KIỆN</span>
+    <h4>Chọn sinh viên cho đề nghị đã duyệt</h4>
     <p>Đối chiếu hồ sơ với tiêu chí tuyển. Chỉ chọn sinh viên đạt đủ tiêu chí, được trường xác nhận đủ điều kiện và chưa có trong đề xuất.</p>
     <Notice message={error || command.message} tone="error" />
     <button disabled={disabled} onClick={() => { setError(''); void command.submit('/matching/evaluate', 'POST', {

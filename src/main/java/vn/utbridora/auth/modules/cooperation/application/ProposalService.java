@@ -38,6 +38,7 @@ public class ProposalService implements InternshipInvitationPort {
     public record ProfileTarget(Item item,String termId) {}
     private static final Set<String> ENTERPRISE_VISIBLE=Set.of("SHARED","ENTERPRISE_ACCEPTED","PLACED","DECLINED");
     private static final Set<String> ITEM_STATES=Set.of("RESERVED","INVITED","ACCEPTED","SHARED","ENTERPRISE_ACCEPTED","PLACED","DECLINED","EXPIRED","REVOKED");
+    private java.time.Clock clock=java.time.Clock.systemUTC();
     private final ProposalShareAccess shareAccess;
     public record InvitationDecision(String decision,Long expectedVersion,String reasonCode,String reasonText) {}
     public record Withdrawal(Long expectedVersion,String reasonCode,String reasonText) {}
@@ -77,7 +78,7 @@ public class ProposalService implements InternshipInvitationPort {
                 if(batchVersion!=request.expectedBatchVersion()) throw failure(409,"VERSION_CONFLICT");batchVersion++;jdbc.update("UPDATE proposal_batches SET version=? WHERE id=?",batchVersion,batchId);
             }
             Capacity capacity=capacityOf(c,d.data().quantity());if(capacity.openForNomination()<refs.size()) throw failure(409,"CAPACITY_EXCEEDED");
-            Instant until=earlier(Instant.now().plusSeconds(86400),d.data().deadline());if(!Instant.now().isBefore(until)) throw failure(409,"RESERVATION_EXPIRED");
+            Instant until=earlier(clock.instant().plusSeconds(86400),d.data().deadline());if(!clock.instant().isBefore(until)) throw failure(409,"RESERVATION_EXPIRED");
             var items=new ArrayList<Reserved>();
             for(var ref:refs) {
                 if(jdbc.queryForObject("SELECT COUNT(*) FROM proposal_items WHERE batch_id=? AND student_user_id=?",Integer.class,batchId,ref.studentUserId())>0) throw failure(409,"PROPOSAL_ALREADY_EXISTS");
@@ -89,9 +90,10 @@ public class ProposalService implements InternshipInvitationPort {
     }
     @Transactional public Capacity capacity(Authentication auth,String coopId) {var c=cooperations.read(coopId);scope.require(auth,c.schoolOrgId(),c.termId(),"t5:proposal:manage");var d=demands.findLocked(c.demandId(),c.enterpriseOrgId()).orElseThrow();return capacityOf(c,d.data().quantity());}
     private Capacity capacityOf(CooperationService.CooperationDto c,int quantity) {
+        expireReservations(c.cooperationId());
         int placed=jdbc.queryForList("SELECT p.id FROM placements p WHERE p.cooperation_id=? AND p.state IN ('APPROVED','ACTIVE','COMPLETED') FOR SHARE",String.class,c.cooperationId()).size()
             + jdbc.queryForList("SELECT i.id FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id WHERE b.cooperation_id=? AND i.state='PLACED' AND i.placement_id IS NULL FOR SHARE",String.class,c.cooperationId()).size();
-        int reserved=jdbc.queryForList("SELECT i.id FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id WHERE b.cooperation_id=? AND ((i.state IN ('RESERVED','INVITED','ACCEPTED','SHARED','ENTERPRISE_ACCEPTED') AND i.reservation_until>UTC_TIMESTAMP(6)) OR EXISTS (SELECT 1 FROM placements p WHERE p.id=i.placement_id AND p.state='PENDING_APPROVAL')) FOR SHARE",String.class,c.cooperationId()).size();
+        int reserved=jdbc.queryForList("SELECT i.id FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id WHERE b.cooperation_id=? AND ((i.state IN ('RESERVED','INVITED','ACCEPTED','SHARED','ENTERPRISE_ACCEPTED') AND i.reservation_until>?) OR EXISTS (SELECT 1 FROM placements p WHERE p.id=i.placement_id AND p.state='PENDING_APPROVAL')) FOR SHARE",String.class,c.cooperationId(),utc(clock.instant())).size();
         int declined=jdbc.queryForObject("SELECT COUNT(*) FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id WHERE b.cooperation_id=? AND i.state='DECLINED'",Integer.class,c.cooperationId());
         Long batchVersion=jdbc.queryForList("SELECT version FROM proposal_batches WHERE cooperation_id=?",Long.class,c.cooperationId()).stream().findFirst().orElse(null);
         return new Capacity(c.cooperationId(),c.demandId(),quantity,placed,reserved,Math.max(0,quantity-placed-reserved),declined,batchVersion);
@@ -157,7 +159,7 @@ public class ProposalService implements InternshipInvitationPort {
         return ledger.execute(new OperationLedger.Command(actor(auth),org,"PROPOSAL_ENTERPRISE_DECIDE",key,Map.of("id",id,"request",request),200),EnterpriseItem.class,()->{
             var current=item(id);if(current.version()!=request.expectedVersion()) throw failure(409,"VERSION_CONFLICT");
             if(!"APPROVED".equals(c.state()) || !"SHARED".equals(current.state())) throw failure(409,"STATE_CONFLICT");
-            if(!Instant.now().isBefore(current.reservationUntil())) throw failure(409,"RESERVATION_EXPIRED");
+            if(!clock.instant().isBefore(current.reservationUntil())) throw failure(409,"RESERVATION_EXPIRED");
             shareAccess.require(auth,current,c);
             String next="ACCEPT".equals(request.decision())?"ENTERPRISE_ACCEPTED":"DECLINED";
             jdbc.update("UPDATE proposal_items SET state=?,version=version+1 WHERE id=?",next,id);
@@ -185,16 +187,16 @@ public class ProposalService implements InternshipInvitationPort {
     private static EnterpriseItem enterpriseView(Item i) {return new EnterpriseItem(i.proposalItemId(),i.cooperationId(),i.state(),i.version(),i.shareId(),i.reservationUntil());}
     private static void validateState(String state) {if(state!=null && !ITEM_STATES.contains(state)) throw failure(400,"SCHEMA_VALIDATION");}
     @Transactional public InternshipInvitation invite(Authentication auth,String id,String key,Invite request) {
-        version(request.expectedVersion());var before=item(uuid(id));var c=cooperations.read(before.cooperationId());scope.require(auth,c.schoolOrgId(),c.termId(),"t5:proposal:manage");
+        version(request.expectedVersion());uuid(id);var c=cooperationForItem(id);scope.require(auth,c.schoolOrgId(),c.termId(),"t5:proposal:manage");
         return ledger.execute(new OperationLedger.Command(actor(auth),c.schoolOrgId(),"INTERNSHIP_INVITE",key,Map.of("id",id,"request",request),202),InternshipInvitation.class,()->{
             var i=item(id);if(i.version()!=request.expectedVersion()) throw failure(409,"VERSION_CONFLICT");
-            if(!i.state().equals("RESERVED") || !Instant.now().isBefore(i.reservationUntil())) throw failure(409,"RESERVATION_EXPIRED");
-            var d=demands.findLocked(c.demandId(),c.enterpriseOrgId()).orElseThrow();Instant now=Instant.now();
+            if(!i.state().equals("RESERVED") || !clock.instant().isBefore(i.reservationUntil())) throw failure(409,"RESERVATION_EXPIRED");
+            var d=demands.findLocked(c.demandId(),c.enterpriseOrgId()).orElseThrow();Instant now=clock.instant();
             Instant termEnd=jdbc.queryForObject("SELECT end_date FROM terms WHERE id=?",java.sql.Date.class,c.termId()).toLocalDate().plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().minusNanos(1000);
             Instant limit=earlier(d.data().deadline(),termEnd),expires=request.expiresAt()==null?earlier(now.plusSeconds(7*86400),limit):request.expiresAt();
             if(!now.isBefore(expires) || expires.isAfter(limit) || expires.isAfter(now.plusSeconds(30*86400))) throw failure(422,"INVITATION_EXPIRY_INVALID");
             String invitation=UUID.randomUUID().toString();jdbc.update("INSERT INTO internship_invitations(id,proposal_item_id,student_user_id,state,expires_at) VALUES(?,?,?,'PENDING',?)",invitation,id,i.studentUserId(),utc(expires));
-            jdbc.update("UPDATE proposal_items SET state='INVITED',version=version+1,invitation_id=? WHERE id=?",invitation,id);
+            jdbc.update("UPDATE proposal_items SET state='INVITED',version=version+1,invitation_id=?,reservation_until=? WHERE id=?",invitation,utc(expires),id);
             history(auth,invitation,null,"PENDING",1,null);audit.workflow(actor(auth),"INTERNSHIP_INVITATION_ISSUED",invitation,c.schoolOrgId(),Map.of("proposalItemId",id,"expiresAt",expires.toString(),"version",1));return invitation(invitation);
         },InternshipInvitation::invitationId);
     }
@@ -210,10 +212,18 @@ public class ProposalService implements InternshipInvitationPort {
         if(request.decision().equals("DECLINE")) reason(request.reasonCode());else if(request.reasonCode()!=null || request.reasonText()!=null) throw failure(400,"SCHEMA_VALIDATION");
         return ledger.execute(new OperationLedger.Command(actor(auth),before.schoolOrgId(),"INTERNSHIP_INVITATION_DECIDE",key,Map.of("id",id,"request",request),200),InternshipInvitation.class,()->{
             var i=invitation(id);if(i.version()!=request.expectedVersion()) throw failure(409,"VERSION_CONFLICT");
-            if(!i.state().equals("PENDING")) throw failure(409,"INVITATION_STATE_CONFLICT");if(!Instant.now().isBefore(i.expiresAt())) throw failure(409,"INVITATION_EXPIRED");
+            if(!i.state().equals("PENDING")) throw failure(409,"INVITATION_STATE_CONFLICT");if(!clock.instant().isBefore(i.expiresAt())) throw failure(409,"INVITATION_EXPIRED");
             String next=request.decision().equals("ACCEPT")?"ACCEPTED":"DECLINED";
-            jdbc.update("UPDATE internship_invitations SET state=?,version=version+1,decided_at=UTC_TIMESTAMP(6),decision_reason_code=? WHERE id=?",next,request.reasonCode(),id);
-            jdbc.update("UPDATE proposal_items SET state=?,version=version+1 WHERE id=?",next,i.proposalItemId());
+            Instant decided=clock.instant();
+            jdbc.update("UPDATE internship_invitations SET state=?,version=version+1,decided_at=?,decision_reason_code=? WHERE id=?",next,utc(decided),request.reasonCode(),id);
+            Instant until=decided;
+            if ("ACCEPTED".equals(next)) {
+                var c=cooperationForItem(i.proposalItemId());var d=demands.findLocked(c.demandId(),c.enterpriseOrgId()).orElseThrow();
+                until=earlier(decided.plusSeconds(7*86400),d.data().deadline());
+                var consent=consentSummary.read(item(i.proposalItemId()),c);
+                if(consent.activeConsentExpiresAt()!=null) until=earlier(until,consent.activeConsentExpiresAt());
+            }
+            jdbc.update("UPDATE proposal_items SET state=?,version=version+1,reservation_until=? WHERE id=?",next,utc(until),i.proposalItemId());
             history(auth,id,"PENDING",next,i.version()+1,request.reasonCode());audit.workflow(actor(auth),"INVITATION_RESPONDED",id,i.schoolOrgId(),Map.of("decision",request.decision(),"invitationVersion",i.version()+1));return invitation(id);
         },InternshipInvitation::invitationId);
     }
@@ -225,6 +235,26 @@ public class ProposalService implements InternshipInvitationPort {
             jdbc.update("UPDATE internship_invitations SET state='WITHDRAWN',version=version+1,decision_reason_code=? WHERE id=?",request.reasonCode(),id);jdbc.update("UPDATE proposal_items SET state='REVOKED',version=version+1 WHERE id=?",i.proposalItemId());
             history(auth,id,"ACCEPTED","WITHDRAWN",i.version()+1,request.reasonCode());audit.workflow(actor(auth),"INTERNSHIP_INVITATION_REVOKED",id,i.schoolOrgId(),Map.of("version",i.version()+1,"reasonCode",request.reasonCode()));return invitation(id);
         },InternshipInvitation::invitationId);
+    }
+    /** Internal owner workflow: locks the cooperation before items, skips every existing Placement. */
+    @Transactional public int expireReservations(String cooperationId) {
+        var c=cooperations.read(uuid(cooperationId));Instant now=clock.instant();int changed=0;
+        var ids=jdbc.queryForList("SELECT i.id FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id WHERE b.cooperation_id=? AND i.state IN ('RESERVED','INVITED','ACCEPTED','SHARED','ENTERPRISE_ACCEPTED') AND i.reservation_until<=? AND i.placement_id IS NULL ORDER BY i.id FOR UPDATE",String.class,c.cooperationId(),utc(now));
+        for(String id:ids) {
+            var before=item(id);
+            if(!jdbc.queryForList("SELECT id FROM placements WHERE proposal_item_id=? AND state IN ('PENDING_APPROVAL','APPROVED','ACTIVE','COMPLETED') FOR SHARE",String.class,id).isEmpty()) continue;
+            if(jdbc.update("UPDATE proposal_items SET state='EXPIRED',version=version+1 WHERE id=? AND version=? AND placement_id IS NULL",id,before.version())!=1) continue;
+            jdbc.update("INSERT INTO proposal_reservation_history(id,proposal_id,proposal_version,from_state,to_state,previous_until,next_until,occurred_at,actor_kind) VALUES(?,?,?,?,?,?,?,?, 'SYSTEM')",java.util.UUID.randomUUID().toString(),id,before.version()+1,before.state(),"EXPIRED",utc(before.reservationUntil()),utc(before.reservationUntil()),utc(now));
+            if(before.invitationId()!=null) {
+                var invitation=invitation(before.invitationId());
+                if("PENDING".equals(invitation.state()) && !now.isBefore(invitation.expiresAt())) {
+                    jdbc.update("UPDATE internship_invitations SET state='EXPIRED',version=version+1 WHERE id=? AND state='PENDING'",invitation.invitationId());
+                    audit.workflow(null,"INTERNSHIP_INVITATION_EXPIRED",invitation.invitationId(),c.schoolOrgId(),Map.of("version",invitation.version()+1,"expiredAt",now.toString()));
+                }
+            }
+            changed++;
+        }
+        return changed;
     }
     public Item item(String id) {
         return jdbc.query("SELECT i.*,b.cooperation_id FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id WHERE i.id=? FOR UPDATE",(r,n)->new Item(r.getString("id"),r.getString("batch_id"),r.getString("student_user_id"),r.getString("cooperation_id"),r.getString("state"),r.getLong("version"),instant(r,"reservation_until"),r.getString("invitation_id"),r.getString("share_id"),r.getString("placement_id")),id).stream().findFirst().orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));

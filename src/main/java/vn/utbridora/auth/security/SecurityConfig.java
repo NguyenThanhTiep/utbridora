@@ -58,6 +58,7 @@ public class SecurityConfig {
                .requestMatchers("/api/v1/auth/**", "/api/v1/demo/**").authenticated()
                .requestMatchers(HttpMethod.POST,"/api/v1/files").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/files/*/metadata","/api/v1/files/*/content").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/cooperation/organizations").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/terms","/api/v1/terms/*").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/t3/**").authenticated()
                .requestMatchers(HttpMethod.POST,"/api/v1/t3/**").authenticated()

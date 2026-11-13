@@ -6,25 +6,61 @@ import type { Demand } from '../types';
 import type { SchoolProposal } from './types';
 import { scopedRead, workflowError } from './api';
 import { useWorkflowCommand } from './useWorkflowCommand';
-import { canLeaveDemand } from '../navigation';
+import { WorkspaceHandoff } from './WorkspaceHandoff';
 
 type Placement = { placementId: string; schoolOrgId: string; enterpriseOrgId: string; cooperationId: string; proposalItemId: string;
   state: string; version: number; effectiveAt: string; startDate: string; endDate: string };
 type Summary = { demandId: string; cooperationId: string | null; target: number; placed: number; pending: number; remaining: number };
 type Link = { state: 'WAITING_HANDOFF' | 'AVAILABLE'; route: string | null };
 const states: Record<string, string> = { PENDING_APPROVAL: 'Chờ trường phê duyệt', APPROVED: 'Đã duyệt, chờ bắt đầu', ACTIVE: 'Đang thực tập', CANCELLED: 'Đã hủy', COMPLETED: 'Đã hoàn thành' };
+const statusGuides: Record<string, { school: string; enterprise: string }> = {
+  PENDING_APPROVAL: {
+    school: 'Doanh nghiệp đã đồng ý tiếp nhận. Nhà trường kiểm tra thời hạn hiệu lực, chỉ tiêu còn lại rồi thực hiện phê duyệt tiếp nhận.',
+    enterprise: 'Hồ sơ tiếp nhận đã được khởi tạo và đang chờ Nhà trường phê duyệt chính thức trước khi chuyển sang giai đoạn thực tập.',
+  },
+  APPROVED: {
+    school: 'Có thể kích hoạt thực tập khi đến thời điểm có hiệu lực.',
+    enterprise: 'Đã phê duyệt tiếp nhận. Kiểm tra bàn giao để chuẩn bị giao việc khi hồ sơ có hiệu lực.',
+  },
+  ACTIVE: {
+    school: 'Sinh viên đang thực tập. Giao việc, nộp bài và đánh giá tại không gian thực tập.',
+    enterprise: 'Sinh viên đang thực tập. Mở không gian thực tập để theo dõi công việc.',
+  },
+  COMPLETED: {
+    school: 'Đợt thực tập đã hoàn tất và đóng hồ sơ theo quy định.',
+    enterprise: 'Đợt thực tập đã hoàn thành. Có thể tra cứu lại hồ sơ thực tập đã lưu trữ trên Không gian thực tập (T3).',
+  },
+  CANCELLED: {
+    school: 'Hồ sơ tiếp nhận này đã bị hủy và giải phóng chỉ tiêu tương ứng.',
+    enterprise: 'Hồ sơ tiếp nhận này đã dừng/hủy theo quyết định đã ghi nhận.',
+  },
+};
+const lifecycleSteps = [
+  { key: 'PENDING_APPROVAL', label: '1. Tạo chờ duyệt' },
+  { key: 'APPROVED', label: '2. Trường phê duyệt' },
+  { key: 'ACTIVE', label: '3. Đang thực tập' },
+  { key: 'COMPLETED', label: '4. Hoàn tất / Đóng' },
+];
+function stepRank(state: string): number {
+  if (state === 'PENDING_APPROVAL') return 0;
+  if (state === 'APPROVED') return 1;
+  if (state === 'ACTIVE') return 2;
+  if (state === 'COMPLETED') return 3;
+  return -1;
+}
 
 /** Consumer of DEV10's CP-T5UI1 routes. No local state transition substitutes for an unavailable API. */
-export function PlacementWorkspace({ org, school, cooperationId, demand, candidates = [], locked = false, changed, pendingChanged }: {
+export function PlacementWorkspace({ org, school, cooperationId, demand, candidates = [], locked = false, changed, pendingChanged, initialCandidateId }: {
   org: string; school: boolean; cooperationId: string; demand: Demand; candidates?: SchoolProposal[]; locked?: boolean;
-  changed?: () => void; pendingChanged?: (pending: boolean) => void;
+  changed?: () => void; pendingChanged?: (pending: boolean) => void; initialCandidateId?: string;
 }) {
   const [result, setResult] = useState<ContractPage<Placement> | null>(null), [summary, setSummary] = useState<Summary | null>(null);
-  const [page, setPage] = useState(0), [filter, setFilter] = useState(''), [revision, setRevision] = useState(0), [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0), [filter, setFilter] = useState(''), [search, setSearch] = useState(''), [revision, setRevision] = useState(0), [loading, setLoading] = useState(true);
   const [error, setError] = useState(''), [notice, setNotice] = useState(''), [selected, setSelected] = useState('');
   const [start, setStart] = useState(demand.data.required.dateRange.startDate), [end, setEnd] = useState(demand.data.required.dateRange.endDate), [effective, setEffective] = useState('');
   const [decision, setDecision] = useState<{ item: Placement; action: string } | null>(null), [reference, setReference] = useState(''), [reason, setReason] = useState('');
   const [links, setLinks] = useState<Record<string, Link>>({}), [now, setNow] = useState(Date.now());
+  const [expandedPlacement, setExpandedPlacement] = useState<string | null>(null);
   const pendingRef = useRef(pendingChanged); pendingRef.current = pendingChanged;
   const side = school ? 'school' : 'enterprise';
   const command = useWorkflowCommand<Placement>(org, value => {
@@ -51,60 +87,126 @@ export function PlacementWorkspace({ org, school, cooperationId, demand, candida
     return () => c.abort();
   }, [org, school, side, cooperationId, demand.demandId, page, filter, revision]);
   const ready = candidates.filter(item => item.state === 'ENTERPRISE_ACCEPTED' && !item.placementId && item.shareIsActive && item.eligibilityVersion > 0);
+  useEffect(() => {
+    if (initialCandidateId && candidates.some(item => item.proposalItemId === initialCandidateId && item.state === 'ENTERPRISE_ACCEPTED'
+      && !item.placementId && item.shareIsActive && item.eligibilityVersion > 0)) setSelected(initialCandidateId);
+  }, [initialCandidateId, candidates]);
   const blocked = locked || command.blocked || loading;
-  return <section className="proposal-placement" aria-label="Tiếp nhận thực tập"><h4>Tiếp nhận thực tập</h4>
-    <p>Doanh nghiệp đồng ý tiếp nhận, trường tạo hồ sơ chờ duyệt, phê duyệt riêng và kích hoạt khi đến thời điểm có hiệu lực.</p>
+  const visibleItems = (result?.content || []).map((item, n) => ({ item, seq: page * 25 + n + 1 })).filter(({ item, seq }) => {
+    if (!search.trim()) return true;
+    const q = search.trim().toLowerCase();
+    return (
+      `tiếp nhận ${seq}`.includes(q)
+      || item.placementId.toLowerCase().includes(q)
+      || item.proposalItemId.toLowerCase().includes(q)
+      || item.startDate.toLowerCase().includes(q)
+      || item.endDate.toLowerCase().includes(q)
+      || (states[item.state] || item.state).toLowerCase().includes(q)
+    );
+  });
+  const placedPct = summary && summary.target > 0 ? Math.min(100, Math.round((summary.placed / summary.target) * 100)) : 0;
+  const pendingPct = summary && summary.target > 0 ? Math.min(100 - placedPct, Math.round((summary.pending / summary.target) * 100)) : 0;
+  const checkHandoff = (item: Placement) => {
+    const controller = new AbortController();
+    void scopedRead<Link>(org, `/${side}/placements/${item.placementId}/internship-link`, controller.signal).then(link => {
+      if (link.state === 'AVAILABLE' && (!link.route || !/^\/workspace\/cases\/[0-9a-f-]{36}$/i.test(link.route))) throw new Error('Invalid internship route');
+      setLinks(old => ({ ...old, [item.placementId]: link })); setExpandedPlacement(item.placementId);
+    }).catch(error => setError(workflowError(error)));
+  };
+  return <section className="proposal-placement" aria-label="Tiếp nhận thực tập">
+    <div className="placement-header-bar">
+      <div>
+        <h4>Tiếp nhận thực tập</h4>
+      </div>
+      <button className="secondary" disabled={blocked} onClick={() => setRevision(n => n + 1)}>Tải lại tiếp nhận thực tập</button>
+    </div>
     <Notice message={error || command.message} tone="error" /><p role="status">{notice}</p>
-    <button className="secondary" disabled={blocked} onClick={() => setRevision(n => n + 1)}>Tải lại tiếp nhận thực tập</button>
     {loading && <p role="status">Đang tải tiếp nhận thực tập…</p>}
     {command.retryable && <button disabled={command.busy} onClick={() => void command.retry()}>Thử lại thao tác tiếp nhận đã gửi</button>}
-    {summary && <dl className="proposal-capacity"><div><dt>Chỉ tiêu tiếp nhận</dt><dd>{summary.target}</dd></div><div><dt>Đã chốt</dt><dd>{summary.placed}</dd></div>
-      <div><dt>Đang chờ</dt><dd>{summary.pending}</dd></div><div><dt>Còn chỗ</dt><dd>{summary.remaining}</dd></div></dl>}
-    {result && <><label>Trạng thái tiếp nhận<select disabled={blocked} value={filter} onChange={e => {setFilter(e.target.value);setPage(0);}}>
-      <option value="">Tất cả trạng thái</option>{Object.entries(states).map(([key, text]) => <option value={key} key={key}>{text}</option>)}
-    </select></label>{!result.content.length && <p>Chưa có hồ sơ tiếp nhận trong nhóm trạng thái này.</p>}
-      {result.content.map((item, n) => <article key={item.placementId} className={`placement-item-card state-${item.state.toLowerCase()}`}>
-        <div className="placement-card-header">
-          <div className="placement-title-group">
-            <span className="placement-seq-badge">#{page * 25 + n + 1}</span>
-            <h5>Tiếp nhận {page * 25 + n + 1} · {states[item.state] || item.state}</h5>
-          </div>
-          <span className={`status-pill pill-${item.state.toLowerCase()}`}>
-            <span className="pill-dot" />
-            {states[item.state] || item.state}
-          </span>
+    {summary && <>
+      <dl className="proposal-capacity"><div><dt>Chỉ tiêu tiếp nhận</dt><dd>{summary.target}</dd></div><div><dt>Đã chốt</dt><dd>{summary.placed}</dd></div>
+        <div><dt>Đang chờ</dt><dd>{summary.pending}</dd></div><div><dt>Còn chỗ</dt><dd>{summary.remaining}</dd></div></dl>
+      {school && <div className="placement-quota-bar" aria-label="Tiến độ lấp đầy chỉ tiêu tiếp nhận">
+        <div className="placement-quota-legend">
+          <span>Tiến độ lấp đầy chỉ tiêu: <strong>{summary.placed}/{summary.target}</strong> đã chốt ({placedPct}%)</span>
+          <span>Đang chờ phê duyệt: <strong>{summary.pending}</strong> · Còn trống: <strong>{summary.remaining}</strong></span>
         </div>
-        <div className="placement-meta-grid">
-          <div className="placement-meta-item">
-            <span className="placement-meta-label">Khoảng thời gian thực tập</span>
-            <span className="placement-meta-value"><strong>{item.startDate}</strong> đến <strong>{item.endDate}</strong></span>
-          </div>
-          <div className="placement-meta-item">
-            <span className="placement-meta-label">Thời điểm có hiệu lực</span>
-            <span className="placement-meta-value">{new Date(item.effectiveAt).toLocaleString('vi-VN')}</span>
-          </div>
-          <div className="placement-meta-item">
-            <span className="placement-meta-label">Mã tiếp nhận</span>
-            <span className="placement-meta-value"><code>{item.placementId.slice(0, 8)}…</code></span>
-          </div>
+        <div className="placement-quota-track">
+          <div className="placement-quota-fill placed" style={{ width: `${placedPct}%` }} />
+          <div className="placement-quota-fill pending" style={{ width: `${pendingPct}%` }} />
         </div>
-        <p className="placement-time-text">Thời gian: {item.startDate} – {item.endDate} · Hiệu lực từ {new Date(item.effectiveAt).toLocaleString('vi-VN')}</p>
-        {school && <div className="button-row">
-          {item.state === 'PENDING_APPROVAL' && <button className="btn-action-approve" disabled={blocked} onClick={() => {setDecision({item, action: 'approve'});setReference('');setReason('SCHOOL_APPROVED');}}>Phê duyệt tiếp nhận</button>}
-          {item.state === 'APPROVED' && <button className="btn-action-activate" disabled={blocked || now < Date.parse(item.effectiveAt)} onClick={() => {setDecision({item, action: 'activate'});setReference('');setReason('START_REQUESTED');}}>Kích hoạt thực tập</button>}
-          {['PENDING_APPROVAL', 'APPROVED', 'ACTIVE'].includes(item.state) && <button className="secondary btn-action-cancel" disabled={blocked} onClick={() => {setDecision({item, action: 'cancel'});setReference('');setReason('');}}>Hủy tiếp nhận</button>}
-        </div>}
-        {item.state === 'APPROVED' && now < Date.parse(item.effectiveAt) && <p className="placement-time-warning">Chưa đến thời điểm kích hoạt. Hồ sơ chưa cho phép giao hoặc nộp nhiệm vụ thực tập.</p>}
-        {['APPROVED', 'ACTIVE', 'COMPLETED'].includes(item.state) && <button className="secondary" disabled={blocked} onClick={() => {
-          const c = new AbortController();void scopedRead<Link>(org, `/${side}/placements/${item.placementId}/internship-link`, c.signal).then(link => {
-            if (link.state === 'AVAILABLE' && (!link.route || !/^\/workspace\/cases\/[0-9a-f-]{36}$/i.test(link.route))) throw new Error('Invalid internship route');
-            setLinks(old => ({...old, [item.placementId]: link}));
-          }).catch(error => setError(workflowError(error)));
-        }}>Kiểm tra bàn giao sang không gian thực tập</button>}
-        {links[item.placementId]?.state === 'WAITING_HANDOFF' && <p className="handoff-waiting">Đang chờ bàn giao sang không gian thực tập.</p>}
-        {links[item.placementId]?.state === 'AVAILABLE' && <a href={links[item.placementId].route!}
-          aria-disabled={blocked} onClick={e => {if (blocked || !canLeaveDemand()) e.preventDefault();}}>Mở hồ sơ thực tập</a>}
-      </article>)}
+      </div>}
+    </>}
+    {result && <>
+      <div className="placement-filter-bar">
+        <label>Trạng thái tiếp nhận<select disabled={blocked} value={filter} onChange={e => {setFilter(e.target.value);setPage(0);}}>
+          <option value="">Tất cả trạng thái</option>{Object.entries(states).map(([key, text]) => <option value={key} key={key}>{text}</option>)}
+        </select></label>
+        <label>Tìm kiếm tiếp nhận<input type="search" disabled={blocked} placeholder="Tìm theo mã tiếp nhận, số thứ tự, ngày thực tập…" value={search} onChange={e => setSearch(e.target.value)} /></label>
+        {(filter || search) && <button type="button" className="secondary" disabled={blocked} onClick={() => { setFilter(''); setSearch(''); setPage(0); }}>Xóa bộ lọc</button>}
+      </div>
+      {!result.content.length && <p>Chưa có hồ sơ tiếp nhận trong nhóm trạng thái này.</p>}
+      {!!result.content.length && !visibleItems.length && <p>Không tìm thấy hồ sơ tiếp nhận khớp từ khóa tìm kiếm trên trang này.</p>}
+      {!school && <div className="proposal-table"><table><thead><tr><th>Tiếp nhận</th><th>Trạng thái</th><th>Thời gian thực tập</th><th>Thao tác</th></tr></thead>
+        <tbody>{visibleItems.map(({ item, seq }) => <tr key={item.placementId}>
+          <th scope="row">Tiếp nhận {seq} · {states[item.state] || item.state}</th>
+          <td><span className={'status-pill pill-' + item.state.toLowerCase()}>{states[item.state] || item.state}</span></td>
+          <td>{item.startDate} – {item.endDate}</td><td><div className="button-row">
+            <button className="secondary" disabled={blocked} aria-expanded={expandedPlacement === item.placementId}
+              onClick={() => setExpandedPlacement(old => old === item.placementId ? null : item.placementId)}>Xem chi tiết</button>
+            {['APPROVED', 'ACTIVE', 'COMPLETED'].includes(item.state) && <button className="secondary" disabled={blocked}
+              onClick={() => checkHandoff(item)}>Kiểm tra bàn giao sang không gian thực tập</button>}
+          </div></td>
+        </tr>)}</tbody></table></div>}
+      {visibleItems.filter(({ item }) => school || expandedPlacement === item.placementId).map(({ item, seq }) => {
+        const rank = stepRank(item.state);
+        const guide = statusGuides[item.state]?.[school ? 'school' : 'enterprise'];
+        const handoff = links[item.placementId];
+        return <article key={item.placementId} className={`placement-item-card state-${item.state.toLowerCase()}`}>
+          <div className="placement-card-header">
+            <div className="placement-title-group">
+              <span className="placement-seq-badge">#{seq}</span>
+              <h5>Tiếp nhận {seq} · {states[item.state] || item.state}</h5>
+            </div>
+            <span className={`status-pill pill-${item.state.toLowerCase()}`}>
+              <span className="pill-dot" />
+              {states[item.state] || item.state}
+            </span>
+          </div>
+          {item.state !== 'CANCELLED' && <ol className="placement-stepper" aria-label="Tiến trình vòng đời tiếp nhận">
+            {lifecycleSteps.map((step, idx) => <li key={step.key} className={`placement-step ${idx < rank ? 'step-done' : idx === rank ? 'step-current' : 'step-upcoming'}`}>
+              <span className="step-indicator">{idx < rank ? '✓' : idx + 1}</span>
+              <span className="step-label">{step.label}</span>
+            </li>)}
+          </ol>}
+          {guide && <div className={`placement-status-banner tone-${item.state.toLowerCase()}`} role="note">
+            <p>{guide}</p>
+          </div>}
+          <div className="placement-meta-grid">
+            <div className="placement-meta-item">
+              <span className="placement-meta-label">Khoảng thời gian thực tập</span>
+              <span className="placement-meta-value"><strong>{item.startDate}</strong> đến <strong>{item.endDate}</strong></span>
+            </div>
+            <div className="placement-meta-item">
+              <span className="placement-meta-label">Thời điểm có hiệu lực</span>
+              <span className="placement-meta-value">{new Date(item.effectiveAt).toLocaleString('vi-VN')}</span>
+            </div>
+            <div className="placement-meta-item">
+              <span className="placement-meta-label">Mã tiếp nhận · Phiên bản</span>
+              <span className="placement-meta-value"><code>{item.placementId.slice(0, 8)}…</code> · v{item.version}</span>
+            </div>
+          </div>
+          {school && <div className="button-row">
+            {item.state === 'PENDING_APPROVAL' && <button className="btn-action-approve" disabled={blocked} onClick={() => {setDecision({item, action: 'approve'});setReference('');setReason('SCHOOL_APPROVED');}}>Phê duyệt tiếp nhận</button>}
+            {item.state === 'APPROVED' && <button className="btn-action-activate" disabled={blocked || now < Date.parse(item.effectiveAt)} onClick={() => {setDecision({item, action: 'activate'});setReference('');setReason('START_REQUESTED');}}>Kích hoạt thực tập</button>}
+            {['PENDING_APPROVAL', 'APPROVED', 'ACTIVE'].includes(item.state) && <button className="secondary btn-action-cancel" disabled={blocked} onClick={() => {setDecision({item, action: 'cancel'});setReference('');setReason('');}}>Hủy tiếp nhận</button>}
+          </div>}
+          {item.state === 'APPROVED' && now < Date.parse(item.effectiveAt) && <p className="placement-time-warning">Chưa đến thời điểm kích hoạt. Hồ sơ chưa cho phép giao hoặc nộp nhiệm vụ thực tập.</p>}
+          {school && ['APPROVED', 'ACTIVE', 'COMPLETED'].includes(item.state) && <button className="secondary" disabled={blocked}
+            onClick={() => checkHandoff(item)}>Kiểm tra bàn giao sang không gian thực tập</button>}
+          {handoff && <WorkspaceHandoff link={handoff} placementId={item.placementId} effectiveAt={item.effectiveAt} locked={blocked} />}
+        </article>;
+      })}
       {result.totalPages > 1 && <div className="button-row"><button className="secondary" disabled={blocked || page === 0} onClick={() => setPage(n => n - 1)}>Trang tiếp nhận trước</button>
         <span>Trang {page + 1}/{result.totalPages}</span><button className="secondary" disabled={blocked || page + 1 >= result.totalPages} onClick={() => setPage(n => n + 1)}>Trang tiếp nhận sau</button></div>}
     </>}

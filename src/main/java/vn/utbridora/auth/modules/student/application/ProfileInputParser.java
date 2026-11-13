@@ -21,7 +21,8 @@ final class ProfileInputParser {
     static final Pattern UUID_FORMAT=Pattern.compile("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
     private static final Pattern DATE_FORMAT=Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
     private static final long MAX_VERSION=9_007_199_254_740_991L;
-    private static final JsonMapper JSON=JsonMapper.builder().build();
+    private static final JsonMapper JSON=JsonMapper.builder()
+        .enable(tools.jackson.databind.DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS).build();
     private static final Set<String> INPUT_KEYS=Set.of("expectedProfileVersion","termId","majorCode","skillsDeclared","skills",
         "customSkills","availabilityDeclared","availablePeriods","orientationCodes","subjectCodes","projects","certificates","cvFileId","phone");
     private static final Set<String> CANONICAL_KEYS=Set.of("skillCode","level","yearsPractice","note");
@@ -166,14 +167,14 @@ final class ProfileInputParser {
     }
     private BigDecimal decimal(Map<?,?> m,String path,String name) {
         if(!m.containsKey(name)) return null;
-        // Stored as DECIMAL(5,2), the precision T2 chose for years of practice (K.2 line 1845).
+        // BC11/K.2 permits nonnegative decimals without a wire precision/scale cap.
         if(m.get(name) instanceof Number number) {
             try {
                 BigDecimal value=new BigDecimal(number.toString());
-                if(value.signum()>=0 && value.compareTo(new BigDecimal("999.99"))<=0 && value.stripTrailingZeros().scale()<=2) return value;
+                if(value.signum()>=0) return value;
             } catch (NumberFormatException ignored) { /* Infinity/NaN from overflowing input; reported below */ }
         }
-        error(join(path,name),"Phải là số từ 0 đến 999,99, tối đa 2 chữ số thập phân."); return null;
+        error(join(path,name),"Phải là số không âm."); return null;
     }
     private Long version(Map<?,?> m,String name) {
         if(!m.containsKey(name)) return null;

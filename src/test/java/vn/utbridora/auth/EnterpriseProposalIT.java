@@ -380,15 +380,20 @@ class EnterpriseProposalIT {
     @Test void rejectsOtherEnterpriseAndMissingPermissionsAndCsrf() throws Exception {
         share();String other=key();
         jdbc.update("INSERT INTO organizations(id,name,type,status,created_at) VALUES(?,'Other enterprise','ENTERPRISE','VERIFIED',UTC_TIMESTAMP(6))",other);
-        jdbc.update("INSERT INTO memberships(id,user_id,organization_id,role,active,created_at) VALUES(?,?,?,'ENTERPRISE',true,UTC_TIMESTAMP(6))",key(),id(4),other);
-        assertEquals(404,http(hr,"GET",listPath(),null,other,null,true).statusCode());
-        assertEquals(404,http(hr,"GET",profilePath(),null,other,null,true).statusCode());
-        assertEquals(404,http(hr,"PATCH",decisionPath(),"{\"expectedVersion\":4,\"decision\":\"ACCEPT\"}",other,key(),true).statusCode());
-        assertEquals(403,http(student,"GET",listPath(),null,id(12),null,true).statusCode());
-        assertEquals(403,http(hr,"PATCH",decisionPath(),"{\"expectedVersion\":4,\"decision\":\"ACCEPT\"}",id(12),key(),false).statusCode());
-        jdbc.update("DELETE FROM role_permissions WHERE role='ENTERPRISE' AND permission_code='proposal:enterprise:decide'");
-        try {assertEquals(403,http(hr,"PATCH",decisionPath(),"{\"expectedVersion\":4,\"decision\":\"ACCEPT\"}",id(12),key(),true).statusCode());}
-        finally {jdbc.update("INSERT INTO role_permissions VALUES('ENTERPRISE','proposal:enterprise:decide')");}
+        try {
+            jdbc.update("INSERT INTO memberships(id,user_id,organization_id,role,active,created_at) VALUES(?,?,?,'ENTERPRISE',true,UTC_TIMESTAMP(6))",key(),id(4),other);
+            assertEquals(404,http(hr,"GET",listPath(),null,other,null,true).statusCode());
+            assertEquals(404,http(hr,"GET",profilePath(),null,other,null,true).statusCode());
+            assertEquals(404,http(hr,"PATCH",decisionPath(),"{\"expectedVersion\":4,\"decision\":\"ACCEPT\"}",other,key(),true).statusCode());
+            assertEquals(403,http(student,"GET",listPath(),null,id(12),null,true).statusCode());
+            assertEquals(403,http(hr,"PATCH",decisionPath(),"{\"expectedVersion\":4,\"decision\":\"ACCEPT\"}",id(12),key(),false).statusCode());
+            jdbc.update("DELETE FROM role_permissions WHERE role='ENTERPRISE' AND permission_code='proposal:enterprise:decide'");
+            try {assertEquals(403,http(hr,"PATCH",decisionPath(),"{\"expectedVersion\":4,\"decision\":\"ACCEPT\"}",id(12),key(),true).statusCode());}
+            finally {jdbc.update("INSERT INTO role_permissions VALUES('ENTERPRISE','proposal:enterprise:decide')");}
+        } finally {
+            jdbc.update("DELETE FROM memberships WHERE organization_id=?",other);
+            jdbc.update("DELETE FROM organizations WHERE id=?",other);
+        }
     }
     @Test void validatesDeclineExpiryAndRollsBackDecisionWhenAuditFails() throws Exception {
         share();String request="{\"expectedVersion\":4,\"decision\":\"DECLINE\",\"reasonCode\":\"SKILL_MISMATCH\"}";
@@ -538,6 +543,22 @@ class EnterpriseProposalIT {
         assertEquals(404,http(student,"GET",detail,null,null,null,true).statusCode());
         jdbc.update("UPDATE cooperations SET state='SUBMITTED' WHERE id=?",id);
         assertEquals(409,http(school,"PUT",publication,JSON.writeValueAsString(new CooperationService.Publication(window.publishedAt(),window.closedAt(),6L)),id(11),key(),true).statusCode());
+    }
+    @Test void portalOrganizationNamesAreLimitedToCurrentMemberships() throws Exception {
+        var enterpriseReply=http(hr,"GET","/cooperation/organizations?organizationId="+id(11),null,id(11),null,false);
+        assertEquals(200,enterpriseReply.statusCode(),enterpriseReply.body());
+        var enterpriseRows=JSON.readTree(enterpriseReply.body());assertEquals(1,enterpriseRows.size());
+        assertEquals(id(12),enterpriseRows.get(0).get("id").asString());
+        assertEquals(jdbc.queryForObject("SELECT name FROM organizations WHERE id=?",String.class,id(12)),enterpriseRows.get(0).get("name").asString());
+        assertFalse(enterpriseRows.get(0).has("status"));
+        var schoolReply=http(school,"GET","/cooperation/organizations",null,null,null,false);
+        assertEquals(200,schoolReply.statusCode(),schoolReply.body());
+        var schoolRows=JSON.readTree(schoolReply.body());assertEquals(1,schoolRows.size());
+        assertEquals(id(11),schoolRows.get(0).get("id").asString());
+        assertEquals(jdbc.queryForObject("SELECT name FROM organizations WHERE id=?",String.class,id(11)),schoolRows.get(0).get("name").asString());
+        assertEquals(0,JSON.readTree(http(student,"GET","/cooperation/organizations",null,null,null,false).body()).size());
+        var anonymous=HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create("http://localhost:"+port+"/api/v1/cooperation/organizations")).GET().build(),HttpResponse.BodyHandlers.ofString());
+        assertEquals(401,anonymous.statusCode());
     }
     @Test void browserUsesRealSchoolStudentEnterpriseSharingAndPlacementHandoff() throws Exception {
         Assumptions.assumeTrue(Boolean.getBoolean("t5.week3.browser"),"Enable -Dt5.week3.browser=true for the real-browser workflow");
@@ -864,4 +885,64 @@ class EnterpriseProposalIT {
         if(csrf)request.header(session.header(),session.token());if(body!=null)request.header("Content-Type","application/json");
         return session.client().send(request.method(method,body==null?HttpRequest.BodyPublishers.noBody():HttpRequest.BodyPublishers.ofString(body)).build(),HttpResponse.BodyHandlers.ofString());
     }
+
+    @Test void invitedReservationSurvivesOriginal24HoursAndAcceptanceStartsItsOwnWindow() {
+        var real=java.time.Clock.systemUTC();Instant start=real.instant();
+        try {
+            org.springframework.test.util.ReflectionTestUtils.setField(proposals,"clock",java.time.Clock.fixed(start.minusSeconds(25*3600),java.time.ZoneOffset.UTC));
+            jdbc.update("UPDATE proposal_items SET reservation_until=? WHERE id=?",java.sql.Timestamp.from(start.minusSeconds(3600)),f.proposalId());
+            var invitation=proposals.invite(as(2),f.proposalId(),key(),new ProposalService.Invite(1L,start.plusSeconds(3*86400)));
+            assertEquals(invitation.expiresAt(),proposals.item(f.proposalId()).reservationUntil());
+            var before=proposals.capacity(as(2),f.cooperation().cooperationId());
+            org.springframework.test.util.ReflectionTestUtils.setField(proposals,"clock",real);
+            assertEquals(before.openForNomination(),proposals.capacity(as(2),f.cooperation().cooperationId()).openForNomination());
+            proposals.decide(as(6),invitation.invitationId(),key(),new ProposalService.InvitationDecision("ACCEPT",1L,null,null));
+            assertTrue(proposals.item(f.proposalId()).reservationUntil().isAfter(start));
+            assertFalse(proposals.item(f.proposalId()).reservationUntil().isAfter(real.instant().plusSeconds(7*86400)));
+            assertEquals("ACCEPTED",proposals.item(f.proposalId()).state());
+        } finally {org.springframework.test.util.ReflectionTestUtils.setField(proposals,"clock",real);}
+    }
+    @Test void consentShortensReservationAndSystemExpiryIsIdempotent() {
+        var shared=share();var item=proposals.item(f.proposalId());
+        assertFalse(item.reservationUntil().isAfter(shared.consent().expiresAt()));
+        try {
+            org.springframework.test.util.ReflectionTestUtils.setField(proposals,"clock",java.time.Clock.fixed(item.reservationUntil().plusSeconds(1),java.time.ZoneOffset.UTC));
+            proposals.expireReservations(f.cooperation().cooperationId());
+            assertEquals("EXPIRED",proposals.item(f.proposalId()).state());
+            long version=proposals.item(f.proposalId()).version();
+            proposals.expireReservations(f.cooperation().cooperationId());
+            assertEquals(version,proposals.item(f.proposalId()).version());
+            assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM proposal_reservation_history WHERE proposal_id=? AND to_state='EXPIRED'",Integer.class,f.proposalId()));
+        } finally {org.springframework.test.util.ReflectionTestUtils.setField(proposals,"clock",java.time.Clock.systemUTC());}
+    }
+
+
+    @Test void expirationNeverReleasesAnExistingPendingPlacement() {
+        enterpriseAccepted();var placement=pending(Instant.now().plusSeconds(3600));
+        var before=proposals.item(f.proposalId());
+        try {
+            org.springframework.test.util.ReflectionTestUtils.setField(proposals,"clock",java.time.Clock.fixed(before.reservationUntil().plusSeconds(1),java.time.ZoneOffset.UTC));
+            proposals.expireReservations(f.cooperation().cooperationId());
+            assertEquals(before.version(),proposals.item(f.proposalId()).version());
+            assertEquals("PENDING_APPROVAL",currentPlacement(placement.placementId()).state());
+            assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM proposal_reservation_history WHERE proposal_id=? AND to_state='EXPIRED'",Integer.class,f.proposalId()));
+        } finally {org.springframework.test.util.ReflectionTestUtils.setField(proposals,"clock",java.time.Clock.systemUTC());}
+    }
+    @Test void populatedLegacyReservationBackfillPreservesInvitationDecisionAndReplaysSafely() throws Exception {
+        var invitation=proposals.invite(as(2),f.proposalId(),key(),new ProposalService.Invite(1L,null));
+        jdbc.update("UPDATE proposal_items SET reservation_until=DATE_ADD(UTC_TIMESTAMP(6),INTERVAL 24 HOUR) WHERE id=?",f.proposalId());
+        long before=proposals.item(f.proposalId()).version();
+        var resource=new org.springframework.core.io.ClassPathResource("db/migration/main/V36__proposal_reservation_lifecycle.sql");
+        String sql=new String(resource.getInputStream().readAllBytes(),java.nio.charset.StandardCharsets.UTF_8);
+        String dml=sql.substring(sql.indexOf("INSERT INTO proposal_reservation_history"));
+        var populator=new org.springframework.jdbc.datasource.init.ResourceDatabasePopulator(new org.springframework.core.io.ByteArrayResource(dml.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        populator.execute(jdbc.getDataSource());
+        assertEquals(invitation.expiresAt(),proposals.item(f.proposalId()).reservationUntil());
+        assertEquals(before+1,proposals.item(f.proposalId()).version());
+        assertEquals("PENDING",proposals.readMine(as(6),invitation.invitationId()).state());
+        assertEquals(invitation.version(),proposals.readMine(as(6),invitation.invitationId()).version());
+        populator.execute(jdbc.getDataSource());assertEquals(before+1,proposals.item(f.proposalId()).version());
+        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM proposal_reservation_history WHERE proposal_id=? AND actor_kind='SYSTEM'",Integer.class,f.proposalId()));
+    }
+
 }

@@ -21,7 +21,7 @@ function invitationLabel(item: SchoolProposal) {
   if (item.state === 'EXPIRED') return 'Hết hạn';
   return 'Sinh viên đã đồng ý';
 }
-export function SchoolProposals({ org, cooperationId, demand }: { org: string; cooperationId: string; demand?: Demand }) {
+export function SchoolProposals({ org, cooperationId, demand, includePlacement = true }: { org: string; cooperationId: string; demand?: Demand; includePlacement?: boolean }) {
   const [page, setPage] = useState(0), [revision, setRevision] = useState(0), [error, setError] = useState(''), [loading, setLoading] = useState(true);
   const [result, setResult] = useState<ContractPage<SchoolProposal> | null>(null), [capacity, setCapacity] = useState<Capacity | null>(null);
   const [pending, setPending] = useState<Set<string>>(new Set()), [notice, setNotice] = useState('');
@@ -49,8 +49,15 @@ export function SchoolProposals({ org, cooperationId, demand }: { org: string; c
       .finally(() => { if (!c.signal.aborted) setLoading(false); });
     return () => c.abort();
   }, [org, cooperationId, page, revision, state]);
-  return <section className="proposal-workspace" aria-label="Tiến trình đề xuất"><h3>Tiến trình đề xuất và chỉ tiêu</h3>
-    <Notice message={error} tone="error" /><p role="status">{notice}</p><button className="secondary" disabled={loading || pending.size > 0} onClick={() => setRevision(n => n + 1)}>Tải lại tiến trình</button>
+  return <section className="proposal-workspace" aria-label="Tiến trình đề xuất">
+    <div className="placement-header-bar">
+      <div>
+        <span className="portal-eyebrow">ĐỀ XUẤT VÀ CHIA SẺ HỒ SƠ</span>
+        <h3>Tiến trình đề xuất và chỉ tiêu</h3>
+      </div>
+      <button className="secondary" disabled={loading || pending.size > 0} onClick={() => setRevision(n => n + 1)}>Tải lại tiến trình</button>
+    </div>
+    <Notice message={error} tone="error" /><p role="status">{notice}</p>
     {loading && <p role="status">Đang tải tiến trình…</p>}
     {capacity && <dl className="proposal-capacity"><div><dt>Chỉ tiêu tuyển</dt><dd>{capacity.quantity}</dd></div>
       <div><dt>Đang giữ chỗ</dt><dd>{capacity.activeReservations}</dd></div><div><dt>Đã nhận (chốt thực tập)</dt><dd>{capacity.placedCount}</dd></div>
@@ -76,7 +83,7 @@ export function SchoolProposals({ org, cooperationId, demand }: { org: string; c
       </tr>)}</tbody></table></div>}
     {result && result.totalPages > 1 && <div className="button-row"><button className="secondary" disabled={page === 0 || loading || pending.size > 0} onClick={() => setPage(n => n - 1)}>Trang tiến trình trước</button>
       <span>Trang {page + 1}/{result.totalPages}</span><button className="secondary" disabled={page + 1 >= result.totalPages || loading || pending.size > 0} onClick={() => setPage(n => n + 1)}>Trang tiến trình sau</button></div>}
-    {demand && <PlacementWorkspace org={org} school cooperationId={cooperationId} demand={demand} candidates={result?.content || []}
+    {demand && includePlacement && <PlacementWorkspace org={org} school cooperationId={cooperationId} demand={demand} candidates={result?.content || []}
       locked={pending.size > 0 && !pending.has('placement')} pendingChanged={active => markPending('placement', active)} changed={() => setRevision(n => n + 1)} />}
     <PublicationEditor key={org + cooperationId} org={org} cooperationId={cooperationId} />
   </section>;

@@ -50,12 +50,18 @@ public class AccountTokenService {
     @Transactional
     public void acceptInvitation(String raw,String displayName,String password) {
         PasswordPolicy.requireValid(password);
+        var candidate=tokens.findByTokenHashAndPurpose(TokenCodec.hash(raw),Purpose.INVITATION)
+            .orElseThrow(()->new IllegalArgumentException("Invalid or expired token"));
+        var mentor=mentorActivation==null?null:mentorActivation.getIfAvailable();
+        if(mentor!=null) mentor.lockPendingIdentity(candidate.email);
+        var existing=users.findByEmailForUpdate(candidate.email).orElse(null);
         OneTimeToken token=valid(raw,Purpose.INVITATION);
-        if(users.existsByEmailIgnoreCase(token.email)) throw new IllegalStateException("Invitation no longer valid");
-        UserAccount user=new UserAccount();user.email=token.email;user.passwordHash=encoder.encode(password);
+        if(existing!=null && (existing.status!=AccountStatus.PENDING_ACTIVATION || mentor==null
+            || !mentor.permitsPendingIdentity(token.id,token.email,existing.id))) throw new IllegalStateException("Invitation no longer valid");
+        UserAccount user=existing==null?new UserAccount():existing;user.email=token.email;user.passwordHash=encoder.encode(password);
         user.displayName=displayName.trim();user.status=AccountStatus.ACTIVE;
         users.save(user);
-        Membership member=new Membership();member.userId=user.id;member.role=token.inviteRole;
+        Membership member=memberships.findByUserIdAndOrganizationIdAndRole(user.id,token.organizationId,token.inviteRole).orElseGet(Membership::new);member.active=true;member.userId=user.id;member.role=token.inviteRole;
         member.organizationId=token.organizationId;memberships.save(member);
         token.consumedAt=Instant.now();
         users.flush();memberships.flush();

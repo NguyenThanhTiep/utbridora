@@ -276,7 +276,7 @@ def run(output=None):
     report=dict(date='2026-11-05',checkedAtUtc=datetime.now(timezone.utc).isoformat(),
                 scope='DEV: schema/static/pure fixture checks; not runtime of new modules or Tester acceptance',
                 sourceCommit=subprocess.check_output(['git','-c','safe.directory='+str(ROOT).replace('\\','/'),'rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
-                packVersion='1.1',candidateApproval='NOT_RECORDED',baseApproval=manifest['baseApproval'],
+                packVersion='1.1',candidateApproval=manifest['candidateApproval'],baseApproval=manifest['baseApproval'],
                 counts=dict(schemas=len(bundle['$defs']),examples=len(examples),regressionCases=len(regression),checks=len(results),passed=passed,failed=len(results)-passed),
                 results=results,sourceHashes=manifest['sourceHashes'],contractHash=manifest['currentContractHash'],
                 toolHashes={str(p.relative_to(ROOT)).replace('\\','/'):digest(p) for p in sorted((ROOT/'scripts/contracts').glob('*')) if p.is_file()},

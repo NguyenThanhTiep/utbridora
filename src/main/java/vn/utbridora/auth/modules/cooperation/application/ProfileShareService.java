@@ -61,7 +61,7 @@ public class ProfileShareService {
             String shareId=UUID.randomUUID().toString();var result=new Share(shareId,nextShareVersion,request.consentId(),request.expectedConsentVersion(),item.studentUserId(),c.schoolOrgId(),c.termId(),c.enterpriseOrgId(),id,"INTERNSHIP_SELECTION",List.copyOf(request.fieldWhitelist()),now,request.expiresAt(),null,actor(auth));
             // Renewing privacy access must not reset the enterprise's existing acceptance.
             String nextState=firstShare ? "SHARED" : item.state();
-            jdbc.update("INSERT INTO profile_shares VALUES(?,?,?,?)",shareId,id,result.consentId(),JSON.writeValueAsString(result));jdbc.update("UPDATE proposal_items SET state=?,version=version+1,share_id=? WHERE id=?",nextState,shareId,id);
+            jdbc.update("INSERT INTO profile_shares VALUES(?,?,?,?)",shareId,id,result.consentId(),JSON.writeValueAsString(result));jdbc.update("UPDATE proposal_items SET state=?,version=version+1,share_id=?,reservation_until=LEAST(reservation_until,?) WHERE id=?",nextState,shareId,utc(consent.validUntil()),id);
             audit.workflow(actor(auth),"PROFILE_SHARED",shareId,c.schoolOrgId(),Map.of("consentId",result.consentId(),"consentVersion",result.consentVersion(),"shareVersion",result.shareVersion(),"fieldCodes",result.fieldWhitelist(),"expiresAt",result.expiresAt().toString()));return result;
         },Share::shareId);
     }

@@ -11,7 +11,7 @@ test('school publication, student preference and matching use real T5 and T2 pro
     await page.goto('/'); await page.getByLabel('Email', { exact: true }).fill(email);
     await page.getByLabel('Mật khẩu', { exact: true }).fill(process.env.E2E_PASSWORD!);
     await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Tài khoản của tôi', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Đăng xuất', exact: true })).toBeVisible();
   }
   function localTime(date: Date) { return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16); }
   let original: { profileVersion: number; profile: Record<string, unknown> } | null = null;
@@ -26,8 +26,8 @@ test('school publication, student preference and matching use real T5 and T2 pro
   }
   try {
     await login(school, 'school@example.test'); await login(student, 'student@example.test');
-    await school.getByRole('button', { name: 'Hợp tác doanh nghiệp', exact: true }).click();
-    await school.getByLabel('Nhà trường').selectOption('00000000-0000-4000-8000-000000000011');
+    await school.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Duyệt hợp tác', exact: true }).click();
+    await school.getByLabel('Nhà trường đang làm việc', { exact: true }).selectOption('00000000-0000-4000-8000-000000000011');
     const cooperationPanel = school.locator('section.panel').filter({ has: school.getByRole('heading', { name: 'Đề nghị hợp tác', exact: true }) });
     let positionInList = -1;
     for (let page = 0; page < 100; page++) {
@@ -77,6 +77,7 @@ test('school publication, student preference and matching use real T5 and T2 pro
     student.once('dialog', dialog => void dialog.accept());
     await preference.getByRole('button', { name: 'Rút nguyện vọng', exact: true }).click();
     await expect(preference.getByText('Đã rút', { exact: true })).toBeVisible();
+    await school.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Đối chiếu hồ sơ', exact: true }).click();
     const matching = school.locator('.matching-workspace');
     // The picker uses Cooperation identity; evaluate derives the authoritative demandId.
     await matching.getByLabel('Nhu cầu đã duyệt').selectOption(coop);

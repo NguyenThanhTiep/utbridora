@@ -12,6 +12,7 @@ export function Icon({ name, size = 20, className = '' }: { name: string; size?:
     lock: <><rect x="5" y="10" width="14" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3" /></>,
     key: <><circle cx="8" cy="9" r="5" /><path d="m12 13 8 8m-2-2 3-3m-6 0 3-3" /></>,
     mail: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></>,
+    bell: <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></>,
     search: <><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></>,
     filter: <><path d="M4 7h16M7 12h10M10 17h4" /><circle cx="8" cy="7" r="1" fill="currentColor" /><circle cx="15" cy="12" r="1" fill="currentColor" /></>,
     plus: <path d="M12 5v14M5 12h14" />,

@@ -1,5 +1,11 @@
 # Contract và ma trận quyền
 
+## Cập nhật quyết định ngày 13/11/2026
+
+Người dùng đã xác nhận **SRS v1.2.4 và Contract Pack v1.1 được duyệt làm căn cứ triển khai**. Quyết định gắn với SRS SHA-256 `92efaaec4efb66bfe0fa69e5de6a706476f93f58f808575982b9d95662438bd4` và Contract v1.1 SHA-256 `805b2db30c7a9d4acd76c3d4ed93eeefa149d121a9848f846441294101c68012`. Tên Candidate và các ghi chú chưa duyệt bên trong snapshot là trạng thái lịch sử, không yêu cầu người dùng duyệt lại hai phiên bản này. Nội dung/hash snapshot giữ nguyên; bản ghi này cập nhật trạng thái quyết định, không thay các kết quả QA/Lead hoặc xác nhận code đã hoàn thành mọi yêu cầu. Các thay đổi nội dung tài liệu sau hai hash này cần được quản lý riêng.
+
+Các bảng/ghi chú bên dưới giữ bối cảnh review ban đầu. Manifest/checker nay ghi trạng thái duyệt thực tế theo quyết định trên.
+
 | Tài liệu | Mục đích | Trạng thái |
 |---|---|---|
 | [Contract Pack B01–B06 v1.1 Candidate](UTBridora_Contract_Pack_B01_B06_v1.1_Candidate.md) | Bản hiệu chỉnh kỹ thuật, Data Dictionary và schema kiểm được bằng máy | DEV review hoàn tất trong phạm vi báo cáo; diff v1.1 chưa tự được phê duyệt |

@@ -16,7 +16,7 @@ import { MentorInvitations } from './modules/internship/pages/MentorInvitations'
 import './modules/workflows.css';
 // DEV08 đã nối màn hình danh mục kỹ năng vào khung ứng dụng hiện có để người kiểm thử mở được giao diện US-T4-06.
 import { SkillTaxonomy } from './modules/taxonomy';
-import { DemandWorkspace, SchoolWorkspace, canAuthorDemands, canLeaveDemand } from './modules/cooperation';
+import { DemandWorkspace, SchoolWorkspace, PortalNavigation, portalPageTitle, canAuthorDemands, canLeaveDemand, type PortalPage } from './modules/cooperation';
 import { SchoolDelegations } from './modules/delegations/SchoolDelegations';
 
 const screens = [
@@ -44,11 +44,20 @@ function initials(name: string) {
   return (words.length > 1 ? words[0][0] + words[words.length - 1][0] : words[0]?.slice(0, 2) || 'UB').toUpperCase();
 }
 
+function defaultPortalSide(grants: Grant[]): 'enterprise' | 'school' | null {
+  if (grants.some(grant => (grant.role === 'ADMIN' && grant.organizationId === null)
+    || (grant.role === 'STUDENT' && !!grant.organizationId))) return null;
+  const enterprise = grants.some(canAuthorDemands);
+  const school = grants.some(grant => grant.role === 'SCHOOL_STAFF' && !!grant.organizationId);
+  return enterprise === school ? null : enterprise ? 'enterprise' : 'school';
+}
+
 export default function App() {
   const [me, setMe] = useState<Me | null>(null);
   const [grants, setGrants] = useState<Grant[]>([]);
   const [initializing, setInitializing] = useState(true);
   const [screen, setScreen] = useState('account');
+  const [portalPage, setPortalPage] = useState<PortalPage>('overview');
   const [caseId, setCaseId] = useState(() => /^\/workspace\/cases\/([0-9a-f-]{36})$/i.exec(location.pathname)?.[1] || '');
   const [studentTab, setStudentTab] = useState<StudentResponseTab>('invitations');
   const [authScreen, setAuthScreen] = useState(location.pathname === '/reset-password' ? 'reset'
@@ -70,11 +79,16 @@ export default function App() {
     : item.id === 'delegations' ? permissions.has('membership:admin:write') || grants.some(g => g.role === 'SCHOOL_STAFF' && g.permissions.includes('school:delegation:manage'))
     : item.permission === null || (item.id === 'taxonomy' ? grants.some(grant => grant.permissions.includes('taxonomy:skills:read')) : (item.group === 'student' ? schools.length > 0 : permissions.has(item.permission))));
   const current = screens.find(item => item.id === screen) || screens[0];
+  const rolePortalSide = defaultPortalSide(grants);
+  const portalScreen = screen === 'demands' || screen === 'school';
+  const portalSide = screen === 'demands' ? 'enterprise' : screen === 'school' ? 'school' : rolePortalSide;
+  const portalEntry = portalSide === 'enterprise' ? 'demands' : 'school';
+  const screenTitle = portalSide && portalScreen ? portalPageTitle(portalSide, portalPage) : current.title;
 
   useEffect(() => {
     const authTitles: Record<string, string> = { login: 'Đăng nhập', forgot: 'Quên mật khẩu', reset: 'Đặt lại mật khẩu', activate: 'Kích hoạt tài khoản' };
-    document.title = (me ? current.title : authTitles[authScreen] || 'Không gian kết nối') + ' | UT.Bridora';
-  }, [me?.userId, screen, authScreen]);
+    document.title = (me ? screenTitle : authTitles[authScreen] || 'Không gian kết nối') + ' | UT.Bridora';
+  }, [me?.userId, screenTitle, authScreen]);
 
   useEffect(() => {
     let active = true;
@@ -86,9 +100,10 @@ export default function App() {
         const effective = await api<Grant[]>('/auth/me/permissions');
         if (active && generation.current === currentGeneration) {
           setMe(user); setGrants(effective);
-          if (location.pathname.startsWith('/workspace/cases/')) {
-            setScreen('internship-case');
-          }
+          const side = defaultPortalSide(effective);
+          setScreen(location.pathname.startsWith('/workspace/cases/') ? 'internship-case'
+            : side === 'enterprise' ? 'demands' : side === 'school' ? 'school' : 'account');
+          setPortalPage('overview');
         }
       } catch (error) {
         if (active && !(error instanceof ApiError && error.status === 401)) action.setMessage('Không thể tải phiên. Vui lòng thử đăng nhập lại.');
@@ -101,7 +116,7 @@ export default function App() {
     };
     const onNavigate = (event: Event) => {
       const target = (event as CustomEvent<string>).detail;
-      if (target && canLeaveDemand()) { setScreen(target); setMobileOpen(false); }
+      if (target && canLeaveDemand()) { setScreen(target); setPortalPage('overview'); setMobileOpen(false); }
     };
     window.addEventListener('session-expired', expired);
     window.addEventListener('bridora:navigate', onNavigate);
@@ -141,7 +156,14 @@ export default function App() {
 
   const navigate = (next: string) => { if (next !== screen && !canLeaveDemand()) return;
     if (next !== 'internship-case' && caseId) {setCaseId('');history.replaceState(null, '', '/');}
+    if (next !== screen) setPortalPage(next === 'demands' ? 'demands' : 'overview');
     setScreen(next); setMobileOpen(false); };
+  const navigatePortal = (next: PortalPage) => {
+    if (!canLeaveDemand()) return;
+    if (caseId) { setCaseId(''); history.replaceState(null, '', '/'); }
+    setScreen(portalEntry);
+    setPortalPage(next);setMobileOpen(false);
+  };
   const signOut = async () => {
     if (!canLeaveDemand()) return;
     await logout(); generation.current += 1;
@@ -151,7 +173,10 @@ export default function App() {
   const signedIn = async (user: Me) => {
     const effective = await api<Grant[]>('/auth/me/permissions');
     generation.current += 1;
-    setGrants(effective); setMe(user); setScreen(caseId ? 'internship-case' : 'account'); setContext('0'); setSessionMessage('');
+    const side = defaultPortalSide(effective);
+    setGrants(effective); setMe(user);
+    setScreen(caseId ? 'internship-case' : side === 'enterprise' ? 'demands' : side === 'school' ? 'school' : 'account');
+    setPortalPage('overview'); setContext('0'); setSessionMessage('');
   };
   const navigateAuth = (next: string) => { setAuthScreen(next); action.setMessage(''); setSessionMessage(''); };
 
@@ -174,15 +199,16 @@ export default function App() {
     <button className="text-button full" disabled={action.busy} onClick={() => { setToken(''); setAuthScreen('login'); history.replaceState(null, '', '/'); }}>Về tài khoản của tôi</button>
   </AuthLayout>;
 
-  return <div className="workspace">
+  return <div className={'workspace' + (portalSide ? ' workspace-t5' : '') + (portalScreen ? ' workspace-t5-portal' : '')}>
     <a className="skip-link" href="#main-content">Bỏ qua điều hướng</a>
     {mobileOpen && <button className="sidebar-backdrop" aria-label="Đóng phần nền menu" onClick={() => setMobileOpen(false)} tabIndex={-1} />}
     <aside className={'sidebar' + (mobileOpen ? ' is-open' : '')} ref={sidebar} id="main-navigation">
-      <div className="sidebar-brand"><a href="/" aria-label="UT.Bridora trang chủ"><Brand /></a>
+      <div className="sidebar-brand"><a href="/" aria-label="UT.Bridora trang chủ"><Brand inverse={!!portalSide} /></a>
         <button className="btn-icon sidebar-close" aria-label="Đóng menu điều hướng" onClick={() => setMobileOpen(false)}><Icon name="close" /></button></div>
       <nav aria-label="Điều hướng chính">
-        <p className="nav-group-label">KHÔNG GIAN CỦA BẠN</p>
-        {menus.filter(item => ['account', 'mentor-invitations', 'internship', 'demands', 'school', 'taxonomy'].includes(item.id)).map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
+        {portalSide && <PortalNavigation side={portalSide} page={portalScreen ? portalPage : undefined} navigate={navigatePortal} />}
+        <p className="nav-group-label">{portalSide ? 'TÀI KHOẢN & TIỆN ÍCH' : 'KHÔNG GIAN CỦA BẠN'}</p>
+        {menus.filter(item => ['account', 'mentor-invitations', 'internship', 'demands', 'school', 'taxonomy'].includes(item.id) && (!portalSide || item.id !== portalEntry)).map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
           aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
         {menus.some(item => item.group === 'student') && <p className="nav-group-label student-nav-group">SINH VIÊN</p>}
         {menus.filter(item => item.group === 'student').map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
@@ -195,14 +221,14 @@ export default function App() {
         <div className="sidebar-user"><span className="avatar">{initials(me.displayName)}</span><div><b>{me.displayName}</b><small>{me.email}</small></div></div>
         <button className="sidebar-logout" disabled={action.busy} onClick={() => void action.run(signOut)}><Icon name="logout" size={18} />Đăng xuất</button>
       </div>
-      <p className="sidebar-caption">Nhà trường · Doanh nghiệp · Sinh viên</p>
+      {!portalSide && <p className="sidebar-caption">Nhà trường · Doanh nghiệp · Sinh viên</p>}
     </aside>
 
     <div className="workspace-main">
       <header className="topbar">
         <div className="topbar-location"><button className="btn-icon menu-toggle" ref={menuButton} aria-label="Mở menu điều hướng"
           aria-expanded={mobileOpen} aria-controls="main-navigation" onClick={() => setMobileOpen(previous => !previous)}><Icon name="menu" /></button>
-          <span className="topbar-home"><Icon name="layers" size={17} />Không gian làm việc</span><Icon name="chevron-right" size={14} /><span className="topbar-current">{current.title}</span></div>
+          <span className="topbar-home"><Icon name="layers" size={17} />Không gian làm việc</span><Icon name="chevron-right" size={14} /><span className="topbar-current">{screenTitle}</span></div>
         <div className="topbar-right"><span className="topbar-date"><Icon name="calendar" size={16} />{new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Bangkok' }).format(new Date())}</span>
           <button className="profile-shortcut" aria-label="Mở tài khoản của tôi" onClick={() => navigate('account')}><span className="avatar avatar-small">{initials(me.displayName)}</span><span>{me.displayName}</span><Icon name="chevron-down" size={14} /></button></div>
       </header>
@@ -228,8 +254,8 @@ export default function App() {
           : screen === 'mentor-invitations' ? <MentorInvitations />
           // DEV08 hiển thị mô-đun danh mục kỹ năng trong khung ứng dụng hiện có để người kiểm thử bắt đầu kiểm tra giao diện.
           : screen === 'taxonomy' ? <SkillTaxonomy />
-          : screen === 'demands' ? <DemandWorkspace key={me.userId} grants={grants} />
-          : screen === 'school' ? <SchoolWorkspace grants={grants} />
+          : screen === 'demands' ? <DemandWorkspace key={me.userId} grants={grants} page={portalPage} onNavigate={navigatePortal} viewerId={me.userId} />
+          : screen === 'school' ? <SchoolWorkspace key={me.userId} grants={grants} page={portalPage} onNavigate={navigatePortal} viewerId={me.userId} />
           : <AccountOverview me={me} grants={grants} context={context} setContext={setContext}
             signedOut={() => { generation.current += 1; setMe(null); setGrants([]); setAuthScreen('login'); setSessionMessage('Đổi mật khẩu thành công. Vui lòng đăng nhập lại.'); }} />}
         <footer className="app-footer"><span>© {new Date().getFullYear()} UT.Bridora</span><span>Kết nối giáo dục với cơ hội nghề nghiệp.</span></footer>
