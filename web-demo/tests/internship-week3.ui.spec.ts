@@ -170,10 +170,16 @@ test('T3-09 HR can read but has no submission, review or comment mutation contro
 test('T3-09 comments append through API and unsafe submission URLs never become links', async ({ page }) => {
   const server = await setup(page, 'SUBMITTED'); server.submissions[0].url = 'javascript:alert(1)'; await openTask(page);
   await expect(page.getByRole('link', { name: 'Mở URL bản v1' })).toHaveCount(0);
-  await page.getByLabel('Nội dung trao đổi').fill('Trao đổi mới'); await page.getByRole('button', { name: 'Gửi trao đổi', exact: true }).click();
-  await expect(page.getByText('Trao đổi mới', { exact: true })).toBeVisible();
+  await page.getByLabel('Nội dung trao đổi').fill('Trao đổi mới');
+  const appended = page.waitForResponse(response => response.url().endsWith('/comments') && response.request().method() === 'POST');
+  await page.getByRole('button', { name: 'Gửi trao đổi', exact: true }).click();
+  expect((await appended).status()).toBe(201);
+  expect(server.comments).toHaveLength(1);
+  // The typed textarea text is not proof that the POST and subsequent list read completed.
+  const savedComment = page.locator('article p.t3-preserve-text').filter({ hasText: /^Trao đổi mới$/ });
+  await expect(savedComment).toBeVisible();
   await page.reload(); await page.getByRole('button', { name: 'Nhiệm vụ tuần 3', exact: true }).click();
-  await expect(page.getByText('Trao đổi mới', { exact: true })).toBeVisible();
+  await expect(savedComment).toBeVisible();
 });
 
 test('T3-09 denied mutation clears private data and drafts; session revocation closes workspace', async ({ page }) => {

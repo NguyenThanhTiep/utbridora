@@ -52,6 +52,10 @@ test('school publication, student preference and matching use real T5 and T2 pro
     const opportunity = await (await student.request.get(`/api/v1/opportunities/${coop}`)).json();
     expect(opportunity.opportunityId).toBe(coop);
     await student.getByRole('button', { name: 'Cơ hội thực tập', exact: true }).click();
+    await expect(student.getByRole('heading', { name: 'Cơ hội đang mở', exact: true })).toBeVisible();
+    await expect(student.getByText('Đang tải học kỳ…', { exact: true })).toHaveCount(0);
+    const termPicker = student.getByLabel('Học kỳ', { exact: true });
+    if (await termPicker.count()) await termPicker.selectOption(term);
     const card = student.locator('li.student-list-item').filter({ has: student.getByRole('heading', { name: opportunity.title, exact: true }) });
     // Scope the card by the real opportunity order when several synthetic demands have the same title.
     const all = await (await student.request.get(`/api/v1/opportunities?termId=${term}&page=0&size=25`)).json();
