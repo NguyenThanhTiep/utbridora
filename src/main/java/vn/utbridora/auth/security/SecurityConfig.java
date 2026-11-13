@@ -65,6 +65,7 @@ public class SecurityConfig {
                .requestMatchers(HttpMethod.GET,"/api/v1/students/me/profile","/api/v1/students/me/catalogs").authenticated()
                .requestMatchers(HttpMethod.PUT,"/api/v1/students/me/profile").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/demands").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/demand-references/schools","/api/v1/enterprise/demand-references/terms","/api/v1/enterprise/demand-references/academic-catalog").authenticated()
                .requestMatchers(HttpMethod.POST,"/api/v1/enterprise/demands").authenticated()
                .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/demands/{id}").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/verifications","/api/v1/enterprise/verifications/*","/api/v1/school/verifications","/api/v1/school/verifications/*").authenticated()
@@ -81,6 +82,18 @@ public class SecurityConfig {
                .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/cooperations/*/submit","/api/v1/enterprise/cooperations/*/reopen","/api/v1/school/cooperations/*/decision").authenticated()
                .requestMatchers(HttpMethod.DELETE,"/api/v1/school/delegations/*","/api/v1/t3/context-assignments/*").authenticated()
                .requestMatchers(HttpMethod.PATCH,"/api/v1/t3/assignments/*/status").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/cooperations/*/proposals","/api/v1/enterprise/proposals/*/profile","/api/v1/opportunities","/api/v1/opportunities/*").authenticated()
+               .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/proposals/*/decision").authenticated()
+               .requestMatchers(HttpMethod.PUT,"/api/v1/school/cooperations/*/publication").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/school/cooperations/*/publication").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/school/cooperations/*/nomination-candidates").authenticated()
+               // T5-07 Placement state machine (both CP-T5UI1 header-based and path-variable routes)
+               .requestMatchers(HttpMethod.POST,"/api/v1/school/placements","/api/v1/school/*/placements",
+                   "/api/v1/placements/*/approve","/api/v1/placements/*/activate","/api/v1/placements/*/cancel").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/school/placements","/api/v1/school/placements/summary","/api/v1/school/placements/*/internship-link",
+                   "/api/v1/enterprise/placements","/api/v1/enterprise/placements/summary","/api/v1/enterprise/placements/*/internship-link",
+                   "/api/v1/school/*/placements","/api/v1/school/*/placements/summary","/api/v1/school/*/placements/*/internship-link",
+                   "/api/v1/enterprise/*/placements","/api/v1/enterprise/*/placements/summary","/api/v1/enterprise/*/placements/*/internship-link").authenticated()
                .anyRequest().denyAll())
            .exceptionHandling(ex->ex
                .authenticationEntryPoint((req,res,error)->{

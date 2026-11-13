@@ -16,6 +16,7 @@ import vn.utbridora.auth.modules.cooperation.application.*;
 import vn.utbridora.auth.modules.matching.application.MatchingService;
 import vn.utbridora.auth.modules.student.application.StudentProfileService;
 import vn.utbridora.auth.operations.OperationFailure;
+import static vn.utbridora.auth.operations.WorkflowValues.JSON;
 
 /** Dedicated database; synthetic week-1 seed is a prerequisite, never workflow acceptance evidence. */
 @SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT,properties={"app.demo.local.enabled=true","DEMO_PASSWORD=Synthetic-week2-test-password-123",
@@ -92,7 +93,8 @@ class Week2WorkflowIT {
         var item=proposals.list(as(2),approved.cooperationId(),0,25).content().getFirst();
         var share=shares.grant(as(2),item.proposalItemId(),key(),new ProfileShareService.GrantProfileShare(item.proposalItemId(),grantConsent.consentId(),grantConsent.consentVersion(),item.version(),List.of("majorCode","skills"),grantConsent.expiresAt()));
         var projection=shares.read(as(4),id(6),id(21),share.shareId(),List.of("majorCode","skills","email"),"INTERNSHIP_SELECTION");
-        assertEquals(Set.of("majorCode","skills"),projection.data().keySet());assertFalse(projection.data().containsKey("email"));
+        var projected=JSON.readTree(JSON.writeValueAsString(projection.data()));
+        assertEquals(Set.of("majorCode","skills"),new HashSet<>(projected.propertyNames()));assertFalse(projected.has("email"));
         consents.revoke(as(6),grantConsent.consentId(),key(),new vn.utbridora.auth.modules.student.application.StudentConsentService.Revoke(1L,"STUDENT_REVOKED"));
         final var enterprise=as(4);assertEquals(403,assertThrows(OperationFailure.class,()->shares.read(enterprise,id(6),id(21),share.shareId(),List.of("majorCode"),"INTERNSHIP_SELECTION")).status);
         assertEquals(placements,jdbc.queryForObject("SELECT COUNT(*) FROM placements",Integer.class));
@@ -263,7 +265,7 @@ class Week2WorkflowIT {
         ProcessBuilder builder=windows?new ProcessBuilder("cmd.exe","/c","npm.cmd run test:e2e -- week2-runtime.spec.ts"):new ProcessBuilder("npm","run","test:e2e","--","week2-runtime.spec.ts");
         builder.directory(new java.io.File("web-demo"));builder.environment().put("API_PROXY_TARGET","http://localhost:"+port);builder.environment().put("E2E_WEEK2","true");builder.environment().put("E2E_PASSWORD","Synthetic-week2-test-password-123");builder.environment().put("E2E_REPORT_FILE","../target/week2-browser-results.xml");
         builder.redirectErrorStream(true).redirectOutput(new java.io.File("target/week2-browser.log"));var process=builder.start();
-        if(!process.waitFor(180,java.util.concurrent.TimeUnit.SECONDS)) {process.descendants().forEach(child->child.destroyForcibly());process.destroyForcibly();fail("Browser timeout; see target/week2-browser.log");}
-        assertEquals(0,process.exitValue(),"See target/week2-browser.log");
+        if(!process.waitFor(240,java.util.concurrent.TimeUnit.SECONDS)) {process.descendants().forEach(child->child.destroyForcibly());process.destroyForcibly();fail("Browser timeout; see target/week2-browser.log");}
+        assertEquals(0,process.exitValue(),()->{try{return java.nio.file.Files.readString(java.nio.file.Path.of("target/week2-browser.log"));}catch(Exception e){return "See target/week2-browser.log";}});
     }
 }

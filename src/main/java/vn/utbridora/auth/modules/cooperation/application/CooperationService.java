@@ -27,10 +27,62 @@ public class CooperationService {
     public record Submitted(DemandDto demand,CooperationDto cooperation) {}
     public record ReviewDetail(DemandDto demand,CooperationDto cooperation,Decision feedback) {}
     public record SubmissionHistory(int submissionNo,Instant submittedAt,long demandVersion,long criteriaVersion,int quantitySnapshot,String decision,Instant decidedAt,String reasonCode,String decisionRef) {}
+    public record Publication(Instant publishedAt,Instant closedAt,Long expectedVersion) {}
+    public record PublicationView(String cooperationId,Instant publishedAt,Instant closedAt,long version) {}
+    public record OpportunityView(String opportunityId,String cooperationId,String demandId,String schoolOrgId,String enterpriseOrgId,String termId,String enterpriseName,String title,List<String> majorCodes,DateRange dateRange,String benefits,String location,Instant publishedAt,Instant closedAt,long version) {}
+    private final vn.utbridora.auth.student.StudentTermLinkService studentTerms;
     private final JdbcTemplate jdbc;private final DemandRepository demands;private final DemandReferencePort refs;
     private final AuthorizationPolicy core;private final SchoolDelegationAccess scope;private final OperationLedger ledger;private final AuditService audit;
-    public CooperationService(JdbcTemplate jdbc,DemandRepository demands,DemandReferencePort refs,AuthorizationPolicy core,SchoolDelegationAccess scope,OperationLedger ledger,AuditService audit) {
+    public CooperationService(JdbcTemplate jdbc,DemandRepository demands,DemandReferencePort refs,AuthorizationPolicy core,SchoolDelegationAccess scope,OperationLedger ledger,AuditService audit,vn.utbridora.auth.student.StudentTermLinkService studentTerms) {
         this.jdbc=jdbc;this.demands=demands;this.refs=refs;this.core=core;this.scope=scope;this.ledger=ledger;this.audit=audit;
+        this.studentTerms=studentTerms;
+    }
+    @Transactional public PublicationView publication(Authentication auth,String school,String id) {
+        var c=owned(id,uuid(school),true);scope.require(auth,school,c.termId(),"opportunity:school:publish");
+        return publicationOf(c);
+    }
+    @Transactional public OpportunityView publish(Authentication auth,String school,String id,String key,Publication request) {
+        var before=owned(id,uuid(school),true);scope.require(auth,school,before.termId(),"opportunity:school:publish");
+        version(request.expectedVersion());period(request.publishedAt(),request.closedAt());
+        return ledger.execute(new OperationLedger.Command(actor(auth),school,"OPPORTUNITY_PUBLISH",key,Map.of("id",id,"request",request),200),OpportunityView.class,()->{
+            var c=read(id);
+            if(c.version()!=request.expectedVersion()) throw failure(409,"VERSION_CONFLICT");
+            if(!"APPROVED".equals(c.state())) throw failure(409,"STATE_CONFLICT");
+            jdbc.update("UPDATE cooperations SET published_at=?,closed_at=?,version=version+1 WHERE id=?",utc(request.publishedAt()),utc(request.closedAt()),id);
+            var result=opportunityProjection("c.id=?",id).stream().findFirst().orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
+            audit.workflow(actor(auth),"OPPORTUNITY_PUBLICATION_CHANGED",id,school,Map.of("publishedAt",request.publishedAt().toString(),"closedAt",request.closedAt().toString(),"version",result.version(),"operation",request.closedAt().isAfter(Instant.now())?"PUBLISH":"CLOSE"));
+            return result;
+        },OpportunityView::cooperationId);
+    }
+    @Transactional public Page<OpportunityView> opportunities(Authentication auth,String term,String query,String major,String enterprise,int page,int size) {
+        page(page,size);uuid(term);if(query!=null) text(query,150);
+        if(major!=null) text(major,64);if(enterprise!=null) uuid(enterprise);
+        String school=jdbc.queryForList("SELECT school_org_id FROM terms WHERE id=?",String.class,term).stream().findFirst().orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
+        studentScope(auth,school,term);
+        var visible=opportunityRows("c.school_org_id=? AND c.term_id=? AND (? IS NULL OR c.enterprise_org_id=?)",school,term,enterprise,enterprise).stream()
+            .filter(v->major==null || v.majorCodes().contains(major))
+            .filter(v->query==null || (v.title()+" "+v.enterpriseName()).toLowerCase(Locale.ROOT).contains(query.strip().toLowerCase(Locale.ROOT))).toList();
+        int from=Math.min(page*size,visible.size());
+        return new Page<>(visible.subList(from,Math.min(from+size,visible.size())),page,size,visible.size(),(visible.size()+size-1)/size);
+    }
+    @Transactional public OpportunityView opportunity(Authentication auth,String id) {
+        var result=opportunityRows("c.id=?",uuid(id)).stream().findFirst().orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
+        studentScope(auth,result.schoolOrgId(),result.termId());return result;
+    }
+    private void studentScope(Authentication auth,String school,String term) {
+        if(!core.holdOrganization(auth,school,Role.STUDENT,"student_profile:self:read") || !studentTerms.linked(actor(auth),school,term)) throw failure(404,"RESOURCE_NOT_FOUND");
+    }
+    private PublicationView publicationOf(CooperationDto c) {
+        return jdbc.queryForObject("SELECT published_at,closed_at FROM cooperations WHERE id=?",(r,n)->new PublicationView(c.cooperationId(),instant(r,"published_at"),instant(r,"closed_at"),c.version()),c.cooperationId());
+    }
+    private List<OpportunityView> opportunityRows(String filter,Object... args) {
+        return opportunityProjection("c.published_at<=UTC_TIMESTAMP(6) AND UTC_TIMESTAMP(6)<c.closed_at AND "+filter,args);
+    }
+    private List<OpportunityView> opportunityProjection(String filter,Object... args) {
+        return jdbc.query("SELECT c.*,d.data_json,o.name AS enterprise_name FROM cooperations c JOIN demands d ON d.id=c.demand_id JOIN organizations o ON o.id=c.enterprise_org_id WHERE c.state='APPROVED' AND d.soft_deleted_at IS NULL AND "+filter+" ORDER BY c.published_at DESC,c.id",(r,n)->{
+            var d=JSON.readValue(r.getString("data_json"),DemandInput.class);
+            return new OpportunityView(r.getString("id"),r.getString("id"),r.getString("demand_id"),r.getString("school_org_id"),r.getString("enterprise_org_id"),r.getString("term_id"),r.getString("enterprise_name"),d.title(),d.required().majorCodes(),d.required().dateRange(),d.benefits(),d.location(),instant(r,"published_at"),instant(r,"closed_at"),r.getLong("version"));
+        },args);
     }
     @Transactional public CooperationDto create(Authentication auth,String org,String key,Submit request) {
         enterprise(auth,org);uuid(request.demandId());version(request.expectedDemandVersion());

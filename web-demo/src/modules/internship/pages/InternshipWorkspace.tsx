@@ -26,8 +26,9 @@ function Failure({ error, retry }: { error: unknown; retry: () => void }) {
   </div>;
 }
 
-export function InternshipWorkspace({ me, grants, gateway = liveWorkspaceGateway }: {
-  me: Me; grants: Grant[]; gateway?: WorkspaceGateway;
+type CaseTarget = { caseId: string; schoolOrgId: string; enterpriseOrgId: string; termId: string; contextAssignmentId?: string };
+export function InternshipWorkspace({ me, grants, gateway = liveWorkspaceGateway, initialCase }: {
+  me: Me; grants: Grant[]; gateway?: WorkspaceGateway; initialCase?: CaseTarget;
 }) {
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<ReadState<ContextAssignment[]>>({ status: 'loading' });
@@ -37,10 +38,16 @@ export function InternshipWorkspace({ me, grants, gateway = liveWorkspaceGateway
     const controller = new AbortController();
     setState({ status: 'loading' }); setSelectedId('');
     void gateway.readAssignments(controller.signal).then(value => {
-      if (!controller.signal.aborted) { setNow(Date.now()); setState({ status: 'ready', value }); }
+      if (!controller.signal.aborted) {
+        setNow(Date.now()); setState({ status: 'ready', value });
+        if (initialCase) setSelectedId(usableAssignments(value, me, grants, Date.now()).find(a =>
+          (!initialCase.contextAssignmentId || a.id === initialCase.contextAssignmentId)
+          && a.scope.schoolOrgId === initialCase.schoolOrgId && a.scope.enterpriseOrgId === initialCase.enterpriseOrgId
+          && a.scope.termId === initialCase.termId)?.id || '');
+      }
     }).catch(error => { if (!controller.signal.aborted) setState({ status: 'error', error }); });
     return () => controller.abort();
-  }, [gateway, me.userId, attempt]);
+  }, [gateway, me.userId, attempt, initialCase, grants]);
   // Expiry invalidates the displayed group without waiting for another click.
   useEffect(() => {
     if (state.status !== 'ready') return;
@@ -83,24 +90,31 @@ export function InternshipWorkspace({ me, grants, gateway = liveWorkspaceGateway
         </div>}
     </section>
     {selected && <AssignmentWorkspace key={selected.id + ':' + selected.version + ':' + attempt}
-      assignment={selected} gateway={gateway} reset={refresh} />}
+      assignment={selected} gateway={gateway} reset={refresh} initialCaseId={initialCase?.caseId} />}
   </div>;
 }
 
-function AssignmentWorkspace({ assignment, gateway, reset }: {
-  assignment: WorkspaceAssignment; gateway: WorkspaceGateway; reset: () => void;
+function AssignmentWorkspace({ assignment, gateway, reset, initialCaseId }: {
+  assignment: WorkspaceAssignment; gateway: WorkspaceGateway; reset: () => void; initialCaseId?: string;
 }) {
   const [state, setState] = useState<ReadState<Cohort[]>>({ status: 'loading' });
   const [cohortId, setCohortId] = useState('');
   useEffect(() => {
     const controller = new AbortController();
-    void gateway.readCohorts(assignment, controller.signal).then(value => {
+    void gateway.readCohorts(assignment, controller.signal).then(async value => {
       if (controller.signal.aborted) return;
       if (value.some(cohort => !cohortInScope(cohort, assignment))) throw new WorkspaceScopeError();
       setState({ status: 'ready', value });
+      if (initialCaseId) {
+        for (const cohort of value) {
+          const groups = await gateway.readGroups(assignment, cohort, controller.signal);
+          if (controller.signal.aborted) return;
+          if (groups.some(group => groupInScope(group, cohort, assignment) && group.caseIds.includes(initialCaseId))) {setCohortId(cohort.cohortId);break;}
+        }
+      }
     }).catch(error => { if (!controller.signal.aborted) setState({ status: 'error', error }); });
     return () => controller.abort();
-  }, [assignment, gateway]);
+  }, [assignment, gateway, initialCaseId]);
   const cohort = state.status === 'ready' ? state.value.find(item => item.cohortId === cohortId) : undefined;
   return <section className="panel">
     <div className="section-heading"><div><p className="section-kicker">{assignment.kind === 'HR' ? 'KHÔNG GIAN HR' : 'KHÔNG GIAN MENTOR'}</p>
@@ -113,12 +127,12 @@ function AssignmentWorkspace({ assignment, gateway, reset }: {
           <option value="">Chọn đợt thực tập…</option>
           {state.value.map(item => <option key={item.cohortId} value={item.cohortId}>{item.code} — {item.name}</option>)}
         </select></div>}
-    {cohort && <GroupWorkspace key={cohort.cohortId + ':' + cohort.version} assignment={assignment} cohort={cohort} gateway={gateway} reset={reset} />}
+    {cohort && <GroupWorkspace key={cohort.cohortId + ':' + cohort.version} assignment={assignment} cohort={cohort} gateway={gateway} reset={reset} initialCaseId={initialCaseId} />}
   </section>;
 }
 
-function GroupWorkspace({ assignment, cohort, gateway, reset }: {
-  assignment: WorkspaceAssignment; cohort: Cohort; gateway: WorkspaceGateway; reset: () => void;
+function GroupWorkspace({ assignment, cohort, gateway, reset, initialCaseId }: {
+  assignment: WorkspaceAssignment; cohort: Cohort; gateway: WorkspaceGateway; reset: () => void; initialCaseId?: string;
 }) {
   const [state, setState] = useState<ReadState<InternshipGroup[]>>({ status: 'loading' });
   const [groupId, setGroupId] = useState('');
@@ -128,9 +142,10 @@ function GroupWorkspace({ assignment, cohort, gateway, reset }: {
       if (controller.signal.aborted) return;
       if (value.some(group => !groupInScope(group, cohort, assignment))) throw new WorkspaceScopeError();
       setState({ status: 'ready', value });
+      if (initialCaseId) setGroupId(value.find(group => group.caseIds.includes(initialCaseId))?.groupId || '');
     }).catch(error => { if (!controller.signal.aborted) setState({ status: 'error', error }); });
     return () => controller.abort();
-  }, [assignment, cohort, gateway]);
+  }, [assignment, cohort, gateway, initialCaseId]);
   const selected = state.status === 'ready' ? state.value.find(item => item.groupId === groupId) : undefined;
   return <div className="internship-groups">
     {state.status === 'loading' ? <LoadingState label="Đang tải nhóm được phân công…" />

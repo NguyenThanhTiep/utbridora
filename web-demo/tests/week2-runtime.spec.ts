@@ -2,9 +2,9 @@ import { test, expect, type Browser } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 test('week 2 skills, cooperation, consent and tasks use real authenticated APIs', async ({ browser }) => {
   test.skip(process.env.E2E_WEEK2 !== 'true', 'Run from Week2WorkflowIT on isolated MySQL');
-  test.setTimeout(150000);
+  test.setTimeout(180000);
   const actor = async (browser: Browser, email: string) => {
-    const context = await browser.newContext(), page = await context.newPage(); await page.goto('/');
+    const context = await browser.newContext(), page = await context.newPage(); page.setDefaultTimeout(15000); await page.goto('/');
     await page.getByLabel('Email', { exact: true }).fill(email); await page.getByLabel('Mật khẩu', { exact: true }).fill(process.env.E2E_PASSWORD!);
     await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Tài khoản của tôi', exact: true })).toBeVisible();
@@ -15,7 +15,9 @@ test('week 2 skills, cooperation, consent and tasks use real authenticated APIs'
   await student.page.getByRole('button', { name: 'Thông tin chung', exact: true }).click();
   await expect(student.page.getByRole('heading', { name: 'Kỹ năng và mức hoàn thiện hồ sơ' })).toBeVisible();
   const note = student.page.getByLabel('Ghi chú', { exact: true }).first(); await note.fill('W2 browser preserved skill note');
+  const savedSkills = student.page.waitForResponse(r => r.url().includes('/api/v1/students/me/profile') && r.request().method() === 'PUT');
   await student.page.getByRole('button', { name: 'Lưu kỹ năng', exact: true }).click();
+  expect((await savedSkills).ok()).toBe(true);
   await expect(student.page.getByRole('button', { name: 'Lưu kỹ năng', exact: true })).toBeEnabled();
   await student.page.reload(); await student.page.getByRole('button', { name: 'Thông tin chung', exact: true }).click();
   await expect(student.page.getByLabel('Ghi chú', { exact: true }).first()).toHaveValue('W2 browser preserved skill note');

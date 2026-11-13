@@ -3,6 +3,7 @@ import { api, send, login, logout, whoAmI, ApiError, type Me, type Grant } from 
 import { Brand, EmptyState, Field, Icon, Notice, useAction, roleNames, permissionNames } from './components';
 import { UserManagement, OrganizationManagement, AuditViewer } from './management';
 import { InternshipWorkspace } from './modules/internship/pages/InternshipWorkspace';
+import { CaseEntry } from './modules/internship/pages/CaseEntry';
 import { canDiscoverWorkspace } from './modules/internship/access';
 
 import { studentGrants } from './modules/student/access';
@@ -18,6 +19,7 @@ import { DemandWorkspace, SchoolWorkspace, canAuthorDemands, canLeaveDemand } fr
 import { SchoolDelegations } from './modules/delegations/SchoolDelegations';
 
 const screens = [
+  { id: 'internship-case', title: 'Hồ sơ thực tập', description: 'Hồ sơ trong phạm vi được phân công.', icon: 'briefcase', permission: null },
   { id: 'school', title: 'Hợp tác doanh nghiệp', description: 'Không gian phối hợp thực tập dành cho nhà trường.', icon: 'building', permission: null },
   { id: 'account', title: 'Tài khoản của tôi', description: 'Thông tin cá nhân, vai trò và bảo mật tài khoản.', icon: 'grid', permission: null },
   { id: 'mentor-invitations', title: 'Lời mời hướng dẫn', description: 'Xem và chấp thuận phân công hướng dẫn thực tập.', icon: 'mail', permission: null },
@@ -44,6 +46,7 @@ export default function App() {
   const [grants, setGrants] = useState<Grant[]>([]);
   const [initializing, setInitializing] = useState(true);
   const [screen, setScreen] = useState('account');
+  const [caseId, setCaseId] = useState(() => /^\/workspace\/cases\/([0-9a-f-]{36})$/i.exec(location.pathname)?.[1] || '');
   const [authScreen, setAuthScreen] = useState(location.pathname === '/reset-password' ? 'reset'
     : location.pathname === '/accept-invitation' ? 'activate' : 'login');
   const [token, setToken] = useState(() => new URLSearchParams(location.hash.slice(1)).get('token') || '');
@@ -57,7 +60,7 @@ export default function App() {
   const action = useAction();
   const permissions = new Set(grants.filter(grant => grant.role === 'ADMIN' && grant.organizationId === null).flatMap(grant => grant.permissions));
   const schools = studentGrants(grants);
-  const menus = screens.filter(item => item.id === 'internship' ? !!me && canDiscoverWorkspace(me)
+  const menus = screens.filter(item => item.id === 'internship-case' ? !!caseId : item.id === 'internship' ? !!me && canDiscoverWorkspace(me)
     : item.id === 'school' ? grants.some(grant => grant.role === 'SCHOOL_STAFF' && !!grant.organizationId)
     : item.id === 'demands' ? grants.some(canAuthorDemands)
     : item.id === 'delegations' ? permissions.has('membership:admin:write') || grants.some(g => g.role === 'SCHOOL_STAFF' && g.permissions.includes('school:delegation:manage'))
@@ -77,7 +80,12 @@ export default function App() {
       try {
         const user = await whoAmI();
         const effective = await api<Grant[]>('/auth/me/permissions');
-        if (active && generation.current === currentGeneration) { setMe(user); setGrants(effective); }
+        if (active && generation.current === currentGeneration) {
+          setMe(user); setGrants(effective);
+          if (location.pathname.startsWith('/workspace/cases/')) {
+            setScreen('internship-case');
+          }
+        }
       } catch (error) {
         if (active && !(error instanceof ApiError && error.status === 401)) action.setMessage('Không thể tải phiên. Vui lòng thử đăng nhập lại.');
       } finally { if (active) setInitializing(false); }
@@ -87,8 +95,13 @@ export default function App() {
       setMe(null); setGrants([]); setMobileOpen(false); setAuthScreen('login');
       setSessionMessage('Phiên đã hết hạn hoặc bị thu hồi. Vui lòng đăng nhập lại.');
     };
+    const onNavigate = (event: Event) => {
+      const target = (event as CustomEvent<string>).detail;
+      if (target && canLeaveDemand()) { setScreen(target); setMobileOpen(false); }
+    };
     window.addEventListener('session-expired', expired);
-    return () => { active = false; window.removeEventListener('session-expired', expired); };
+    window.addEventListener('bridora:navigate', onNavigate);
+    return () => { active = false; window.removeEventListener('session-expired', expired); window.removeEventListener('bridora:navigate', onNavigate); };
   }, []);
 
   useEffect(() => {
@@ -122,17 +135,19 @@ export default function App() {
     };
   }, [mobileOpen]);
 
-  const navigate = (next: string) => { if (next !== screen && !canLeaveDemand()) return; setScreen(next); setMobileOpen(false); };
+  const navigate = (next: string) => { if (next !== screen && !canLeaveDemand()) return;
+    if (next !== 'internship-case' && caseId) {setCaseId('');history.replaceState(null, '', '/');}
+    setScreen(next); setMobileOpen(false); };
   const signOut = async () => {
     if (!canLeaveDemand()) return;
     await logout(); generation.current += 1;
-    setMe(null); setGrants([]); setContext('0'); setMobileOpen(false);
+    setMe(null); setGrants([]); setContext('0'); setMobileOpen(false);setCaseId('');
     setAuthScreen('login'); setSessionMessage(''); history.replaceState(null, '', '/');
   };
   const signedIn = async (user: Me) => {
     const effective = await api<Grant[]>('/auth/me/permissions');
     generation.current += 1;
-    setGrants(effective); setMe(user); setScreen('account'); setContext('0'); setSessionMessage('');
+    setGrants(effective); setMe(user); setScreen(caseId ? 'internship-case' : 'account'); setContext('0'); setSessionMessage('');
   };
   const navigateAuth = (next: string) => { setAuthScreen(next); action.setMessage(''); setSessionMessage(''); };
 
@@ -199,6 +214,7 @@ export default function App() {
           : screen === 'organizations' ? <OrganizationManagement permissions={permissions} />
           : screen === 'audit' ? <AuditViewer />
           : screen === 'delegations' ? <SchoolDelegations key={me.userId} grants={grants} />
+          : screen === 'internship-case' ? <CaseEntry key={me.userId + caseId} caseId={caseId} me={me} grants={grants} />
           : screen === 'internship' ? <InternshipWorkspace key={me.userId} me={me} grants={grants} />
           : screen === 'student-overview' ? <StudentOverviewPage me={me} schools={schools} openProfile={() => navigate('student-profile')} />
           : screen === 'student-profile' ? <MyProfilePage me={me} schools={schools} />

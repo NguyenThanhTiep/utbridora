@@ -1,9 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { api } from '../../api';
 import { Notice } from '../../components';
 import { newIdempotencyKey } from '../student/api';
 import type { ContractPage } from '../student/types';
 import type { Demand } from './types';
+import { EnterpriseProposals } from './proposals/EnterpriseProposals';
+import { SchoolProposals } from './proposals/SchoolProposals';
+import { PlacementWorkspace } from './proposals/PlacementWorkspace';
+import { EnterpriseMatchingSummary } from './proposals/EnterpriseMatchingSummary';
 type Cooperation = { cooperationId: string; demandId: string; state: string; version: number; submissionNo: number; termId: string };
 type VerificationInput = { schoolOrgId: string; previousVerificationId: string | null; registrationCode: string; registeredName: string; address: string; contactName: string; contactEmail: string; contactPhone: string; evidenceFileIds: string[] };
 type Verification = { verificationId: string; state: string; version: number; data: VerificationInput; missingFields: string[]; decisionRef: string | null };
@@ -32,6 +36,10 @@ export function CooperationFlows({ org, school }: { org: string; school: boolean
       {school && detail.cooperation.state === 'SUBMITTED' && <ReviewDecision busy={action.busy} fields={['title', 'description', 'quantity', 'required', 'preferred', 'deadline']} submit={data => action.command('/school/cooperations/' + detail.cooperation.cooperationId + '/decision', 'PATCH', { expectedVersion: detail.cooperation.version, ...data })} />}
       {!school && ['DRAFT', 'NEEDS_CHANGES'].includes(detail.cooperation.state) && <button disabled={action.busy} onClick={() => void action.command('/enterprise/cooperations/' + detail.cooperation.cooperationId + '/submit', 'PATCH', { expectedVersion: detail.cooperation.version, expectedDemandVersion: detail.demand.version })}>Gửi lại đề nghị hợp tác</button>}
       {!school && detail.cooperation.state === 'REJECTED' && <button disabled={action.busy} onClick={() => void action.command('/enterprise/cooperations/' + detail.cooperation.cooperationId + '/reopen', 'PATCH', { expectedVersion: detail.cooperation.version, reasonCode: 'ENTERPRISE_REOPENED' })}>Mở lại bản nháp để bổ sung</button>}
+      {detail.cooperation.state === 'APPROVED' && (school
+        ? <SchoolProposals key={org + detail.cooperation.cooperationId} org={org} cooperationId={detail.cooperation.cooperationId} demand={detail.demand} />
+        : <div key={org + detail.cooperation.cooperationId}><EnterpriseMatchingSummary key={org + detail.demand.demandId + ':' + detail.demand.version} org={org} demand={detail.demand} /><EnterpriseProposals org={org} cooperationId={detail.cooperation.cooperationId} />
+          <PlacementWorkspace org={org} school={false} cooperationId={detail.cooperation.cooperationId} demand={detail.demand} /></div>)}
     </article>}
   </section>;
 }

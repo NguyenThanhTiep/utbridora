@@ -12,6 +12,14 @@ import static vn.utbridora.auth.operations.WorkflowValues.body;
 public class CooperationController {
     private final CooperationService service;
     public CooperationController(CooperationService service) {this.service=service;}
+    @GetMapping("/opportunities")
+    public Page<OpportunityView> opportunities(Authentication a,@RequestParam String termId,@RequestParam(required=false) String q,@RequestParam(required=false) String majorCode,@RequestParam(required=false) String enterpriseOrgId,@RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="25") int size) {return service.opportunities(a,termId,q,majorCode,enterpriseOrgId,page,size);}
+    @GetMapping("/opportunities/{id}")
+    public OpportunityView opportunity(Authentication a,@PathVariable String id) {return service.opportunity(a,id);}
+    @GetMapping("/school/cooperations/{id}/publication")
+    public PublicationView publication(Authentication a,@RequestHeader("X-Organization-Id") String org,@PathVariable String id) {return service.publication(a,org,id);}
+    @PutMapping("/school/cooperations/{id}/publication")
+    public OpportunityView publish(Authentication a,@RequestHeader("X-Organization-Id") String org,@PathVariable String id,@RequestHeader("Idempotency-Key") String key,@RequestBody String data) {return service.publish(a,org,id,key,body(data,Publication.class));}
     @PostMapping("/enterprise/cooperations") @ResponseStatus(HttpStatus.CREATED)
     public CooperationDto create(Authentication a,@RequestHeader("X-Organization-Id") String org,@RequestHeader("Idempotency-Key") String key,@RequestBody String data) {return service.create(a,org,key,body(data,Submit.class));}
     @PostMapping("/enterprise/demands/submit-with-cooperation")

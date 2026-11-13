@@ -7,6 +7,7 @@ import { demandInput, initialForm, skillRow, type FormData } from './form';
 import { failureMessage } from './errors';
 import { SkillFields } from './SkillFields';
 import { SkillCatalogPicker } from './SkillCatalogPicker';
+import { DemandReferenceFields } from './DemandReferenceFields';
 
 export function DemandEditor({ organizationId, existing, onBusy, onUnconfirmed, onClose, onSaved }: {
   organizationId: string; existing: Demand | null; onBusy: (value: boolean) => void;
@@ -82,16 +83,15 @@ export function DemandEditor({ organizationId, existing, onBusy, onUnconfirmed, 
     }
   };
   const locked = busy || retry;
-  const uuidPattern = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}';
   return <section className="panel cooperation-editor" aria-labelledby={prefix + '-title'}>
     <h2 id={prefix + '-title'} tabIndex={-1} ref={titleRef}>{existing ? 'Sửa bản nháp nhu cầu' : 'Tạo bản nháp nhu cầu'}</h2>
     <p className="section-description">Điền thông tin tuyển dụng, chọn tiêu chí rồi lưu bản nháp. Lưu nháp chưa gửi yêu cầu hợp tác.</p>
-    <Notice message="Nếu đang chạy DEMO, dùng nút chọn trường và kỳ bên dưới. Với dữ liệu chính thức, nhập mã và phiên bản được cung cấp. Kỹ năng có thể chọn từ danh mục ở phần tiêu chí." />
+    <p className="field-hint">Chọn trường, kỳ thực tập và phiên bản danh mục từ dữ liệu hiện có. Kỹ năng có thể chọn ở phần tiêu chí.</p>
     <form ref={formRef} onSubmit={event => void submit(event)} aria-busy={busy}>
       <fieldset disabled={locked} className="cooperation-fields"><legend>Thông tin nhu cầu</legend>
+        <DemandReferenceFields org={organizationId} form={form} existing={!!existing} fieldError={fieldError}
+          change={values => setForm(previous => ({ ...previous, ...values }))} />
         <div className="cooperation-form-grid">
-          <Field error={fieldError('schoolOrgId')} label="Mã trường (UUID)" value={form.schoolOrgId} onChange={value => set('schoolOrgId', value)} pattern={uuidPattern} disabled={!!existing} />
-          <Field error={fieldError('termId')} label="Mã kỳ thực tập (UUID)" value={form.termId} onChange={value => set('termId', value)} pattern={uuidPattern} disabled={!!existing} />
           <Field error={fieldError('title')} label="Tên nhu cầu" value={form.title} onChange={value => set('title', value)} maxLength={200} />
           <Field error={fieldError('quantity')} label="Số lượng vị trí" value={form.quantity} onChange={value => set('quantity', value)} type="number" min={1} max={5000} step={1} />
           <Field error={fieldError('deadline')} label="Hạn tuyển" value={form.deadline} onChange={value => set('deadline', value)} type="datetime-local" step={1} hint="Theo múi giờ trên thiết bị; được lưu thành thời điểm UTC." />
@@ -121,12 +121,6 @@ export function DemandEditor({ organizationId, existing, onBusy, onUnconfirmed, 
       </fieldset>
       <fieldset disabled={locked} className="cooperation-fields"><legend>Tiêu chí ưu tiên</legend>
         <SkillFields error={fieldError('preferred')} label="Ưu tiên" rows={form.preferred} change={rows => set('preferred', rows)} />
-      </fieldset>
-      <fieldset disabled={locked} className="cooperation-fields"><legend>Phiên bản danh mục</legend>
-        <div className="cooperation-form-grid">
-          <Field error={fieldError('academicCatalogVersion')} label="Phiên bản danh mục học vụ" value={form.academicCatalogVersion} onChange={value => set('academicCatalogVersion', value)} maxLength={64} />
-          <Field error={fieldError('taxonomyVersion')} label="Phiên bản danh mục kỹ năng" value={form.taxonomyVersion} onChange={value => set('taxonomyVersion', value)} maxLength={64} />
-        </div>
       </fieldset>
       <Notice message={error} tone="error" />
       {fieldErrors.length > 0 && <ul className="cooperation-field-errors" aria-label="Chi tiết thông tin chưa hợp lệ">{fieldErrors.map((message, index) => <li key={index}>{message}</li>)}</ul>}

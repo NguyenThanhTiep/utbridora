@@ -14,7 +14,7 @@ import vn.utbridora.auth.modules.cooperation.domain.DemandFailure;
 import vn.utbridora.auth.modules.cooperation.domain.DemandModels.FieldError;
 
 @Order(-100)
-@RestControllerAdvice(assignableTypes=DemandController.class)
+@RestControllerAdvice(assignableTypes={DemandController.class,DemandReferenceController.class})
 public class DemandErrorHandler {
     public record ErrorBody(String errorCode,String error,String message,String requestId,List<FieldError> fieldErrors,Integer retryAfterSeconds) {}
     @ExceptionHandler(DemandFailure.class)
@@ -22,6 +22,7 @@ public class DemandErrorHandler {
         return response(failure.status(),failure.code(),failure.getMessage(),failure.fields(),request);
     }
     @ExceptionHandler({org.springframework.web.bind.MissingRequestHeaderException.class,
+            org.springframework.web.bind.MissingServletRequestParameterException.class,
             org.springframework.http.converter.HttpMessageNotReadableException.class,
             org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class})
     ResponseEntity<ErrorBody> schema(Exception failure,HttpServletRequest request) {

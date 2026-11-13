@@ -1,11 +1,19 @@
 .workflow-surface { min-width: 0; }
-.workflow-surface fieldset { min-width: 0; margin: 18px 0; padding: 12px 16px 18px; border: 1px solid var(--line); border-radius: 10px; }
-.workflow-surface legend { max-width: 100%; padding: 0 6px; overflow-wrap: anywhere; }
-.workflow-surface label:has(> input[type="checkbox"]) { display: flex; align-items: flex-start; gap: 10px; font-weight: 500; }
+.workflow-surface > h2 { margin-bottom: 14px; }
+.workflow-surface > .secondary { margin-bottom: 14px; }
+.workflow-surface fieldset { min-width: 0; margin: 18px 0; padding: 16px 18px 20px; border: 1px solid #d9e5ec; border-radius: 12px; background: #fbfdfe; }
+.workflow-surface legend { max-width: 100%; padding: 0 8px; font-weight: 650; color: var(--ink); overflow-wrap: anywhere; }
+.workflow-surface label:has(> input[type="checkbox"]) { display: flex; align-items: flex-start; gap: 10px; font-weight: 500; margin-top: 10px; }
 .workflow-surface input[type="checkbox"] { width: 18px; height: 18px; min-height: 18px; flex: 0 0 18px; margin: 3px 0 0; padding: 0; accent-color: var(--brand); }
 .workflow-surface textarea { display: block; width: 100%; min-height: 110px; margin-top: 7px; padding: 12px; font: inherit; border: 1px solid var(--line); border-radius: 8px; resize: vertical; }
 .workflow-surface p, .workflow-surface li { overflow-wrap: anywhere; }
+.workflow-surface p + p { margin-top: 6px; }
 .workflow-surface button { max-width: 100%; white-space: normal; }
-.workflow-surface article + article { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--line); }
+.workflow-surface > article { padding: 18px 20px; margin: 14px 0; border: 1px solid #dfe8ee; border-radius: 12px; background: #fbfdfe; transition: border-color .15s, box-shadow .15s; }
+.workflow-surface > article:hover { border-color: #c5d8e2; box-shadow: 0 3px 12px rgba(20, 48, 64, .04); }
+.workflow-surface > article h3 { font-size: var(--text-lg); margin-bottom: 8px; color: var(--ink); }
+.workflow-surface > article p { color: #395465; font-size: var(--text-sm); line-height: 1.65; }
+.workflow-surface > article > button, .workflow-surface > article > .button-row { margin-top: 12px; }
+.workflow-surface > .button-row { margin: 14px 0; align-items: center; }
 .workflow-surface article .text-button { text-align: left; overflow-wrap: anywhere; }
-@media (max-width: 700px) { .workflow-surface fieldset { padding: 10px; } }
+@media (max-width: 700px) { .workflow-surface fieldset { padding: 12px; } .workflow-surface > article { padding: 14px; } }
