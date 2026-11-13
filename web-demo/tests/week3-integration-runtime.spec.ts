@@ -74,8 +74,8 @@ test('school publication, student preference and matching use real T5 and T2 pro
     await preference.getByRole('button', { name: 'Rút nguyện vọng', exact: true }).click();
     await expect(preference.getByText('Đã rút', { exact: true })).toBeVisible();
     const matching = school.locator('.matching-workspace');
-    const cooperation = await detailResponse.json();
-    await matching.getByLabel('Nhu cầu đã duyệt').selectOption(cooperation.demand.demandId);
+    // The picker uses Cooperation identity; evaluate derives the authoritative demandId.
+    await matching.getByLabel('Nhu cầu đã duyệt').selectOption(coop);
     const evaluated = school.waitForResponse(r => r.url().endsWith('/matching/evaluate') && r.request().method() === 'POST');
     await matching.getByRole('button', { name: 'Chạy Matching', exact: true }).click();
     const firstResponse = await evaluated; expect(firstResponse.ok()).toBeTruthy(); const first = await firstResponse.json();
