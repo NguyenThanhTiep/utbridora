@@ -51,8 +51,17 @@ test('week 3 school, student and enterprise use real share, decision, Placement 
     await panel.getByRole('button', {name: 'Nhận lời mời', exact: true}).click();await expect(panel.getByRole('button', {name: 'Rút nhận lời', exact: true})).toBeVisible();
     await hr.page.getByRole('button', {name: 'Tải lại ứng viên', exact: true}).click();await expect(hr.page.getByText('Chưa có hồ sơ được chia sẻ hợp lệ.', {exact: true})).toBeVisible();
     await panel.getByRole('checkbox', {name: 'Kỹ năng', exact: true}).check();
+    const granted = student.page.waitForResponse(r => r.url().endsWith('/students/me/consents') && r.request().method() === 'POST');
     await panel.getByRole('button', {name: 'Đồng ý chia sẻ các mục đã chọn', exact: true}).click();
-    await expect(student.page.getByText('Đang có hiệu lực', {exact: true})).toBeVisible();
+    const grantResponse = await granted;expect(grantResponse.status(), await grantResponse.text()).toBe(201);
+    const consent = await grantResponse.json();expect(consent.invitationId).toBe(invitation.invitationId);
+    const expiryLabel = await student.page.evaluate(value => new Date(value).toLocaleString('vi-VN'), consent.expiresAt);
+    const consentSection = student.page.locator('section.panel').filter({has: student.page.getByRole('heading', {name: 'Quyền chia sẻ đã cấp', exact: true})});
+    // The seven-day expiry identifies this new grant among the earlier synthetic one-hour grants.
+    // A global active label can belong to an old lineage while the new POST is still pending.
+    const consentArticle = consentSection.locator('article').filter({hasText: 'hết hạn ' + expiryLabel});
+    await expect(consentArticle).toHaveCount(1);
+    await expect(consentArticle.getByText('Đang có hiệu lực', {exact: true})).toBeVisible();
     await school.page.getByRole('button', {name: 'Tải lại tiến trình', exact: true}).click();
     await school.page.getByRole('button', {name: 'Cấp chia sẻ', exact: true}).click();
     await school.page.getByRole('button', {name: 'Xác nhận cấp chia sẻ', exact: true}).click();
@@ -80,8 +89,13 @@ test('week 3 school, student and enterprise use real share, decision, Placement 
     await expect(school.page.getByText('Trạng thái: Chờ bắt đầu', {exact: true})).toBeVisible();
 
     // Revocation blocks new profile reads without cancelling an already approved Placement.
-    await student.page.getByRole('button', {name: 'Thu hồi quyền chia sẻ', exact: true}).click();
-    await expect(student.page.getByText('Đang có hiệu lực', {exact: true})).toHaveCount(0);
+    const revoked = student.page.waitForResponse(r => r.url().endsWith(`/students/me/consents/${consent.consentId}/revoke`) && r.request().method() === 'POST');
+    await consentArticle.getByRole('button', {name: 'Thu hồi quyền chia sẻ', exact: true}).click();
+    const revokeResponse = await revoked;expect(revokeResponse.status(), await revokeResponse.text()).toBe(200);
+    expect(revokeResponse.request().postDataJSON().expectedLineageVersion).toBe(consent.lineageVersion);
+    expect((await revokeResponse.json()).revokedAt).not.toBeNull();
+    await expect(consentArticle.getByText('Đang có hiệu lực', {exact: true})).toHaveCount(0);
+    await expect(consentArticle.getByText('Đã thu hồi', {exact: true})).toBeVisible();
     await hr.page.getByRole('button', {name: 'Tải lại ứng viên', exact: true}).click();
     await expect(hr.page.getByText('Chưa có hồ sơ được chia sẻ hợp lệ.', {exact: true})).toBeVisible();
     await openCooperation(school.page, true);
