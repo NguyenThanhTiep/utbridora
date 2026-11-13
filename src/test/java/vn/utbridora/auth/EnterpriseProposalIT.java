@@ -360,15 +360,20 @@ class EnterpriseProposalIT {
     @Test void rejectsOtherEnterpriseAndMissingPermissionsAndCsrf() throws Exception {
         share();String other=key();
         jdbc.update("INSERT INTO organizations(id,name,type,status,created_at) VALUES(?,'Other enterprise','ENTERPRISE','VERIFIED',UTC_TIMESTAMP(6))",other);
-        jdbc.update("INSERT INTO memberships(id,user_id,organization_id,role,active,created_at) VALUES(?,?,?,'ENTERPRISE',true,UTC_TIMESTAMP(6))",key(),id(4),other);
-        assertEquals(404,http(hr,"GET",listPath(),null,other,null,true).statusCode());
-        assertEquals(404,http(hr,"GET",profilePath(),null,other,null,true).statusCode());
-        assertEquals(404,http(hr,"PATCH",decisionPath(),"{\"expectedVersion\":4,\"decision\":\"ACCEPT\"}",other,key(),true).statusCode());
-        assertEquals(403,http(student,"GET",listPath(),null,id(12),null,true).statusCode());
-        assertEquals(403,http(hr,"PATCH",decisionPath(),"{\"expectedVersion\":4,\"decision\":\"ACCEPT\"}",id(12),key(),false).statusCode());
-        jdbc.update("DELETE FROM role_permissions WHERE role='ENTERPRISE' AND permission_code='proposal:enterprise:decide'");
-        try {assertEquals(403,http(hr,"PATCH",decisionPath(),"{\"expectedVersion\":4,\"decision\":\"ACCEPT\"}",id(12),key(),true).statusCode());}
-        finally {jdbc.update("INSERT INTO role_permissions VALUES('ENTERPRISE','proposal:enterprise:decide')");}
+        try {
+            jdbc.update("INSERT INTO memberships(id,user_id,organization_id,role,active,created_at) VALUES(?,?,?,'ENTERPRISE',true,UTC_TIMESTAMP(6))",key(),id(4),other);
+            assertEquals(404,http(hr,"GET",listPath(),null,other,null,true).statusCode());
+            assertEquals(404,http(hr,"GET",profilePath(),null,other,null,true).statusCode());
+            assertEquals(404,http(hr,"PATCH",decisionPath(),"{\"expectedVersion\":4,\"decision\":\"ACCEPT\"}",other,key(),true).statusCode());
+            assertEquals(403,http(student,"GET",listPath(),null,id(12),null,true).statusCode());
+            assertEquals(403,http(hr,"PATCH",decisionPath(),"{\"expectedVersion\":4,\"decision\":\"ACCEPT\"}",id(12),key(),false).statusCode());
+            jdbc.update("DELETE FROM role_permissions WHERE role='ENTERPRISE' AND permission_code='proposal:enterprise:decide'");
+            try {assertEquals(403,http(hr,"PATCH",decisionPath(),"{\"expectedVersion\":4,\"decision\":\"ACCEPT\"}",id(12),key(),true).statusCode());}
+            finally {jdbc.update("INSERT INTO role_permissions VALUES('ENTERPRISE','proposal:enterprise:decide')");}
+        } finally {
+            jdbc.update("DELETE FROM memberships WHERE organization_id=?",other);
+            jdbc.update("DELETE FROM organizations WHERE id=?",other);
+        }
     }
     @Test void validatesDeclineExpiryAndRollsBackDecisionWhenAuditFails() throws Exception {
         share();String request="{\"expectedVersion\":4,\"decision\":\"DECLINE\",\"reasonCode\":\"SKILL_MISMATCH\"}";

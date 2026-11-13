@@ -5,6 +5,10 @@ const org = '11111111-1111-4111-8111-111111111111';
 const school = '22222222-2222-4222-8222-222222222222';
 const term = '33333333-3333-4333-8333-333333333333';
 async function session(page: Page, grants = true) {
+  // Keep fixture-only UI requests out of the live backend used by CorePlatformIT.
+  await page.route('**/api/v1/**', route => route.fulfill({ status: 404, json: { errorCode: 'RESOURCE_NOT_FOUND' } }));
+  await page.route('**/api/v1/cooperation/organizations', route => route.fulfill({ json: grants
+    ? [{ id: org, name: 'Doanh nghiệp kiểm thử', type: 'ENTERPRISE' }] : [] }));
   await page.route('**/api/v1/enterprise/demand-references/schools?**', route => route.fulfill({ json: {
     content: [{ schoolOrgId: school, name: 'Trường kiểm thử' }], page: 0, size: 100, totalElements: 1, totalPages: 1,
   } }));
