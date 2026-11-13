@@ -86,7 +86,6 @@ public class SecurityConfig {
                .requestMatchers(HttpMethod.GET,"/api/v1/matching/runs/*/summary","/api/v1/matching/runs/*/summary.csv","/api/v1/matching/runs/*/summary.chart").authenticated()
                .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/cooperations/*/submit","/api/v1/enterprise/cooperations/*/reopen","/api/v1/school/cooperations/*/decision").authenticated()
                .requestMatchers(HttpMethod.DELETE,"/api/v1/school/delegations/*","/api/v1/t3/context-assignments/*").authenticated()
-               .requestMatchers(HttpMethod.PATCH,"/api/v1/t3/assignments/*/status").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/cooperations/*/proposals","/api/v1/enterprise/proposals/*/profile","/api/v1/opportunities","/api/v1/opportunities/*").authenticated()
                .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/proposals/*/decision").authenticated()
                .requestMatchers(HttpMethod.PUT,"/api/v1/school/cooperations/*/publication").authenticated()

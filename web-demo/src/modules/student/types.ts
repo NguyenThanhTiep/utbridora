@@ -17,8 +17,6 @@ export type ProfileInput = {
   availabilityDeclared: boolean; availablePeriods: DateRange[];
   orientationCodes: Code[]; subjectCodes: Code[]; projects: Project[]; certificates: Certificate[];
   cvFileId: string | null; phone: string | null;
-  // liên quan đến việc thêm lọc svien theo gpa là MVP: Sinh viên có thể khai GPA thang 0.00–4.00.
-  gpa: number | null;
 };
 export type SelfProfileData = {
   termId: string; majorCode: Code | null;
@@ -26,8 +24,6 @@ export type SelfProfileData = {
   availabilityDeclared: boolean; availablePeriods: DateRange[];
   orientationCodes: Code[]; subjectCodes: Code[]; projects: Project[]; certificates: Certificate[];
   cvFileId: string | null; phone: string | null;
-  // liên quan đến việc thêm lọc svien theo gpa là MVP: Đọc GPA hồ sơ để employer matching theo ngưỡng.
-  gpa: number | null;
 };
 
 export type CompletenessCheckCode = 'MAJOR_VALID' | 'STUDENT_TERM_PRESENT' | 'SKILLS_DECLARED' | 'SKILLS_VALID' | 'AVAILABILITY_DECLARED' | 'AVAILABILITY_VALID';

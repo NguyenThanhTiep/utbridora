@@ -100,8 +100,6 @@ export function toProfileInput(view: SelfProfileView): ProfileInput {
     projects: profile.projects.map(({ projectId, title, description, role, skillCodes, url, evidenceFileIds }) =>
       ({ projectId, title, description, role, skillCodes: [...skillCodes], url, evidenceFileIds: [...evidenceFileIds] })),
     certificates: profile.certificates.map(({ certificateId, title, issuer, issuedOn, expiresOn, fileId }) => ({ certificateId, title, issuer, issuedOn, expiresOn, fileId })),
-    cvFileId: profile.cvFileId, phone: profile.phone,
-    // liên quan đến việc thêm lọc svien theo gpa là MVP: Giữ GPA khi lưu lại các trường khác của hồ sơ.
-    gpa: profile.gpa
+    cvFileId: profile.cvFileId, phone: profile.phone
   };
 }

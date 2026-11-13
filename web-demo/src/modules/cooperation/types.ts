@@ -17,8 +17,6 @@ export type DemandInput = {
     majorCodes: string[];
     skills: SkillCriterion[];
     dateRange: { startDate: string; endDate: string };
-    // liên quan đến việc thêm lọc svien theo gpa là MVP: Ngưỡng GPA tối thiểu do doanh nghiệp chọn, null nếu không lọc GPA.
-    minGpa: number | null;
   };
   preferred: SkillCriterion[];
   academicCatalogVersion: string;

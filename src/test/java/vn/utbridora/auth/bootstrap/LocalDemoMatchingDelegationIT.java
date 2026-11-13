@@ -17,7 +17,7 @@ import vn.utbridora.auth.operations.OperationFailure;
 
 @SpringBootTest(properties={"app.demo.local.enabled=true","DEMO_PASSWORD=Synthetic-demo-test-password-123",
     "app.bootstrap.admin.email=admin@example.test","app.bootstrap.admin.password=Synthetic-admin-test-password-456",
-    "app.t5.placement-delivery.enabled=false"})
+    "app.t5.placement-delivery.enabled=false","app.demo.local.matching-delegation-enabled=true"})
 @ActiveProfiles("local")
 class LocalDemoMatchingDelegationIT {
     static final MySQLContainer<?> MYSQL=new MySQLContainer<>("mysql:8.4").withDatabaseName("utbridora")

@@ -38,7 +38,7 @@ public class MatchingService {
         this.jdbc=jdbc;this.demands=demands;this.profiles=profiles;this.access=access;this.authorization=authorization;this.ledger=ledger;this.audit=audit;
     }
     @Transactional public Evaluated evaluate(Authentication auth,String key,Evaluate input) {
-        uuid(input.demandId());version(input.expectedDemandVersion());version(input.expectedCriteriaVersion());
+        uuid(key);uuid(input.demandId());version(input.expectedDemandVersion());version(input.expectedCriteriaVersion());
         String enterpriseOrg=jdbc.query("SELECT enterprise_org_id FROM demands WHERE id=?",r->r.next()?r.getString(1):null,input.demandId());
         if(enterpriseOrg!=null && authorization.hasOrganization(auth,enterpriseOrg,Role.ENTERPRISE,"matching:enterprise:aggregate_read"))
             return evaluateEnterprise(auth,key,input,enterpriseOrg);
@@ -68,7 +68,7 @@ public class MatchingService {
 
     /** Doanh nghiệp chỉ được đánh giá trên batch đã đóng băng do Ops chọn và chỉ nhận DTO đã bảo vệ. */
     @Transactional public Evaluated evaluateEnterprise(Authentication auth,String key,Evaluate input,String enterpriseOrg) {
-        if(jdbc.queryForObject("SELECT enabled FROM matching_privacy_release_settings WHERE id=1",Boolean.class)!=Boolean.TRUE)
+        if(jdbc.queryForObject("SELECT enabled FROM matching_privacy_release_settings WHERE id=1 FOR SHARE",Boolean.class)!=Boolean.TRUE)
             throw failure(503,"PRIVACY_RELEASE_UNAVAILABLE");
         var criteria=demands.read(auth,enterpriseOrg,input.demandId(),input.expectedCriteriaVersion(),DemandCriteriaPort.Purpose.EVALUATE);
         if(criteria.demandVersion()!=input.expectedDemandVersion() || criteria.criteriaVersion()!=input.expectedCriteriaVersion()) throw failure(409,"CRITERIA_STALE");
@@ -91,8 +91,6 @@ public class MatchingService {
             if(!fingerprint.equals(existing.getFirst()[0])) throw failure(409,"PRIVACY_RELEASE_LOCKED");
             var release=(ProtectedAggregatePolicy.ProtectedAggregate)existing.getFirst()[1];
             audit.write(actor(auth),"MATCH_AGGREGATE_VIEWED","match_run",release.matchRunId(),"SUCCESS");
-            audit.matchingRunCompleted(actor(auth),criteria.demandId(),release.matchRunId(),enterpriseOrg,Map.of(
-                "demandId",criteria.demandId(),"runVersion",1,"status","COMPLETED","ruleVersion",StrictClassifier.RULE_VERSION));
             return new Evaluated("ENTERPRISE",null,release);
         }
 
@@ -123,10 +121,10 @@ public class MatchingService {
     }
     /** Controller gọi sau khi giao dịch evaluate thất bại đã rollback để audit không bị rollback theo. */
     public void auditPrivacyReleaseBlocked(Authentication auth,String demandId) {
-        var scope=jdbc.query("SELECT enterprise_org_id,school_org_id,term_id FROM demands WHERE id=?",
-            (r,n)->new String[]{r.getString(1),r.getString(2),r.getString(3)},uuid(demandId)).stream().findFirst()
+        var scope=jdbc.query("SELECT d.enterprise_org_id,d.school_org_id,d.term_id,b.demo_batch_id FROM demands d JOIN matching_active_demo_batches b ON b.school_org_id=d.school_org_id AND b.term_id=d.term_id WHERE d.id=?",
+            (r,n)->new String[]{r.getString(1),r.getString(2),r.getString(3),r.getString(4)},uuid(demandId)).stream().findFirst()
             .orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
-        audit.writeScoped(actor(auth),"PRIVACY_RELEASE_BLOCKED","privacy_release",null,"DENIED",scope[0],"PRIVACY_RELEASE_LOCKED");
+        audit.privacyReleaseBlocked(actor(auth),scope[0],scope[1],scope[2],scope[3]);
     }
     @Transactional public Details details(Authentication auth,String id,String status,int page,int size) {
         if(jdbc.queryForObject("SELECT COUNT(*) FROM memberships m JOIN users u ON u.id=m.user_id JOIN organizations o ON o.id=m.organization_id JOIN role_permissions p ON p.role=m.role WHERE m.user_id=? AND m.role='SCHOOL_STAFF' AND m.active=true AND u.status='ACTIVE' AND u.security_version=? AND o.status='VERIFIED' AND p.permission_code='matching:school:detail_read'",Integer.class,actor(auth),((vn.utbridora.auth.security.AppPrincipal)auth.getPrincipal()).securityVersion())==0) throw failure(403,"ACCESS_DENIED");
@@ -140,12 +138,14 @@ public class MatchingService {
         return new Details(stored.run(),new Page<>(rows,page,size,count,(int)((count+size-1)/size)));
     }
     @Transactional public ProtectedAggregatePolicy.ProtectedAggregate protectedRelease(Authentication auth,String matchRunId) {
+        if(jdbc.queryForObject("SELECT enabled FROM matching_privacy_release_settings WHERE id=1 FOR SHARE",Boolean.class)!=Boolean.TRUE)
+            throw failure(503,"PRIVACY_RELEASE_UNAVAILABLE");
         uuid(matchRunId);
         var rows=jdbc.query("SELECT enterprise_org_id,dto_json FROM matching_privacy_releases WHERE match_run_id=?",
             (r,n)->new Object[]{r.getString(1),JSON.readValue(r.getString(2),ProtectedAggregatePolicy.ProtectedAggregate.class)},matchRunId);
         if(rows.size()!=1) throw failure(404,"RESOURCE_NOT_FOUND");
         String enterpriseOrg=(String)rows.getFirst()[0];
-        if(!authorization.hasOrganization(auth,enterpriseOrg,Role.ENTERPRISE,"matching:enterprise:aggregate_read")) throw failure(404,"RESOURCE_NOT_FOUND");
+        if(!authorization.holdOrganization(auth,enterpriseOrg,Role.ENTERPRISE,"matching:enterprise:aggregate_read")) throw failure(404,"RESOURCE_NOT_FOUND");
         audit.write(actor(auth),"MATCH_AGGREGATE_VIEWED","match_run",matchRunId,"SUCCESS");
         return (ProtectedAggregatePolicy.ProtectedAggregate)rows.getFirst()[1];
     }

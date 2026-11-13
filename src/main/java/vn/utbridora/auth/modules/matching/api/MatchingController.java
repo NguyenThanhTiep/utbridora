@@ -20,7 +20,10 @@ public class MatchingController {
         var input=body(data,MatchingService.Evaluate.class);
         try {return service.evaluate(auth,key,input);}
         catch(OperationFailure failure) {
-            if("PRIVACY_RELEASE_LOCKED".equals(failure.code)) service.auditPrivacyReleaseBlocked(auth,input.demandId());
+            if("PRIVACY_RELEASE_LOCKED".equals(failure.code)) {
+                try {service.auditPrivacyReleaseBlocked(auth,input.demandId());}
+                catch(RuntimeException unavailable) {org.slf4j.LoggerFactory.getLogger(MatchingController.class).warn("Privacy denial audit unavailable");}
+            }
             throw failure;
         }
     }

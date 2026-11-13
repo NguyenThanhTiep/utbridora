@@ -15,4 +15,7 @@ public interface StudentEligibilityPort {
      */
     void assertEligibleForPlacement(Authentication actor, String student, String school,
                                      String term, long expectedVersion);
+    default void assertCurrentForPlacement(Authentication actor,String student,String school,String term) {
+        throw vn.utbridora.auth.operations.WorkflowValues.failure(503,"DEPENDENCY_UNAVAILABLE");
+    }
 }

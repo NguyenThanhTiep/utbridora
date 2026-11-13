@@ -56,6 +56,7 @@ public class ProposalService implements InternshipInvitationPort {
         request.studentUserIds().forEach(vn.utbridora.auth.operations.WorkflowValues::uuid);version(request.expectedDemandVersion());version(request.expectedCriteriaVersion());version(request.expectedCooperationVersion());
         return ledger.execute(new OperationLedger.Command(actor(auth),stored.schoolOrgId(),"PROPOSAL_NOMINATE",key,Map.of("runId",runId,"request",request),201),NominationResult.class,()->{
             var run=stored.run();var d=demands.findLocked(run.demandId(),stored.enterpriseOrgId()).orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
+            if(!run.ruleVersion().equals(vn.utbridora.auth.modules.matching.domain.StrictClassifier.RULE_VERSION)) throw failure(409,"MATCH_RUN_STALE");
             if(d.version()!=request.expectedDemandVersion() || d.criteriaVersion()!=request.expectedCriteriaVersion() || run.criteriaVersion()!=d.criteriaVersion() || run.demandVersion()!=d.version() || !run.criteriaHash().equals(d.criteriaHash())) throw failure(409,"MATCH_RUN_STALE");
             references.validate(stored.enterpriseOrgId(),d.data());
             if(d.cooperationId()==null) throw failure(409,"STATE_CONFLICT");var c=cooperations.read(d.cooperationId());
@@ -88,9 +89,9 @@ public class ProposalService implements InternshipInvitationPort {
     }
     @Transactional public Capacity capacity(Authentication auth,String coopId) {var c=cooperations.read(coopId);scope.require(auth,c.schoolOrgId(),c.termId(),"t5:proposal:manage");var d=demands.findLocked(c.demandId(),c.enterpriseOrgId()).orElseThrow();return capacityOf(c,d.data().quantity());}
     private Capacity capacityOf(CooperationService.CooperationDto c,int quantity) {
-        int placed=jdbc.queryForObject("SELECT COUNT(DISTINCT p.id) FROM placements p WHERE p.cooperation_id=? AND p.state IN ('APPROVED','ACTIVE','COMPLETED')",Integer.class,c.cooperationId())
-            + jdbc.queryForObject("SELECT COUNT(*) FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id WHERE b.cooperation_id=? AND i.state='PLACED' AND i.placement_id IS NULL",Integer.class,c.cooperationId());
-        int reserved=jdbc.queryForObject("SELECT COUNT(*) FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id WHERE b.cooperation_id=? AND ((i.state IN ('RESERVED','INVITED','ACCEPTED','SHARED','ENTERPRISE_ACCEPTED') AND i.reservation_until>UTC_TIMESTAMP(6)) OR EXISTS (SELECT 1 FROM placements p WHERE p.id=i.placement_id AND p.state='PENDING_APPROVAL'))",Integer.class,c.cooperationId());
+        int placed=jdbc.queryForList("SELECT p.id FROM placements p WHERE p.cooperation_id=? AND p.state IN ('APPROVED','ACTIVE','COMPLETED') FOR SHARE",String.class,c.cooperationId()).size()
+            + jdbc.queryForList("SELECT i.id FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id WHERE b.cooperation_id=? AND i.state='PLACED' AND i.placement_id IS NULL FOR SHARE",String.class,c.cooperationId()).size();
+        int reserved=jdbc.queryForList("SELECT i.id FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id WHERE b.cooperation_id=? AND ((i.state IN ('RESERVED','INVITED','ACCEPTED','SHARED','ENTERPRISE_ACCEPTED') AND i.reservation_until>UTC_TIMESTAMP(6)) OR EXISTS (SELECT 1 FROM placements p WHERE p.id=i.placement_id AND p.state='PENDING_APPROVAL')) FOR SHARE",String.class,c.cooperationId()).size();
         int declined=jdbc.queryForObject("SELECT COUNT(*) FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id WHERE b.cooperation_id=? AND i.state='DECLINED'",Integer.class,c.cooperationId());
         Long batchVersion=jdbc.queryForList("SELECT version FROM proposal_batches WHERE cooperation_id=?",Long.class,c.cooperationId()).stream().findFirst().orElse(null);
         return new Capacity(c.cooperationId(),c.demandId(),quantity,placed,reserved,Math.max(0,quantity-placed-reserved),declined,batchVersion);
@@ -152,6 +153,7 @@ public class ProposalService implements InternshipInvitationPort {
         if("DECLINE".equals(request.decision())) reason(request.reasonCode());
         else if(request.reasonCode()!=null) throw failure(400,"SCHEMA_VALIDATION");
         var c=cooperationForItem(id);owned(c,org);
+        shareAccess.require(auth,item(id),c);
         return ledger.execute(new OperationLedger.Command(actor(auth),org,"PROPOSAL_ENTERPRISE_DECIDE",key,Map.of("id",id,"request",request),200),EnterpriseItem.class,()->{
             var current=item(id);if(current.version()!=request.expectedVersion()) throw failure(409,"VERSION_CONFLICT");
             if(!"APPROVED".equals(c.state()) || !"SHARED".equals(current.state())) throw failure(409,"STATE_CONFLICT");

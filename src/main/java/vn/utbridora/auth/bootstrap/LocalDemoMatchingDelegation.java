@@ -21,7 +21,7 @@ import vn.utbridora.auth.operations.OperationFailure;
 /** Upgrade only the explicitly opted-in synthetic fixture through T1's audited owner service. */
 @Configuration(proxyBeanMethods=false)
 @Profile("local")
-@ConditionalOnProperty(name="app.demo.local.enabled",havingValue="true")
+@ConditionalOnProperty(name={"app.demo.local.enabled","app.demo.local.matching-delegation-enabled"},havingValue="true")
 public class LocalDemoMatchingDelegation {
     static final String DECISION="DEMO-T5-WEEK3-MATCHING";
     static final List<String> PERMISSIONS=List.of("matching:run:execute","matching:school:detail_read","matching:school:nominate");

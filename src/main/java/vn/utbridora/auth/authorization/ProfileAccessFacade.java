@@ -25,7 +25,7 @@ public class ProfileAccessFacade implements ProfileAccessPort {
         org.springframework.beans.factory.ObjectProvider<StudentProfileProjectionPort> profiles) {
         this.core=core;this.delegation=delegation;this.shares=shares;this.policies=policies;this.consents=consents;this.profiles=profiles;
     }
-    @Override @Transactional(propagation=Propagation.MANDATORY)
+    @Override @Transactional(propagation=Propagation.MANDATORY,noRollbackFor=vn.utbridora.auth.operations.OperationFailure.class)
     public Decision decide(ActorContext context,Query q) {
         var auth=context.authentication();actor(auth);uuid(q.studentUserId());uuid(q.termId());fields(q.requestedFields(),false);
         String school=profiles.getObject().schoolOf(context,q.studentUserId(),q.termId());

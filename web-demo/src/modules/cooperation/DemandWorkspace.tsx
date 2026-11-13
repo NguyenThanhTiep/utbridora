@@ -5,7 +5,6 @@ import { ScopedDemands } from './demand/ScopedDemands';
 import { canLeaveDemand } from './navigation';
 import './styles.css';
 import { CooperationFlows, VerificationFlows } from './WorkflowViews';
-import { EnterpriseMatchingPanel } from '../matching/EnterpriseMatchingPanel';
 
 export const canAuthorDemands = (grant: Grant) => grant.role === 'ENTERPRISE'
   && !!grant.organizationId && grant.permissions.includes('cooperation:enterprise:create');
@@ -27,8 +26,6 @@ export function DemandWorkspace({ grants }: { grants: Grant[] }) {
     </section>
     {/* A fresh component per organization discards its editor, list and pending request results. */}
     <ScopedDemands key={scope} organizationId={scope} />
-    {/* liên quan đến việc thêm lọc svien theo gpa là MVP: Đưa form chọn Demand/GPA/kỹ năng và aggregate matching vào workspace doanh nghiệp. */}
-    <EnterpriseMatchingPanel key={scope + ':matching'} organizationId={scope} />
     <VerificationFlows key={scope + ':v'} org={scope} school={false} />
     <CooperationFlows key={scope + ':c'} org={scope} school={false} />
   </div>;

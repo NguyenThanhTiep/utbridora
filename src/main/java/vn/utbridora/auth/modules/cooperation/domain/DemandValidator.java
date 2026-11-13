@@ -40,11 +40,6 @@ public final class DemandValidator {
         }
         List<SkillCriterion> required=skills(r.skills(),"required.skills");
         List<SkillCriterion> preferred=skills(input.preferred(),"preferred");
-        // liên quan đến việc thêm lọc svien theo gpa là MVP: Chỉ nhận ngưỡng 1.0–4.0 theo bước 0.1.
-        var minGpa=r.minGpa();
-        if(minGpa!=null && (minGpa.compareTo(new java.math.BigDecimal("1.0"))<0 || minGpa.compareTo(new java.math.BigDecimal("4.0"))>0
-                || minGpa.remainder(new java.math.BigDecimal("0.1")).signum()!=0))
-            throw DemandFailure.invalid("required.minGpa","Ngưỡng GPA phải từ 1.0 đến 4.0 theo bước 0.1.");
         var codes=new HashSet<String>();
         required.forEach(s -> codes.add(s.skillCode()));
         for(SkillCriterion s:preferred) if(!codes.add(s.skillCode()))
@@ -52,7 +47,7 @@ public final class DemandValidator {
         return new DemandInput(school,term,text(input.title(),1,200,"title",false),input.quantity(),
                 text(input.description(),1,10000,"description",false),text(input.location(),1,500,"location",true),
                 text(input.benefits(),0,2000,"benefits",true),input.deadline(),
-                new RequiredCriteria(List.copyOf(majors),required,r.dateRange(),minGpa==null?null:minGpa.setScale(1)),preferred,
+                new RequiredCriteria(List.copyOf(majors),required,r.dateRange()),preferred,
                 text(input.academicCatalogVersion(),1,64,"academicCatalogVersion",false),
                 text(input.taxonomyVersion(),1,64,"taxonomyVersion",false));
     }

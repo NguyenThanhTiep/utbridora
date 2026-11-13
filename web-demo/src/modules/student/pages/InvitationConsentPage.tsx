@@ -65,7 +65,8 @@ export function InvitationConsentPage() {
         {open && <div className="button-row"><button disabled={busy} onClick={() => decide(i, 'ACCEPT')}>Nhận lời mời</button>
           <button className="secondary" disabled={busy} onClick={() => { if (window.confirm('Từ chối lời mời này? Sau khi từ chối bạn không thể nhận lại lời mời.')) decide(i, 'DECLINE'); }}>Từ chối</button></div>}
         {i.state === 'ACCEPTED' && (i.placementId ? <p>Đã có Placement nên không thể rút nhận lời.</p>
-          : <button className="secondary" disabled={busy} onClick={() => { if (window.confirm('Rút lại quyết định nhận lời mời này?')) withdraw(i); }}>Rút nhận lời</button>)}
+          : <button className="secondary" disabled={busy} onClick={() => { if (window.confirm('CẢNH BÁO: Rút nhận lời sẽ HỦY BỎ cơ hội thực tập này và không thể hoàn tác. Bạn có chắc chắn muốn rút?')) withdraw(i); }}>Rút nhận lời</button>)}
+        <p>Để chỉ thu hồi quyền xem thông tin cá nhân của doanh nghiệp mà vẫn giữ vị trí thực tập, hãy chọn “Thu hồi quyền chia sẻ” bên dưới.</p>
         <InvitationDetail key={i.invitationId + ':' + i.version} invitationId={i.invitationId} />
         {(open || i.state === 'ACCEPTED') && <ConsentForm key={i.invitationId} invitation={i} consents={consents} busy={busy} refresh={refresh} command={command} />}
       </section>; })}

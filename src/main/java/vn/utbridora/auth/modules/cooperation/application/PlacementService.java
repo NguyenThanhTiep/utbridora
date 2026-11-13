@@ -13,7 +13,10 @@ import vn.utbridora.auth.authorization.SchoolDelegationAccess;
 import vn.utbridora.auth.contracts.placement.PlacementReadPort;
 import vn.utbridora.auth.modules.cooperation.domain.DemandModels.Page;
 import vn.utbridora.auth.modules.student.port.StudentEligibilityPort;
-import vn.utbridora.auth.modules.student.port.StudentConsentPort;
+import vn.utbridora.auth.modules.student.port.StudentProfileSnapshotPort;
+import vn.utbridora.auth.modules.cooperation.persistence.DemandRepository;
+import vn.utbridora.auth.modules.cooperation.integration.DemandReferencePort;
+import vn.utbridora.auth.modules.matching.application.MatchingService;
 import vn.utbridora.auth.operations.OperationLedger;
 import vn.utbridora.auth.user.Role;
 import static vn.utbridora.auth.operations.WorkflowValues.*;
@@ -65,38 +68,43 @@ public class PlacementService {
     private final ProposalService proposals;
     private final ProposalConsentSummary consentSummary;
     private final StudentEligibilityPort eligibility;
-    private final StudentConsentPort consent;
     private final SchoolDelegationAccess scope;
     private final AuthorizationPolicy core;
     private final PlacementLifecyclePublisher publisher;
     private final PlacementReadPort source;
     private final OperationLedger ledger;
     private final AuditService audit;
+    private final DemandRepository demands;
+    private final DemandReferencePort references;
+    private final StudentProfileSnapshotPort profiles;
+    private final MatchingService matching;
+    private final Clock clock;
 
     public PlacementService(JdbcTemplate jdbc,
                              CooperationService cooperations,
                              ProposalService proposals,
                              ProposalConsentSummary consentSummary,
                              StudentEligibilityPort eligibility,
-                             StudentConsentPort consent,
                              SchoolDelegationAccess scope,
                              AuthorizationPolicy core,
                              PlacementLifecyclePublisher publisher,
                              PlacementReadPort source,
                              OperationLedger ledger,
-                             AuditService audit) {
+                             AuditService audit,DemandRepository demands,DemandReferencePort references,
+                             StudentProfileSnapshotPort profiles,MatchingService matching,@org.springframework.beans.factory.annotation.Qualifier("placementClock") Clock clock) {
         this.jdbc = jdbc;
         this.cooperations = cooperations;
         this.proposals = proposals;
         this.consentSummary = consentSummary;
         this.eligibility = eligibility;
-        this.consent = consent;
         this.scope = scope;
         this.core = core;
         this.publisher = publisher;
         this.source = source;
         this.ledger = ledger;
         this.audit = audit;
+        this.demands=demands;this.references=references;this.profiles=profiles;this.matching=matching;
+        this.clock=clock;
     }
 
     // ── Create: PENDING_APPROVAL ──────────────────────────────────────────────
@@ -112,10 +120,13 @@ public class PlacementService {
         uuid(body.proposalItemId());
         version(body.expectedProposalVersion());
         version(body.expectedEligibilityVersion());
+        var terms=jdbc.queryForList("SELECT c.term_id FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id JOIN cooperations c ON c.id=b.cooperation_id WHERE i.id=? AND c.school_org_id=?",String.class,body.proposalItemId(),schoolOrgId);
+        if(terms.size()!=1) throw failure(404,"RESOURCE_NOT_FOUND");
+        scope.require(auth,schoolOrgId,terms.getFirst(),"placement:school:write");
 
         Instant effectiveAt = parseInstant(body.effectiveAt());
-        LocalDate startDate = LocalDate.parse(body.startDate());
-        LocalDate endDate   = LocalDate.parse(body.endDate());
+        LocalDate startDate = parseDate(body.startDate());
+        LocalDate endDate   = parseDate(body.endDate());
         if (!startDate.isBefore(endDate) && !startDate.isEqual(endDate))
             throw failure(422, "INVALID_DATE_RANGE");
 
@@ -130,6 +141,7 @@ public class PlacementService {
     private PlacementView doCreate(Authentication auth, String schoolOrgId,
                                     CreatePlacement body, Instant effectiveAt,
                                     LocalDate startDate, LocalDate endDate) {
+        lockDemandForItem(body.proposalItemId(),schoolOrgId);
         // Load and lock proposal item
         var item = proposals.item(body.proposalItemId());
         if (!item.state().equals("ENTERPRISE_ACCEPTED"))
@@ -146,6 +158,10 @@ public class PlacementService {
 
         // Delegation check for the specific term
         scope.require(auth, schoolOrgId, coop.termId(), "placement:school:write");
+
+        reCheckVerification(coop.enterpriseOrgId(),schoolOrgId);
+        checkDates(coop.termId(),startDate,endDate,effectiveAt);
+        checkCurrentCandidate(auth,item,coop);
 
         // No duplicate placement per proposal item
         int existing = jdbc.queryForObject(
@@ -169,7 +185,6 @@ public class PlacementService {
             body.expectedEligibilityVersion());
 
         // Consent/share still valid (T2 port + T5 consent/share summary)
-        consent.assertValidForPlacement(auth, item);
         if (!consentSummary.read(item, coop).shareIsActive())
             throw failure(409, "CONSENT_INVALID");
 
@@ -207,11 +222,13 @@ public class PlacementService {
     public PlacementView approve(Authentication auth, String placementId,
                                   String idempotencyKey, PlacementCommand body) {
         version(body.expectedVersion());
+        text(body.decisionRef(),120);reason(body.reasonCode());
         // Load placement first to get schoolOrgId for delegation check
-        var peek = jdbc.query("SELECT school_org_id FROM placements WHERE id=?",
-            (r, n) -> r.getString("school_org_id"), uuid(placementId))
+        var target = jdbc.query("SELECT school_org_id,term_id FROM placements WHERE id=?",
+            (r, n) -> new String[]{r.getString(1),r.getString(2)}, uuid(placementId))
             .stream().findFirst().orElseThrow(() -> failure(404, "RESOURCE_NOT_FOUND"));
-        scope.require(auth, peek, null, "placement:school:write");
+        String peek=target[0];
+        scope.require(auth, peek, target[1], "placement:school:write");
         return ledger.execute(
             new OperationLedger.Command(actor(auth), peek,
                 "PLACEMENT_APPROVE", idempotencyKey, Map.of("id", placementId, "body", body), 200),
@@ -222,6 +239,7 @@ public class PlacementService {
 
     private PlacementView doApprove(Authentication auth, String schoolOrgId,
                                      String placementId, PlacementCommand body) {
+        lockDemandForPlacement(placementId,schoolOrgId);
         var p = lockPlacement(placementId, schoolOrgId);
         if (!p.state().equals("PENDING_APPROVAL")) throw failure(409, "STATE_CONFLICT");
         if (p.version() != body.expectedVersion())  throw failure(409, "VERSION_CONFLICT");
@@ -231,12 +249,15 @@ public class PlacementService {
 
         // Re-check org and school verification
         reCheckVerification(p.enterpriseOrgId(), schoolOrgId);
-        reCheckQuota(p.cooperationId(), p.demandId());
 
         // Re-check cooperation, invitation still ACCEPTED, and consent/share still active
         var coop = cooperations.read(p.cooperationId());
         if (!coop.state().equals("APPROVED")) throw failure(409, "STATE_CONFLICT");
         var item = proposals.item(p.proposalItemId());
+        eligibility.assertCurrentForPlacement(auth,p.studentUserId(),schoolOrgId,p.termId());
+        checkCurrentCandidate(auth,item,coop);
+        checkDates(p.termId(),p.startDate(),p.endDate(),p.effectiveAt());
+        reCheckQuota(p.cooperationId(),p.demandId());
         reCheckInvitationAccepted(item);
         if (!consentSummary.read(item, coop).shareIsActive())
             throw failure(409, "CONSENT_INVALID");
@@ -248,7 +269,9 @@ public class PlacementService {
                 "approved_at=?,decision_ref=? WHERE id=?",
                 utc(now), body.decisionRef(), placementId);
         } catch (org.springframework.dao.DataIntegrityViolationException dup) {
-            throw failure(409, "ACTIVE_PLACEMENT_EXISTS");
+            String cause=dup.getMostSpecificCause().getMessage();
+            if(cause!=null && cause.contains("uk_placement_active_student_term")) throw failure(409, "ACTIVE_PLACEMENT_EXISTS");
+            throw dup;
         }
 
         writeHistory(placementId, "PENDING_APPROVAL", "APPROVED", actor(auth),
@@ -270,10 +293,12 @@ public class PlacementService {
     public PlacementView activate(Authentication auth, String placementId,
                                    String idempotencyKey, PlacementCommand body) {
         version(body.expectedVersion());
-        var peek = jdbc.query("SELECT school_org_id FROM placements WHERE id=?",
-            (r, n) -> r.getString("school_org_id"), uuid(placementId))
+        text(body.decisionRef(),120);reason(body.reasonCode());
+        var target = jdbc.query("SELECT school_org_id,term_id FROM placements WHERE id=?",
+            (r, n) -> new String[]{r.getString(1),r.getString(2)}, uuid(placementId))
             .stream().findFirst().orElseThrow(() -> failure(404, "RESOURCE_NOT_FOUND"));
-        scope.require(auth, peek, null, "placement:school:write");
+        String peek=target[0];
+        scope.require(auth, peek, target[1], "placement:school:write");
         return ledger.execute(
             new OperationLedger.Command(actor(auth), peek,
                 "PLACEMENT_ACTIVATE", idempotencyKey, Map.of("id", placementId, "body", body), 200),
@@ -284,25 +309,36 @@ public class PlacementService {
 
     private PlacementView doActivate(Authentication auth, String schoolOrgId,
                                       String placementId, PlacementCommand body) {
+        lockDemandForPlacement(placementId,schoolOrgId);
         var p = lockPlacement(placementId, schoolOrgId);
         if (!p.state().equals("APPROVED")) throw failure(409, "STATE_CONFLICT");
         if (p.version() != body.expectedVersion()) throw failure(409, "VERSION_CONFLICT");
         scope.require(auth, schoolOrgId, p.termId(), "placement:school:write");
 
-        if (Instant.now().isBefore(p.effectiveAt()))
-            throw failure(409, "PLACEMENT_NOT_EFFECTIVE");
+        return activateApproved(p,actor(auth));
+    }
 
-        reCheckVerification(p.enterpriseOrgId(), schoolOrgId);
-
-        jdbc.update("UPDATE placements SET state='ACTIVE',version=version+1 WHERE id=?", placementId);
-
-        writeHistory(placementId, "APPROVED", "ACTIVE", actor(auth),
-            null, null, UUID.randomUUID().toString());
-
-        // Publish PlacementActivated — T3 inbox: WAITING_START → IN_PROGRESS (also writes PLACEMENT_ACTIVATED audit)
-        publisher.publish(actor(auth), placementId);
-
-        return readPlacement(placementId);
+    /** Internal SYSTEM purpose: only activate an existing, current APPROVED placement when due. No create/approve authority. */
+    @Transactional
+    public void activateDue(String placementId,long expectedVersion) {
+        uuid(placementId);version(expectedVersion);
+        var before=readPlacement(placementId);
+        lockDemandForPlacement(placementId,before.schoolOrgId());
+        var p=lockPlacement(placementId,before.schoolOrgId());
+        if(!p.state().equals("APPROVED") || p.version()!=expectedVersion) return;
+        activateApproved(p,null);
+    }
+    private PlacementView activateApproved(PlacementView p,String actorId) {
+        if(clock.instant().isBefore(p.effectiveAt())) throw failure(409,"PLACEMENT_NOT_EFFECTIVE");
+        String termState=jdbc.queryForObject("SELECT status FROM terms WHERE id=? AND school_org_id=? FOR SHARE",String.class,p.termId(),p.schoolOrgId());
+        if(!"ACTIVE".equals(termState)) throw failure(422,"TERM_INVALID");
+        reCheckVerification(p.enterpriseOrgId(),p.schoolOrgId());
+        checkDates(p.termId(),p.startDate(),p.endDate(),p.effectiveAt());
+        int changed=jdbc.update("UPDATE placements SET state='ACTIVE',version=version+1 WHERE id=? AND state='APPROVED' AND version=?",p.placementId(),p.version());
+        if(changed!=1) throw failure(409,"VERSION_CONFLICT");
+        writeHistory(p.placementId(),"APPROVED","ACTIVE",actorId,"EFFECTIVE_AT",null,UUID.randomUUID().toString());
+        publisher.publish(actorId,p.placementId());
+        return readPlacement(p.placementId());
     }
 
     // ── Cancel: any open state → CANCELLED ───────────────────────────────────
@@ -315,11 +351,13 @@ public class PlacementService {
     public PlacementView cancel(Authentication auth, String placementId,
                                  String idempotencyKey, PlacementCommand body) {
         version(body.expectedVersion());
+        text(body.decisionRef(),120);reason(body.reasonCode());
         reason(body.reasonCode());
-        var peek = jdbc.query("SELECT school_org_id FROM placements WHERE id=?",
-            (r, n) -> r.getString("school_org_id"), uuid(placementId))
+        var target = jdbc.query("SELECT school_org_id,term_id FROM placements WHERE id=?",
+            (r, n) -> new String[]{r.getString(1),r.getString(2)}, uuid(placementId))
             .stream().findFirst().orElseThrow(() -> failure(404, "RESOURCE_NOT_FOUND"));
-        scope.require(auth, peek, null, "placement:school:write");
+        String peek=target[0];
+        scope.require(auth, peek, target[1], "placement:school:write");
         return ledger.execute(
             new OperationLedger.Command(actor(auth), peek,
                 "PLACEMENT_CANCEL", idempotencyKey, Map.of("id", placementId, "body", body), 200),
@@ -330,6 +368,7 @@ public class PlacementService {
 
     private PlacementView doCancel(Authentication auth, String schoolOrgId,
                                     String placementId, PlacementCommand body) {
+        lockDemandForPlacement(placementId,schoolOrgId);
         var p = lockPlacement(placementId, schoolOrgId);
         if (!Set.of("PENDING_APPROVAL", "APPROVED", "ACTIVE").contains(p.state()))
             throw failure(409, "STATE_CONFLICT");
@@ -372,7 +411,7 @@ public class PlacementService {
                                               int page, int size) {
         page(page, size);
         scope.require(auth, uuid(schoolOrgId), termId, "placement:school:write");
-        return queryPlacements("school_org_id", schoolOrgId, termId, cooperationId, state, page, size);
+        return queryPlacements(auth,"school_org_id", schoolOrgId, termId, cooperationId, state, page, size);
     }
 
     @Transactional(readOnly = true)
@@ -388,7 +427,7 @@ public class PlacementService {
                                                   int page, int size) {
         page(page, size);
         requireEnterpriseRead(auth, enterpriseOrgId);
-        return queryPlacements("enterprise_org_id", enterpriseOrgId, termId, cooperationId, state, page, size);
+        return queryPlacements(auth,"enterprise_org_id", enterpriseOrgId, termId, cooperationId, state, page, size);
     }
 
     @Transactional(readOnly = true)
@@ -400,6 +439,7 @@ public class PlacementService {
             "SELECT COUNT(*) FROM demands WHERE id=? AND school_org_id=? AND soft_deleted_at IS NULL",
             Integer.class, demandId, schoolOrgId);
         if (exists == 0) throw failure(404, "RESOURCE_NOT_FOUND");
+        scope.require(auth,schoolOrgId,jdbc.queryForObject("SELECT term_id FROM demands WHERE id=?",String.class,demandId),"placement:school:write");
         return buildSummary(demandId);
     }
 
@@ -488,10 +528,9 @@ public class PlacementService {
     }
 
     private void reCheckVerification(String enterpriseOrgId, String schoolOrgId) {
-        int v = jdbc.queryForObject(
-            "SELECT COUNT(*) FROM enterprise_verifications " +
-            "WHERE enterprise_org_id=? AND school_org_id=? AND state='APPROVED'",
-            Integer.class, enterpriseOrgId, schoolOrgId);
+        var states=jdbc.queryForList("SELECT status FROM organizations WHERE id IN (?,?) ORDER BY id FOR SHARE",String.class,enterpriseOrgId,schoolOrgId);
+        if(states.size()!=2 || states.stream().anyMatch(state->!state.equals("VERIFIED"))) throw failure(422,"PLACEMENT_GATE_FAILED");
+        int v = jdbc.queryForList("SELECT id FROM enterprise_verifications WHERE enterprise_org_id=? AND school_org_id=? AND state='APPROVED' FOR SHARE",String.class,enterpriseOrgId,schoolOrgId).size();
         if (v == 0) throw failure(422, "SCHOOL_VERIFICATION_REQUIRED");
     }
 
@@ -499,16 +538,16 @@ public class PlacementService {
         int quantity = jdbc.queryForObject(
             "SELECT JSON_UNQUOTE(JSON_EXTRACT(d.data_json,'$.quantity')) FROM demands d " +
             "WHERE d.id=?", Integer.class, demandId);
-        int placed = jdbc.queryForObject(
-            "SELECT COUNT(*) FROM placements p " +
+        int placed = jdbc.queryForList(
+            "SELECT p.id FROM placements p " +
             "JOIN proposal_batches b ON b.cooperation_id=? " +
             "JOIN proposal_items i ON i.batch_id=b.id AND i.placement_id=p.id " +
-            "WHERE p.state IN ('APPROVED','ACTIVE','COMPLETED')",
-            Integer.class, cooperationId);
+            "WHERE p.state IN ('APPROVED','ACTIVE','COMPLETED') FOR SHARE",
+            String.class, cooperationId).size();
         if (placed >= quantity) throw failure(409, "CAPACITY_EXCEEDED");
     }
 
-    private Page<PlacementView> queryPlacements(String column, String orgId,
+    private Page<PlacementView> queryPlacements(Authentication auth,String column, String orgId,
                                                   String termId, String cooperationId, String state,
                                                   int page, int size) {
         if (termId != null && !termId.isBlank()) uuid(termId);
@@ -523,6 +562,11 @@ public class PlacementService {
         Object[] args  = {orgId, tFilter, tFilter, cFilter, cFilter, sFilter, sFilter};
         var ids = jdbc.queryForList(
             "SELECT id FROM placements" + where + " ORDER BY state,id", String.class, args);
+        if(column.equals("school_org_id")) ids=ids.stream().filter(id->{
+            var p=readPlacement(id);
+            try {scope.require(auth,orgId,p.termId(),"placement:school:write");return true;}
+            catch(vn.utbridora.auth.operations.OperationFailure denied) {if(denied.status==404 || denied.status==403) return false;throw denied;}
+        }).toList();
         int from = Math.min(page * size, ids.size());
         var rows = ids.subList(from, Math.min(from + size, ids.size()))
             .stream().map(this::readPlacement).toList();
@@ -564,8 +608,38 @@ public class PlacementService {
         return new InternshipLink(p.placementId(), caseId, "AVAILABLE", route);
     }
 
+    private static LocalDate parseDate(String text) {
+        try {if(text==null || !text.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}")) throw new IllegalArgumentException();return LocalDate.parse(text);}
+        catch(Exception e) {throw failure(400,"SCHEMA_VALIDATION");}
+    }
+    private void lockDemandForItem(String item,String school) {
+        var ids=jdbc.queryForList("SELECT c.demand_id FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id JOIN cooperations c ON c.id=b.cooperation_id WHERE i.id=? AND c.school_org_id=?",String.class,item,school);
+        if(ids.size()!=1) throw failure(404,"RESOURCE_NOT_FOUND");
+        jdbc.queryForObject("SELECT id FROM demands WHERE id=? FOR UPDATE",String.class,ids.getFirst());
+    }
+    private void lockDemandForPlacement(String placement,String school) {
+        var ids=jdbc.queryForList("SELECT demand_id FROM placements WHERE id=? AND school_org_id=?",String.class,placement,school);
+        if(ids.size()!=1) throw failure(404,"RESOURCE_NOT_FOUND");
+        jdbc.queryForObject("SELECT id FROM demands WHERE id=? FOR UPDATE",String.class,ids.getFirst());
+    }
+    private void checkDates(String term,LocalDate start,LocalDate end,Instant effective) {
+        var dates=jdbc.query("SELECT start_date,end_date FROM terms WHERE id=? FOR SHARE",(r,n)->new LocalDate[]{r.getDate(1).toLocalDate(),r.getDate(2).toLocalDate()},term).getFirst();
+        var zone=ZoneId.of("Asia/Ho_Chi_Minh");
+        if(start.isBefore(dates[0]) || end.isAfter(dates[1]) || effective.isBefore(dates[0].atStartOfDay(zone).toInstant())
+            || !effective.isBefore(dates[1].plusDays(1).atStartOfDay(zone).toInstant())) throw failure(422,"PLACEMENT_GATE_FAILED");
+    }
+    private void checkCurrentCandidate(Authentication auth,ProposalService.Item item,CooperationService.CooperationDto coop) {
+        var d=demands.findLocked(coop.demandId(),coop.enterpriseOrgId()).orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
+        if(d.deletedAt()!=null) throw failure(404,"RESOURCE_NOT_FOUND");
+        references.validate(coop.enterpriseOrgId(),d.data());
+        var refs=jdbc.queryForMap("SELECT match_run_id,profile_snapshot_id FROM proposal_items WHERE id=?",item.proposalItemId());
+        var run=matching.read(auth,(String)refs.get("match_run_id"),"placement:school:write");
+        if(!run.run().demandId().equals(coop.demandId()) || run.run().criteriaVersion()!=d.criteriaVersion()
+            || !run.run().criteriaHash().equals(d.criteriaHash()) || !run.run().ruleVersion().equals(vn.utbridora.auth.modules.matching.domain.StrictClassifier.RULE_VERSION)) throw failure(409,"MATCH_RUN_STALE");
+        profiles.assertCurrentForPlacement(auth,(String)refs.get("profile_snapshot_id"),item.studentUserId(),coop.schoolOrgId(),coop.termId());
+    }
     private static Instant parseInstant(String iso) {
-        try { return Instant.parse(iso); }
+        try { if(iso==null || !iso.endsWith("Z")) throw new IllegalArgumentException();return Instant.parse(iso); }
         catch (Exception e) { throw failure(400, "SCHEMA_VALIDATION"); }
     }
 
@@ -591,10 +665,10 @@ public class PlacementService {
                                String operationId) {
         jdbc.update(
             "INSERT INTO placement_history(id,placement_id,from_state,to_state," +
-            "actor_id,reason_code,decision_ref,operation_id,changed_at) " +
-            "VALUES(?,?,?,?,?,?,?,?,UTC_TIMESTAMP(6))",
+            "actor_id,reason_code,decision_ref,operation_id,actor_kind,changed_at) " +
+            "VALUES(?,?,?,?,?,?,?,?,?,UTC_TIMESTAMP(6))",
             UUID.randomUUID().toString(), placementId, fromState, toState,
             actorId, reasonCode, decisionRef,
-            operationId != null ? operationId : UUID.randomUUID().toString());
+            operationId != null ? operationId : UUID.randomUUID().toString(),actorId==null?"SYSTEM":"USER");
     }
 }

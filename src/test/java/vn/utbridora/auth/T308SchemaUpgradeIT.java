@@ -19,7 +19,7 @@ class T308SchemaUpgradeIT {
                 s.executeUpdate("INSERT INTO terms(id,school_org_id,term_code,start_date,end_date,status,version,created_at,updated_at) VALUES ('"+term+"','"+school+"','UPGRADE','2026-01-01','2027-01-01','ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))");
                 s.executeUpdate("INSERT INTO internship_cases(id,placement_id,student_user_id,school_org_id,enterprise_org_id,term_id,state,version,last_applied_version) VALUES ('"+caseId+"',UUID(),'"+user+"','"+school+"','"+enterprise+"','"+term+"','IN_PROGRESS',2,2)");
                 var flyway=Flyway.configure().dataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword()).load();
-                assertEquals(1,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
+                assertEquals(3,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
                 try(var r=s.executeQuery("SELECT version,state FROM internship_cases WHERE id='"+caseId+"'")){assertTrue(r.next());assertEquals(2,r.getLong(1));assertEquals("IN_PROGRESS",r.getString(2));}
                 try(var r=s.executeQuery("SELECT COUNT(*) FROM role_permissions WHERE permission_code='t3:comments:write'")){assertTrue(r.next());assertEquals(2,r.getInt(1));}
                 String report=UUID.randomUUID().toString();

@@ -420,7 +420,7 @@ class CorePlatformIT {
         env.put("E2E_RESET_TOKEN",reset);env.put("E2E_RESET_EMAIL",resetUser.email);env.put("E2E_ORG_B_ID",orgB.id);
         builder.redirectErrorStream(true).redirectOutput(new java.io.File("target/frontend-e2e.log"));
         Process process=builder.start();
-        if(!process.waitFor(240,TimeUnit.SECONDS)) {
+        if(!process.waitFor(480,TimeUnit.SECONDS)) {
             process.descendants().forEach(child->child.destroyForcibly());process.destroyForcibly();
             fail("Frontend E2E timed out; see target/frontend-e2e.log");
         }

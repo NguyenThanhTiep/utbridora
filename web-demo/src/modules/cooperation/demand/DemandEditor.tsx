@@ -113,13 +113,6 @@ export function DemandEditor({ organizationId, existing, onBusy, onUnconfirmed, 
           })} />
         <Field error={fieldError('required.majorCodes')} label="Mã ngành chính thức (không bắt buộc)" value={form.majorCodes} onChange={value => set('majorCodes', value)} required={false}
           hint="Phân cách bằng dấu phẩy. Để trống nghĩa là không giới hạn ngành; không nhập tên ngành thay cho mã." />
-        {/* liên quan đến việc thêm lọc svien theo gpa là MVP: Cho doanh nghiệp chọn GPA tối thiểu; matching giữ sinh viên GPA bằng hoặc cao hơn. */}
-        <label htmlFor={prefix + '-min-gpa'}>GPA tối thiểu (không bắt buộc)</label>
-        <select id={prefix + '-min-gpa'} value={form.minGpa} onChange={event => set('minGpa', event.target.value)}>
-          <option value="">Không lọc theo GPA</option>
-          {Array.from({ length: 31 }, (_, index) => (1 + index / 10).toFixed(1)).map(value =>
-            <option key={value} value={value}>{value} trở lên</option>)}
-        </select>
         <div className="cooperation-form-grid">
           <Field error={fieldError('required.dateRange')} label="Ngày bắt đầu thực tập" value={form.startDate} onChange={value => set('startDate', value)} type="date" />
           <Field error={fieldError('required.dateRange.endDate')} label="Ngày kết thúc thực tập" value={form.endDate} onChange={value => set('endDate', value)} type="date" min={form.startDate || undefined} />

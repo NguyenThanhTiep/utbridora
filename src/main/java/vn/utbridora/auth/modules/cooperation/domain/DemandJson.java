@@ -12,7 +12,6 @@ import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.MapperFeature;
 import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ObjectNode;
 import static vn.utbridora.auth.modules.cooperation.domain.DemandModels.*;
 
 public final class DemandJson {
@@ -22,16 +21,22 @@ public final class DemandJson {
             .disable(MapperFeature.ALLOW_COERCION_OF_SCALARS).build();
     private DemandJson() {}
     public static String write(Object value) { return JSON.writeValueAsString(value); }
-    public static <T> T read(String value,Class<T> type) { return JSON.readValue(value,type); }
-    public static <T> T request(JsonNode node,Class<T> type) {
-        try {
-            JsonNode normalized=node;
-            if(type==DemandInput.class && node.isObject() && node.get("required") instanceof ObjectNode required && !required.has("minGpa")) {
-                normalized=node.deepCopy();
-                ((ObjectNode)normalized.get("required")).putNull("minGpa");
+    public static <T> T read(String value,Class<T> type) {
+        // The unapproved T4 GPA branch backfilled a reserved null field in stored JSON.
+        // Read that harmless historical representation without editing immutable revisions.
+        // A non-null criterion requires an explicit owner decision; never silently drop a predicate.
+        if(type==DemandInput.class || type==DemandCriteriaSnapshot.class) {
+            var tree=JSON.readTree(value);var required=tree.get("required");
+            if(required!=null && required.has("minGpa")) {
+                if(!required.get("minGpa").isNull()) throw new DemandFailure(409,"LEGACY_CRITERIA_REVIEW_REQUIRED","Tiêu chí GPA từ nhánh cũ cần được chủ sở hữu rà soát trước khi dùng với contract v1.0.");
+                ((tools.jackson.databind.node.ObjectNode)required).remove("minGpa");
             }
-            checkNulls(normalized,type); return JSON.treeToValue(normalized,type);
+            return JSON.treeToValue(tree,type);
         }
+        return JSON.readValue(value,type);
+    }
+    public static <T> T request(JsonNode node,Class<T> type) {
+        try { checkNulls(node,type); return JSON.treeToValue(node,type); }
         catch(RuntimeException ex) { throw new DemandFailure(400,"SCHEMA_VALIDATION","Kiểm tra trường dữ liệu, kiểu dữ liệu và các trường bắt buộc."); }
     }
     private static void checkNulls(JsonNode node,Class<?> type) {
@@ -39,7 +44,7 @@ public final class DemandJson {
         for(var field:type.getRecordComponents()) {
             JsonNode value=node.get(field.getName());
             if(value==null) throw new IllegalArgumentException();
-            boolean nullable=java.util.Set.of("location","benefits","minLevel","minYearsPractice","minGpa").contains(field.getName());
+            boolean nullable=java.util.Set.of("location","benefits","minLevel","minYearsPractice").contains(field.getName());
             if(value.isNull()) { if(!nullable) throw new IllegalArgumentException(); continue; }
             if((field.getType()==String.class || field.getType()==java.time.Instant.class || field.getType()==java.time.LocalDate.class)
                     && !value.getNodeType().name().equals("STRING")) throw new IllegalArgumentException();
@@ -61,13 +66,9 @@ public final class DemandJson {
         data.put("schoolOrgId",input.schoolOrgId()); data.put("termId",input.termId());
         data.put("quantity",input.quantity()); data.put("academicCatalogVersion",input.academicCatalogVersion());
         data.put("taxonomyVersion",input.taxonomyVersion());
-        var required=new TreeMap<String,Object>();
-        required.put("majorCodes",input.required().majorCodes().stream().sorted().toList());
-        required.put("skills",input.required().skills().stream().sorted(Comparator.comparing(SkillCriterion::skillCode)).toList());
-        required.put("dateRange",input.required().dateRange());
-        // liên quan đến việc thêm lọc svien theo gpa là MVP: Đưa ngưỡng GPA vào criteria hash để thay đổi ngưỡng tạo phiên bản matching mới.
-        required.put("minGpa",input.required().minGpa());
-        data.put("required",required);
+        data.put("required",Map.of("majorCodes",input.required().majorCodes().stream().sorted().toList(),
+                "skills",input.required().skills().stream().sorted(Comparator.comparing(SkillCriterion::skillCode)).toList(),
+                "dateRange",input.required().dateRange()));
         data.put("preferred",input.preferred().stream().sorted(Comparator.comparing(SkillCriterion::skillCode)).toList());
         return sha256(canonical(JSON.valueToTree(data)));
     }

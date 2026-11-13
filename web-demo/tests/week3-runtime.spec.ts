@@ -17,10 +17,18 @@ test('week 3 school, student and enterprise use real share, decision, Placement 
       && r.request().headers()['x-organization-id'] === org);
     await page.getByRole('button', {name: school ? 'Hợp tác doanh nghiệp' : 'Nhu cầu thực tập', exact: true}).click();
     await page.getByLabel(school ? 'Nhà trường' : 'Doanh nghiệp đang làm việc').selectOption(org);
-    const response = await loaded;
-    expect(response.ok()).toBeTruthy();const result = await response.json();
-    const index = result.content.findIndex((c: {cooperationId: string}) => c.cooperationId === coop);expect(index).toBeGreaterThanOrEqual(0);
-    await page.getByRole('button', {name: `Xem nội dung đề nghị ${index + 1}`, exact: true}).click();
+    let response = await loaded, currentPage = 0;
+    const panel = page.locator('section.panel').filter({has: page.getByRole('heading', {name: 'Đề nghị hợp tác', exact: true})});
+    let position = -1;
+    while (true) {
+      expect(response.ok()).toBeTruthy();const result = await response.json();
+      const index = result.content.findIndex((c: {cooperationId: string}) => c.cooperationId === coop);
+      if (index >= 0) {position = currentPage * 25 + index; break;}
+      expect(currentPage + 1).toBeLessThan(result.totalPages); currentPage++;
+      const next = page.waitForResponse(r => r.url().includes(`/api/v1/${side}/cooperations?`) && new URL(r.url()).searchParams.get('page') === String(currentPage));
+      await panel.getByRole('button', {name: 'Sau', exact: true}).click(); response = await next;
+    }
+    await panel.getByRole('button', {name: `Xem nội dung đề nghị ${position + 1}`, exact: true}).click();
   }
   const school = await actor(browser, 'school@example.test');
   const student = await actor(browser, 'student@example.test');
@@ -33,7 +41,7 @@ test('week 3 school, student and enterprise use real share, decision, Placement 
     const invitationResponse = await issued;expect(invitationResponse.status()).toBe(202);const invitation = await invitationResponse.json();
     await openCooperation(hr.page, false);await expect(hr.page.getByText('Chưa có hồ sơ được chia sẻ hợp lệ.', {exact: true})).toBeVisible();
 
-    await student.page.getByRole('button', {name: 'Lời mời và chia sẻ', exact: true}).click();
+    await student.page.getByRole('button', {name: 'Lời mời & nguyện vọng', exact: true}).click();
     const invitations = await (await student.page.request.get('/api/v1/invitations/me?page=0&size=100')).json();
     const index = invitations.content.findIndex((i: {invitationId: string}) => i.invitationId === invitation.invitationId);expect(index).toBeGreaterThanOrEqual(0);
     const panel = student.page.locator('.workflow-surface > section.panel').nth(index);

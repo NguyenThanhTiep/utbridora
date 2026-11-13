@@ -118,6 +118,15 @@ public class AuditService {
         event.metadataJson=new tools.jackson.databind.ObjectMapper().writeValueAsString(metadata);
         flushRequiredAudit();
     }
+    /** Denial survives the failed release transaction, with only the E.2 metadata allowlist. */
+    @Transactional(propagation=Propagation.REQUIRES_NEW)
+    public void privacyReleaseBlocked(String actor,String enterprise,String school,String term,String batch) {
+        validateId(enterprise);validateId(school);validateId(term);validateId(batch);
+        var event=store(actor,"PRIVACY_RELEASE_BLOCKED","privacy_release",null,"DENIED",enterprise,"PRIVACY_RELEASE_LOCKED");
+        event.metadataJson=new tools.jackson.databind.ObjectMapper().writeValueAsString(java.util.Map.of(
+            "enterpriseOrgId",enterprise,"schoolOrgId",school,"termId",term,"demoBatchId",batch,"reasonCode","PRIVACY_RELEASE_LOCKED"));
+        flushRequiredAudit();
+    }
     private void flushRequiredAudit() {
         try {repository.flush();}
         catch(org.springframework.dao.DataAccessException failure) {

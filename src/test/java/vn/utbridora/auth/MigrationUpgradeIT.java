@@ -19,7 +19,7 @@ class MigrationUpgradeIT {
                 s.executeUpdate("INSERT INTO file_bindings(id,file_id,binding_kind,purpose,resource_id,created_at) VALUES (UUID(),'"+file+"','STUDENT_PROFILE','CV','"+user+"',UTC_TIMESTAMP(6))");
             }
             var flyway=Flyway.configure().dataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword()).load();
-            assertEquals(3,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
+            assertEquals(5,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
             try(Connection c=DriverManager.getConnection(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword());Statement s=c.createStatement()) {
                 try(ResultSet r=s.executeQuery("SELECT f.owner_user_id,f.storage_key,f.scan_status,b.resource_id,b.purpose FROM files f JOIN file_bindings b ON b.file_id=f.id WHERE f.id='"+file+"'")) {
                     assertTrue(r.next());assertEquals(user,r.getString(1));assertEquals("legacy-storage-key",r.getString(2));assertEquals("CLEAN",r.getString(3));assertEquals(user,r.getString(4));assertEquals("CV",r.getString(5));assertFalse(r.next());
@@ -66,7 +66,7 @@ class MigrationUpgradeIT {
             }
             Flyway flyway=Flyway.configure().dataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword()).load();
             // V3-V7, shared ledger, T5 terms, T2 relationship and profile schemas.
-            assertEquals(28,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
+            assertEquals(30,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
             try(Connection c=DriverManager.getConnection(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword());Statement s=c.createStatement()) {
                 try(ResultSet r=s.executeQuery("SELECT email FROM users WHERE id='"+user+"'")) {assertTrue(r.next());assertEquals("upgrade@example.test",r.getString(1));}
                 assertThrows(SQLException.class,()->s.executeUpdate("INSERT INTO memberships (id,user_id,role,active,created_at) VALUES ('"+UUID.randomUUID()+"','"+user+"','ADMIN',1,UTC_TIMESTAMP(6))"));

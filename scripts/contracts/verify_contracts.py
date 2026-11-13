@@ -176,7 +176,7 @@ def check_audit_enum(enum_values, audit):
 def check_registries(manifest):
     problems=[]
     perms=manifest['permissions'];audit=manifest['auditActions']
-    sql=(ROOT/'src/main/resources/db/migration/V3__permissions_and_membership_integrity.sql').read_text(encoding='utf-8')
+    sql=(ROOT/'src/main/resources/db/migration/base/V3__permissions_and_membership_integrity.sql').read_text(encoding='utf-8')
     seed=sql.split('INSERT INTO permissions',1)[1].split('INSERT INTO role_permissions',1)[0]
     core_codes=set(re.findall(r"\('([^']+)'",seed))
     contract_core={p['code'] for p in perms if p['catalogImplemented']}

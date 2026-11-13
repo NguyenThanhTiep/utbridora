@@ -1,6 +1,6 @@
 package vn.utbridora.auth.modules.cooperation.api;
 
-import jakarta.validation.Valid;
+import static vn.utbridora.auth.operations.WorkflowValues.body;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -31,8 +31,8 @@ public class PlacementController {
             Authentication auth,
             @RequestHeader("X-Organization-Id") String schoolOrgId,
             @RequestHeader("Idempotency-Key") String idempotencyKey,
-            @Valid @RequestBody CreatePlacement body) {
-        return placements.create(auth, schoolOrgId, idempotencyKey, body);
+            @RequestBody String data) {
+        return placements.create(auth, schoolOrgId, idempotencyKey, body(data,CreatePlacement.class));
     }
 
     @PostMapping("/api/v1/school/{schoolOrgId}/placements")
@@ -41,8 +41,8 @@ public class PlacementController {
             Authentication auth,
             @PathVariable String schoolOrgId,
             @RequestHeader("Idempotency-Key") String idempotencyKey,
-            @Valid @RequestBody CreatePlacement body) {
-        return placements.create(auth, schoolOrgId, idempotencyKey, body);
+            @RequestBody String data) {
+        return placements.create(auth, schoolOrgId, idempotencyKey, body(data,CreatePlacement.class));
     }
 
     @PostMapping("/api/v1/placements/{placementId}/approve")
@@ -50,8 +50,8 @@ public class PlacementController {
             Authentication auth,
             @PathVariable String placementId,
             @RequestHeader("Idempotency-Key") String idempotencyKey,
-            @Valid @RequestBody PlacementCommand body) {
-        return placements.approve(auth, placementId, idempotencyKey, body);
+            @RequestBody String data) {
+        return placements.approve(auth, placementId, idempotencyKey, body(data,PlacementCommand.class));
     }
 
     @PostMapping("/api/v1/placements/{placementId}/activate")
@@ -59,8 +59,8 @@ public class PlacementController {
             Authentication auth,
             @PathVariable String placementId,
             @RequestHeader("Idempotency-Key") String idempotencyKey,
-            @Valid @RequestBody PlacementCommand body) {
-        return placements.activate(auth, placementId, idempotencyKey, body);
+            @RequestBody String data) {
+        return placements.activate(auth, placementId, idempotencyKey, body(data,PlacementCommand.class));
     }
 
     @PostMapping("/api/v1/placements/{placementId}/cancel")
@@ -68,8 +68,8 @@ public class PlacementController {
             Authentication auth,
             @PathVariable String placementId,
             @RequestHeader("Idempotency-Key") String idempotencyKey,
-            @Valid @RequestBody PlacementCommand body) {
-        return placements.cancel(auth, placementId, idempotencyKey, body);
+            @RequestBody String data) {
+        return placements.cancel(auth, placementId, idempotencyKey, body(data,PlacementCommand.class));
     }
 
     // ── Reads (Header-based CP-T5UI1) ─────────────────────────────────────────

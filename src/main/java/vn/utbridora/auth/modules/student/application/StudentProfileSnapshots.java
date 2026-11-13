@@ -63,22 +63,32 @@ public class StudentProfileSnapshots implements StudentProfileSnapshotPort {
             if(!current(ref.studentUserId(),snapshot.schoolOrgId(),snapshot.termId(),snapshot.academicCatalogVersion(),snapshot.taxonomyVersion(),Instant.now()).relevantHash().equals(ref.relevantHash())) throw failure(409,"PROFILE_STALE");
         }
     }
+    @Override @Transactional(propagation=Propagation.MANDATORY)
+    public void assertCurrentForPlacement(Authentication auth,String snapshotId,String student,String school,String term) {
+        scope.require(auth,school,term,"placement:school:write");
+        var snapshot=jdbc.query("SELECT data_json FROM student_profile_snapshots WHERE id=?",
+            (r,n)->JSON.readValue(r.getString(1),ProfileSnapshot.class),uuid(snapshotId)).stream().findFirst()
+            .orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
+        if(!snapshot.studentUserId().equals(student) || !snapshot.schoolOrgId().equals(school) || !snapshot.termId().equals(term))
+            throw failure(404,"RESOURCE_NOT_FOUND");
+        if(!current(student,school,term,snapshot.academicCatalogVersion(),snapshot.taxonomyVersion(),Instant.now()).relevantHash().equals(snapshot.relevantHash()))
+            throw failure(409,"PROFILE_STALE");
+    }
     public SnapshotSet set(String id) {
         return jdbc.query("SELECT data_json FROM student_snapshot_sets WHERE id=?",(r,n)->JSON.readValue(r.getString(1),SnapshotSet.class),id).stream().findFirst().orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
     }
     private ProfileSnapshot current(String student,String school,String term,String academic,String tax,Instant now) {
         var row=profiles.lockByUser(student).orElse(null);
-        String major=null;boolean declared=false,availability=false;long version=0;java.math.BigDecimal gpa=null;
+        String major=null;boolean declared=false,availability=false;long version=0;
         List<SkillValue> skills=List.of();List<vn.utbridora.auth.modules.student.api.StudentProfileDtos.DateRange> periods=List.of();
         if(row!=null) {
-            version=row.version();declared=row.skillsDeclared();gpa=row.gpa();var per=profiles.findTerm(row.id(),term).orElse(null);
+            version=row.version();declared=row.skillsDeclared();var per=profiles.findTerm(row.id(),term).orElse(null);
             if(per!=null) {major=per.majorCode();availability=per.availabilityDeclared();}
             skills=profiles.skills(row.id()).stream().map(s->new SkillValue(s.skillCode(),s.level(),s.yearsPractice().stripTrailingZeros(),s.source())).sorted(Comparator.comparing(SkillValue::skillCode)).toList();
             periods=profiles.periods(row.id(),term).stream().sorted(Comparator.comparing(v->v.startDate()+v.endDate())).toList();
         }
-        // liên quan đến việc thêm lọc svien theo gpa là MVP: GPA nằm trong fingerprint để thay đổi GPA làm kết quả matching stale.
-        var relevant=new TreeMap<String,Object>();relevant.put("majorCode",major);relevant.put("termId",term);relevant.put("gpa",gpa);relevant.put("skillsDeclared",declared);relevant.put("skills",skills);relevant.put("availabilityDeclared",availability);relevant.put("availablePeriods",periods);
-        return new ProfileSnapshot(UUID.randomUUID().toString(),student,school,term,major,declared,skills,availability,periods,version,OperationLedger.payloadHash(relevant),"demo-v1",academic,tax,now,gpa);
+        var relevant=new TreeMap<String,Object>();relevant.put("majorCode",major);relevant.put("termId",term);relevant.put("skillsDeclared",declared);relevant.put("skills",skills);relevant.put("availabilityDeclared",availability);relevant.put("availablePeriods",periods);
+        return new ProfileSnapshot(UUID.randomUUID().toString(),student,school,term,major,declared,skills,availability,periods,version,OperationLedger.payloadHash(relevant),"demo-v1",academic,tax,now);
     }
     private String school(String term) {return jdbc.queryForList("SELECT school_org_id FROM terms WHERE id=?",String.class,term).stream().findFirst().orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));}
 }

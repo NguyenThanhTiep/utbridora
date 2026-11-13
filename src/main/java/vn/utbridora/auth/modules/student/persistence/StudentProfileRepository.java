@@ -15,9 +15,9 @@ import vn.utbridora.auth.modules.student.api.StudentProfileDtos.*;
  */
 @Repository
 public class StudentProfileRepository {
-    public record ProfileRow(String id,String userId,String phone,String cvFileId,boolean skillsDeclared,long version,BigDecimal gpa) {}
+    public record ProfileRow(String id,String userId,String phone,String cvFileId,boolean skillsDeclared,long version) {}
     public record TermRow(String schoolOrgId,String majorCode,boolean availabilityDeclared) {}
-    private static final String PROFILE="SELECT id,user_id,phone,cv_file_id,skills_declared,profile_version,gpa FROM student_profiles WHERE user_id=?";
+    private static final String PROFILE="SELECT id,user_id,phone,cv_file_id,skills_declared,profile_version FROM student_profiles WHERE user_id=?";
     private final JdbcTemplate jdbc;
     public StudentProfileRepository(JdbcTemplate jdbc) { this.jdbc=jdbc; }
 
@@ -25,7 +25,7 @@ public class StudentProfileRepository {
     /** Serializes writers of one profile so the version check and the update commit together (G line 1667). */
     public Optional<ProfileRow> lockByUser(String userId) { return profile(PROFILE+" FOR UPDATE",userId); }
     private Optional<ProfileRow> profile(String sql,String userId) {
-        return jdbc.query(sql,(rs,i)->new ProfileRow(rs.getString(1),rs.getString(2),rs.getString(3),rs.getString(4),rs.getBoolean(5),rs.getLong(6),rs.getBigDecimal(7)),userId)
+        return jdbc.query(sql,(rs,i)->new ProfileRow(rs.getString(1),rs.getString(2),rs.getString(3),rs.getString(4),rs.getBoolean(5),rs.getLong(6)),userId)
             .stream().findFirst();
     }
     public Optional<TermRow> findTerm(String profileId,String termId) {
@@ -61,13 +61,13 @@ public class StudentProfileRepository {
     }
 
     public void insert(ProfileRow p) {
-        jdbc.update("INSERT INTO student_profiles (id,user_id,phone,cv_file_id,skills_declared,profile_version,gpa,created_at,updated_at) "
-            +"VALUES (?,?,?,?,?,?,?,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",p.id(),p.userId(),p.phone(),p.cvFileId(),p.skillsDeclared(),p.version(),p.gpa());
+        jdbc.update("INSERT INTO student_profiles (id,user_id,phone,cv_file_id,skills_declared,profile_version,created_at,updated_at) "
+            +"VALUES (?,?,?,?,?,?,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",p.id(),p.userId(),p.phone(),p.cvFileId(),p.skillsDeclared(),p.version());
     }
     /** G line 1667: a wrong affected-row count rolls back instead of overwriting a newer version. */
     public void update(ProfileRow p,long expectedVersion) {
-        int rows=jdbc.update("UPDATE student_profiles SET phone=?,cv_file_id=?,skills_declared=?,profile_version=?,gpa=?,updated_at=UTC_TIMESTAMP(6) "
-            +"WHERE id=? AND profile_version=?",p.phone(),p.cvFileId(),p.skillsDeclared(),p.version(),p.gpa(),p.id(),expectedVersion);
+        int rows=jdbc.update("UPDATE student_profiles SET phone=?,cv_file_id=?,skills_declared=?,profile_version=?,updated_at=UTC_TIMESTAMP(6) "
+            +"WHERE id=? AND profile_version=?",p.phone(),p.cvFileId(),p.skillsDeclared(),p.version(),p.id(),expectedVersion);
         if(rows!=1) throw new OptimisticLockingFailureException("Student profile version changed");
     }
     public void saveTerm(String profileId,String termId,TermRow term) {

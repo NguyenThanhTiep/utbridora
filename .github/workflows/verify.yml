@@ -26,7 +26,7 @@ jobs:
           path: target/contract-verification.json
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -37,7 +37,7 @@ jobs:
         working-directory: web-demo
       - run: npx playwright install --with-deps chromium
         working-directory: web-demo
-      - run: mvn -B -Dfrontend.e2e=true verify
+      - run: mvn -B -Dfrontend.e2e=true -Dt5.week3.browser=true verify
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -46,6 +46,9 @@ jobs:
             target/surefire-reports/
             target/failsafe-reports/
             target/*browser-results.xml
+            target/*browser.xml
+            target/*browser.log
+            target/week3-*.png
             target/*e2e.log
             target/student-browser.log
             web-demo/test-results/

@@ -20,30 +20,12 @@ public final class StudentProfileDtos {
                                boolean skillsDeclared, List<CanonicalSkillInput> skills, List<CustomSkillInput> customSkills,
                                boolean availabilityDeclared, List<DateRange> availablePeriods,
                                List<String> orientationCodes, List<String> subjectCodes, List<Project> projects,
-                               List<Certificate> certificates, String cvFileId, String phone,
-                               // liên quan đến việc thêm lọc svien theo gpa là MVP: Nhận GPA do sinh viên khai báo để matching lọc theo ngưỡng.
-                               BigDecimal gpa) {
-        public ProfileInput(long expectedProfileVersion,String termId,String majorCode,boolean skillsDeclared,List<CanonicalSkillInput> skills,
-                List<CustomSkillInput> customSkills,boolean availabilityDeclared,List<DateRange> availablePeriods,List<String> orientationCodes,
-                List<String> subjectCodes,List<Project> projects,List<Certificate> certificates,String cvFileId,String phone) {
-            this(expectedProfileVersion,termId,majorCode,skillsDeclared,skills,customSkills,availabilityDeclared,availablePeriods,
-                orientationCodes,subjectCodes,projects,certificates,cvFileId,phone,null);
-        }
-    }
+                               List<Certificate> certificates, String cvFileId, String phone) {}
     public record SelfProfileData(String termId, String majorCode,
                                   boolean skillsDeclared, List<SelfSkillView> skills, List<CustomSkillView> customSkills,
                                   boolean availabilityDeclared, List<DateRange> availablePeriods,
                                   List<String> orientationCodes, List<String> subjectCodes, List<Project> projects,
-                                  List<Certificate> certificates, String cvFileId, String phone,
-                                  // liên quan đến việc thêm lọc svien theo gpa là MVP: Trả GPA trong hồ sơ nội bộ để chụp snapshot matching.
-                                  BigDecimal gpa) {
-        public SelfProfileData(String termId,String majorCode,boolean skillsDeclared,List<SelfSkillView> skills,List<CustomSkillView> customSkills,
-                boolean availabilityDeclared,List<DateRange> availablePeriods,List<String> orientationCodes,List<String> subjectCodes,
-                List<Project> projects,List<Certificate> certificates,String cvFileId,String phone) {
-            this(termId,majorCode,skillsDeclared,skills,customSkills,availabilityDeclared,availablePeriods,orientationCodes,
-                subjectCodes,projects,certificates,cvFileId,phone,null);
-        }
-    }
+                                  List<Certificate> certificates, String cvFileId, String phone) {}
     public record CompletenessCheck(String code, boolean passed, String reasonCode) {}
     public record CompletenessResult(String policyVersion, boolean complete, List<CompletenessCheck> checks) {}
     public record SelfProfileView(String studentUserId, String schoolOrgId, long profileVersion,

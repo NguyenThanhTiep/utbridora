@@ -13,8 +13,6 @@ export function DemandSummary({ demand }: { demand: Demand }) {
     <dl>
       <dt>Trường / kỳ</dt><dd>{data.schoolOrgId} / {data.termId}</dd>
       <dt>Ngành</dt><dd>{data.required.majorCodes.join(', ') || 'Không giới hạn ngành'}</dd>
-      {/* liên quan đến việc thêm lọc svien theo gpa là MVP: Hiển thị ngưỡng GPA đã lưu trong tiêu chí tuyển dụng. */}
-      <dt>GPA tối thiểu</dt><dd>{data.required.minGpa?.toFixed(1) ?? 'Không lọc theo GPA'}</dd>
       <dt>Thời gian thực tập</dt><dd>{date(data.required.dateRange.startDate)} – {date(data.required.dateRange.endDate)}</dd>
       <dt>Hạn tuyển</dt><dd>{new Date(data.deadline).toLocaleString('vi-VN')}</dd>
       <dt>Địa điểm</dt><dd>{data.location || 'Chưa cung cấp'}</dd>

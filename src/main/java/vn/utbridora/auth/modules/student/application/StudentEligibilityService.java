@@ -44,6 +44,7 @@ public class StudentEligibilityService implements StudentEligibilityPort {
     @Override @Transactional(propagation=Propagation.MANDATORY)
     public void assertEligibleForPlacement(Authentication auth, String student, String school,
                                             String term, long expectedVersion) {
+        scope.require(auth,school,term,"placement:school:write");
         var e = read(student, term);
         if (!school.equals(e.schoolOrgId())) throw failure(404, "RESOURCE_NOT_FOUND");
         if (e.version() != expectedVersion) throw failure(409, "ELIGIBILITY_CHANGED");
@@ -56,6 +57,12 @@ public class StudentEligibilityService implements StudentEligibilityPort {
         var subject = core.currentSubject(student).orElseThrow(() -> failure(404, "RESOURCE_NOT_FOUND"));
         if (!core.holdOrganization(subject, school, Role.STUDENT, "student_profile:self:read"))
             throw failure(422, "STUDENT_TERM_MISMATCH");
+    }
+    @Override @Transactional(propagation=Propagation.MANDATORY)
+    public void assertCurrentForPlacement(Authentication auth,String student,String school,String term) {
+        scope.require(auth,school,term,"placement:school:write");
+        var current=read(student,term);
+        assertEligibleForPlacement(auth,student,school,term,current.version());
     }
     private StudentTermEligibility read(String user,String term) {
         return jdbc.query("SELECT e.*,r.student_code,r.major_code FROM student_term_eligibilities e JOIN student_rosters r ON r.id=e.student_roster_id WHERE e.user_id=? AND e.term_id=? FOR UPDATE",(r,n)->new StudentTermEligibility(r.getString("user_id"),r.getString("school_org_id"),r.getString("term_id"),r.getString("student_code"),r.getString("major_code"),r.getBoolean("school_approved"),r.getLong("version"),r.getString("approved_by"),r.getTimestamp("approved_at")==null?null:instant(r,"approved_at"),r.getString("reason_code")),user,term).stream().findFirst().orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
