@@ -8,8 +8,11 @@ import { useWorkflowCommand } from './useWorkflowCommand';
 import { useSharedProfile } from './useSharedProfile';
 import { ProposalStateFilter } from './ProposalStateFilter';
 import './styles.css';
+import { readAll } from '../portal/data';
+import { canLeaveDemand } from '../navigation';
 
-export function EnterpriseProposals({ org, cooperationId }: { org: string; cooperationId: string }) {
+export function EnterpriseProposals({ org, cooperationId, focusProposalId }: { org: string; cooperationId: string; focusProposalId?: string }) {
+  const [focusId, setFocusId] = useState(focusProposalId || '');
   const [page, setPage] = useState(0), [revision, setRevision] = useState(0), [result, setResult] = useState<ContractPage<EnterpriseProposal> | null>(null);
   const [error, setError] = useState(''), [loading, setLoading] = useState(true), [notice, setNotice] = useState('');
   const [pending, setPending] = useState<Set<string>>(new Set());
@@ -27,21 +30,30 @@ export function EnterpriseProposals({ org, cooperationId }: { org: string; coope
   useEffect(() => {
     const controller = new AbortController(); setLoading(true); setError(''); setResult(null);
     const query = new URLSearchParams({page: String(page), size: '10', ...(state ? {state} : {})});
-    void scopedRead<ContractPage<EnterpriseProposal>>(org, `/enterprise/cooperations/${cooperationId}/proposals?${query}`, controller.signal)
+    const request = focusId ? readAll<EnterpriseProposal>(org, `/enterprise/cooperations/${cooperationId}/proposals`, controller.signal).then(items => {
+      const content = items.filter(item => item.proposalItemId === focusId);
+      return { content, page: 0, size: 10, totalElements: content.length, totalPages: content.length ? 1 : 0 };
+    }) : scopedRead<ContractPage<EnterpriseProposal>>(org, `/enterprise/cooperations/${cooperationId}/proposals?${query}`, controller.signal);
+    void request
       .then(value => { if (!controller.signal.aborted) {
         if (page > 0 && page >= value.totalPages) setPage(Math.max(0, value.totalPages - 1));
         else setResult(value);
       } }).catch(reason => { if (!controller.signal.aborted) setError(workflowError(reason)); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [org, cooperationId, page, revision, state]);
-  return <section className="proposal-workspace" aria-label="Ứng viên được đề xuất"><h3>Ứng viên được đề xuất</h3>
-    <p>Hồ sơ hiển thị theo phạm vi sinh viên đồng ý và nhà trường chia sẻ.</p>
-    <Notice message={error} tone="error" /><p role="status">{notice}</p>
-    <button className="secondary" disabled={loading || pending.size > 0} onClick={refresh}>Tải lại ứng viên</button>
-    <ProposalStateFilter school={false} value={state} disabled={loading || pending.size > 0} changed={value => {setState(value);setPage(0);}} />
+  }, [org, cooperationId, page, revision, state, focusId]);
+  return <section className="proposal-workspace" aria-label="Ứng viên được đề xuất">
+    <div className="placement-header-bar">
+      <div>
+        <h3>Ứng viên được đề xuất</h3>
+      </div>
+      <button className="secondary" disabled={loading || pending.size > 0} onClick={refresh}>Tải lại ứng viên</button>
+    </div>
+    <Notice message={error} tone="error" />{notice && <p role="status">{notice}</p>}
+    {focusId ? <button className="secondary" disabled={pending.size > 0} onClick={() => { if (canLeaveDemand()) { setFocusId('');setPage(0); } }}>Xem tất cả ứng viên</button>
+      : <ProposalStateFilter school={false} value={state} disabled={loading || pending.size > 0} changed={value => {setState(value);setPage(0);}} />}
     {loading && <p role="status">Đang tải ứng viên…</p>}
-    {result?.totalElements === 0 && <p>{state ? 'Không có ứng viên được chia sẻ trong trạng thái đã chọn.' : 'Chưa có hồ sơ được chia sẻ hợp lệ.'}</p>}
+    {result?.totalElements === 0 && <p>{focusId ? 'Hồ sơ này đã thay đổi hoặc không còn được chia sẻ.' : state ? 'Không có ứng viên được chia sẻ trong trạng thái đã chọn.' : 'Chưa có hồ sơ được chia sẻ hợp lệ.'}</p>}
     {result?.content.map((item, n) => <Candidate key={item.proposalItemId + ':' + item.version + ':' + revision}
       org={org} item={item} number={page * 10 + n + 1} locked={pending.size > 0 && !pending.has(item.proposalItemId)} markPending={markPending} changed={value => { setNotice(value); refresh(); }} />)}
     {result && result.totalPages > 1 && <div className="button-row">

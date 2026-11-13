@@ -1,9 +1,28 @@
 import type { SharedProfile } from './types';
 import { SharedFileDownload, type SharedFileContext } from './SharedFileDownload';
 
+const allowedLabels: Record<string, string> = {
+  displayName: 'Họ tên',
+  studentCode: 'Mã SV',
+  email: 'Email',
+  phone: 'Điện thoại',
+  majorCode: 'Chuyên ngành',
+  skills: 'Kỹ năng',
+  projects: 'Dự án',
+  certificates: 'Chứng chỉ',
+  cv: 'CV',
+  evidence: 'Minh chứng',
+};
+
 export function SharedProfileView({ profile, files }: { profile: SharedProfile; files: SharedFileContext }) {
   const allowed = new Set(profile.allowedFields), data = profile.data;
   return <div className="proposal-profile">
+    <div className="proposal-whitelist-bar" aria-label="Phạm vi trường dữ liệu được chia sẻ">
+      <span className="placement-meta-label">Phạm vi dữ liệu được phép xem (Consent Whitelist):</span>
+      <div className="proposal-whitelist-chips">
+        {profile.allowedFields.map(field => <span key={field} className="placement-seq-badge">{allowedLabels[field] || field}</span>)}
+      </div>
+    </div>
     {allowed.has('displayName') && <p><strong>Họ tên:</strong> {data.displayName || 'Chưa khai báo'}</p>}
     {allowed.has('studentCode') && <p><strong>Mã sinh viên:</strong> {data.studentCode || 'Chưa khai báo'}</p>}
     {allowed.has('email') && <p><strong>Email:</strong> {data.email || 'Chưa khai báo'}</p>}

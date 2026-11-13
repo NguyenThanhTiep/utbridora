@@ -286,11 +286,14 @@ test('school workspace loads API-backed panels and has no approval action for an
   await session(page);
   await page.route('**/api/v1/school/verifications?**', route => route.fulfill({ json: empty }));
   await page.route('**/api/v1/school/cooperations?**', route => route.fulfill({ json: empty }));
+  await page.route('**/api/v1/terms?**', route => route.fulfill({ json: empty }));
   await page.route('**/api/v1/auth/me/permissions', route => route.fulfill({ json: [{ role: 'SCHOOL_STAFF', organizationId: school, permissions: [] }] }));
   await page.goto('/');
-  await page.getByRole('button', { name: 'Hợp tác doanh nghiệp', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Hợp tác với doanh nghiệp', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Tổng quan Nhà trường', exact: true })).toBeVisible();
+  await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Xác minh doanh nghiệp', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Xác minh doanh nghiệp', exact: true })).toBeVisible();
+  await expect(page.getByText('Chưa có hồ sơ xác minh trong phạm vi này.', { exact: true })).toBeVisible();
+  await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Duyệt hợp tác', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Đề nghị hợp tác', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Lưu kết quả xét duyệt', exact: true })).toHaveCount(0);
 });

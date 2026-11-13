@@ -7,7 +7,7 @@ test('week 2 skills, cooperation, consent and tasks use real authenticated APIs'
     const context = await browser.newContext(), page = await context.newPage(); page.setDefaultTimeout(15000); await page.goto('/');
     await page.getByLabel('Email', { exact: true }).fill(email); await page.getByLabel('Mật khẩu', { exact: true }).fill(process.env.E2E_PASSWORD!);
     await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Tài khoản của tôi', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Đăng xuất', exact: true })).toBeVisible();
     return { context, page };
   };
   const student = await actor(browser, 'student@example.test');
@@ -33,14 +33,15 @@ test('week 2 skills, cooperation, consent and tasks use real authenticated APIs'
   await student.context.close();
 
   const school = await actor(browser, 'school@example.test');
-  await school.page.getByRole('button', { name: 'Hợp tác doanh nghiệp', exact: true }).click();
+  await school.page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Duyệt hợp tác', exact: true }).click();
   await school.page.getByRole('button', { name: 'Xem nội dung đề nghị 1', exact: true }).click();
   await expect(school.page.getByRole('heading', { name: 'W2 browser cooperation', exact: true })).toBeVisible();
   await school.page.screenshot({ path: '../target/week2-browser-cooperation.png', fullPage: true });
   await school.page.getByLabel('Căn cứ quyết định', { exact: true }).fill('DEMO-BROWSER-W2');
   await school.page.getByRole('button', { name: 'Lưu kết quả xét duyệt', exact: true }).click();
   await expect(school.page.getByRole('heading', { name: 'Đề nghị 1 · Đã duyệt', exact: true })).toBeVisible();
-  await school.page.reload(); await school.page.getByRole('button', { name: 'Hợp tác doanh nghiệp', exact: true }).click();
+  await school.page.reload();
+  await school.page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Duyệt hợp tác', exact: true }).click();
   await expect(school.page.getByRole('heading', { name: 'Đề nghị 1 · Đã duyệt', exact: true })).toBeVisible(); await school.context.close();
 
   const mentor = await actor(browser, 'mentor@example.test');

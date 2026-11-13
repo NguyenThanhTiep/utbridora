@@ -8,19 +8,17 @@ test('week 3 school, student and enterprise use real share, decision, Placement 
     const context = await browser.newContext(), page = await context.newPage();page.setDefaultTimeout(10000);await page.goto('/');
     await page.getByLabel('Email', {exact: true}).fill(email);await page.getByLabel('Mật khẩu', {exact: true}).fill(process.env.E2E_PASSWORD!);
     await page.getByRole('button', {name: 'Đăng nhập', exact: true}).click();
-    await expect(page.getByRole('heading', {name: 'Tài khoản của tôi', exact: true})).toBeVisible();return {context, page};
+    await expect(page.getByRole('button', {name: 'Đăng xuất', exact: true})).toBeVisible();return {context, page};
   }
-  async function openCooperation(page: Page, school: boolean) {
-    const side = school ? 'school' : 'enterprise';
+  async function openCooperation(page: Page, school: boolean, placements = false) {
     const org = school ? '00000000-0000-4000-8000-000000000011' : '00000000-0000-4000-8000-000000000012';
-    const loaded = page.waitForResponse(r => r.url().includes(`/api/v1/${side}/cooperations?`) && r.request().method() === 'GET'
-      && r.request().headers()['x-organization-id'] === org);
-    await page.getByRole('button', {name: school ? 'Hợp tác doanh nghiệp' : 'Nhu cầu thực tập', exact: true}).click();
-    await page.getByLabel(school ? 'Nhà trường' : 'Doanh nghiệp đang làm việc').selectOption(org);
-    const response = await loaded;
-    expect(response.ok()).toBeTruthy();const result = await response.json();
-    const index = result.content.findIndex((c: {cooperationId: string}) => c.cooperationId === coop);expect(index).toBeGreaterThanOrEqual(0);
-    await page.getByRole('button', {name: `Xem nội dung đề nghị ${index + 1}`, exact: true}).click();
+    const entry = page.getByRole('button', {name: school ? 'Hợp tác doanh nghiệp' : 'Nhu cầu thực tập', exact: true});
+    if (await entry.count()) await entry.click();
+    const navigation = page.getByRole('navigation', {name: 'Điều hướng chính'});
+    await navigation.getByRole('button', {name: placements ? 'Tiếp nhận thực tập' : school ? 'Đề xuất sinh viên' : 'Ứng viên đề xuất', exact: true}).click();
+    await page.getByLabel(school ? 'Nhà trường đang làm việc' : 'Doanh nghiệp đang làm việc', {exact: true}).selectOption(org);
+    await page.getByLabel('Hợp tác đang xem', {exact: true}).selectOption(coop);
+    await expect(page.getByRole('button', {name: placements ? 'Tải lại tiếp nhận thực tập' : school ? 'Tải lại tiến trình' : 'Tải lại ứng viên', exact: true})).toBeVisible();
   }
   const school = await actor(browser, 'school@example.test');
   const student = await actor(browser, 'student@example.test');
@@ -49,14 +47,15 @@ test('week 3 school, student and enterprise use real share, decision, Placement 
     await hr.page.getByRole('button', {name: 'Tải lại ứng viên', exact: true}).click();
     await expect(hr.page.getByText(/JAVA · Cấp độ/)).toBeVisible();
     await expect(hr.page.locator('.proposal-profile').getByText('student@example.test')).toHaveCount(0);
-    await hr.page.getByRole('button', {name: 'Tiếp nhận thực tập', exact: true}).click();
+    await hr.page.locator('.proposal-card').getByRole('button', {name: 'Tiếp nhận thực tập', exact: true}).click();
     await expect(hr.page.locator('.proposal-card .cooperation-state').getByText('Doanh nghiệp đã đồng ý', {exact: true})).toBeVisible();
     await school.page.getByRole('button', {name: 'Tải lại tiến trình', exact: true}).click();
+    await openCooperation(school.page, true, true);
     await school.page.getByLabel('Ứng viên đã được doanh nghiệp đồng ý').selectOption(proposal);
     const effective = await school.page.getByLabel('Ngày bắt đầu', {exact: true}).inputValue();
     await school.page.getByLabel('Thời điểm có hiệu lực', {exact: true}).fill(`${effective}T00:00`);
     await school.page.getByRole('button', {name: 'Tạo hồ sơ chờ phê duyệt', exact: true}).click();
-    await expect(school.page.getByText('Tiếp nhận 1 · Chờ trường phê duyệt', {exact: true})).toBeVisible();
+    await expect(school.page.getByRole('heading', {name: 'Tiếp nhận 1 · Chờ trường phê duyệt', exact: true})).toBeVisible();
     await school.page.getByRole('button', {name: 'Phê duyệt tiếp nhận', exact: true}).click();
     await school.page.getByLabel('Căn cứ thao tác tiếp nhận').fill('DEMO-WEEK3-BROWSER');
     await school.page.getByRole('button', {name: 'Xác nhận phê duyệt', exact: true}).click();
@@ -73,13 +72,13 @@ test('week 3 school, student and enterprise use real share, decision, Placement 
     await expect(student.page.getByText('Đang có hiệu lực', {exact: true})).toHaveCount(0);
     await hr.page.getByRole('button', {name: 'Tải lại ứng viên', exact: true}).click();
     await expect(hr.page.getByText('Chưa có hồ sơ được chia sẻ hợp lệ.', {exact: true})).toBeVisible();
-    await openCooperation(school.page, true);
-    await expect(school.page.getByText('Tiếp nhận 1 · Đã duyệt, chờ bắt đầu', {exact: true})).toBeVisible();
+    await openCooperation(school.page, true, true);
+    await expect(school.page.getByRole('heading', {name: 'Tiếp nhận 1 · Đã duyệt, chờ bắt đầu', exact: true})).toBeVisible();
     await school.page.getByRole('button', {name: 'Hủy tiếp nhận', exact: true}).click();
     await school.page.getByLabel('Căn cứ thao tác tiếp nhận').fill('DEMO-WEEK3-BROWSER-CANCEL');
     await school.page.getByRole('combobox', {name: 'Lý do hủy', exact: true}).selectOption('SCHOOL_CANCELLED');
     await school.page.getByRole('button', {name: 'Xác nhận hủy tiếp nhận', exact: true}).click();
-    await expect(school.page.getByText('Tiếp nhận 1 · Đã hủy', {exact: true})).toBeVisible();
+    await expect(school.page.getByRole('heading', {name: 'Tiếp nhận 1 · Đã hủy', exact: true})).toBeVisible();
     // The existing ACTIVE fixture independently verifies HR navigation and assignment scope;
     // the new Placement above remains the future-effective APPROVED/cancel workflow.
     const handoff = await hr.page.request.get('/api/v1/enterprise/placements/00000000-0000-4000-8000-000000000099/internship-link', {

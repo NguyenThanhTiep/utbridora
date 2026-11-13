@@ -84,44 +84,55 @@ export function DemandEditor({ organizationId, existing, onBusy, onUnconfirmed, 
   };
   const locked = busy || retry;
   return <section className="panel cooperation-editor" aria-labelledby={prefix + '-title'}>
-    <h2 id={prefix + '-title'} tabIndex={-1} ref={titleRef}>{existing ? 'Sửa bản nháp nhu cầu' : 'Tạo bản nháp nhu cầu'}</h2>
-    <p className="section-description">Điền thông tin tuyển dụng, chọn tiêu chí rồi lưu bản nháp. Lưu nháp chưa gửi yêu cầu hợp tác.</p>
-    <p className="field-hint">Chọn trường, kỳ thực tập và phiên bản danh mục từ dữ liệu hiện có. Kỹ năng có thể chọn ở phần tiêu chí.</p>
+    <div className="workflow-section-header">
+      <div>
+        <h2 id={prefix + '-title'} tabIndex={-1} ref={titleRef}>{existing ? 'Sửa bản nháp nhu cầu' : 'Tạo bản nháp nhu cầu'}</h2>
+      </div>
+    </div>
     <form ref={formRef} onSubmit={event => void submit(event)} aria-busy={busy}>
-      <fieldset disabled={locked} className="cooperation-fields"><legend>Thông tin nhu cầu</legend>
-        <DemandReferenceFields org={organizationId} form={form} existing={!!existing} fieldError={fieldError}
-          change={values => setForm(previous => ({ ...previous, ...values }))} />
-        <div className="cooperation-form-grid">
-          <Field error={fieldError('title')} label="Tên nhu cầu" value={form.title} onChange={value => set('title', value)} maxLength={200} />
-          <Field error={fieldError('quantity')} label="Số lượng vị trí" value={form.quantity} onChange={value => set('quantity', value)} type="number" min={1} max={5000} step={1} />
-          <Field error={fieldError('deadline')} label="Hạn tuyển" value={form.deadline} onChange={value => set('deadline', value)} type="datetime-local" step={1} hint="Theo múi giờ trên thiết bị; được lưu thành thời điểm UTC." />
-          <Field error={fieldError('location')} label="Địa điểm (không bắt buộc)" value={form.location} onChange={value => set('location', value)} required={false} maxLength={500} />
+      <div className="bm01-two-col-grid">
+        <div className="bm01-col-left">
+          <fieldset disabled={locked} className="cooperation-fields"><legend>Thông tin nhu cầu</legend>
+            <DemandReferenceFields org={organizationId} form={form} existing={!!existing} fieldError={fieldError}
+              change={values => setForm(previous => ({ ...previous, ...values }))} />
+            <div className="cooperation-form-grid">
+              <Field error={fieldError('title')} label="Tên nhu cầu" value={form.title} onChange={value => set('title', value)} maxLength={200} />
+              <Field error={fieldError('quantity')} label="Số lượng vị trí" value={form.quantity} onChange={value => set('quantity', value)} type="number" min={1} max={5000} step={1} />
+              <Field error={fieldError('deadline')} label="Hạn tuyển" value={form.deadline} onChange={value => set('deadline', value)} type="datetime-local" step={1} />
+              <Field error={fieldError('location')} label="Địa điểm (không bắt buộc)" value={form.location} onChange={value => set('location', value)} required={false} maxLength={500} />
+            </div>
+            <label htmlFor={prefix + '-description'}>Mô tả công việc</label>
+            <textarea aria-invalid={!!fieldError('description')} aria-describedby={prefix + '-description-error'} id={prefix + '-description'} value={form.description} onChange={event => set('description', event.target.value)} required maxLength={10000} rows={4} />
+            <p id={prefix + '-description-error'} className="field-error">{fieldError('description')}</p>
+            <label htmlFor={prefix + '-benefits'}>Quyền lợi (không bắt buộc)</label>
+            <textarea aria-invalid={!!fieldError('benefits')} aria-describedby={prefix + '-benefits-error'} id={prefix + '-benefits'} value={form.benefits} onChange={event => set('benefits', event.target.value)} maxLength={2000} rows={3} />
+            <p id={prefix + '-benefits-error'} className="field-error">{fieldError('benefits')}</p>
+          </fieldset>
         </div>
-        <label htmlFor={prefix + '-description'}>Mô tả công việc</label>
-        <textarea aria-invalid={!!fieldError('description')} aria-describedby={prefix + '-description-error'} id={prefix + '-description'} value={form.description} onChange={event => set('description', event.target.value)} required maxLength={10000} rows={4} />
-        <p id={prefix + '-description-error'} className="field-error">{fieldError('description')}</p>
-        <label htmlFor={prefix + '-benefits'}>Quyền lợi (không bắt buộc)</label>
-        <textarea aria-invalid={!!fieldError('benefits')} aria-describedby={prefix + '-benefits-error'} id={prefix + '-benefits'} value={form.benefits} onChange={event => set('benefits', event.target.value)} maxLength={2000} rows={3} />
-        <p id={prefix + '-benefits-error'} className="field-error">{fieldError('benefits')}</p>
-      </fieldset>
-      <fieldset disabled={locked} className="cooperation-fields"><legend>Tiêu chí bắt buộc</legend>
-        <SkillCatalogPicker selected={[...form.required, ...form.preferred].map(row => row.skillCode.trim())}
-          onVersion={version => set('taxonomyVersion', version)} onPick={(skill, group, version) => setForm(previous => {
-            if ([...previous.required, ...previous.preferred].some(row => row.skillCode.trim() === skill.skillCode)) return previous;
-            return { ...previous, taxonomyVersion: version,
-              [group]: [...previous[group], skillRow({ skillCode: skill.skillCode, minLevel: null, minYearsPractice: null })] };
-          })} />
-        <Field error={fieldError('required.majorCodes')} label="Mã ngành chính thức (không bắt buộc)" value={form.majorCodes} onChange={value => set('majorCodes', value)} required={false}
-          hint="Phân cách bằng dấu phẩy. Để trống nghĩa là không giới hạn ngành; không nhập tên ngành thay cho mã." />
-        <div className="cooperation-form-grid">
-          <Field error={fieldError('required.dateRange')} label="Ngày bắt đầu thực tập" value={form.startDate} onChange={value => set('startDate', value)} type="date" />
-          <Field error={fieldError('required.dateRange.endDate')} label="Ngày kết thúc thực tập" value={form.endDate} onChange={value => set('endDate', value)} type="date" min={form.startDate || undefined} />
+        <div className="bm01-col-right">
+          <div className="bm01-rule-note" role="note">
+            Kỹ năng bắt buộc cần đạt đầy đủ. Kỹ năng ưu tiên giúp xếp hạng ứng viên. Mỗi kỹ năng chỉ chọn trong một nhóm.
+          </div>
+          <fieldset disabled={locked} className="cooperation-fields"><legend>Tiêu chí bắt buộc</legend>
+            <SkillCatalogPicker selected={[...form.required, ...form.preferred].map(row => row.skillCode.trim())}
+              onVersion={version => set('taxonomyVersion', version)} onPick={(skill, group, version) => setForm(previous => {
+                if ([...previous.required, ...previous.preferred].some(row => row.skillCode.trim() === skill.skillCode)) return previous;
+                return { ...previous, taxonomyVersion: version,
+                  [group]: [...previous[group], skillRow({ skillCode: skill.skillCode, minLevel: null, minYearsPractice: null })] };
+              })} />
+            <Field error={fieldError('required.majorCodes')} label="Mã ngành chính thức (không bắt buộc)" value={form.majorCodes} onChange={value => set('majorCodes', value)} required={false}
+              hint="Phân cách bằng dấu phẩy. Để trống nghĩa là không giới hạn ngành; không nhập tên ngành thay cho mã." />
+            <div className="cooperation-form-grid">
+              <Field error={fieldError('required.dateRange')} label="Ngày bắt đầu thực tập" value={form.startDate} onChange={value => set('startDate', value)} type="date" />
+              <Field error={fieldError('required.dateRange.endDate')} label="Ngày kết thúc thực tập" value={form.endDate} onChange={value => set('endDate', value)} type="date" min={form.startDate || undefined} />
+            </div>
+            <SkillFields error={fieldError('required.skills')} label="Bắt buộc" rows={form.required} change={rows => set('required', rows)} />
+          </fieldset>
+          <fieldset disabled={locked} className="cooperation-fields"><legend>Tiêu chí ưu tiên</legend>
+            <SkillFields error={fieldError('preferred')} label="Ưu tiên" rows={form.preferred} change={rows => set('preferred', rows)} />
+          </fieldset>
         </div>
-        <SkillFields error={fieldError('required.skills')} label="Bắt buộc" rows={form.required} change={rows => set('required', rows)} />
-      </fieldset>
-      <fieldset disabled={locked} className="cooperation-fields"><legend>Tiêu chí ưu tiên</legend>
-        <SkillFields error={fieldError('preferred')} label="Ưu tiên" rows={form.preferred} change={rows => set('preferred', rows)} />
-      </fieldset>
+      </div>
       <Notice message={error} tone="error" />
       {fieldErrors.length > 0 && <ul className="cooperation-field-errors" aria-label="Chi tiết thông tin chưa hợp lệ">{fieldErrors.map((message, index) => <li key={index}>{message}</li>)}</ul>}
       {retry && <Notice message="Chưa xác nhận được kết quả lưu. Thử lưu lại với cùng nội dung để tránh tạo trùng; nội dung tạm khóa trong lúc chờ xác nhận." />}

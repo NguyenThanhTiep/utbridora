@@ -75,20 +75,16 @@
 .proposal-placement > article h5 { font-size: var(--text-md); color: var(--ink); margin: 0; }
 
 .status-pill {
-  display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px;
-  border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px;
+  border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
 }
 .pill-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
-.pill-pending_approval { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-.pill-pending_approval .pill-dot { background: #d97706; }
-.pill-approved { background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; }
-.pill-approved .pill-dot { background: #0284c7; }
-.pill-active { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-.pill-active .pill-dot { background: #16a34a; }
-.pill-cancelled { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-.pill-cancelled .pill-dot { background: #dc2626; }
-.pill-completed { background: #ede9fe; color: #5b21b6; border: 1px solid #ddd6fe; }
-.pill-completed .pill-dot { background: #7c3aed; }
+.pill-pending_approval, .pill-submitted, .pill-needs_changes, .pill-draft { background: #FFF2DB; color: #B76E00; border: 1px solid #f5dca8; }
+.pill-pending_approval .pill-dot, .pill-submitted .pill-dot, .pill-needs_changes .pill-dot, .pill-draft .pill-dot { background: #B76E00; }
+.pill-approved, .pill-active, .pill-completed { background: #E5F6ED; color: #0B927C; border: 1px solid #bfe6d2; }
+.pill-approved .pill-dot, .pill-active .pill-dot, .pill-completed .pill-dot { background: #0B927C; }
+.pill-cancelled, .pill-rejected { background: #FFF0F0; color: #D32F2F; border: 1px solid #f7c6c6; }
+.pill-cancelled .pill-dot, .pill-rejected .pill-dot { background: #D32F2F; }
 
 .placement-meta-grid {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -162,31 +158,170 @@
 .effective-label-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 .cooperation-state {
   display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px;
-  border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
-  background: #eef3f6; color: #476072; border: 1px solid #d5e2ea;
+  border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+  background: #FFF2DB; color: #B76E00; border: 1px solid #f5dca8;
 }
-.cooperation-state.state-shared { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
-.cooperation-state.state-enterprise_accepted { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
-.cooperation-state.state-declined { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
-.cooperation-state.state-placed { background: #ede9fe; color: #6d28d9; border-color: #ddd6fe; }
+.cooperation-state.state-shared { background: #FFF2DB; color: #B76E00; border-color: #f5dca8; }
+.cooperation-state.state-enterprise_accepted, .cooperation-state.state-placed, .cooperation-state.state-ready { background: #E5F6ED; color: #0B927C; border-color: #bfe6d2; }
+.cooperation-state.state-declined { background: #FFF0F0; color: #D32F2F; border-color: #f7c6c6; }
+
+.proposal-whitelist-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid #E3EAF2;
+}
+.proposal-whitelist-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 
 .reservation-box {
   display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px;
-  border-radius: 8px; font-size: var(--text-xs); font-weight: 500; margin: 8px 0 12px;
+  border-radius: 12px; font-size: var(--text-xs); font-weight: 500; margin: 8px 0 12px;
 }
-.reservation-box.active { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
-.reservation-box.expired { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+.reservation-box.active { background: #E5F6ED; border: 1px solid #bfe6d2; color: #0B927C; }
+.reservation-box.expired { background: #FFF0F0; border: 1px solid #f7c6c6; color: #D32F2F; }
 
 .btn-enterprise-accept {
-  background: #059669 !important; border-color: #059669 !important; color: #fff !important;
+  background: #0B927C !important; border-color: #0B927C !important; color: #fff !important; border-radius: 12px !important;
 }
-.btn-enterprise-accept:hover { background: #047857 !important; }
+.btn-enterprise-accept:hover { background: #11AA91 !important; }
 .btn-enterprise-decline {
-  border-color: #fca5a5 !important; color: #b91c1c !important;
+  border-color: #f7c6c6 !important; color: #D32F2F !important; border-radius: 12px !important;
 }
-.btn-enterprise-decline:hover { background: #fef2f2 !important; }
+.btn-enterprise-decline:hover { background: #FFF0F0 !important; }
+
+/* Placement & Workflow Extended UI (T5-UI-01 .. T5-UI-08) */
+.placement-header-bar, .workflow-section-header {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 12px;
+}
+.placement-header-bar h4, .workflow-section-header h2, .workflow-section-header h3 { margin: 4px 0; color: #142F40; }
+.workflow-section-subtitle { color: #64788A; font-size: 14px; line-height: 20px; margin: 2px 0 0; }
+
+.placement-quota-bar {
+  margin: 12px 0 18px; padding: 12px 16px; border-radius: 12px;
+  background: #F3F6FB; border: 1px solid #E3EAF2;
+}
+.placement-quota-legend {
+  display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  font-size: var(--text-xs); color: #142F40; margin-bottom: 8px;
+}
+.placement-quota-track {
+  height: 10px; border-radius: 999px; background: #E3EAF2; overflow: hidden; display: flex;
+}
+.placement-quota-fill.placed { background: linear-gradient(90deg, #0B927C, #11AA91); transition: width .25s ease; }
+.placement-quota-fill.pending { background: #B76E00; transition: width .25s ease; }
+
+.placement-filter-bar {
+  display: grid; grid-template-columns: minmax(180px, 1fr) minmax(220px, 2fr) auto;
+  gap: 12px; align-items: end; padding: 14px 16px; margin: 14px 0;
+  border-radius: 12px; background: #F3F6FB; border: 1px solid #E3EAF2;
+}
+.placement-filter-bar label { margin: 0; font-size: var(--text-xs); font-weight: 650; color: #142F40; }
+.placement-filter-bar select, .placement-filter-bar input {
+  width: 100%; box-sizing: border-box; margin-top: 5px; border-radius: 12px; border: 1px solid #E3EAF2;
+}
+
+.placement-stepper {
+  list-style: none; padding: 10px 12px; margin: 10px 0 12px;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;
+  background: #F3F6FB; border: 1px solid #E3EAF2; border-radius: 12px;
+}
+.placement-step {
+  display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px;
+  font-size: 12px; font-weight: 600; color: #64788A; min-width: 0;
+}
+.placement-step .step-indicator {
+  width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; background: #E3EAF2; color: #64788A; flex-shrink: 0;
+}
+.placement-step.step-done { color: #0B927C; background: #E5F6ED; }
+.placement-step.step-done .step-indicator { background: #0B927C; color: #fff; }
+.placement-step.step-current { color: #142F40; background: #FFFFFF; border: 1px solid #0B927C; }
+.placement-step.step-current .step-indicator { background: #0B927C; color: #fff; }
+
+.placement-status-banner {
+  padding: 10px 14px; border-radius: 12px; margin: 8px 0 12px; font-size: 13px; line-height: 20px;
+}
+.placement-status-banner p { margin: 0; }
+.placement-status-banner.tone-pending_approval, .placement-status-banner.tone-submitted, .placement-status-banner.tone-needs_changes {
+  background: #FFF2DB; border: 1px solid #f5dca8; color: #B76E00;
+}
+.placement-status-banner.tone-approved, .placement-status-banner.tone-active, .placement-status-banner.tone-completed {
+  background: #E5F6ED; border: 1px solid #bfe6d2; color: #0B927C;
+}
+.placement-status-banner.tone-cancelled, .placement-status-banner.tone-rejected {
+  background: #FFF0F0; border: 1px solid #f7c6c6; color: #D32F2F;
+}
+
+.workflow-kpi-grid {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 14px 0;
+}
+.kpi-card {
+  padding: 12px 14px; border-radius: 12px; border: 1px solid #E3EAF2; background: #FFFFFF;
+}
+.kpi-card dt { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #64788A; }
+.kpi-card dd { margin: 4px 0 0; font-size: 1.45rem; font-weight: 750; color: #142F40; }
+.kpi-card.kpi-pending { background: #FFF2DB; border-color: #f5dca8; }
+.kpi-card.kpi-pending dd { color: #B76E00; }
+.kpi-card.kpi-warning { background: #FFF2DB; border-color: #f5dca8; }
+.kpi-card.kpi-warning dd { color: #B76E00; }
+.kpi-card.kpi-approved { background: #E5F6ED; border-color: #bfe6d2; }
+.kpi-card.kpi-approved dd { color: #0B927C; }
+.kpi-card.kpi-rejected { background: #FFF0F0; border-color: #f7c6c6; }
+.kpi-card.kpi-rejected dd { color: #D32F2F; }
+
+.workflow-card-list { display: grid; gap: 14px; margin: 14px 0; }
+.workflow-item-card {
+  padding: 16px 18px; border-radius: 12px; border: 1px solid #E3EAF2;
+  background: #FFFFFF; transition: border-color .15s, box-shadow .15s;
+}
+.workflow-item-card:hover { border-color: #0B927C; box-shadow: 0 3px 12px rgba(20, 47, 64, .05); }
+.workflow-item-card.card-selected { border-color: #0B927C; background: #f4fbf9; }
+.workflow-item-card.state-border-submitted, .workflow-item-card.state-border-needs_changes { border-left: 4px solid #B76E00; }
+.workflow-item-card.state-border-approved { border-left: 4px solid #0B927C; }
+.workflow-item-card.state-border-rejected { border-left: 4px solid #D32F2F; }
+.workflow-item-card.state-border-draft { border-left: 4px solid #64788A; }
+
+.workflow-card-top {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;
+}
+.workflow-card-top h3, .workflow-card-top h4 { margin: 0 0 4px; font-size: var(--text-md); color: #142F40; }
+.workflow-card-meta { margin: 0; font-size: var(--text-xs); color: #64788A; }
+
+.workflow-detail-drawer {
+  margin-top: 20px; padding: 20px 22px; border-radius: 12px;
+  border: 2px solid #0B927C; background: #FFFFFF; box-shadow: 0 6px 20px rgba(11, 146, 124, .06);
+}
+.workflow-detail-desc {
+  padding: 12px 14px; border-radius: 12px; background: #F3F6FB; border: 1px solid #E3EAF2;
+  white-space: pre-wrap; font-size: 14px; line-height: 20px; color: #142F40; margin: 10px 0;
+}
+.workflow-feedback-box {
+  padding: 12px 14px; border-radius: 12px; background: #FFF2DB; border: 1px solid #f5dca8;
+  color: #B76E00; font-size: 13px; font-weight: 500; margin: 12px 0;
+}
+.workflow-feedback-box p { margin: 0; }
+.workflow-review-form {
+  margin-top: 14px; padding: 16px 18px; border-radius: 12px;
+  background: #F3F6FB; border: 1px solid #E3EAF2;
+}
+.workflow-review-form fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.workflow-review-form legend { font-weight: 700; color: #0B927C; margin-bottom: 10px; }
+.workflow-missing-fields {
+  margin-top: 12px !important; padding: 12px 14px !important;
+  border: 1px solid #E3EAF2 !important; border-radius: 12px; background: #FFFFFF;
+}
+.workflow-checkbox-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px 14px;
+}
+.workflow-checkbox-item {
+  display: flex; align-items: center; gap: 8px; margin: 0 !important; font-size: var(--text-sm);
+}
+
+@media (max-width: 750px) {
+  .placement-filter-bar { grid-template-columns: minmax(0, 1fr); }
+  .placement-stepper { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .workflow-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
 @media (max-width: 650px) {
   .proposal-capacity { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .proposal-card, .proposal-publication, .proposal-nomination, .proposal-placement { padding: 14px; }
+  .proposal-card, .proposal-publication, .proposal-nomination, .proposal-placement, .workflow-detail-drawer { padding: 14px; }
 }
