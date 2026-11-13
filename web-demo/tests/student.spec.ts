@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import type { SelfProfileView } from '../src/modules/student/types';
+import type { ConsentGrant, InternshipInvitation, OpportunityView, PreferenceView, SelfProfileView } from '../src/modules/student/types';
 test.beforeEach(async ({ page }) => {
   const empty = { content: [], page: 0, size: 100, totalElements: 0, totalPages: 0 };
   await page.route('**/api/v1/taxonomy/categories?**', route => route.fulfill({ json: empty }));
@@ -84,14 +84,17 @@ test('Quản trị viên không thấy nhóm Sinh viên', async ({ page }) => {
   await expect(nav.getByRole('button', { name: 'Thông tin chung', exact: true })).toHaveCount(0);
 });
 
-test('Hai màn sinh viên vừa màn hình 320px và 390px', async ({ page }) => {
+test('Các màn sinh viên vừa màn hình 320px và 390px', async ({ page }) => {
   await signIn(page, fixture('E2E_STUDENT_EMAIL'));
   for (const width of [320, 390]) {
     await page.setViewportSize({ width, height: 844 });
-    for (const title of ['Tổng quan', 'Thông tin chung']) {
+    for (const title of ['Tổng quan', 'Thông tin chung', 'Cơ hội thực tập', 'Lời mời & nguyện vọng']) {
       await navigate(page, title);
       await expectNoPageOverflow(page);
     }
+    await page.getByRole('tab', { name: 'Nguyện vọng', exact: true }).click();
+    await expectNoPageOverflow(page);
+    await page.getByRole('tab', { name: 'Lời mời', exact: true }).click();
   }
 });
 
@@ -309,4 +312,221 @@ test('UX UI mock: chưa có hồ sơ thì tạo bằng hồ sơ rỗng đủ 14 
   expect(puts[0].body).toEqual({ expectedProfileVersion: 0, termId: TERM_ID, majorCode: null, skillsDeclared: false, skills: [], customSkills: [],
     availabilityDeclared: false, availablePeriods: [], orientationCodes: [], subjectCodes: [], projects: [], certificates: [], cvFileId: null, phone: null });
   expect(puts[0].headers['idempotency-key']).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+});
+
+// T2-08: lời mời/consent tổng hợp theo BC23/BC24, chỉ dùng trong test; không thay thế API T5 hay tích hợp thật.
+const ENTERPRISE_ID = '00000000-0000-4000-8000-000000000012';
+const FUTURE = '2099-01-01T00:00:00Z', PAST = '2020-01-01T00:00:00Z';
+const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+const invitation = (n: number, title: string, state: InternshipInvitation['state'], expiresAt: string): InternshipInvitation => {
+  const suffix = String(n).padStart(2, '0'), item = '00000000-0000-4000-8000-0000000002' + suffix;
+  return { invitationId: '00000000-0000-4000-8000-0000000001' + suffix, proposalItemId: item, placementCandidateId: item,
+    studentUserId: '00000000-0000-4000-8000-000000000002', schoolOrgId: SCHOOL_ID, enterpriseOrgId: ENTERPRISE_ID, termId: TERM_ID,
+    opportunityId: '00000000-0000-4000-8000-000000000081', title, enterpriseName: 'Doanh nghiệp thử nghiệm', state, expiresAt,
+    decidedAt: null, decisionReasonCode: null, version: 1, placementId: null };
+};
+async function mockInvitations(page: Page, current: () => InternshipInvitation[], consents: ConsentGrant[] = []) {
+  await page.route('**/api/v1/invitations/me?**', route => route.fulfill({ json: termsPage(current()) }));
+  await page.route('**/api/v1/students/me/consents?**', route => route.fulfill({ json: termsPage(consents) }));
+  await page.route('**/api/v1/school/terms/*/profile-sharing-policy', route => route.fulfill({ json:
+    { schoolOrgId: SCHOOL_ID, termId: TERM_ID, version: 3, allowedFields: ['skills', 'phone'], updatedAt: null, updatedByUserId: null } }));
+}
+const invitationPanel = (page: Page, title: string) => page.locator('section.panel').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+
+test('UX UI mock: lời mời hiện trạng thái tiếng Việt, quá hạn thì khóa phản hồi, nhận lời không tự cấp quyền chia sẻ', async ({ page }) => {
+  let invitations = [invitation(1, 'Thực tập Java thử nghiệm', 'PENDING', FUTURE), invitation(2, 'Lời mời đã quá hạn', 'PENDING', PAST),
+    invitation(3, 'Lời mời đã từ chối', 'DECLINED', FUTURE)];
+  const decisions: { body: Record<string, unknown>; key: string | undefined }[] = [], consentWrites: string[] = [];
+  page.on('request', request => {
+    if (request.method() === 'POST' && new URL(request.url()).pathname.startsWith('/api/v1/students/me/consents')) consentWrites.push(request.url());
+  });
+  await mockInvitations(page, () => invitations);
+  await page.route('**/api/v1/invitations/*/decision', route => {
+    const request = route.request();
+    decisions.push({ body: request.postDataJSON(), key: request.headers()['idempotency-key'] });
+    invitations = invitations.map((item, index): InternshipInvitation => index === 0 ? { ...item, state: 'ACCEPTED', version: 2 } : item);
+    return route.fulfill({ json: invitations[0] });
+  });
+  await signIn(page, fixture('E2E_STUDENT_EMAIL'));
+  await navigate(page, 'Lời mời & nguyện vọng');
+  const open = invitationPanel(page, 'Thực tập Java thử nghiệm'), late = invitationPanel(page, 'Lời mời đã quá hạn');
+  const declined = invitationPanel(page, 'Lời mời đã từ chối');
+  await expect(open.getByText(/ · Chờ phản hồi$/)).toBeVisible();
+  await expect(declined.getByText(/ · Đã từ chối$/)).toBeVisible();
+  await expect(late.getByText('Đã quá hạn phản hồi.', { exact: true })).toBeVisible();
+  await expect(late.getByRole('button', { name: 'Nhận lời mời', exact: true })).toHaveCount(0);
+  await expect(declined.getByRole('button', { name: 'Đồng ý chia sẻ các mục đã chọn', exact: true })).toHaveCount(0);
+  await open.getByRole('button', { name: 'Nhận lời mời', exact: true }).click();
+  await expect(open.getByText(/ · Đã nhận lời$/)).toBeVisible();
+  await expect(open.getByRole('button', { name: 'Rút nhận lời', exact: true })).toBeVisible();
+  expect(decisions).toHaveLength(1);
+  expect(decisions[0].body).toEqual({ decision: 'ACCEPT', expectedVersion: 1, reasonCode: null, reasonText: null });
+  expect(decisions[0].key).toMatch(UUID_V4);
+  expect(consentWrites).toEqual([]);
+  await expect(page.getByText('Đang có hiệu lực', { exact: true })).toHaveCount(0);
+});
+
+test('UX UI mock: từ chối cần xác nhận; 409 INVITATION_EXPIRED báo rõ và tải lại', async ({ page }) => {
+  let listCalls = 0;
+  const bodies: Record<string, unknown>[] = [];
+  await mockInvitations(page, () => { listCalls++; return [invitation(1, 'Thực tập Java thử nghiệm', 'PENDING', FUTURE)]; });
+  await page.route('**/api/v1/invitations/*/decision', route => {
+    bodies.push(route.request().postDataJSON());
+    return route.fulfill({ status: 409, json: envelope('INVITATION_EXPIRED', 'Nội dung máy chủ không hiển thị') });
+  });
+  await signIn(page, fixture('E2E_STUDENT_EMAIL'));
+  await navigate(page, 'Lời mời & nguyện vọng');
+  const panel = invitationPanel(page, 'Thực tập Java thử nghiệm');
+  page.once('dialog', dialog => void dialog.dismiss());
+  await panel.getByRole('button', { name: 'Từ chối', exact: true }).click();
+  expect(bodies).toEqual([]);
+  const before = listCalls;
+  page.once('dialog', dialog => void dialog.accept());
+  await panel.getByRole('button', { name: 'Từ chối', exact: true }).click();
+  await expect(page.getByText('Lời mời đã hết hạn phản hồi.', { exact: true })).toBeVisible();
+  await expect.poll(() => listCalls).toBeGreaterThan(before);
+  expect(bodies).toEqual([{ decision: 'DECLINE', expectedVersion: 1, reasonCode: 'STUDENT_DECLINED', reasonText: null }]);
+  await expect(page.getByText('Nội dung máy chủ không hiển thị')).toHaveCount(0);
+});
+
+test('UX UI mock: tải lỗi thì báo và cho tải lại; quyền chia sẻ hiện đúng nhãn; xem chi tiết lời mời', async ({ page }) => {
+  let fail = true;
+  const accepted: InternshipInvitation = { ...invitation(1, 'Thực tập Java thử nghiệm', 'ACCEPTED', FUTURE), version: 2, decidedAt: '2026-11-03T08:00:00Z' };
+  const consent: ConsentGrant = { consentId: '00000000-0000-4000-8000-000000000091', consentVersion: 1, lineageVersion: 1,
+    studentUserId: '00000000-0000-4000-8000-000000000002', schoolOrgId: SCHOOL_ID, termId: TERM_ID, recipientOrgId: ENTERPRISE_ID,
+    invitationId: accepted.invitationId, purpose: 'INTERNSHIP_SELECTION', fieldWhitelist: ['skills', 'gpa'], grantedAt: '2026-11-03T08:00:00Z',
+    expiresAt: FUTURE, revokedAt: null, policyVersion: 'demo-consent-v1', replacedByConsentId: null };
+  await mockInvitations(page, () => [accepted], [consent]);
+  await page.route('**/api/v1/invitations/me?**', route => fail ? route.fulfill({ status: 500, json: envelope('INTERNAL_ERROR', 'Lỗi') }) : route.fallback());
+  await page.route('**/api/v1/invitations/' + accepted.invitationId, route => route.fulfill({ json: accepted }));
+  await signIn(page, fixture('E2E_STUDENT_EMAIL'));
+  await navigate(page, 'Lời mời & nguyện vọng');
+  await expect(page.getByText('Không tải được lời mời hoặc quyền chia sẻ.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Chưa có lời mời thực tập', exact: true })).toHaveCount(0);
+  fail = false;
+  await page.getByRole('button', { name: 'Tải lại lời mời', exact: true }).click();
+  const panel = invitationPanel(page, 'Thực tập Java thử nghiệm');
+  await expect(panel.getByText(/ · Đã nhận lời$/)).toBeVisible();
+  await expect(page.getByText('Không tải được lời mời hoặc quyền chia sẻ.', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Doanh nghiệp thử nghiệm: Kỹ năng, Điểm trung bình', { exact: false })).toBeVisible();
+  await expect(page.getByText('Đang có hiệu lực', { exact: true })).toBeVisible();
+  await panel.getByRole('button', { name: 'Xem chi tiết', exact: true }).click();
+  await expect(panel.getByText('Chưa có Placement', { exact: true })).toBeVisible();
+});
+
+// T2-07/T2-08: cơ hội và nguyện vọng tổng hợp theo BC22, chỉ dùng trong test cô lập.
+// Không thay thế API T5 và không phải bằng chứng đã tích hợp T5.
+const OPPORTUNITY_ID = '00000000-0000-4000-8000-000000000081';
+const opportunity = (id: string, title: string, closedAt: string): OpportunityView => ({
+  opportunityId: id, cooperationId: id, demandId: '00000000-0000-4000-8000-000000000072', schoolOrgId: SCHOOL_ID, enterpriseOrgId: ENTERPRISE_ID,
+  termId: TERM_ID, enterpriseName: 'Doanh nghiệp thử nghiệm', title, majorCodes: ['SE'], dateRange: { startDate: '2027-01-05', endDate: '2027-03-31' },
+  benefits: 'Hỗ trợ chi phí đi lại', location: 'Địa điểm thử nghiệm', publishedAt: '2026-11-01T00:00:00Z', closedAt, version: 1
+});
+const preference = (id: string, opportunityId: string, intentVersion: number, version: number, status: PreferenceView['status']): PreferenceView => ({
+  preferenceId: id, studentUserId: '00000000-0000-4000-8000-000000000002', schoolOrgId: SCHOOL_ID, termId: TERM_ID, opportunityId, intentVersion, version,
+  status, message: null, createdAt: '2026-11-0' + intentVersion + 'T08:00:00Z', withdrawnAt: status === 'WITHDRAWN' ? '2026-11-05T08:00:00Z' : null,
+  reviewedAt: status === 'REVIEWED' ? '2026-11-06T08:00:00Z' : null, reviewedByUserId: null
+});
+const preferenceItem = (page: Page, title: string) => page.locator('li.student-list-item').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+
+test('UX UI mock: cơ hội lọc theo kỳ và ngành, xem chi tiết, gửi nguyện vọng lần đầu với version 0 rồi mở tab Nguyện vọng', async ({ page }) => {
+  const listQueries: URLSearchParams[] = [], posts: { body: Record<string, unknown>; key: string | undefined }[] = [];
+  let preferences: PreferenceView[] = [];
+  await page.route('**/api/v1/terms?**', route => route.fulfill({ json: termsPage([term(TERM_ID, 'HK1-DEMO', 'ACTIVE')]) }));
+  await page.route('**/api/v1/students/me/catalogs?**', route => route.fulfill({ json:
+    { catalogVersion: 'school-demo-v1', entries: termsPage([{ code: 'SE', name: 'Kỹ thuật phần mềm', majorCodes: [], status: 'ACTIVE' }]) } }));
+  await page.route('**/api/v1/opportunities?**', route => {
+    listQueries.push(new URL(route.request().url()).searchParams);
+    return route.fulfill({ json: termsPage([opportunity(OPPORTUNITY_ID, 'Thực tập Java thử nghiệm', FUTURE)]) });
+  });
+  await page.route('**/api/v1/opportunities/' + OPPORTUNITY_ID, route => route.fulfill({ json: opportunity(OPPORTUNITY_ID, 'Thực tập Java thử nghiệm', FUTURE) }));
+  await page.route('**/api/v1/students/me/preferences**', route => {
+    const request = route.request();
+    if (request.method() !== 'POST') return route.fulfill({ json: termsPage(preferences) });
+    posts.push({ body: request.postDataJSON(), key: request.headers()['idempotency-key'] });
+    preferences = [{ ...preference('00000000-0000-4000-8000-000000000091', OPPORTUNITY_ID, 1, 1, 'SUBMITTED'), message: 'Em mong muốn vị trí này' }];
+    return route.fulfill({ status: 201, json: preferences[0] });
+  });
+  await signIn(page, fixture('E2E_STUDENT_EMAIL'));
+  await navigate(page, 'Cơ hội thực tập');
+  await expect(page.getByRole('heading', { name: 'Thực tập Java thử nghiệm', exact: true })).toBeVisible();
+  expect(Object.fromEntries(listQueries[0])).toEqual({ termId: TERM_ID, page: '0', size: '20' });
+  await page.getByLabel('Vị trí hoặc doanh nghiệp', { exact: true }).fill('Java');
+  await page.getByLabel('Ngành', { exact: true }).selectOption('SE');
+  await page.getByRole('button', { name: 'Tìm cơ hội', exact: true }).click();
+  await expect.poll(() => listQueries.length).toBe(2);
+  expect(Object.fromEntries(listQueries[1])).toEqual({ termId: TERM_ID, q: 'Java', majorCode: 'SE', page: '0', size: '20' });
+  await page.getByRole('button', { name: 'Xem chi tiết', exact: true }).click();
+  await expect(page.getByText('Hỗ trợ chi phí đi lại', { exact: true })).toBeVisible();
+  await expect(page.getByText('Kỹ thuật phần mềm', { exact: true })).toBeVisible();
+  await page.getByLabel('Lời nhắn cho nhà trường (không bắt buộc)', { exact: true }).fill('Em mong muốn vị trí này');
+  await page.getByRole('button', { name: 'Gửi nguyện vọng', exact: true }).click();
+  await expect(page.getByText('Đã gửi nguyện vọng.', { exact: false })).toBeVisible();
+  await expect(page.getByText(/Nguyện vọng gần nhất \(lần 1\): Đã gửi, chờ nhà trường xét/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Gửi nguyện vọng', exact: true })).toHaveCount(0);
+  expect(posts).toHaveLength(1);
+  expect(posts[0].body).toEqual({ action: 'SUBMIT', opportunityId: OPPORTUNITY_ID, message: 'Em mong muốn vị trí này', expectedIntentVersion: 0 });
+  expect(posts[0].key).toMatch(UUID_V4);
+  await page.getByRole('button', { name: 'Xem hoặc rút nguyện vọng', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Lời mời & nguyện vọng', exact: true })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Nguyện vọng', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(preferenceItem(page, 'Thực tập Java thử nghiệm').getByText('Đã gửi, chờ nhà trường xét', { exact: true })).toBeVisible();
+});
+
+test('UX UI mock: dịch vụ cơ hội chưa sẵn sàng báo rõ; cơ hội vừa đóng thì không cho gửi nguyện vọng', async ({ page }) => {
+  let unavailable = true;
+  await page.route('**/api/v1/terms?**', route => route.fulfill({ json: termsPage([term(TERM_ID, 'HK1-DEMO', 'ACTIVE')]) }));
+  await page.route('**/api/v1/students/me/catalogs?**', route => route.fulfill({ status: 404, json: envelope('RESOURCE_NOT_FOUND', 'Không có') }));
+  await page.route('**/api/v1/opportunities?**', route => unavailable
+    ? route.fulfill({ status: 503, json: envelope('DEPENDENCY_UNAVAILABLE', 'Nội dung máy chủ không hiển thị') })
+    : route.fulfill({ json: termsPage([opportunity(OPPORTUNITY_ID, 'Thực tập Java thử nghiệm', FUTURE)]) }));
+  await page.route('**/api/v1/opportunities/' + OPPORTUNITY_ID, route => route.fulfill({ json: opportunity(OPPORTUNITY_ID, 'Thực tập Java thử nghiệm', PAST) }));
+  await page.route('**/api/v1/students/me/preferences**', route => route.fulfill({ json: termsPage([]) }));
+  await signIn(page, fixture('E2E_STUDENT_EMAIL'));
+  await navigate(page, 'Cơ hội thực tập');
+  await expect(page.getByRole('heading', { name: 'Chưa tải được cơ hội thực tập', exact: true })).toBeVisible();
+  await expect(page.getByText('Dịch vụ cơ hội thực tập chưa sẵn sàng. Vui lòng thử lại sau.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Nội dung máy chủ không hiển thị')).toHaveCount(0);
+  unavailable = false;
+  await page.getByRole('button', { name: 'Thử lại', exact: true }).click();
+  await page.getByRole('button', { name: 'Xem chi tiết', exact: true }).click();
+  await expect(page.getByText('Cơ hội đã hết hạn nhận nguyện vọng.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Gửi nguyện vọng', exact: true })).toHaveCount(0);
+});
+
+test('UX UI mock: nguyện vọng hiện trạng thái và lịch sử, chỉ rút khi chưa xét; 409 PREFERENCE_REVIEWED báo rõ và tải lại', async ({ page }) => {
+  const other = '00000000-0000-4000-8000-000000000082';
+  let listCalls = 0;
+  const bodies: Record<string, unknown>[] = [];
+  await page.route('**/api/v1/students/me/preferences**', route => {
+    const request = route.request();
+    if (request.method() === 'POST') {
+      bodies.push(request.postDataJSON());
+      return route.fulfill({ status: 409, json: envelope('PREFERENCE_REVIEWED', 'Nội dung máy chủ không hiển thị') });
+    }
+    listCalls++;
+    return route.fulfill({ json: termsPage([preference('00000000-0000-4000-8000-000000000091', OPPORTUNITY_ID, 1, 2, 'WITHDRAWN'),
+      preference('00000000-0000-4000-8000-000000000092', OPPORTUNITY_ID, 2, 3, 'SUBMITTED'), preference('00000000-0000-4000-8000-000000000093', other, 1, 2, 'REVIEWED')]) });
+  });
+  await page.route('**/api/v1/opportunities/' + OPPORTUNITY_ID, route => route.fulfill({ json: opportunity(OPPORTUNITY_ID, 'Thực tập Java thử nghiệm', FUTURE) }));
+  await page.route('**/api/v1/opportunities/' + other, route => route.fulfill({ status: 404, json: envelope('RESOURCE_NOT_FOUND', 'Không có') }));
+  await signIn(page, fixture('E2E_STUDENT_EMAIL'));
+  await navigate(page, 'Lời mời & nguyện vọng');
+  // Mặc định mở tab Lời mời; mũi tên phải chuyển sang tab Nguyện vọng và giữ focus trên tab.
+  await page.getByRole('tab', { name: 'Lời mời', exact: true }).press('ArrowRight');
+  await expect(page.getByRole('tab', { name: 'Nguyện vọng', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tab', { name: 'Nguyện vọng', exact: true })).toBeFocused();
+  const submitted = preferenceItem(page, 'Thực tập Java thử nghiệm'), reviewed = preferenceItem(page, 'Cơ hội đã đóng hoặc không còn hiển thị');
+  await expect(submitted.getByText('Đã gửi, chờ nhà trường xét', { exact: true })).toBeVisible();
+  await expect(reviewed.getByText('Nhà trường đã xét', { exact: true })).toBeVisible();
+  await expect(reviewed.getByRole('button', { name: 'Rút nguyện vọng', exact: true })).toHaveCount(0);
+  await submitted.getByRole('button', { name: 'Xem chi tiết', exact: true }).click();
+  await expect(submitted.getByText('Lần 1: Đã rút', { exact: false })).toBeVisible();
+  const before = listCalls;
+  page.once('dialog', dialog => void dialog.accept());
+  await submitted.getByRole('button', { name: 'Rút nguyện vọng', exact: true }).click();
+  await expect(page.getByText('Nguyện vọng đã được nhà trường xét nên không thể rút. Muốn đổi ý, hãy gửi nguyện vọng mới.', { exact: true })).toBeVisible();
+  await expect.poll(() => listCalls).toBeGreaterThan(before);
+  expect(bodies).toEqual([{ action: 'WITHDRAW', preferenceId: '00000000-0000-4000-8000-000000000092', expectedVersion: 3, reasonCode: 'STUDENT_WITHDREW' }]);
+  await expect(page.getByText('Nội dung máy chủ không hiển thị')).toHaveCount(0);
 });

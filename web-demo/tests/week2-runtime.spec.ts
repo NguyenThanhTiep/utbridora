@@ -22,7 +22,7 @@ test('week 2 skills, cooperation, consent and tasks use real authenticated APIs'
   await student.page.reload(); await student.page.getByRole('button', { name: 'Thông tin chung', exact: true }).click();
   await expect(student.page.getByLabel('Ghi chú', { exact: true }).first()).toHaveValue('W2 browser preserved skill note');
   await student.page.screenshot({ path: '../target/week2-browser-skills.png', fullPage: true });
-  await student.page.getByRole('button', { name: 'Lời mời và chia sẻ', exact: true }).click();
+  await student.page.getByRole('button', { name: 'Lời mời & nguyện vọng', exact: true }).click();
   await expect(student.page.getByText('Đang có hiệu lực', { exact: true })).toHaveCount(0);
   await student.page.getByLabel('Kỹ năng', { exact: true }).check();
   await student.page.getByRole('button', { name: 'Đồng ý chia sẻ các mục đã chọn', exact: true }).click();
@@ -92,16 +92,17 @@ test('week 2 skills, cooperation, consent and tasks use real authenticated APIs'
   }
   await author.context.close(); await reviewer.context.close();
   const decisions = await actor(browser, 'student@example.test');
-  await decisions.page.getByRole('button', { name: 'Lời mời và chia sẻ', exact: true }).click();
+  await decisions.page.getByRole('button', { name: 'Lời mời & nguyện vọng', exact: true }).click();
   const accepted = decisions.page.locator('section.panel').filter({ has: decisions.page.getByRole('heading', { name: 'W2 UI accept invitation', exact: true }) });
   const declined = decisions.page.locator('section.panel').filter({ has: decisions.page.getByRole('heading', { name: 'W2 UI decline invitation', exact: true }) });
   await accepted.getByRole('button', { name: 'Nhận lời mời', exact: true }).click();
   await expect(accepted.getByRole('button', { name: 'Rút nhận lời', exact: true })).toBeVisible();
+  decisions.page.once('dialog', dialog => void dialog.accept());
   await declined.getByRole('button', { name: 'Từ chối', exact: true }).click();
-  await expect(declined.getByText(/ · DECLINED$/)).toBeVisible();
-  await decisions.page.reload(); await decisions.page.getByRole('button', { name: 'Lời mời và chia sẻ', exact: true }).click();
+  await expect(declined.getByText(/ · Đã từ chối$/)).toBeVisible();
+  await decisions.page.reload(); await decisions.page.getByRole('button', { name: 'Lời mời & nguyện vọng', exact: true }).click();
   await expect(accepted.getByRole('button', { name: 'Rút nhận lời', exact: true })).toBeVisible();
-  await expect(declined.getByText(/ · DECLINED$/)).toBeVisible();
+  await expect(declined.getByText(/ · Đã từ chối$/)).toBeVisible();
   await expect(decisions.page.getByText('Đang có hiệu lực', { exact: true })).toHaveCount(0);
   await decisions.context.close();
 });
