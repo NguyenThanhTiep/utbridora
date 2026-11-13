@@ -43,7 +43,7 @@ Các đường dẫn bên dưới tính từ gốc repository; BE = `src/main/ja
 | [InvitationConsentPage](../../web-demo/src/modules/student/pages/InvitationConsentPage.tsx) | UI đã dùng invitation T5 + consent T2; giữ phần này khi thêm cơ hội/nguyện vọng |
 | [SkillsEditor](../../web-demo/src/modules/student/components/SkillsEditor.tsx), [MyProfilePage](../../web-demo/src/modules/student/pages/MyProfilePage.tsx) | Editor thật và form profile hiện tại |
 | [Transport chung](../../web-demo/src/api.ts), [student API](../../web-demo/src/modules/student/api.ts), [App](../../web-demo/src/App.tsx) | Session/cookie/CSRF, ApiError, menu; mở rộng trong cùng ứng dụng |
-| [V25](../../src/main/resources/db/migration/V25__consent_and_profile_sharing.sql) | School policy, consent lineage/grant, profile share; không tạo các bảng canonical trùng |
+| [V25](../../src/main/resources/db/migration/base/V25__consent_and_profile_sharing.sql) | School policy, consent lineage/grant, profile share; không tạo các bảng canonical trùng |
 
 Pure completeness thuộc T4; capture snapshot T2 không gọi ngược policy T4. Không đưa nhánh mới vào chuỗi gây vòng phụ thuộc T2→T4→T2.
 

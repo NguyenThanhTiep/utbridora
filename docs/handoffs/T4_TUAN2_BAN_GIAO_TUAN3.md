@@ -37,7 +37,7 @@ Kết quả chung đã ghi: 485 unit PASS; 125 integration PASS theo report mớ
 | [StudentProfileSnapshots](../../src/main/java/vn/utbridora/auth/modules/student/application/StudentProfileSnapshots.java), [snapshot port](../../src/main/java/vn/utbridora/auth/modules/student/port/StudentProfileSnapshotPort.java) | T2 owner; frozen refs/hash/current check; capture hiện từ dữ liệu liên kết active |
 | [DemandCriteriaPort](../../src/main/java/vn/utbridora/auth/modules/cooperation/integration/DemandCriteriaPort.java), [facade](../../src/main/java/vn/utbridora/auth/modules/cooperation/integration/DemandCriteriaFacade.java) | Provider T5 thật; server-owned auth/context; không lấy criteria từ browser |
 | [ProposalService](../../src/main/java/vn/utbridora/auth/modules/cooperation/application/ProposalService.java), [ProposalController](../../src/main/java/vn/utbridora/auth/modules/cooperation/api/ProposalController.java) | T5 sở hữu nomination/batch/quota và đang giữ mapping REST nominate |
-| [V23](../../src/main/resources/db/migration/V23__student_matching_snapshots.sql) | student_snapshot_sets, student_profile_snapshots, match_runs, match_results; không tạo bảng run trùng |
+| [V23](../../src/main/resources/db/migration/base/V23__student_matching_snapshots.sql) | student_snapshot_sets, student_profile_snapshots, match_runs, match_results; không tạo bảng run trùng |
 | [Oracle S1–S11](../testing/fixtures/t4-s1-s11.json), [StrictClassifierTest](../../src/test/java/vn/utbridora/auth/modules/matching/StrictClassifierTest.java) | Expected độc lập, runtime assertions; nhãn NOT_RUN trong fixture là lịch sử của artifact tuần 1 |
 
 Giữ các invariant sau khi làm UI/privacy:

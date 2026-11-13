@@ -12,6 +12,7 @@ Mục lục tài liệu dùng chung cho năm team. Cập nhật cách sắp xế
 | Biết source hiện đã có gì | [Trạng thái triển khai](status/IMPLEMENTATION_STATUS.md) và [báo cáo kiểm thử](testing/TEST_REPORT.md) |
 | Xem kế hoạch và phân công công việc | [Workbook kế hoạch UT.Bridora](plans/UTBridora_Plan.xlsx) |
 | Nhận kết quả tuần 2 và tiếp tục tuần 3 | [T2](handoffs/T2_TUAN2_BAN_GIAO_TUAN3.md), [T3](handoffs/T3_TUAN2_BAN_GIAO_TUAN3.md), [T4](handoffs/T4_TUAN2_BAN_GIAO_TUAN3.md), [T5](handoffs/T5_TUAN2_BAN_GIAO_TUAN3.md) |
+| Nhận bản tích hợp tuần 3 và làm tuần 4 | [Ma trận/evidence](testing/WEEK3_INTEGRATION_ACCEPTANCE.md), [runtime/migration](guides/WEEK3_INTEGRATION_RUNTIME.md), [T2](handoffs/T2_TUAN3_BAN_GIAO_TUAN4.md), [T3](handoffs/T3_TUAN3_BAN_GIAO_TUAN4.md), [T4](handoffs/T4_TUAN3_BAN_GIAO_TUAN4.md), [T5](handoffs/T5_TUAN3_BAN_GIAO_TUAN4.md) |
 | Đưa module của team vào repository | [Hướng dẫn BE/FE cho các team và AI](guides/HUONG_DAN_PHAT_TRIEN_BE_FE_CHO_CAC_TEAM.md) |
 | Làm việc với GitHub | [Nhánh, commit theo chức năng, PR, review và xử lý xung đột](guides/HUONG_DAN_LAM_VIEC_VOI_GITHUB.md) |
 | Chạy local hoặc chuẩn bị staging | [Hướng dẫn triển khai](guides/DEPLOYMENT_GUIDE.md) |
@@ -53,11 +54,19 @@ docs/
 - [Chạy local, chuẩn bị staging và backup](guides/DEPLOYMENT_GUIDE.md).
 - [Làm việc với GitHub: nhánh, commit, pull request, review và xử lý xung đột](guides/HUONG_DAN_LAM_VIEC_VOI_GITHUB.md).
 - [T3-03: khung UI HR/Mentor, nhóm thực tập và điểm chờ tích hợp](../src/test/resources/vn/utbridora/auth/modules/internship/t3_03/guides/T3_03_HR_MENTOR_WORKSPACE.md).
-- [T3-09: UI nộp bài, nhận xét và báo cáo tuần — checkpoint chờ backend](../src/test/resources/vn/utbridora/auth/modules/internship/t3_09/README.md).
+- [T3-09: UI nộp bài, nhận xét, báo cáo và các checkpoint DEV](../src/test/resources/vn/utbridora/auth/modules/internship/t3_09/README.md).
 - [Docker local: tạo dữ liệu mẫu và hướng dẫn demo Student/HR/Mentor cho dev](guides/LOCAL_DEMO.md).
 - [Tuần 2: luồng runtime, API và cách kiểm tra trên môi trường riêng](guides/WEEK2_RUNTIME.md).
 - [T1-04-UI: cấp và thu hồi quyền cán bộ theo trường/kỳ](guides/T1_04_UI_SCHOOL_DELEGATIONS.md).
 - [T1-06 tuần 3: private upload, owner guard, storage và boundary tích hợp](guides/T1_06_PRIVATE_FILES.md).
+
+## Bàn giao tuần 3 → tuần 4
+
+- [T2 — CV/dự án/chứng chỉ, luồng sinh viên và consent/scope](handoffs/T2_TUAN3_BAN_GIAO_TUAN4.md).
+- [T3 — rubric/evaluation bất biến, publish và visibility điểm](handoffs/T3_TUAN3_BAN_GIAO_TUAN4.md).
+- [T4 — privacy/security/performance nhỏ và enterprise band UI](handoffs/T4_TUAN3_BAN_GIAO_TUAN4.md).
+- [T5 — Placement search/scope, concurrency/outbox và hoàn thiện UI](handoffs/T5_TUAN3_BAN_GIAO_TUAN4.md).
+- [Đối chiếu task/nguồn/fixes/giới hạn](testing/WEEK3_INTEGRATION_ACCEPTANCE.md), [evidence DEV](testing/evidence/WEEK3_INTEGRATION_VERIFICATION.json) và [đường nâng cấp DB từng lineage](guides/WEEK3_INTEGRATION_RUNTIME.md).
 
 ## Bàn giao tuần 2 → tuần 3
 

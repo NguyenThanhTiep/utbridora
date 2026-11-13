@@ -42,7 +42,7 @@ BE tính từ `src/main/java/vn/utbridora/auth/`.
 | [WorkspaceTaskActions](../../src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WorkspaceTaskActions.java), [TaskDtos](../../src/main/java/vn/utbridora/auth/modules/internship/api/TaskDtos.java) | Start assignment, calendar và DTO hiện có |
 | [PlacementInbox](../../src/main/java/vn/utbridora/auth/modules/internship/infrastructure/PlacementInbox.java), [PlacementReadPort](../../src/main/java/vn/utbridora/auth/contracts/placement/PlacementReadPort.java) | Consumer thật và nguồn authoritative T5; interface comment cũ không thay implementation này |
 | [TaskBoard](../../web-demo/src/modules/internship/pages/TaskBoard.tsx), [InternshipWorkspace](../../web-demo/src/modules/internship/pages/InternshipWorkspace.tsx), [live gateway](../../web-demo/src/modules/internship/api.ts) | UI thật; giữ selected context và chống response cũ ghi đè scope mới |
-| [V21](../../src/main/resources/db/migration/V21__internship_runtime.sql), [V26](../../src/main/resources/db/migration/V26__mentor_onboarding_references.sql), [V27](../../src/main/resources/db/migration/V27__explicit_mentor_handovers.sql) | Tables task/assignment/group/Case, mentor provenance và handover |
+| [V21](../../src/main/resources/db/migration/base/V21__internship_runtime.sql), [V26](../../src/main/resources/db/migration/base/V26__mentor_onboarding_references.sql), [V27](../../src/main/resources/db/migration/base/V27__explicit_mentor_handovers.sql) | Tables task/assignment/group/Case, mentor provenance và handover |
 
 Các route đã chạy:
 
