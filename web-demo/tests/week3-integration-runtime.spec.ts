@@ -27,7 +27,7 @@ test('school publication, student preference and matching use real T5 and T2 pro
   try {
     await login(school, 'school@example.test'); await login(student, 'student@example.test');
     await school.getByRole('button', { name: 'Hợp tác doanh nghiệp', exact: true }).click();
-    await school.getByLabel('Nhà trường', { exact: true }).selectOption('00000000-0000-4000-8000-000000000011');
+    await school.getByLabel('Nhà trường').selectOption('00000000-0000-4000-8000-000000000011');
     const cooperationPanel = school.locator('section.panel').filter({ has: school.getByRole('heading', { name: 'Đề nghị hợp tác', exact: true }) });
     let positionInList = -1;
     for (let page = 0; page < 100; page++) {
@@ -41,7 +41,10 @@ test('school publication, student preference and matching use real T5 and T2 pro
       await cooperationPanel.getByRole('button', { name: 'Sau', exact: true }).click(); await loaded;
     }
     expect(positionInList).toBeGreaterThanOrEqual(0);
+    const detailLoaded = school.waitForResponse(r => r.url().endsWith(`/school/cooperations/${coop}`) && r.request().method() === 'GET');
     await cooperationPanel.getByRole('button', { name: `Xem nội dung đề nghị ${positionInList + 1}`, exact: true }).click();
+    const detailResponse = await detailLoaded;
+    expect(detailResponse.ok(), await detailResponse.text()).toBeTruthy();
     await school.getByLabel('Thời điểm công bố', { exact: true }).fill(localTime(new Date(Date.now() - 3600000)));
     await school.getByLabel('Thời điểm đóng', { exact: true }).fill(localTime(new Date(Date.now() + 86400000)));
     await school.getByRole('button', { name: 'Lưu thời gian công bố', exact: true }).click();
@@ -71,7 +74,8 @@ test('school publication, student preference and matching use real T5 and T2 pro
     await preference.getByRole('button', { name: 'Rút nguyện vọng', exact: true }).click();
     await expect(preference.getByText('Đã rút', { exact: true })).toBeVisible();
     const matching = school.locator('.matching-workspace');
-    await matching.getByLabel('Nhu cầu đã duyệt', { exact: true }).selectOption(coop);
+    const cooperation = await detailResponse.json();
+    await matching.getByLabel('Nhu cầu đã duyệt').selectOption(cooperation.demand.demandId);
     const evaluated = school.waitForResponse(r => r.url().endsWith('/matching/evaluate') && r.request().method() === 'POST');
     await matching.getByRole('button', { name: 'Chạy Matching', exact: true }).click();
     const firstResponse = await evaluated; expect(firstResponse.ok()).toBeTruthy(); const first = await firstResponse.json();

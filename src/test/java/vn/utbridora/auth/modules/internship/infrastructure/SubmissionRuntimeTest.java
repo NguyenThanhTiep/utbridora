@@ -93,6 +93,24 @@ class SubmissionRuntimeTest {
         verify(jdbc).query(contains("WHERE 1=0"),any(RowMapper.class));
     }
 
+    @Test void recursiveMainLocationsKeepTheOriginalBaselineIdentity() {
+        baseline(List.of(List.of("28","main/V28__private_file_service.sql"),
+                List.of("29","main/V29__t3_submission_review_comment.sql")));
+        session.requireBaseline();
+        verify(jdbc).query(contains("WHERE 1=0"),any(RowMapper.class));
+    }
+
+    @Test void knownLegacyLineageNeedsSuccessfulConvergenceAndActualColumns() {
+        baseline(List.of(List.of("28","V28__matching_protected_releases.sql"),
+                List.of("29","V29__matching_audit_statistics.sql")));
+        when(jdbc.queryForObject(contains("version='32'"),eq(Integer.class))).thenReturn(1);
+        session.requireBaseline();
+        verify(jdbc).query(contains("WHERE 1=0"),any(RowMapper.class));
+        when(jdbc.query(contains("WHERE 1=0"),any(RowMapper.class)))
+                .thenThrow(new BadSqlGrammarException("test","not exposed",new SQLException("synthetic")));
+        error(503,"DEPENDENCY_UNAVAILABLE",session::requireBaseline);
+    }
+
     @Test void acceptedVersionNumbersDoNotHideMissingSubmissionColumns() {
         ready();
         when(jdbc.query(contains("WHERE 1=0"),any(RowMapper.class)))

@@ -28,7 +28,10 @@ test('week 3 school, student and enterprise use real share, decision, Placement 
       const next = page.waitForResponse(r => r.url().includes(`/api/v1/${side}/cooperations?`) && new URL(r.url()).searchParams.get('page') === String(currentPage));
       await panel.getByRole('button', {name: 'Sau', exact: true}).click(); response = await next;
     }
+    const detailLoaded = page.waitForResponse(r => r.url().endsWith(`/${side}/cooperations/${coop}`) && r.request().method() === 'GET');
     await panel.getByRole('button', {name: `Xem nội dung đề nghị ${position + 1}`, exact: true}).click();
+    const detailResponse = await detailLoaded;
+    expect(detailResponse.ok(), await detailResponse.text()).toBeTruthy();
   }
   const school = await actor(browser, 'school@example.test');
   const student = await actor(browser, 'student@example.test');

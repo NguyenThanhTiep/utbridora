@@ -153,7 +153,7 @@ public class CooperationService {
             var result=read(id);history(auth,result,"REOPEN",request);audit.workflow(actor(auth),"COOPERATION_DRAFT_SAVED",id,c.schoolOrgId(),Map.of("operation","REOPEN","version",result.version()));return result;
         },CooperationDto::cooperationId);
     }
-    @Transactional public Page<CooperationDto> list(Authentication auth,String org,boolean school,String term,String state,int page,int size) {
+    @Transactional(readOnly=true) public Page<CooperationDto> list(Authentication auth,String org,boolean school,String term,String state,int page,int size) {
         uuid(org);page(page,size);if(term!=null) uuid(term);
         if(school) scope.require(auth,org,term,"cooperation:school:review");else enterprise(auth,org);
         if(state!=null && !Set.of("DRAFT","SUBMITTED","NEEDS_CHANGES","APPROVED","REJECTED").contains(state)) throw failure(400,"SCHEMA_VALIDATION");
@@ -174,13 +174,16 @@ public class CooperationService {
         },id,size,page*size);
         return new Page<>(rows,page,size,count,(int)((count+size-1)/size));
     }
-    @Transactional public ReviewDetail reviewDetail(Authentication auth,String org,String id,boolean schoolSide) {
+    @Transactional(readOnly=true) public ReviewDetail reviewDetail(Authentication auth,String org,String id,boolean schoolSide) {
         var c=owned(id,org,schoolSide);if(schoolSide) scope.require(auth,org,c.termId(),"cooperation:school:review");else enterprise(auth,org);
         var feedback=jdbc.query("SELECT data_json FROM cooperation_history WHERE cooperation_id=? AND operation IN ('APPROVE','REJECT','REQUEST_INFO') ORDER BY created_at DESC,id ASC LIMIT 1",(r,n)->JSON.readValue(r.getString(1),Decision.class),id).stream().findFirst().orElse(null);
-        return new ReviewDetail(demands.findLocked(c.demandId(),c.enterpriseOrgId()).orElseThrow().dto(),c,feedback);
+        return new ReviewDetail(demands.findForRead(c.demandId(),c.enterpriseOrgId()).orElseThrow().dto(),c,feedback);
     }
     @Transactional(propagation=Propagation.MANDATORY) public CooperationDto read(String id) {
-        return jdbc.query("SELECT * FROM cooperations WHERE id=? FOR UPDATE",(r,n)->new CooperationDto(r.getString("id"),r.getString("demand_id"),r.getString("school_org_id"),r.getString("enterprise_org_id"),r.getString("term_id"),r.getString("state"),r.getInt("submission_no"),r.getLong("version"),r.getTimestamp("submitted_at")==null?null:instant(r,"submitted_at"),r.getString("decision_ref")),uuid(id)).stream().findFirst().orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
+        // Parallel list/detail readers must not take Cooperation -> delegation locks while
+        // another reader holds delegation and walks the remaining Cooperation rows.
+        String lock=org.springframework.transaction.support.TransactionSynchronizationManager.isCurrentTransactionReadOnly()?"":" FOR UPDATE";
+        return jdbc.query("SELECT * FROM cooperations WHERE id=?"+lock,(r,n)->new CooperationDto(r.getString("id"),r.getString("demand_id"),r.getString("school_org_id"),r.getString("enterprise_org_id"),r.getString("term_id"),r.getString("state"),r.getInt("submission_no"),r.getLong("version"),r.getTimestamp("submitted_at")==null?null:instant(r,"submitted_at"),r.getString("decision_ref")),uuid(id)).stream().findFirst().orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
     }
     private CooperationDto owned(String id,String org,boolean school) {var c=read(id);if(!org.equals(school?c.schoolOrgId():c.enterpriseOrgId())) throw failure(404,"RESOURCE_NOT_FOUND");return c;}
     private void enterprise(Authentication auth,String org) {if(!core.holdOrganization(auth,uuid(org),Role.ENTERPRISE,"enterprise:cooperation:submit")) throw failure(403,"ACCESS_DENIED");}

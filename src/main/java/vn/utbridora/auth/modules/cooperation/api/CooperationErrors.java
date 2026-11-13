@@ -32,6 +32,9 @@ public class CooperationErrors {
     }
     @ExceptionHandler(Exception.class)
     ResponseEntity<DemandErrorHandler.ErrorBody> unexpected(Exception e,HttpServletRequest r) {
+        // Retain a correlation and exception type without serializing request bodies, SQL or PII.
+        org.slf4j.LoggerFactory.getLogger(CooperationErrors.class).error("Cooperation request failed: requestId={}, exceptionType={}",
+                r.getAttribute("bridora.request_id"),e.getClass().getName());
         return domain(new DemandFailure(500,"INTERNAL_ERROR","Không thể hoàn tất thao tác."),r);
     }
 }

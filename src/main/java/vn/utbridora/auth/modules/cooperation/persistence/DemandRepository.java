@@ -27,6 +27,9 @@ public class DemandRepository {
     public Optional<StoredDemand> findLocked(String id,String org) {
         return jdbc.query("SELECT * FROM demands WHERE id=? AND enterprise_org_id=? FOR UPDATE",this::row,id,org).stream().findFirst();
     }
+    public Optional<StoredDemand> findForRead(String id,String org) {
+        return jdbc.query("SELECT * FROM demands WHERE id=? AND enterprise_org_id=?",this::row,id,org).stream().findFirst();
+    }
     public Optional<StoredDemand> findForSchool(String id) {
         return jdbc.query("SELECT * FROM demands WHERE id=? FOR UPDATE",this::row,id).stream().findFirst();
     }

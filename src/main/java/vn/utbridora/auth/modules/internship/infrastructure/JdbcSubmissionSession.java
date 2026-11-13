@@ -44,16 +44,21 @@ public final class JdbcSubmissionSession implements Session {
         this.audit = Objects.requireNonNull(audit);
     }
 
-    /** Every request waits for the real, ordered V28/V29 baseline; never applies migrations itself.
-     * Flyway remains responsible for checksum validation at application startup.
+    /** Accept the original ordered baseline or the common V32 convergence of a known lineage.
+     * Flyway remains responsible for checksum validation at startup; this check never runs DDL.
      */
     public void requireBaseline() {
         transaction();
         try {
             var rows = jdbc.query("SELECT version,script,installed_rank FROM flyway_schema_history WHERE success=true AND version IN ('28','29') ORDER BY installed_rank",
                     (r, n) -> List.of(r.getString("version"), r.getString("script")));
-            if (!rows.equals(List.of(List.of("28", "V28__private_file_service.sql"),
-                    List.of("29", "V29__t3_submission_review_comment.sql")))) throw unavailable();
+            var scripts = rows.stream().map(row -> List.of(row.getFirst(),
+                    row.get(1).substring(row.get(1).lastIndexOf('/') + 1))).toList();
+            boolean original = scripts.equals(List.of(List.of("28", "V28__private_file_service.sql"),
+                    List.of("29", "V29__t3_submission_review_comment.sql")));
+            if (!original && !Integer.valueOf(1).equals(jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM flyway_schema_history WHERE version='32' AND description='converge week3 lineages' AND success=true",
+                    Integer.class))) throw unavailable();
             // Fail closed when a numbered migration does not provide the expected columns.
             jdbc.query(ARTIFACT + " WHERE 1=0", (r, n) -> r.getString("id"));
         } catch (DataAccessException missingSchema) {

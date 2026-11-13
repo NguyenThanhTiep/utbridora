@@ -557,6 +557,45 @@ class EnterpriseProposalIT {
     private static OperationFailure failure(int status,String code,org.junit.jupiter.api.function.Executable action) {
         var f=assertThrows(OperationFailure.class,action);assertEquals(status,f.status);assertEquals(code,f.code);return f;
     }
+    @Test void approvedPlacementAndCooperationRemainReadableAfterConsentRevocation() throws Exception {
+        var shared=enterpriseAccepted();
+        var created=pending(Instant.now().plusSeconds(3600));
+        var approved=placements.approve(as(2),created.placementId(),key(),new PlacementService.PlacementCommand(created.version(),"DEMO-REVOKE-READ","SCHOOL_APPROVED"));
+        consents.revoke(as(6),shared.consent().consentId(),key(),new StudentConsentService.Revoke(shared.consent().lineageVersion(),"STUDENT_REVOKED"));
+        var detail=http(school,"GET","/school/cooperations/"+f.cooperation().cooperationId(),null,id(11),null,true);
+        assertEquals(200,detail.statusCode(),detail.body());
+        var listed=http(school,"GET","/school/placements?cooperationId="+f.cooperation().cooperationId(),null,id(11),null,true);
+        assertEquals(200,listed.statusCode(),listed.body());
+        assertTrue(listed.body().contains(approved.placementId()));
+        assertEquals("APPROVED",currentPlacement(approved.placementId()).state());
+        assertHidden();
+    }
+    @Test void parallelCooperationListsAndDetailsKeepCurrentScopeWithoutReadDeadlocks() throws Exception {
+        var auth=as(2);
+        String detailId=f.cooperation().cooperationId();
+        // A newer row makes list readers visit it before the detail target, matching the UI's
+        // list plus Promise.all(detail) requests rather than serializing on a single first row.
+        var newer=demands.create(as(4),id(12),key(),input);
+        cooperations.submitWithCooperation(as(4),id(12),key(),new CooperationService.Submit(newer.demandId(),newer.version()));
+        var gate=new java.util.concurrent.CountDownLatch(1);
+        try(var pool=java.util.concurrent.Executors.newFixedThreadPool(20)) {
+            var futures=new ArrayList<java.util.concurrent.Future<?>>();
+            for(int i=0;i<20;i++) {
+                boolean list=i%2==0;
+                futures.add(pool.submit(()->{
+                    gate.await();SecurityContextHolder.getContext().setAuthentication(auth);
+                    try {
+                        if(list) assertTrue(cooperations.list(auth,id(11),true,id(21),null,0,25).totalElements()>0);
+                        else assertEquals(detailId,cooperations.reviewDetail(auth,id(11),detailId,true).cooperation().cooperationId());
+                        return null;
+                    } finally {SecurityContextHolder.clearContext();}
+                }));
+            }
+            gate.countDown();
+            for(var future:futures) future.get(30,java.util.concurrent.TimeUnit.SECONDS);
+        }
+        assertEquals(404,assertThrows(OperationFailure.class,()->cooperations.reviewDetail(as(4),id(11),detailId,true)).status);
+    }
     private PlacementService.PlacementView currentPlacement(String id) {return new TransactionTemplate(transactions).execute(status->placements.readPlacement(id));}
     private long eligibilityVersion() {return jdbc.queryForObject("SELECT version FROM student_term_eligibilities WHERE user_id=? AND term_id=?",Long.class,id(6),id(21));}
     private PlacementService.PlacementView pending(Instant effective) {

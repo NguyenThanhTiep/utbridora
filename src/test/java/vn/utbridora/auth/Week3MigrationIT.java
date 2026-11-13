@@ -32,6 +32,14 @@ class Week3MigrationIT {
                 var after = history(url, mysql);
                 before.forEach((key, value) -> assertEquals(value, after.get(key), "Changed installed history " + lineage + target + ":" + key));
                 assertEquals("33", flyway.info().current().getVersion().getVersion());
+                var dataSource = new org.springframework.jdbc.datasource.DriverManagerDataSource(url, mysql.getUsername(), mysql.getPassword());
+                var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
+                var submission = new vn.utbridora.auth.modules.internship.infrastructure.JdbcSubmissionSession(jdbc,
+                    org.mockito.Mockito.mock(vn.utbridora.auth.operations.OperationLedger.class),
+                    org.mockito.Mockito.mock(vn.utbridora.auth.audit.AuditService.class));
+                new org.springframework.transaction.support.TransactionTemplate(
+                    new org.springframework.jdbc.datasource.DataSourceTransactionManager(dataSource))
+                    .executeWithoutResult(status -> submission.requireBaseline());
                 try (var c = DriverManager.getConnection(url, mysql.getUsername(), mysql.getPassword()); var s = c.createStatement()) {
                     var schema = new ArrayList<String>();
                     try (var rows = s.executeQuery("SELECT TABLE_NAME,COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE,COALESCE(COLUMN_DEFAULT,'<null>') FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME<>'flyway_schema_history' AND COLUMN_NAME<>'gpa' ORDER BY TABLE_NAME,COLUMN_NAME")) {
