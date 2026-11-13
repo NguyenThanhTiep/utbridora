@@ -1,5 +1,6 @@
 # Keep the exact bytes of documents referenced by SHA-256.
 docs/contracts/UTBridora_Contract_Pack_B01_B06_v1.0_Candidate.md -text
+docs/contracts/UTBridora_Contract_Pack_B01_B06_v1.1_Candidate.md -text
 docs/reviews/*.md -text
 docs/srs/*.docx -text
 scripts/*.sh text eol=lf

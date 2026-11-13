@@ -410,7 +410,9 @@ def build(check=False):
     frozen += [ROOT/'src/main/resources/application.yml']
     errors = sorted(set(re.findall(r'\b(?:400|401|403|404|409|413|416|422|429|500|503)\s*([A-Z][A-Z0-9_]{2,})', text)))
     manifest=dict(packVersion='1.1',baseVersion='1.0',baseApproval='USER_APPROVED_2026-11-05',
-                  candidateApproval='USER_APPROVED_2026-11-13',permissions=permissions,permissionAliases=aliases,
+                  candidateApproval=('USER_APPROVED_2026-11-13'
+                      if hashlib.sha256(CONTRACT.read_bytes()).hexdigest()=='805b2db30c7a9d4acd76c3d4ed93eeefa149d121a9848f846441294101c68012'
+                      else 'NOT_RECORDED'),permissions=permissions,permissionAliases=aliases,
                   auditActions=audit,auditAliases=audit_aliases,operations=ops,ports=ports,
                   typedPorts=compiler.port_models,
                   legacyCoreOperations=legacy,errorCodesInHttpExamples=errors,
