@@ -35,6 +35,8 @@ class MentorOnboardingIT {
     }
     @Autowired JdbcTemplate jdbc;@Autowired AuthorizationPolicy core;@Autowired MentorInvitationService invitations;
     @Autowired AccountTokenService accounts;@Autowired WorkspaceRuntime workspace;
+    @Autowired TokenRepository tokenRepository;
+    @Autowired org.springframework.transaction.PlatformTransactionManager transactions;
     static String id(int i) {return "00000000-0000-4000-8000-"+String.format("%012d",i);}
     @Test void newMentorActivatesOwnIdentityAndScopedAssignmentsWithOneTimeT1Token() throws Exception {
         var hr=core.currentSubject(id(4)).orElseThrow();SecurityContextHolder.getContext().setAuthentication(hr);
@@ -166,5 +168,39 @@ class MentorOnboardingIT {
         assertEquals(token,jdbc.queryForObject("SELECT token_id FROM mentor_invitation_refs WHERE id=?",String.class,issued.invitationId()));
         assertEquals("PENDING_ACTIVATION",jdbc.queryForObject("SELECT status FROM users WHERE id=?",String.class,subject));
         assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM memberships WHERE user_id=?",Integer.class,subject));
+    }
+
+    @Test void activationThatCachedOldTokenBeforeConcurrentReissueCannotCreateIdentity() throws Exception {
+        hrContext();var hr=core.currentSubject(id(4)).orElseThrow();
+        String group=jdbc.queryForObject("SELECT id FROM internship_groups ORDER BY id LIMIT 1",String.class);
+        var input=new MentorInvitationService.MentorInviteRequest("stale-activation-mentor@example.test",id(12),List.of(group),id(21),"DEMO-STALE-ACTIVATION");
+        var issued=invitations.issue(hr,UUID.randomUUID().toString(),input);
+        String hash=jdbc.queryForObject("SELECT t.token_hash FROM one_time_tokens t JOIN mentor_invitation_refs r ON r.token_id=t.id WHERE r.id=?",String.class,issued.invitationId());
+        String raw=tokenFromDedicatedMailbox(hash);
+        String assignment=((ServletRequestAttributes)RequestContextHolder.getRequestAttributes()).getRequest().getHeader("X-Context-Assignment-Id");
+        org.springframework.test.util.ReflectionTestUtils.setField(invitations,"clock",java.time.Clock.fixed(java.time.Instant.now().plusSeconds(301),java.time.ZoneOffset.UTC));
+        try(var executor=java.util.concurrent.Executors.newSingleThreadExecutor()) {
+            new org.springframework.transaction.support.TransactionTemplate(transactions).executeWithoutResult(status->{
+                // Reproduce the persistence context of activation before it waits
+                // for another transaction to finish rotating the same claim.
+                var cached=tokenRepository.findByTokenHashAndPurpose(hash,OneTimeToken.Purpose.INVITATION).orElseThrow();
+                assertNull(cached.consumedAt);
+                var rotated=executor.submit(()->{
+                    SecurityContextHolder.getContext().setAuthentication(hr);
+                    var request=new MockHttpServletRequest();request.addHeader("X-Context-Assignment-Id",assignment);
+                    RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+                    try {return invitations.issue(hr,UUID.randomUUID().toString(),input);}
+                    finally {SecurityContextHolder.clearContext();RequestContextHolder.resetRequestAttributes();}
+                });
+                try {assertEquals("ACCOUNT_PENDING",rotated.get(20,java.util.concurrent.TimeUnit.SECONDS).state());}
+                catch(Exception failure){throw new AssertionError("Concurrent reissue failed",failure);}
+                assertNull(cached.consumedAt,"Fixture must retain the stale JPA token");
+                assertThrows(IllegalArgumentException.class,()->accounts.acceptInvitation(raw,"Rejected stale activation","Synthetic-stale-mentor-password-789"));
+                status.setRollbackOnly();
+            });
+        }
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM users WHERE email=?",Integer.class,input.email()));
+        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM one_time_tokens WHERE email=? AND consumed_at IS NULL",Integer.class,input.email()));
+        assertEquals("ACCOUNT_PENDING",jdbc.queryForObject("SELECT state FROM mentor_invitation_refs WHERE id=?",String.class,issued.invitationId()));
     }
 }

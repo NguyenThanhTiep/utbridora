@@ -56,6 +56,11 @@ public class AccountTokenService {
         if(mentor!=null) mentor.lockPendingIdentity(candidate.email);
         var existing=users.findByEmailForUpdate(candidate.email).orElse(null);
         OneTimeToken token=valid(raw,Purpose.INVITATION);
+        // A request may have loaded this entity before waiting for the claim.
+        // Check the current database row even when JPA still holds an old token.
+        Instant consumed=Instant.now();
+        if(tokens.consumeIfUsable(token.id,consumed)!=1) throw new IllegalArgumentException("Invalid or expired token");
+        token.consumedAt=consumed;
         if(existing!=null && (existing.status!=AccountStatus.PENDING_ACTIVATION || mentor==null
             || !mentor.permitsPendingIdentity(token.id,token.email,existing.id))) throw new IllegalStateException("Invitation no longer valid");
         UserAccount user=existing==null?new UserAccount():existing;user.email=token.email;user.passwordHash=encoder.encode(password);
@@ -63,7 +68,6 @@ public class AccountTokenService {
         users.save(user);
         Membership member=memberships.findByUserIdAndOrganizationIdAndRole(user.id,token.organizationId,token.inviteRole).orElseGet(Membership::new);member.active=true;member.userId=user.id;member.role=token.inviteRole;
         member.organizationId=token.organizationId;memberships.save(member);
-        token.consumedAt=Instant.now();
         users.flush();memberships.flush();
         if(mentorActivation!=null) mentorActivation.ifAvailable(port->port.activated(token.id,user.id));
         audit.write(user.id,"ACCOUNT_ACTIVATED","user",user.id,"SUCCESS");

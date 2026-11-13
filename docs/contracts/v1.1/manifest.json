@@ -5257,7 +5257,7 @@
     "src/main/java/vn/utbridora/auth/student/port/TermReferencePort.java": "25d58880974f75f96cc5d88b53b3d0420ebe35ae1456c0bd62d9398280ff841c",
     "src/main/java/vn/utbridora/auth/student/roster/StudentRoster.java": "823c9cab21e54902864217e2aa82dfabb1980118917fada303eed97522f51e8d",
     "src/main/java/vn/utbridora/auth/student/roster/StudentRosterRepository.java": "bb7f659c48f4aefab834d6a9d2a3e79cccb7e44cd29e1f5f50d946c17b349898",
-    "src/main/java/vn/utbridora/auth/tokens/AccountTokenService.java": "70455dc6bd782d94adb76d78a2930096aaccfea2f9d398d0d5185566284717a3",
+    "src/main/java/vn/utbridora/auth/tokens/AccountTokenService.java": "d772ff037868b16072089f94b95e35f8ed9689a67b225c81ccac3b3d43dea290",
     "src/main/java/vn/utbridora/auth/tokens/EmailService.java": "a47c7080f4aa4b0a297085712dd5aa8ffd810a643739f5360d322b381f9efe22",
     "src/main/java/vn/utbridora/auth/tokens/MentorActivationPort.java": "c8f3035b2197735e94924f314bec3a2e13467343658f4b54bd7432bde63bf005",
     "src/main/java/vn/utbridora/auth/tokens/MentorInvitationService.java": "e035fb5a04c0f4683f58655454827fb604a8aca070c995af8acd8aed83117a48",

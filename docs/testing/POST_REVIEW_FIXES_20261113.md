@@ -19,6 +19,8 @@ Nguồn: main `9565c30ab0bc88a9bfc471a8ccfb8e9756203612` và nhánh DEV `feature
 
 ## Kiểm chứng
 
+Kích hoạt invitation tiêu thụ token bằng predicate database `consumed_at IS NULL AND expires_at > now` trước khi tạo/kích hoạt identity. Regression giữ token cũ trong JPA cache, rotate từ transaction khác rồi thử activation để bảo đảm yêu cầu đang chờ không dùng lại generation cũ.
+
 Giữ các test DEV/main đã có; thêm boundary parser/HTTP persistence, hạn giữ chỗ vượt24h/accept/consent/expiry replay, token generation/cooldown/quota/old-token/pending-user/concurrent reissue và migration dữ liệu cũ. Browser mới vẫn kiểm API/provider thực, persisted state và quyền. Test UX mock chỉ chứng minh UI consumer, không thay backend integration.
 
 Lệnh chính: `npm ci`, `npm run build`; `mvn -B -Dfrontend.e2e=true -Dt5.week3.browser=true verify`; các checker contract/audit/portability và oracle S1–S11 trong workflow. Báo kết quả theo đúng commit/CI cuối và lưu artifact; không dùng tài liệu này thay QA/Lead signoff. Môi trường8088, tài khoản, mật khẩu, dữ liệu và stash không bị triển khai/thay đổi bởi bản sửa source này.
