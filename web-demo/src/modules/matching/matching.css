@@ -1,0 +1,43 @@
+.matching-workspace { min-width: 0; }
+.matching-heading, .matching-result-header, .matching-candidate-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.matching-heading h2, .matching-run-meta h3, .matching-result-header h3 { margin: 0; }
+.matching-heading .section-description { margin-bottom: 0; }
+.matching-controls { display: flex; align-items: end; gap: 14px; margin: 22px 0 12px; }
+.matching-controls label { flex: 1; min-width: 0; }
+.matching-controls select { width: 100%; box-sizing: border-box; }
+.matching-demand-summary { display: flex; flex-wrap: wrap; gap: 8px 18px; color: var(--muted); font-size: var(--text-sm); }
+.matching-demand-summary code, .matching-run-meta code { overflow-wrap: anywhere; }
+.matching-run-meta { margin-top: 28px; }
+.matching-run-meta p { color: var(--muted); font-size: var(--text-sm); overflow-wrap: anywhere; }
+.matching-counts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 16px 0 20px; }
+.matching-counts button { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); text-align: left; }
+.matching-counts button.selected { border-color: var(--brand); box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 18%, transparent); }
+.matching-counts strong { font-size: 1.2rem; }
+.matching-candidates { display: grid; gap: 12px; margin-top: 14px; }
+.matching-candidate { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 10px; }
+.matching-candidate-ident { flex: 1; min-width: 0; }
+.matching-candidate-ident h4 { margin: 0; overflow-wrap: anywhere; }
+.matching-candidate-ident p, .matching-skills { margin: 5px 0 0; color: var(--muted); font-size: var(--text-sm); }
+.matching-score { white-space: nowrap; font-size: var(--text-sm); font-weight: 650; color: var(--brand-dark); }
+.matching-select { display: flex; align-items: center; }
+.matching-select input { width: 18px; height: 18px; }
+.matching-criteria { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 0; margin: 14px 0 0; list-style: none; }
+.matching-criteria li { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; align-items: center; padding: 8px 10px; background: var(--surface-subtle, #f6f8fa); border-radius: 7px; }
+.matching-criteria li small { grid-column: 2; color: var(--muted); }
+.matching-criterion-status { font-size: var(--text-xs); font-weight: 700; }
+.matching-criterion-status.pass { color: #19744b; }
+.matching-criterion-status.fail { color: #a32739; }
+.matching-criterion-status.unknown { color: #8b6414; }
+.matching-pagination { display: flex; align-items: center; justify-content: end; gap: 10px; margin-top: 18px; }
+.matching-pagination span { margin-right: auto; color: var(--muted); font-size: var(--text-sm); }
+/* liên quan đến việc thêm lọc svien theo gpa là MVP: Cách biệt panel chạy aggregate của doanh nghiệp và tóm tắt tiêu chí đã chọn. */
+.matching-enterprise-panel { display: grid; gap: 14px; }
+.matching-enterprise-criteria, .matching-enterprise-result { display: grid; gap: 8px; padding: 14px; border: 1px solid var(--line); border-radius: 10px; }
+.matching-enterprise-criteria p, .matching-enterprise-result p { margin: 0; }
+@media (max-width: 650px) {
+  .matching-heading, .matching-controls { align-items: stretch; flex-direction: column; }
+  .matching-counts { grid-template-columns: 1fr; }
+  .matching-criteria { grid-template-columns: 1fr; }
+  .matching-candidate-top { align-items: flex-start; }
+  .matching-score { white-space: normal; text-align: right; }
+}

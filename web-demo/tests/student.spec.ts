@@ -47,7 +47,9 @@ const profileView = (profileVersion: number, phone: string | null): SelfProfileV
     projects: [{ projectId: '00000000-0000-4000-8000-000000000041', title: 'Ứng dụng thử nghiệm', description: 'Đồ án mẫu', role: 'Backend',
       skillCodes: ['JAVA'], url: 'https://example.test/project', evidenceFileIds: ['00000000-0000-4000-8000-000000000051'] }],
     certificates: [{ certificateId: '00000000-0000-4000-8000-000000000061', title: 'Chứng chỉ thử nghiệm', issuer: 'Đơn vị thử nghiệm', issuedOn: '2026-06-01', expiresOn: null, fileId: null }],
-    cvFileId: '00000000-0000-4000-8000-000000000071', phone
+    cvFileId: '00000000-0000-4000-8000-000000000071', phone,
+    // liên quan đến việc thêm lọc svien theo gpa là MVP: Fixture GPA giúp kiểm tra giữ và cập nhật GPA hồ sơ.
+    gpa: 3.25
   },
   completeness: { policyVersion: 'demo-v1', complete: true, checks: (['MAJOR_VALID', 'STUDENT_TERM_PRESENT', 'SKILLS_DECLARED', 'SKILLS_VALID', 'AVAILABILITY_DECLARED', 'AVAILABILITY_VALID'] as const)
     .map(code => ({ code, passed: true, reasonCode: 'OK' })) }
@@ -122,14 +124,17 @@ test('UX UI mock: S02 lưu đủ 14 trường, giữ kỹ năng, dự án, chứ
   const save = page.getByRole('button', { name: 'Lưu thông tin chung', exact: true });
   await expect(save).toBeDisabled();
   await page.getByLabel('Số điện thoại', { exact: true }).fill('0901234567');
+  // liên quan đến việc thêm lọc svien theo gpa là MVP: Kiểm tra sinh viên cập nhật GPA trên hồ sơ của mình.
+  await page.getByLabel(/GPA \(thang 4\.0/).fill('3.45');
   await save.click();
   await expect(page.getByText('Đã lưu thông tin chung.', { exact: true })).toBeVisible();
   expect(puts).toHaveLength(1);
   const { body, headers } = puts[0];
   const original = profileView(3, null).profile;
   expect(Object.keys(body).sort()).toEqual(['availabilityDeclared', 'availablePeriods', 'certificates', 'customSkills', 'cvFileId', 'expectedProfileVersion',
-    'majorCode', 'orientationCodes', 'phone', 'projects', 'skills', 'skillsDeclared', 'subjectCodes', 'termId']);
+    'gpa', 'majorCode', 'orientationCodes', 'phone', 'projects', 'skills', 'skillsDeclared', 'subjectCodes', 'termId']);
   expect(body).toMatchObject({ expectedProfileVersion: 3, termId: TERM_ID, phone: '0901234567', majorCode: 'SE', skillsDeclared: true, availabilityDeclared: true });
+  expect(body.gpa).toBe(3.45);
   // Kỹ năng ghi theo CanonicalSkillInput: không gửi `source`.
   expect(body.skills).toEqual([{ skillCode: 'JAVA', level: 3, yearsPractice: 1.5, note: null }]);
   for (const key of ['customSkills', 'availablePeriods', 'orientationCodes', 'subjectCodes', 'projects', 'certificates', 'cvFileId'] as const) expect(body[key]).toEqual(original[key]);
@@ -310,7 +315,7 @@ test('UX UI mock: chưa có hồ sơ thì tạo bằng hồ sơ rỗng đủ 14 
   await expect(page.getByRole('button', { name: 'Lưu thông tin chung', exact: true })).toBeDisabled();
   expect(puts).toHaveLength(1);
   expect(puts[0].body).toEqual({ expectedProfileVersion: 0, termId: TERM_ID, majorCode: null, skillsDeclared: false, skills: [], customSkills: [],
-    availabilityDeclared: false, availablePeriods: [], orientationCodes: [], subjectCodes: [], projects: [], certificates: [], cvFileId: null, phone: null });
+    availabilityDeclared: false, availablePeriods: [], orientationCodes: [], subjectCodes: [], projects: [], certificates: [], cvFileId: null, phone: null, gpa: null });
   expect(puts[0].headers['idempotency-key']).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
 });
 

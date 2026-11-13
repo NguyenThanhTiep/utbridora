@@ -105,6 +105,19 @@ public class AuditService {
         event.metadataJson=new tools.jackson.databind.ObjectMapper().writeValueAsString(metadata);
         flushRequiredAudit();
     }
+    /** Successful matching execution audit; MANDATORY keeps the record atomic with the matching transaction. */
+    @Transactional(propagation=Propagation.MANDATORY)
+    public void matchingRunCompleted(String actor,String demandId,String matchRunId,String organizationId,
+                                     java.util.Map<String,Object> metadata) {
+        var spec=WorkflowAuditRegistry.ACTIONS.get("MATCH_RUN_COMPLETED");
+        if(!spec.fields().containsAll(metadata.keySet())) throw new IllegalArgumentException("Invalid matching audit metadata");
+        validateId(demandId);
+        var event=store(actor,"MATCH_RUN_COMPLETED",spec.resourceType(),matchRunId,"SUCCESS",organizationId,null);
+        event.demandId=demandId;
+        event.ipAddress=requestIpAddress();
+        event.metadataJson=new tools.jackson.databind.ObjectMapper().writeValueAsString(metadata);
+        flushRequiredAudit();
+    }
     private void flushRequiredAudit() {
         try {repository.flush();}
         catch(org.springframework.dao.DataAccessException failure) {
@@ -131,6 +144,14 @@ public class AuditService {
         }
         if(event.requestId==null) event.requestId=java.util.UUID.randomUUID().toString();
         return repository.save(event);
+    }
+    private String requestIpAddress() {
+        var attributes=RequestContextHolder.getRequestAttributes();
+        if(attributes instanceof ServletRequestAttributes web) {
+            String address=web.getRequest().getRemoteAddr();
+            if(address!=null && !address.isBlank() && address.length()<=45) return address;
+        }
+        return null;
     }
     private void validateId(String id) {
         if(id!=null && !id.matches("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"))

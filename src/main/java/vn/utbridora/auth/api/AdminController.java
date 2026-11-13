@@ -2,6 +2,7 @@ package vn.utbridora.auth.api;
 
 import jakarta.validation.Valid;
 import org.springframework.data.domain.*;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -24,10 +25,11 @@ public class AdminController {
     private final AuditService audit;
     private final AuditRepository auditRepository;
     private final UserRepository users;
+    private final JdbcTemplate jdbc;
 
     public AdminController(OrganizationRepository organizations, AccountTokenService tokens,
             AccountLifecycleService lifecycle, MembershipService membershipService,
-            AuditService audit, AuditRepository auditRepository, UserRepository users) {
+            AuditService audit, AuditRepository auditRepository, UserRepository users, JdbcTemplate jdbc) {
         this.organizations = organizations;
         this.tokens = tokens;
         this.lifecycle = lifecycle;
@@ -35,6 +37,7 @@ public class AdminController {
         this.audit = audit;
         this.auditRepository = auditRepository;
         this.users = users;
+        this.jdbc = jdbc;
     }
 
     private static String actor(Authentication a) {
@@ -82,6 +85,7 @@ public class AdminController {
             @RequestParam(required = false) String action,
             @RequestParam(required = false) String actorId,
             @RequestParam(required = false) String organizationId,
+            @RequestParam(required = false) String demandId,
             @RequestParam(required = false) String result,
             @RequestParam(required = false) java.time.Instant from,
             @RequestParam(required = false) java.time.Instant until) {
@@ -96,6 +100,8 @@ public class AdminController {
             throw new IllegalArgumentException("Invalid actor filter");
         if (organizationId != null && !organizationId.matches("[0-9a-fA-F-]{36}"))
             throw new IllegalArgumentException("Invalid organization filter");
+        if (demandId != null && !demandId.matches("[0-9a-fA-F-]{36}"))
+            throw new IllegalArgumentException("Invalid demand filter");
         if (result != null && !java.util.Set.of("SUCCESS", "FAILURE", "DENIED").contains(result))
             throw new IllegalArgumentException("Invalid result filter");
         if (from != null && until != null && !from.isBefore(until))
@@ -107,6 +113,8 @@ public class AdminController {
             filter = filter.and((root, query, cb) -> cb.equal(root.get("actorId"), actorId));
         if (organizationId != null)
             filter = filter.and((root, query, cb) -> cb.equal(root.get("organizationId"), organizationId));
+        if (demandId != null)
+            filter = filter.and((root, query, cb) -> cb.equal(root.get("demandId"), demandId));
         if (result != null)
             filter = filter.and((root, query, cb) -> cb.equal(root.get("result"), result));
         if (from != null)
@@ -115,6 +123,29 @@ public class AdminController {
             filter = filter.and((root, query, cb) -> cb.lessThan(root.get("createdAt"), until));
         Page<AuditLog> found = auditRepository.findAll(filter, paging);
         return found.map(AuditLogView::from);
+    }
+
+    public record MatchingStatistics(long totalExecutions,long distinctActors,java.time.Instant firstExecutionAt,
+                                     java.time.Instant lastExecutionAt) {}
+
+    @GetMapping("/matching-statistics")
+    @PreAuthorize("@authorizationPolicy.hasGlobal(authentication, 'audit:global:read')")
+    public MatchingStatistics matchingStatistics(@RequestParam(required = false) String demandId,
+            @RequestParam(required = false) java.time.Instant from,
+            @RequestParam(required = false) java.time.Instant until) {
+        if (demandId != null && !demandId.matches("[0-9a-fA-F-]{36}"))
+            throw new IllegalArgumentException("Invalid demand filter");
+        if (from != null && until != null && !from.isBefore(until))
+            throw new IllegalArgumentException("Invalid time range");
+        var sql = new StringBuilder("SELECT COUNT(*) AS total_executions, COUNT(DISTINCT actor_id) AS distinct_actors, MIN(created_at) AS first_execution_at, MAX(created_at) AS last_execution_at FROM audit_logs WHERE action='MATCH_RUN_COMPLETED'");
+        var args = new java.util.ArrayList<Object>();
+        if (demandId != null) { sql.append(" AND demand_id=?"); args.add(demandId); }
+        if (from != null) { sql.append(" AND created_at>=?"); args.add(java.sql.Timestamp.from(from)); }
+        if (until != null) { sql.append(" AND created_at<?"); args.add(java.sql.Timestamp.from(until)); }
+        return jdbc.queryForObject(sql.toString(), (row,n) -> new MatchingStatistics(
+            row.getLong("total_executions"),row.getLong("distinct_actors"),
+            row.getTimestamp("first_execution_at")==null?null:row.getTimestamp("first_execution_at").toInstant(),
+            row.getTimestamp("last_execution_at")==null?null:row.getTimestamp("last_execution_at").toInstant()),args.toArray());
     }
 
     @PatchMapping("/users/{id}/revoke-sessions")

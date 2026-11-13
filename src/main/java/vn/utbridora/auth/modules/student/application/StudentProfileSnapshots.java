@@ -68,16 +68,17 @@ public class StudentProfileSnapshots implements StudentProfileSnapshotPort {
     }
     private ProfileSnapshot current(String student,String school,String term,String academic,String tax,Instant now) {
         var row=profiles.lockByUser(student).orElse(null);
-        String major=null;boolean declared=false,availability=false;long version=0;
+        String major=null;boolean declared=false,availability=false;long version=0;java.math.BigDecimal gpa=null;
         List<SkillValue> skills=List.of();List<vn.utbridora.auth.modules.student.api.StudentProfileDtos.DateRange> periods=List.of();
         if(row!=null) {
-            version=row.version();declared=row.skillsDeclared();var per=profiles.findTerm(row.id(),term).orElse(null);
+            version=row.version();declared=row.skillsDeclared();gpa=row.gpa();var per=profiles.findTerm(row.id(),term).orElse(null);
             if(per!=null) {major=per.majorCode();availability=per.availabilityDeclared();}
             skills=profiles.skills(row.id()).stream().map(s->new SkillValue(s.skillCode(),s.level(),s.yearsPractice().stripTrailingZeros(),s.source())).sorted(Comparator.comparing(SkillValue::skillCode)).toList();
             periods=profiles.periods(row.id(),term).stream().sorted(Comparator.comparing(v->v.startDate()+v.endDate())).toList();
         }
-        var relevant=new TreeMap<String,Object>();relevant.put("majorCode",major);relevant.put("termId",term);relevant.put("skillsDeclared",declared);relevant.put("skills",skills);relevant.put("availabilityDeclared",availability);relevant.put("availablePeriods",periods);
-        return new ProfileSnapshot(UUID.randomUUID().toString(),student,school,term,major,declared,skills,availability,periods,version,OperationLedger.payloadHash(relevant),"demo-v1",academic,tax,now);
+        // liên quan đến việc thêm lọc svien theo gpa là MVP: GPA nằm trong fingerprint để thay đổi GPA làm kết quả matching stale.
+        var relevant=new TreeMap<String,Object>();relevant.put("majorCode",major);relevant.put("termId",term);relevant.put("gpa",gpa);relevant.put("skillsDeclared",declared);relevant.put("skills",skills);relevant.put("availabilityDeclared",availability);relevant.put("availablePeriods",periods);
+        return new ProfileSnapshot(UUID.randomUUID().toString(),student,school,term,major,declared,skills,availability,periods,version,OperationLedger.payloadHash(relevant),"demo-v1",academic,tax,now,gpa);
     }
     private String school(String term) {return jdbc.queryForList("SELECT school_org_id FROM terms WHERE id=?",String.class,term).stream().findFirst().orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));}
 }

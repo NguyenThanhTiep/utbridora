@@ -12,6 +12,7 @@ import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.MapperFeature;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 import static vn.utbridora.auth.modules.cooperation.domain.DemandModels.*;
 
 public final class DemandJson {
@@ -23,7 +24,14 @@ public final class DemandJson {
     public static String write(Object value) { return JSON.writeValueAsString(value); }
     public static <T> T read(String value,Class<T> type) { return JSON.readValue(value,type); }
     public static <T> T request(JsonNode node,Class<T> type) {
-        try { checkNulls(node,type); return JSON.treeToValue(node,type); }
+        try {
+            JsonNode normalized=node;
+            if(type==DemandInput.class && node.isObject() && node.get("required") instanceof ObjectNode required && !required.has("minGpa")) {
+                normalized=node.deepCopy();
+                ((ObjectNode)normalized.get("required")).putNull("minGpa");
+            }
+            checkNulls(normalized,type); return JSON.treeToValue(normalized,type);
+        }
         catch(RuntimeException ex) { throw new DemandFailure(400,"SCHEMA_VALIDATION","Kiểm tra trường dữ liệu, kiểu dữ liệu và các trường bắt buộc."); }
     }
     private static void checkNulls(JsonNode node,Class<?> type) {
@@ -31,7 +39,7 @@ public final class DemandJson {
         for(var field:type.getRecordComponents()) {
             JsonNode value=node.get(field.getName());
             if(value==null) throw new IllegalArgumentException();
-            boolean nullable=java.util.Set.of("location","benefits","minLevel","minYearsPractice").contains(field.getName());
+            boolean nullable=java.util.Set.of("location","benefits","minLevel","minYearsPractice","minGpa").contains(field.getName());
             if(value.isNull()) { if(!nullable) throw new IllegalArgumentException(); continue; }
             if((field.getType()==String.class || field.getType()==java.time.Instant.class || field.getType()==java.time.LocalDate.class)
                     && !value.getNodeType().name().equals("STRING")) throw new IllegalArgumentException();
@@ -53,9 +61,13 @@ public final class DemandJson {
         data.put("schoolOrgId",input.schoolOrgId()); data.put("termId",input.termId());
         data.put("quantity",input.quantity()); data.put("academicCatalogVersion",input.academicCatalogVersion());
         data.put("taxonomyVersion",input.taxonomyVersion());
-        data.put("required",Map.of("majorCodes",input.required().majorCodes().stream().sorted().toList(),
-                "skills",input.required().skills().stream().sorted(Comparator.comparing(SkillCriterion::skillCode)).toList(),
-                "dateRange",input.required().dateRange()));
+        var required=new TreeMap<String,Object>();
+        required.put("majorCodes",input.required().majorCodes().stream().sorted().toList());
+        required.put("skills",input.required().skills().stream().sorted(Comparator.comparing(SkillCriterion::skillCode)).toList());
+        required.put("dateRange",input.required().dateRange());
+        // liên quan đến việc thêm lọc svien theo gpa là MVP: Đưa ngưỡng GPA vào criteria hash để thay đổi ngưỡng tạo phiên bản matching mới.
+        required.put("minGpa",input.required().minGpa());
+        data.put("required",required);
         data.put("preferred",input.preferred().stream().sorted(Comparator.comparing(SkillCriterion::skillCode)).toList());
         return sha256(canonical(JSON.valueToTree(data)));
     }

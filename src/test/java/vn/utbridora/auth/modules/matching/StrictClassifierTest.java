@@ -12,6 +12,7 @@ import vn.utbridora.auth.modules.cooperation.domain.DemandModels.*;
 import static vn.utbridora.auth.operations.WorkflowValues.JSON;
 
 class StrictClassifierTest {
+    // DEV8 đã bổ sung từ kiểm tra một trường hợp Preferred sang bao phủ làm tròn, UNKNOWN, điểm null và tie-break, phục vụ nghiệm thu R11.
     @Test void independentSrsOracleS1ThroughS11RunsAgainstRealClassifier() throws Exception {
         var oracle=JSON.readTree(Files.readString(Path.of("docs/testing/fixtures/t4-s1-s11.json")));
         var required=oracle.get("required");
@@ -37,5 +38,65 @@ class StrictClassifierTest {
         assertEquals(new BigDecimal("66.67"),StrictClassifier.evaluate(profile,criteria,preferred,Map.of()).fitScore());
         var fail=new RequiredCriteria(List.of("OTHER"),criteria.skills(),criteria.dateRange());
         assertNull(StrictClassifier.evaluate(profile,fail,preferred,Map.of()).fitScore());
+    }
+
+    @Test void r11PreferredScoresUnknownNoPreferredAndStableTies() {
+        var required=new RequiredCriteria(List.of(),List.of(),new DateRange(LocalDate.parse("2027-01-01"),LocalDate.parse("2027-01-02")));
+        var available=List.of(new vn.utbridora.auth.modules.student.api.StudentProfileDtos.DateRange("2027-01-01","2027-01-02"));
+        var preferred=List.of(new SkillCriterion("JAVA",null,null),new SkillCriterion("SQL",null,null),new SkillCriterion("GO",null,null));
+        var twoOfThree=profile("u-2",true,List.of("JAVA","SQL"),true,available);
+        var oneOfThree=profile("u-1",true,List.of("JAVA"),true,available);
+        var unknownPreferred=profile("u-3",false,List.of(),true,available);
+        var noPreferred=profile("u-4",true,List.of(),true,available);
+
+        assertEquals(new BigDecimal("66.67"),StrictClassifier.evaluate(twoOfThree,required,preferred,Map.of()).fitScore());
+        assertEquals(new BigDecimal("33.33"),StrictClassifier.evaluate(oneOfThree,required,preferred,Map.of()).fitScore());
+        assertEquals(new BigDecimal("0.00"),StrictClassifier.evaluate(unknownPreferred,required,preferred,Map.of()).fitScore());
+        assertEquals("UNKNOWN",StrictClassifier.evaluate(unknownPreferred,required,preferred,Map.of()).details().get(2).status().name());
+        assertEquals(new BigDecimal("0.00"),StrictClassifier.evaluate(noPreferred,required,List.of(),Map.of()).fitScore());
+        assertNull(StrictClassifier.evaluate(profile("u-5",true,List.of(),false,List.of()),required,preferred,Map.of()).fitScore());
+        assertNull(StrictClassifier.evaluate(profile("u-6",true,List.of(),true,available),
+            new RequiredCriteria(List.of("REQUIRED_MAJOR"),List.of(),required.dateRange()),preferred,Map.of()).fitScore());
+
+        var tiedA=StrictClassifier.evaluate(profile("student-a",true,List.of("JAVA"),true,available),required,preferred,Map.of());
+        var tiedB=StrictClassifier.evaluate(profile("student-b",true,List.of("JAVA"),true,available),required,preferred,Map.of());
+        assertEquals(List.of("student-a","student-b"),List.of(tiedB,tiedA).stream().sorted(StrictClassifier.ranking()).map(StrictClassifier.MatchResult::studentUserId).toList());
+        assertEquals(List.of("student-a","student-b"),List.of(
+            new StrictClassifier.MatchResult("student-b","s",1,"h","NOT_MATCH",new BigDecimal("99.00"),List.of()),
+            new StrictClassifier.MatchResult("student-a","s",1,"h","MISSING_DATA",null,List.of()))
+            .stream().sorted(StrictClassifier.ranking()).map(StrictClassifier.MatchResult::studentUserId).toList());
+    }
+
+    // liên quan đến việc thêm lọc svien theo gpa là MVP: Đảm bảo GPA >= 2.5 đạt, thấp hơn thì NOT_MATCH, thiếu GPA thì MISSING_DATA.
+    @Test void minimumGpaCombinesWithRequiredSkillsAndClassifiesMissingValues() {
+        var available=List.of(new vn.utbridora.auth.modules.student.api.StudentProfileDtos.DateRange("2027-01-01","2027-01-02"));
+        var criteria=new RequiredCriteria(List.of(),List.of(new SkillCriterion("JAVA",null,null)),
+            new DateRange(LocalDate.parse("2027-01-01"),LocalDate.parse("2027-01-02")),new BigDecimal("2.5"));
+        var aliases=Map.<String,String>of();
+        var below=StrictClassifier.evaluate(profileWithGpa("student-below",true,List.of("JAVA"),true,available,new BigDecimal("2.4")),criteria,List.of(),aliases);
+        var equal=StrictClassifier.evaluate(profileWithGpa("student-equal",true,List.of("JAVA"),true,available,new BigDecimal("2.5")),criteria,List.of(),aliases);
+        var above=StrictClassifier.evaluate(profileWithGpa("student-above",true,List.of("JAVA"),true,available,new BigDecimal("3.9")),criteria,List.of(),aliases);
+        var missing=StrictClassifier.evaluate(profileWithGpa("student-no-gpa",true,List.of("JAVA"),true,available,null),criteria,List.of(),aliases);
+        var skillFail=StrictClassifier.evaluate(profileWithGpa("student-skill-fail",true,List.of("SQL"),true,available,new BigDecimal("4.0")),criteria,List.of(),aliases);
+        assertEquals("NOT_MATCH",below.overallStatus());
+        assertEquals("MATCH",equal.overallStatus());
+        assertEquals("MATCH",above.overallStatus());
+        assertEquals("MISSING_DATA",missing.overallStatus());
+        assertEquals("NOT_MATCH",skillFail.overallStatus());
+    }
+
+    // liên quan đến việc thêm lọc svien theo gpa là MVP: Tạo snapshot tổng hợp gồm kỹ năng, lịch và GPA cho oracle matching.
+    private static ProfileSnapshot profileWithGpa(String userId,boolean skillsDeclared,List<String> skillCodes,boolean availabilityDeclared,
+            List<vn.utbridora.auth.modules.student.api.StudentProfileDtos.DateRange> periods,BigDecimal gpa) {
+        var skills=skillCodes.stream().map(code->new SkillValue(code,3,BigDecimal.ZERO,"SELF_DECLARED")).toList();
+        return new ProfileSnapshot("snapshot-"+userId,userId,"school","term",null,skillsDeclared,skills,availabilityDeclared,periods,
+            1,"hash","demo-v1","academic-v1","skills-v1",Instant.EPOCH,gpa);
+    }
+
+    private static ProfileSnapshot profile(String userId,boolean skillsDeclared,List<String> skillCodes,boolean availabilityDeclared,
+                                           List<vn.utbridora.auth.modules.student.api.StudentProfileDtos.DateRange> periods) {
+        var skills=skillCodes.stream().map(code->new SkillValue(code,1,BigDecimal.ZERO,"SELF_DECLARED")).toList();
+        return new ProfileSnapshot("snapshot-"+userId,userId,"school","term",null,skillsDeclared,skills,availabilityDeclared,periods,
+            1,"hash","demo-v1","academic-v1","skills-v1",Instant.EPOCH);
     }
 }

@@ -13,6 +13,8 @@ public class AuditLog {
     @Column(name="resource_id",length=36) public String resourceId;
     @Column(nullable=false,length=20) public String result;
     @Column(name="organization_id",length=36) public String organizationId;
+    @Column(name="demand_id",length=36) public String demandId;
+    @Column(name="ip_address",length=45) public String ipAddress;
     @Column(name="request_id",length=80) public String requestId;
     @Column(name="reason_code",length=64) public String reasonCode;
     @Column(nullable=false,length=32) public String source="APPLICATION";

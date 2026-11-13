@@ -34,6 +34,10 @@ final class WorkflowAuditRegistry {
         Map.entry("PROFILE_SHARED",new Spec("profile_share",Set.of("consentId","consentVersion","shareVersion","fieldCodes","expiresAt"))),
         Map.entry("PROFILE_SHARE_REVOKED",new Spec("profile_share",Set.of("shareVersion","reasonCode"))),
         Map.entry("STUDENT_PROFILE_ACCESSED",new Spec("student_profile",Set.of("accessPurpose","fieldCodes","consentId","consentVersion","shareId","shareVersion"))),
+        // DEV08 bổ sung: metadata được cho phép khi tạo release; không gồm fingerprint hoặc số đếm nguồn.
+        Map.entry("PRIVACY_RELEASE_CREATED",new Spec("privacy_release",Set.of("enterpriseOrgId","schoolOrgId","termId","demoBatchId","eligibleBand"))),
+        // DEV08 bổ sung: metadata được cho phép khi chặn release thứ hai; không gồm bộ lọc yêu cầu hoặc số đếm.
+        Map.entry("PRIVACY_RELEASE_BLOCKED",new Spec("privacy_release",Set.of("enterpriseOrgId","schoolOrgId","termId","demoBatchId","reasonCode"))),
         Map.entry("MENTOR_INVITATION_ACCEPTED",new Spec("account_invitation",Set.of("enterpriseOrgId","assignmentId","operationId"))),
         Map.entry("ACCOUNT_INVITATION_REVOKED",new Spec("account_invitation",Set.of("purpose","reasonCode","operationId"))),
         Map.entry("PLACEMENT_CREATED",new Spec("placement",Set.of("termId","placementVersion","decisionRef","effectiveAt","reasonCode","operationId"))),

@@ -10,7 +10,13 @@ public final class DemandModels {
     private DemandModels() {}
     public record DateRange(LocalDate startDate, LocalDate endDate) {}
     public record SkillCriterion(String skillCode, Integer minLevel, BigDecimal minYearsPractice) {}
-    public record RequiredCriteria(List<String> majorCodes, List<SkillCriterion> skills, DateRange dateRange) {}
+    public record RequiredCriteria(List<String> majorCodes, List<SkillCriterion> skills, DateRange dateRange,
+            // liên quan đến việc thêm lọc svien theo gpa là MVP: Ngưỡng GPA tối thiểu do nhà tuyển dụng chọn.
+            BigDecimal minGpa) {
+        public RequiredCriteria(List<String> majorCodes,List<SkillCriterion> skills,DateRange dateRange) {
+            this(majorCodes,skills,dateRange,null);
+        }
+    }
     public record DemandInput(String schoolOrgId, String termId, String title, Integer quantity,
             String description, String location, String benefits, Instant deadline,
             RequiredCriteria required, List<SkillCriterion> preferred,
@@ -25,7 +31,7 @@ public final class DemandModels {
             String academicCatalogVersion, String taxonomyVersion, String cooperationId,
             String cooperationState, Instant capturedAt) {
         public DemandCriteriaSnapshot {
-            required = new RequiredCriteria(List.copyOf(required.majorCodes()), List.copyOf(required.skills()), required.dateRange());
+            required = new RequiredCriteria(List.copyOf(required.majorCodes()), List.copyOf(required.skills()), required.dateRange(),required.minGpa());
             preferred = List.copyOf(preferred);
         }
     }

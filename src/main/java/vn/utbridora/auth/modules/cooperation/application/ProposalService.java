@@ -30,7 +30,7 @@ public class ProposalService implements InternshipInvitationPort {
     public record NominationContext(String cooperationId,long cooperationVersion,long demandVersion,long criteriaVersion,Long batchVersion,Capacity capacity,MatchingService.MatchRunRef run,Page<NominationCandidate> candidates) {}
     private final ProposalConsentSummary consentSummary;
     public record Reserved(String proposalItemId,String studentUserId,String state,Instant reservationUntil) {}
-    public record Capacity(String cooperationId,String demandId,int quantity,int placedCount,int activeReservations,int openForNomination,int declinedCount) {}
+    public record Capacity(String cooperationId,String demandId,int quantity,int placedCount,int activeReservations,int openForNomination,int declinedCount,Long batchVersion) {}
     public record NominationResult(String batchId,long batchVersion,List<Reserved> items,int quantity,int placedCount,int activeReservations,int openForNomination) {}
     public record Invite(Long expectedVersion,Instant expiresAt) {}
     public record EnterpriseDecision(Long expectedVersion,String decision,String reasonCode) {}
@@ -92,7 +92,8 @@ public class ProposalService implements InternshipInvitationPort {
             + jdbc.queryForObject("SELECT COUNT(*) FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id WHERE b.cooperation_id=? AND i.state='PLACED' AND i.placement_id IS NULL",Integer.class,c.cooperationId());
         int reserved=jdbc.queryForObject("SELECT COUNT(*) FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id WHERE b.cooperation_id=? AND ((i.state IN ('RESERVED','INVITED','ACCEPTED','SHARED','ENTERPRISE_ACCEPTED') AND i.reservation_until>UTC_TIMESTAMP(6)) OR EXISTS (SELECT 1 FROM placements p WHERE p.id=i.placement_id AND p.state='PENDING_APPROVAL'))",Integer.class,c.cooperationId());
         int declined=jdbc.queryForObject("SELECT COUNT(*) FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id WHERE b.cooperation_id=? AND i.state='DECLINED'",Integer.class,c.cooperationId());
-        return new Capacity(c.cooperationId(),c.demandId(),quantity,placed,reserved,Math.max(0,quantity-placed-reserved),declined);
+        Long batchVersion=jdbc.queryForList("SELECT version FROM proposal_batches WHERE cooperation_id=?",Long.class,c.cooperationId()).stream().findFirst().orElse(null);
+        return new Capacity(c.cooperationId(),c.demandId(),quantity,placed,reserved,Math.max(0,quantity-placed-reserved),declined,batchVersion);
     }
     @Transactional public Page<SchoolItem> list(Authentication auth,String coopId,int page,int size) {
         return list(auth,coopId,null,page,size);

@@ -82,6 +82,8 @@ public class SecurityConfig {
                .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/cooperations/*").authenticated()
                .requestMatchers(HttpMethod.POST,"/api/v1/matching/evaluate","/api/v1/matching/runs/*/nominate","/api/v1/enterprise/cooperations","/api/v1/enterprise/demands/submit-with-cooperation","/api/v1/school/proposals/*/invite").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/matching/runs/*/details","/api/v1/enterprise/cooperations","/api/v1/school/cooperations","/api/v1/school/cooperations/*","/api/v1/school/cooperations/*/submission-history","/api/v1/school/cooperations/*/capacity","/api/v1/school/cooperations/*/proposals").authenticated()
+               // DEV08 bổ sung: yêu cầu đăng nhập cho các route JSON, CSV và biểu đồ của release matching; MatchingService tiếp tục kiểm tra phạm vi tổ chức.
+               .requestMatchers(HttpMethod.GET,"/api/v1/matching/runs/*/summary","/api/v1/matching/runs/*/summary.csv","/api/v1/matching/runs/*/summary.chart").authenticated()
                .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/cooperations/*/submit","/api/v1/enterprise/cooperations/*/reopen","/api/v1/school/cooperations/*/decision").authenticated()
                .requestMatchers(HttpMethod.DELETE,"/api/v1/school/delegations/*","/api/v1/t3/context-assignments/*").authenticated()
                .requestMatchers(HttpMethod.PATCH,"/api/v1/t3/assignments/*/status").authenticated()
