@@ -7,7 +7,7 @@ test('admin bootstrap, school subdelegation and revocation use real APIs and cur
     await page.getByLabel('Email', { exact: true }).fill(email);
     await page.getByLabel('Mật khẩu', { exact: true }).fill(email === 'admin@example.test' ? process.env.E2E_ADMIN_PASSWORD! : process.env.E2E_PASSWORD!);
     await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Tài khoản của tôi', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Đăng xuất', exact: true })).toBeVisible();
   };
   const actor = async (browser: Browser, email: string) => { const context = await browser.newContext({ reducedMotion: 'reduce' }); const page = await context.newPage(); await page.goto('/'); await signIn(page, email); return { context, page }; };
   const admin = await actor(browser, 'admin@example.test'), school = await actor(browser, 'school@example.test'), reviewer = await actor(browser, 'delegate@example.test');
@@ -43,9 +43,9 @@ test('admin bootstrap, school subdelegation and revocation use real APIs and cur
   await reviewer.page.reload(); await signIn(reviewer.page, 'delegate@example.test');
   const visible = await reviewer.page.request.get('/api/v1/school/cooperations', { headers: schoolHeaders });
   expect(visible.status(), await visible.text()).toBe(200);
-  await reviewer.page.getByRole('button', { name: 'Hợp tác doanh nghiệp', exact: true }).click();
+  await reviewer.page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Duyệt hợp tác', exact: true }).click();
   await expect(reviewer.page.getByRole('heading', { name: 'Đề nghị 1 · Đã gửi', exact: true })).toBeVisible();
-  await reviewer.page.reload(); await reviewer.page.getByRole('button', { name: 'Hợp tác doanh nghiệp', exact: true }).click();
+  await reviewer.page.reload(); await reviewer.page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Duyệt hợp tác', exact: true }).click();
   await expect(reviewer.page.getByRole('heading', { name: 'Đề nghị 1 · Đã gửi', exact: true })).toBeVisible();
   await admin.page.getByRole('button', { name: 'Thu hồi phân công', exact: true }).click();
   await expect(admin.page.getByText('Đã thu hồi phân công và các phiên bị ảnh hưởng.', { exact: true })).toBeVisible();

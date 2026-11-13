@@ -10,7 +10,7 @@ async function actor(browser: Browser, role: 'student' | 'mentor' | 'hr' | 'outs
   const context = await browser.newContext(), page = await context.newPage();
   await page.goto('/'); await page.getByLabel('Email', { exact: true }).fill(cfg![role + 'Email' as keyof Fixture]);
   await page.getByLabel('Mật khẩu', { exact: true }).fill(cfg!.password); await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Tài khoản của tôi', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Đăng xuất', exact: true })).toBeVisible();
   await board(page, role); return { context, page };
 }
 async function board(page: Page, role: 'student' | 'mentor' | 'hr' | 'outsider') {
