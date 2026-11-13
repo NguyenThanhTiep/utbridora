@@ -932,7 +932,7 @@ class EnterpriseProposalIT {
         var invitation=proposals.invite(as(2),f.proposalId(),key(),new ProposalService.Invite(1L,null));
         jdbc.update("UPDATE proposal_items SET reservation_until=DATE_ADD(UTC_TIMESTAMP(6),INTERVAL 24 HOUR) WHERE id=?",f.proposalId());
         long before=proposals.item(f.proposalId()).version();
-        var resource=new org.springframework.core.io.ClassPathResource("db/migration/main/V36__proposal_reservation_lifecycle.sql");
+        var resource=new org.springframework.core.io.ClassPathResource("db/migration/base/V36__proposal_reservation_lifecycle.sql");
         String sql=new String(resource.getInputStream().readAllBytes(),java.nio.charset.StandardCharsets.UTF_8);
         String dml=sql.substring(sql.indexOf("INSERT INTO proposal_reservation_history"));
         var populator=new org.springframework.jdbc.datasource.init.ResourceDatabasePopulator(new org.springframework.core.io.ByteArrayResource(dml.getBytes(java.nio.charset.StandardCharsets.UTF_8)));

@@ -17,6 +17,8 @@ Nguồn: main `9565c30ab0bc88a9bfc471a8ccfb8e9756203612` và nhánh DEV `feature
 - V37: các tài liệu có số decimal chính xác (profile snapshot, Demand/revision, cooperation history và cache phản hồi) dùng JSON text có JSON_VALID thay MySQL binary JSON để không bị chuyển số sang floating point. ALTER giữ nguyên chuỗi tài liệu/hashes cũ, không rebuild nội dung immutable. Parser Demand nhận raw JSON trước khi tạo DTO; hash giữ biểu diễn cũ khi số cũ biểu diễn chính xác, đồng thời phân biệt các giá trị decimal mới khác nhau.
 - Chạy các migration bằng Flyway trên đường upgrade bình thường. Không repair/reset, không out-of-order, không sửa flyway_schema_history. Không tự chạy chúng lên stack chung8088 trong nhiệm vụ này.
 
+V34–V37 nằm trong `db/migration/base` để mọi lineage được hỗ trợ đều nhận các bước nâng cấp mới sau V32/V33. Di chuyển vị trí resource giữ nguyên tên và checksum SQL. Đọc `years_practice` bằng chuỗi rồi tạo BigDecimal trực tiếp để tránh numeric conversion của JDBC driver với cột text.
+
 ## Kiểm chứng
 
 Kích hoạt invitation tiêu thụ token bằng predicate database `consumed_at IS NULL AND expires_at > now` trước khi tạo/kích hoạt identity. Regression giữ token cũ trong JPA cache, rotate từ transaction khác rồi thử activation để bảo đảm yêu cầu đang chờ không dùng lại generation cũ.

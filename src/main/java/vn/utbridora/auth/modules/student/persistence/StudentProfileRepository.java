@@ -33,12 +33,14 @@ public class StudentProfileRepository {
             (rs,i)->new TermRow(rs.getString(1),rs.getString(2),rs.getBoolean(3)),profileId,termId).stream().findFirst();
     }
     public List<SelfSkillView> skills(String profileId) {
+        // Parse text directly: a driver's generic numeric conversion may go
+        // through floating point for a LONGTEXT column.
         return jdbc.query("SELECT skill_code,level,years_practice,source,note FROM student_profile_skills WHERE profile_id=? ORDER BY ordinal"+currentRead(),
-            (rs,i)->new SelfSkillView(rs.getString(1),rs.getInt(2),plain(rs.getBigDecimal(3)),rs.getString(4),rs.getString(5)),profileId);
+            (rs,i)->new SelfSkillView(rs.getString(1),rs.getInt(2),plain(new BigDecimal(rs.getString(3))),rs.getString(4),rs.getString(5)),profileId);
     }
     public List<CustomSkillView> customSkills(String profileId) {
         return jdbc.query("SELECT id,name,category_code,level,years_practice,note FROM student_custom_skills WHERE profile_id=? ORDER BY ordinal",
-            (rs,i)->new CustomSkillView(rs.getString(1),rs.getString(2),rs.getString(3),rs.getInt(4),plain(rs.getBigDecimal(5)),rs.getString(6)),profileId);
+            (rs,i)->new CustomSkillView(rs.getString(1),rs.getString(2),rs.getString(3),rs.getInt(4),plain(new BigDecimal(rs.getString(5))),rs.getString(6)),profileId);
     }
     public List<Project> projects(String profileId) {
         List<Project> rows=jdbc.query("SELECT id,title,description,role,url FROM student_projects WHERE profile_id=? ORDER BY ordinal",
@@ -125,7 +127,7 @@ public class StudentProfileRepository {
         for(int i=0;i<codes.size();i++)
             jdbc.update("INSERT INTO student_profile_term_codes (profile_id,term_id,kind,ordinal,code) VALUES (?,?,?,?,?)",profileId,termId,kind,i,codes.get(i));
     }
-    /** DECIMAL(5,2) comes back as 1.50; return the plain value the client sent (1.5, 2). */
+    /** Return plain decimals, including the exact text storage introduced in V34. */
     private static String currentRead() {
         return org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive()
             && !org.springframework.transaction.support.TransactionSynchronizationManager.isCurrentTransactionReadOnly()?" FOR SHARE":"";

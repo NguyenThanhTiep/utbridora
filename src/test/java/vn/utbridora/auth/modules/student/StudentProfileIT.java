@@ -435,8 +435,8 @@ class StudentProfileIT {
         var replay=b.send("PUT",PROFILE,wire,true,key);assertEquals(200,replay.statusCode(),replay.body());assertTrue(replay.body().contains(years.toPlainString()),replay.body());
         assertTrue(saved.body().contains(years.toPlainString()),saved.body());
         assertTrue(b.get(TERM).body().contains(years.toPlainString()));
-        assertEquals(0,years.compareTo(jdbc.queryForObject("SELECT s.years_practice FROM student_profile_skills s JOIN student_profiles p ON p.id=s.profile_id WHERE p.user_id=?",java.math.BigDecimal.class,student.id)));
-        assertEquals(0,new java.math.BigDecimal("1.001").compareTo(jdbc.queryForObject("SELECT s.years_practice FROM student_custom_skills s JOIN student_profiles p ON p.id=s.profile_id WHERE p.user_id=?",java.math.BigDecimal.class,student.id)));
+        assertEquals(years.toPlainString(),jdbc.queryForObject("SELECT s.years_practice FROM student_profile_skills s JOIN student_profiles p ON p.id=s.profile_id WHERE p.user_id=?",String.class,student.id));
+        assertEquals("1.001",jdbc.queryForObject("SELECT s.years_practice FROM student_custom_skills s JOIN student_profiles p ON p.id=s.profile_id WHERE p.user_id=?",String.class,student.id));
     }
 
 }
