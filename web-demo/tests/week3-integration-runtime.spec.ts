@@ -93,9 +93,10 @@ test('school publication, student preference and matching use real T5 and T2 pro
     await expect(matching.getByRole('button', { name: new RegExp(`^Đáp ứng\\s+${next.summary.matched}$`) })).toBeVisible();
     await matching.getByRole('button', { name: new RegExp(`^Không đáp ứng\\s+${next.summary.notMatched}$`) }).click();
     await expect(matching.locator('.matching-candidate')).not.toHaveCount(0);
-    await school.screenshot({ path: '../target/week3-matching-school.png', fullPage: true });
+    await matching.screenshot({ path: '../target/week3-matching-school.png', animations: 'disabled' });
     await student.setViewportSize({ width: 390, height: 844 });
-    await student.screenshot({ path: '../target/week3-preferences-mobile.png', fullPage: true });
+    await expect(student.locator('#main-navigation')).not.toBeInViewport();
+    await student.screenshot({ path: '../target/week3-preferences-mobile.png', fullPage: true, animations: 'disabled' });
     expect(await student.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
   } finally {
     if (original) {
