@@ -45,6 +45,8 @@ test('school publication, student preference and matching use real T5 and T2 pro
     await cooperationPanel.getByRole('button', { name: `Xem nội dung đề nghị ${positionInList + 1}`, exact: true }).click();
     const detailResponse = await detailLoaded;
     expect(detailResponse.ok(), await detailResponse.text()).toBeTruthy();
+    await school.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Đề xuất sinh viên', exact: true }).click();
+    await school.getByLabel('Hợp tác đang xem', { exact: true }).selectOption(coop);
     await school.getByLabel('Thời điểm công bố', { exact: true }).fill(localTime(new Date(Date.now() - 3600000)));
     await school.getByLabel('Thời điểm đóng', { exact: true }).fill(localTime(new Date(Date.now() + 86400000)));
     await school.getByRole('button', { name: 'Lưu thời gian công bố', exact: true }).click();

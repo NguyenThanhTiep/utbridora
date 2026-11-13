@@ -34,6 +34,17 @@ class DemandDomainTest {
     @Test void completeDraftAllowsNullableOptionalFields() {
         assertEquals(input(), DemandValidator.validate(input()));
     }
+    @Test void rawRequestPreservesExactDecimalCriteriaAndHashDifferences() {
+        var d=input();var exact=new java.math.BigDecimal("1000.12345678901234567890123456789");
+        var required=new RequiredCriteria(d.required().majorCodes(),List.of(new SkillCriterion("JAVA",2,exact)),d.required().dateRange());
+        var expected=change(d.title(),d.quantity(),required,List.of());
+        String body=DemandJson.write(expected);
+        var parsed=DemandJson.rawRequest(body,DemandInput.class);
+        assertEquals(exact,parsed.required().skills().getFirst().minYearsPractice());
+        assertEquals(DemandJson.criteriaHash(expected),DemandJson.criteriaHash(parsed));
+        assertNotEquals(DemandJson.criteriaHash(parsed),DemandJson.criteriaHash(DemandJson.rawRequest(
+            body.replace(exact.toString(),"1000.12345678901234567890123456788"),DemandInput.class)));
+    }
     @ParameterizedTest @ValueSource(ints={0,-1,5001})
     void rejectsInvalidQuantity(int quantity) {
         var e=assertThrows(DemandFailure.class,()->DemandValidator.validate(change("Title",quantity,input().required(),List.of())));
@@ -72,5 +83,6 @@ class DemandDomainTest {
             case "fractionalQuantity" -> node.put("quantity",1.5);
         }
         assertEquals("SCHEMA_VALIDATION",assertThrows(DemandFailure.class,()->DemandJson.request(node,DemandInput.class)).code());
+        assertEquals("SCHEMA_VALIDATION",assertThrows(DemandFailure.class,()->DemandJson.rawRequest(node.toString(),DemandInput.class)).code());
     }
 }

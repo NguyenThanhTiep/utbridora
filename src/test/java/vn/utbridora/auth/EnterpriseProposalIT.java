@@ -945,4 +945,18 @@ class EnterpriseProposalIT {
         assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM proposal_reservation_history WHERE proposal_id=? AND actor_kind='SYSTEM'",Integer.class,f.proposalId()));
     }
 
+
+    @Test void preciseProfileSnapshotAndCurrentHashSurviveNativeDocumentPersistence() {
+        var before=profiles.read(as(6),id(21));var p=before.profile();var exact=new java.math.BigDecimal("10.12345678901234567890123456789");
+        var skills=p.skills().stream().map(s->new StudentProfileDtos.CanonicalSkillInput(s.skillCode(),s.level(),exact,s.note())).toList();
+        var request=new StudentProfileDtos.ProfileInput(before.profileVersion(),id(21),p.majorCode(),p.skillsDeclared(),skills,
+            p.customSkills().stream().map(s->new StudentProfileDtos.CustomSkillInput(s.customSkillId(),s.name(),s.categoryCode(),s.level(),s.yearsPractice(),s.note())).toList(),
+            p.availabilityDeclared(),p.availablePeriods(),p.orientationCodes(),p.subjectCodes(),p.projects(),p.certificates(),p.cvFileId(),p.phone());
+        profiles.save(as(6),key(),JSON.writeValueAsString(request));
+        var run=matching.evaluate(as(2),key(),new MatchingService.Evaluate(f.cooperation().demandId(),2L,1L));
+        var snapshot=snapshots.readPage(as(2),run.summary().run().datasetSnapshotId(),null,100).items().stream().filter(s->s.studentUserId().equals(id(6))).findFirst().orElseThrow();
+        assertFalse(snapshot.skills().isEmpty());snapshot.skills().forEach(s->assertEquals(0,exact.compareTo(s.yearsPractice())));
+        new TransactionTemplate(transactions).executeWithoutResult(status->snapshots.assertCurrentForDecision(as(2),List.of(new StudentProfileSnapshotPort.DecisionProfileRef(snapshot.studentUserId(),snapshot.profileSnapshotId(),snapshot.profileVersion(),snapshot.relevantHash()))));
+    }
+
 }

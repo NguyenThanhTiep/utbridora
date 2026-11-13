@@ -11,7 +11,7 @@ import vn.utbridora.auth.security.AppPrincipal;
 public final class WorkflowValues {
     private WorkflowValues() {}
     public static final JsonMapper JSON=JsonMapper.builder()
-        .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+        .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
         .disable(DeserializationFeature.ACCEPT_FLOAT_AS_INT)
         .disable(tools.jackson.databind.MapperFeature.ALLOW_COERCION_OF_SCALARS).build();
     public static String actor(Authentication auth) {

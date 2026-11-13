@@ -135,11 +135,14 @@ class MentorOnboardingIT {
         var input=new MentorInvitationService.MentorInviteRequest("race-rotate-mentor@example.test",id(12),List.of(group),id(21),"DEMO-RACE-REISSUE");
         invitations.issue(core.currentSubject(id(4)).orElseThrow(),UUID.randomUUID().toString(),input);
         org.springframework.test.util.ReflectionTestUtils.setField(invitations,"clock",java.time.Clock.fixed(java.time.Instant.now().plusSeconds(301),java.time.ZoneOffset.UTC));
+        String assignment=((ServletRequestAttributes)RequestContextHolder.getRequestAttributes()).getRequest().getHeader("X-Context-Assignment-Id");
         var ready=new java.util.concurrent.CountDownLatch(2);var start=new java.util.concurrent.CountDownLatch(1);
         try(var executor=java.util.concurrent.Executors.newFixedThreadPool(2)) {
             var futures=new java.util.ArrayList<java.util.concurrent.Future<Integer>>();
             for(int n=0;n<2;n++) futures.add(executor.submit(()->{
-                hrContext();ready.countDown();assertTrue(start.await(10,java.util.concurrent.TimeUnit.SECONDS));
+                var auth=core.currentSubject(id(4)).orElseThrow();SecurityContextHolder.getContext().setAuthentication(auth);
+                var request=new MockHttpServletRequest();request.addHeader("X-Context-Assignment-Id",assignment);RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+                ready.countDown();assertTrue(start.await(10,java.util.concurrent.TimeUnit.SECONDS));
                 try {invitations.issue(core.currentSubject(id(4)).orElseThrow(),UUID.randomUUID().toString(),input);return 202;}
                 catch(vn.utbridora.auth.operations.OperationFailure failure){return failure.status;}
                 finally {SecurityContextHolder.clearContext();RequestContextHolder.resetRequestAttributes();}
@@ -150,5 +153,18 @@ class MentorOnboardingIT {
         }
         assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM mentor_manual_reissues WHERE email=?",Integer.class,input.email()));
         assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM one_time_tokens WHERE email=? AND consumed_at IS NULL",Integer.class,input.email()));
+    }
+
+    @Test void sameEmailDoesNotTakeOverAnUnboundPendingIdentity() {
+        hrContext();var hr=core.currentSubject(id(4)).orElseThrow();String group=jdbc.queryForObject("SELECT id FROM internship_groups ORDER BY id LIMIT 1",String.class);
+        var input=new MentorInvitationService.MentorInviteRequest("foreign-pending-mentor@example.test",id(12),List.of(group),id(21),"DEMO-FOREIGN-PENDING");
+        var issued=invitations.issue(hr,UUID.randomUUID().toString(),input);
+        String token=jdbc.queryForObject("SELECT token_id FROM mentor_invitation_refs WHERE id=?",String.class,issued.invitationId()),subject=UUID.randomUUID().toString();
+        jdbc.update("INSERT INTO users(id,email,password_hash,display_name,status,security_version,failed_attempts,created_at,updated_at) VALUES(?,?,'unusable-pending','Other pending workflow','PENDING_ACTIVATION',0,0,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",subject,input.email());
+        org.springframework.test.util.ReflectionTestUtils.setField(invitations,"clock",java.time.Clock.fixed(java.time.Instant.now().plusSeconds(301),java.time.ZoneOffset.UTC));
+        assertEquals("REVIEW_REQUIRED",invitations.issue(hr,UUID.randomUUID().toString(),input).state());
+        assertEquals(token,jdbc.queryForObject("SELECT token_id FROM mentor_invitation_refs WHERE id=?",String.class,issued.invitationId()));
+        assertEquals("PENDING_ACTIVATION",jdbc.queryForObject("SELECT status FROM users WHERE id=?",String.class,subject));
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM memberships WHERE user_id=?",Integer.class,subject));
     }
 }

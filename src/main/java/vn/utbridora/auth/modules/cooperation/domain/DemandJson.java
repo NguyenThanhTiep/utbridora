@@ -16,7 +16,7 @@ import static vn.utbridora.auth.modules.cooperation.domain.DemandModels.*;
 
 public final class DemandJson {
     private static final JsonMapper JSON=JsonMapper.builder()
-            .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES)
+            .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES,DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
             .disable(DeserializationFeature.ACCEPT_FLOAT_AS_INT)
             .disable(MapperFeature.ALLOW_COERCION_OF_SCALARS).build();
     private DemandJson() {}
@@ -38,6 +38,10 @@ public final class DemandJson {
     public static <T> T request(JsonNode node,Class<T> type) {
         try { checkNulls(node,type); return JSON.treeToValue(node,type); }
         catch(RuntimeException ex) { throw new DemandFailure(400,"SCHEMA_VALIDATION","Kiểm tra trường dữ liệu, kiểu dữ liệu và các trường bắt buộc."); }
+    }
+    public static <T> T rawRequest(String body,Class<T> type) {
+        try {return request(JSON.readTree(body),type);}
+        catch(RuntimeException invalid) {throw new DemandFailure(400,"SCHEMA_VALIDATION","Kiểm tra trường dữ liệu, kiểu dữ liệu và các trường bắt buộc.");}
     }
     private static void checkNulls(JsonNode node,Class<?> type) {
         if(!node.isObject()) throw new IllegalArgumentException();

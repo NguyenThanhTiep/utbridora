@@ -4,7 +4,7 @@ async function signIn(page: Page, email: string, password = env('E2E_PASSWORD'))
   await page.goto('/'); await page.getByLabel('Email', { exact: true }).fill(email);
   await page.getByLabel('Mật khẩu', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Đăng xuất', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Mở tài khoản của tôi', exact: true })).toBeVisible();
   const menu = page.getByRole('button', { name: 'Mở menu điều hướng', exact: true });
   if (await menu.isVisible() && await menu.getAttribute('aria-expanded') !== 'true') await menu.click();
   await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Tài khoản của tôi', exact: true }).click();

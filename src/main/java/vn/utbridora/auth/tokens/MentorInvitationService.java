@@ -26,9 +26,13 @@ public class MentorInvitationService implements MentorActivationPort {
     public MentorInvitationService(JdbcTemplate jdbc,MentorScopePort workspace,UserRepository users,MembershipRepository memberships,TokenRepository tokens,EmailService email,AuthorizationPolicy core,OperationLedger ledger,AuditService audit) {this.jdbc=jdbc;this.workspace=workspace;this.users=users;this.memberships=memberships;this.tokens=tokens;this.email=email;this.core=core;this.ledger=ledger;this.audit=audit;}
     @Transactional public MentorInviteDto issue(Authentication auth,String key,MentorInviteRequest request) {
         String address=text(request.email(),254).toLowerCase(Locale.ROOT);if(!address.matches("[^\\s@]+@[^\\s@]+\\.[^\\s@]+")) throw failure(400,"SCHEMA_VALIDATION");text(request.decisionRef(),120);
+        actor(auth);
+        // Serialize this identity before acquiring the current authority chain.
+        // Otherwise two reissues can hold shared subject locks and upgrade the
+        // same delegation chain in opposite order before reaching the claim.
+        lockPendingIdentity(address);
         var scope=workspace.validateInvite(auth,request.enterpriseOrgId(),request.termId(),request.groupIds());
         return ledger.execute(new OperationLedger.Command(actor(auth),scope.enterpriseOrgId(),"MENTOR_INVITATION_ISSUE",key,request,202),MentorInviteDto.class,()->{
-            lockPendingIdentity(address);
             var user=users.findByEmailForUpdate(address).orElse(null);
             String claim=jdbc.queryForObject("SELECT invitation_id FROM mentor_onboarding_claims WHERE email=? FOR UPDATE",String.class,address);
             var pending=claim==null?null:read(claim);
@@ -40,7 +44,8 @@ public class MentorInvitationService implements MentorActivationPort {
                 jdbc.update("INSERT INTO mentor_invitation_refs VALUES(?,?,?,?,?,?,1,?,?,?)",id,address,user.id,null,actor(auth),"MEMBERSHIP_PENDING",JSON.writeValueAsString(scope),"[]",utc(expiry));
                 audit.writeScoped(actor(auth),"INVITATION_CREATED","account_invitation",id,"SUCCESS",scope.enterpriseOrgId(),"MENTOR_INVITATION");return read(id).dto();
             }
-            if((pending!=null && !same) || user!=null && !same) return review(auth,address,user==null?null:user.id,scope);
+            if((pending!=null && !same) || user!=null && (!same || !user.id.equals(pending.userId())))
+                return review(auth,address,user==null?null:user.id,scope);
             if(!same && jdbc.queryForObject("SELECT COUNT(*) FROM one_time_tokens WHERE email=? AND purpose='INVITATION' AND consumed_at IS NULL AND expires_at>?",Integer.class,address,utc(clock.instant()))>0)
                 return review(auth,address,null,scope);
             Instant now=clock.instant();

@@ -14,6 +14,7 @@ Nguồn: main `9565c30ab0bc88a9bfc471a8ccfb8e9756203612` và nhánh DEV `feature
 - V34: chuyển chính xác số DECIMAL cũ, giữ giá trị và ràng buộc không âm; không sửa V11/checksum cũ.
 - V35: thêm khóa Mentor onboarding claim và lịch manual reissue; chỉ nhận pending reference thực sự thuộc Mentor/token hiện hữu. Không takeover claim roster/org khác.
 - V36: history SYSTEM và hiệu chỉnh TTL các proposal mutable chưa Placement từ bản cũ. Ghi lại thời hạn trước/sau và tăng version; không sửa invitation decisions, immutable criteria/revision/snapshot/hash hoặc lịch sử Placement. Client đang giữ version cũ cần tải lại khi gặp VERSION_CONFLICT.
+- V37: các tài liệu có số decimal chính xác (profile snapshot, Demand/revision, cooperation history và cache phản hồi) dùng JSON text có JSON_VALID thay MySQL binary JSON để không bị chuyển số sang floating point. ALTER giữ nguyên chuỗi tài liệu/hashes cũ, không rebuild nội dung immutable. Parser Demand nhận raw JSON trước khi tạo DTO; hash giữ biểu diễn cũ khi số cũ biểu diễn chính xác, đồng thời phân biệt các giá trị decimal mới khác nhau.
 - Chạy các migration bằng Flyway trên đường upgrade bình thường. Không repair/reset, không out-of-order, không sửa flyway_schema_history. Không tự chạy chúng lên stack chung8088 trong nhiệm vụ này.
 
 ## Kiểm chứng

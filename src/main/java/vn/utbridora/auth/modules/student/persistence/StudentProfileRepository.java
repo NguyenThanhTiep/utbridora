@@ -81,7 +81,7 @@ public class StudentProfileRepository {
         for(int i=0;i<skills.size();i++) {
             SelfSkillView s=skills.get(i);
             jdbc.update("INSERT INTO student_profile_skills (profile_id,skill_code,ordinal,level,years_practice,source,note) VALUES (?,?,?,?,?,?,?)",
-                profileId,s.skillCode(),i,s.level(),s.yearsPractice(),s.source(),s.note());
+                profileId,s.skillCode(),i,s.level(),s.yearsPractice().toString(),s.source(),s.note());
         }
     }
     public void replaceCustomSkills(String profileId,List<CustomSkillView> skills) {
@@ -89,7 +89,7 @@ public class StudentProfileRepository {
         for(int i=0;i<skills.size();i++) {
             CustomSkillView s=skills.get(i);
             jdbc.update("INSERT INTO student_custom_skills (id,profile_id,ordinal,name,category_code,level,years_practice,note) VALUES (?,?,?,?,?,?,?,?)",
-                s.customSkillId(),profileId,i,s.name(),s.categoryCode(),s.level(),s.yearsPractice(),s.note());
+                s.customSkillId(),profileId,i,s.name(),s.categoryCode(),s.level(),s.yearsPractice().toString(),s.note());
         }
     }
     public void replaceProjects(String profileId,List<Project> projects) {

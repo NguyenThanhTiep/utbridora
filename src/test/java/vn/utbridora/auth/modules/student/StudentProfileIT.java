@@ -430,7 +430,9 @@ class StudentProfileIT {
         var years=new java.math.BigDecimal("1000.12345678901234567890123456789");
         value.put("skills",List.of(obj("skillCode","JAVA","level",3,"yearsPractice",years,"note",null)));
         value.put("customSkills",List.of(obj("customSkillId",null,"name","Precise custom","categoryCode","DESIGN","level",2,"yearsPractice",new java.math.BigDecimal("1.001"),"note",null)));
-        var saved=b.put(value);assertEquals(200,saved.statusCode(),saved.body());
+        String wire=new tools.jackson.databind.ObjectMapper().writeValueAsString(value),key=UUID.randomUUID().toString();
+        var saved=b.send("PUT",PROFILE,wire,true,key);assertEquals(200,saved.statusCode(),saved.body());
+        var replay=b.send("PUT",PROFILE,wire,true,key);assertEquals(200,replay.statusCode(),replay.body());assertTrue(replay.body().contains(years.toPlainString()),replay.body());
         assertTrue(saved.body().contains(years.toPlainString()),saved.body());
         assertTrue(b.get(TERM).body().contains(years.toPlainString()));
         assertEquals(0,years.compareTo(jdbc.queryForObject("SELECT s.years_practice FROM student_profile_skills s JOIN student_profiles p ON p.id=s.profile_id WHERE p.user_id=?",java.math.BigDecimal.class,student.id)));

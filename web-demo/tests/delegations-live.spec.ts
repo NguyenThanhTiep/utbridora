@@ -7,7 +7,7 @@ test('admin bootstrap, school subdelegation and revocation use real APIs and cur
     await page.getByLabel('Email', { exact: true }).fill(email);
     await page.getByLabel('Mật khẩu', { exact: true }).fill(email === 'admin@example.test' ? process.env.E2E_ADMIN_PASSWORD! : process.env.E2E_PASSWORD!);
     await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Đăng xuất', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Mở tài khoản của tôi', exact: true })).toBeVisible();
   };
   const actor = async (browser: Browser, email: string) => { const context = await browser.newContext({ reducedMotion: 'reduce' }); const page = await context.newPage(); await page.goto('/'); await signIn(page, email); return { context, page }; };
   const admin = await actor(browser, 'admin@example.test'), school = await actor(browser, 'school@example.test'), reviewer = await actor(browser, 'delegate@example.test');

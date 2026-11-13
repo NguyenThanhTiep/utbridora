@@ -15,4 +15,20 @@ class OperationLedgerTest {
         assertEquals(OperationLedger.payloadHash(Map.of("caseIds",List.of("a","b"))),
                 OperationLedger.payloadHash(Map.of("caseIds",List.of("b","a"))));
     }
+
+    @Test void decimalHashPreservesPrecision() {
+        assertNotEquals(OperationLedger.payloadHash(Map.of("years",new java.math.BigDecimal("1.0000000000000000001"))),
+            OperationLedger.payloadHash(Map.of("years",new java.math.BigDecimal("1.0000000000000000002"))));
+    }
+    @Test void exactLegacyNumericPayloadHashesStayCompatible() throws Exception {
+        var legacy=tools.jackson.databind.json.JsonMapper.builder().build();
+        for(String value:List.of("0","1","1.0","1.50","1.001","66.67","999.99","1000")) {
+            var input=Map.of("years",new java.math.BigDecimal(value));
+            Object old=legacy.convertValue(input,Object.class);
+            byte[] bytes=legacy.writeValueAsString(old).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            String hash=java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(bytes));
+            assertEquals(hash,OperationLedger.payloadHash(input),"Changed legacy numeric hash for "+value);
+        }
+    }
+
 }

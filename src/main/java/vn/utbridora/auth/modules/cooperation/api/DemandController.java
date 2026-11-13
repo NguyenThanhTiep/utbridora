@@ -3,7 +3,6 @@ package vn.utbridora.auth.modules.cooperation.api;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import tools.jackson.databind.JsonNode;
 import vn.utbridora.auth.modules.cooperation.application.DemandService;
 import vn.utbridora.auth.modules.cooperation.domain.DemandJson;
 import static vn.utbridora.auth.modules.cooperation.domain.DemandModels.*;
@@ -15,13 +14,13 @@ public class DemandController {
     public DemandController(DemandService service) { this.service=service; }
     @PostMapping
     public ResponseEntity<DemandDto> create(Authentication authentication,@RequestHeader("X-Organization-Id") String org,
-            @RequestHeader("Idempotency-Key") String key,@RequestBody JsonNode body) {
-        return ResponseEntity.status(201).body(service.create(authentication,org,key,DemandJson.request(body,DemandInput.class)));
+            @RequestHeader("Idempotency-Key") String key,@RequestBody String body) {
+        return ResponseEntity.status(201).body(service.create(authentication,org,key,DemandJson.rawRequest(body,DemandInput.class)));
     }
     @PatchMapping("/{id}")
     public DemandDto update(Authentication authentication,@RequestHeader("X-Organization-Id") String org,
-            @PathVariable String id,@RequestHeader("Idempotency-Key") String key,@RequestBody JsonNode body) {
-        return service.update(authentication,org,id,key,DemandJson.request(body,UpdateDemand.class));
+            @PathVariable String id,@RequestHeader("Idempotency-Key") String key,@RequestBody String body) {
+        return service.update(authentication,org,id,key,DemandJson.rawRequest(body,UpdateDemand.class));
     }
     @GetMapping
     public Page<DemandDto> list(Authentication authentication,@RequestHeader("X-Organization-Id") String org,
