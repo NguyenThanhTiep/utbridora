@@ -12,7 +12,7 @@ final class DemandSecurityErrors {
     static boolean applies(HttpServletRequest request) {
         String path=request.getServletPath();
         return java.util.List.of("/api/v1/enterprise/demands","/api/v1/enterprise/verifications","/api/v1/school/verifications",
-            "/api/v1/taxonomy","/api/v1/students","/api/v1/terms","/api/v1/t3","/api/v1/matching","/api/v1/invitations","/api/v1/school/cooperations","/api/v1/enterprise/cooperations","/api/v1/school/proposals","/api/v1/school/profile-shares","/api/v1/school/terms","/api/v1/school/student-eligibilities","/api/v1/school/delegations","/api/v1/admin/school-delegations")
+            "/api/v1/files","/api/v1/taxonomy","/api/v1/students","/api/v1/terms","/api/v1/t3","/api/v1/matching","/api/v1/invitations","/api/v1/school/cooperations","/api/v1/enterprise/cooperations","/api/v1/school/proposals","/api/v1/school/profile-shares","/api/v1/school/terms","/api/v1/school/student-eligibilities","/api/v1/school/delegations","/api/v1/admin/school-delegations")
             .stream().anyMatch(prefix->path.equals(prefix) || path.startsWith(prefix+"/"));
     }
     static void write(HttpServletRequest request,HttpServletResponse response,int status,String code,String message) throws IOException {

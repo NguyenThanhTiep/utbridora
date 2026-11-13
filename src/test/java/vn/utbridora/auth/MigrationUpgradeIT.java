@@ -8,6 +8,26 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.testcontainers.containers.MySQLContainer;
 
 class MigrationUpgradeIT {
+    @Test void privateFileUpgradePreservesLegacyMetadataBindingsAndScanState() throws Exception {
+        try(var mysql=new MySQLContainer<>("mysql:8.4").withPassword(UUID.randomUUID().toString())) {
+            mysql.start();
+            Flyway.configure().dataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword()).target("27").load().migrate();
+            String user=UUID.randomUUID().toString(),file=UUID.randomUUID().toString();
+            try(Connection c=DriverManager.getConnection(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword());Statement s=c.createStatement()) {
+                s.executeUpdate("INSERT INTO users VALUES ('"+user+"','file-upgrade@example.test','unusable-test-hash','File Upgrade Test','ACTIVE',0,0,NULL,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))");
+                s.executeUpdate("INSERT INTO files(id,owner_user_id,storage_key,original_name,content_type,size_bytes,sha256,classification,scan_status,created_at) VALUES ('"+file+"','"+user+"','legacy-storage-key','legacy.pdf','application/pdf',8,REPEAT('a',64),'PRIVATE','CLEAN',UTC_TIMESTAMP(6))");
+                s.executeUpdate("INSERT INTO file_bindings(id,file_id,binding_kind,purpose,resource_id,created_at) VALUES (UUID(),'"+file+"','STUDENT_PROFILE','CV','"+user+"',UTC_TIMESTAMP(6))");
+            }
+            var flyway=Flyway.configure().dataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword()).load();
+            assertEquals(1,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
+            try(Connection c=DriverManager.getConnection(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword());Statement s=c.createStatement()) {
+                try(ResultSet r=s.executeQuery("SELECT f.owner_user_id,f.storage_key,f.scan_status,b.resource_id,b.purpose FROM files f JOIN file_bindings b ON b.file_id=f.id WHERE f.id='"+file+"'")) {
+                    assertTrue(r.next());assertEquals(user,r.getString(1));assertEquals("legacy-storage-key",r.getString(2));assertEquals("CLEAN",r.getString(3));assertEquals(user,r.getString(4));assertEquals("CV",r.getString(5));assertFalse(r.next());
+                }
+                try(ResultSet r=s.executeQuery("SELECT COUNT(*) FROM role_permissions WHERE permission_code IN ('file:upload','file:download')")) {assertTrue(r.next());assertEquals(8,r.getInt(1));}
+            }
+        }
+    }
     @Test void demandReferencesUseCanonicalSchoolTermAndSharedLedger() throws Exception {
         try(var mysql=new MySQLContainer<>("mysql:8.4").withPassword(UUID.randomUUID().toString())) {
             mysql.start();
@@ -46,7 +66,7 @@ class MigrationUpgradeIT {
             }
             Flyway flyway=Flyway.configure().dataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword()).load();
             // V3-V7, shared ledger, T5 terms, T2 relationship and profile schemas.
-            assertEquals(25,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
+            assertEquals(26,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
             try(Connection c=DriverManager.getConnection(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword());Statement s=c.createStatement()) {
                 try(ResultSet r=s.executeQuery("SELECT email FROM users WHERE id='"+user+"'")) {assertTrue(r.next());assertEquals("upgrade@example.test",r.getString(1));}
                 assertThrows(SQLException.class,()->s.executeUpdate("INSERT INTO memberships (id,user_id,role,active,created_at) VALUES ('"+UUID.randomUUID()+"','"+user+"','ADMIN',1,UTC_TIMESTAMP(6))"));

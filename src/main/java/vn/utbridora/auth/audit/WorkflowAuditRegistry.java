@@ -3,10 +3,12 @@ package vn.utbridora.auth.audit;
 import java.util.Map;
 import java.util.Set;
 
-/** Exact E registry subset used by week-2 producers. */
+/** Exact E registry subset used by implemented workflow producers. */
 final class WorkflowAuditRegistry {
     record Spec(String resourceType,Set<String> fields) {}
     static final Map<String,Spec> ACTIONS=Map.ofEntries(
+        Map.entry("FILE_UPLOADED",new Spec("file",Set.of("purpose","contentType","sizeBytes","scanStatus"))),
+        Map.entry("FILE_DOWNLOADED",new Spec("file",Set.of("purpose","resourceType","resourceId","rangeRequest","consentVersion","shareVersion"))),
         Map.entry("CAPABILITY_GRANTED",new Spec("capability_assignment",Set.of("permissionCode","scopeKind","scopeId","termId","assignmentKind","validFrom","validUntil","securityVersion","decisionRef"))),
         Map.entry("CAPABILITY_REVOKED",new Spec("capability_assignment",Set.of("permissionCode","scopeKind","scopeId","termId","assignmentKind","securityVersion","reasonCode"))),
         Map.entry("CONSENT_GRANTED",new Spec("student_consent",Set.of("recipientOrgId","schoolOrgId","termId","purpose","fieldCodes","consentVersion","expiresAt"))),

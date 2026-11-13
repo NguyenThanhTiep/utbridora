@@ -56,6 +56,7 @@ docs/
 - [Docker local: tạo dữ liệu mẫu và hướng dẫn demo Student/HR/Mentor cho dev](guides/LOCAL_DEMO.md).
 - [Tuần 2: luồng runtime, API và cách kiểm tra trên môi trường riêng](guides/WEEK2_RUNTIME.md).
 - [T1-04-UI: cấp và thu hồi quyền cán bộ theo trường/kỳ](guides/T1_04_UI_SCHOOL_DELEGATIONS.md).
+- [T1-06 tuần 3: private upload, owner guard, storage và boundary tích hợp](guides/T1_06_PRIVATE_FILES.md).
 
 ## Bàn giao tuần 2 → tuần 3
 
@@ -73,6 +74,7 @@ Code, tests và bốn tài liệu bàn giao nằm trong cùng bản phát hành 
 - [Lịch sử nâng cấp giao diện và kiểm chứng đã ghi nhận](archive/UI_UPGRADE.md).
 - [Báo cáo kiểm thử](testing/TEST_REPORT.md).
 - [Tuần 2: task, implementation, kiểm chứng DEV và giới hạn nghiệm thu](testing/WEEK2_ACCEPTANCE.md).
+- [T1-06: kiểm thử File Service tối thiểu và giới hạn scanner/QA](testing/T1_06_ACCEPTANCE.md).
 - [T3-03: kiểm thử DEV và daily report](testing/T3_03_TEST_REPORT.md).
 - [T3-03: bàn giao QA03, phạm vi kiểm thử và dependency](testing/T3_03_QA_HANDOFF.md).
 - Evidence gốc: [backend và tích hợp](testing/evidence/TEST_EVIDENCE.json), [giao diện](testing/evidence/UI_TEST_EVIDENCE.json), [trước push](testing/evidence/PREPUSH_TEST_EVIDENCE.json).

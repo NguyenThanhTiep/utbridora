@@ -1,5 +1,7 @@
 # Bàn giao T3 — kết quả tuần 2 và hướng dẫn tuần 3
 
+**Cập nhật T1-06 ngày 10/11/2026:** bản DEV trên nhánh bàn giao `feature/t1-06-private-files` có private upload PDF cho TaskAssignment IN_PROGRESS, owner read và FileReadPort tối thiểu; chưa deploy. File mới PENDING; scanner, ZIP và WeeklyReport authorizer còn thiếu. URL mode vẫn làm độc lập được; xem [boundary tích hợp mới](../guides/T1_06_PRIVATE_FILES.md). Các ghi nhận thiếu runtime bên dưới phản ánh snapshot tuần 2.
+
 Ngày lập: 09/11/2026. Người nhận: Team Thực tập, DEV05/DEV06/DEV07 và QA03. Mục tiêu: kế thừa workspace/assignment/task đã chạy, bổ sung Submission/Review/Comment/Weekly Report và UI tương ứng.
 
 ## 1. Baseline và nguồn phải đọc
