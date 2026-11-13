@@ -21,16 +21,17 @@ class Week3MigrationIT {
                     s.execute("CREATE DATABASE " + db);
                 }
                 String url = mysql.getJdbcUrl().replace("/" + mysql.getDatabaseName(), "/" + db);
-                String[] locations = lineage.equals("main") ? new String[]{"classpath:db/migration"}
-                    : new String[]{"classpath:db/migration/base", "classpath:db/legacy/" + lineage};
+                String[] locations = locations(lineage, Integer.parseInt(target));
                 var builder = Flyway.configure().dataSource(url, mysql.getUsername(), mysql.getPassword()).locations(locations);
                 if (!target.equals("0")) builder.target(target).load().migrate();
                 var before = history(url, mysql);
+                var immutable = lineage.equals("t4") ? seedLegacyCriteria(url, mysql, Integer.parseInt(target)) : null;
                 var flyway = Flyway.configure().dataSource(url, mysql.getUsername(), mysql.getPassword()).locations(locations).load();
                 flyway.migrate(); flyway.validate();
                 assertEquals(0, flyway.migrate().migrationsExecuted, lineage + target);
                 var after = history(url, mysql);
                 before.forEach((key, value) -> assertEquals(value, after.get(key), "Changed installed history " + lineage + target + ":" + key));
+                if (immutable != null) assertEquals(immutable, criteria(url, mysql), "Changed immutable criteria " + lineage + target);
                 assertEquals("33", flyway.info().current().getVersion().getVersion());
                 var dataSource = new org.springframework.jdbc.datasource.DriverManagerDataSource(url, mysql.getUsername(), mysql.getPassword());
                 var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
@@ -56,6 +57,35 @@ class Week3MigrationIT {
                 }
             }
         }
+    }
+    private static String[] locations(String lineage, int installed) {
+        if (lineage.equals("main")) return new String[]{"classpath:db/migration"};
+        var paths = new ArrayList<>(List.of("classpath:db/migration/base", "classpath:db/legacy/" + lineage));
+        // V30/V31 remain available only to validate a database that already applied them.
+        // In particular, a V28/V29/V30 database must never newly backfill immutable JSON via V31.
+        if (lineage.equals("t4") && installed >= 30) paths.add("classpath:db/legacy/t4-v30");
+        if (lineage.equals("t4") && installed >= 31) paths.add("classpath:db/legacy/t4-v31");
+        return paths.toArray(String[]::new);
+    }
+    private static List<String> seedLegacyCriteria(String url, MySQLContainer<?> mysql, int installed) throws SQLException {
+        String user=UUID.randomUUID().toString(),school=UUID.randomUUID().toString(),org=UUID.randomUUID().toString(),term=UUID.randomUUID().toString(),demand=UUID.randomUUID().toString();
+        String json=installed>=31?"{\"required\":{\"minGpa\":null}}":"{\"required\":{}}",hash="a".repeat(64);
+        try(var c=DriverManager.getConnection(url,mysql.getUsername(),mysql.getPassword())) {
+            sql(c,"INSERT INTO users(id,email,password_hash,display_name,status,created_at,updated_at) VALUES (?,'lineage@example.test','synthetic-unusable','Synthetic','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",user);
+            sql(c,"INSERT INTO organizations(id,name,type,status,created_at) VALUES (?,'Synthetic School','UNIVERSITY','VERIFIED',UTC_TIMESTAMP(6)),(?,'Synthetic Enterprise','ENTERPRISE','VERIFIED',UTC_TIMESTAMP(6))",school,org);
+            sql(c,"INSERT INTO terms(id,school_org_id,term_code,start_date,end_date,status,version,created_at,updated_at) VALUES (?,?,'LINEAGE','2026-01-01','2027-01-01','ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",term,school);
+            sql(c,"INSERT INTO demands(id,enterprise_org_id,school_org_id,term_id,state,validation_state,version,criteria_version,criteria_hash,data_json,created_at,updated_at) VALUES (?,?,?,?,'DRAFT','VALID',1,1,?,?,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",demand,org,school,term,hash,json);
+            sql(c,"INSERT INTO demand_revisions VALUES (?,1,1,?,?,?,?, 'CREATE',UTC_TIMESTAMP(6))",demand,hash,json,json,user);
+        }
+        return criteria(url,mysql);
+    }
+    private static List<String> criteria(String url, MySQLContainer<?> mysql) throws SQLException {
+        try(var c=DriverManager.getConnection(url,mysql.getUsername(),mysql.getPassword());var s=c.createStatement();var rows=s.executeQuery("SELECT d.data_json,r.data_json,r.snapshot_json,d.criteria_hash,r.criteria_hash FROM demands d JOIN demand_revisions r ON r.demand_id=d.id")) {
+            assertTrue(rows.next());return List.of(rows.getString(1),rows.getString(2),rows.getString(3),rows.getString(4),rows.getString(5));
+        }
+    }
+    private static void sql(Connection c,String text,Object...values) throws SQLException {
+        try(var s=c.prepareStatement(text)) {for(int i=0;i<values.length;i++)s.setObject(i+1,values[i]);s.executeUpdate();}
     }
     private static Map<String, String> history(String url, MySQLContainer<?> mysql) throws SQLException {
         Map<String, String> result = new TreeMap<>();
