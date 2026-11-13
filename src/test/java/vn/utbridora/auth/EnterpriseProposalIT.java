@@ -519,6 +519,22 @@ class EnterpriseProposalIT {
         jdbc.update("UPDATE cooperations SET state='SUBMITTED' WHERE id=?",id);
         assertEquals(409,http(school,"PUT",publication,JSON.writeValueAsString(new CooperationService.Publication(window.publishedAt(),window.closedAt(),6L)),id(11),key(),true).statusCode());
     }
+    @Test void portalOrganizationNamesAreLimitedToCurrentMemberships() throws Exception {
+        var enterpriseReply=http(hr,"GET","/cooperation/organizations?organizationId="+id(11),null,id(11),null,false);
+        assertEquals(200,enterpriseReply.statusCode(),enterpriseReply.body());
+        var enterpriseRows=JSON.readTree(enterpriseReply.body());assertEquals(1,enterpriseRows.size());
+        assertEquals(id(12),enterpriseRows.get(0).get("id").asString());
+        assertEquals(jdbc.queryForObject("SELECT name FROM organizations WHERE id=?",String.class,id(12)),enterpriseRows.get(0).get("name").asString());
+        assertFalse(enterpriseRows.get(0).has("status"));
+        var schoolReply=http(school,"GET","/cooperation/organizations",null,null,null,false);
+        assertEquals(200,schoolReply.statusCode(),schoolReply.body());
+        var schoolRows=JSON.readTree(schoolReply.body());assertEquals(1,schoolRows.size());
+        assertEquals(id(11),schoolRows.get(0).get("id").asString());
+        assertEquals(jdbc.queryForObject("SELECT name FROM organizations WHERE id=?",String.class,id(11)),schoolRows.get(0).get("name").asString());
+        assertEquals(0,JSON.readTree(http(student,"GET","/cooperation/organizations",null,null,null,false).body()).size());
+        var anonymous=HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create("http://localhost:"+port+"/api/v1/cooperation/organizations")).GET().build(),HttpResponse.BodyHandlers.ofString());
+        assertEquals(401,anonymous.statusCode());
+    }
     @Test void browserUsesRealSchoolStudentEnterpriseSharingAndPlacementHandoff() throws Exception {
         Assumptions.assumeTrue(Boolean.getBoolean("t5.week3.browser"),"Enable -Dt5.week3.browser=true for the real-browser workflow");
         boolean windows=System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win");
