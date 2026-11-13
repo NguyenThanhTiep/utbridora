@@ -1,0 +1,116 @@
+{
+  "task": "T3-09",
+  "owner": "DEV07 - Lai Thai Thuan",
+  "recordedAt": "2026-11-10T07:59:57.607171+00:00",
+  "status": "UI_CHECKPOINT_PASS_BACKEND_INTEGRATION_BLOCKED",
+  "branch": "feature/t3-week3",
+  "head": "3e6a573a303a7d1801324901b6783dfbb110851b",
+  "mergeHead": "c3d0dbc67b66ba21af84a7d4095def5d32324696",
+  "uncommitted": true,
+  "gitMutationsThisCheckpoint": [],
+  "preexistingStagedFileCount": 12,
+  "build": {
+    "command": "npm.cmd --prefix web-demo run build",
+    "status": "PASS"
+  },
+  "tests": {
+    "passed": 62,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": [
+      {
+        "name": "internship-week3.ui.spec.ts",
+        "timestamp": "2026-11-10T07:57:09.986Z",
+        "hostname": "",
+        "tests": "16",
+        "failures": "0",
+        "skipped": "0",
+        "time": "17.752",
+        "errors": "0"
+      },
+      {
+        "name": "internship.ui.spec.ts",
+        "timestamp": "2026-11-10T07:57:09.986Z",
+        "hostname": "",
+        "tests": "18",
+        "failures": "0",
+        "skipped": "0",
+        "time": "7.432",
+        "errors": "0"
+      },
+      {
+        "name": "internship.unit.spec.ts",
+        "timestamp": "2026-11-10T07:57:09.986Z",
+        "hostname": "",
+        "tests": "17",
+        "failures": "0",
+        "skipped": "0",
+        "time": "0.016",
+        "errors": "0"
+      },
+      {
+        "name": "unit\\internship-workflow.spec.ts",
+        "timestamp": "2026-11-10T07:57:09.986Z",
+        "hostname": "",
+        "tests": "8",
+        "failures": "0",
+        "skipped": "0",
+        "time": "0.009",
+        "errors": "0"
+      },
+      {
+        "name": "unit\\student-terms.spec.ts",
+        "timestamp": "2026-11-10T07:57:09.986Z",
+        "hostname": "",
+        "tests": "3",
+        "failures": "0",
+        "skipped": "0",
+        "time": "0.006",
+        "errors": "0"
+      }
+    ],
+    "mode": "Browser UI API contract fixtures plus frontend unit; NOT backend E2E"
+  },
+  "notRun": [
+    "Maven/DB integration",
+    "T3-07/T3-08 real backend browser E2E",
+    "contract bundle checker",
+    "CI",
+    "human QA/Lead acceptance"
+  ],
+  "dependencies": [
+    "T3-07 v2 and Review HTTP/provider",
+    "T3-08 Comment/WeeklyReport runtime",
+    "approved review read contract/provider for persisted reviewer/comment history",
+    "V28/V29 integration with owners",
+    "T1 private file pipeline",
+    "T5-07 real Placement activation for cross-team acceptance"
+  ],
+  "preservation": {
+    "t3_03CanonicalFiles": 11,
+    "t3_03ByteIdenticalEvidence": 7,
+    "unmergedPaths": 0,
+    "newBackendChanges": 0,
+    "taskMarkdownLinksChecked": 8
+  },
+  "sourceHashEncoding": "UTF-8 text normalized LF",
+  "sourceHashes": {
+    "web-demo/src/App.tsx": "20ec1587e7f4be84449867feacb61d8308dc52dfe1b7a5a84c7d51fb495952d8",
+    "web-demo/src/modules/internship/pages/TaskBoard.tsx": "872443965931fd885ca4f524eb636425b82665f025a4d7270379ef157bdc5a55",
+    "web-demo/src/modules/internship/pages/SubmissionWorkspace.tsx": "784a5e9f4e09257aee7d3152c69e1ae2491a86b8781ea714bf65827fb8d0a9d2",
+    "web-demo/src/modules/internship/pages/WeeklyReports.tsx": "5b3f70c0cfbcf8cd2085a686d9257dad3015a8b735b287f39c24797041769fde",
+    "web-demo/src/modules/internship/workflow.ts": "fc1751acb265ad546d65527f7370c757f0e933c244ae634674ff9ff4c0f55567",
+    "web-demo/src/modules/internship/workflow-api.ts": "505fadfeca8ac462ee3f6eb4c84da7ddf29f15be17ce3b696dec8132b7e966ba",
+    "web-demo/src/modules/internship/useWorkflowCommand.tsx": "7341bba66d2858d2993004066cc464239503bd5bf6ecdf8f032f0e55c38080f8",
+    "web-demo/src/modules/internship/styles.css": "8072f1c5e82533a92bc6b2058fc746e40506d6b3c7b9748a88cd5f3100a07eea",
+    "web-demo/tests/internship-week3.ui.spec.ts": "a57dadcf518fa68ac38940f372688aff0d6d36caa5f4367e4bffe9559aa55629",
+    "web-demo/tests/unit/internship-workflow.spec.ts": "e28eeab3725c759f58f1a9f48e17d0d90a98dcdba63332be45f3da74d94f9522",
+    "web-demo/tests/fixtures/internship-week3-harness.tsx": "6548831917ea0286cd8fa56d04ae6ea0795275ae7ecf2b6cab17d246d38972bb",
+    "web-demo/tests/fixtures/internship-week3.html": "1108455497b5f7185433d721ef53cfb172f86a986d9b3d603083464d8c1fcffb"
+  },
+  "evidenceHashes": {
+    "t3-09-mobile-fixture.png": "7f007bf9f57486c2dbec946278a949a7250b15e7b316b29bf43c15e03456f5cd",
+    "T3_09_CHECKPOINT_RESULTS.xml": "b691b310a4baf8e5bb451d651ccb4546e7322360782e273270b6249ea9607d89"
+  }
+}

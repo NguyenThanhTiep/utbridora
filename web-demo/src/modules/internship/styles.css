@@ -23,3 +23,8 @@
   .internship-workspace .panel { padding: 18px; }
   .internship-workspace .section-heading > button { width: 100%; }
 }
+.t3-workflow { min-width: 0; overflow-wrap: anywhere; }
+.t3-workflow fieldset { min-width: 0; display: grid; gap: 12px; }
+.t3-workflow textarea { min-height: 96px; width: 100%; box-sizing: border-box; }
+.t3-workflow input, .t3-workflow select { max-width: 100%; }
+.t3-preserve-text { white-space: pre-wrap; overflow-wrap: anywhere; }

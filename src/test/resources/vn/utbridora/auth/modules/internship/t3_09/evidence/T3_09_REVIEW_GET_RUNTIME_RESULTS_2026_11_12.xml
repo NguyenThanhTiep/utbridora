@@ -1,0 +1,12 @@
+<testsuites id="" name="" tests="4" failures="0" skipped="0" errors="0" time="34.294989">
+<testsuite name="internship-week3-runtime.spec.ts" timestamp="2026-11-12T11:41:29.578Z" hostname="" tests="4" failures="0" skipped="0" time="31.07" errors="0">
+<testcase name="T3-09 real backend: student URL v1, Mentor revision, URL v2, ACCEPT, comments and reload" classname="internship-week3-runtime.spec.ts" time="14.399">
+</testcase>
+<testcase name="T3-09 real backend: report review survives reload and historical revision remains immutable" classname="internship-week3-runtime.spec.ts" time="8.806">
+</testcase>
+<testcase name="T3-09 real backend: multipart attachment stays PENDING, submit is denied and draft survives reload" classname="internship-week3-runtime.spec.ts" time="4.122">
+</testcase>
+<testcase name="T3-09 real backend: outsider reads denied and HR cannot mutate review UI" classname="internship-week3-runtime.spec.ts" time="3.743">
+</testcase>
+</testsuite>
+</testsuites>

@@ -2562,63 +2562,71 @@
     {
       "method": "POST",
       "path": "/api/v1/t3/reports",
-      "line": 493,
-      "contractSection": "CP-WS3 — Báo cáo tuần (T3 → T2 UI), version 1.0",
+      "line": 497,
+      "contractSection": "CP-WS3 — Báo cáo tuần (T3 → T2 UI), version 1.1",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/t3/reports | ReportInput →201 ReportDto, state DRAFT | Student owner có internship:student:submission_write; case IN_PROGRESS; tuần hợp lệ; report root đã tồn tại409 REPORT_ALREADY_EXISTS. |"
     },
     {
       "method": "PATCH",
       "path": "/api/v1/t3/reports/{reportId}",
-      "line": 494,
-      "contractSection": "CP-WS3 — Báo cáo tuần (T3 → T2 UI), version 1.0",
+      "line": 498,
+      "contractSection": "CP-WS3 — Báo cáo tuần (T3 → T2 UI), version 1.1",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| PATCH /api/v1/t3/reports/{reportId} | UpdateReport →200 ReportDto | Owner, current DRAFT, expectedVersion; file sai binding422 FILE_BINDING_INVALID; version sai409 VERSION_CONFLICT. |"
     },
     {
       "method": "POST",
       "path": "/api/v1/t3/reports/{reportId}/submit",
-      "line": 495,
-      "contractSection": "CP-WS3 — Báo cáo tuần (T3 → T2 UI), version 1.0",
+      "line": 499,
+      "contractSection": "CP-WS3 — Báo cáo tuần (T3 → T2 UI), version 1.1",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/t3/reports/{reportId}/submit | SubmitReport →200 ReportDto, state SUBMITTED | Owner, current DRAFT, case/Placement đang active; kiểm nội dung/files; Idempotency-Key bắt buộc. |"
     },
     {
       "method": "POST",
       "path": "/api/v1/t3/reports/{reportId}/reviews",
-      "line": 496,
-      "contractSection": "CP-WS3 — Báo cáo tuần (T3 → T2 UI), version 1.0",
+      "line": 500,
+      "contractSection": "CP-WS3 — Báo cáo tuần (T3 → T2 UI), version 1.1",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/t3/reports/{reportId}/reviews | ReportReview →200 ReportDto, state REVIEWED | Assigned Mentor có internship:enterprise:task_write; chỉ current SUBMITTED; lưu comment và reviewer từ server. |"
     },
     {
       "method": "POST",
       "path": "/api/v1/t3/reports/{reportId}/revisions",
-      "line": 497,
-      "contractSection": "CP-WS3 — Báo cáo tuần (T3 → T2 UI), version 1.0",
+      "line": 501,
+      "contractSection": "CP-WS3 — Báo cáo tuần (T3 → T2 UI), version 1.1",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/t3/reports/{reportId}/revisions | CreateReportRevision →201 ReportDto, revisionNo+1,state DRAFT | Student owner, case active; current SUBMITTED/REVIEWED; clone nội dung/file refs, reason+audit; không ghi đè bản đã review. |"
     },
     {
       "method": "GET",
       "path": "/api/v1/t3/reports/{reportId}",
-      "line": 498,
-      "contractSection": "CP-WS3 — Báo cáo tuần (T3 → T2 UI), version 1.0",
+      "line": 502,
+      "contractSection": "CP-WS3 — Báo cáo tuần (T3 → T2 UI), version 1.1",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/t3/reports/{reportId} | ReportReadQuery →200 ReportDto | t3:workspace:read đúng case; bỏ revisionNo lấy current; revision cụ thể vẫn cùng row/scope guard. |"
     },
     {
       "method": "GET",
+      "path": "/api/v1/t3/reports/{reportId}/reviews",
+      "line": 503,
+      "contractSection": "CP-WS3 — Báo cáo tuần (T3 → T2 UI), version 1.1",
+      "status": "TARGET_NOT_IMPLEMENTED",
+      "evidenceLine": "| GET /api/v1/t3/reports/{reportId}/reviews | ReportReadQuery →200 ReportReviewDto | Cùng quyền đọc Report, recheck quyền hiện hành; bỏ revisionNo lấy current. Revision chưa có review hoặc resource ngoài scope trả404 RESOURCE_NOT_FOUND; không tìm review cũ thay current. |"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/t3/reports",
-      "line": 499,
-      "contractSection": "CP-WS3 — Báo cáo tuần (T3 → T2 UI), version 1.0",
+      "line": 504,
+      "contractSection": "CP-WS3 — Báo cáo tuần (T3 → T2 UI), version 1.1",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/t3/reports | ReportQuery →200 Page<ReportDto> | Same guard; mỗi root trả current revision; sort weekStart DESC,reportId ASC. |"
     },
     {
       "method": "GET",
       "path": "/api/v1/t3/rubric-templates",
-      "line": 576,
+      "line": 581,
       "contractSection": "CP-WS4 — Rubric, evaluation, hiển thị điểm và đóng case (T3 ↔ T2/T5), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/t3/rubric-templates | Query termId:U,PageQuery →200 Page<RubricTemplate> | t3:workspace:read đúng term/scope; fixture T3 có version cụ thể; sort templateId ASC. Không thêm yêu cầu UI template CRUD vào MVP. |"
@@ -2626,7 +2634,7 @@
     {
       "method": "POST",
       "path": "/api/v1/t3/evaluations",
-      "line": 577,
+      "line": 582,
       "contractSection": "CP-WS4 — Rubric, evaluation, hiển thị điểm và đóng case (T3 ↔ T2/T5), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/t3/evaluations | EvaluationInput →201 EvaluationDto,DRAFT | internship:enterprise:evaluate và Mentor đúng case; case active; templateVersion sai409 VERSION_CONFLICT; rubric không hợp lệ422 RUBRIC_INVALID. |"
@@ -2634,7 +2642,7 @@
     {
       "method": "PUT",
       "path": "/api/v1/t3/evaluations/{evaluationId}",
-      "line": 578,
+      "line": 583,
       "contractSection": "CP-WS4 — Rubric, evaluation, hiển thị điểm và đóng case (T3 ↔ T2/T5), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| PUT /api/v1/t3/evaluations/{evaluationId} | UpdateEvaluation →200 EvaluationDto | Same Mentor guard, current DRAFT; scores khớp template; expectedVersion bắt buộc. |"
@@ -2642,7 +2650,7 @@
     {
       "method": "POST",
       "path": "/api/v1/t3/evaluations/{evaluationId}/submit",
-      "line": 579,
+      "line": 584,
       "contractSection": "CP-WS4 — Rubric, evaluation, hiển thị điểm và đóng case (T3 ↔ T2/T5), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/t3/evaluations/{evaluationId}/submit | SubmitEvaluation →200 EvaluationDto,SUBMITTED | Mentor có quyền; chỉ DRAFT; kiểm đủ scores/files; snapshot template không đổi. |"
@@ -2650,7 +2658,7 @@
     {
       "method": "POST",
       "path": "/api/v1/t3/evaluations/{evaluationId}/publish",
-      "line": 580,
+      "line": 585,
       "contractSection": "CP-WS4 — Rubric, evaluation, hiển thị điểm và đóng case (T3 ↔ T2/T5), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/t3/evaluations/{evaluationId}/publish | PublishEvaluation →200 EvaluationDto,PUBLISHED | t3:grades:publish và school delegation đúng case; chỉ SUBMITTED; HR/Mentor không tự publish. |"
@@ -2658,7 +2666,7 @@
     {
       "method": "POST",
       "path": "/api/v1/t3/evaluations/{evaluationId}/revisions",
-      "line": 581,
+      "line": 586,
       "contractSection": "CP-WS4 — Rubric, evaluation, hiển thị điểm và đóng case (T3 ↔ T2/T5), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/t3/evaluations/{evaluationId}/revisions | CreateEvaluationRevision →201 EvaluationDto,DRAFT | School có t3:grades:publish; từ current SUBMITTED/PUBLISHED, case active; giữ revision và published pointer cũ. |"
@@ -2666,7 +2674,7 @@
     {
       "method": "GET",
       "path": "/api/v1/t3/schools/{schoolOrgId}/terms/{termId}/result-visibility",
-      "line": 582,
+      "line": 587,
       "contractSection": "CP-WS4 — Rubric, evaluation, hiển thị điểm và đóng case (T3 ↔ T2/T5), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/t3/schools/{schoolOrgId}/terms/{termId}/result-visibility | Không body →200 SchoolResultVisibilityDto | t3:result_policy:manage và school delegation; thiếu record trả enabled=false,version0. |"
@@ -2674,7 +2682,7 @@
     {
       "method": "PUT",
       "path": "/api/v1/t3/schools/{schoolOrgId}/terms/{termId}/result-visibility",
-      "line": 583,
+      "line": 588,
       "contractSection": "CP-WS4 — Rubric, evaluation, hiển thị điểm và đóng case (T3 ↔ T2/T5), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| PUT /api/v1/t3/schools/{schoolOrgId}/terms/{termId}/result-visibility | SetVisibility →200 SchoolResultVisibilityDto | Cùng guard; expectedVersion0 cho lần tạo đầu; không cho HR sửa school policy. |"
@@ -2682,7 +2690,7 @@
     {
       "method": "GET",
       "path": "/api/v1/t3/organizations/{enterpriseOrgId}/grade-visibility",
-      "line": 584,
+      "line": 589,
       "contractSection": "CP-WS4 — Rubric, evaluation, hiển thị điểm và đóng case (T3 ↔ T2/T5), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/t3/organizations/{enterpriseOrgId}/grade-visibility | GradeVisibilityQuery →200 GradeVisibilityDto | t3:grade_visibility:manage và HR đúng org/term hoặc case; bỏ caseId nghĩa policy ORGANIZATION_TERM. |"
@@ -2690,7 +2698,7 @@
     {
       "method": "PUT",
       "path": "/api/v1/t3/organizations/{enterpriseOrgId}/grade-visibility",
-      "line": 585,
+      "line": 590,
       "contractSection": "CP-WS4 — Rubric, evaluation, hiển thị điểm và đóng case (T3 ↔ T2/T5), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| PUT /api/v1/t3/organizations/{enterpriseOrgId}/grade-visibility | GradeVisibilityQuery + SetVisibility →200 GradeVisibilityDto | HR enterprise-wide mới viết policy ORGANIZATION_TERM; HR group chỉ viết CASE thuộc group được giao. |"
@@ -2698,7 +2706,7 @@
     {
       "method": "GET",
       "path": "/api/v1/t3/me/results",
-      "line": 586,
+      "line": 591,
       "contractSection": "CP-WS4 — Rubric, evaluation, hiển thị điểm và đóng case (T3 ↔ T2/T5), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/t3/me/results | Query caseId:U →200 StudentResultDto | Student owner; chỉ trả published evaluation khi school policy và effective HR visibility đều bật. |"
@@ -2706,7 +2714,7 @@
     {
       "method": "GET",
       "path": "/api/v1/t3/school/evaluations",
-      "line": 587,
+      "line": 592,
       "contractSection": "CP-WS4 — Rubric, evaluation, hiển thị điểm và đóng case (T3 ↔ T2/T5), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/t3/school/evaluations | EvaluationQuery →200 Page<EvaluationDto> | t3:workspace:read và school delegation có grade purpose; sort caseId ASC,revisionNo DESC. |"
@@ -2714,7 +2722,7 @@
     {
       "method": "POST",
       "path": "/api/v1/t3/cases/{caseId}/close",
-      "line": 588,
+      "line": 593,
       "contractSection": "CP-WS4 — Rubric, evaluation, hiển thị điểm và đóng case (T3 ↔ T2/T5), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/t3/cases/{caseId}/close | CloseCase →200 CaseRef | t3:cases:close và school delegation. NORMAL cần endDate đã tới, mọi task COMPLETED, current reports REVIEWED, current evaluation PUBLISHED; thiếu409 CASE_CLOSE_PRECONDITION_FAILED. EARLY cần school decision/reason; phát CaseClosed, không sửa bảng T5. |"
@@ -2722,7 +2730,7 @@
     {
       "method": "GET",
       "path": "/api/v1/t3/hr/dashboard",
-      "line": 668,
+      "line": 673,
       "contractSection": "CP-WS5 — Dashboard, lịch, đánh giá doanh nghiệp và phối hợp (T3 → T2/T5 UI), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/t3/hr/dashboard | DashboardQuery →200 WorkspaceSummary | t3:workspace:read và HR đúng enterprise/school/term; không đếm case ngoài HR scope. |"
@@ -2730,7 +2738,7 @@
     {
       "method": "GET",
       "path": "/api/v1/t3/mentor/dashboard",
-      "line": 669,
+      "line": 674,
       "contractSection": "CP-WS5 — Dashboard, lịch, đánh giá doanh nghiệp và phối hợp (T3 → T2/T5 UI), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/t3/mentor/dashboard | DashboardQuery →200 WorkspaceSummary | t3:workspace:read và active Mentor assignment; chỉ nhóm/case được giao. |"
@@ -2738,7 +2746,7 @@
     {
       "method": "GET",
       "path": "/api/v1/t3/school/dashboard",
-      "line": 670,
+      "line": 675,
       "contractSection": "CP-WS5 — Dashboard, lịch, đánh giá doanh nghiệp và phối hợp (T3 → T2/T5 UI), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/t3/school/dashboard | DashboardQuery →200 WorkspaceSummary | t3:workspace:read và school delegation; không cộng trường khác. |"
@@ -2746,7 +2754,7 @@
     {
       "method": "GET",
       "path": "/api/v1/t3/calendar",
-      "line": 671,
+      "line": 676,
       "contractSection": "CP-WS5 — Dashboard, lịch, đánh giá doanh nghiệp và phối hợp (T3 → T2/T5 UI), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/t3/calendar | CalendarQuery →200 Page<CalendarEvent> | t3:workspace:read, owner/assigned/delegated scope; khoảng sai422 CALENDAR_RANGE_INVALID. |"
@@ -2754,7 +2762,7 @@
     {
       "method": "GET",
       "path": "/api/v1/t3/enterprise-quality/templates",
-      "line": 672,
+      "line": 677,
       "contractSection": "CP-WS5 — Dashboard, lịch, đánh giá doanh nghiệp và phối hợp (T3 → T2/T5 UI), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/t3/enterprise-quality/templates | Query termId:U,PageQuery →200 Page<EnterpriseQualityTemplate> | Delegated school đúng term; fixture read-only; sort templateId ASC. |"
@@ -2762,7 +2770,7 @@
     {
       "method": "POST",
       "path": "/api/v1/t3/school/enterprise-feedback",
-      "line": 673,
+      "line": 678,
       "contractSection": "CP-WS5 — Dashboard, lịch, đánh giá doanh nghiệp và phối hợp (T3 → T2/T5 UI), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/t3/school/enterprise-feedback | EnterpriseQualityInput →201 EnterpriseQualityDto | t3:enterprise_quality:school:write; school có Placement/collaboration hợp lệ với enterprise; sai template/ratings422 ENTERPRISE_RUBRIC_INVALID. |"
@@ -2770,7 +2778,7 @@
     {
       "method": "POST",
       "path": "/api/v1/t3/school/issues",
-      "line": 674,
+      "line": 679,
       "contractSection": "CP-WS5 — Dashboard, lịch, đánh giá doanh nghiệp và phối hợp (T3 → T2/T5 UI), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/t3/school/issues | CreateCoordinationIssue →201 CoordinationIssue,OPEN | t3:coordination:manage và school delegate; owner phải là school staff/HR/Mentor hợp lệ cho case; owner sai422 ISSUE_OWNER_INVALID. |"
@@ -2778,7 +2786,7 @@
     {
       "method": "PATCH",
       "path": "/api/v1/t3/school/issues/{issueId}",
-      "line": 675,
+      "line": 680,
       "contractSection": "CP-WS5 — Dashboard, lịch, đánh giá doanh nghiệp và phối hợp (T3 → T2/T5 UI), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| PATCH /api/v1/t3/school/issues/{issueId} | UpdateCoordinationIssue →200 CoordinationIssue | t3:coordination:manage và delegated school hoặc HR đúng case; transition khác409 STATE_CONFLICT; expectedVersion bắt buộc. |"
@@ -2786,7 +2794,7 @@
     {
       "method": "GET",
       "path": "/api/v1/t3/school/issues",
-      "line": 676,
+      "line": 681,
       "contractSection": "CP-WS5 — Dashboard, lịch, đánh giá doanh nghiệp và phối hợp (T3 → T2/T5 UI), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/t3/school/issues | IssueQuery →200 Page<CoordinationIssue> | t3:workspace:read và school/HR/Mentor đúng case; sort createdAt DESC,issueId ASC. |"
@@ -2794,7 +2802,7 @@
     {
       "method": "GET",
       "path": "/api/v1/students/me/profile",
-      "line": 746,
+      "line": 751,
       "contractSection": "BC11 — Profile/self editor, immutable snapshot và completeness (T2↔T4/T5), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "GET /api/v1/students/me/profile?termId=U trả 200 SelfProfileView với student_profile:self:read. PUT /api/v1/students/me/profile nhận ProfileInput, trả 200 SelfProfileView với student_profile:self:write; áp dụng MutationContext, Idempotency-Key và CSRF theo C.0. Actor/owner lấy từ principal. expectedProfileVersion cũ trả 409 PROFILE_STALE. Dữ liệu kỹ năng do sinh viên sửa luôn có source=SELF_DECLARED; client không được tự gửi SCHOOL_VERIFIED. Mã ngành và lựa chọn học vụ mới phải thuộc catalog ACTIVE đúng school/term; fileId phải CLEAN, thuộc owner và đúng binding STUDENT_PROFILE. majorCode=null thể hiện chưa khai để completeness đánh giá, không phải đã được trường phê duyệt. Không tự chia sẻ tên, số điện thoại hoặc dữ liệu học vụ."
@@ -2802,7 +2810,7 @@
     {
       "method": "PUT",
       "path": "/api/v1/students/me/profile",
-      "line": 746,
+      "line": 751,
       "contractSection": "BC11 — Profile/self editor, immutable snapshot và completeness (T2↔T4/T5), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "GET /api/v1/students/me/profile?termId=U trả 200 SelfProfileView với student_profile:self:read. PUT /api/v1/students/me/profile nhận ProfileInput, trả 200 SelfProfileView với student_profile:self:write; áp dụng MutationContext, Idempotency-Key và CSRF theo C.0. Actor/owner lấy từ principal. expectedProfileVersion cũ trả 409 PROFILE_STALE. Dữ liệu kỹ năng do sinh viên sửa luôn có source=SELF_DECLARED; client không được tự gửi SCHOOL_VERIFIED. Mã ngành và lựa chọn học vụ mới phải thuộc catalog ACTIVE đúng school/term; fileId phải CLEAN, thuộc owner và đúng binding STUDENT_PROFILE. majorCode=null thể hiện chưa khai để completeness đánh giá, không phải đã được trường phê duyệt. Không tự chia sẻ tên, số điện thoại hoặc dữ liệu học vụ."
@@ -2810,7 +2818,7 @@
     {
       "method": "GET",
       "path": "/api/v1/taxonomy/skills",
-      "line": 788,
+      "line": 793,
       "contractSection": "BC12 — Skill taxonomy và academic catalogs (T4/T2→T2/T5/T1), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "GET /api/v1/taxonomy/skills nhận q, includeDeprecated=false, page và size; trả 200 SkillCatalogPage. POST /api/v1/taxonomy/skills/resolve nhận ResolveSkillsRequest, trả 200 ResolveSkillsResponse. Hai route yêu cầu session hợp lệ và taxonomy:skills:read. GET /api/v1/students/me/catalogs?termId=U&kind=MAJOR|SUBJECT|ORIENTATION&page=0&size=25 trả 200 AcademicCatalogPage, chỉ cho quan hệ student–school–term của principal. Import T1 sử dụng AcademicCatalogPort nội bộ; không gọi vòng qua HTTP. Scope ngoài quyền trả 404 RESOURCE_NOT_FOUND; version catalog đổi trả 409 CATALOG_CHANGED; code không hợp lệ trả 422 CATALOG_CODE_INVALID."
@@ -2818,7 +2826,7 @@
     {
       "method": "POST",
       "path": "/api/v1/taxonomy/skills/resolve",
-      "line": 788,
+      "line": 793,
       "contractSection": "BC12 — Skill taxonomy và academic catalogs (T4/T2→T2/T5/T1), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "GET /api/v1/taxonomy/skills nhận q, includeDeprecated=false, page và size; trả 200 SkillCatalogPage. POST /api/v1/taxonomy/skills/resolve nhận ResolveSkillsRequest, trả 200 ResolveSkillsResponse. Hai route yêu cầu session hợp lệ và taxonomy:skills:read. GET /api/v1/students/me/catalogs?termId=U&kind=MAJOR|SUBJECT|ORIENTATION&page=0&size=25 trả 200 AcademicCatalogPage, chỉ cho quan hệ student–school–term của principal. Import T1 sử dụng AcademicCatalogPort nội bộ; không gọi vòng qua HTTP. Scope ngoài quyền trả 404 RESOURCE_NOT_FOUND; version catalog đổi trả 409 CATALOG_CHANGED; code không hợp lệ trả 422 CATALOG_CODE_INVALID."
@@ -2826,7 +2834,7 @@
     {
       "method": "GET",
       "path": "/api/v1/students/me/catalogs",
-      "line": 788,
+      "line": 793,
       "contractSection": "BC12 — Skill taxonomy và academic catalogs (T4/T2→T2/T5/T1), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "GET /api/v1/taxonomy/skills nhận q, includeDeprecated=false, page và size; trả 200 SkillCatalogPage. POST /api/v1/taxonomy/skills/resolve nhận ResolveSkillsRequest, trả 200 ResolveSkillsResponse. Hai route yêu cầu session hợp lệ và taxonomy:skills:read. GET /api/v1/students/me/catalogs?termId=U&kind=MAJOR|SUBJECT|ORIENTATION&page=0&size=25 trả 200 AcademicCatalogPage, chỉ cho quan hệ student–school–term của principal. Import T1 sử dụng AcademicCatalogPort nội bộ; không gọi vòng qua HTTP. Scope ngoài quyền trả 404 RESOURCE_NOT_FOUND; version catalog đổi trả 409 CATALOG_CHANGED; code không hợp lệ trả 422 CATALOG_CODE_INVALID."
@@ -2834,7 +2842,7 @@
     {
       "method": "GET",
       "path": "/api/v1/taxonomy/categories",
-      "line": 796,
+      "line": 801,
       "contractSection": "BC12 — Skill taxonomy và academic catalogs (T4/T2→T2/T5/T1), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/taxonomy/categories | page,size → 200 Page<CategoryDto> |"
@@ -2842,7 +2850,7 @@
     {
       "method": "POST",
       "path": "/api/v1/taxonomy/categories",
-      "line": 797,
+      "line": 802,
       "contractSection": "BC12 — Skill taxonomy và academic catalogs (T4/T2→T2/T5/T1), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/taxonomy/categories | {categoryCode:Code,name:Text(1..128),parentCategoryCode:Code\\|null} → 201 CategoryDto ACTIVE |"
@@ -2850,7 +2858,7 @@
     {
       "method": "PATCH",
       "path": "/api/v1/taxonomy/categories/{code}",
-      "line": 798,
+      "line": 803,
       "contractSection": "BC12 — Skill taxonomy và academic catalogs (T4/T2→T2/T5/T1), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| PATCH /api/v1/taxonomy/categories/{code} | {expectedVersion:V,name:Text(1..128),status:ACTIVE\\|DEPRECATED} → 200 CategoryDto |"
@@ -2858,7 +2866,7 @@
     {
       "method": "POST",
       "path": "/api/v1/taxonomy/skills",
-      "line": 799,
+      "line": 804,
       "contractSection": "BC12 — Skill taxonomy và academic catalogs (T4/T2→T2/T5/T1), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/taxonomy/skills | {skillCode:Code,name:Text(1..128),categoryCode:Code,parentSkillCode:Code\\|null} → 201 SkillCatalogItem ACTIVE |"
@@ -2866,7 +2874,7 @@
     {
       "method": "PATCH",
       "path": "/api/v1/taxonomy/skills/{code}",
-      "line": 800,
+      "line": 805,
       "contractSection": "BC12 — Skill taxonomy và academic catalogs (T4/T2→T2/T5/T1), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| PATCH /api/v1/taxonomy/skills/{code} | {expectedVersion:V,name:Text(1..128),categoryCode:Code,parentSkillCode:Code\\|null,status:ACTIVE\\|DEPRECATED} → 200 SkillCatalogItem |"
@@ -2874,7 +2882,7 @@
     {
       "method": "POST",
       "path": "/api/v1/taxonomy/skills/{code}/aliases",
-      "line": 801,
+      "line": 806,
       "contractSection": "BC12 — Skill taxonomy và academic catalogs (T4/T2→T2/T5/T1), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/taxonomy/skills/{code}/aliases | {alias:Text(1..128),expectedVersion:V} → 201 SkillAliasDto |"
@@ -2882,7 +2890,7 @@
     {
       "method": "DELETE",
       "path": "/api/v1/taxonomy/skills/{code}/aliases/{aliasId}",
-      "line": 802,
+      "line": 807,
       "contractSection": "BC12 — Skill taxonomy và academic catalogs (T4/T2→T2/T5/T1), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| DELETE /api/v1/taxonomy/skills/{code}/aliases/{aliasId} | {expectedVersion:V} → 200 MutationAck |"
@@ -2890,7 +2898,7 @@
     {
       "method": "GET",
       "path": "/api/v1/terms",
-      "line": 833,
+      "line": 838,
       "contractSection": "BC21 — TermReference và Eligibility (T5/T2→T1/T3/T4/T5), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "T5 sở hữu TermReference; T2 sở hữu StudentTermEligibility. Term ACTIVE là reference được phép dùng trong demo, không phải Placement đã bắt đầu. GET /api/v1/terms?schoolOrgId=U&page=0&size=25 trả 200 Page<TermReference>; schoolOrgId chỉ là filter trong scope đã xác thực của actor hoặc trusted service. POST /api/v1/school/student-eligibilities/decisions nhận EligibilityDecision, trả 200 StudentTermEligibility; yêu cầu student:eligibility:school:approve và delegation đúng school/term. GET /api/v1/students/me/eligibility?termId=U chỉ trả dữ liệu của principal; T5 đọc qua port nội bộ, không gọi HTTP vòng lại."
@@ -2898,7 +2906,7 @@
     {
       "method": "POST",
       "path": "/api/v1/school/student-eligibilities/decisions",
-      "line": 833,
+      "line": 838,
       "contractSection": "BC21 — TermReference và Eligibility (T5/T2→T1/T3/T4/T5), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "T5 sở hữu TermReference; T2 sở hữu StudentTermEligibility. Term ACTIVE là reference được phép dùng trong demo, không phải Placement đã bắt đầu. GET /api/v1/terms?schoolOrgId=U&page=0&size=25 trả 200 Page<TermReference>; schoolOrgId chỉ là filter trong scope đã xác thực của actor hoặc trusted service. POST /api/v1/school/student-eligibilities/decisions nhận EligibilityDecision, trả 200 StudentTermEligibility; yêu cầu student:eligibility:school:approve và delegation đúng school/term. GET /api/v1/students/me/eligibility?termId=U chỉ trả dữ liệu của principal; T5 đọc qua port nội bộ, không gọi HTTP vòng lại."
@@ -2906,7 +2914,7 @@
     {
       "method": "GET",
       "path": "/api/v1/students/me/eligibility",
-      "line": 833,
+      "line": 838,
       "contractSection": "BC21 — TermReference và Eligibility (T5/T2→T1/T3/T4/T5), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "T5 sở hữu TermReference; T2 sở hữu StudentTermEligibility. Term ACTIVE là reference được phép dùng trong demo, không phải Placement đã bắt đầu. GET /api/v1/terms?schoolOrgId=U&page=0&size=25 trả 200 Page<TermReference>; schoolOrgId chỉ là filter trong scope đã xác thực của actor hoặc trusted service. POST /api/v1/school/student-eligibilities/decisions nhận EligibilityDecision, trả 200 StudentTermEligibility; yêu cầu student:eligibility:school:approve và delegation đúng school/term. GET /api/v1/students/me/eligibility?termId=U chỉ trả dữ liệu của principal; T5 đọc qua port nội bộ, không gọi HTTP vòng lại."
@@ -2914,7 +2922,7 @@
     {
       "method": "GET",
       "path": "/api/v1/opportunities",
-      "line": 870,
+      "line": 875,
       "contractSection": "BC22 — Opportunity/Preference (T5/T2), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "GET /api/v1/opportunities nhận các filter của OpportunityPort.list và trả 200 Page<OpportunityView>; GET /api/v1/opportunities/{id} trả 200 OpportunityView. T5 là owner duy nhất của projection, opportunityId=cooperationId. Chỉ hiển thị Cooperation APPROVED, đúng school/student-term và publishedAt≤serverNow<closedAt. PUT /api/v1/school/cooperations/{id}/publication nhận {publishedAt:I,closedAt:I,expectedVersion:V}, trả 200 OpportunityView; yêu cầu opportunity:school:publish, delegation school/term và closedAt>publishedAt. Không tạo Demand thứ hai."
@@ -2922,7 +2930,7 @@
     {
       "method": "GET",
       "path": "/api/v1/opportunities/{id}",
-      "line": 870,
+      "line": 875,
       "contractSection": "BC22 — Opportunity/Preference (T5/T2), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "GET /api/v1/opportunities nhận các filter của OpportunityPort.list và trả 200 Page<OpportunityView>; GET /api/v1/opportunities/{id} trả 200 OpportunityView. T5 là owner duy nhất của projection, opportunityId=cooperationId. Chỉ hiển thị Cooperation APPROVED, đúng school/student-term và publishedAt≤serverNow<closedAt. PUT /api/v1/school/cooperations/{id}/publication nhận {publishedAt:I,closedAt:I,expectedVersion:V}, trả 200 OpportunityView; yêu cầu opportunity:school:publish, delegation school/term và closedAt>publishedAt. Không tạo Demand thứ hai."
@@ -2930,7 +2938,7 @@
     {
       "method": "PUT",
       "path": "/api/v1/school/cooperations/{id}/publication",
-      "line": 870,
+      "line": 875,
       "contractSection": "BC22 — Opportunity/Preference (T5/T2), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "GET /api/v1/opportunities nhận các filter của OpportunityPort.list và trả 200 Page<OpportunityView>; GET /api/v1/opportunities/{id} trả 200 OpportunityView. T5 là owner duy nhất của projection, opportunityId=cooperationId. Chỉ hiển thị Cooperation APPROVED, đúng school/student-term và publishedAt≤serverNow<closedAt. PUT /api/v1/school/cooperations/{id}/publication nhận {publishedAt:I,closedAt:I,expectedVersion:V}, trả 200 OpportunityView; yêu cầu opportunity:school:publish, delegation school/term và closedAt>publishedAt. Không tạo Demand thứ hai."
@@ -2938,7 +2946,7 @@
     {
       "method": "GET",
       "path": "/api/v1/students/me/preferences",
-      "line": 872,
+      "line": 877,
       "contractSection": "BC22 — Opportunity/Preference (T5/T2), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "T2 sở hữu GET /api/v1/students/me/preferences → 200 Page<PreferenceView> và POST cùng route nhận discriminated union SubmitPreference hoặc WithdrawPreference → 201 khi submit, 200 khi withdraw. Principal là student owner; yêu cầu student:preference:self:manage. POST /api/v1/school/preferences/{id}/review nhận {expectedVersion:V,reasonCode:Reason} → 200 PreferenceView, yêu cầu student:preference:school:review và delegation đúng school/term. UI T5 gọi route do T2 sở hữu; không tạo bảng preference canonical trong T5."
@@ -2946,7 +2954,7 @@
     {
       "method": "POST",
       "path": "/api/v1/school/preferences/{id}/review",
-      "line": 872,
+      "line": 877,
       "contractSection": "BC22 — Opportunity/Preference (T5/T2), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "T2 sở hữu GET /api/v1/students/me/preferences → 200 Page<PreferenceView> và POST cùng route nhận discriminated union SubmitPreference hoặc WithdrawPreference → 201 khi submit, 200 khi withdraw. Principal là student owner; yêu cầu student:preference:self:manage. POST /api/v1/school/preferences/{id}/review nhận {expectedVersion:V,reasonCode:Reason} → 200 PreferenceView, yêu cầu student:preference:school:review và delegation đúng school/term. UI T5 gọi route do T2 sở hữu; không tạo bảng preference canonical trong T5."
@@ -2954,7 +2962,7 @@
     {
       "method": "POST",
       "path": "/api/v1/students/me/preferences:",
-      "line": 876,
+      "line": 881,
       "contractSection": "BC22 — Opportunity/Preference (T5/T2), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "Ví dụ POST /api/v1/students/me/preferences:"
@@ -2962,7 +2970,7 @@
     {
       "method": "GET",
       "path": "/api/v1/invitations/me",
-      "line": 908,
+      "line": 913,
       "contractSection": "BC23 — Internship Invitation (T5 canonical → UI T2), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "T5 sở hữu GET /api/v1/invitations/me → 200 Page<InternshipInvitation>, GET /api/v1/invitations/{id} → 200 InternshipInvitation, POST /api/v1/invitations/{id}/decision nhận InvitationDecision và POST /api/v1/invitations/{id}/withdraw nhận InvitationWithdrawal → 200 InternshipInvitation. Student owner lấy từ principal, không từ body; mutation dùng key/CSRF. placementCandidateId là alias của proposalItemId, không phải entity danh tính mới. T2 chỉ sở hữu UI/intent reference, không lưu canonical invitation decision."
@@ -2970,7 +2978,7 @@
     {
       "method": "GET",
       "path": "/api/v1/invitations/{id}",
-      "line": 908,
+      "line": 913,
       "contractSection": "BC23 — Internship Invitation (T5 canonical → UI T2), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "T5 sở hữu GET /api/v1/invitations/me → 200 Page<InternshipInvitation>, GET /api/v1/invitations/{id} → 200 InternshipInvitation, POST /api/v1/invitations/{id}/decision nhận InvitationDecision và POST /api/v1/invitations/{id}/withdraw nhận InvitationWithdrawal → 200 InternshipInvitation. Student owner lấy từ principal, không từ body; mutation dùng key/CSRF. placementCandidateId là alias của proposalItemId, không phải entity danh tính mới. T2 chỉ sở hữu UI/intent reference, không lưu canonical invitation decision."
@@ -2978,7 +2986,7 @@
     {
       "method": "POST",
       "path": "/api/v1/invitations/{id}/decision",
-      "line": 908,
+      "line": 913,
       "contractSection": "BC23 — Internship Invitation (T5 canonical → UI T2), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "T5 sở hữu GET /api/v1/invitations/me → 200 Page<InternshipInvitation>, GET /api/v1/invitations/{id} → 200 InternshipInvitation, POST /api/v1/invitations/{id}/decision nhận InvitationDecision và POST /api/v1/invitations/{id}/withdraw nhận InvitationWithdrawal → 200 InternshipInvitation. Student owner lấy từ principal, không từ body; mutation dùng key/CSRF. placementCandidateId là alias của proposalItemId, không phải entity danh tính mới. T2 chỉ sở hữu UI/intent reference, không lưu canonical invitation decision."
@@ -2986,7 +2994,7 @@
     {
       "method": "POST",
       "path": "/api/v1/invitations/{id}/withdraw",
-      "line": 908,
+      "line": 913,
       "contractSection": "BC23 — Internship Invitation (T5 canonical → UI T2), version 1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "T5 sở hữu GET /api/v1/invitations/me → 200 Page<InternshipInvitation>, GET /api/v1/invitations/{id} → 200 InternshipInvitation, POST /api/v1/invitations/{id}/decision nhận InvitationDecision và POST /api/v1/invitations/{id}/withdraw nhận InvitationWithdrawal → 200 InternshipInvitation. Student owner lấy từ principal, không từ body; mutation dùng key/CSRF. placementCandidateId là alias của proposalItemId, không phải entity danh tính mới. T2 chỉ sở hữu UI/intent reference, không lưu canonical invitation decision."
@@ -2994,7 +3002,7 @@
     {
       "method": "GET",
       "path": "/api/v1/school/terms/{termId}/profile-sharing-policy",
-      "line": 963,
+      "line": 968,
       "contractSection": "BC24 — Consent/share/policy và ProfileAccess (T2/T5→T1 facade), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "T2 sở hữu consent; T5 sở hữu share và SchoolSharingPolicy; T1 façade kết hợp các kiểm tra authoritative mới nhất. Chưa có SchoolSharingPolicy thì version=0, allowedFields=[majorCode,skills,projects]; đây chỉ là giới hạn được phép xin consent, không tự cấp share hoặc quyền đọc hồ sơ. GET /api/v1/school/terms/{termId}/profile-sharing-policy trả 200 SchoolSharingPolicy; PUT cùng route nhận {expectedVersion:V,allowedFields:ProfileField[]}, trả 200 và yêu cầu student_profile:share:school:manage trong school delegation đúng term. School review cần student_profile:school:read và profileReadFields được cấp đích danh, không đòi consent dành cho enterprise. Trường A không đọc trường B; global ADMIN không bypass."
@@ -3002,7 +3010,7 @@
     {
       "method": "GET",
       "path": "/api/v1/students/me/consents",
-      "line": 965,
+      "line": 970,
       "contractSection": "BC24 — Consent/share/policy và ProfileAccess (T2/T5→T1 facade), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "GET /api/v1/students/me/consents nhận page,size, trả 200 Page<ConsentGrant> của principal. POST cùng route nhận GrantConsent, trả 201 ConsentGrant; POST /api/v1/students/me/consents/{id}/revoke nhận {expectedLineageVersion:V,reasonCode:Reason}, trả 200 ConsentGrant. Cả ba dùng student:consent:self:manage."
@@ -3010,7 +3018,7 @@
     {
       "method": "POST",
       "path": "/api/v1/students/me/consents/{id}/revoke",
-      "line": 965,
+      "line": 970,
       "contractSection": "BC24 — Consent/share/policy và ProfileAccess (T2/T5→T1 facade), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "GET /api/v1/students/me/consents nhận page,size, trả 200 Page<ConsentGrant> của principal. POST cùng route nhận GrantConsent, trả 201 ConsentGrant; POST /api/v1/students/me/consents/{id}/revoke nhận {expectedLineageVersion:V,reasonCode:Reason}, trả 200 ConsentGrant. Cả ba dùng student:consent:self:manage."
@@ -3018,7 +3026,7 @@
     {
       "method": "POST",
       "path": "/api/v1/school/proposals/{id}/shares",
-      "line": 967,
+      "line": 972,
       "contractSection": "BC24 — Consent/share/policy và ProfileAccess (T2/T5→T1 facade), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "POST /api/v1/school/proposals/{id}/shares nhận GrantProfileShare, trả 201 ProfileShareGrant; proposalItemId phải bằng path id. POST /api/v1/school/profile-shares/{id}/revoke nhận {expectedVersion:V,reasonCode:Reason}, trả 200 ProfileShareGrant. School cần student_profile:share:school:manage và delegation đúng school/term. Grant share đọc lại invitation và proposal hiện hành, chỉ cho proposal ACCEPTED với invitation ACCEPTED; valid consent và capacity được tái kiểm tra trong transaction, rồi proposal ACCEPTED→SHARED. Không đổi student decision bằng việc cấp share."
@@ -3026,7 +3034,7 @@
     {
       "method": "POST",
       "path": "/api/v1/school/profile-shares/{id}/revoke",
-      "line": 967,
+      "line": 972,
       "contractSection": "BC24 — Consent/share/policy và ProfileAccess (T2/T5→T1 facade), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "POST /api/v1/school/proposals/{id}/shares nhận GrantProfileShare, trả 201 ProfileShareGrant; proposalItemId phải bằng path id. POST /api/v1/school/profile-shares/{id}/revoke nhận {expectedVersion:V,reasonCode:Reason}, trả 200 ProfileShareGrant. School cần student_profile:share:school:manage và delegation đúng school/term. Grant share đọc lại invitation và proposal hiện hành, chỉ cho proposal ACCEPTED với invitation ACCEPTED; valid consent và capacity được tái kiểm tra trong transaction, rồi proposal ACCEPTED→SHARED. Không đổi student decision bằng việc cấp share."
@@ -3034,7 +3042,7 @@
     {
       "method": "GET",
       "path": "/api/v1/students/{studentUserId}/profile",
-      "line": 969,
+      "line": 974,
       "contractSection": "BC24 — Consent/share/policy và ProfileAccess (T2/T5→T1 facade), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "GET /api/v1/students/{studentUserId}/profile?termId=U&shareId=U&fields=majorCode,skills&purpose=INTERNSHIP_SELECTION trả 200 ProfileProjection qua guard façade T1/provider T2. Enterprise cần student_profile:shared:read, shareId hợp lệ và own recipient org; school review dùng purpose=SCHOOL_REVIEW và explicit field delegation. Không truyền shareId cho school review; owner self dùng BC11. Deny trả 403 hoặc foreign resource 404; giao tập field phải khác rỗng. Query fields không tăng quyền. Thay policy/consent/share có hiệu lực với request đọc tiếp theo; không cache response PII để bỏ qua guard."
@@ -3042,7 +3050,7 @@
     {
       "method": "POST",
       "path": "/api/v1/matching/evaluate",
-      "line": 1050,
+      "line": 1055,
       "contractSection": "BC32 — MatchRun/MatchResult/ProtectedAggregate (T4→T5/T2UI), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "POST /api/v1/matching/evaluate nhận EvaluateMatchRequest, trả 200 EvaluateMatchResponse sau khi hoàn tất; yêu cầu matching:run:execute, CSRF và key. Engine không khả dụng trả 503 MATCH_ENGINE_UNAVAILABLE, không trả partial counters. Audience được server xác định từ permission/scope, không cho browser chọn nhánh SCHOOL."
@@ -3050,7 +3058,7 @@
     {
       "method": "GET",
       "path": "/api/v1/matching/runs/{id}/summary",
-      "line": 1052,
+      "line": 1057,
       "contractSection": "BC32 — MatchRun/MatchResult/ProtectedAggregate (T4→T5/T2UI), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "GET /api/v1/matching/runs/{id}/summary trả 200 ProtectedAggregate cho enterprise sở hữu release với matching:enterprise:aggregate_read; run chưa hoàn tất trả 409 MATCH_RUN_NOT_READY. GET /api/v1/matching/runs/{id}/details nhận overallStatus,page,size, trả 200 SchoolMatchDetailsPage với results là Page chuẩn; chỉ matching:school:detail_read và delegation đúng school/term, enterprise nhận 403. POST /api/v1/matching/runs/{id}/nominate nhận NominateMatchRequest, trả 201 NominationResult; T4 dựng immutable candidate refs và gọi port T5 BC31. Đây là REST path nomination duy nhất. Endpoint barriers nhiều ô không được bật cho enterprise MVP; trả 409 PRIVACY_BREAKDOWN_DISABLED."
@@ -3058,7 +3066,7 @@
     {
       "method": "GET",
       "path": "/api/v1/matching/runs/{id}/details",
-      "line": 1052,
+      "line": 1057,
       "contractSection": "BC32 — MatchRun/MatchResult/ProtectedAggregate (T4→T5/T2UI), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "GET /api/v1/matching/runs/{id}/summary trả 200 ProtectedAggregate cho enterprise sở hữu release với matching:enterprise:aggregate_read; run chưa hoàn tất trả 409 MATCH_RUN_NOT_READY. GET /api/v1/matching/runs/{id}/details nhận overallStatus,page,size, trả 200 SchoolMatchDetailsPage với results là Page chuẩn; chỉ matching:school:detail_read và delegation đúng school/term, enterprise nhận 403. POST /api/v1/matching/runs/{id}/nominate nhận NominateMatchRequest, trả 201 NominationResult; T4 dựng immutable candidate refs và gọi port T5 BC31. Đây là REST path nomination duy nhất. Endpoint barriers nhiều ô không được bật cho enterprise MVP; trả 409 PRIVACY_BREAKDOWN_DISABLED."
@@ -3066,7 +3074,7 @@
     {
       "method": "POST",
       "path": "/api/v1/matching/runs/{id}/nominate",
-      "line": 1052,
+      "line": 1057,
       "contractSection": "BC32 — MatchRun/MatchResult/ProtectedAggregate (T4→T5/T2UI), version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "GET /api/v1/matching/runs/{id}/summary trả 200 ProtectedAggregate cho enterprise sở hữu release với matching:enterprise:aggregate_read; run chưa hoàn tất trả 409 MATCH_RUN_NOT_READY. GET /api/v1/matching/runs/{id}/details nhận overallStatus,page,size, trả 200 SchoolMatchDetailsPage với results là Page chuẩn; chỉ matching:school:detail_read và delegation đúng school/term, enterprise nhận 403. POST /api/v1/matching/runs/{id}/nominate nhận NominateMatchRequest, trả 201 NominationResult; T4 dựng immutable candidate refs và gọi port T5 BC31. Đây là REST path nomination duy nhất. Endpoint barriers nhiều ô không được bật cho enterprise MVP; trả 409 PRIVACY_BREAKDOWN_DISABLED."
@@ -3074,7 +3082,7 @@
     {
       "method": "POST",
       "path": "/api/v1/enterprise/verifications",
-      "line": 1165,
+      "line": 1170,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/enterprise/verifications | VerificationInput→201 VerificationDto DRAFT | enterprise_verification:enterprise:manage; owner từ membership; previous ID chỉ REJECTED cùng org/school;409 VERIFICATION_ALREADY_OPEN |"
@@ -3082,7 +3090,7 @@
     {
       "method": "PATCH",
       "path": "/api/v1/enterprise/verifications/{id}",
-      "line": 1166,
+      "line": 1171,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| PATCH /api/v1/enterprise/verifications/{id} | {expectedVersion:V,data:VerificationInput}→200 VerificationDto | Owner; DRAFT/NEEDS_CHANGES; school/lineage immutable; 422 VERIFICATION_DATA_INVALID |"
@@ -3090,7 +3098,7 @@
     {
       "method": "PATCH",
       "path": "/api/v1/enterprise/verifications/{id}/submit",
-      "line": 1167,
+      "line": 1172,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| PATCH /api/v1/enterprise/verifications/{id}/submit | {expectedVersion:V}→200 VerificationDto SUBMITTED | Owner; đủ contact/registration và ít nhất 1 evidence CLEAN đúng binding; current school; version; không sửa history |"
@@ -3098,7 +3106,7 @@
     {
       "method": "GET",
       "path": "/api/v1/enterprise/verifications",
-      "line": 1168,
+      "line": 1173,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/enterprise/verifications; GET /api/v1/school/verifications | page,size,schoolOrgId?,state?→200 Page<VerificationDto> | Enterprise own hoặc enterprise_verification:school:review + SD; không mở contact cross-school |"
@@ -3106,7 +3114,7 @@
     {
       "method": "GET",
       "path": "/api/v1/school/verifications",
-      "line": 1168,
+      "line": 1173,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/enterprise/verifications; GET /api/v1/school/verifications | page,size,schoolOrgId?,state?→200 Page<VerificationDto> | Enterprise own hoặc enterprise_verification:school:review + SD; không mở contact cross-school |"
@@ -3114,7 +3122,7 @@
     {
       "method": "PATCH",
       "path": "/api/v1/school/verifications/{id}/decision",
-      "line": 1169,
+      "line": 1174,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| PATCH /api/v1/school/verifications/{id}/decision | VerificationDecision→200 VerificationDto | enterprise_verification:school:review; SUBMITTED; REJECT/REQUEST_INFO cần reason, REQUEST_INFO nonempty missingFields; APPROVE missingFields=[] |"
@@ -3122,7 +3130,7 @@
     {
       "method": "POST",
       "path": "/api/v1/enterprise/demands",
-      "line": 1170,
+      "line": 1175,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/enterprise/demands | DemandInput→201 DemandDto DRAFT | cooperation:enterprise:create; org VERIFIED; school/term catalogs hợp lệ; không tự submit |"
@@ -3130,7 +3138,7 @@
     {
       "method": "PATCH",
       "path": "/api/v1/enterprise/demands/{id}",
-      "line": 1171,
+      "line": 1176,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| PATCH /api/v1/enterprise/demands/{id} | {expectedVersion:V,data:DemandInput}→200 DemandDto | cooperation:enterprise:create; DRAFT/unlocked; owner và term immutable sau tạo; 409 DEMAND_LOCKED; 422 INVALID_CRITERIA |"
@@ -3138,7 +3146,7 @@
     {
       "method": "GET",
       "path": "/api/v1/enterprise/demands",
-      "line": 1172,
+      "line": 1177,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/enterprise/demands | page,size,termId?,state?,includeDeleted?→200 Page<DemandDto> | Enterprise own; version/criteria đọc từ T5; không truyền criteria client vào matching |"
@@ -3146,7 +3154,7 @@
     {
       "method": "PATCH",
       "path": "/api/v1/enterprise/demands/{id}/reopen",
-      "line": 1173,
+      "line": 1178,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| PATCH /api/v1/enterprise/demands/{id}/reopen; PATCH /api/v1/enterprise/demands/{id}/restore | {expectedVersion:V,reasonCode:Reason}→200 DemandDto | Demand READY chưa Cooperation hoặc Cooperation REJECTED, không downstream hiệu lực; restore chỉ softDeletedAt!=null; 409 DEMAND_LOCKED; không dùng Demand CANCELLED |"
@@ -3154,7 +3162,7 @@
     {
       "method": "PATCH",
       "path": "/api/v1/enterprise/demands/{id}/restore",
-      "line": 1173,
+      "line": 1178,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| PATCH /api/v1/enterprise/demands/{id}/reopen; PATCH /api/v1/enterprise/demands/{id}/restore | {expectedVersion:V,reasonCode:Reason}→200 DemandDto | Demand READY chưa Cooperation hoặc Cooperation REJECTED, không downstream hiệu lực; restore chỉ softDeletedAt!=null; 409 DEMAND_LOCKED; không dùng Demand CANCELLED |"
@@ -3162,7 +3170,7 @@
     {
       "method": "POST",
       "path": "/api/v1/enterprise/cooperations",
-      "line": 1174,
+      "line": 1179,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/enterprise/cooperations | {demandId:U,expectedDemandVersion:V}→201 CooperationDto DRAFT | enterprise:cooperation:submit; unique demand; tạo draft chưa phải đã gửi; 409 COOPERATION_ALREADY_EXISTS |"
@@ -3170,7 +3178,7 @@
     {
       "method": "PATCH",
       "path": "/api/v1/enterprise/cooperations/{id}/submit",
-      "line": 1175,
+      "line": 1180,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| PATCH /api/v1/enterprise/cooperations/{id}/submit | {expectedVersion:V,expectedDemandVersion:V}→200 CooperationDto SUBMITTED | enterprise:cooperation:submit; DRAFT/NEEDS_CHANGES; internal validateAndReady; org VERIFIED + school APPROVED; snapshot immutable; 422 SCHOOL_VERIFICATION_REQUIRED |"
@@ -3178,7 +3186,7 @@
     {
       "method": "POST",
       "path": "/api/v1/enterprise/demands/submit-with-cooperation",
-      "line": 1176,
+      "line": 1181,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/enterprise/demands/submit-with-cooperation | {demandId:U,expectedDemandVersion:V}→200 {demand:DemandDto,cooperation:CooperationDto} | Canonical UI Gửi: existing saved DRAFT chưa Cooperation; create unique DRAFT coop + validateAndReady + submit atomic. Không nhúng một luồng tạo Demand thứ hai. Lỗi rollback, không SUBMITTED giả. |"
@@ -3186,7 +3194,7 @@
     {
       "method": "PATCH",
       "path": "/api/v1/enterprise/cooperations/{id}/reopen",
-      "line": 1177,
+      "line": 1182,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| PATCH /api/v1/enterprise/cooperations/{id}/reopen | {expectedVersion:V,reasonCode:Reason}→200 CooperationDto DRAFT | Owner; REJECTED, không downstream hiệu lực; giữ ID, append history. CANCELLED legacy read-only khi chưa có policy hủy được phê duyệt. |"
@@ -3194,7 +3202,7 @@
     {
       "method": "GET",
       "path": "/api/v1/school/cooperations",
-      "line": 1178,
+      "line": 1183,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/school/cooperations; GET /api/v1/enterprise/cooperations | page,size,termId?,state?→200 Page<CooperationDto> | cooperation:school:review+SD hoặc enterprise owner |"
@@ -3202,7 +3210,7 @@
     {
       "method": "GET",
       "path": "/api/v1/enterprise/cooperations",
-      "line": 1178,
+      "line": 1183,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/school/cooperations; GET /api/v1/enterprise/cooperations | page,size,termId?,state?→200 Page<CooperationDto> | cooperation:school:review+SD hoặc enterprise owner |"
@@ -3210,7 +3218,7 @@
     {
       "method": "PATCH",
       "path": "/api/v1/school/cooperations/{id}/decision",
-      "line": 1179,
+      "line": 1184,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| PATCH /api/v1/school/cooperations/{id}/decision | CooperationDecision→200 CooperationDto | cooperation:school:review+SD; chỉ SUBMITTED; reason cho REJECT/REQUEST_INFO; APPROVE giữ snapshot, không sửa Demand |"
@@ -3218,7 +3226,7 @@
     {
       "method": "GET",
       "path": "/api/v1/school/cooperations/{id}/submission-history",
-      "line": 1180,
+      "line": 1185,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/school/cooperations/{id}/submission-history | page,size→200 Page<SubmissionHistory> | Delegated reviewer; snapshot theo submissionNo, không raw credentials/PII |"
@@ -3226,7 +3234,7 @@
     {
       "method": "GET",
       "path": "/api/v1/school/cooperations/{id}/capacity",
-      "line": 1181,
+      "line": 1186,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/school/cooperations/{id}/capacity | none→200 CapacityView | t5:proposal:manage+SD; T90/R4 exact counters; no hidden student profile |"
@@ -3234,7 +3242,7 @@
     {
       "method": "GET",
       "path": "/api/v1/school/cooperations/{id}/proposals",
-      "line": 1182,
+      "line": 1187,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/school/cooperations/{id}/proposals; GET /api/v1/enterprise/cooperations/{id}/proposals | page,size,state?→200 Page<ProposalItemView> | School t5:proposal:manage; enterprise proposal:enterprise:decide; enterprise trả studentUserId chỉ nếu valid explicit share, nếu chưa share thì item bị lọc, không ID leakage |"
@@ -3242,7 +3250,7 @@
     {
       "method": "GET",
       "path": "/api/v1/enterprise/cooperations/{id}/proposals",
-      "line": 1182,
+      "line": 1187,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/school/cooperations/{id}/proposals; GET /api/v1/enterprise/cooperations/{id}/proposals | page,size,state?→200 Page<ProposalItemView> | School t5:proposal:manage; enterprise proposal:enterprise:decide; enterprise trả studentUserId chỉ nếu valid explicit share, nếu chưa share thì item bị lọc, không ID leakage |"
@@ -3250,7 +3258,7 @@
     {
       "method": "POST",
       "path": "/api/v1/school/proposals/{id}/invite",
-      "line": 1183,
+      "line": 1188,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/school/proposals/{id}/invite | {expectedVersion:V,expiresAt:I\\|null}→202 InternshipInvitation | t5:proposal:manage; RESERVED còn reservation. null dùng min(now+7ngày,demand.deadline,term.endDate cuối ngày UTC); giá trị explicit phải >now,≤now+30ngày và không vượt hạn tuyển/kỳ, sai trả 422 INVITATION_EXPIRY_INVALID; một invitation hiệu lực/item |"
@@ -3258,7 +3266,7 @@
     {
       "method": "PATCH",
       "path": "/api/v1/enterprise/proposals/{id}/decision",
-      "line": 1184,
+      "line": 1189,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| PATCH /api/v1/enterprise/proposals/{id}/decision | {expectedVersion:V,decision:ACCEPT\\|DECLINE,reasonCode:Reason\\|null}→200 ProposalItemView | proposal:enterprise:decide; owner SHARED, current consent/share; DECLINE reason; ACCEPT→ENTERPRISE_ACCEPTED; không tạo Placement |"
@@ -3266,7 +3274,7 @@
     {
       "method": "POST",
       "path": "/api/v1/school/placements",
-      "line": 1185,
+      "line": 1190,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/school/placements | CreatePlacement→201 PlacementView PENDING_APPROVAL | placement:school:write+SD; accepted SV, consent/share, enterprise accepted, schoolApproved, criteria/profile current;422 PLACEMENT_GATE_FAILED |"
@@ -3274,7 +3282,7 @@
     {
       "method": "POST",
       "path": "/api/v1/placements/{id}/approve",
-      "line": 1186,
+      "line": 1191,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/placements/{id}/approve | PlacementCommand→200 PlacementView APPROVED | placement:school:write+SD; PENDING_APPROVAL; recheck tất cả gates/quota; unique active-key;409 ACTIVE_PLACEMENT_EXISTS/CAPACITY_EXCEEDED |"
@@ -3282,7 +3290,7 @@
     {
       "method": "POST",
       "path": "/api/v1/placements/{id}/activate",
-      "line": 1187,
+      "line": 1192,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/placements/{id}/activate | PlacementCommand→200 PlacementView ACTIVE | placement:school:write+SD; APPROVED; now>=effectiveAt, valid term/org/school verification;409 PLACEMENT_NOT_EFFECTIVE; scheduler cùng guard |"
@@ -3290,7 +3298,7 @@
     {
       "method": "POST",
       "path": "/api/v1/placements/{id}/cancel",
-      "line": 1188,
+      "line": 1193,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/placements/{id}/cancel | PlacementCommand→200 PlacementView CANCELLED | placement:school:write+SD; PENDING_APPROVAL/APPROVED/ACTIVE; reason; terminal409 STATE_CONFLICT |"
@@ -3298,7 +3306,7 @@
     {
       "method": "GET",
       "path": "/api/v1/enterprise/placements",
-      "line": 1189,
+      "line": 1194,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/enterprise/placements; GET /api/v1/school/placements | page,size,termId?,demandId?,cooperationId?,state?→200 Page<PlacementView> | Owner enterprise hoặc school delegate; projection không thêm student name/PII mặc định |"
@@ -3306,7 +3314,7 @@
     {
       "method": "GET",
       "path": "/api/v1/school/placements",
-      "line": 1189,
+      "line": 1194,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/enterprise/placements; GET /api/v1/school/placements | page,size,termId?,demandId?,cooperationId?,state?→200 Page<PlacementView> | Owner enterprise hoặc school delegate; projection không thêm student name/PII mặc định |"
@@ -3314,7 +3322,7 @@
     {
       "method": "GET",
       "path": "/api/v1/enterprise/placements/summary",
-      "line": 1190,
+      "line": 1195,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/enterprise/placements/summary; GET /api/v1/school/placements/summary | demandId→200 PlacementSummary | Cùng read scope; target từ approved submission, placed DISTINCT APPROVED/ACTIVE/COMPLETED; remaining=max(0,target-placed); pending DISTINCT chưa Placement |"
@@ -3322,7 +3330,7 @@
     {
       "method": "GET",
       "path": "/api/v1/school/placements/summary",
-      "line": 1190,
+      "line": 1195,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/enterprise/placements/summary; GET /api/v1/school/placements/summary | demandId→200 PlacementSummary | Cùng read scope; target từ approved submission, placed DISTINCT APPROVED/ACTIVE/COMPLETED; remaining=max(0,target-placed); pending DISTINCT chưa Placement |"
@@ -3330,7 +3338,7 @@
     {
       "method": "GET",
       "path": "/api/v1/enterprise/placements/{id}/internship-link",
-      "line": 1191,
+      "line": 1196,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/enterprise/placements/{id}/internship-link; GET /api/v1/school/placements/{id}/internship-link | none→200 InternshipLink | Scoped owner; pending event→WAITING_HANDOFF/null route; available→relative /workspace/cases/{caseId}; thiếu adapter503 DEPENDENCY_UNAVAILABLE |"
@@ -3338,7 +3346,7 @@
     {
       "method": "GET",
       "path": "/api/v1/school/placements/{id}/internship-link",
-      "line": 1191,
+      "line": 1196,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/enterprise/placements/{id}/internship-link; GET /api/v1/school/placements/{id}/internship-link | none→200 InternshipLink | Scoped owner; pending event→WAITING_HANDOFF/null route; available→relative /workspace/cases/{caseId}; thiếu adapter503 DEPENDENCY_UNAVAILABLE |"
@@ -3346,7 +3354,7 @@
     {
       "method": "POST",
       "path": "/api/v1/school/cooperations/{id}/proposal-batches",
-      "line": 1195,
+      "line": 1200,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "**Một canonical nomination path:** POST /api/v1/matching/runs/{id}/nominate (BC32) → MatchingPort → ProposalNominationPort (BC31). Các target cũ POST /api/v1/school/cooperations/{id}/proposal-batches và POST /api/v1/school/proposal-batches/{id}/items chưa có implementation T5 trong checkout; đề xuất thay chúng trong SRS bằng path này, không tạo route ghi batch thứ hai. Một batch/cooperation; lần đầu expectedBatchVersion=null, append cùng batch dùng version hiện hành."
@@ -3354,7 +3362,7 @@
     {
       "method": "POST",
       "path": "/api/v1/school/proposal-batches/{id}/items",
-      "line": 1195,
+      "line": 1200,
       "contractSection": "CP-T5UI1 — Façade T5 dùng chung với giao diện T2/T3/T4, version1.0",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "**Một canonical nomination path:** POST /api/v1/matching/runs/{id}/nominate (BC32) → MatchingPort → ProposalNominationPort (BC31). Các target cũ POST /api/v1/school/cooperations/{id}/proposal-batches và POST /api/v1/school/proposal-batches/{id}/items chưa có implementation T5 trong checkout; đề xuất thay chúng trong SRS bằng path này, không tạo route ghi batch thứ hai. Một batch/cooperation; lần đầu expectedBatchVersion=null, append cùng batch dùng version hiện hành."
@@ -3362,7 +3370,7 @@
     {
       "method": "GET",
       "path": "/api/v1/admin/audit-logs",
-      "line": 1467,
+      "line": 1472,
       "contractSection": "E.4. Compatibility mapping và domain event",
       "status": "CORE_IMPLEMENTED",
       "evidenceLine": "AuditEventPort.write(actor, {action:AuditAction,resourceType:string,resourceId:U|null,organizationId:U|null,result:SUCCESS|FAILURE|DENIED,reasonCode:Reason|null,metadata:allowlist-object,eventVersion:1}) chạy cùng transaction owner. Actor/request/source lấy trusted context; API user không có route ghi action tùy ý. GET /api/v1/admin/audit-logs giữ core filter/page contract và audit:global:read; metadata trả chỉ registry-safe, không sửa/xóa tùy tiện."
@@ -3370,7 +3378,7 @@
     {
       "method": "POST",
       "path": "/api/v1/school/student-imports/preview",
-      "line": 1502,
+      "line": 1507,
       "contractSection": "F.1. Upload, preview, tiến độ, rows, confirm, resume và resend",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/school/student-imports/preview | multipart file,termId; key header | 201 ImportPreviewDto, job PREVIEW_READY; rows page0,size25 | 413 FILE_TOO_LARGE;422 UNSUPPORTED_FILE_FORMAT/FILE_STRUCTURE_INVALID/IMPORT_ROW_LIMIT_EXCEEDED;503 SCANNER_UNAVAILABLE |"
@@ -3378,7 +3386,7 @@
     {
       "method": "POST",
       "path": "/api/v1/school/student-imports/{importJobId}/confirm",
-      "line": 1503,
+      "line": 1508,
       "contractSection": "F.1. Upload, preview, tiến độ, rows, confirm, resume và resend",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/school/student-imports/{importJobId}/confirm | ConfirmImport; key header | 202 ImportAccepted | 409 PREVIEW_EXPIRED/PREVIEW_STALE/STATE_CONFLICT;422 INVALID_ROW_SELECTION |"
@@ -3386,7 +3394,7 @@
     {
       "method": "GET",
       "path": "/api/v1/school/student-imports/{importJobId}",
-      "line": 1504,
+      "line": 1509,
       "contractSection": "F.1. Upload, preview, tiến độ, rows, confirm, resume và resend",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/school/student-imports/{importJobId} | none | 200 ImportJobDto | 404 foreign/missing; không trả token |"
@@ -3394,7 +3402,7 @@
     {
       "method": "GET",
       "path": "/api/v1/school/student-imports/{importJobId}/rows",
-      "line": 1505,
+      "line": 1510,
       "contractSection": "F.1. Upload, preview, tiến độ, rows, confirm, resume và resend",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| GET /api/v1/school/student-imports/{importJobId}/rows | page,size; validationState?,rowState?,mailState?; sort=rowNo ASC,id ASC | 200 Page<ImportRowDto> | 400 INVALID_PAGINATION/INVALID_REQUEST |"
@@ -3402,7 +3410,7 @@
     {
       "method": "POST",
       "path": "/api/v1/school/student-imports/{importJobId}/resume",
-      "line": 1506,
+      "line": 1511,
       "contractSection": "F.1. Upload, preview, tiến độ, rows, confirm, resume và resend",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/school/student-imports/{importJobId}/resume | ResumeImport; key header | 202 ImportAccepted khi còn unfinished rows;200 ImportJobDto terminal khi chỉ cần recovery finalize | 409 JOB_IN_PROGRESS nếu lease đang chạy;409 STATE_CONFLICT nếu không FAILED |"
@@ -3410,7 +3418,7 @@
     {
       "method": "POST",
       "path": "/api/v1/school/student-imports/{importJobId}/rows/{rowId}/resend",
-      "line": 1507,
+      "line": 1512,
       "contractSection": "F.1. Upload, preview, tiến độ, rows, confirm, resume và resend",
       "status": "TARGET_NOT_IMPLEMENTED",
       "evidenceLine": "| POST /api/v1/school/student-imports/{importJobId}/rows/{rowId}/resend | ResendActivation; key header | 202 ResendAccepted; job/counters không đổi | 409 ACCOUNT_ALREADY_ACTIVE/ACTIVATION_NOT_PENDING/STATE_CONFLICT/MAIL_SEND_IN_PROGRESS;429 RESEND_RATE_LIMITED |"
@@ -3509,252 +3517,252 @@
     },
     {
       "signature": "StudentProfileSnapshotPort.captureForMatching(actor:ActorContext,request:{termId:U,expectedAcademicCatalogVersion:Code,expectedTaxonomyVersion:Code},mutation:MutationContext):Result<SnapshotSet>",
-      "line": 740,
+      "line": 745,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "StudentProfileSnapshotPort.readPage(actor:ActorContext,request:{datasetSnapshotId:U,cursor:Text(1..512)|null,size:int[1..100]}):Result<SnapshotPage>",
-      "line": 741,
+      "line": 746,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "StudentProfileSnapshotPort.readSnapshot(actor:ActorContext,profileSnapshotId:U):Result<ProfileSnapshot>",
-      "line": 742,
+      "line": 747,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "StudentProfileSnapshotPort.assertCurrentForDecision(actor:ActorContext,request:{refs:DecisionProfileRef[1..5000]}):Result<ProfileDecisionValidation>",
-      "line": 743,
+      "line": 748,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "CompletenessPort.evaluate(actor:ActorContext,request:{profile:ProfileSnapshot,studentTermPresent:boolean,majorCodeValid:boolean}):Result<CompletenessResult>",
-      "line": 744,
+      "line": 749,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "SkillCatalogPort.list(actor:ActorContext,request:{q:Text(1..128)|null,includeDeprecated:boolean,page:int,size:int}):Result<SkillCatalogPage>",
-      "line": 784,
+      "line": 789,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "SkillCatalogPort.resolve(actor:ActorContext,request:ResolveSkillsRequest):Result<ResolveSkillsResponse>",
-      "line": 785,
+      "line": 790,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "AcademicCatalogPort.list(actor:ActorContext,request:{termId:U,kind:MAJOR|SUBJECT|ORIENTATION,expectedCatalogVersion:Code|null,page:int,size:int}):Result<AcademicCatalogPage>",
-      "line": 786,
+      "line": 791,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "TermReadPort.get(actor:ActorContext,termId:U):Result<TermReference>",
-      "line": 828,
+      "line": 833,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "StudentEligibilityPort.read(actor:ActorContext,request:{studentUserId:U,termId:U}):Result<StudentTermEligibility>",
-      "line": 829,
+      "line": 834,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "StudentEligibilityPort.decide(actor:ActorContext,request:EligibilityDecision,mutation:MutationContext):Result<StudentTermEligibility>",
-      "line": 830,
+      "line": 835,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "StudentEligibilityPort.assertEligibleForPlacement(actor:ActorContext,request:{studentUserId:U,termId:U,expectedVersion:V}):Result<StudentTermEligibility>",
-      "line": 831,
+      "line": 836,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "OpportunityPort.list(actor:ActorContext,request:{termId:U,q:Text(1..150)|null,majorCode:Code|null,enterpriseOrgId:U|null,page:int,size:int}):Result<Page<OpportunityView>>",
-      "line": 864,
+      "line": 869,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "OpportunityPort.publish(actor:ActorContext,request:{cooperationId:U,publishedAt:I,closedAt:I,expectedVersion:V},mutation:MutationContext):Result<OpportunityView>",
-      "line": 865,
+      "line": 870,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "PreferencePort.submit(actor:ActorContext,request:SubmitPreference,mutation:MutationContext):Result<PreferenceView>",
-      "line": 866,
+      "line": 871,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "PreferencePort.withdraw(actor:ActorContext,request:WithdrawPreference,mutation:MutationContext):Result<PreferenceView>",
-      "line": 867,
+      "line": 872,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "PreferencePort.review(actor:ActorContext,preferenceId:U,request:{expectedVersion:V,reasonCode:Reason},mutation:MutationContext):Result<PreferenceView>",
-      "line": 868,
+      "line": 873,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "InternshipInvitationPort.listMine(actor:ActorContext,request:{state:InvitationState|null,termId:U|null,page:int,size:int}):Result<Page<InternshipInvitation>>",
-      "line": 903,
+      "line": 908,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "InternshipInvitationPort.readMine(actor:ActorContext,invitationId:U):Result<InternshipInvitation>",
-      "line": 904,
+      "line": 909,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "InternshipInvitationPort.decide(actor:ActorContext,invitationId:U,request:InvitationDecision,mutation:MutationContext):Result<InternshipInvitation>",
-      "line": 905,
+      "line": 910,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "InternshipInvitationPort.withdraw(actor:ActorContext,invitationId:U,request:InvitationWithdrawal,mutation:MutationContext):Result<InternshipInvitation>",
-      "line": 906,
+      "line": 911,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "SchoolSharingPolicyPort.get(actor:ActorContext,schoolOrgId:U,termId:U):Result<SchoolSharingPolicy>",
-      "line": 951,
-      "status": "TARGET_NOT_IMPLEMENTED"
-    },
-    {
-      "signature": "SchoolSharingPolicyPort.update(actor:ActorContext,termId:U,request:{expectedVersion:V,allowedFields:ProfileField[]},mutation:MutationContext):Result<SchoolSharingPolicy>",
-      "line": 952,
-      "status": "TARGET_NOT_IMPLEMENTED"
-    },
-    {
-      "signature": "StudentConsentPort.grant(actor:ActorContext,request:GrantConsent,mutation:MutationContext):Result<ConsentGrant>",
-      "line": 953,
-      "status": "TARGET_NOT_IMPLEMENTED"
-    },
-    {
-      "signature": "StudentConsentPort.revoke(actor:ActorContext,consentId:U,request:{expectedLineageVersion:V,reasonCode:Reason},mutation:MutationContext):Result<ConsentGrant>",
-      "line": 954,
-      "status": "TARGET_NOT_IMPLEMENTED"
-    },
-    {
-      "signature": "StudentConsentPort.check(actor:ActorContext,request:GrantCheck):Result<GrantValidation>",
-      "line": 955,
-      "status": "TARGET_NOT_IMPLEMENTED"
-    },
-    {
-      "signature": "StudentConsentPort.lockAndCheckForShare(actor:ActorContext,request:GrantCheck):Result<GrantValidation>",
       "line": 956,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
-      "signature": "ProfileSharePort.grant(actor:ActorContext,request:GrantProfileShare,mutation:MutationContext):Result<ProfileShareGrant>",
+      "signature": "SchoolSharingPolicyPort.update(actor:ActorContext,termId:U,request:{expectedVersion:V,allowedFields:ProfileField[]},mutation:MutationContext):Result<SchoolSharingPolicy>",
       "line": 957,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
-      "signature": "ProfileSharePort.revoke(actor:ActorContext,shareId:U,request:{expectedVersion:V,reasonCode:Reason},mutation:MutationContext):Result<ProfileShareGrant>",
+      "signature": "StudentConsentPort.grant(actor:ActorContext,request:GrantConsent,mutation:MutationContext):Result<ConsentGrant>",
       "line": 958,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
-      "signature": "ProfileSharePort.check(actor:ActorContext,request:GrantCheck):Result<GrantValidation>",
+      "signature": "StudentConsentPort.revoke(actor:ActorContext,consentId:U,request:{expectedLineageVersion:V,reasonCode:Reason},mutation:MutationContext):Result<ConsentGrant>",
       "line": 959,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
-      "signature": "ProfileAccessPort.decide(actor:ActorContext,request:ProfileAccessQuery):Result<ProfileAccessDecision>",
+      "signature": "StudentConsentPort.check(actor:ActorContext,request:GrantCheck):Result<GrantValidation>",
       "line": 960,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
-      "signature": "StudentProfileProjectionPort.readAllowed(actor:ActorContext,request:ProfileAccessQuery,decision:ProfileAccessDecision):Result<ProfileProjection>",
+      "signature": "StudentConsentPort.lockAndCheckForShare(actor:ActorContext,request:GrantCheck):Result<GrantValidation>",
       "line": 961,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
+      "signature": "ProfileSharePort.grant(actor:ActorContext,request:GrantProfileShare,mutation:MutationContext):Result<ProfileShareGrant>",
+      "line": 962,
+      "status": "TARGET_NOT_IMPLEMENTED"
+    },
+    {
+      "signature": "ProfileSharePort.revoke(actor:ActorContext,shareId:U,request:{expectedVersion:V,reasonCode:Reason},mutation:MutationContext):Result<ProfileShareGrant>",
+      "line": 963,
+      "status": "TARGET_NOT_IMPLEMENTED"
+    },
+    {
+      "signature": "ProfileSharePort.check(actor:ActorContext,request:GrantCheck):Result<GrantValidation>",
+      "line": 964,
+      "status": "TARGET_NOT_IMPLEMENTED"
+    },
+    {
+      "signature": "ProfileAccessPort.decide(actor:ActorContext,request:ProfileAccessQuery):Result<ProfileAccessDecision>",
+      "line": 965,
+      "status": "TARGET_NOT_IMPLEMENTED"
+    },
+    {
+      "signature": "StudentProfileProjectionPort.readAllowed(actor:ActorContext,request:ProfileAccessQuery,decision:ProfileAccessDecision):Result<ProfileProjection>",
+      "line": 966,
+      "status": "TARGET_NOT_IMPLEMENTED"
+    },
+    {
       "signature": "DemandCriteriaPort.read(actor:ActorContext,request:{demandId:U,expectedCriteriaVersion:V|null,purpose:EVALUATE|NOMINATE|PLACEMENT}):Result<DemandCriteriaSnapshot>",
-      "line": 1001,
+      "line": 1006,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "ProposalNominationPort.nominate(actor:ActorContext,request:NominateCandidates,mutation:MutationContext):Result<NominationResult>",
-      "line": 1002,
+      "line": 1007,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "MatchingPort.evaluate(actor:ActorContext,request:EvaluateMatchRequest,mutation:MutationContext):Result<EvaluateMatchResponse>",
-      "line": 1044,
+      "line": 1049,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "MatchingPort.readRunForNomination(actor:ActorContext,matchRunId:U):Result<MatchRunRef>",
-      "line": 1045,
+      "line": 1050,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "MatchingPort.details(actor:ActorContext,matchRunId:U,request:{overallStatus:MATCH|MISSING_DATA|NOT_MATCH,page:int,size:int}):Result<SchoolMatchDetailsPage>",
-      "line": 1046,
+      "line": 1051,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "MatchingPort.protectedSummary(actor:ActorContext,matchRunId:U):Result<ProtectedAggregate>",
-      "line": 1047,
+      "line": 1052,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "MatchingPort.nominate(actor:ActorContext,matchRunId:U,request:NominateMatchRequest,mutation:MutationContext):Result<NominationResult>",
-      "line": 1048,
+      "line": 1053,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "PlacementReadPort.readForInternship(actor:ActorContext,placementId:U):Result<PlacementView>",
-      "line": 1083,
+      "line": 1088,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "PlacementReadPort.readCurrentForGuard(actor:ActorContext,placementId:U):Result<PlacementView>",
-      "line": 1084,
+      "line": 1089,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "InternshipCaseReadPort.participant(actor:ActorContext,caseId:U):Result<CaseParticipantRef>",
-      "line": 1085,
+      "line": 1090,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "InternshipCaseReadPort.readClosureProof(actor:ActorContext,caseId:U):Result<CaseClosureProof>",
-      "line": 1086,
+      "line": 1091,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "OrganizationSchoolVerificationPort.get(actor:ActorContext,enterpriseOrgId:U,schoolOrgId:U):Result<SchoolVerificationView>",
-      "line": 1118,
+      "line": 1123,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "AuditEventPort.write(actor, {action:AuditAction,resourceType:string,resourceId:U|null,organizationId:U|null,result:SUCCESS|FAILURE|DENIED,reasonCode:Reason|null,metadata:allowlist-object,eventVersion:1}) chạy cùng transaction owner. Actor/request/source lấy trusted context; API user không có route ghi action tùy ý. GET /api/v1/admin/audit-logs giữ core filter/page contract và audit:global:read; metadata trả chỉ registry-safe, không sửa/xóa tùy tiện.",
-      "line": 1467,
+      "line": 1472,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "AccountProvisioningPort.inspectForOnboarding(actor:ActorContext,input:{emailCanonical:Email,scopeOrgId:U,purpose:ROSTER|MENTOR}):Result<AccountOnboardingRef>",
-      "line": 1522,
-      "status": "TARGET_NOT_IMPLEMENTED"
-    },
-    {
-      "signature": "StudentRosterProvisionPort.ensureRoster(actor,EnsureRoster,mutation):Result<RosterProvisionResult>",
       "line": 1527,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
+      "signature": "StudentRosterProvisionPort.ensureRoster(actor,EnsureRoster,mutation):Result<RosterProvisionResult>",
+      "line": 1532,
+      "status": "TARGET_NOT_IMPLEMENTED"
+    },
+    {
       "signature": "StudentRosterProvisionPort.bindActivatedUser(actor,BindActivatedUser,mutation):Result<BindResult>",
-      "line": 1528,
+      "line": 1533,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "StudentRosterProvisionPort.readForActivation(actor,rosterId:U):Result<{rosterId:U,rosterVersion:V,schoolOrgId:U,studentCode:Text(1..32),emailCanonical:Email,userId:U|null,termIds:U[]}>",
-      "line": 1529,
+      "line": 1534,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
       "signature": "AuditEventPort.write(actor:ActorContext,input:AuditEventInput):void",
-      "line": 1822,
+      "line": 1827,
       "status": "TARGET_NOT_IMPLEMENTED"
     }
   ],
@@ -3966,7 +3974,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 740,
+      "line": 745,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -3981,7 +3989,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 741,
+      "line": 746,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -3996,7 +4004,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 742,
+      "line": 747,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4011,7 +4019,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 743,
+      "line": 748,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4026,7 +4034,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 744,
+      "line": 749,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4041,7 +4049,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 784,
+      "line": 789,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4056,7 +4064,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 785,
+      "line": 790,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4071,7 +4079,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 786,
+      "line": 791,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4086,7 +4094,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 828,
+      "line": 833,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4101,7 +4109,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 829,
+      "line": 834,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4121,7 +4129,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 830,
+      "line": 835,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4136,7 +4144,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 831,
+      "line": 836,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4151,7 +4159,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 864,
+      "line": 869,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4171,7 +4179,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 865,
+      "line": 870,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4191,7 +4199,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 866,
+      "line": 871,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4211,7 +4219,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 867,
+      "line": 872,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4231,7 +4239,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 868,
+      "line": 873,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4246,7 +4254,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 903,
+      "line": 908,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4261,7 +4269,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 904,
+      "line": 909,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4281,7 +4289,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 905,
+      "line": 910,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4301,7 +4309,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 906,
+      "line": 911,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4316,7 +4324,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 951,
+      "line": 956,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4336,7 +4344,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 952,
+      "line": 957,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4356,7 +4364,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 953,
+      "line": 958,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4376,7 +4384,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 954,
+      "line": 959,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4391,7 +4399,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 955,
+      "line": 960,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4406,7 +4414,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 956,
+      "line": 961,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4426,7 +4434,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 957,
+      "line": 962,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4446,7 +4454,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 958,
+      "line": 963,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4461,7 +4469,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 959,
+      "line": 964,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4476,7 +4484,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 960,
+      "line": 965,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4491,7 +4499,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 961,
+      "line": 966,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4506,7 +4514,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 1001,
+      "line": 1006,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4526,7 +4534,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 1002,
+      "line": 1007,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4546,7 +4554,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 1044,
+      "line": 1049,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4561,7 +4569,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 1045,
+      "line": 1050,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4576,7 +4584,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 1046,
+      "line": 1051,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4591,7 +4599,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 1047,
+      "line": 1052,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4611,7 +4619,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 1048,
+      "line": 1053,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4626,7 +4634,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 1083,
+      "line": 1088,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4641,7 +4649,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 1084,
+      "line": 1089,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4656,7 +4664,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 1085,
+      "line": 1090,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4671,7 +4679,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 1086,
+      "line": 1091,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4686,7 +4694,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 1087,
+      "line": 1092,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4701,7 +4709,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 1088,
+      "line": 1093,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4716,7 +4724,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 1118,
+      "line": 1123,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4731,7 +4739,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 1522,
+      "line": 1527,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4751,7 +4759,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 1527,
+      "line": 1532,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4771,7 +4779,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 1528,
+      "line": 1533,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4786,7 +4794,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 1529,
+      "line": 1534,
       "status": "TARGET_NOT_IMPLEMENTED"
     },
     {
@@ -4801,7 +4809,7 @@
           "source": "SERVER_ONLY"
         }
       ],
-      "line": 1822,
+      "line": 1827,
       "status": "TARGET_NOT_IMPLEMENTED"
     }
   ],
@@ -4975,13 +4983,13 @@
     "src/main/java/vn/utbridora/auth/api/AuthController.java": "2f7ce43cc64310a7c3f3969ef6c16f28372289f74d08a2dfdd7b7f21dc81e815",
     "src/main/java/vn/utbridora/auth/api/DemoOrganizationVerificationController.java": "63bb6dff43258261edd682218548672ecb22189018bb1d1d9200a83e8aedf688",
     "src/main/java/vn/utbridora/auth/api/DemoScopeController.java": "cc9f4f48b67640582df3b7cfa0512c75e52a2b3862e2cc273eaf85ef465dc628",
-    "src/main/java/vn/utbridora/auth/audit/AuditAction.java": "2a98c9c9d4a67275e0d5dfe7bfe67d3ab2bd9747d4998bc1b6a42542ae72fba4",
+    "src/main/java/vn/utbridora/auth/audit/AuditAction.java": "d7986b48dd204b96e0a569588e07c14a72f22022bf2e371436eed834da55d706",
     "src/main/java/vn/utbridora/auth/audit/AuditLog.java": "2f5549c5155cdc582a798757e00507c84efbedc5054f803a65f55acdb4dc40bc",
     "src/main/java/vn/utbridora/auth/audit/AuditLogView.java": "1fbd804b7ee65b23810c25edf454a8070d052267a83257ed3891800910d1ce90",
     "src/main/java/vn/utbridora/auth/audit/AuditRepository.java": "54374400a410a150b54b6527be0b85aed27f62ab7aaa9224d8f0c82ad07bf5df",
     "src/main/java/vn/utbridora/auth/audit/AuditService.java": "0ab570f754646cddf4439e724302294cf96449bb5d0b444e042e993a69f86e76",
     "src/main/java/vn/utbridora/auth/audit/RequestIdFilter.java": "f81047b6fd1e918a5936885f60dc3c964f025dcc51d55cf1d310cc13152ae59d",
-    "src/main/java/vn/utbridora/auth/audit/WorkflowAuditRegistry.java": "193edc4fd886620031becc56c841373018412ef4c50ceaf6056677cbdeaf3b43",
+    "src/main/java/vn/utbridora/auth/audit/WorkflowAuditRegistry.java": "0af77c0287759d06a354ce13ea61085695cb6c2e0028e6df00c01a31191879e3",
     "src/main/java/vn/utbridora/auth/authorization/AccountSecurityPort.java": "d67cfdad91268f9277b2818e1e64f459f4a6fcf8a1cd805456a51734c06ad152",
     "src/main/java/vn/utbridora/auth/authorization/AccountSecurityService.java": "d42ee715c5dbb8647d0baf37f4fc0d821d1b86b485ae2b7f1ad9d4018482b756",
     "src/main/java/vn/utbridora/auth/authorization/AdministrationGuard.java": "72a6bf000b4c1c5fd232be320d6c0c2b061b9ff03124a6512227885fbb31046b",
@@ -5084,12 +5092,29 @@
     "src/main/java/vn/utbridora/auth/modules/cooperation/port/ProfileShareReadPort.java": "0570f6481f902f9a46cfd5155d9321f8c2aea729c15bd27b0f9930162cfb6277",
     "src/main/java/vn/utbridora/auth/modules/cooperation/port/SchoolSharingPolicyPort.java": "91d2a6aa3a733d09db476eb03f9c991817aa9ab623c4947fe8f68930260d224a",
     "src/main/java/vn/utbridora/auth/modules/internship/api/CohortGroupDtos.java": "3bb50e78a0487aeef7a34459a813303a4e5674f9d12d0286e033bca4b2e3e3d5",
+    "src/main/java/vn/utbridora/auth/modules/internship/api/ReportDtos.java": "1b5962407566be6f395ca9e4eaee23c2cc22516bee670660f95a6ea4fc0c4cc3",
+    "src/main/java/vn/utbridora/auth/modules/internship/api/ReportJson.java": "4f54939a7dca4580a385065a088c41f6d58bbd5ee06c6e25614e15f87884da62",
+    "src/main/java/vn/utbridora/auth/modules/internship/api/SubmissionController.java": "b422f64cf24e7335d9bacf2301f76285f7e2d3a0401e03ad40bef5bd1a3a6719",
+    "src/main/java/vn/utbridora/auth/modules/internship/api/SubmissionDtos.java": "9a42120cf21741ede8ace01daee2ec47375cfbfe1d3760196e8e6c25d9ea48d7",
+    "src/main/java/vn/utbridora/auth/modules/internship/api/SubmissionErrors.java": "6906c3df368aac805021323965d1d05286cbb829a25e43c8002533bd9c0a7ae4",
+    "src/main/java/vn/utbridora/auth/modules/internship/api/SubmissionJson.java": "0721a0dfee37e7e32759b9a4a11b75daa1af1f7d4ef0dd38b8c4f8fa73437a53",
+    "src/main/java/vn/utbridora/auth/modules/internship/api/SubmissionReviewController.java": "8b406eab0e5a00891355947952dd500ea635d1d34f7afe6c6cbe294a5a7c7619",
+    "src/main/java/vn/utbridora/auth/modules/internship/api/TaskCommentController.java": "6c6f9f83603b766e1a071d7ef3874644158eb1e244bff641beb1fad890953118",
     "src/main/java/vn/utbridora/auth/modules/internship/api/TaskDtos.java": "85f4adfc0fa9dd09f1839fc8aa1d62b8495e1ac8a725c92df5c2d2df0b2fa736",
+    "src/main/java/vn/utbridora/auth/modules/internship/api/Week3HttpErrors.java": "9044b3a652e85af5b91063d8377d917df3eb2e4368027d798a0a5daa4029f7ed",
+    "src/main/java/vn/utbridora/auth/modules/internship/api/Week3RequestValues.java": "13913e7b1679a7628bc44d8b638ea5978203d29cd3551b2812939a99eeac9856",
+    "src/main/java/vn/utbridora/auth/modules/internship/api/WeeklyReportController.java": "ca4d0ab78476f20ec5f00c4732c12295db79b3f65f658114484600a25f287b27",
     "src/main/java/vn/utbridora/auth/modules/internship/api/WorkspaceAssignmentController.java": "90cee1ecce8c1e44da4c451b0bb450c770e1680ffd2b6d1fa10e5b96b3ac9c3f",
     "src/main/java/vn/utbridora/auth/modules/internship/api/WorkspaceController.java": "e8501a8544c1f61de5da18d63ab2dbd5a7816875d855d179c44612345901a179",
     "src/main/java/vn/utbridora/auth/modules/internship/api/WorkspaceErrorMapping.java": "51a1729f70c9ed0857cbb9ba3b39c0502a899ab20736955fb1de576971af06ed",
     "src/main/java/vn/utbridora/auth/modules/internship/api/WorkspaceErrors.java": "a95c4213b9d32e1fca85da23f5532804674552553dbf98abd7b90bcddac53b4d",
     "src/main/java/vn/utbridora/auth/modules/internship/api/WorkspaceTaskController.java": "4a237d79f0c158aee30d8713717bf4735293912c0c88653ff2ffaac52b46406b",
+    "src/main/java/vn/utbridora/auth/modules/internship/application/SubmissionPorts.java": "92739b01909455d40f654f798d4e8f05cf0a117db1665246e3c91a153756302f",
+    "src/main/java/vn/utbridora/auth/modules/internship/application/SubmissionService.java": "e21f8d87bea4a7ebf3f940e359e10b18769c7cc11815b226b9b8a0911ece741c",
+    "src/main/java/vn/utbridora/auth/modules/internship/application/TaskCommentPorts.java": "78ca11b5ebfa4644864d2bb54fbfc6375e2764d19ee02204407c72c7b1035954",
+    "src/main/java/vn/utbridora/auth/modules/internship/application/TaskCommentService.java": "725370eb5465dc090af2dcaaf8ebc6435b2a1aed00f21c71f2fbe54f45b50eaa",
+    "src/main/java/vn/utbridora/auth/modules/internship/application/WeeklyReportPorts.java": "908762b019169c3fd81f752c7ab7144742cd76224095b54beac2adb1a1055435",
+    "src/main/java/vn/utbridora/auth/modules/internship/application/WeeklyReportService.java": "e54476225a408e4275a12c7fc1c36b7293cf367ff15c439779073f04f3a61cfb",
     "src/main/java/vn/utbridora/auth/modules/internship/application/WorkspacePorts.java": "88cfc634fe53a11528d4704fa727590efd824facfa75b9c477c31d10102694e2",
     "src/main/java/vn/utbridora/auth/modules/internship/application/WorkspaceService.java": "38e578db36b663c5b21ea1874ced2fe4fb43baf6479fc3046c10df0c5aff0e5c",
     "src/main/java/vn/utbridora/auth/modules/internship/domain/Cohort.java": "362d0fb3e69eb4ef5770a6f5c66eabfa07c1e72aa558b3818425916cee701bbf",
@@ -5098,14 +5123,40 @@
     "src/main/java/vn/utbridora/auth/modules/internship/domain/InternshipGroup.java": "4726cacf4a5e43cb24de8b81063f55bed55d47b752b48e0e191a1643559d6bc5",
     "src/main/java/vn/utbridora/auth/modules/internship/domain/InternshipTask.java": "c2ffb2a6fccbfabf4890801c11239e6e055e415e1b54955231e8aa73e48225cf",
     "src/main/java/vn/utbridora/auth/modules/internship/domain/PlacementEventEnvelopePolicy.java": "df8d674de16336714400de766ef7e1490802c1922aac57c62374ee96fd32fefb",
+    "src/main/java/vn/utbridora/auth/modules/internship/domain/SubmissionPolicy.java": "04f783cf752d6b9878b1a4b9de31ebb4cea2a5a9eb29d37e44084510d3c686a4",
+    "src/main/java/vn/utbridora/auth/modules/internship/domain/TaskComment.java": "783977d8cf34c8a6b80a797feaa8eef67eed136e344dcc14a94d9084b3759ab3",
+    "src/main/java/vn/utbridora/auth/modules/internship/domain/WeeklyReport.java": "d5a685a3937b0bdf2047cdd93bf230c1f2ae1779fce9c4cc06aa6c17d8fa9a5d",
+    "src/main/java/vn/utbridora/auth/modules/internship/domain/WeeklyReportPolicy.java": "79b260d0b1b6c3f6a89ea5eb38b9c1dc712bc9638cd2cd63ddecfc38479dd6d2",
     "src/main/java/vn/utbridora/auth/modules/internship/domain/WorkspaceRuleException.java": "9363f64b52cc43ae32311f51dd23f77a843f0d1cf7c8515c07dd5278c35b4721",
     "src/main/java/vn/utbridora/auth/modules/internship/domain/WorkspaceScope.java": "39af0a30c45cbb0405c95af31a2a0f93969ba83d0bbd35343ed09f5d2b8ccc4e",
-    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/CaseRuntime.java": "053f0f1f6972eba55923d9533ec1320f0315b806c6cdd8ba82ad05cae5c89667",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/CaseRuntime.java": "e24bf3f1e13d3f37fcbee4764cf969283257af808d6670af8760beec3f5ec96a",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/CoreSubmissionAccess.java": "79f701af062e1b508fa7a8b865ad3234ae3b5869904b68aeb1952d670aa90320",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/CoreWorkspaceAccess.java": "6f40753542d2809b42d9814dc145604715254daa7157fef94ad1a12bb23c702e",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/Dev06Jdbc.java": "f0ac09e1015dc361e7a43a8cc7b360c7fe5d8d4c7e3bb89eb52402b5131fe5ad",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/JdbcSubmissionSession.java": "218a52be1bf8b62479575dfd4ffec71bfbaa8b1189025b86300fe0baf909a7ce",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/JdbcTaskCommentSession.java": "b154900b4aac0affd5a88c91a3b996fc5041e62d609b7e04d6efe96ac9e3b3fe",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/JdbcWeeklyReportSession.java": "c881e29aa47933d1ed66f393d1903541169f5a3a5b90e6de5b9d2c2bcec6fa41",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/JdbcWorkspaceSession.java": "bb59a403098081b0490c6784f7e3414906cfa6c44a58138aa966ce062112db5b",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/PlacementInbox.java": "b5240db01d4c03bd3220e887162cb44565768ed998dec6ef6cfae3abdd21647d",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/SubmissionConfiguration.java": "4e1fa81540dd97ca514cf9d76045e8ad6f82294ef38c99f3a2b3baaff714554b",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/TaskAssignmentFilePolicy.java": "065c2c378b29c0c4e7504b752e65604231b6b34792a0e6840d4c93c9428244f0",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/TaskCommentAccessAdapter.java": "23837d6ed2fd4555ba833ea98f9b237605e416cb06ef55774597a6728bd51417",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/TaskCommentAssignmentsAdapter.java": "9b1cfb0a628e574299475218260b648aa1050059b852a4e6c5bf1ad2b864b5f5",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/TaskCommentAuditAdapter.java": "d00fbdd3434bdcbe0bf76a0bd7d0113d91d83298bbc611becaef4ae5b1650add",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/TaskCommentCaseGuard.java": "66898e4f75095a35b56f199e862ee5e6f8dbf3e40db3eeab3bc9f6cef8f67f23",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/TaskCommentCommands.java": "811d7a1d0d1d348afd72486329f02f40525a8ba8ba2fc4d94f28f7dbf409139e",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/TransactionalSubmissionUnitOfWork.java": "3c823f577c12b1761e97e5048362de4bb63be4ed7f9792b0bd54ac0cd4221b13",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/TransactionalWorkspaceUnitOfWork.java": "038ac8db7402d7334047462f70b9d5070255aa02eb09467e080d96c953b2123a",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/Week3RuntimeConfiguration.java": "174cb1b1df2490e0a1a8c251caff7360a2ccf52238fd910ddebcecbdcfaec58c",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/Week3WorkspaceTransactions.java": "4b1b8bbbb526c62da7476e5655f60549a91d55048b4db51291f66e197c04b56e",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WeeklyReportAccessAdapter.java": "787a31c9f679bd0cf1221ba05a449554236dd590e33b52c45c356b3a6a59d66d",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WeeklyReportAuditAdapter.java": "ea2d902251bb24ac728b7fdef71d80d472171819709da69b0da5c20d93ab4dd7",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WeeklyReportCaseAdapter.java": "6ebb441fa89568bea7e4f5d1a5d9bd8f90b0fb6e74e1aa40a47fd76e40920605",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WeeklyReportCommands.java": "a5c2edaeb7340c97bbe379d1f62a315502b37d4e7398f9bf8ea1975435e7d1d3",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WeeklyReportFileAdapter.java": "c44eda9b52458f9b9802a52b371eb06df20861ee10468257bb76dc5e1040e7bc",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WeeklyReportFilePolicy.java": "56e65110a73a71968c40b38f253d4a37693cfea88fe4f0155877dddffcab5340",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WeeklyReportRuntimeChecks.java": "c12905a28c34e54c0c523544100d0a9a342a6c29c3539712c730f4f2ef7d8804",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WeeklyReportUnitOfWork.java": "fed724c2f317fd1c3d96ab47e1fbad542935f49694312a5d805e549fb90c0280",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WorkspaceAssignmentService.java": "4cf76ae8e8f2dc8f04ad490ef16889a29c9a784ad4c309048db9de7634177de1",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WorkspaceAuthority.java": "8761a448d9444d8d94e947261938c3cfd91bb90720546951d921b4f09943f3d2",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WorkspaceConfiguration.java": "7a30d882f1ec0cea00e736e34d03197cf16f6fd12a0c4eccc592e9c94fe46652",
@@ -5185,7 +5236,7 @@
     "src/main/java/vn/utbridora/auth/security/AppUserDetailsService.java": "7cc716bec37e1f4c14dfb7ca8b113a07b9804bbc62b843b92761fae5ec0d3a31",
     "src/main/java/vn/utbridora/auth/security/DemandSecurityErrors.java": "7d91ff3ff07df57dadbb1047ddc6599dbc9bdb9fc96f4dbd3fe84fb5ed8eabc2",
     "src/main/java/vn/utbridora/auth/security/OrganizationAccess.java": "c04b8ae3357b17e2c24a34e1f17d194cd79178110cfa17fb1252299d2b7722d0",
-    "src/main/java/vn/utbridora/auth/security/SecurityConfig.java": "bf2148646ce664da7abb7b2bd0101955f309cc4fa6df77598ba66a3a3764d34c",
+    "src/main/java/vn/utbridora/auth/security/SecurityConfig.java": "6b495fce3b108d82ba258dc067d85f1b83e784ced0e7b81557fe027aa868ccb3",
     "src/main/java/vn/utbridora/auth/student/StudentEligibilityQueryService.java": "de74551cd0a993394948127fb635e89bc0c396c86ad4c3dcfa521a60288f8407",
     "src/main/java/vn/utbridora/auth/student/StudentRosterQueryService.java": "1f78514ffe715b75bd30a03f637845aaa278acb6da5107113d955e6480567dea",
     "src/main/java/vn/utbridora/auth/student/StudentSchoolAccessGuard.java": "b3fe79f55e592c8dbfed0ea651d26f19fbea60f18e03a28a9de769018eea0b42",
@@ -5238,10 +5289,12 @@
     "src/main/resources/db/migration/V28__student_preferences.sql": "4a6a5246d3ae597c891a68c468200012f92f20a92db683ac6777edf08b95ab49",
     "src/main/resources/db/migration/V29__matching_audit_statistics.sql": "5883e6163775628e7181c3f3fda5fb0dacf589d113ae59cec855a340e2c9e902",
     "src/main/resources/db/migration/V29__placement_history.sql": "5a3237b8602d544d7cba8a565ecf9aaf2a313c3ab9353e9caadce435df12c5ea",
+    "src/main/resources/db/migration/V29__t3_submission_review_comment.sql": "c7e49bd89479f8aecc0ccbb65a86035f67e8abb9bd7c9d2b58faa24a63336660",
     "src/main/resources/db/migration/V2__spring_sessions.sql": "3a961adb7ac577a0c7fed30ca18f436ff8a4803ece2cbce45eb1a288c662e616",
     "src/main/resources/db/migration/V30__proposal_decisions_and_opportunity_publication.sql": "20ade91c9188557bdf394f89f034bcc8cab4d8e267bcd21e6345be075d1fd008",
     "src/main/resources/db/migration/V30__student_profile_gpa.sql": "5ffca4cf1aa4e1252b9c153b17f6c5d00af2ea00c69a122a4c149b2dd92f2935",
     "src/main/resources/db/migration/V31__demand_gpa_criteria_backfill.sql": "840fcb0048e8d64fe1b5883d4a1471e0fffce23031b24f0481d80d73763f6580",
+    "src/main/resources/db/migration/V31__t3_weekly_reports.sql": "e341b3106240bff42bcacaa953329d4d4091dd8a3496a58c01fad9a525cffac5",
     "src/main/resources/db/migration/V3__permissions_and_membership_integrity.sql": "27c715667d66e362248314c32b582dd0bf26f7f10cef04d40ebcc2006893cee6",
     "src/main/resources/db/migration/V4__audit_expansion.sql": "20f9d708b0ddf99ec5f78de01dca361feb2768567edd52eee2eecceb14dc6a28",
     "src/main/resources/db/migration/V5__files_metadata.sql": "7fc22062bbaca4ab5ace160abf8e7f6375c5656d833647c93f24da61285e8030",
@@ -5252,7 +5305,7 @@
     "pom.xml": "cfed023cfe6019c962ed608382cc36dc340694425a9366b433a023f569b8045f",
     "docs/openapi.json": "91b8ece0a984c8ca429f9c5ff3a2542aa9edd81f4c856f6567931ba7aaceab5a",
     "docs/contracts/permission_matrix.csv": "264746eb91190a0207bf26e872f08b1fc07d63f809c267e4e4bb95b3ad828ae3",
-    "src/main/resources/application.yml": "945837a2aadb12201575ac8542c7269add3a1e77780c1017e85eead039e8079e"
+    "src/main/resources/application.yml": "6fc0a47b0d7ec265ff28883d2c6a5ac964897284a51723400e91de49ae56c21f"
   },
-  "currentContractHash": "79054562c7ec3f3ed930d758a3c713d517007aebe457df8b648f9617efaa2179"
+  "currentContractHash": "746a8537dca95c1c722f5ce33e4044ecd9414bb072bf9e204632f9a9ad1bea03"
 }

@@ -19,7 +19,10 @@ public class CaseRuntime implements CaseChecks,CaseMembershipPort {
     public CaseRuntime(JdbcTemplate jdbc,PlacementReadPort placements) {this.jdbc=jdbc;this.placements=placements;}
     @Transactional(propagation=Propagation.MANDATORY)
     public CaseRef read(UUID id) {
-        return jdbc.query("SELECT * FROM internship_cases WHERE id=?",(r,n)->new CaseRef(UUID.fromString(r.getString("id")),
+        return select(id,false);
+    }
+    private CaseRef select(UUID id,boolean lock) {
+        return jdbc.query("SELECT * FROM internship_cases WHERE id=?"+(lock?" FOR UPDATE":""),(r,n)->new CaseRef(UUID.fromString(r.getString("id")),
             UUID.fromString(r.getString("placement_id")),UUID.fromString(r.getString("student_user_id")),UUID.fromString(r.getString("school_org_id")),
             UUID.fromString(r.getString("enterprise_org_id")),UUID.fromString(r.getString("term_id")),r.getString("state"),r.getLong("version")),id.toString())
             .stream().findFirst().orElseThrow(()->new WorkspaceRuleException(NOT_FOUND));
@@ -51,6 +54,24 @@ public class CaseRuntime implements CaseChecks,CaseMembershipPort {
             || !c.schoolOrgId().equals(scope.schoolOrgId()) || !c.enterpriseOrgId().equals(scope.enterpriseOrgId()) || !c.termId().equals(scope.termId()))
             throw new WorkspaceRuleException(SCOPE_MISMATCH);
         return p;
+    }
+    /** Independent Report fence: same Placement -> Case order as Task, no fabricated Task/Cohort. */
+    @Transactional(propagation=Propagation.MANDATORY)
+    public CaseRef holdForReport(UUID id,long expected) {
+        if(org.springframework.transaction.support.TransactionSynchronizationManager.isCurrentTransactionReadOnly())
+            throw new WorkspaceRuleException(UNAVAILABLE);
+        var before=read(id);
+        var source=placements.readCurrentForGuard(before.placementId().toString())
+            .orElseThrow(()->new WorkspaceRuleException(UNAVAILABLE));
+        // A locking read returns current committed fields even when a T1 upload joins RR.
+        var current=select(id,true);
+        if(current.version()!=expected || !before.equals(current)) throw new WorkspaceRuleException(VERSION_CONFLICT);
+        if(!source.placementId().equals(current.placementId().toString())
+            || !source.studentUserId().equals(current.studentUserId().toString())
+            || !source.schoolOrgId().equals(current.schoolOrgId().toString())
+            || !source.enterpriseOrgId().equals(current.enterpriseOrgId().toString())
+            || !source.termId().equals(current.termId().toString())) throw new WorkspaceRuleException(SCOPE_MISMATCH);
+        return current;
     }
     @Override @Transactional(propagation=Propagation.MANDATORY)
     public long advanceMembershipVersion(UUID id,long expected) {

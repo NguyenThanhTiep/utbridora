@@ -1,0 +1,312 @@
+{
+    "verifiedAt":  "2026-11-12T12:42:46+07:00",
+    "integration":  {
+                        "failed":  0,
+                        "skipped":  0,
+                        "total":  39,
+                        "passed":  39
+                    },
+    "contract":  {
+                     "passed":  868,
+                     "failed":  0
+                 },
+    "sourceHashes":  [
+                         {
+                             "sha256":  "805B2DB30C7A9D4ACD76C3D4ED93EEEFA149D121A9848F846441294101C68012",
+                             "path":  "docs/contracts/UTBridora_Contract_Pack_B01_B06_v1.1_Candidate.md"
+                         },
+                         {
+                             "sha256":  "05B0AAA27577CE6B4C2F3D81D4E09A74529635BDFF01106B43E0EBC0134C4FAF",
+                             "path":  "docs/contracts/v1.1/examples.json"
+                         },
+                         {
+                             "sha256":  "0E06B178A3EA2F089255479643C728225FC8AD3787CBB4225A5E2757A0AAA7BC",
+                             "path":  "docs/contracts/v1.1/manifest.json"
+                         },
+                         {
+                             "sha256":  "390EEAD6C5F4FC3DB8232F88690FEC4F7334423E657978274345B7A4F7EA56BC",
+                             "path":  "docs/contracts/v1.1/schemas.json"
+                         },
+                         {
+                             "sha256":  "91F3CAD76357090A2F19F12C1D87CD7ADB8A1DC039663443F6963BBEAC1FBC7D",
+                             "path":  "src/main/java/vn/utbridora/auth/audit/AuditAction.java"
+                         },
+                         {
+                             "sha256":  "525CBE321E6A545E391C31294B74900DAB603EAF78CBC58E0D7E73372F717B5A",
+                             "path":  "src/main/java/vn/utbridora/auth/audit/WorkflowAuditRegistry.java"
+                         },
+                         {
+                             "sha256":  "1B5962407566BE6F395CA9E4EAEE23C2CC22516BEE670660F95A6EA4FC0C4CC3",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/api/ReportDtos.java"
+                         },
+                         {
+                             "sha256":  "6C6F9F83603B766E1A071D7EF3874644158EB1E244BFF641BEB1FAD890953118",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/api/TaskCommentController.java"
+                         },
+                         {
+                             "sha256":  "9044B3A652E85AF5B91063D8377D917DF3EB2E4368027D798A0A5DAA4029F7ED",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/api/Week3HttpErrors.java"
+                         },
+                         {
+                             "sha256":  "13913E7B1679A7628BC44D8B638EA5978203D29CD3551B2812939A99EEAC9856",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/api/Week3RequestValues.java"
+                         },
+                         {
+                             "sha256":  "CA4D0AB78476F20EC5F00C4732C12295DB79B3F65F658114484600A25F287B27",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/api/WeeklyReportController.java"
+                         },
+                         {
+                             "sha256":  "78CA11B5EBFA4644864D2BB54FBFC6375E2764D19EE02204407C72C7B1035954",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/application/TaskCommentPorts.java"
+                         },
+                         {
+                             "sha256":  "725370EB5465DC090AF2DCAAF8EBC6435B2A1AED00F21C71F2FBE54F45B50EAA",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/application/TaskCommentService.java"
+                         },
+                         {
+                             "sha256":  "908762B019169C3FD81F752C7AB7144742CD76224095B54BEAC2ADB1A1055435",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/application/WeeklyReportPorts.java"
+                         },
+                         {
+                             "sha256":  "E54476225A408E4275A12C7FC1C36B7293CF367FF15C439779073F04F3A61CFB",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/application/WeeklyReportService.java"
+                         },
+                         {
+                             "sha256":  "783977D8CF34C8A6B80A797FEAA8EEF67EED136E344DCC14A94D9084B3759AB3",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/domain/TaskComment.java"
+                         },
+                         {
+                             "sha256":  "D5A685A3937B0BDF2047CDD93BF230C1F2AE1779FCE9C4CC06AA6C17D8FA9A5D",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/domain/WeeklyReport.java"
+                         },
+                         {
+                             "sha256":  "D4A874DAC3CEF7D1AAC78ED22DFAA10530EB66DF2411BA0CE4290BE77259322E",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/CaseRuntime.java"
+                         },
+                         {
+                             "sha256":  "F0AC09E1015DC361E7A43A8CC7B360C7FE5D8D4C7E3BB89EB52402B5131FE5AD",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/Dev06Jdbc.java"
+                         },
+                         {
+                             "sha256":  "B154900B4AAC0AFFD5A88C91A3B996FC5041E62D609B7E04D6EFE96AC9E3B3FE",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/JdbcTaskCommentSession.java"
+                         },
+                         {
+                             "sha256":  "C881E29AA47933D1ED66F393D1903541169F5A3A5B90E6DE5B9D2C2BCEC6FA41",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/JdbcWeeklyReportSession.java"
+                         },
+                         {
+                             "sha256":  "23837D6ED2FD4555BA833EA98F9B237605E416CB06EF55774597A6728BD51417",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/TaskCommentAccessAdapter.java"
+                         },
+                         {
+                             "sha256":  "9B1CFB0A628E574299475218260B648AA1050059B852A4E6C5BF1AD2B864B5F5",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/TaskCommentAssignmentsAdapter.java"
+                         },
+                         {
+                             "sha256":  "D00FBDD3434BDCBE0BF76A0BD7D0113D91D83298BBC611BECAEF4AE5B1650ADD",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/TaskCommentAuditAdapter.java"
+                         },
+                         {
+                             "sha256":  "66898E4F75095A35B56F199E862EE5E6F8DBF3E40DB3EEAB3BC9F6CEF8F67F23",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/TaskCommentCaseGuard.java"
+                         },
+                         {
+                             "sha256":  "811D7A1D0D1D348AFD72486329F02F40525A8BA8BA2FC4D94F28F7DBF409139E",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/TaskCommentCommands.java"
+                         },
+                         {
+                             "sha256":  "174CB1B1DF2490E0A1A8C251CAFF7360A2CCF52238FD910DDEBCECBDCFAEC58C",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/Week3RuntimeConfiguration.java"
+                         },
+                         {
+                             "sha256":  "4B1B8BBBB526C62DA7476E5655F60549A91D55048B4DB51291F66E197C04B56E",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/Week3WorkspaceTransactions.java"
+                         },
+                         {
+                             "sha256":  "787A31C9F679BD0CF1221BA05A449554236DD590E33B52C45C356B3A6A59D66D",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WeeklyReportAccessAdapter.java"
+                         },
+                         {
+                             "sha256":  "EA2D902251BB24AC728B7FDEF71D80D472171819709DA69B0DA5C20D93AB4DD7",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WeeklyReportAuditAdapter.java"
+                         },
+                         {
+                             "sha256":  "6EBB441FA89568BEA7E4F5D1A5D9BD8F90B0FB6E74E1AA40A47FD76E40920605",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WeeklyReportCaseAdapter.java"
+                         },
+                         {
+                             "sha256":  "A5C2EDAEB7340C97BBE379D1F62A315502B37D4E7398F9BF8EA1975435E7D1D3",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WeeklyReportCommands.java"
+                         },
+                         {
+                             "sha256":  "C44EDA9B52458F9B9802A52B371EB06DF20861EE10468257BB76DC5E1040E7BC",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WeeklyReportFileAdapter.java"
+                         },
+                         {
+                             "sha256":  "56E65110A73A71968C40B38F253D4A37693CFEA88FE4F0155877DDDFFCAB5340",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WeeklyReportFilePolicy.java"
+                         },
+                         {
+                             "sha256":  "C12905A28C34E54C0C523544100D0A9A342A6C29C3539712C730F4F2EF7D8804",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WeeklyReportRuntimeChecks.java"
+                         },
+                         {
+                             "sha256":  "FED724C2F317FD1C3D96AB47E1FBAD542935F49694312A5D805E549FB90C0280",
+                             "path":  "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WeeklyReportUnitOfWork.java"
+                         },
+                         {
+                             "sha256":  "81115C07578A372016DF615B6100B93769F4070E9634A5B15CB4C09341A4AB65",
+                             "path":  "src/main/java/vn/utbridora/auth/security/SecurityConfig.java"
+                         },
+                         {
+                             "sha256":  "38B3207818C9218520B4176F102548F1B833126712FA41543C5D5C8CC254AF2A",
+                             "path":  "src/main/resources/application.yml"
+                         },
+                         {
+                             "sha256":  "338112415874444A024627AF8CF7FEDAE90F4A61263F1963F865BDA1FD957871",
+                             "path":  "src/main/resources/db/migration/V31__t3_weekly_reports.sql"
+                         },
+                         {
+                             "sha256":  "9BC15DD619003D72B2F6DA6763BB8CDC582A7A2FB96A3CD114AFF3054FFB4896",
+                             "path":  "src/test/java/vn/utbridora/auth/audit/SubmissionCreatedAuditTest.java"
+                         },
+                         {
+                             "sha256":  "91A89AD65B07DE1D787667AFB63094458387A7C6539C45F0CD2C2AB87E55E8E7",
+                             "path":  "src/test/java/vn/utbridora/auth/audit/WeeklyReportWorkflowAuditTest.java"
+                         },
+                         {
+                             "sha256":  "3319EAE2D3806087671B29928DE7C0A1AE0E5B7805D7D4D72F2BDDC4A72B50E4",
+                             "path":  "src/test/java/vn/utbridora/auth/MigrationUpgradeIT.java"
+                         },
+                         {
+                             "sha256":  "68557B61552C70DA1CD518C5F64CEC93EB6343750D88F3B44463CC72632FD1FB",
+                             "path":  "src/test/java/vn/utbridora/auth/modules/internship/api/ReportDtosTest.java"
+                         },
+                         {
+                             "sha256":  "F3E4C05B3E9C226D12442CEF02F8466DAE95AB2FFF52687A67C7C663B6EA0FC7",
+                             "path":  "src/test/java/vn/utbridora/auth/modules/internship/api/Week3HttpControllerTest.java"
+                         },
+                         {
+                             "sha256":  "A87F06E7B5238DF15C743A9B7D3C1EF87C5719CBB7C4527A4899272C647B192D",
+                             "path":  "src/test/java/vn/utbridora/auth/modules/internship/application/TaskCommentServiceTest.java"
+                         },
+                         {
+                             "sha256":  "F84AF2C3A43C1893EEF7F618D11C42F3C75147DA588DDE098059BBE95485A4DC",
+                             "path":  "src/test/java/vn/utbridora/auth/modules/internship/application/WeeklyReportServiceTest.java"
+                         },
+                         {
+                             "sha256":  "09755C5F9E475510AE9DC6753219C0DFB3E905ED02328E4B52A8DBC9549F04BD",
+                             "path":  "src/test/java/vn/utbridora/auth/modules/internship/domain/TaskCommentTest.java"
+                         },
+                         {
+                             "sha256":  "2E2F9AE6829500494DB32DB753AFB7915FF500D6877A0343C590E29CB5D5F470",
+                             "path":  "src/test/java/vn/utbridora/auth/modules/internship/domain/WeeklyReportRestoreTest.java"
+                         },
+                         {
+                             "sha256":  "B2DE44D000B1BF826C20C9F86F0AD3B9537C075BFFD6A1D2079380A71C9DE806",
+                             "path":  "src/test/java/vn/utbridora/auth/modules/internship/infrastructure/Dev06HttpWorkflowTest.java"
+                         },
+                         {
+                             "sha256":  "7695EAB23610FF5ED2819F84C846213456F48E169762BD1C249CE9D48549358C",
+                             "path":  "src/test/java/vn/utbridora/auth/modules/internship/infrastructure/Dev06JdbcTestSupport.java"
+                         },
+                         {
+                             "sha256":  "1A3462A5209CFFDF29DBA3B4F6889AA984B147F55A9C2C592A2A549A488E302A",
+                             "path":  "src/test/java/vn/utbridora/auth/modules/internship/infrastructure/Dev06WorkflowFixture.java"
+                         },
+                         {
+                             "sha256":  "C0D3C91C2FAACCB4D78AE7E07D8FF897A8A0C56403D206D40C7365DE3E8B161D",
+                             "path":  "src/test/java/vn/utbridora/auth/modules/internship/infrastructure/Dev06WorkflowScenarioTest.java"
+                         },
+                         {
+                             "sha256":  "59C35AF8269B526A99C066C3175A2DE5D31A91CFF44ABC5E0486C7B5B342B741",
+                             "path":  "src/test/java/vn/utbridora/auth/modules/internship/infrastructure/JdbcTaskCommentSessionTest.java"
+                         },
+                         {
+                             "sha256":  "0CE27D21254F0834784D4B4989B1A4957D2DFC8503A92CA70136EDB32E5C5658",
+                             "path":  "src/test/java/vn/utbridora/auth/modules/internship/infrastructure/JdbcWeeklyReportSessionTest.java"
+                         },
+                         {
+                             "sha256":  "4266E96101F91C22332D1F9B3F725E846AF830550FDB1640F7526C717C67EDE5",
+                             "path":  "src/test/java/vn/utbridora/auth/modules/internship/infrastructure/TaskCommentAdaptersTest.java"
+                         },
+                         {
+                             "sha256":  "0CE87A54ED999D1212BC31DC249D8F020FC55E020CD55F201BAB01B31D6C6B77",
+                             "path":  "src/test/java/vn/utbridora/auth/modules/internship/infrastructure/TaskCommentCaseGuardTest.java"
+                         },
+                         {
+                             "sha256":  "F75E6A52DB9CE59D50DD8A3E0ACB2557FE806DC4FDC613118733BD3EEB175ED6",
+                             "path":  "src/test/java/vn/utbridora/auth/modules/internship/infrastructure/TaskCommentCommandsTest.java"
+                         },
+                         {
+                             "sha256":  "974EBD386508A192A6A16003F7B3617DE86BE35BFA56154361A75B69E96749CE",
+                             "path":  "src/test/java/vn/utbridora/auth/modules/internship/infrastructure/WeeklyReportAdaptersTest.java"
+                         },
+                         {
+                             "sha256":  "4341FBC664B4E270AC5325C23735C6EF08A256A76DCAC584DFE8C778B3B4ABA7",
+                             "path":  "src/test/java/vn/utbridora/auth/modules/internship/infrastructure/WeeklyReportAdapterTestSupport.java"
+                         },
+                         {
+                             "sha256":  "63E3EA435E20AB019122C9829C1812B2BBCABB6B0BDCDB69C99674E1DA55FDB3",
+                             "path":  "src/test/java/vn/utbridora/auth/modules/internship/infrastructure/WeeklyReportAuditAdapterTest.java"
+                         },
+                         {
+                             "sha256":  "2EC1E324544A1BE13F2C56B6D84936DAAB656BFA8ACEB191A2A2A127E234D125",
+                             "path":  "src/test/java/vn/utbridora/auth/modules/internship/infrastructure/WeeklyReportCommandsTest.java"
+                         },
+                         {
+                             "sha256":  "A870567FBC91C29A900A3E9A66CA5407E762E04DB2D8446FCAB90A066D49AF1D",
+                             "path":  "src/test/java/vn/utbridora/auth/modules/internship/infrastructure/WeeklyReportFileAdapterTest.java"
+                         },
+                         {
+                             "sha256":  "22B71D1DA747596B2FC3F3284786ECB15EF63A7DDD25566E5357D040529DD6F2",
+                             "path":  "src/test/java/vn/utbridora/auth/modules/internship/infrastructure/WeeklyReportUnitOfWorkTest.java"
+                         },
+                         {
+                             "sha256":  "11147E03268A0D573635C31D1DB8F042F8163592063537C504675B0C3FDC2729",
+                             "path":  "src/test/java/vn/utbridora/auth/T307SchemaUpgradeIT.java"
+                         },
+                         {
+                             "sha256":  "C98739A87D4666B217CED1A0328C6B69B2B75E5F54AF1F38DF340B3D475DA5A3",
+                             "path":  "src/test/java/vn/utbridora/auth/T308CommentRuntimeIT.java"
+                         },
+                         {
+                             "sha256":  "45D92BE86F1A651F42F08D4683C3BF85D077FF4E52082BD74E794C6020DC314D",
+                             "path":  "src/test/java/vn/utbridora/auth/T308ReportRuntimeIT.java"
+                         },
+                         {
+                             "sha256":  "6D954810EA7D3E10A542A15DAD8713BDE4CB4FD55DDC13E42264639E82B5EB28",
+                             "path":  "src/test/java/vn/utbridora/auth/T308SchemaUpgradeIT.java"
+                         }
+                     ],
+    "owner":  "DEV06 - Le Nguyen Nhat Duy",
+    "task":  "T3-08",
+    "maven":  "BUILD SUCCESS",
+    "limitations":  [
+                        "No shared database deployment",
+                        "Scanner CLEAN is an explicit test fixture",
+                        "UI T3-09 and human QA not performed"
+                    ],
+    "status":  "DEV_COMPLETE_NOT_QA_SIGNOFF",
+    "unit":  {
+                 "failed":  0,
+                 "skipped":  1,
+                 "total":  1252,
+                 "passed":  1251
+             },
+    "commitWhitespaceNormalization":  [
+                                          {
+                                              "path":  "src/main/resources/db/migration/V31__t3_weekly_reports.sql",
+                                              "change":  "Removed trailing blank line only",
+                                              "committedSha256":  "338112415874444A024627AF8CF7FEDAE90F4A61263F1963F865BDA1FD957871",
+                                              "testedSha256":  "322B5242CB345FB569C2D4CEB0ADED1A5DE58367212AB56086119804A8E416E3"
+                                          },
+                                          {
+                                              "path":  "src/test/java/vn/utbridora/auth/T308CommentRuntimeIT.java",
+                                              "change":  "Removed trailing blank line only",
+                                              "committedSha256":  "C98739A87D4666B217CED1A0328C6B69B2B75E5F54AF1F38DF340B3D475DA5A3",
+                                              "testedSha256":  "ABA22CAECC3A9E869EBBC5E319323A83C14840B395E39AE70F7638A75103A1B7"
+                                          }
+                                      ]
+}

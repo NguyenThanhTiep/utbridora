@@ -1,6 +1,6 @@
 # T3-03 — Bàn giao kiểm thử khung UI HR/Mentor
 
-> Ghi chú 09/11/2026: giữ nguyên biên bản lịch sử bên dưới. Runtime/gateway mới và phép kiểm hiện hành ở [ma trận tuần 1](WEEK1_ACCEPTANCE.md); ghi chú này không thay chữ ký QA hoặc sửa kết quả checkpoint cũ.
+> Ghi chú 09/11/2026: giữ nguyên biên bản lịch sử bên dưới. Runtime/gateway mới và phép kiểm hiện hành ở [ma trận tuần 1](../../../../../../../../../../docs/testing/WEEK1_ACCEPTANCE.md); ghi chú này không thay chữ ký QA hoặc sửa kết quả checkpoint cũ.
 
 Ngày chuẩn bị: **07/11/2026**, UTC+7. DEV07 — Lại Thái Thuận.
 Người kiểm thử phụ trách: QA03 — Phạm Lâm Phương Bảo.
@@ -59,7 +59,7 @@ Full regression từ gốc repo:
 
 Lệnh này chạy backend unit, core HTTP/migration và Playwright. Không chạy riêng
 `npm run test:e2e` rồi giả định backend đã có: CorePlatformIT chuẩn bị auth/data
-core riêng. Kiểm contract theo [hướng dẫn checker](../../scripts/contracts/README.md).
+core riêng. Kiểm contract theo [hướng dẫn checker](../../../../../../../../../../scripts/contracts/README.md).
 
 ## Các nhóm ca QA có thể kiểm ngay
 
@@ -117,7 +117,7 @@ Team 5 trước khi QA kiểm khung UI; cũng không coi B01/B02 đã giải quy
 ## Bằng chứng và ghi nhận kết quả
 
 Kết quả DEV lần này: [báo cáo mới nhất](T3_03_TEST_REPORT.md) và
-[snapshot 07/11](evidence/T3_03_QA_VERIFICATION_2026_11_07.json).
+[snapshot 07/11](../evidence/T3_03_QA_VERIFICATION_2026_11_07.json).
 Log local: `target/t3-03-qa-verify-2026-11-07.log`, `target/frontend-e2e.log`,
 `target/surefire-reports`, `target/failsafe-reports`, `web-demo/test-results`.
 Không commit raw backend XML/system properties, log SQL hoặc thông tin đăng nhập.
@@ -133,6 +133,6 @@ vì sửa snapshot cũ thành PASS. Quyết định QA/nghiệm thu do QA/Lead t
 > tương thích frontend. Nhờ QA03 kiểm các ca Q01–Q08 tại commit mới sau push.
 > UI dữ liệu thật còn chờ assignment/context và cohort/group HTTP providers;
 > Case runtime theo thông báo DEV06 để giai đoạn Team 5 tuần 3. Chi tiết phạm vi,
-> lệnh chạy và bằng chứng ở docs/testing/T3_03_QA_HANDOFF.md.
+> lệnh chạy và bằng chứng ở src/test/resources/vn/utbridora/auth/modules/internship/t3_03/testing/T3_03_QA_HANDOFF.md.
 
 Người thực hiện bổ sung link commit/PR sau push. Chưa gửi nội dung này tự động.
