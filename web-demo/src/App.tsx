@@ -12,6 +12,7 @@ import { MyProfilePage } from './modules/student/pages/MyProfilePage';
 import { InvitationsPreferencesPage, type StudentResponseTab } from './modules/student/pages/InvitationsPreferencesPage';
 import { OpportunitiesPage } from './modules/student/pages/OpportunitiesPage';
 import { InternshipTasksPage } from './modules/student/pages/InternshipTasksPage';
+import { CapabilityPage } from './modules/student/pages/CapabilityPage';
 import { ReportsResultsPage } from './modules/student/pages/ReportsResultsPage';
 import { MentorInvitations } from './modules/internship/pages/MentorInvitations';
 import './modules/workflows.css';
@@ -28,6 +29,8 @@ const screens = [
   { id: 'internship', title: 'Không gian thực tập', description: 'Theo dõi đợt và nhóm thực tập trong phạm vi HR/Mentor được phân công.', icon: 'briefcase', permission: null },
   { id: 'student-overview', title: 'Tổng quan', description: 'Lối vào nhanh tới hồ sơ và các bước tiếp theo của bạn.', icon: 'graduation', permission: 'student_profile:self:read', group: 'student' },
   { id: 'student-profile', title: 'Thông tin chung', description: 'Thông tin cơ bản trong hồ sơ sinh viên của bạn.', icon: 'user', permission: 'student_profile:self:read', group: 'student' },
+  // S04 (SRS 14.1, /ho-so/nang-luc): dự án, chứng chỉ, CV và minh chứng.
+  { id: 'student-capability', title: 'Năng lực', description: 'Dự án, chứng chỉ, CV và minh chứng trong hồ sơ của bạn.', icon: 'layers', permission: 'student_profile:self:read', group: 'student' },
   { id: 'student-opportunities', title: 'Cơ hội thực tập', description: 'Tìm cơ hội đã được nhà trường công bố và gửi nguyện vọng.', icon: 'briefcase', permission: 'student_profile:self:read', group: 'student' },
   // S06 (SRS 14.1): lời mời và nguyện vọng chung một màn, 2 tab.
   { id: 'student-invitations', title: 'Lời mời & nguyện vọng', description: 'Phản hồi lời mời, quyết định chia sẻ hồ sơ và theo dõi nguyện vọng đã gửi.', icon: 'mail', permission: 'student_profile:self:read', group: 'student' },
@@ -251,6 +254,7 @@ export default function App() {
           : screen === 'internship' ? <InternshipWorkspace key={me.userId} me={me} grants={grants} />
           : screen === 'student-overview' ? <StudentOverviewPage me={me} schools={schools} openProfile={() => navigate('student-profile')} />
           : screen === 'student-profile' ? <MyProfilePage me={me} schools={schools} />
+          : screen === 'student-capability' ? <CapabilityPage key={me.userId} me={me} schools={schools} />
           : screen === 'student-opportunities' ? <OpportunitiesPage schools={schools} openPreferences={() => { setStudentTab('preferences'); navigate('student-invitations'); }} />
           : screen === 'student-invitations' ? <InvitationsPreferencesPage tab={studentTab} setTab={setStudentTab} />
           : screen === 'student-tasks' ? <InternshipTasksPage key={me.userId} me={me} />

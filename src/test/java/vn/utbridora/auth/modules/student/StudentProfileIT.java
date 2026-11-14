@@ -37,11 +37,21 @@ import vn.utbridora.auth.user.*;
 class StudentProfileIT {
     static final MySQLContainer<?> MYSQL=new MySQLContainer<>("mysql:8.4")
         .withDatabaseName("student_test").withUsername("student_test").withPassword(UUID.randomUUID().toString());
-    static { MYSQL.start(); }
+    static final java.nio.file.Path FILES;
+    static {
+        try {FILES=java.nio.file.Files.createTempDirectory("utbridora-profile-files-it-");} catch(java.io.IOException e) {throw new ExceptionInInitializerError(e);}
+        MYSQL.start();
+    }
     @DynamicPropertySource static void database(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", MYSQL::getJdbcUrl);
         registry.add("spring.datasource.username", MYSQL::getUsername);
         registry.add("spring.datasource.password", MYSQL::getPassword);
+        registry.add("app.files.storage-root", FILES::toString);
+    }
+    @AfterAll static void deleteFiles() throws java.io.IOException {
+        // Only direct children of this JVM-created test directory; never a shared storage root.
+        try(var paths=java.nio.file.Files.list(FILES)) {for(var path:paths.toList()) java.nio.file.Files.delete(path);}
+        java.nio.file.Files.delete(FILES);
     }
     static final String TERM="44444444-4444-4444-8444-444444444444";
     static final String PROFILE="/api/v1/students/me/profile";
@@ -91,7 +101,7 @@ class StudentProfileIT {
         for(String table:List.of("academic_catalog_entries","academic_catalogs","operation_records","student_term_eligibilities","student_rosters","student_project_files","student_project_skills","student_projects","student_certificates",
                 "student_custom_skills","student_profile_skills","student_profile_term_codes","student_profile_term_periods",
                 "student_profile_terms","student_profiles","SPRING_SESSION_ATTRIBUTES","SPRING_SESSION","audit_logs","account_status_history",
-                "one_time_tokens","files","memberships","terms","users","organizations")) jdbc.update("DELETE FROM "+table);
+                "one_time_tokens","file_bindings","files","memberships","terms","users","organizations")) jdbc.update("DELETE FROM "+table);
         LinkedTerms.available=true;
         university=university(Organization.Status.VERIFIED);
         student=student(university.id);
@@ -157,7 +167,28 @@ class StudentProfileIT {
         HttpResponse<String> put(Map<String,Object> body) throws Exception {
             return send("PUT",PROFILE,new tools.jackson.databind.ObjectMapper().writeValueAsString(body),true,UUID.randomUUID().toString());
         }
+        /** Real T1 multipart upload bound to this student's STUDENT_PROFILE; the server keeps it PENDING. */
+        String upload(UserAccount owner,String purpose) throws Exception {
+            String boundary="T209-profile-boundary";
+            var body=new java.io.ByteArrayOutputStream();
+            for(var field:List.of(List.of("resourceType","STUDENT_PROFILE"),List.of("resourceId",owner.id),List.of("purpose",purpose)))
+                body.write(("--"+boundary+"\r\nContent-Disposition: form-data; name=\""+field.get(0)+"\"\r\n\r\n"+field.get(1)+"\r\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            body.write(("--"+boundary+"\r\nContent-Disposition: form-data; name=\"file\"; filename=\"profile.pdf\"\r\nContent-Type: application/pdf\r\n\r\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            body.write(PDF);body.write(("\r\n--"+boundary+"--\r\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            var request=HttpRequest.newBuilder(URI.create("http://localhost:"+port+"/api/v1/files")).timeout(Duration.ofSeconds(30))
+                .header("Content-Type","multipart/form-data; boundary="+boundary).header("Idempotency-Key",UUID.randomUUID().toString()).header("X-CSRF-TOKEN",csrf);
+            var res=client.send(request.POST(HttpRequest.BodyPublishers.ofByteArray(body.toByteArray())).build(),HttpResponse.BodyHandlers.ofString());
+            assertEquals(202,res.statusCode(),res.body());assertEquals("PENDING",read(res,"$.scanStatus"));
+            return read(res,"$.fileId");
+        }
+        int download(String fileId) throws Exception {
+            return client.send(HttpRequest.newBuilder(URI.create("http://localhost:"+port+"/api/v1/files/"+fileId+"/content")).GET().build(),
+                HttpResponse.BodyHandlers.discarding()).statusCode();
+        }
     }
+    static final byte[] PDF="%PDF-1.7\nSynthetic T2-09 profile fixture, not a scanned document.\n%%EOF".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    /** Scanner-output fixture (T1-07 is not on this base): marks the test's own upload CLEAN, never production data. */
+    void syntheticClean(String fileId) { jdbc.update("UPDATE files SET scan_status='CLEAN' WHERE id=?",fileId); }
     Browser signedIn(UserAccount user) throws Exception {
         Browser b=new Browser();b.csrf();
         var res=b.send("POST","/api/v1/auth/login",new tools.jackson.databind.ObjectMapper().writeValueAsString(Map.of("email",user.email,"password",password)),true,null);
@@ -403,7 +434,7 @@ class StudentProfileIT {
         var removed=b.put(remove);
         assertEquals(200,removed.statusCode(),removed.body());assertEquals(List.of(),read(removed,"$.profile.projects"));
     }
-    @Test void foreignRecordIdIs404AndNewFileReferenceIs422() throws Exception {
+    @Test void foreignRecordIdIs404AndUnknownFileReferenceIs422() throws Exception {
         Browser b=signedIn(student);
         assertEquals(200,b.put(input(0)).statusCode());
         var foreign=input(1);foreign.put("customSkills",List.of(obj("customSkillId",UUID.randomUUID().toString(),"name","Thiết kế",
@@ -411,7 +442,55 @@ class StudentProfileIT {
         assertEnvelope(b.put(foreign),404,"RESOURCE_NOT_FOUND");
         var file=input(1);file.put("cvFileId",UUID.randomUUID().toString());
         var rejected=b.put(file);
-        assertEnvelope(rejected,422,"BUSINESS_VALIDATION");assertEquals(List.of("cvFileId"),fields(rejected));
+        assertEnvelope(rejected,422,"FILE_BINDING_INVALID");assertEquals(List.of("cvFileId"),fields(rejected));
+    }
+    @Test void cleanOwnFilesAttachToCvProjectAndCertificateAndSurviveReload() throws Exception {
+        Browser b=signedIn(student);
+        assertEquals(200,b.put(input(0)).statusCode());
+        String cv=b.upload(student,"CV"), evidence=b.upload(student,"EVIDENCE"), certificate=b.upload(student,"EVIDENCE");
+        for(String id:List.of(cv,evidence,certificate)) syntheticClean(id);
+        var attach=input(1);attach.put("cvFileId",cv);
+        var project=project(null);project.put("evidenceFileIds",List.of(evidence));attach.put("projects",List.of(project));
+        attach.put("certificates",List.of(obj("certificateId",null,"title","Chứng chỉ thử nghiệm","issuer","Đơn vị thử nghiệm",
+            "issuedOn","2026-06-01","expiresOn",null,"fileId",certificate)));
+        var saved=b.put(attach);
+        assertEquals(200,saved.statusCode(),saved.body());assertEquals(2,(int)read(saved,"$.profileVersion"));
+        var reloaded=b.get(TERM);
+        assertEquals(cv,read(reloaded,"$.profile.cvFileId"));
+        assertEquals(List.of(evidence),read(reloaded,"$.profile.projects[0].evidenceFileIds"));
+        assertEquals(certificate,read(reloaded,"$.profile.certificates[0].fileId"));
+        assertEquals(200,b.download(cv));
+        // Kept references are not re-checked: a later save that keeps them succeeds without new uploads.
+        var keep=input(2);keep.put("cvFileId",cv);
+        var keptProject=project((String)read(reloaded,"$.profile.projects[0].projectId"));keptProject.put("evidenceFileIds",List.of(evidence));
+        keep.put("projects",List.of(keptProject));
+        keep.put("certificates",List.of(obj("certificateId",read(reloaded,"$.profile.certificates[0].certificateId"),"title","Chứng chỉ thử nghiệm",
+            "issuer","Đơn vị thử nghiệm","issuedOn","2026-06-01","expiresOn",null,"fileId",certificate)));
+        assertEquals(200,b.put(keep).statusCode());
+    }
+    @Test void pendingWrongPurposeForeignAndDeletedFilesAreRejectedWithoutSaving() throws Exception {
+        Browser b=signedIn(student);
+        assertEquals(200,b.put(input(0)).statusCode());
+        String pending=b.upload(student,"CV");
+        var waiting=input(1);waiting.put("cvFileId",pending);
+        var notClean=b.put(waiting);
+        assertEnvelope(notClean,409,"FILE_NOT_CLEAN");assertEquals(List.of("cvFileId"),fields(notClean));
+        String evidence=b.upload(student,"EVIDENCE");syntheticClean(evidence);
+        var wrongPurpose=input(1);wrongPurpose.put("cvFileId",evidence);
+        var wrong=b.put(wrongPurpose);
+        assertEnvelope(wrong,422,"FILE_BINDING_INVALID");assertEquals(List.of("cvFileId"),fields(wrong));
+        UserAccount other=student(university.id);Browser o=signedIn(other);
+        assertEquals(200,o.put(input(0)).statusCode());
+        String foreign=o.upload(other,"CV");syntheticClean(foreign);
+        var stolen=input(1);stolen.put("cvFileId",foreign);
+        var foreignRejected=b.put(stolen);
+        assertEnvelope(foreignRejected,422,"FILE_BINDING_INVALID");assertEquals(List.of("cvFileId"),fields(foreignRejected));
+        String deleted=b.upload(student,"CV");syntheticClean(deleted);
+        jdbc.update("UPDATE files SET deleted_at=UTC_TIMESTAMP(6) WHERE id=?",deleted);
+        var gone=input(1);gone.put("cvFileId",deleted);
+        assertEnvelope(b.put(gone),422,"FILE_BINDING_INVALID");
+        assertEquals(1,jdbc.queryForObject("SELECT profile_version FROM student_profiles WHERE user_id=?",Integer.class,student.id));
+        assertNull(jdbc.queryForObject("SELECT cv_file_id FROM student_profiles WHERE user_id=?",String.class,student.id));
     }
     @Test void pendingSchoolRevokedMembershipMissingCsrfAndAnonymousAreDenied() throws Exception {
         assertEnvelope(signedIn(student(university(Organization.Status.PENDING).id)).get(TERM),403,"ACCESS_DENIED");

@@ -62,6 +62,17 @@ button.student-tab:focus-visible { outline-offset: -3px; }
 .student-status.submitted { color: #966614; background: #fff8e9; border-color: #f3e7c7; }
 .student-status.reviewed, .student-status.in_progress { color: #28775c; background: #edf8f2; border-color: #d6ecdf; }
 .student-pre-line { white-space: pre-line; }
+.student-status.pending { color: #966614; background: #fff8e9; border-color: #f3e7c7; }
+.student-status.clean { color: #28775c; background: #edf8f2; border-color: #d6ecdf; }
+.student-status.rejected { color: #a5364c; background: #fff1f2; border-color: #f6d5da; }
+.student-file-list { display: grid; gap: 8px; margin: 10px 0 0; padding: 0; list-style: none; }
+.student-file-list > li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; min-width: 0; }
+.student-file { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; }
+.student-file-name { font-size: var(--text-sm); overflow-wrap: anywhere; }
+.student-file .student-status { margin: 0; }
+.student-upload { margin-top: 18px; padding-top: 16px; border-top: 1px dashed #e3eaee; }
+.student-upload input[type="file"] { display: block; max-width: 100%; margin-top: 7px; }
+.student-upload + * { margin-top: 22px; }
 .student-result-total { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 4px 0 0; }
 .student-result-total span { color: var(--muted); font-size: var(--text-sm); font-weight: 600; }
 .student-result-total strong { color: var(--ink); font-size: 2rem; line-height: 1.2; }

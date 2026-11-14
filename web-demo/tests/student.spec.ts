@@ -88,7 +88,7 @@ test('Các màn sinh viên vừa màn hình 320px và 390px', async ({ page }) =
   await signIn(page, fixture('E2E_STUDENT_EMAIL'));
   for (const width of [320, 390]) {
     await page.setViewportSize({ width, height: 844 });
-    for (const title of ['Tổng quan', 'Thông tin chung', 'Cơ hội thực tập', 'Nhiệm vụ & sản phẩm', 'Báo cáo & đánh giá']) {
+    for (const title of ['Tổng quan', 'Thông tin chung', 'Năng lực', 'Cơ hội thực tập', 'Nhiệm vụ & sản phẩm', 'Báo cáo & đánh giá']) {
       await navigate(page, title);
       await expectNoPageOverflow(page);
     }
@@ -647,4 +647,97 @@ test('UX UI mock: API kết quả trả 404 thì báo chưa sẵn sàng, không 
   await expect(region.getByText('Chưa xem được kết quả: chức năng chưa sẵn sàng hoặc hồ sơ không còn truy cập được. Vui lòng thử lại sau.', { exact: true })).toBeVisible();
   await expect(region).not.toContainText(/\d/);
   await expect(page.getByText('Nội dung máy chủ không hiển thị')).toHaveCount(0);
+});
+
+// T2-09/S04: hồ sơ và tệp tổng hợp theo BC11/CP-FILE, chỉ dùng trong test cô lập.
+// Không thay thế dịch vụ tệp T1 và không phải bằng chứng đã có bộ quét T1-07.
+const CV_ID = '00000000-0000-4000-8000-000000000071';
+const fileDto = (fileId: string, resourceId: string, purpose: 'CV' | 'EVIDENCE', scanStatus: 'PENDING' | 'CLEAN', originalName: string) => ({
+  fileId, resource: { resourceType: 'STUDENT_PROFILE', resourceId }, purpose, originalName, contentType: 'application/pdf', sizeBytes: 1024,
+  sha256: 'a'.repeat(64), scanStatus, createdAt: '2026-11-01T00:00:00Z', deletedAt: null
+});
+async function mockCapabilityProfile(page: Page, userId: string, onPut: (body: Record<string, unknown>, key: string | undefined) => { status: number; json: unknown }) {
+  await page.route('**/api/v1/terms?**', route => route.fulfill({ json: termsPage([term(TERM_ID, 'HK1-DEMO', 'ACTIVE')]) }));
+  await page.route('**/api/v1/students/me/profile**', route => {
+    const request = route.request();
+    if (request.method() !== 'PUT') return route.fulfill({ json: profileView(3, '0901234567') });
+    return route.fulfill(onPut(request.postDataJSON(), request.headers()['idempotency-key']));
+  });
+  await page.route('**/api/v1/files/*/metadata', route => {
+    const id = new URL(route.request().url()).pathname.split('/')[4];
+    return route.fulfill({ json: fileDto(id, userId, id === CV_ID ? 'CV' : 'EVIDENCE', 'CLEAN', id === CV_ID ? 'cv.pdf' : 'minh-chung.pdf') });
+  });
+}
+
+test('UX UI mock: S04 thêm dự án gửi PUT hồ sơ đầy đủ, giữ kỹ năng, chứng chỉ và CV', async ({ page }) => {
+  const puts: { body: Record<string, unknown>; key: string | undefined }[] = [];
+  await signIn(page, fixture('E2E_STUDENT_EMAIL'));
+  await mockCapabilityProfile(page, await currentUserId(page), (body, key) => {
+    puts.push({ body, key });
+    const saved = profileView(4, '0901234567');
+    saved.profile.projects = [...saved.profile.projects, { ...(body.projects as SelfProfileView['profile']['projects'])[1], projectId: '00000000-0000-4000-8000-000000000042' }];
+    return { status: 200, json: saved };
+  });
+  await navigate(page, 'Năng lực');
+  await expect(page.getByRole('heading', { name: 'Ứng dụng thử nghiệm', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Thêm dự án', exact: true }).click();
+  await page.getByLabel('Tên dự án', { exact: true }).fill('Hệ thống quản lý thực tập');
+  await page.getByLabel('Vai trò của bạn', { exact: true }).fill('Frontend');
+  await page.getByLabel('Đường dẫn dự án (https)', { exact: true }).fill('http://example.test/intern');
+  await page.getByRole('button', { name: 'Lưu dự án', exact: true }).click();
+  await expect(page.getByText('Đường dẫn phải là URL https:// hợp lệ, không chứa tài khoản hoặc mật khẩu.', { exact: true })).toBeVisible();
+  expect(puts).toEqual([]);
+  await page.getByLabel('Đường dẫn dự án (https)', { exact: true }).fill('https://example.test/intern');
+  await page.getByRole('checkbox', { name: 'JAVA', exact: true }).check();
+  await page.getByRole('button', { name: 'Lưu dự án', exact: true }).click();
+  await expect(page.getByText('Đã thêm dự án.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Hệ thống quản lý thực tập', exact: true })).toBeVisible();
+  expect(puts).toHaveLength(1);
+  expect(puts[0].key).toMatch(UUID_V4);
+  expect(puts[0].body.expectedProfileVersion).toBe(3);
+  expect(puts[0].body.projects).toEqual([
+    { projectId: '00000000-0000-4000-8000-000000000041', title: 'Ứng dụng thử nghiệm', description: 'Đồ án mẫu', role: 'Backend', skillCodes: ['JAVA'],
+      url: 'https://example.test/project', evidenceFileIds: ['00000000-0000-4000-8000-000000000051'] },
+    { projectId: null, title: 'Hệ thống quản lý thực tập', description: '', role: 'Frontend', skillCodes: ['JAVA'], url: 'https://example.test/intern', evidenceFileIds: [] }]);
+  expect(puts[0].body.skills).toEqual([{ skillCode: 'JAVA', level: 3, yearsPractice: 1.5, note: null }]);
+  expect(puts[0].body.certificates).toHaveLength(1);
+  expect(puts[0].body.cvFileId).toBe(CV_ID);
+});
+
+test('UX UI mock: S04 tải CV lên chờ quét, chỉ dùng làm CV khi đã an toàn; FILE_NOT_CLEAN báo rõ và thử lại cùng key', async ({ page }) => {
+  const NEW_CV = '00000000-0000-4000-8000-000000000072';
+  const uploads: string[] = [], puts: { body: Record<string, unknown>; key: string | undefined }[] = [];
+  let clean = false;
+  await signIn(page, fixture('E2E_STUDENT_EMAIL'));
+  const userId = await currentUserId(page);
+  await mockCapabilityProfile(page, userId, (body, key) => {
+    puts.push({ body, key });
+    if (puts.length === 1) return { status: 409, json: envelope('FILE_NOT_CLEAN', 'Nội dung máy chủ không hiển thị') };
+    const saved = profileView(4, '0901234567'); saved.profile.cvFileId = NEW_CV;
+    return { status: 200, json: saved };
+  });
+  await page.route('**/api/v1/files/' + NEW_CV + '/metadata', route => route.fulfill({ json: fileDto(NEW_CV, userId, 'CV', clean ? 'CLEAN' : 'PENDING', 'cv-moi.pdf') }));
+  await page.route('**/api/v1/files', route => {
+    uploads.push(route.request().postDataBuffer()?.toString('utf8') ?? '');
+    return route.fulfill({ status: 202, json: fileDto(NEW_CV, userId, 'CV', 'PENDING', 'cv-moi.pdf') });
+  });
+  await navigate(page, 'Năng lực');
+  await page.getByRole('tab', { name: 'CV', exact: true }).click();
+  await page.getByLabel('Chọn tệp CV', { exact: true }).setInputFiles({ name: 'cv-moi.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.7\n%%EOF') });
+  await page.getByRole('button', { name: 'Tải CV lên', exact: true }).click();
+  await expect.poll(() => uploads.length).toBe(1);
+  for (const part of ['name="resourceType"', 'STUDENT_PROFILE', 'name="purpose"', 'name="resourceId"', userId]) expect(uploads[0]).toContain(part);
+  const use = page.getByRole('button', { name: 'Dùng làm CV', exact: true });
+  await expect(page.getByText('Đang chờ quét', { exact: true })).toBeVisible();
+  await expect(use).toBeDisabled();
+  clean = true;
+  await page.getByRole('button', { name: 'Kiểm tra trạng thái tệp', exact: true }).click();
+  await expect(use).toBeEnabled();
+  await use.click();
+  await expect(page.getByText('Tệp chưa được xác nhận an toàn. Chờ trạng thái "Đã xác nhận an toàn" rồi gắn lại.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Nội dung máy chủ không hiển thị')).toHaveCount(0);
+  await use.click();
+  await expect(page.getByText('Đã gắn CV vào hồ sơ.', { exact: true })).toBeVisible();
+  expect(puts.map(item => item.body.cvFileId)).toEqual([NEW_CV, NEW_CV]);
+  expect(puts[1].key).toBe(puts[0].key);
 });
