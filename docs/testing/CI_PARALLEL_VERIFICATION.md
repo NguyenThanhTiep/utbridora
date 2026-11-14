@@ -5,6 +5,9 @@ GitHub-hosted runners. Failsafe still uses one fork at a time and releases each
 class's Spring context/Testcontainers at JVM exit. Browser ports and databases are
 isolated by runner; no local/shared deployment is involved.
 
+Runner labels are pinned to `ubuntu-24.04`, matching the verified main baseline,
+to keep the operating-system migration of `ubuntu-latest` separate from this change.
+
 Jobs start independently:
 
 - `contracts`: existing contract, audit, portability and fixture checks.
@@ -27,6 +30,9 @@ Artifacts are `test-results` (unit reports), `integration-results-1..3` (IT/brow
 reports, logs, screenshots and shard manifests), and `contract-results`. Keep all
 three integration artifacts when counting regression results. Matrix `fail-fast`
 is disabled to retain diagnostic evidence from the other shards after a failure.
+JUnit totals and a digest of the underlying XML reports are also emitted as GitHub
+Checks notices, with bounded failure annotations. REST clients can inspect these
+when downloading artifacts is unavailable; the raw reports remain in the artifacts.
 
 New commits cancel superseded runs for the same DEV branch or pull request and
 event type. Main and tag runs have unique concurrency groups so their evidence is

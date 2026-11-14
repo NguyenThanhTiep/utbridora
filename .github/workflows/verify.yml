@@ -8,7 +8,7 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/') }}
 jobs:
   contracts:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       contents: read
@@ -25,13 +25,19 @@ jobs:
       - run: python scripts/fixtures/t4/verify_s1_s11_fixture.py
       - run: python scripts/contracts/build_contract_bundle.py --check
       - run: python scripts/contracts/verify_contracts.py --output target/contract-verification.json
+      - name: Report contract totals
+        run: |
+          python - <<'PY'
+          import json
+          print('::notice title=Contract summary::' + json.dumps(json.load(open('target/contract-verification.json', encoding='utf-8'))['counts']))
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: contract-results
           path: target/contract-verification.json
   fast:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -45,13 +51,18 @@ jobs:
       - run: npm ci && npm run build
         working-directory: web-demo
       - run: mvn -B -DskipITs verify
+      - name: Report unit results
+        if: always()
+        run: python scripts/ci/report_failures.py --unit
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results
-          path: target/surefire-reports/
+          path: |
+            target/surefire-reports/
+            target/ci-result-summary.json
   integration:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -76,8 +87,8 @@ jobs:
           -Dfailsafe.includesFile=target/ci-includes.txt
           -Dfrontend.e2e=true -Dt5.week3.browser=true
       - run: python scripts/ci/integration_shards.py check
-      - name: Annotate failed integration tests
-        if: failure()
+      - name: Report integration results
+        if: always()
         run: python scripts/ci/report_failures.py
       - uses: actions/upload-artifact@v4
         if: always()
@@ -86,6 +97,7 @@ jobs:
           path: |
             target/ci-shard.json
             target/ci-includes.txt
+            target/ci-result-summary.json
             target/failsafe-reports/
             target/*browser-results.xml
             target/*browser.xml
@@ -98,7 +110,7 @@ jobs:
   verify:
     if: ${{ always() }}
     needs: [contracts, fast, integration]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Require all verification jobs
