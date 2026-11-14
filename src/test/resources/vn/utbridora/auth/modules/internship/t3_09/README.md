@@ -31,7 +31,7 @@ Xem kết quả thực thi và giới hạn trong [báo cáo hiện tại](testi
   `pages/TaskBoard.tsx`, `pages/SubmissionWorkspace.tsx`, `pages/WeeklyReports.tsx`,
   `pages/ReportEvidence.tsx`, `styles.css`. Transport chung `web-demo/src/api.ts`
   bổ sung multipart đúng boundary và đọc Blob, dùng lại session/CSRF/error handling.
-- Entry sinh viên hiện có: `web-demo/src/App.tsx`, mục Công việc của tôi;
+- Entry sinh viên hiện có: `web-demo/src/App.tsx`, mục Nhiệm vụ & sản phẩm (S07) và Báo cáo & đánh giá (S08, T2-10);
   thêm key theo userId để không giữ state giữa hai tài khoản.
 - Test thực thi: `web-demo/tests/unit/internship-workflow.spec.ts`,
   `web-demo/tests/internship-week3.ui.spec.ts` và fixture `web-demo/tests/fixtures/internship-week3*`.

@@ -11,7 +11,8 @@ import { StudentOverviewPage } from './modules/student/pages/StudentOverviewPage
 import { MyProfilePage } from './modules/student/pages/MyProfilePage';
 import { InvitationsPreferencesPage, type StudentResponseTab } from './modules/student/pages/InvitationsPreferencesPage';
 import { OpportunitiesPage } from './modules/student/pages/OpportunitiesPage';
-import { TaskBoard } from './modules/internship/pages/TaskBoard';
+import { InternshipTasksPage } from './modules/student/pages/InternshipTasksPage';
+import { ReportsResultsPage } from './modules/student/pages/ReportsResultsPage';
 import { MentorInvitations } from './modules/internship/pages/MentorInvitations';
 import './modules/workflows.css';
 // DEV08 đã nối màn hình danh mục kỹ năng vào khung ứng dụng hiện có để người kiểm thử mở được giao diện US-T4-06.
@@ -30,7 +31,9 @@ const screens = [
   { id: 'student-opportunities', title: 'Cơ hội thực tập', description: 'Tìm cơ hội đã được nhà trường công bố và gửi nguyện vọng.', icon: 'briefcase', permission: 'student_profile:self:read', group: 'student' },
   // S06 (SRS 14.1): lời mời và nguyện vọng chung một màn, 2 tab.
   { id: 'student-invitations', title: 'Lời mời & nguyện vọng', description: 'Phản hồi lời mời, quyết định chia sẻ hồ sơ và theo dõi nguyện vọng đã gửi.', icon: 'mail', permission: 'student_profile:self:read', group: 'student' },
-  { id: 'student-tasks', title: 'Công việc của tôi', description: 'Nhiệm vụ và lịch thực tập được giao cho bạn.', icon: 'calendar', permission: 'student_profile:self:read', group: 'student' },
+  // S07, S08 (SRS 14.1): giữ id 'student-tasks' cho S07 để không đổi điều hướng cũ.
+  { id: 'student-tasks', title: 'Nhiệm vụ & sản phẩm', description: 'Vị trí thực tập, nhiệm vụ được giao, lịch hạn và bài nộp của bạn.', icon: 'calendar', permission: 'student_profile:self:read', group: 'student' },
+  { id: 'student-reports', title: 'Báo cáo & đánh giá', description: 'Báo cáo tuần và kết quả đánh giá đã được nhà trường công bố.', icon: 'check-circle', permission: 'student_profile:self:read', group: 'student' },
   { id: 'demands', title: 'Nhu cầu thực tập', description: 'Quản lý bản nháp nhu cầu và tiêu chí tuyển thực tập của doanh nghiệp.', icon: 'briefcase', permission: 'cooperation:enterprise:create' },
   { id: 'users', title: 'Tài khoản & phân quyền', description: 'Quản lý thành viên và quyền truy cập trong hệ thống.', icon: 'users', permission: 'account:admin:status' },
   { id: 'delegations', title: 'Phân công quyền cán bộ', description: 'Cấp và thu hồi quyền trong từng trường và kỳ thực tập.', icon: 'shield', permission: null },
@@ -250,7 +253,8 @@ export default function App() {
           : screen === 'student-profile' ? <MyProfilePage me={me} schools={schools} />
           : screen === 'student-opportunities' ? <OpportunitiesPage schools={schools} openPreferences={() => { setStudentTab('preferences'); navigate('student-invitations'); }} />
           : screen === 'student-invitations' ? <InvitationsPreferencesPage tab={studentTab} setTab={setStudentTab} />
-          : screen === 'student-tasks' ? <TaskBoard key={me.userId} student />
+          : screen === 'student-tasks' ? <InternshipTasksPage key={me.userId} me={me} />
+          : screen === 'student-reports' ? <ReportsResultsPage key={me.userId} me={me} />
           : screen === 'mentor-invitations' ? <MentorInvitations />
           // DEV08 hiển thị mô-đun danh mục kỹ năng trong khung ứng dụng hiện có để người kiểm thử bắt đầu kiểm tra giao diện.
           : screen === 'taxonomy' ? <SkillTaxonomy />

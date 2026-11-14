@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import type { ConsentGrant, InternshipInvitation, OpportunityView, PreferenceView, SelfProfileView } from '../src/modules/student/types';
+import type { ConsentGrant, EvaluationDto, InternshipInvitation, OpportunityView, PreferenceView, SelfProfileView, StudentResultDto } from '../src/modules/student/types';
 test.beforeEach(async ({ page }) => {
   const empty = { content: [], page: 0, size: 100, totalElements: 0, totalPages: 0 };
   await page.route('**/api/v1/taxonomy/categories?**', route => route.fulfill({ json: empty }));
@@ -88,10 +88,14 @@ test('Các màn sinh viên vừa màn hình 320px và 390px', async ({ page }) =
   await signIn(page, fixture('E2E_STUDENT_EMAIL'));
   for (const width of [320, 390]) {
     await page.setViewportSize({ width, height: 844 });
-    for (const title of ['Tổng quan', 'Thông tin chung', 'Cơ hội thực tập', 'Lời mời & nguyện vọng']) {
+    for (const title of ['Tổng quan', 'Thông tin chung', 'Cơ hội thực tập', 'Nhiệm vụ & sản phẩm', 'Báo cáo & đánh giá']) {
       await navigate(page, title);
       await expectNoPageOverflow(page);
     }
+    await page.getByRole('tab', { name: 'Kết quả đánh giá', exact: true }).click();
+    await expectNoPageOverflow(page);
+    await navigate(page, 'Lời mời & nguyện vọng');
+    await expectNoPageOverflow(page);
     await page.getByRole('tab', { name: 'Nguyện vọng', exact: true }).click();
     await expectNoPageOverflow(page);
     await page.getByRole('tab', { name: 'Lời mời', exact: true }).click();
@@ -528,5 +532,119 @@ test('UX UI mock: nguyện vọng hiện trạng thái và lịch sử, chỉ r�
   await expect(page.getByText('Nguyện vọng đã được nhà trường xét nên không thể rút. Muốn đổi ý, hãy gửi nguyện vọng mới.', { exact: true })).toBeVisible();
   await expect.poll(() => listCalls).toBeGreaterThan(before);
   expect(bodies).toEqual([{ action: 'WITHDRAW', preferenceId: '00000000-0000-4000-8000-000000000092', expectedVersion: 3, reasonCode: 'STUDENT_WITHDREW' }]);
+  await expect(page.getByText('Nội dung máy chủ không hiển thị')).toHaveCount(0);
+});
+
+// T2-10: nhiệm vụ, hồ sơ thực tập và kết quả tổng hợp theo CP-WS1/CP-WS2/CP-WS4, chỉ dùng trong test cô lập.
+// Không thay thế API T3 và không phải bằng chứng đã tích hợp T3; GET /t3/me/results còn chờ T3-11.
+const CASE_ID = '00000000-0000-4000-8000-000000000301', PLACEMENT_ID = '00000000-0000-4000-8000-000000000302';
+const currentUserId = async (page: Page) => ((await (await page.request.get('/api/v1/auth/me')).json()) as { userId: string }).userId;
+const internshipTask = (studentUserId: string) => ({
+  taskId: '00000000-0000-4000-8000-000000000303', title: 'Nhiệm vụ thử nghiệm', description: 'Mô tả thử nghiệm',
+  groupId: '00000000-0000-4000-8000-000000000304', dueAt: FUTURE, priority: 'NORMAL', lateAllowed: true, version: 1,
+  assignments: [{ assignmentId: '00000000-0000-4000-8000-000000000305', caseId: CASE_ID, studentUserId, state: 'NEW', version: 1, currentSubmissionId: null }]
+});
+// Ví dụ CP-WS4 (v1.0 dòng 624–655): trọng số 40/60, điểm 5/3, total100=76.00 do server trả.
+const evaluation = (state: EvaluationDto['state']): EvaluationDto => ({
+  evaluationId: '00000000-0000-4000-8000-000000000306', caseId: CASE_ID,
+  template: { templateId: '00000000-0000-4000-8000-000000000307', templateVersion: 1, criteria: [
+    { criterionCode: 'QUALITY', label: 'Chất lượng công việc', weight: 40 }, { criterionCode: 'PROCESS', label: 'Quy trình thực hiện', weight: 60 }] },
+  scores: [{ criterionCode: 'QUALITY', score: 5, comment: 'Hoàn thành tốt', evidenceFileIds: [] }, { criterionCode: 'PROCESS', score: 3, comment: null, evidenceFileIds: [] }],
+  total100: 76, state, revisionNo: 1, version: 3, publishedAt: state === 'PUBLISHED' ? '2026-12-20T08:00:00Z' : null, decisionRef: null
+});
+async function mockInternship(page: Page, studentUserId: string, tasks = true) {
+  await page.route('**/api/v1/t3/tasks?**', route => route.fulfill({ json: termsPage(tasks ? [internshipTask(studentUserId)] : []) }));
+  await page.route('**/api/v1/t3/calendar?**', route => route.fulfill({ json: termsPage([]) }));
+  await page.route('**/api/v1/t3/cases/' + CASE_ID, route => route.fulfill({ json: { caseId: CASE_ID, placementId: PLACEMENT_ID, studentUserId,
+    schoolOrgId: SCHOOL_ID, enterpriseOrgId: ENTERPRISE_ID, termId: TERM_ID, state: 'IN_PROGRESS', version: 1 } }));
+  await page.route('**/api/v1/invitations/me?**', route => route.fulfill({ json: termsPage([{ ...invitation(1, 'Thực tập Java thử nghiệm', 'ACCEPTED', FUTURE), placementId: PLACEMENT_ID }]) }));
+  await page.route('**/api/v1/terms?**', route => route.fulfill({ json: termsPage([term(TERM_ID, 'HK1-DEMO', 'ACTIVE')]) }));
+}
+async function openResults(page: Page) {
+  await navigate(page, 'Báo cáo & đánh giá');
+  await page.getByRole('tab', { name: 'Kết quả đánh giá', exact: true }).click();
+  return page.getByRole('region', { name: 'Kết quả đánh giá', exact: true });
+}
+
+test('UX UI mock: S07 thay Công việc của tôi, hiện vị trí đã chốt, kỳ thực tập và nhiệm vụ; báo cáo tuần chuyển sang S08', async ({ page }) => {
+  await signIn(page, fixture('E2E_STUDENT_EMAIL'));
+  await mockInternship(page, await currentUserId(page));
+  await expect(page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Công việc của tôi', exact: true })).toHaveCount(0);
+  await navigate(page, 'Nhiệm vụ & sản phẩm');
+  const mine = page.getByRole('region', { name: 'Thực tập của tôi', exact: true });
+  await expect(mine.getByRole('heading', { name: 'Thực tập Java thử nghiệm', exact: true })).toBeVisible();
+  await expect(mine.getByText('Doanh nghiệp thử nghiệm', { exact: true })).toBeVisible();
+  await expect(mine.getByText('Đang thực tập', { exact: true })).toBeVisible();
+  await expect(mine.getByText(/^Kỳ HK1-DEMO:/)).toBeVisible();
+  await expect(page.locator('article').getByRole('button', { name: 'Nhiệm vụ thử nghiệm', exact: true })).toBeVisible();
+  await expect(page.locator('article').getByRole('button', { name: 'Bắt đầu làm', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Mở báo cáo tuần', exact: true })).toHaveCount(0);
+  await navigate(page, 'Báo cáo & đánh giá');
+  await expect(page.getByRole('tab', { name: 'Báo cáo tuần', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('combobox', { name: 'Hồ sơ cho báo cáo', exact: true }).locator('option', { hasText: 'Hồ sơ …000301' })).toHaveCount(1);
+});
+
+test('UX UI mock: chưa có nhiệm vụ thì không đoán caseId và không gọi API kết quả', async ({ page }) => {
+  const resultCalls: string[] = [];
+  await signIn(page, fixture('E2E_STUDENT_EMAIL'));
+  await mockInternship(page, await currentUserId(page), false);
+  await page.route('**/api/v1/invitations/me?**', route => route.fulfill({ json: termsPage([]) }));
+  await page.route('**/api/v1/t3/me/results?**', route => { resultCalls.push(route.request().url()); return route.fulfill({ status: 500, json: envelope('INTERNAL_ERROR', 'Lỗi') }); });
+  await navigate(page, 'Nhiệm vụ & sản phẩm');
+  await expect(page.getByRole('heading', { name: 'Chưa có thông tin thực tập để hiển thị', exact: true })).toBeVisible();
+  await navigate(page, 'Báo cáo & đánh giá');
+  await page.getByRole('tab', { name: 'Kết quả đánh giá', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Chưa có hồ sơ thực tập', exact: true })).toBeVisible();
+  expect(resultCalls).toEqual([]);
+});
+
+test('UX UI mock: kết quả HIDDEN, bản chưa công bố hoặc bị gửi kèm sai đều chỉ báo chưa công bố và không lộ số điểm', async ({ page }) => {
+  let result: StudentResultDto = { caseId: CASE_ID, visibility: 'HIDDEN', evaluation: null, reasonCode: 'NOT_AVAILABLE' };
+  const queries: (string | null)[] = [];
+  await signIn(page, fixture('E2E_STUDENT_EMAIL'));
+  await mockInternship(page, await currentUserId(page));
+  await page.route('**/api/v1/t3/me/results?**', route => { queries.push(new URL(route.request().url()).searchParams.get('caseId')); return route.fulfill({ json: result }); });
+  const region = await openResults(page);
+  const hidden = region.getByRole('heading', { name: 'Chưa có kết quả được công bố', exact: true });
+  await expect(hidden).toBeVisible();
+  await expect(region).not.toContainText(/\d/);
+  expect(queries).toEqual([CASE_ID]);
+  // Server gửi kèm bản đã chấm khi HIDDEN (vi phạm CP-WS4) hoặc VISIBLE nhưng chưa PUBLISHED: giao diện vẫn không hiển thị.
+  const leaks: StudentResultDto[] = [{ ...result, evaluation: evaluation('PUBLISHED') },
+    { caseId: CASE_ID, visibility: 'VISIBLE', reasonCode: 'VISIBLE', evaluation: evaluation('SUBMITTED') }];
+  for (const leaked of leaks) {
+    result = leaked;
+    const response = page.waitForResponse('**/api/v1/t3/me/results?**');
+    await page.getByRole('button', { name: 'Tải lại kết quả', exact: true }).click();
+    await response;
+    await expect(hidden).toBeVisible();
+    await expect(region).not.toContainText(/\d/);
+  }
+});
+
+test('UX UI mock: kết quả VISIBLE hiện đúng total100 và điểm theo tiêu chí do server trả, vừa màn 320px', async ({ page }) => {
+  await signIn(page, fixture('E2E_STUDENT_EMAIL'));
+  await mockInternship(page, await currentUserId(page));
+  await page.route('**/api/v1/t3/me/results?**', route => route.fulfill({ json: { caseId: CASE_ID, visibility: 'VISIBLE', reasonCode: 'VISIBLE', evaluation: evaluation('PUBLISHED') } }));
+  const region = await openResults(page);
+  await expect(region.getByText('76,00', { exact: true })).toBeVisible();
+  const quality = region.getByRole('row').filter({ has: page.getByRole('rowheader', { name: 'Chất lượng công việc', exact: true }) });
+  await expect(quality).toContainText('40,00%');
+  await expect(quality).toContainText('5,00');
+  await expect(quality).toContainText('Hoàn thành tốt');
+  const process = region.getByRole('row').filter({ has: page.getByRole('rowheader', { name: 'Quy trình thực hiện', exact: true }) });
+  await expect(process).toContainText('60,00%');
+  await expect(process).toContainText('3,00');
+  await page.setViewportSize({ width: 320, height: 844 });
+  await expectNoPageOverflow(page);
+});
+
+test('UX UI mock: API kết quả trả 404 thì báo chưa sẵn sàng, không hiện nội dung server hay số điểm', async ({ page }) => {
+  await signIn(page, fixture('E2E_STUDENT_EMAIL'));
+  await mockInternship(page, await currentUserId(page));
+  await page.route('**/api/v1/t3/me/results?**', route => route.fulfill({ status: 404, json: envelope('RESOURCE_NOT_FOUND', 'Nội dung máy chủ không hiển thị') }));
+  const region = await openResults(page);
+  await expect(region.getByText('Chưa xem được kết quả: chức năng chưa sẵn sàng hoặc hồ sơ không còn truy cập được. Vui lòng thử lại sau.', { exact: true })).toBeVisible();
+  await expect(region).not.toContainText(/\d/);
   await expect(page.getByText('Nội dung máy chủ không hiển thị')).toHaveCount(0);
 });

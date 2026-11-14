@@ -1,7 +1,9 @@
 import { api } from '../../api';
+import type { CaseRef } from '../internship/cases';
 import type {
   ConsentGrant, ContractPage, GrantConsent, InternshipInvitation, InvitationDecision, InvitationWithdrawal, OpportunityView,
-  PreferenceView, ProfileInput, RevokeConsent, SchoolSharingPolicy, SelfProfileView, SubmitPreference, TermReference, WithdrawPreference
+  PreferenceView, ProfileInput, RevokeConsent, SchoolSharingPolicy, SelfProfileView, StudentResultDto, SubmitPreference, TermReference,
+  WithdrawPreference
 } from './types';
 
 // BC11 (Contract Pack v1.0, dòng 778). CSRF do api() của core tự thêm cho PUT.
@@ -75,6 +77,13 @@ export const getOpportunity = (opportunityId: string, signal?: AbortSignal) =>
 export const listMyPreferences = (signal?: AbortSignal) => readAllPages<PreferenceView>('/students/me/preferences', signal);
 export const sendPreference = (request: SubmitPreference | WithdrawPreference, idempotencyKey: string) =>
   command<PreferenceView>('/students/me/preferences', request, idempotencyKey);
+
+// CP-WS1 (v1.0 dòng 431): sinh viên chỉ đọc được hồ sơ thực tập của chính mình; T3 kiểm quyền ở mỗi lần đọc.
+export const getMyCase = (caseId: string, signal?: AbortSignal) =>
+  api<CaseRef>('/t3/cases/' + encodeURIComponent(caseId), { signal });
+// CP-WS4 (v1.0 dòng 618): T3 chỉ trả điểm khi đã công bố và đủ chính sách xem của trường lẫn HR.
+export const getMyResult = (caseId: string, signal?: AbortSignal) =>
+  api<StudentResultDto>('/t3/me/results?' + new URLSearchParams({ caseId }), { signal });
 
 // crypto.randomUUID chỉ có trong secure context (localhost/HTTPS); dự phòng UUID v4 từ getRandomValues.
 export function newIdempotencyKey() {

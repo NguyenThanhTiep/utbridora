@@ -74,3 +74,15 @@ export type PreferenceView = {
 };
 export type SubmitPreference = { action: 'SUBMIT'; opportunityId: string; message: string | null; expectedIntentVersion: number };
 export type WithdrawPreference = { action: 'WITHDRAW'; preferenceId: string; expectedVersion: number; reasonCode: Code };
+
+// CP-WS4 (v1.0 dòng 576–622): T3 sở hữu rubric/evaluation và quyết định hiển thị; T2 chỉ đọc kết quả của chính sinh viên.
+export type EvaluationState = 'DRAFT' | 'SUBMITTED' | 'PUBLISHED';
+export type Score = { criterionCode: string; score: number; comment: string | null; evidenceFileIds: string[] };
+export type RubricCriterion = { criterionCode: string; label: string; weight: number };
+export type RubricTemplate = { templateId: string; templateVersion: number; criteria: RubricCriterion[] };
+export type EvaluationDto = {
+  evaluationId: string; caseId: string; template: RubricTemplate; scores: Score[]; total100: number; state: EvaluationState;
+  revisionNo: number; version: number; publishedAt: string | null; decisionRef: string | null;
+};
+// HIDDEN luôn đi kèm evaluation=null, reasonCode=NOT_AVAILABLE (dòng 622).
+export type StudentResultDto = { caseId: string; visibility: 'VISIBLE' | 'HIDDEN'; evaluation: EvaluationDto | null; reasonCode: 'VISIBLE' | 'NOT_AVAILABLE' };

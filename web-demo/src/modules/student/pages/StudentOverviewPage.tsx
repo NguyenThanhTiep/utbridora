@@ -99,7 +99,7 @@ export function StudentOverviewPage({ me, schools, openProfile }: { me: Me; scho
             <p><strong>Doanh nghiệp tiếp nhận:</strong> {selectedDetail.enterpriseName}</p>
             <p><strong>Địa điểm làm việc:</strong> {selectedDetail.location || 'Theo sắp xếp của doanh nghiệp'}</p>
             <p><strong>Quyền lợi / Hỗ trợ:</strong> {selectedDetail.benefits || 'Theo chính sách thực tập của doanh nghiệp'}</p>
-            <p><strong>Hướng dẫn tham gia:</strong> Cập nhật đầy đủ kỹ năng và lịch trống tại mục <em>Thông tin chung</em>. Khi nhà trường đề cử bạn vào vị trí này, lời mời sẽ xuất hiện tại mục <em>Lời mời và chia sẻ</em>.</p>
+            <p><strong>Hướng dẫn tham gia:</strong> Cập nhật đầy đủ kỹ năng và lịch trống tại mục <em>Thông tin chung</em>. Khi nhà trường đề cử bạn vào vị trí này, lời mời sẽ xuất hiện tại mục <em>Lời mời & nguyện vọng</em>.</p>
           </div>}
         </article>)}
       </div>}

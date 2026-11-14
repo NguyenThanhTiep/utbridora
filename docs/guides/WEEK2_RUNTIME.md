@@ -33,10 +33,10 @@ Log JUnit ở target/surefire-reports và target/failsafe-reports. Chromium tu�
 2. **Student:** Thông tin chung → Kỹ năng và mức hoàn thiện. Canonical skill lấy từ taxonomy; custom skill không được suy thành canonical MATCH. Lưu rồi reload để đọc dữ liệu backend.
 3. **Matching:** trường có delegation gọi evaluate bằng demandId và versions. Server đọc criteria T5 và dataset T2, không nhận kết quả MATCH từ browser. Chỉ nhánh school được mở; enterprise aggregate giữ đóng.
 4. **Cooperation:** doanh nghiệp lưu Demand nháp → Gửi đề nghị hợp tác. Một transaction tạo Cooperation, validate/READY Demand và SUBMITTED. Trường mở Hợp tác doanh nghiệp, xem nội dung rồi approve/request-info/reject; doanh nghiệp sửa/resubmit hoặc reopen hồ sơ rejected.
-5. **Proposal/invitation:** trường nominate từ run hiện hành và student đã schoolApproved. Gửi lời mời cho reserved item; student vào Lời mời và chia sẻ để ACCEPT/DECLINE. Trường không phản hồi thay sinh viên.
+5. **Proposal/invitation:** trường nominate từ run hiện hành và student đã schoolApproved. Gửi lời mời cho reserved item; student vào Lời mời & nguyện vọng (tab Lời mời) để ACCEPT/DECLINE. Trường không phản hồi thay sinh viên.
 6. **Consent/share:** student chọn fields/expiry độc lập, revoke hoặc regrant dùng lineageVersion. Share cần invitation ACCEPTED và consent hiện hành. Enterprise chỉ nhận whitelist giao giữa policy/share/consent/request; revoke chặn lần đọc tiếp theo. Regrant không phục hồi share cũ.
 7. **Mentor:** HR chọn phân công/nhóm rồi mời email. Tài khoản ACTIVE tự chấp nhận tại Lời mời hướng dẫn; người mới nhận link T1 qua email để tự tạo tài khoản và password. T3 không giữ password/token. Các quyền được sinh sau owner acceptance và scope check lại tại thời điểm đó.
-8. **Task:** Mentor chọn phân công, đợt và nhóm trong Không gian thực tập rồi giao việc. Student vào Công việc của tôi để xem board/lịch và bắt đầu làm. Case phải IN_PROGRESS và Placement ACTIVE. SUBMITTED/COMPLETED được điều khiển bởi submission/review ở tuần 3, không PATCH tùy ý.
+8. **Task:** Mentor chọn phân công, đợt và nhóm trong Không gian thực tập rồi giao việc. Student vào Nhiệm vụ & sản phẩm để xem board/lịch và bắt đầu làm; báo cáo tuần ở Báo cáo & đánh giá. Case phải IN_PROGRESS và Placement ACTIVE. SUBMITTED/COMPLETED được điều khiển bởi submission/review ở tuần 3, không PATCH tùy ý.
 
 ## Các API mới chính
 
