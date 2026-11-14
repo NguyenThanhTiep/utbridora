@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.UUID;
 import jakarta.persistence.*;
 
-/** Private file metadata; FileService owns storage/binding. Antivirus workflow remains T1-07. */
+/** Private file metadata; T1 FileService and the fenced scanner own storage/binding/scan. */
 @Entity @Table(name="files")
 public class FileMetadata {
     public enum Classification { PRIVATE, ORGANIZATION, SHARED }

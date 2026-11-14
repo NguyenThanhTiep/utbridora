@@ -36,10 +36,12 @@ final class FileUploadPolicy {
             || name.codePoints().anyMatch(c->Character.isISOControl(c) || c==0x2028 || c==0x2029)) throw failure(400,"SCHEMA_VALIDATION");
         return name;
     }
-    static void content(FileStorage.Staged staged,Policy policy,String type,String name) {
+    static void content(FileStorage.Staged staged,Policy policy,String type,String name,FilePurpose purpose) {
         if(type==null || !policy.contentTypes().contains(type)) throw failure(422,"BUSINESS_VALIDATION");
-        // ZIP/XLSX/CSV stay closed until the bounded archive/import validators of T1-07 are provided.
-        if(!DOCUMENTS.contains(type)) throw failure(503,"DEPENDENCY_UNAVAILABLE");
+        if(!DOCUMENTS.contains(type)) {
+            try(var input=staged.open()) {FileSafetyValidator.validate(input,staged.size(),type,name,purpose);return;}
+            catch(IOException error) {throw failure(503,"FILE_STORAGE_UNAVAILABLE");}
+        }
         try {
             byte[] bytes=staged.prefix(16);String lower=name.toLowerCase(Locale.ROOT);
             boolean valid=switch(type) {
@@ -54,5 +56,5 @@ final class FileUploadPolicy {
             if(!valid) throw failure(422,"BUSINESS_VALIDATION");
         } catch(IOException error) {throw failure(503,"FILE_STORAGE_UNAVAILABLE");}
     }
-    static String extension(String type) {return switch(type) {case "application/pdf"->"pdf";case "image/png"->"png";case "image/jpeg"->"jpg";default->"bin";};}
+    static String extension(String type) {return switch(type) {case "application/pdf"->"pdf";case "image/png"->"png";case "image/jpeg"->"jpg";case "application/zip"->"zip";case "text/csv"->"csv";case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"->"xlsx";default->"bin";};}
 }

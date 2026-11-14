@@ -40,7 +40,7 @@ public class FileService implements FileReadPort {
         if(file.getSize()>policy.maximumBytes()) throw failure(413,"FILE_TOO_LARGE");
         String name=FileUploadPolicy.name(file.getOriginalFilename()),type=file.getContentType();
         try(var inputStream=file.getInputStream();var staged=storage.stage(inputStream,policy.maximumBytes())) {
-            FileUploadPolicy.content(staged,policy,type,name);
+            FileUploadPolicy.content(staged,policy,type,name,purpose);
             var payload=Map.of("resource",resource,"purpose",purpose,"originalName",name,"contentType",type,"sizeBytes",staged.size(),"sha256",staged.sha256());
             return ledger.execute(new OperationLedger.Command(actor.actorId(),grant.organizationId(),"FILE_UPLOAD",key,payload,202),FileDto.class,()->{
                 String id=UUID.randomUUID().toString(),storageKey=storage.promote(staged);

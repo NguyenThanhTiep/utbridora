@@ -17,14 +17,19 @@ class MigrationUpgradeIT {
                 s.executeUpdate("INSERT INTO users VALUES ('"+user+"','file-upgrade@example.test','unusable-test-hash','File Upgrade Test','ACTIVE',0,0,NULL,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))");
                 s.executeUpdate("INSERT INTO files(id,owner_user_id,storage_key,original_name,content_type,size_bytes,sha256,classification,scan_status,created_at) VALUES ('"+file+"','"+user+"','legacy-storage-key','legacy.pdf','application/pdf',8,REPEAT('a',64),'PRIVATE','CLEAN',UTC_TIMESTAMP(6))");
                 s.executeUpdate("INSERT INTO file_bindings(id,file_id,binding_kind,purpose,resource_id,created_at) VALUES (UUID(),'"+file+"','STUDENT_PROFILE','CV','"+user+"',UTC_TIMESTAMP(6))");
+                s.executeUpdate("INSERT INTO files(id,owner_user_id,storage_key,original_name,content_type,size_bytes,sha256,classification,scan_status,created_at) VALUES (UUID(),'"+user+"','legacy-pending-key','pending.pdf','application/pdf',8,REPEAT('b',64),'PRIVATE','PENDING',UTC_TIMESTAMP(6)),(UUID(),'"+user+"','legacy-rejected-key','rejected.pdf','application/pdf',8,REPEAT('c',64),'PRIVATE','REJECTED',UTC_TIMESTAMP(6))");
             }
             var flyway=Flyway.configure().dataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword()).load();
-            assertEquals(9,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
+            assertEquals(10,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
             try(Connection c=DriverManager.getConnection(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword());Statement s=c.createStatement()) {
                 try(ResultSet r=s.executeQuery("SELECT f.owner_user_id,f.storage_key,f.scan_status,b.resource_id,b.purpose FROM files f JOIN file_bindings b ON b.file_id=f.id WHERE f.id='"+file+"'")) {
                     assertTrue(r.next());assertEquals(user,r.getString(1));assertEquals("legacy-storage-key",r.getString(2));assertEquals("CLEAN",r.getString(3));assertEquals(user,r.getString(4));assertEquals("CV",r.getString(5));assertFalse(r.next());
                 }
                 try(ResultSet r=s.executeQuery("SELECT COUNT(*) FROM role_permissions WHERE permission_code IN ('file:upload','file:download')")) {assertTrue(r.next());assertEquals(8,r.getInt(1));}
+                try(ResultSet r=s.executeQuery("SELECT scan_status,scan_attempt,scanner_reason_code,scan_lease_id,version FROM files WHERE storage_key IN ('legacy-pending-key','legacy-rejected-key') ORDER BY storage_key")) {
+                    assertTrue(r.next());assertEquals("PENDING",r.getString(1));assertEquals(0,r.getInt(2));assertNull(r.getString(3));assertNull(r.getString(4));assertEquals(1,r.getLong(5));
+                    assertTrue(r.next());assertEquals("REJECTED",r.getString(1));assertEquals(0,r.getInt(2));assertNull(r.getString(3));assertNull(r.getString(4));assertEquals(1,r.getLong(5));assertFalse(r.next());
+                }
             }
         }
     }

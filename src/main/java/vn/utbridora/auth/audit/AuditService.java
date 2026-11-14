@@ -105,6 +105,13 @@ public class AuditService {
         event.metadataJson=new tools.jackson.databind.ObjectMapper().writeValueAsString(metadata);
         flushRequiredAudit();
     }
+    /** Technical SYSTEM actor (null user); sanitized verdict is atomic with scan state. */
+    @Transactional(propagation=Propagation.MANDATORY)
+    public void fileScanCompleted(String id,String org,String status,int attempt,String reason) {
+        var event=store(null,"FILE_SCAN_COMPLETED","file",id,status.equals("CLEAN")?"SUCCESS":"FAILURE",org,reason);
+        event.metadataJson=new tools.jackson.databind.ObjectMapper().writeValueAsString(java.util.Map.of("scanStatus",status,"attemptNo",attempt,"reasonCode",reason));
+        flushRequiredAudit();
+    }
     /** Successful matching execution audit; MANDATORY keeps the record atomic with the matching transaction. */
     @Transactional(propagation=Propagation.MANDATORY)
     public void matchingRunCompleted(String actor,String demandId,String matchRunId,String organizationId,

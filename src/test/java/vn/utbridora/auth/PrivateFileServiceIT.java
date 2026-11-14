@@ -181,7 +181,13 @@ class PrivateFileServiceIT {
         assertEquals(409,assertThrows(OperationFailure.class,()->files.upload(intern,key(),resource,FilePurpose.SUBMISSION,part(PDF))).status);
         taskActions.start(intern,assignment,key(),new vn.utbridora.auth.modules.internship.infrastructure.WorkspaceTaskActions.StartAssignment(1L,"IN_PROGRESS"));
         var uploaded=files.upload(intern,key(),resource,FilePurpose.SUBMISSION,part(PDF));syntheticClean(uploaded.fileId());
-        assertEquals(503,assertThrows(OperationFailure.class,()->files.upload(intern,key(),resource,FilePurpose.SUBMISSION,new MockMultipartFile("file","work.zip","application/zip",new byte[]{80,75,3,4}))).status);
+        assertEquals(422,assertThrows(OperationFailure.class,()->files.upload(intern,key(),resource,FilePurpose.SUBMISSION,new MockMultipartFile("file","work.zip","application/zip",new byte[]{80,75,3,4}))).status);
+        var archive=new ByteArrayOutputStream();try(var zip=new java.util.zip.ZipOutputStream(archive)) {
+            zip.putNextEntry(new java.util.zip.ZipEntry("work.txt"));zip.write("Synthetic submission, never executed".getBytes(StandardCharsets.UTF_8));zip.closeEntry();
+        }
+        var zipped=files.upload(intern,key(),resource,FilePurpose.SUBMISSION,new MockMultipartFile("file","work.zip","application/zip",archive.toByteArray()));
+        assertEquals(FileMetadata.ScanStatus.PENDING,zipped.scanStatus());
+        assertEquals("FILE_NOT_CLEAN",assertThrows(OperationFailure.class,()->files.requireCleanBound(zipped.fileId(),resource,FilePurpose.SUBMISSION,ActorContext.fromAuthenticatedWorkflow(intern,null))).code);
         jdbc.update("UPDATE placements SET state='CANCELLED',cancelled_at=UTC_TIMESTAMP(6) WHERE id=?",id(99));
         try {
             assertEquals(409,assertThrows(OperationFailure.class,()->files.upload(intern,key(),resource,FilePurpose.SUBMISSION,part(PDF))).status);

@@ -1,0 +1,27 @@
+# Example for a separately managed private scanner, not a deployment command.
+# Keep current official ClamAV signatures and patch releases; provision RAM for the full database.
+Foreground yes
+TCPSocket 3310
+TCPAddr 0.0.0.0
+DatabaseDirectory /var/lib/clamav
+TemporaryDirectory /tmp
+LogTime yes
+LogVerbose no
+ScanArchive yes
+ScanPDF yes
+ScanOLE2 yes
+ScanPE yes
+ScanELF yes
+ScanHTML yes
+StreamMaxLength 20M
+MaxScanSize 100M
+MaxFileSize 100M
+MaxFiles 1000
+MaxRecursion 10
+AlertExceedsMax yes
+AlertEncryptedArchive yes
+AlertEncryptedDoc yes
+CommandReadTimeout 5
+ReadTimeout 60
+MaxScanTime 60000
+MaxThreads 2

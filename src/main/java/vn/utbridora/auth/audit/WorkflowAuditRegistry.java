@@ -8,6 +8,7 @@ final class WorkflowAuditRegistry {
     record Spec(String resourceType,Set<String> fields) {}
     static final Map<String,Spec> ACTIONS=Map.ofEntries(
         Map.entry("FILE_UPLOADED",new Spec("file",Set.of("purpose","contentType","sizeBytes","scanStatus"))),
+        Map.entry("FILE_SCAN_COMPLETED",new Spec("file",Set.of("scanStatus","attemptNo","reasonCode"))),
         Map.entry("ACTIVATION_INVITATION_REISSUED",new Spec("account_invitation",Set.of("rowId","operationId","reasonCode","expiresAt"))),
         Map.entry("INTERNSHIP_INVITATION_EXPIRED",new Spec("internship_invitation",Set.of("version","expiredAt"))),
         Map.entry("FILE_DOWNLOADED",new Spec("file",Set.of("purpose","resourceType","resourceId","rangeRequest","consentVersion","shareVersion"))),

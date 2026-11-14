@@ -58,13 +58,13 @@ class PrivateFileStorageTest {
         var storage=new PrivateFileStorage(root.toString());
         var policy=FileUploadPolicy.forResource(new ResourceRef(ResourceType.STUDENT_PROFILE,UUID.randomUUID().toString()),FilePurpose.CV);
         try(var staged=storage.stage(new ByteArrayInputStream(pdf),100)) {
-            assertDoesNotThrow(()->FileUploadPolicy.content(staged,policy,"application/pdf","cv.pdf"));
-            assertEquals(422,assertThrows(OperationFailure.class,()->FileUploadPolicy.content(staged,policy,"image/png","cv.png")).status);
-            assertEquals(422,assertThrows(OperationFailure.class,()->FileUploadPolicy.content(staged,policy,"application/pdf","cv.exe")).status);
+            assertDoesNotThrow(()->FileUploadPolicy.content(staged,policy,"application/pdf","cv.pdf",FilePurpose.CV));
+            assertEquals(422,assertThrows(OperationFailure.class,()->FileUploadPolicy.content(staged,policy,"image/png","cv.png",FilePurpose.CV)).status);
+            assertEquals(422,assertThrows(OperationFailure.class,()->FileUploadPolicy.content(staged,policy,"application/pdf","cv.exe",FilePurpose.CV)).status);
         }
         var task=FileUploadPolicy.forResource(new ResourceRef(ResourceType.TASK_ASSIGNMENT,UUID.randomUUID().toString()),FilePurpose.SUBMISSION);
         try(var staged=storage.stage(new ByteArrayInputStream(new byte[]{80,75,3,4}),100)) {
-            assertEquals(503,assertThrows(OperationFailure.class,()->FileUploadPolicy.content(staged,task,"application/zip","work.zip")).status);
+            assertEquals(422,assertThrows(OperationFailure.class,()->FileUploadPolicy.content(staged,task,"application/zip","work.zip",FilePurpose.SUBMISSION)).status);
         }
         assertEquals(422,assertThrows(OperationFailure.class,()->FileUploadPolicy.forResource(new ResourceRef(ResourceType.STUDENT_PROFILE,UUID.randomUUID().toString()),FilePurpose.SUBMISSION)).status);
     }

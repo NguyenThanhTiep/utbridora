@@ -54,6 +54,8 @@ class EnterpriseProposalIT {
     @Autowired StudentPreferenceService preferences;
     @Autowired StudentProfileSnapshotPort snapshots;
     @Autowired FileService files;
+    @Autowired vn.utbridora.auth.files.FileScanService fileScans;
+    @Autowired vn.utbridora.auth.files.FileStorage fileStorage;
     @org.springframework.test.context.bean.override.mockito.MockitoBean(name="placementClock") java.time.Clock placementClock;
     @LocalServerPort int port;
     DemandInput input; Session hr,student,school; Fixture f;
@@ -730,24 +732,34 @@ class EnterpriseProposalIT {
         proposals.decide(as(6),invitation.invitationId(),key(),new ProposalService.InvitationDecision("ACCEPT",1L,null,null));
         jdbc.update("INSERT INTO school_sharing_policies VALUES(?,?,1,?,UTC_TIMESTAMP(6),?)",id(11),id(21),JSON.writeValueAsString(List.of("cv")),id(2));
         String file=null;
-        try {
+        try(var clamd=vn.utbridora.auth.support.ClamdFixture.start();
+            var antivirus=new vn.utbridora.auth.files.ClamdFileScanner(clamd.getHost(),clamd.getMappedPort(3310))) {
             long lineage=jdbc.queryForObject("SELECT COALESCE(MAX(version),0) FROM student_consent_lineages WHERE student_user_id=? AND term_id=? AND recipient_org_id=?",Long.class,id(6),id(21),id(12));
             var consent=consents.grant(as(6),key(),new StudentConsentService.GrantConsent(invitation.invitationId(),"INTERNSHIP_SELECTION",List.of("cv"),Instant.now().plusSeconds(3600),"demo-consent-v1",1L,lineage));
             shares.grant(as(2),f.proposalId(),key(),new ProfileShareService.GrantProfileShare(f.proposalId(),consent.consentId(),consent.consentVersion(),3L,List.of("cv"),consent.expiresAt()));
             var uploaded=files.upload(as(6),key(),new FileContracts.ResourceRef(FileContracts.ResourceType.STUDENT_PROFILE,id(6)),FileContracts.FilePurpose.CV,new MockMultipartFile("file","private-student-cv.pdf","application/pdf","%PDF-1.4\nsynthetic CV only\n%%EOF".getBytes(java.nio.charset.StandardCharsets.UTF_8)));
             file=uploaded.fileId();jdbc.update("UPDATE student_profiles SET cv_file_id=? WHERE user_id=?",file,id(6));
             var pending=http(hr,"GET",profilePath(),null,id(12),null,true);assertEquals(409,pending.statusCode(),pending.body());assertTrue(pending.body().contains("FILE_NOT_CLEAN"));
-            // Explicit scanner-output fixture in this isolated DB; no runtime scanner or antivirus signoff.
-            jdbc.update("UPDATE files SET scan_status='CLEAN' WHERE id=?",file);
+            scanRealFile(file,antivirus);
             var profile=http(hr,"GET",profilePath(),null,id(12),null,true);assertEquals(200,profile.statusCode(),profile.body());assertFalse(profile.body().contains("private-student-cv"));
             try(var download=files.download(as(4),file,"bytes=0-3")) {assertEquals(4,download.length());assertTrue(download.partial());}
+            var range=HttpRequest.newBuilder(URI.create("http://localhost:"+port+"/api/v1/files/"+file+"/content")).header("X-Organization-Id",id(12)).header("Range","bytes=0-3").GET().build();
+            var allowedRange=hr.client().send(range,HttpResponse.BodyHandlers.ofByteArray());assertEquals(206,allowedRange.statusCode());assertArrayEquals(new byte[]{37,80,68,70},allowedRange.body());
             var foreign=files.upload(as(6),key(),new FileContracts.ResourceRef(FileContracts.ResourceType.STUDENT_PROFILE,id(6)),FileContracts.FilePurpose.CV,new MockMultipartFile("file","unattached.pdf","application/pdf","%PDF-1.4\nnot attached".getBytes(java.nio.charset.StandardCharsets.UTF_8)));
-            jdbc.update("UPDATE files SET scan_status='CLEAN' WHERE id=?",foreign.fileId());
+            scanRealFile(foreign.fileId(),antivirus);
             failure(404,"RESOURCE_NOT_FOUND",()->files.download(as(4),foreign.fileId(),"bytes=0-3"));
             consents.revoke(as(6),consent.consentId(),key(),new StudentConsentService.Revoke(consent.lineageVersion(),"STUDENT_REVOKED"));
             String currentFile=file;failure(404,"RESOURCE_NOT_FOUND",()->files.download(as(4),currentFile,"bytes=0-3"));
+            assertEquals(404,hr.client().send(range,HttpResponse.BodyHandlers.ofString()).statusCode());
             assertEquals(403,http(hr,"GET",profilePath(),null,id(12),null,true).statusCode());
         } finally {jdbc.update("UPDATE student_profiles SET cv_file_id=NULL WHERE user_id=?",id(6));jdbc.update("DELETE FROM school_sharing_policies WHERE school_org_id=? AND term_id=?",id(11),id(21));}
+    }
+
+    private void scanRealFile(String id,vn.utbridora.auth.files.FileScanner scanner) {
+        var worker=new vn.utbridora.auth.files.FileScanWorker(fileScans,fileStorage,scanner);
+        for(int i=0;i<100 && jdbc.queryForObject("SELECT scan_status FROM files WHERE id=?",String.class,id).equals("PENDING");i++) assertTrue(worker.runOne());
+        assertEquals("CLEAN",jdbc.queryForObject("SELECT scan_status FROM files WHERE id=?",String.class,id));
+        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE action='FILE_SCAN_COMPLETED' AND resource_id=? AND result='SUCCESS'",Integer.class,id));
     }
 
     @Test void protectedReleasesEnforceBandsFrozenReplayGateAndAllHttpRepresentations() throws Exception {

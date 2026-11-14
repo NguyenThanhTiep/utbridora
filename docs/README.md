@@ -4,6 +4,8 @@ Mục lục tài liệu dùng chung cho năm team. Cập nhật cách sắp xế
 
 ## Đọc từ đâu
 
+T1-07 tuần 4: [hướng dẫn scanner/file safety, runtime và phạm vi kiểm chứng](guides/T1_07_FILE_SCANNING.md).
+
 | Nhu cầu | Tài liệu bắt đầu |
 |---|---|
 | Hiểu yêu cầu toàn hệ thống | [SRS tổng thể v1.2.4](srs/UTBridora_SRS_Tong_The_v1.2.4.docx) và [trạng thái SRS](srs/README.md) |

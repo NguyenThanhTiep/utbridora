@@ -9,6 +9,7 @@ public interface FileStorage {
         long size();
         String sha256();
         byte[] prefix(int limit) throws IOException;
+        InputStream open() throws IOException;
         @Override void close();
     }
     Staged stage(InputStream input,long limit);
