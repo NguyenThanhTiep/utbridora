@@ -35,6 +35,8 @@ final class WorkflowAuditRegistry {
         Map.entry("WEEKLY_REPORT_REVISION_CREATED",new Spec("weekly_report",Set.of("caseId","weekStart","revisionNo","reportVersion","reasonCode"))),
         Map.entry("WEEKLY_REPORT_SUBMITTED",new Spec("weekly_report",Set.of("caseId","weekStart","revisionNo","lateFlag"))),
         Map.entry("WEEKLY_REPORT_REVIEWED",new Spec("weekly_report",Set.of("caseId","weekStart","revisionNo","reportVersion"))),
+        Map.entry("EVALUATION_DRAFT_SAVED",new Spec("evaluation",Set.of("caseId","templateVersion","evaluationVersion"))),
+        Map.entry("EVALUATION_SUBMITTED",new Spec("evaluation",Set.of("caseId","templateVersion","evaluationVersion"))),
         Map.entry("SUBMISSION_CREATED",new Spec("submission",Set.of("assignmentId","versionNo","fileId","fileIds","lateFlag"))),
         Map.entry("SUBMISSION_REVISED",new Spec("submission",Set.of("assignmentId","versionNo","previousSubmissionId","fileId","fileIds","lateFlag"))),
         Map.entry("SUBMISSION_REVIEWED",new Spec("submission",Set.of("assignmentId","reviewedVersion","verdict","assignmentVersion"))),

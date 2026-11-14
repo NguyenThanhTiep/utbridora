@@ -62,6 +62,7 @@ public class SecurityConfig {
                .requestMatchers(HttpMethod.GET,"/api/v1/terms","/api/v1/terms/*").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/t3/**").authenticated()
                .requestMatchers(HttpMethod.POST,"/api/v1/t3/**").authenticated()
+               .requestMatchers(HttpMethod.PUT,"/api/v1/t3/evaluations/*").authenticated()
                // T2-01 own student profile (BC11); the VERIFIED school scope is checked in StudentProfileService.
                .requestMatchers(HttpMethod.GET,"/api/v1/students/me/profile","/api/v1/students/me/catalogs").authenticated()
                .requestMatchers(HttpMethod.PUT,"/api/v1/students/me/profile").authenticated()
