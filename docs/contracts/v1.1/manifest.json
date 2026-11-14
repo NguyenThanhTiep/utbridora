@@ -5036,7 +5036,7 @@
     "src/main/java/vn/utbridora/auth/files/FileResourcePolicy.java": "7fa9cff09cc2172d878d399d8e196d03703000ad0009eda1b68384c18810b013",
     "src/main/java/vn/utbridora/auth/files/FileSafetyValidator.java": "01fe0d7974897522fdf581b7571f4c46a8f150bfeb9c6ba745d6f3a827fa6fdb",
     "src/main/java/vn/utbridora/auth/files/FileScanService.java": "bde8a89ee9b8b309d7786c1e7501f7aea7dfac3440d411cdbc97edf29efb7c16",
-    "src/main/java/vn/utbridora/auth/files/FileScanWorker.java": "64e90e5496263a12a540bb16339f70cefac4e3bfb0c71c7961f438014f428787",
+    "src/main/java/vn/utbridora/auth/files/FileScanWorker.java": "ec1c2cc089e9a6c94fa6c2b8f5e40a440545fb55989cc26af5b4ffb94026d855",
     "src/main/java/vn/utbridora/auth/files/FileScanner.java": "f14ea9ca9a6ef00eea14c6648ace09f68f10e7dd41d8fa1f5f455aca808ff7b3",
     "src/main/java/vn/utbridora/auth/files/FileService.java": "d07e31d75d747bb882ac567c44f07ab5a8d3ca3dad61de22c4fe800b87361ca3",
     "src/main/java/vn/utbridora/auth/files/FileStorage.java": "3d4cc94fb39a135f4b0de1fbb74f9ac7a70ef83f1a9091383e211bf3646166d6",

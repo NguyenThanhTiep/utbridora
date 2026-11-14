@@ -34,7 +34,8 @@ trạng thái hiển thị ở UI không thay kiểm tra server. CLEAN không c�
 - State và `FILE_SCAN_COMPLETED` commit cùng transaction. Audit lỗi thì không có
   CLEAN được commit. Audit SYSTEM có actorId=null, chỉ `scanStatus,attemptNo,
   reasonCode` theo E.2; không có tên virus, tên file, bytes, path hoặc secret.
-- Worker có scheduler riêng một luồng, không chiếm scheduler của Placement.
+- Worker có executor riêng một luồng, tối đa một việc đang chạy/chờ; timer chỉ
+  nhận lịch rồi trả về, không giữ scheduler của Placement trong lúc quét.
 
 Migration **V38 trong `db/migration/base`** chỉ bổ sung attempt/reason/next-at/lease/
 version/index/check, áp dụng mọi lineage. Không sửa migration/checksum cũ, binary,
