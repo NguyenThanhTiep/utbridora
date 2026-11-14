@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import type { Grant } from '../../../api';
 import { EmptyState, Icon, LoadingState, Notice, Pagination } from '../../../components';
 import { getOpportunity, listMajors, listMyPreferences, listOpportunities, newIdempotencyKey, sendPreference, type AcademicCatalogItem } from '../api';
+import { StudentNote } from '../components/StudentUI';
 import { date, dateTime, groupPreferences, isStale, preferenceError, preferenceLabels, useStudentTerm } from '../preferences';
 import type { ContractPage, OpportunityView, PreferenceView, SubmitPreference } from '../types';
 import '../styles.css';
@@ -41,47 +42,52 @@ export function OpportunitiesPage({ schools, openPreferences }: { schools: Grant
 
   if (selected) return <OpportunityDetail opportunityId={selected} majors={majors} back={() => setSelected(null)} openPreferences={openPreferences} />;
   const search = (event: FormEvent) => { event.preventDefault(); setFilter({ q: draft.q.trim(), majorCode: draft.majorCode, page: 0 }); };
-  const content = terms === null && !failed ? <LoadingState label="Đang tải học kỳ…" />
+  const termState = terms === null && !failed ? <LoadingState label="Đang tải học kỳ…" />
     : failed || terms === null ? <EmptyState icon="calendar" title="Chưa xác định học kỳ" description="Chưa tải được danh sách học kỳ của trường.">
       <button type="button" className="secondary" onClick={retry}><Icon name="refresh" size={16} />Thử lại</button></EmptyState>
     : terms.length === 0 ? <EmptyState icon="calendar" title="Chưa xác định học kỳ" description="Trường chưa có học kỳ đang mở nên chưa có cơ hội để hiển thị." />
     : !termId ? <EmptyState icon="calendar" title="Chọn học kỳ" description="Trường có nhiều học kỳ đang mở. Chọn học kỳ để xem cơ hội tương ứng." />
-    : <>
-      <form className="student-filter" onSubmit={search}>
+    : null;
+  // Frame 477:11864: thẻ "Tìm cơ hội phù hợp" có bộ lọc, ghi chú công bố, rồi mỗi cơ hội là một thẻ riêng.
+  return <div className="student-page">
+    <section className="panel">
+      <div className="section-heading"><div><p className="section-kicker">CƠ HỘI THỰC TẬP</p><h2>Cơ hội đang mở</h2>
+        <p className="section-description">Cơ hội do nhà trường công bố từ các hợp tác đã duyệt. Gửi nguyện vọng không tự tạo lời mời hay Placement.</p></div>
+        {terms && terms.length > 1 && <div className="field student-term-select"><label htmlFor={termSelectId}>Học kỳ</label>
+          <select id={termSelectId} value={termId} onChange={event => { setTermId(event.target.value); setFilter(previous => ({ ...previous, page: 0 })); }}>
+            <option value="">Chọn học kỳ</option>{terms.map(term => <option key={term.termId} value={term.termId}>{term.termCode}</option>)}
+          </select></div>}
+      </div>
+      {termState ?? <form className="student-filter" onSubmit={search}>
         <div className="field"><label htmlFor={searchId}>Vị trí hoặc doanh nghiệp</label>
           <input id={searchId} maxLength={150} value={draft.q} placeholder="Ví dụ: Java, Doanh nghiệp A" onChange={event => setDraft({ ...draft, q: event.target.value })} /></div>
         <div className="field"><label htmlFor={majorId}>Ngành</label>
           <select id={majorId} value={draft.majorCode} onChange={event => setDraft({ ...draft, majorCode: event.target.value })}>
             <option value="">Tất cả ngành</option>{majors.map(major => <option key={major.code} value={major.code}>{major.name}</option>)}
           </select></div>
-        <button type="submit" className="secondary"><Icon name="search" size={16} />Tìm cơ hội</button>
-      </form>
-      {error ? <EmptyState icon="alert" title="Chưa tải được cơ hội thực tập" description={error}>
-        <button type="button" className="secondary" onClick={() => setAttempt(previous => previous + 1)}><Icon name="refresh" size={16} />Thử lại</button></EmptyState>
-        : result === null ? <LoadingState label="Đang tải cơ hội…" />
-        : result.content.length === 0 ? <EmptyState icon="briefcase" title="Chưa có cơ hội phù hợp" description="Chỉ cơ hội đã được nhà trường công bố và còn hạn mới hiển thị." />
+        <button type="submit" className="student-btn-wide"><Icon name="search" size={16} />Tìm cơ hội</button>
+      </form>}
+    </section>
+    {!termState && <>
+      <StudentNote>Chỉ các cơ hội đã được phê duyệt và công bố mới hiển thị cho sinh viên.</StudentNote>
+      {error ? <section className="panel"><EmptyState icon="alert" title="Chưa tải được cơ hội thực tập" description={error}>
+        <button type="button" className="secondary" onClick={() => setAttempt(previous => previous + 1)}><Icon name="refresh" size={16} />Thử lại</button></EmptyState></section>
+        : result === null ? <section className="panel"><LoadingState label="Đang tải cơ hội…" /></section>
+        : result.content.length === 0 ? <section className="panel"><EmptyState icon="briefcase" title="Chưa có cơ hội phù hợp" description="Chỉ cơ hội đã được nhà trường công bố và còn hạn mới hiển thị." /></section>
         : <>
-          <ul className="student-list">{result.content.map(opportunity => <li className="student-list-item" key={opportunity.opportunityId}>
-            <h3>{opportunity.title}</h3>
-            <p className="student-list-meta">{opportunity.enterpriseName} · {majorNames(opportunity.majorCodes, majors)}</p>
-            <p className="student-list-meta">Thực tập {date(opportunity.dateRange.startDate)} – {date(opportunity.dateRange.endDate)} · Nhận nguyện vọng đến {dateTime(opportunity.closedAt)}</p>
-            <div className="button-row"><button type="button" className="secondary" onClick={() => setSelected(opportunity.opportunityId)}>Xem chi tiết</button></div>
-          </li>)}</ul>
+          <ul className="student-list student-card-list">{result.content.map(opportunity => { const open = Date.now() < Date.parse(opportunity.closedAt);
+            return <li className="student-list-item" key={opportunity.opportunityId}>
+              <div className="student-title-row"><h3>{opportunity.title}</h3>
+                <span className={'student-status ' + (open ? 'tone-brand' : 'tone-neutral')}>{open ? 'Đang nhận nguyện vọng' : 'Đã hết hạn nhận nguyện vọng'}</span></div>
+              <p className="student-company">{opportunity.enterpriseName}</p>
+              <p className="student-list-text">{majorNames(opportunity.majorCodes, majors)} · Thực tập {date(opportunity.dateRange.startDate)} – {date(opportunity.dateRange.endDate)}</p>
+              <p className="student-list-meta">Nhận nguyện vọng đến {dateTime(opportunity.closedAt)} · Yêu cầu và quyền lợi xem trong trang chi tiết</p>
+              <div className="button-row"><button type="button" className="student-btn-wide" onClick={() => setSelected(opportunity.opportunityId)}>Xem chi tiết</button></div>
+            </li>; })}</ul>
           <Pagination page={{ content: [], number: result.page, totalElements: result.totalElements, totalPages: result.totalPages }}
             change={page => setFilter(previous => ({ ...previous, page }))} busy={false} />
         </>}
-    </>;
-  return <div className="student-page">
-    <section className="panel">
-      <div className="section-heading"><div><p className="section-kicker">CƠ HỘI THỰC TẬP</p><h2>Cơ hội đang mở</h2>
-        <p className="muted">Cơ hội do nhà trường công bố từ các hợp tác đã duyệt. Gửi nguyện vọng không tự tạo lời mời hay Placement.</p></div>
-        {terms && terms.length > 1 && <div className="field student-term-select"><label htmlFor={termSelectId}>Học kỳ</label>
-          <select id={termSelectId} value={termId} onChange={event => { setTermId(event.target.value); setFilter(previous => ({ ...previous, page: 0 })); }}>
-            <option value="">Chọn học kỳ</option>{terms.map(term => <option key={term.termId} value={term.termId}>{term.termCode}</option>)}
-          </select></div>}
-      </div>
-      {content}
-    </section>
+    </>}
   </div>;
 }
 

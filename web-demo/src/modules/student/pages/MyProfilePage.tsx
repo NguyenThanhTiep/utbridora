@@ -4,6 +4,7 @@ import { EmptyState, Field, Icon, LoadingState, Notice, useAction } from '../../
 import { getMyProfile, listMajors, listTerms, newIdempotencyKey, saveMyProfile, toProfileInput, type AcademicCatalogItem } from '../api';
 import { AvailabilityEditor } from '../components/AvailabilityEditor';
 import { SkillsEditor } from '../components/SkillsEditor';
+import { CompletenessCards } from '../components/StudentUI';
 import type { DateRange, ProfileInput, SelfProfileView, TermReference } from '../types';
 import '../styles.css';
 
@@ -32,6 +33,8 @@ function validate(draft: Draft): DraftErrors {
   return errors;
 }
 const hasErrors = (errors: DraftErrors) => Boolean(errors.phone) || Object.keys(errors.periods).length > 0;
+const initials = (name: string) => { const words = name.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  return ((words[0]?.[0] ?? '') + (words.length > 1 ? words[words.length - 1][0] : '')).toUpperCase() || '?'; };
 // Tạo lần đầu dùng version 0; PUT vẫn kiểm quan hệ student–school–term ở server.
 const emptyInput = (termId: string): ProfileInput => ({
   expectedProfileVersion: 0, termId, majorCode: null, skillsDeclared: false, skills: [], customSkills: [],
@@ -195,17 +198,17 @@ export function MyProfilePage({ me, schools }: { me: Me; schools: Grant[] }) {
     : profile.status === 'error' ? <EmptyState icon="alert" title="Không tải được hồ sơ" description={profile.message}>
       <button type="button" className="secondary" onClick={() => setProfileAttempt(previous => previous + 1)}><Icon name="refresh" size={16} />Thử lại</button></EmptyState>
     : view && draft && <form className="student-profile-form" noValidate aria-busy={save.busy} onSubmit={submit}>
-      <div className="field"><label htmlFor={majorInputId}>Ngành đào tạo</label><select id={majorInputId} value={draft.majorCode ?? ''} disabled={save.busy || majors === null || majorsFailed}
+      <div className="student-form-grid"><div><div className="field"><label htmlFor={majorInputId}>Ngành đào tạo</label><select id={majorInputId} value={draft.majorCode ?? ''} disabled={save.busy || majors === null || majorsFailed}
         onChange={event => change({ ...draft, majorCode: event.target.value || null })}>
         <option value="">Chưa khai báo</option>
         {draft.majorCode && !majors?.some(item => item.code === draft.majorCode) && <option value={draft.majorCode}>{draft.majorCode} (đã lưu)</option>}
         {majors?.map(item => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}
       </select></div>
       {majorsFailed && <p className="field-hint">Chưa tải được danh mục ngành. Bạn có thể sửa thông tin khác và tải lại danh mục.</p>}
-      {rejectedFields.includes('majorCode') && <p className="student-field-error">Ngành đã chọn không còn hợp lệ. Tải lại danh mục rồi chọn lại.</p>}
-      <Field label="Số điện thoại" type="tel" autoComplete="tel" required={false} value={draft.phone} disabled={save.busy}
+      {rejectedFields.includes('majorCode') && <p className="student-field-error">Ngành đã chọn không còn hợp lệ. Tải lại danh mục rồi chọn lại.</p>}</div>
+      <div><Field label="Số điện thoại" type="tel" autoComplete="tel" required={false} value={draft.phone} disabled={save.busy}
         onChange={phone => change({ ...draft, phone })} {...(phoneError ? { 'aria-invalid': true, 'aria-describedby': phoneErrorId } : {})} />
-      {phoneError && <p className="student-field-error" id={phoneErrorId}>{phoneError}</p>}
+      {phoneError && <p className="student-field-error" id={phoneErrorId}>{phoneError}</p>}</div></div>
       <AvailabilityEditor declared={draft.availabilityDeclared} periods={draft.availablePeriods} errors={errors.periods} groupError={availabilityError} disabled={save.busy}
         setDeclared={availabilityDeclared => change({ ...draft, availabilityDeclared })} setPeriods={availablePeriods => change({ ...draft, availablePeriods })} />
       <div className="student-kept"><h3>Dữ liệu được giữ nguyên khi lưu</h3>
@@ -227,21 +230,25 @@ export function MyProfilePage({ me, schools }: { me: Me; schools: Grant[] }) {
       </div>
     </form>;
 
+  // Frame 477:11203: độ hoàn thiện + 6 tiêu chí ở trên, thẻ "Thông tin sinh viên" chia cột tài khoản | thông tin cơ bản.
+  // Chưa có API ảnh đại diện nên ô bên trái hiện chữ viết tắt và thông tin tài khoản đăng nhập.
   return <div className="student-page">
-    <section className="panel identity-panel">
-      <div className="section-heading"><div><p className="section-kicker">TÀI KHOẢN ĐĂNG NHẬP</p><h2>Thông tin cá nhân</h2>
-        <p className="section-description">Lấy từ tài khoản đăng nhập hiện tại của bạn.</p></div>
-        <span className="section-icon"><Icon name="user" size={21} /></span></div>
-      <div className="identity-grid"><div className="identity-item"><span className="identity-label"><Icon name="user" size={15} />Họ và tên</span><strong>{me.displayName}</strong></div>
-        <div className="identity-item"><span className="identity-label"><Icon name="mail" size={15} />Email</span><strong>{me.email}</strong></div></div>
-    </section>
+    {view && <CompletenessCards result={view.completeness} />}
     <section className="panel student-term-panel">
-      <div className="section-heading"><div><p className="section-kicker">HỒ SƠ THEO HỌC KỲ</p><h2>Hồ sơ sinh viên</h2>
+      <div className="section-heading"><div><h2>Thông tin sinh viên</h2>
         {term && <p className="section-description">Học kỳ {term.termCode} · {term.startDate} – {term.endDate}</p>}</div>
         {terms && terms.length > 1 && <label className="student-term-select">Học kỳ<select value={termId} onChange={event => setTermId(event.target.value)}>
           <option value="" disabled>Chọn học kỳ</option>
           {terms.map(item => <option key={item.termId} value={item.termId}>{item.termCode}</option>)}</select></label>}</div>
-      {content}
+      <div className="student-profile-layout">
+        <div className="student-identity-card">
+          <span className="student-avatar" aria-hidden="true">{initials(me.displayName)}</span>
+          <p className="student-group-label">Tài khoản đăng nhập</p>
+          <strong className="student-identity-name">{me.displayName}</strong>
+          <span className="student-identity-email">{me.email}</span>
+        </div>
+        <div className="student-profile-main"><p className="student-group-label">THÔNG TIN CƠ BẢN</p>{content}</div>
+      </div>
     </section>
     {profile.status === 'ready' && <SkillsEditor key={termId + ':' + profile.view.profileVersion} view={profile.view}
       disabled={dirty || save.busy || conflict} onSaved={view => { setProfile({ status: 'ready', view }); setDraft(draftOf(view)); }} />}

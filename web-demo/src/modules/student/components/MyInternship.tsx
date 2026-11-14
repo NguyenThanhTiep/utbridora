@@ -4,6 +4,7 @@ import type { CaseRef } from '../../internship/cases';
 import { workflowError } from '../../internship/workflow-api';
 import { getMyCase, listMyInvitations, listTerms } from '../api';
 import { useMyCaseIds } from '../internship';
+import { StudentKpi } from './StudentUI';
 import { date } from '../preferences';
 import type { InternshipInvitation, TermReference } from '../types';
 import '../styles.css';
@@ -13,7 +14,9 @@ type Loaded = { cases: CaseRef[]; invitations: InternshipInvitation[]; terms: Te
 
 // T2-F22: vị trí đã chốt (lời mời đã nhận có Placement, BC23) và kỳ thực tập (hồ sơ T3 CP-WS1, học kỳ T5 BC21). Chỉ đọc API thật.
 export function MyInternship({ userId }: { userId: string }) {
-  const { caseIds, error: caseError, retry } = useMyCaseIds(userId);
+  const { caseIds, assignments, error: caseError, retry } = useMyCaseIds(userId);
+  // Frame 477:12406 "Kỳ thực tập của tôi": 3 ô số liệu đếm từ phân công T3 của chính sinh viên theo hồ sơ.
+  const count = (caseId: string, state: string) => assignments?.filter(item => item.caseId === caseId && item.state === state).length ?? 0;
   const [data, setData] = useState<Loaded | null>(null), [error, setError] = useState('');
   useEffect(() => {
     if (!caseIds) return;
@@ -29,8 +32,8 @@ export function MyInternship({ userId }: { userId: string }) {
   }, [caseIds]);
   const failure = caseError ? workflowError(caseError) : error;
   const waiting = data ? data.invitations.filter(item => !data.cases.some(value => value.placementId === item.placementId)) : [];
-  return <section className="panel" aria-label="Thực tập của tôi">
-    <div className="section-heading"><div><p className="section-kicker">THỰC TẬP CỦA TÔI</p><h2>Vị trí đã chốt và kỳ thực tập</h2>
+  return <section className="panel student-internship" aria-label="Thực tập của tôi">
+    <div className="section-heading"><div><p className="section-kicker">KỲ THỰC TẬP CỦA TÔI</p><h2>Vị trí đã chốt và kỳ thực tập</h2>
       <p className="section-description">Đọc từ lời mời bạn đã nhận và hồ sơ thực tập do nhà trường, doanh nghiệp quản lý.</p></div>
       <button type="button" className="secondary" disabled={!failure && !data} onClick={retry}><Icon name="refresh" size={16} />Tải lại thông tin thực tập</button></div>
     {failure ? <p className="student-error-note" role="alert">{failure}</p>
@@ -44,8 +47,12 @@ export function MyInternship({ userId }: { userId: string }) {
           const invitation = data.invitations.find(value => value.placementId === item.placementId), term = data.terms.find(value => value.termId === item.termId);
           return <li className="student-list-item" key={item.caseId}>
             <h3>{invitation?.title ?? 'Vị trí thực tập'}</h3>
-            {invitation && <p className="student-list-meta">{invitation.enterpriseName}</p>}
-            <p className={'student-status ' + item.state.toLowerCase()}>{caseStates[item.state] ?? item.state}</p>
+            {invitation && <p className="student-company">{invitation.enterpriseName}</p>}
+            <div className="student-kpis student-kpis-inner">
+              <StudentKpi label="Trạng thái kỳ" value={caseStates[item.state] ?? item.state} />
+              <StudentKpi label="Công việc đang làm" value={count(item.caseId, 'IN_PROGRESS') + ' nhiệm vụ'} />
+              <StudentKpi label="Chờ mentor phản hồi" value={count(item.caseId, 'SUBMITTED') + ' bài nộp'} />
+            </div>
             {term && <p className="student-list-meta">Kỳ {term.termCode}: {date(term.startDate)} – {date(term.endDate)}</p>}
             {item.state === 'WAITING_START' && <p className="student-list-meta">Chưa nhận hoặc nộp nhiệm vụ trước khi thực tập được kích hoạt.</p>}
           </li>;

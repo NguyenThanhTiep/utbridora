@@ -1,99 +1,332 @@
-/* Module sinh viên: chỉ dùng class tiền tố .student-, không ghi đè style chung. */
+/* Module sinh viên: chỉ dùng class tiền tố .student-, không ghi đè style chung.
+   Bố cục, số đo và màu theo bộ bàn giao UI/UX 10/11 (frame 477:*, file context trong 07-quality-review/source-data);
+   mọi rule đổi thành phần dùng chung (panel, nút, ô nhập, bảng việc T3…) đều nằm trong .student-page nên không ảnh hưởng vai trò khác. */
 .nav-group-label.student-nav-group { margin-top: 31px; }
-.student-page { display: grid; gap: 24px; min-width: 0; }
+
+/* Token Foundations 112:2318. Chữ và nền nút dùng #097b69 (cùng sắc độ #0b927c, đậm hơn): #0b927c với chữ trắng chỉ đạt
+   3,88:1, dưới 4,5:1 theo NFR-06; #0b927c giữ cho viền, thanh tiến độ và vạch nhấn. Màu chữ trạng thái chọn để đạt 4,5:1. */
+.student-page {
+  --brand: #097b69; --brand-dark: #086859; --brand-light: #e7f6f0; --student-accent: #0b927c;
+  --ink: #142f40; --muted: #64788a; --line: #e3eaf2; --radius: 12px;
+  --student-subtle: #fbfdfe; --student-neutral: #f3f6fb; --student-shadow: 0 3px 12px rgba(16, 44, 57, .05);
+  display: grid; gap: 18px; min-width: 0; color: var(--ink); font-size: var(--text-sm); line-height: 20px;
+}
 /* Grid item mặc định min-width:auto; cho co lại để bảng rộng tự cuộn trong khung thay vì làm tràn trang ở 320px. */
 .student-page > * { min-width: 0; }
-.student-scope { padding-top: 19px; border-top: 1px solid #edf1f4; }
+.student-sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* Khung riêng cho tài khoản sinh viên (Student Sidebar 477:11122, header 477:11170): chỉ đổi màu và trình bày khi menu có nhóm
+   SINH VIÊN; không đổi cấu trúc hay điều hướng của App. Màu chữ trên nền tối đạt ≥ 6:1 (NFR-06). */
+.workspace:has(.student-nav-group) .workspace-main { background: #f3f6fb; }
+.workspace:has(.student-nav-group) .sidebar { background: #102c39; border-right-color: #102c39; }
+.workspace:has(.student-nav-group) .brand-lockup { color: #0b927c; }
+.workspace:has(.student-nav-group) .brand-wordmark { color: #fff; }
+.workspace:has(.student-nav-group) .brand-dot { color: #5fd3bb; }
+.workspace:has(.student-nav-group) .brand-caption, .workspace:has(.student-nav-group) .nav-group-label, .workspace:has(.student-nav-group) .sidebar-caption { color: #a9c3c9; }
+.workspace:has(.student-nav-group) button.nav { min-height: 40px; margin: 4px 0; padding: 10px 12px; color: #c6d8dc; font-size: var(--text-sm); font-weight: 600; border-radius: 10px; }
+.workspace:has(.student-nav-group) button.nav .icon { width: 17px; height: 17px; color: #c6d8dc; }
+.workspace:has(.student-nav-group) button.nav:hover { color: #fff; background: #22484c; }
+.workspace:has(.student-nav-group) button.nav.active { color: #fff; background: #366761; }
+.workspace:has(.student-nav-group) button.nav.active .icon, .workspace:has(.student-nav-group) button.nav:hover .icon { color: #fff; }
+.workspace:has(.student-nav-group) button.nav.active::before { display: none; }
+.workspace:has(.student-nav-group) .sidebar-bottom { border-top-color: #24485a; }
+.workspace:has(.student-nav-group) .sidebar-user b { color: #fff; }
+.workspace:has(.student-nav-group) .sidebar-user small { color: #a9c3c9; }
+.workspace:has(.student-nav-group) button.sidebar-logout { color: #c6d8dc; }
+.workspace:has(.student-nav-group) button.sidebar-logout:hover { color: #fff; background: #22484c; }
+/* Tiêu đề trang thành banner nền mint (Header 477:11170: đệm 20, bo 12, viền #d2e4e7, tiêu đề 24 semibold, mô tả 12–13). */
+.workspace:has(.student-nav-group) .page-header { margin-bottom: 18px; padding: 18px 20px; background: #e7f6f0; border: 1px solid #d2e4e7; border-radius: 12px; box-shadow: 0 3px 12px rgba(16, 44, 57, .05); }
+.workspace:has(.student-nav-group) .page-header .section-kicker { margin-bottom: 4px; color: #086859; font-size: 11px; letter-spacing: 1px; }
+.workspace:has(.student-nav-group) .page-header h1 { color: #142f40; font-size: 24px; font-weight: 600; letter-spacing: 0; line-height: 32px; }
+.workspace:has(.student-nav-group) .page-description { margin-top: 4px; color: #4f6475; font-size: 13px; line-height: 18px; }
+
+/* Card: nền trắng, bo 12, đệm 18, bóng nhẹ, không viền (frame 477:11121 "Thông báo hồ sơ"). Card lồng là khối phụ nền #fbfdfe. */
+.student-page .panel { padding: 18px; border: 0; border-radius: 12px; box-shadow: var(--student-shadow); }
+.student-page .panel .panel { padding: 12px; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 8px; box-shadow: none; }
+.student-page h2 { font-size: 17px; line-height: 24px; font-weight: 600; letter-spacing: 0; }
+.student-page .panel > h2 { margin-bottom: 10px; }
+.student-page h3 { font-size: var(--text-base); line-height: 22px; font-weight: 600; }
+.student-page h4 { margin: 0; color: var(--ink); font-size: 15px; line-height: 22px; font-weight: 600; }
+.student-page h5 { margin: 0; color: var(--ink); font-size: var(--text-sm); line-height: 20px; font-weight: 600; }
+.student-page .section-heading { gap: 12px; margin-bottom: 14px; }
+.student-page .section-kicker { margin: 0 0 4px; color: var(--muted); font-size: var(--text-caption); font-weight: 600; letter-spacing: .4px; line-height: 16px; }
+.student-page .section-description, .student-card-note { margin-top: 4px; color: var(--muted); font-size: 13px; line-height: 18px; }
+.student-page .section-icon { display: none; }
+.student-group-label { margin: 0 0 10px; color: var(--muted); font-size: var(--text-caption); font-weight: 600; line-height: 16px; }
+.student-card-actions { margin-top: 14px; }
+.student-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+
+/* Nút UT.BRIDORA/Button 112:2820: cao 36, đệm 8/14, bo 12, chữ 14 Medium; nút chính rộng tối thiểu 176.
+   Secondary dùng biến thể Outline (nền trắng, chữ màu thương hiệu) vì nền #11aa91 của Figma chỉ đạt 2,92:1 với chữ trắng. */
+.student-page :where(button) { min-height: 36px; padding: 8px 14px; border-radius: 12px; font-size: var(--text-sm); font-weight: 500; line-height: 20px; }
+.student-page button.secondary { color: var(--brand); background: var(--surface); border-color: var(--line); }
+.student-page button.secondary:hover { color: var(--brand-dark); background: var(--brand-light); border-color: #c9e6dc; }
+.student-page button.student-btn-wide, .student-page .t3-workflow fieldset > button { min-width: 176px; }
+
+/* Ô nhập Field 477:11864/12029: nhãn 12 semibold màu phụ, ô nền #fbfdfe bo 9, chữ 14. */
+.student-page label { color: var(--muted); font-size: var(--text-caption); font-weight: 600; line-height: 16px; }
+.student-page label:has(> input[type="checkbox"]), .student-page label.student-checkbox { color: var(--ink); font-size: var(--text-sm); font-weight: 500; line-height: 20px; }
+.student-page :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select) { min-height: 42px; margin-top: 6px; padding: 10px 12px; font-size: var(--text-sm); background-color: var(--student-subtle); border-color: #dbe4ea; border-radius: 9px; }
+/* Chừa chỗ cho mũi tên của ô chọn (style chung đặt ở bên phải 12px) để chữ dài như "Chưa bắt đầu" không bị đè. */
+.student-page :where(select) { padding-right: 36px; }
+.student-page input:focus, .student-page select:focus, .student-page textarea:focus { outline: 0; border-color: var(--student-accent); box-shadow: 0 0 0 3px var(--brand-light); }
+.student-page textarea { display: block; width: 100%; max-width: 100%; min-width: 0; min-height: 96px; margin-top: 6px; padding: 10px 12px; font: inherit; font-size: var(--text-sm); color: var(--ink); background: var(--student-subtle); border: 1px solid #dbe4ea; border-radius: 9px; resize: vertical; }
+.student-page .workflow-surface textarea, .student-page .t3-workflow textarea { border-radius: 9px; }
+.student-field-error { margin-top: 6px; color: #a5364c; font-size: var(--text-xs); line-height: 1.6; }
+.student-error-note { margin-top: 10px; color: #a5364c; font-size: var(--text-sm); line-height: 1.7; overflow-wrap: anywhere; }
+
+/* Badge trạng thái: đệm 4/9, bo 12, chữ 12 semibold; tông Foundations success/warning/info/brand và trung tính. */
+.student-status { display: inline-flex; align-items: center; width: fit-content; max-width: 100%; margin: 0; padding: 4px 9px; color: #475b6b; font-size: var(--text-caption); font-weight: 600; line-height: 16px; background: #f3f6fb; border-radius: 12px; }
+.student-status.tone-info, .student-status.submitted, .student-status.waiting_start { color: #2969a9; background: #e8f2ff; }
+.student-status.tone-warning, .student-status.pending { color: #966614; background: #fff2db; }
+.student-status.tone-success, .student-status.reviewed, .student-status.in_progress, .student-status.completed, .student-status.clean { color: #1a7d50; background: #e5f6ed; }
+.student-status.tone-brand { color: var(--brand-dark); background: var(--brand-light); }
+.student-status.rejected { color: #a5364c; background: #fff0f0; }
+
+/* Ghi chú (Notice 477:12470): bo 9, đệm 12, chữ 12–13; Notice dùng chung cũng theo tông này khi ở trang sinh viên. */
+.student-note { padding: 12px 13px; color: #2969a9; background: #e8f2ff; border-radius: 9px; }
+.student-note p { font-size: var(--text-caption); line-height: 18px; overflow-wrap: anywhere; }
+.student-note.warning { color: #966614; background: #fff2db; }
+.student-note.success { color: #1a7d50; background: #e5f6ed; }
+.student-page .panel .student-note { margin-top: 12px; }
+.student-page .notice { margin: 0; padding: 12px 13px; color: #2969a9; background: #e8f2ff; border-color: transparent; border-radius: 9px; }
+.student-page .notice p { font-size: 13px; line-height: 18px; }
+.student-page .notice-error { color: #a5364c; background: #fff0f0; }
+.student-page .notice-success { color: #1a7d50; background: #e5f6ed; }
+.student-page .panel .notice { margin: 12px 0; }
+
+/* Thẻ số liệu (KPI cards 477:11180): 3 cột, đệm 19, bo 14; nhãn 14 phụ, giá trị 25 semibold, liên kết 12 semibold. */
+.student-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+/* Ô số liệu S01 dùng cùng kiểu thẻ sức chứa của T5 (proposal-capacity): nền mint chuyển nhẹ, viền mint, nhãn in hoa, số đậm màu thương hiệu. */
+.student-kpi { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; min-width: 0; padding: 16px 18px; background: linear-gradient(180deg, #f3fbfa 0%, #eaf7f5 100%); border: 1px solid #d2ebe7; border-radius: 12px; }
+.student-kpi-label { color: #3a606e; font-size: var(--text-xs); font-weight: 650; letter-spacing: .4px; line-height: 18px; text-transform: uppercase; }
+.student-kpi-value { color: var(--brand-dark); font-size: 26px; font-weight: 700; line-height: 32px; overflow-wrap: anywhere; }
+.student-kpi-hint { color: #4f6475; font-size: var(--text-caption); line-height: 16px; }
+.student-page button.student-kpi-link { min-height: 0; padding: 0; color: var(--brand); font-size: var(--text-caption); font-weight: 600; background: none; }
+/* KPI trong card (477:12461): đệm 18, bo 12, nhãn 12, giá trị 18. */
+.student-kpis-inner { margin-top: 4px; }
+.student-kpis-inner .student-kpi { gap: 8px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: none; }
+.student-kpis-inner .student-kpi-label { color: var(--muted); font-size: var(--text-caption); font-weight: 400; letter-spacing: 0; line-height: 16px; text-transform: none; }
+.student-kpis-inner .student-kpi-value { color: var(--ink); font-size: 18px; font-weight: 600; line-height: 24px; }
+
+/* S01 lời chào và phạm vi trường. */
+.student-welcome { display: grid; justify-items: start; gap: 8px; }
+.student-page .student-welcome > h2 { margin: 0; }
+.student-scope { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; width: 100%; margin-top: 6px; padding-top: 12px; border-top: 1px solid var(--line); }
+.student-scope-label { color: var(--muted); font-size: var(--text-caption); font-weight: 600; }
 .student-scope-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.student-scope-list code { display: inline-block; padding: 3px 7px; color: #6b8290; font-size: var(--text-caption); background: #edf2f5; border-radius: 4px; }
+.student-scope-list code { display: inline-block; padding: 3px 7px; color: #5e7180; font-size: var(--text-caption); background: #edf2f5; border-radius: 4px; }
+
+/* Danh sách đánh dấu (6 tiêu chí 477:11262, việc cần làm 477:11193): chữ 13, cách dòng 10. */
+.student-checklist { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; font-size: 13px; line-height: 18px; }
+.student-checklist li { display: flex; align-items: flex-start; gap: 8px; overflow-wrap: anywhere; }
+.student-checklist li > span[aria-hidden] { flex-shrink: 0; width: 14px; color: var(--muted); font-weight: 600; text-align: center; }
+.student-checklist li.passed > span[aria-hidden] { color: var(--student-accent); }
+
+/* S02 độ hoàn thiện (477:11257): tiêu đề 19, thanh tiến độ cao 13 nền mint. */
+.student-completeness { display: grid; gap: 8px; }
+.student-completeness > h2 { margin: 0; font-size: 19px; line-height: 26px; }
+.student-progress { max-width: 1000px; height: 13px; overflow: hidden; background: var(--brand-light); border-radius: 8px; }
+.student-progress > span { display: block; height: 100%; background: var(--student-accent); border-radius: 7px; }
+
+/* S02 "Thông tin sinh viên" (477:11269): cột trái 286 thông tin tài khoản, cột phải thông tin cơ bản 2 cột. */
+.student-profile-layout { display: grid; grid-template-columns: 286px minmax(0, 1fr); align-items: start; gap: 32px; }
+.student-identity-card { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; padding: 18px 15px; text-align: center; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 12px; }
+.student-avatar { display: grid; place-items: center; width: 98px; height: 98px; margin-bottom: 8px; color: var(--brand-dark); font-size: 32px; font-weight: 600; background: var(--brand-light); border: 2px solid var(--student-accent); border-radius: 50%; }
+.student-identity-card .student-group-label { margin: 0; }
+.student-identity-name { max-width: 100%; font-size: 17px; line-height: 22px; font-weight: 600; overflow-wrap: anywhere; }
+.student-identity-email { max-width: 100%; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.student-profile-main { min-width: 0; }
+.student-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; }
+.student-form-grid .field { margin-top: 0; }
 .student-term-panel .empty-state { min-height: 180px; }
 .student-term-select { flex-shrink: 0; min-width: 200px; margin: 0; }
-
 .student-profile-form { min-width: 0; }
 .student-readonly { padding-top: 19px; border-top: 1px solid #edf1f4; }
 .student-readonly > strong { display: block; font-size: var(--text-sm); font-weight: 550; overflow-wrap: anywhere; }
-.student-field-error { margin-top: 7px; color: #a5364c; font-size: var(--text-xs); line-height: 1.6; }
-.student-fieldset { min-width: 0; margin: 24px 0 0; padding: 0; border: 0; }
-.student-fieldset > legend { padding: 0; color: #314d5e; font-size: var(--text-sm); font-weight: 600; line-height: 1.6; }
-.student-checkbox { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-weight: 500; }
+.student-fieldset { min-width: 0; margin: 22px 0 0; padding: 0; border: 0; }
+.student-fieldset > legend { padding: 0; color: var(--ink); font-size: 15px; font-weight: 600; line-height: 22px; }
+.student-checkbox { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
 .student-checkbox input { flex-shrink: 0; width: 18px; height: 18px; min-height: 0; margin: 0; padding: 0; accent-color: var(--brand); }
-.student-period { min-width: 0; margin: 14px 0 0; padding: 2px 16px 12px; border: 1px solid var(--line); border-radius: 10px; }
+.student-period { min-width: 0; margin: 12px 0 0; padding: 2px 14px 12px; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 9px; }
 .student-period > legend { padding: 0 6px; color: var(--muted); font-size: var(--text-xs); font-weight: 600; }
 .student-period-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
 .student-period .text-button { margin-top: 6px; }
-.student-add-period { margin-top: 14px; }
-.student-kept { margin-top: 24px; padding-top: 17px; border-top: 1px dashed #e3eaee; }
-.student-kept ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 20px; margin: 10px 0; padding: 0; list-style: none; color: var(--muted); font-size: var(--text-sm); }
-.student-error-note { margin-top: 10px; color: #a5364c; font-size: var(--text-sm); line-height: 1.7; overflow-wrap: anywhere; }
-.student-profile-form .button-row { margin-top: 22px; }
-.student-opp-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
-.student-opp-filters label { margin-top: 0; }
-.student-opp-list { display: grid; gap: 14px; margin-top: 14px; }
-.student-opp-card { padding: 18px 20px; border: 1px solid #dce6ec; border-radius: 12px; background: #fbfdfe; }
-.student-opp-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
-.student-opp-card h3 { font-size: var(--text-lg); color: var(--ink); margin: 0; }
-.student-opp-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; background: var(--brand-light); color: var(--brand-dark); font-size: var(--text-xs); font-weight: 600; white-space: nowrap; }
-.student-opp-meta { color: #3d5869; font-size: var(--text-sm); margin: 5px 0; }
-.student-opp-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
-.student-opp-tag { padding: 3px 9px; border-radius: 6px; background: #eef4f7; color: #365060; font-size: var(--text-xs); font-weight: 600; }
-.student-opp-detail { margin-top: 12px; padding: 14px 16px; border-radius: 10px; background: #f2faf8; border: 1px solid #c9e6e1; font-size: var(--text-sm); color: #1d4e56; }
-.student-opp-detail p + p { margin-top: 6px; }
+.student-add-period { margin-top: 12px; }
+.student-kept { margin-top: 22px; padding-top: 16px; border-top: 1px dashed var(--line); }
+.student-kept h3 { font-size: 15px; }
+.student-kept ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 20px; margin: 10px 0; padding: 0; list-style: none; color: var(--muted); font-size: 13px; }
+.student-profile-form .button-row { margin-top: 20px; }
 
-/* Đường kẻ dưới vẽ bằng inset shadow để gạch chân tab không tràn khung (tràn 1px làm hiện thanh cuộn dọc). */
-.student-tabs { display: flex; gap: 4px; min-width: 0; overflow-x: auto; box-shadow: inset 0 -1px 0 var(--line); }
-button.student-tab { flex-shrink: 0; min-height: 44px; padding: 10px 16px; color: var(--muted); background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; }
-button.student-tab:hover { color: var(--brand-dark); background: #eef8f6; }
-button.student-tab.active { color: var(--brand); border-bottom-color: var(--brand); }
-button.student-tab:focus-visible { outline-offset: -3px; }
+/* S03 kỹ năng (477:11346): mỗi kỹ năng là một hàng nền #fbfdfe, bo 8. */
+.student-page .student-skills form > fieldset { margin: 0; padding: 0; background: none; border: 0; }
+.student-page .student-skills h3 { margin-top: 18px; font-size: 15px; }
+.student-page .student-skill-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); align-items: end; gap: 0 12px; margin: 12px 0 0; padding: 4px 12px 12px; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 8px; }
+.student-page .student-skill-row > legend { padding: 0 6px; color: var(--ink); font-size: 13px; font-weight: 600; }
+.student-page .student-skill-row > label { margin-top: 8px; }
+.student-page .student-skill-row > button { justify-self: start; margin-top: 8px; }
+.student-page .student-skills form > fieldset > button { margin: 12px 10px 0 0; }
+.student-page .student-skills form > fieldset > button[type="submit"] { min-width: 176px; }
 
-.student-invitation-detail { margin-top: 12px; }
-.student-invitation-detail dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 20px; margin: 12px 0 0; }
-.student-invitation-detail dt { color: var(--muted); font-size: var(--text-xs); font-weight: 600; }
-.student-invitation-detail dd { margin: 3px 0 0; font-size: var(--text-sm); overflow-wrap: anywhere; }
-
-.student-filter { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; gap: 0 16px; align-items: end; margin-bottom: 22px; }
-.student-filter > button { margin-top: 16px; }
-.student-list { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
-.student-list-item { min-width: 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: 10px; }
+/* Danh sách: mỗi mục là hàng phụ nền #fbfdfe (477:12474); .student-card-list biến mỗi mục thành card riêng (477:11931). */
+.student-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.student-list-item { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 12px; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 8px; }
 .student-list-item h3 { overflow-wrap: anywhere; }
-.student-list-meta { margin: 6px 0 0; color: var(--muted); font-size: var(--text-sm); line-height: 1.6; overflow-wrap: anywhere; }
-.student-list-item .button-row, .student-page form .button-row { margin-top: 12px; }
-.student-status { display: inline-block; margin: 8px 0 0; padding: 3px 8px; color: #5e7180; font-size: var(--text-xs); font-weight: 600; border: 1px solid var(--line); border-radius: 6px; }
-.student-status.submitted { color: #966614; background: #fff8e9; border-color: #f3e7c7; }
-.student-status.reviewed, .student-status.in_progress { color: #28775c; background: #edf8f2; border-color: #d6ecdf; }
+.student-list-item .button-row, .student-page form .button-row { margin-top: 6px; }
+.student-card-list { gap: 18px; }
+.student-card-list > .student-list-item { gap: 10px; padding: 18px; background: var(--surface); border: 0; border-radius: 12px; box-shadow: var(--student-shadow); }
+.student-card-list .student-title-row h3 { font-size: 19px; line-height: 26px; }
+.student-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; min-width: 0; }
+.student-company { color: var(--muted); font-size: var(--text-sm); font-weight: 600; line-height: 20px; overflow-wrap: anywhere; }
+.student-list-text { color: var(--ink); font-size: 13px; line-height: 18px; overflow-wrap: anywhere; }
+.student-list-meta { margin: 0; color: var(--muted); font-size: var(--text-caption); line-height: 18px; overflow-wrap: anywhere; }
+.student-field-box { width: fit-content; max-width: 100%; padding: 10px 12px; color: var(--ink); font-size: var(--text-sm); background: var(--student-subtle); border: 1px solid var(--line); border-radius: 9px; overflow-wrap: anywhere; }
+.student-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 11px 12px; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 8px; }
+.student-row > p:first-child { flex: 1 1 260px; min-width: 0; font-size: 13px; overflow-wrap: anywhere; }
 .student-pre-line { white-space: pre-line; }
-.student-status.pending { color: #966614; background: #fff8e9; border-color: #f3e7c7; }
-.student-status.clean { color: #28775c; background: #edf8f2; border-color: #d6ecdf; }
-.student-status.rejected { color: #a5364c; background: #fff1f2; border-color: #f6d5da; }
-.student-file-list { display: grid; gap: 8px; margin: 10px 0 0; padding: 0; list-style: none; }
-.student-file-list > li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; min-width: 0; }
-.student-file { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; }
-.student-file-name { font-size: var(--text-sm); overflow-wrap: anywhere; }
-.student-file .student-status { margin: 0; }
-.student-upload { margin-top: 18px; padding-top: 16px; border-top: 1px dashed #e3eaee; }
-.student-upload input[type="file"] { display: block; max-width: 100%; margin-top: 7px; }
-.student-upload + * { margin-top: 22px; }
-.student-result-total { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 4px 0 0; }
-.student-result-total span { color: var(--muted); font-size: var(--text-sm); font-weight: 600; }
-.student-result-total strong { color: var(--ink); font-size: 2rem; line-height: 1.2; }
-.student-table-wrap { max-width: 100%; margin-top: 16px; overflow-x: auto; }
-.student-result-table { width: 100%; min-width: 480px; border-collapse: collapse; font-size: var(--text-sm); }
-.student-result-table caption { padding-bottom: 8px; color: #314d5e; font-weight: 600; text-align: left; }
-.student-result-table th, .student-result-table td { padding: 10px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
-.student-result-table thead th { color: var(--muted); font-size: var(--text-xs); font-weight: 600; }
-.student-result-table td:nth-child(2), .student-result-table td:nth-child(3) { white-space: nowrap; }
-.student-detail { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; margin: 14px 0 0; }
-.student-detail dt { color: var(--muted); font-size: var(--text-xs); font-weight: 600; }
+.student-detail { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; margin: 10px 0 0; }
+.student-detail dt { color: var(--muted); font-size: var(--text-caption); font-weight: 600; }
 .student-detail dd { margin: 3px 0 0; font-size: var(--text-sm); overflow-wrap: anywhere; white-space: pre-line; }
 .student-detail ul { margin: 0; padding-left: 18px; }
 .student-detail-wide { grid-column: 1 / -1; }
-.student-page textarea { display: block; width: 100%; max-width: 100%; min-width: 0; min-height: 96px; margin-top: 7px; padding: 11px 13px; font: inherit; color: var(--ink); background: #fff; border: 1px solid #dbe4ea; border-radius: 8px; resize: vertical; }
-.student-page textarea:focus { outline: 0; border-color: #209c9c; box-shadow: 0 0 0 3px #e3f4f1; }
 
+/* Tab dạng chip (477:11422, 477:12001): bo 20, chữ 13 semibold; tab đang chọn nền mint. Giữ vùng chạm 36px. */
+.student-tabs { display: flex; gap: 10px; min-width: 0; overflow-x: auto; }
+button.student-tab { flex-shrink: 0; min-height: 36px; padding: 6px 16px; color: var(--muted); font-size: 13px; font-weight: 600; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; }
+button.student-tab:hover { color: var(--brand-dark); background: var(--brand-light); }
+button.student-tab.active { color: var(--brand-dark); background: var(--brand-light); border-color: var(--student-accent); }
+button.student-tab:focus-visible { outline-offset: -3px; }
+
+/* S04 tệp và tải lên. */
+.student-file-list { display: grid; gap: 8px; margin: 10px 0 0; padding: 0; list-style: none; }
+.student-file-list > li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; min-width: 0; padding: 10px 12px; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 9px; }
+.student-file { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; }
+.student-file-name { font-size: var(--text-sm); overflow-wrap: anywhere; }
+.student-upload { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--line); }
+/* Ô chọn tệp theo "Field / Tệp PDF / ZIP" (477:12558): khung nét đứt nền #fbfdfe, nút chọn dạng Outline. */
+.student-upload input[type="file"] { display: block; width: 100%; max-width: 100%; min-height: 0; margin-top: 6px; padding: 10px 12px; color: var(--muted); font-size: 13px; background: var(--student-subtle); border: 1px dashed #c9d6e0; border-radius: 9px; }
+.student-upload input[type="file"]::file-selector-button { margin-right: 12px; padding: 6px 12px; color: var(--brand); font: inherit; font-weight: 600; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.student-term-bar { justify-content: space-between; }
+.student-upload + * { margin-top: 20px; }
+
+/* S05 bộ lọc (477:11916) và bảng tin cơ hội ở S01. */
+.student-filter { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; align-items: end; gap: 0 12px; }
+.student-filter > button { margin-top: 16px; }
+.student-opp-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.student-opp-filters label { margin-top: 0; }
+.student-opp-list { display: grid; gap: 10px; margin-top: 12px; }
+.student-opp-card { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 14px 16px; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 8px; }
+.student-opp-card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.student-opp-card h3 { margin: 0; color: var(--ink); font-size: 17px; line-height: 24px; }
+.student-opp-badge { display: inline-block; padding: 4px 9px; color: var(--brand-dark); font-size: var(--text-caption); font-weight: 600; line-height: 16px; white-space: nowrap; background: var(--brand-light); border-radius: 12px; }
+.student-opp-company { color: var(--muted); font-size: var(--text-sm); font-weight: 600; }
+.student-opp-meta { color: var(--muted); font-size: var(--text-caption); line-height: 18px; }
+.student-opp-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.student-opp-tag { padding: 3px 9px; color: #475b6b; font-size: var(--text-caption); font-weight: 600; line-height: 16px; background: #f3f6fb; border-radius: 12px; }
+.student-opp-detail { align-self: stretch; padding: 12px 14px; color: var(--ink); font-size: 13px; background: var(--brand-light); border-radius: 9px; }
+.student-opp-detail p + p { margin-top: 6px; }
+
+/* S06 lời mời (477:12017) và cấp quyền chia sẻ (477:12083). */
+.student-invitations.stack { gap: 18px; }
+.student-invitations > .panel { display: grid; gap: 10px; }
+.student-invitations > .panel > h2 { margin: 0; font-size: 18px; }
+.student-invite-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.student-invitation-detail dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 20px; margin: 10px 0 0; padding: 12px; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 9px; }
+.student-invitation-detail dt { color: var(--muted); font-size: var(--text-caption); font-weight: 600; }
+.student-invitation-detail dd { margin: 3px 0 0; font-size: var(--text-sm); overflow-wrap: anywhere; }
+.student-consent-form { display: grid; gap: 8px; margin-top: 4px; padding: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.student-consent-form > h3 { font-size: 18px; line-height: 24px; }
+.student-page .student-consent-fields { display: grid; justify-items: start; gap: 8px; margin: 6px 0 0; padding: 0; background: none; border: 0; }
+.student-consent-label { color: var(--ink); font-size: 15px; font-weight: 600; }
+.student-page .student-consent-fields > label:has(> input[type="checkbox"]) { min-width: min(260px, 100%); margin: 0; padding: 9px 10px; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 7px; }
+.student-consent-days { width: min(320px, 100%); margin-top: 4px; }
+.student-consent + .student-consent { margin-top: 8px; }
+
+/* Khối T3 trong ngữ cảnh sinh viên (S07 477:12406/12497, S08 477:12579): chỉ đổi trình bày, không đổi cấu trúc component. */
+.student-page > .workflow-surface { padding: 18px; background: var(--surface); border: 0; border-radius: 12px; box-shadow: var(--student-shadow); }
+.student-page > .workflow-surface > h2, .student-page > .workflow-surface > h3 { font-size: 17px; line-height: 24px; }
+.student-page > .workflow-surface, .student-page .t3-workflow, .student-page .t3-workflow .stack { gap: 14px; }
+.student-page .stack > label, .student-page .t3-workflow fieldset > label { margin-top: 0; }
+.student-page .stack > button, .student-page .t3-workflow fieldset > button { justify-self: start; }
+.student-page > .workflow-surface > .button-row { margin: 0; }
+.student-page > .workflow-surface > .button-row > label { margin-top: 0; }
+/* Hàng bộ lọc: căn đáy và cho nút cao bằng ô nhập để "Tải lại bảng việc" thẳng hàng với các ô lọc. */
+.student-page > .workflow-surface > .button-row:has(> label) { align-items: flex-end; }
+.student-page > .workflow-surface > .button-row:has(> label) > button { min-height: 42px; }
+.student-page > .workflow-surface .panel { box-shadow: none; }
+.student-page > .workflow-surface > section.panel { border: 1px solid var(--line); }
+/* S07: cột trạng thái của bảng việc hiển thị thành danh sách "Nhiệm vụ được giao" (477:12472): đủ 5 nhóm, mỗi nhóm có badge
+   trạng thái, mỗi việc là một hàng; nhóm chưa có việc hiện dòng "Không có nhiệm vụ". Chỉ đổi trình bày, DOM của TaskBoard (T3) giữ nguyên. */
+.student-page .workflow-surface > div:has(> section.panel > h4) { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; gap: 12px !important; }
+.student-page .workflow-surface > div > section.panel { display: grid; gap: 8px; padding: 0; background: none; border: 0; }
+.student-page .workflow-surface > div > section.panel:not(:has(> article))::after { content: 'Không có nhiệm vụ'; padding: 10px 12px; color: var(--muted); font-size: var(--text-caption); background: var(--student-subtle); border: 1px dashed var(--line); border-radius: 8px; }
+.student-page .workflow-surface > div > section.panel > h4 { width: fit-content; padding: 4px 9px; color: #475b6b; font-size: var(--text-caption); line-height: 16px; background: #f3f6fb; border-radius: 12px; }
+.student-page .workflow-surface > div > section.panel:nth-child(1) > h4 { color: #2969a9; background: #e8f2ff; }
+.student-page .workflow-surface > div > section.panel:nth-child(2) > h4, .student-page .workflow-surface > div > section.panel:nth-child(5) > h4 { color: #1a7d50; background: #e5f6ed; }
+.student-page .workflow-surface > div > section.panel:nth-child(3) > h4, .student-page .workflow-surface > div > section.panel:nth-child(4) > h4 { color: #966614; background: #fff2db; }
+.student-page .workflow-surface > div > section.panel > article { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; padding: 11px 12px; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 8px; }
+.student-page .workflow-surface > div > section.panel > article .text-button { flex: 1 1 280px; justify-content: flex-start; min-height: 0; padding: 0; color: var(--ink); font-weight: 600; text-align: left; }
+.student-page .workflow-surface > div > section.panel > article p { color: var(--muted); font-size: var(--text-caption); }
+/* Lịch công việc theo mẫu "Lịch theo tháng": tiêu đề màu thương hiệu và ô chọn tháng cùng hàng, nền xám nhạt, ô ngày trắng bo 10,
+   cột Chủ nhật màu cam đỏ. Dữ liệu, thứ tự cột (Thứ 2 → Chủ nhật), kích thước lưới và cách chọn tháng của TaskBoard giữ nguyên.
+   Mỗi ô trong lưới (tiêu đề thứ, ô trống, ô ngày) chiếm đúng một cột theo thứ tự, nên :nth-child(7n) luôn là cột Chủ nhật. */
+.student-page > .workflow-surface > section.panel:has([role="grid"]) { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 12px; padding: 18px; background: var(--student-neutral); border: 0; border-radius: 16px; }
+.student-page > .workflow-surface > section.panel:has([role="grid"]) > h3 { flex: 1 1 160px; color: var(--brand); font-size: 15px; font-weight: 700; }
+.student-page > .workflow-surface > section.panel:has([role="grid"]) > label { display: flex; align-items: center; gap: 8px; margin: 0; }
+.student-page > .workflow-surface > section.panel:has([role="grid"]) > label > input { width: auto; min-height: 36px; margin: 0; padding: 6px 10px; color: var(--ink); background-color: var(--surface); border-radius: 8px; }
+.student-page > .workflow-surface > section.panel:has([role="grid"]) > div { flex: 1 1 100%; }
+.student-page .workflow-surface [role="grid"] { align-items: stretch; }
+.student-page .workflow-surface [role="columnheader"] { margin-right: -6px; padding: 0 6px 12px 0; color: #475b6b; font-size: 13px; font-weight: 700; text-align: center; border-bottom: 1px solid #dfe6ee; }
+.student-page .workflow-surface [role="columnheader"]:nth-child(7) { margin-right: 0; padding-right: 0; }
+.student-page .workflow-surface [role="grid"] > :nth-child(7n) { color: #c2410c; }
+.student-page .workflow-surface [role="gridcell"].panel { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 52px; margin-top: 4px; padding: 8px 6px; background: var(--surface); border: 0; border-radius: 10px; box-shadow: 0 1px 2px rgba(16, 44, 57, .04); transition: box-shadow .15s; }
+.student-page .workflow-surface [role="gridcell"].panel > strong { color: inherit; font-size: var(--text-sm); font-weight: 500; line-height: 20px; }
+.student-page .workflow-surface [role="gridcell"].panel:hover, .student-page .workflow-surface [role="gridcell"].panel:focus-within { box-shadow: inset 0 0 0 2px var(--student-accent); }
+.student-page .workflow-surface [role="gridcell"].panel > .text-button { width: 100%; min-height: 0; padding: 2px 4px; color: var(--brand); font-size: 11px; font-weight: 600; line-height: 14px; text-align: center; white-space: normal; background: var(--brand-light); border-radius: 6px; }
+.student-page .panel .t3-workflow { background: var(--surface); }
+.student-page .t3-workflow > p { color: var(--muted); font-size: 13px; }
+.student-page .t3-workflow article.panel { display: grid; gap: 6px; }
+/* Báo cáo tuần: các ô nhập xếp 2 cột như 477:12631 khi biểu mẫu có từ 3 ô trở lên. */
+.student-page .t3-workflow fieldset:has(> label ~ label ~ label) { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; }
+.student-page .t3-workflow fieldset:has(> label ~ label ~ label) > :not(label) { grid-column: 1 / -1; }
+
+/* S08 kết quả (477:12649): trạng thái chưa công bố căn trái, danh sách điều kiện và ghi chú. */
+.student-results .empty-state { align-items: flex-start; min-height: 0; padding: 0; text-align: left; }
+.student-results .empty-state-icon { display: none; }
+.student-results .empty-state h3 { margin-bottom: 4px; font-size: 15px; }
+.student-conditions { display: grid; gap: 8px; margin-top: 10px; }
+.student-conditions > p { font-size: 13px; line-height: 18px; }
+.student-conditions ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: var(--text-caption); line-height: 20px; }
+.student-page .student-conditions .student-note { margin-top: 4px; }
+.student-result-total { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 4px 0 0; }
+.student-result-total span { color: var(--muted); font-size: var(--text-sm); font-weight: 600; }
+.student-result-total strong { color: var(--ink); font-size: 32px; line-height: 40px; font-weight: 700; }
+/* Bảng (Table 112:3164): đầu bảng nền neutral/50, ô đệm 12/16, viền border/default. */
+.student-table-wrap { max-width: 100%; margin-top: 16px; overflow-x: auto; }
+.student-result-table { width: 100%; min-width: 480px; border-collapse: collapse; font-size: var(--text-sm); }
+.student-result-table caption { padding-bottom: 8px; color: var(--ink); font-weight: 600; text-align: left; }
+.student-result-table th, .student-result-table td { padding: 12px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.student-result-table thead th { color: var(--muted); font-size: var(--text-xs); font-weight: 600; background: #f3f6fb; }
+.student-result-table td:nth-child(2), .student-result-table td:nth-child(3) { white-space: nowrap; }
+
+@media (max-width: 900px) {
+  .workspace:has(.student-nav-group) .sidebar-close { color: #fff; background: #24485a; }
+  .workspace:has(.student-nav-group) .page-header h1 { font-size: 22px; line-height: 28px; }
+}
+@media (max-width: 1050px) {
+  .student-profile-layout { grid-template-columns: 1fr; gap: 18px; }
+  .student-identity-card { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 2px 14px; text-align: left; }
+  .student-avatar { grid-row: 1 / span 3; width: 56px; height: 56px; margin: 0; font-size: 20px; }
+}
 @media (max-width: 700px) {
-  .student-page { gap: 18px; }
+  .student-page { gap: 16px; }
+  .student-page .panel, .student-page > .workflow-surface { padding: 16px; }
+  .student-page :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select), .student-page textarea { font-size: var(--text-base); }
   .student-term-panel .section-heading, .student-page .section-heading { flex-wrap: wrap; }
   .student-term-select { width: 100%; }
-  .student-period-fields, .student-kept ul, .student-opp-filters { grid-template-columns: 1fr; }
-  .student-period-fields, .student-kept ul, .student-invitation-detail dl, .student-filter, .student-detail { grid-template-columns: 1fr; }
+  .student-kpis { grid-template-columns: 1fr; }
+  .student-kpi-value { font-size: 22px; }
+  .student-form-grid, .student-period-fields, .student-kept ul, .student-opp-filters, .student-invitation-detail dl, .student-filter, .student-detail { grid-template-columns: 1fr; }
+  .student-page .t3-workflow fieldset:has(> label ~ label ~ label) { grid-template-columns: 1fr; }
+  .student-page button.student-btn-wide, .student-page .t3-workflow fieldset > button { min-width: 0; }
 }

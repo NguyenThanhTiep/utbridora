@@ -57,7 +57,7 @@ export function PreferencesPage() {
     <Notice message={error} tone="error" /><Notice message={notice} tone="success" />
     <section className="panel">
       <div className="section-heading"><div><p className="section-kicker">NGUYỆN VỌNG</p><h2>Nguyện vọng đã gửi</h2>
-        <p className="muted">Nhà trường xét nguyện vọng; bạn rút được khi chưa xét. Nguyện vọng không tự tạo lời mời, chia sẻ hồ sơ hay Placement.</p></div>
+        <p className="section-description">Nhà trường xét nguyện vọng; bạn rút được khi chưa xét. Nguyện vọng không tự tạo lời mời, chia sẻ hồ sơ hay Placement.</p></div>
         <button type="button" className="secondary" disabled={busy} onClick={() => { setError(''); setNotice(''); setAttempt(previous => previous + 1); }}>
           <Icon name="refresh" size={16} />Tải lại nguyện vọng</button></div>
       {loadError ? <EmptyState icon="alert" title="Chưa tải được nguyện vọng" description={loadError}>
@@ -77,11 +77,12 @@ function PreferenceItem({ group, opportunity, busy, withdraw }: {
   const { current, history } = group;
   const title = opportunity === undefined ? 'Đang tải tên cơ hội…' : opportunity === 'missing' ? 'Cơ hội đã đóng hoặc không còn hiển thị'
     : opportunity === 'unavailable' ? 'Chưa tải được thông tin cơ hội' : opportunity.title;
+  // Frame 477:11949 "Nguyện vọng đang gửi": tiêu đề, badge trạng thái, doanh nghiệp, ô lời nhắn đi kèm, thao tác.
   return <li className="student-list-item">
-    <h3>{title}</h3>
-    {typeof opportunity === 'object' && <p className="student-list-meta">{opportunity.enterpriseName}</p>}
-    <p className={'student-status ' + current.status.toLowerCase()}>{preferenceLabels[current.status]}</p>
-    {current.message && <p className="student-list-meta">Lời nhắn: {current.message}</p>}
+    <div className="student-title-row"><h3>{title}</h3>
+      <p className={'student-status ' + current.status.toLowerCase()}>{preferenceLabels[current.status]}</p></div>
+    {typeof opportunity === 'object' && <p className="student-company">{opportunity.enterpriseName}</p>}
+    {current.message && <p className="student-field-box">Lời nhắn: {current.message}</p>}
     {current.status === 'REVIEWED' && <p className="student-list-meta">Nguyện vọng đã được xét nên không thể rút. Muốn đổi ý, hãy gửi nguyện vọng mới từ Cơ hội thực tập.</p>}
     <div className="button-row">
       {current.status === 'SUBMITTED' && <button type="button" className="secondary" disabled={busy} onClick={() => withdraw(current)}>Rút nguyện vọng</button>}

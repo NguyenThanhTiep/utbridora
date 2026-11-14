@@ -36,28 +36,40 @@ const uploadError = (failure: unknown) => !(failure instanceof ApiError) ? (fail
   : failure.status === 413 || failure.status === 415 || failure.status === 422 ? 'Tệp không hợp lệ: chỉ nhận PDF, PNG hoặc JPEG tối đa 10 MiB.'
   : failure.message + withRequest(failure);
 
+// Tiêu đề từng tab, dùng cả khi chưa có học kỳ để 4 mục vẫn tách riêng như khi đã có dữ liệu.
+const tabHeadings: Record<CapabilityTab, { kicker: string; title: string }> = {
+  projects: { kicker: 'DỰ ÁN', title: 'Dự án đã thực hiện' }, certificates: { kicker: 'CHỨNG CHỈ', title: 'Chứng chỉ đã đạt' },
+  cv: { kicker: 'CV', title: 'CV trong hồ sơ' }, evidence: { kicker: 'MINH CHỨNG', title: 'Tệp minh chứng' }
+};
+
 export function CapabilityPage({ me, schools }: { me: Me; schools: Grant[] }) {
   const { terms, failed, termId, setTermId, retry } = useStudentTerm(schools);
+  const [tab, setTab] = useState<CapabilityTab>('projects');
   const term = terms?.find(item => item.termId === termId);
+  const termSelect = terms && terms.length > 1 && <label className="student-term-select">Học kỳ<select value={termId} onChange={event => setTermId(event.target.value)}>
+    <option value="" disabled>Chọn học kỳ</option>{terms.map(item => <option key={item.termId} value={item.termId}>{item.termCode}</option>)}</select></label>;
+  const termState = terms === null ? <LoadingState label="Đang tải học kỳ…" />
+    : terms.length === 0 ? <EmptyState icon="calendar" title="Chưa xác định học kỳ"
+      description={(failed ? 'Chưa tải được danh sách học kỳ của trường. ' : 'Trường chưa có học kỳ đang mở. ') + 'Hồ sơ được đọc theo học kỳ nên chưa thể mở năng lực.'}>
+      <button type="button" className="secondary" onClick={retry}><Icon name="refresh" size={16} />Thử lại</button></EmptyState>
+    : <EmptyState icon="calendar" title="Chọn học kỳ" description="Trường có nhiều học kỳ đang mở. Chọn học kỳ để mở hồ sơ năng lực." />;
+  // Frame 477:11368 không có thẻ tiêu đề riêng: một dòng thông tin gọn phía trên tab. Chưa có học kỳ thì vẫn giữ 4 tab,
+  // mỗi tab báo trạng thái học kỳ trong thẻ của chính mục đó.
   return <div className="student-page">
-    <section className="panel student-term-panel">
-      <div className="section-heading"><div><p className="section-kicker">HỒ SƠ NĂNG LỰC</p><h2>Dự án, chứng chỉ, CV và minh chứng</h2>
-        <p className="section-description">{term ? 'Học kỳ ' + term.termCode + '. ' : ''}Tệp được lưu riêng tư và chỉ tải xuống khi đã được xác nhận an toàn.</p></div>
-        {terms && terms.length > 1 && <label className="student-term-select">Học kỳ<select value={termId} onChange={event => setTermId(event.target.value)}>
-          <option value="" disabled>Chọn học kỳ</option>{terms.map(item => <option key={item.termId} value={item.termId}>{item.termCode}</option>)}</select></label>}</div>
-      {terms === null ? <LoadingState label="Đang tải học kỳ…" />
-        : terms.length === 0 ? <EmptyState icon="calendar" title="Chưa xác định học kỳ"
-          description={(failed ? 'Chưa tải được danh sách học kỳ của trường. ' : 'Trường chưa có học kỳ đang mở. ') + 'Hồ sơ được đọc theo học kỳ nên chưa thể mở năng lực.'}>
-          <button type="button" className="secondary" onClick={retry}><Icon name="refresh" size={16} />Thử lại</button></EmptyState>
-        : !termId && <EmptyState icon="calendar" title="Chọn học kỳ" description="Trường có nhiều học kỳ đang mở. Chọn học kỳ để mở hồ sơ năng lực." />}
-    </section>
-    {termId && <Capability key={termId} me={me} termId={termId} />}
+    <div className="student-toolbar student-term-bar">
+      <p className="student-card-note">{term ? 'Học kỳ ' + term.termCode + ' · ' : ''}Tệp được lưu riêng tư và chỉ tải xuống khi đã được xác nhận an toàn.</p>{termSelect}</div>
+    {termId ? <Capability key={termId} me={me} termId={termId} tab={tab} setTab={setTab} />
+      : <StudentTabs label="Hồ sơ năng lực" idPrefix="student-capability" tabs={tabs} tab={tab} setTab={setTab} render={id =>
+        <section className="panel student-term-panel">
+          <div className="section-heading"><div><p className="section-kicker">{tabHeadings[id].kicker}</p><h2>{tabHeadings[id].title}</h2></div></div>
+          {termState}
+        </section>} />}
   </div>;
 }
 
-function Capability({ me, termId }: { me: Me; termId: string }) {
+function Capability({ me, termId, tab, setTab }: { me: Me; termId: string; tab: CapabilityTab; setTab: (tab: CapabilityTab) => void }) {
   const [view, setView] = useState<SelfProfileView | null>(null), [loadError, setLoadError] = useState(''), [missing, setMissing] = useState(false);
-  const [attempt, setAttempt] = useState(0), [tab, setTab] = useState<CapabilityTab>('projects');
+  const [attempt, setAttempt] = useState(0);
   const [files, setFiles] = useState<Files>({}), [fileAttempt, setFileAttempt] = useState(0);
   // Tệp vừa tải lên trong phiên này; chưa gắn vào hồ sơ thì không được lưu lại sau khi tải lại trang.
   const [uploaded, setUploaded] = useState<Record<ProfileFilePurpose, string[]>>({ CV: [], EVIDENCE: [] });
@@ -121,7 +133,7 @@ function Capability({ me, termId }: { me: Me; termId: string }) {
   const locked = busy || conflict;
   return <>
     <Notice message={error} tone="error" /><Notice message={notice} tone="success" />
-    <div className="button-row">
+    <div className="button-row student-toolbar">
       <button type="button" className="secondary" disabled={busy} onClick={reload}><Icon name="refresh" size={16} />Tải lại dữ liệu mới nhất</button>
       <button type="button" className="secondary" disabled={busy} onClick={() => setFileAttempt(previous => previous + 1)}>Kiểm tra trạng thái tệp</button>
     </div>
@@ -196,16 +208,15 @@ function ProjectsTab({ view, evidence, files, busy, save }: { view: SelfProfileV
   };
   const toggle = (key: 'skillCodes' | 'evidenceFileIds', value: string) =>
     setDraft(previous => ({ ...previous, [key]: previous[key].includes(value) ? previous[key].filter(item => item !== value) : [...previous[key], value] }));
+  // Frame 477:11368 "Dự án cá nhân": tiêu đề dự án, dòng phụ vai trò · kỹ năng, nút thêm ở cuối card.
   return <section className="panel">
-    <div className="section-heading"><div><p className="section-kicker">DỰ ÁN</p><h2>Dự án đã thực hiện</h2></div>
-      <button type="button" disabled={busy || editing !== null} onClick={() => open('new')}><Icon name="plus" size={16} />Thêm dự án</button></div>
+    <div className="section-heading"><div><p className="section-kicker">DỰ ÁN</p><h2>Dự án đã thực hiện</h2></div></div>
     {projects.length === 0 ? <EmptyState icon="briefcase" title="Chưa có dự án" description="Thêm dự án để nhà trường và doanh nghiệp hiểu năng lực thực tế của bạn." />
       : <ul className="student-list">{projects.map((item, index) => <li className="student-list-item" key={item.projectId ?? index}>
         <h3>{item.title}</h3>
-        {item.role && <p className="student-list-meta">Vai trò: {item.role}</p>}
-        {item.description && <p className="student-list-meta student-pre-line">{item.description}</p>}
+        {(item.role || item.skillCodes.length > 0) && <p className="student-list-meta">{[item.role && 'Vai trò: ' + item.role, item.skillCodes.length > 0 && 'Kỹ năng: ' + item.skillCodes.join(', ')].filter(Boolean).join(' · ')}</p>}
+        {item.description && <p className="student-list-text student-pre-line">{item.description}</p>}
         {item.url && <p className="student-list-meta"><a href={item.url} target="_blank" rel="noopener noreferrer">{item.url}</a></p>}
-        {item.skillCodes.length > 0 && <p className="student-list-meta">Kỹ năng: {item.skillCodes.join(', ')}</p>}
         <FileList ids={item.evidenceFileIds} files={files} />
         <div className="button-row">
           <button type="button" className="secondary" aria-label={'Sửa dự án ' + item.title} disabled={busy || editing !== null} onClick={() => open(index)}>Sửa</button>
@@ -213,6 +224,7 @@ function ProjectsTab({ view, evidence, files, busy, save }: { view: SelfProfileV
             if (window.confirm('Xóa dự án này khỏi hồ sơ?')) void save(input => ({ ...input, projects: input.projects.filter((_, position) => position !== index) }), 'Đã xóa dự án.');
           }}>Xóa</button></div>
       </li>)}</ul>}
+    {editing === null && <div className="student-card-actions"><button type="button" className="student-btn-wide" disabled={busy} onClick={() => open('new')}><Icon name="plus" size={16} />Thêm dự án</button></div>}
     {editing !== null && <form className="student-profile-form" noValidate onSubmit={submit}><fieldset className="student-fieldset" disabled={busy}>
       <legend>{editing === 'new' ? 'Thêm dự án' : 'Sửa dự án'}</legend>
       <label>Tên dự án<input value={draft.title} onChange={event => setDraft({ ...draft, title: event.target.value })} /></label>
@@ -255,8 +267,7 @@ function CertificatesTab({ view, evidence, files, busy, save }: { view: SelfProf
       editing === 'new' ? 'Đã thêm chứng chỉ.' : 'Đã cập nhật chứng chỉ.').then(ok => { if (ok) setEditing(null); });
   };
   return <section className="panel">
-    <div className="section-heading"><div><p className="section-kicker">CHỨNG CHỈ</p><h2>Chứng chỉ đã đạt</h2></div>
-      <button type="button" disabled={busy || editing !== null} onClick={() => open('new')}><Icon name="plus" size={16} />Thêm chứng chỉ</button></div>
+    <div className="section-heading"><div><p className="section-kicker">CHỨNG CHỈ</p><h2>Chứng chỉ đã đạt</h2></div></div>
     {certificates.length === 0 ? <EmptyState icon="check-circle" title="Chưa có chứng chỉ" description="Thêm chứng chỉ kèm minh chứng để hồ sơ đáng tin cậy hơn." />
       : <ul className="student-list">{certificates.map((item, index) => <li className="student-list-item" key={item.certificateId ?? index}>
         <h3>{item.title}</h3><p className="student-list-meta">{item.issuer} · Cấp ngày {item.issuedOn}{item.expiresOn ? ' · Hết hạn ' + item.expiresOn : ''}</p>
@@ -267,6 +278,7 @@ function CertificatesTab({ view, evidence, files, busy, save }: { view: SelfProf
             if (window.confirm('Xóa chứng chỉ này khỏi hồ sơ?')) void save(input => ({ ...input, certificates: input.certificates.filter((_, position) => position !== index) }), 'Đã xóa chứng chỉ.');
           }}>Xóa</button></div>
       </li>)}</ul>}
+    {editing === null && <div className="student-card-actions"><button type="button" className="student-btn-wide" disabled={busy} onClick={() => open('new')}><Icon name="plus" size={16} />Thêm chứng chỉ</button></div>}
     {editing !== null && <form className="student-profile-form" noValidate onSubmit={submit}><fieldset className="student-fieldset" disabled={busy}>
       <legend>{editing === 'new' ? 'Thêm chứng chỉ' : 'Sửa chứng chỉ'}</legend>
       <label>Tên chứng chỉ<input value={draft.title} onChange={event => setDraft({ ...draft, title: event.target.value })} /></label>

@@ -5,6 +5,7 @@ import { accessLost, workflowError } from '../../internship/workflow-api';
 import { getMyResult } from '../api';
 import { useMyCaseIds } from '../internship';
 import { dateTime } from '../preferences';
+import { StudentNote } from './StudentUI';
 import type { EvaluationDto, StudentResultDto } from '../types';
 import '../styles.css';
 
@@ -36,8 +37,8 @@ export function EvaluationResults({ userId }: { userId: string }) {
     return () => c.abort();
   }, [caseId, attempt]);
   const evaluation = result && publishedOf(result, caseId);
-  return <section className="panel">
-    <div className="section-heading"><div><p className="section-kicker">KẾT QUẢ ĐÁNH GIÁ</p><h2>Kết quả kỳ thực tập</h2>
+  return <section className="panel student-results">
+    <div className="section-heading"><div><p className="section-kicker">KẾT QUẢ THỰC TẬP</p><h2>Kết quả kỳ thực tập</h2>
       <p className="section-description">Chỉ hiển thị sau khi nhà trường công bố và cho phép sinh viên xem.</p></div>
       <button type="button" className="secondary" disabled={!caseId} onClick={() => setAttempt(previous => previous + 1)}><Icon name="refresh" size={16} />Tải lại kết quả</button></div>
     {caseError ? <p className="student-error-note" role="alert">{workflowError(caseError)}</p>
@@ -50,11 +51,20 @@ export function EvaluationResults({ userId }: { userId: string }) {
           {!caseId ? <p className="muted">Chọn hồ sơ thực tập để xem kết quả.</p>
             : error ? <p className="student-error-note" role="alert">{error}</p>
             : !result ? <LoadingState label="Đang tải kết quả…" />
-            : !evaluation ? <EmptyState icon="lock" title="Chưa có kết quả được công bố" />
+            : !evaluation ? <><EmptyState icon="lock" title="Chưa có kết quả được công bố" /><ResultConditions /></>
             : <PublishedEvaluation evaluation={evaluation} />}
         </div>
       </>}
   </section>;
+}
+
+// Điều kiện tĩnh theo MVP-BR-17 (Figma 477:12579 vẽ dạng ô đánh dấu). Trình duyệt không biết điều kiện nào còn thiếu
+// nên chỉ liệt kê, không hiện như trạng thái.
+const conditions = ['Nhà trường đã công bố kết quả.', 'Nhà trường cho phép sinh viên xem điểm.', 'HR doanh nghiệp đã bật hiển thị điểm.'];
+function ResultConditions() {
+  return <div className="student-conditions"><p>Chưa đủ điều kiện hiển thị điểm. Không hiển thị bảng tiêu chí hoặc điểm khi thiếu bất kỳ điều kiện nào:</p>
+    <ul>{conditions.map(item => <li key={item}>{item}</li>)}</ul>
+    <StudentNote>Điểm chỉ xuất hiện khi đủ cả ba điều kiện công bố và cho phép xem.</StudentNote></div>;
 }
 
 function PublishedEvaluation({ evaluation }: { evaluation: EvaluationDto }) {
