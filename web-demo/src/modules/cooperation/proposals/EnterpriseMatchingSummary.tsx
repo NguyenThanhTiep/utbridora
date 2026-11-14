@@ -30,19 +30,24 @@ export function EnterpriseMatchingSummary({ org, demand }: { org: string; demand
     <p>Kết quả được công bố theo khoảng số lượng; không hiển thị danh tính sinh viên.</p>
     <Notice message={error || command.message} tone="error" />
     <div className="p30-agg-grid">
-      <div className="p30-agg-main-card">
+      <div className="p30-agg-main-card" aria-busy={command.busy}>
         <h4>Kết quả tổng hợp được bảo vệ</h4>
-        <div className="p30-agg-band-value">{release ? release.eligibleBand : '—'}</div>
+        <div className="p30-agg-band-value" aria-label={release ? `Khoảng kết quả: ${bands[release.eligibleBand]}` : 'Chưa có kết quả'}>
+          {release ? release.eligibleBand : '—'}
+        </div>
         {release && <p role="status">Số ứng viên phù hợp: <strong>{bands[release.eligibleBand]}</strong></p>}
+        <p role="status" aria-live="polite" aria-atomic="true">{command.busy ? 'Đang tải thống kê được bảo vệ…' : ''}</p>
         <p className="p30-agg-caption">Khoảng số lượng phù hợp với toàn bộ kỹ năng REQUIRED.</p>
         <p className="p30-agg-caption">Một lần phát hành theo doanh nghiệp – trường – kỳ.</p>
         <div className="button-row">
-          <button className="t5-btn-teal" disabled={command.blocked} onClick={() => {
+          <button className="t5-btn-teal" disabled={command.blocked} aria-busy={command.busy} onClick={() => {
             setRelease(null);setError('');void command.submit('/matching/evaluate', 'POST', {
               demandId: demand.demandId, expectedDemandVersion: demand.version, expectedCriteriaVersion: demand.criteriaVersion,
             });
-          }}>Xem thống kê đối chiếu</button>
-          {command.retryable && <button disabled={command.busy} onClick={() => void command.retry()}>Thử lại yêu cầu thống kê đã gửi</button>}
+          }}>{command.busy ? 'Đang tải thống kê…' : 'Xem thống kê đối chiếu'}</button>
+          {command.retryable && <button disabled={command.busy} aria-busy={command.busy} onClick={() => void command.retry()}>
+            {command.busy ? 'Đang thử lại…' : 'Thử lại yêu cầu thống kê đã gửi'}
+          </button>}
         </div>
       </div>
       <div className="p30-agg-privacy-card">
