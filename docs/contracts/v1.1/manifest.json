@@ -5199,7 +5199,7 @@
     "src/main/java/vn/utbridora/auth/modules/student/application/StudentProfileException.java": "15666838734a42eb0667b4095fcfae55a83c386fd85f3d83045330d5872174fd",
     "src/main/java/vn/utbridora/auth/modules/student/application/StudentProfileFilePolicy.java": "4e944d59d491db6b29a98796381623600102d4443e35e9177189e3553b68ba10",
     "src/main/java/vn/utbridora/auth/modules/student/application/StudentProfileProjectionService.java": "156c4a3b7d44cd1abc6f9ea3d5e4b11c382caaf35db6468a3f73409bc9dd6d25",
-    "src/main/java/vn/utbridora/auth/modules/student/application/StudentProfileService.java": "ddc356f6440b4a8743b1ce86fee6238e933089d8e127799cc677a5afe468fda9",
+    "src/main/java/vn/utbridora/auth/modules/student/application/StudentProfileService.java": "3bd053c71b362b8a961763717850ab53cff0b83908db52ef4f5c31d70dc494f9",
     "src/main/java/vn/utbridora/auth/modules/student/application/StudentProfileSnapshots.java": "d5bac46c8d765041d970ce3b937b88ed8e4c9cd65741d49de27754bdf7f54567",
     "src/main/java/vn/utbridora/auth/modules/student/application/StudentTermScopeConfiguration.java": "fc75da2bd7f8b74d3810e1c72c1386bd4dab2edec36524e39405b71903b68b82",
     "src/main/java/vn/utbridora/auth/modules/student/application/StudentTermScopePort.java": "373f76a1ad5c22d423852f5c27a87172e0856d4c7176676fbd29bdd6eb54460f",
