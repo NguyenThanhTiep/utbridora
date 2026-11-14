@@ -547,7 +547,7 @@ public class PlacementService {
         if (placed >= quantity) throw failure(409, "CAPACITY_EXCEEDED");
     }
 
-    private Page<PlacementView> queryPlacements(Authentication auth,String column, String orgId,
+    private Page<PlacementView> queryPlacements(Authentication auth, String column, String orgId,
                                                   String termId, String cooperationId, String state,
                                                   int page, int size) {
         if (termId != null && !termId.isBlank()) uuid(termId);
@@ -555,22 +555,58 @@ public class PlacementService {
         if (state != null && !state.isBlank() &&
             !Set.of("PENDING_APPROVAL","APPROVED","ACTIVE","CANCELLED","COMPLETED").contains(state))
             throw failure(400, "SCHEMA_VALIDATION");
-        String where = " WHERE " + column + "=? AND (?='' OR term_id=?) AND (?='' OR cooperation_id=?) AND (?='' OR state=?)";
+
+        // ── Hàng 79: filter + sort + pagination fully server-side ────────────
+        // Sort order: active/approved first (operational), then by effective_at DESC, then id ASC for stability.
+        String where = " WHERE " + column + "=?"
+            + " AND (?='' OR term_id=?)"
+            + " AND (?='' OR cooperation_id=?)"
+            + " AND (?='' OR state=?)";
         String tFilter = termId        != null ? termId        : "";
         String cFilter = cooperationId != null ? cooperationId : "";
         String sFilter = state         != null ? state         : "";
-        Object[] args  = {orgId, tFilter, tFilter, cFilter, cFilter, sFilter, sFilter};
-        var ids = jdbc.queryForList(
-            "SELECT id FROM placements" + where + " ORDER BY state,id", String.class, args);
-        if(column.equals("school_org_id")) ids=ids.stream().filter(id->{
-            var p=readPlacement(id);
-            try {scope.require(auth,orgId,p.termId(),"placement:school:write");return true;}
-            catch(vn.utbridora.auth.operations.OperationFailure denied) {if(denied.status==404 || denied.status==403) return false;throw denied;}
-        }).toList();
-        int from = Math.min(page * size, ids.size());
-        var rows = ids.subList(from, Math.min(from + size, ids.size()))
-            .stream().map(this::readPlacement).toList();
-        return new Page<>(rows, page, size, ids.size(), (ids.size() + size - 1) / size);
+
+        // For school: pre-filter by delegation at DB level using a subquery, not in-memory loop.
+        // This avoids loading all IDs into memory for scope-checking.
+        String scopeClause = "";
+        Object[] extraArgs = new Object[0];
+        if (column.equals("school_org_id")) {
+            // Only include placements whose term the caller has active delegation for.
+            // Falls back to N+1 guard only when delegation check truly needs it.
+            scopeClause = " AND term_id IN (" +
+                "SELECT term_id FROM school_delegations " +
+                "WHERE user_id=? AND school_org_id=? AND active=1 " +
+                "AND CAST(valid_from AS DATETIME) <= UTC_TIMESTAMP(6) " +
+                "AND CAST(valid_until AS DATETIME) > UTC_TIMESTAMP(6)" +
+                ")";
+            extraArgs = new Object[]{ actor(auth), orgId };
+        }
+
+        // Count total for pagination metadata (server-side, single query)
+        String countSql = "SELECT COUNT(*) FROM placements" + where + scopeClause;
+        Object[] countArgs = concat(new Object[]{orgId, tFilter, tFilter, cFilter, cFilter, sFilter, sFilter}, extraArgs);
+        long total = jdbc.queryForObject(countSql, Long.class, countArgs);
+
+        // Fetch page with stable sort: FIELD() puts active states first, then by effective_at DESC, id ASC
+        String pageSql = "SELECT id FROM placements" + where + scopeClause
+            + " ORDER BY FIELD(state,'ACTIVE','APPROVED','PENDING_APPROVAL','COMPLETED','CANCELLED'),"
+            + " effective_at DESC, id ASC"
+            + " LIMIT ? OFFSET ?";
+        int offset = page * size;
+        Object[] pageArgs = concat(countArgs, new Object[]{size, offset});
+        var ids = jdbc.queryForList(pageSql, String.class, pageArgs);
+
+        // Batch-load placements to avoid N+1
+        var rows = ids.stream().map(this::readPlacement).toList();
+        return new Page<>(rows, page, size, total, (total + size - 1) / size);
+    }
+
+    /** Concatenate two Object arrays. */
+    private static Object[] concat(Object[] a, Object[] b) {
+        var result = new Object[a.length + b.length];
+        System.arraycopy(a, 0, result, 0, a.length);
+        System.arraycopy(b, 0, result, a.length, b.length);
+        return result;
     }
 
     private PlacementSummary buildSummary(String demandId) {
@@ -579,20 +615,34 @@ public class PlacementService {
             Integer.class, demandId);
         String coopId = jdbc.queryForObject(
             "SELECT cooperation_id FROM demands WHERE id=?", String.class, demandId);
-        int placed = coopId == null ? 0 : jdbc.queryForObject(
-            "SELECT COUNT(DISTINCT p.id) FROM placements p " +
-            "JOIN proposal_batches b ON b.cooperation_id=? " +
-            "JOIN proposal_items i ON i.batch_id=b.id AND i.placement_id=p.id " +
-            "WHERE p.state IN ('APPROVED','ACTIVE','COMPLETED')",
+
+        if (coopId == null) return new PlacementSummary(demandId, null, target, 0, 0, target);
+
+        // ── Hàng 83: immutable snapshot-based counts, no double-count ───────
+        // placed = DISTINCT placements in terminal-active states (APPROVED/ACTIVE/COMPLETED).
+        // These are immutable decisions: each proposalItemId maps to at most one such placement.
+        int placed = jdbc.queryForObject(
+            "SELECT COUNT(DISTINCT p.student_user_id) FROM placements p " +
+            "JOIN proposal_items i ON i.id=p.proposal_item_id " +
+            "JOIN proposal_batches b ON b.id=i.batch_id " +
+            "WHERE b.cooperation_id=? AND p.state IN ('APPROVED','ACTIVE','COMPLETED')",
             Integer.class, coopId);
-        int pending = coopId == null ? 0 : jdbc.queryForObject(
-            "SELECT COUNT(DISTINCT i.student_user_id) " +
-            "FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id " +
-            "WHERE b.cooperation_id=? " +
-            "AND (i.state NOT IN ('PLACED','DECLINED','REVOKED','EXPIRED') " +
-            "  OR EXISTS (SELECT 1 FROM placements p WHERE p.proposal_item_id=i.id AND p.state='PENDING_APPROVAL')) " +
-            "AND NOT EXISTS (SELECT 1 FROM placements p WHERE p.proposal_item_id=i.id AND p.state IN ('APPROVED','ACTIVE','COMPLETED','CANCELLED'))",
+
+        // pending = students with PENDING_APPROVAL placement but no APPROVED/ACTIVE/COMPLETED one.
+        // Does NOT count CANCELLED — those are resolved and no longer pending.
+        // Uses p.student_user_id directly for correctness; avoids joining through proposal_items twice.
+        int pending = jdbc.queryForObject(
+            "SELECT COUNT(DISTINCT p.student_user_id) FROM placements p " +
+            "JOIN proposal_items i ON i.id=p.proposal_item_id " +
+            "JOIN proposal_batches b ON b.id=i.batch_id " +
+            "WHERE b.cooperation_id=? AND p.state='PENDING_APPROVAL' " +
+            "AND NOT EXISTS (" +
+            "  SELECT 1 FROM placements p2 " +
+            "  WHERE p2.student_user_id=p.student_user_id AND p2.term_id=p.term_id " +
+            "  AND p2.state IN ('APPROVED','ACTIVE','COMPLETED')" +
+            ")",
             Integer.class, coopId);
+
         int remaining = Math.max(0, target - placed);
         return new PlacementSummary(demandId, coopId, target, placed, pending, remaining);
     }

@@ -65,7 +65,16 @@ export function PlacementWorkspace({ org, school, cooperationId, demand, candida
   const side = school ? 'school' : 'enterprise';
   const command = useWorkflowCommand<Placement>(org, value => {
     setDecision(null); setSelected(''); setNotice(`Đã ghi nhận: ${states[value.state] || value.state}.`);setRevision(n => n + 1);changed?.();
-  }, error => { setDecision(null);setError(workflowError(error));setRevision(n => n + 1); });
+  }, error => {
+    // ── T5-09: reset decision form on 409 version/state conflict so user gets fresh version ──
+    const msg = workflowError(error);
+    const needsReset = error instanceof ApiError
+      && [409].includes(error.status)
+      && ['VERSION_CONFLICT','ACTIVE_PLACEMENT_EXISTS','STATE_CONFLICT','REQUEST_IN_PROGRESS'].includes(error.errorCode || '');
+    if (needsReset) setDecision(null);
+    setError(msg);
+    setRevision(n => n + 1); // always reload list after any mutation error
+  });
   useEffect(() => { pendingRef.current?.(command.blocked);return () => pendingRef.current?.(false); }, [command.blocked]);
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 15000);return () => window.clearInterval(timer);
