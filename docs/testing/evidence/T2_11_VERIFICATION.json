@@ -1,0 +1,151 @@
+{
+  "task": "T2-11",
+  "developer": "DEV04 - Le Van Chuong",
+  "recorded_at": "2026-11-14T12:54:37.764472+07:00",
+  "branch": "feature/t2-week4",
+  "base_head": "f08c3cb12cef1a01f30778ab12eea4b28006b8f0",
+  "source_state": "uncommitted working tree; no production source changes",
+  "source_sha256": {
+    "src/test/java/vn/utbridora/auth/EnterpriseProposalIT.java": "dfdfbf52f96a6a4fa0ac3111ee658baeafe687aa69c6ac97470907e17049e9ce",
+    "src/test/java/vn/utbridora/auth/Week2WorkflowIT.java": "6d9a5fbd3de5532b952423cec934060885eb398d60a757550ff56791b9daaf12"
+  },
+  "environment": {
+    "java": "Temurin 21.0.13",
+    "mysql": "8.4.13 via mysql:8.4 Testcontainers",
+    "docker_server": "29.9.2",
+    "database_isolation": "new container datasource from DynamicPropertySource; no existing database used",
+    "providers": "real T2/T5/T1; no new mocked provider",
+    "clean_fixture": "scanner-output fixture only"
+  },
+  "suites": [
+    {
+      "suite": "EnterpriseProposalIT",
+      "tests": 55,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "passed": 54,
+      "time_seconds": 309.703,
+      "junit": "target/failsafe-reports/TEST-vn.utbridora.auth.EnterpriseProposalIT.xml",
+      "junit_sha256": "7f2e794e525600106873c2072cd6e76ce9924267dc8b6f37d22abaebb65b9d7d",
+      "log": "target/t2-11-enterprise-final.log",
+      "log_sha256": "c77373e46cc347be12f75513ce5e7ef68fd42ca36af75216a872a114fd46e097",
+      "non_passing_cases": [
+        {
+          "name": "browserUsesRealSchoolStudentEnterpriseSharingAndPlacementHandoff",
+          "status": "SKIPPED"
+        }
+      ]
+    },
+    {
+      "suite": "Week2WorkflowIT",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 1,
+      "time_seconds": 134.769,
+      "junit": "target/failsafe-reports/TEST-vn.utbridora.auth.Week2WorkflowIT.xml",
+      "junit_sha256": "48698f3dc65f922354b0ba3d2523d912f4f2ec449e5c47f40554f3e59112a27b",
+      "log": "target/t2-11-regression.log",
+      "log_sha256": "1ee62431d98af13b29c05afb9fe464526b5f587a30f527588290b1fcc7c72242",
+      "non_passing_cases": []
+    }
+  ],
+  "totals": {
+    "tests": 56,
+    "passed": 55,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 1
+  },
+  "new_t211_http_cases": [
+    {
+      "name": "t211PolicyNarrowingOmitsRemovedFieldsOnBothProfileRoutes",
+      "status": "PASS"
+    },
+    {
+      "name": "t211ForeignRecipientCannotReadEitherProfileRouteOrReplayDecision",
+      "status": "PASS"
+    },
+    {
+      "name": "t211CurrentAuthorityBlocksProfileProposalAndSuccessfulDecisionReplay(String)[1]",
+      "status": "PASS"
+    },
+    {
+      "name": "t211CurrentAuthorityBlocksProfileProposalAndSuccessfulDecisionReplay(String)[2]",
+      "status": "PASS"
+    },
+    {
+      "name": "t211CurrentAuthorityBlocksProfileProposalAndSuccessfulDecisionReplay(String)[3]",
+      "status": "PASS"
+    },
+    {
+      "name": "t211CurrentAuthorityBlocksProfileProposalAndSuccessfulDecisionReplay(String)[4]",
+      "status": "PASS"
+    },
+    {
+      "name": "t211SchoolScopeBlocksProfilePolicyProposalAndPolicyReplay(String)[1]",
+      "status": "PASS"
+    },
+    {
+      "name": "t211SchoolScopeBlocksProfilePolicyProposalAndPolicyReplay(String)[2]",
+      "status": "PASS"
+    },
+    {
+      "name": "t211SchoolScopeBlocksProfilePolicyProposalAndPolicyReplay(String)[3]",
+      "status": "PASS"
+    },
+    {
+      "name": "t211SchoolScopeBlocksProfilePolicyProposalAndPolicyReplay(String)[4]",
+      "status": "PASS"
+    },
+    {
+      "name": "t211FileHttpRechecksAuthorityOnMetadataContentAndRange(String)[1]",
+      "status": "PASS"
+    },
+    {
+      "name": "t211FileHttpRechecksAuthorityOnMetadataContentAndRange(String)[2]",
+      "status": "PASS"
+    },
+    {
+      "name": "t211FileHttpRechecksAuthorityOnMetadataContentAndRange(String)[3]",
+      "status": "PASS"
+    },
+    {
+      "name": "t211FileHttpRechecksAuthorityOnMetadataContentAndRange(String)[4]",
+      "status": "PASS"
+    }
+  ],
+  "new_week2_checks": 6,
+  "history": [
+    {
+      "run": "target/t2-11-new-it.log",
+      "passed": 10,
+      "failures": 4,
+      "errors": 0,
+      "skipped": 0,
+      "reason": "School fixture selected seed T3 delegation as well as workflow delegation; selector corrected, authorization assertions unchanged.",
+      "evidence": "target/t2-11-evidence/initial/"
+    },
+    {
+      "run": "target/t2-11-regression.log",
+      "enterprise_passed": 53,
+      "enterprise_errors": 1,
+      "enterprise_skipped": 1,
+      "week2_passed": 1,
+      "reason": "Foreign school fixture type SCHOOL rejected by core; corrected to UNIVERSITY. Enterprise suite rerun in full.",
+      "evidence": "target/t2-11-evidence/regression-fixture/"
+    }
+  ],
+  "acceptance": {
+    "plan_sheet": "CAP NHAT CHUNG",
+    "plan_row": 61,
+    "dev_result": "PASS for tested matrix; QA02 and Lead signoff pending",
+    "qa02": "NOT_RUN",
+    "browser": "SKIP inherited harness; t5.week3.browser not enabled",
+    "production_guard_changes": false,
+    "shared_database_migration": false,
+    "commit_push_pr": false
+  }
+}

@@ -116,6 +116,210 @@ class EnterpriseProposalIT {
     }
     String sharePath() {return "/school/proposals/"+f.proposalId()+"/shares";}
     String legacyProfilePath(String share) {return "/students/"+id(6)+"/profile?termId="+id(21)+"&shareId="+share+"&fields=skills&purpose=INTERNSHIP_SELECTION";}
+
+    // T2-11: each invocation uses the real T2/T5 workflow in this container and a positive control.
+    // Timestamp mutation is an isolated legacy-data fixture: share and reservation remain current.
+    void t211LoseAccess(String cause,Shared shared) throws Exception {
+        switch(cause) {
+            case "revoke" -> consents.revoke(as(6),shared.consent().consentId(),key(),
+                new StudentConsentService.Revoke(shared.consent().lineageVersion(),"STUDENT_REVOKED"));
+            case "expiry" -> {
+                assertTrue(shared.share().expiresAt().isAfter(Instant.now()));
+                jdbc.update("UPDATE student_consents SET data_json=JSON_SET(data_json,'$.expiresAt',?) WHERE id=?",
+                    Instant.now().minusSeconds(1).toString(),shared.consent().consentId());
+            }
+            case "policy" -> {
+                var result=http(school,"PUT","/school/terms/"+id(21)+"/profile-sharing-policy",
+                    JSON.writeValueAsString(new SchoolSharingPolicyService.Update(0L,List.of())),id(11),key(),true);
+                assertEquals(200,result.statusCode(),result.body());
+            }
+            case "permission" -> assertEquals(1,jdbc.update(
+                "DELETE FROM role_permissions WHERE role='ENTERPRISE' AND permission_code='student_profile:shared:read'"));
+            default -> throw new IllegalArgumentException(cause);
+        }
+    }
+    void t211RestoreAccessFixture(String cause) {
+        if("policy".equals(cause)) jdbc.update("DELETE FROM school_sharing_policies WHERE school_org_id=? AND term_id=?",id(11),id(21));
+        if("permission".equals(cause)) jdbc.update("INSERT INTO role_permissions VALUES('ENTERPRISE','student_profile:shared:read')");
+    }
+    void t211Denied(HttpResponse<String> response,int status) throws Exception {
+        assertEquals(status,response.statusCode(),response.body());
+        var error=JSON.readTree(response.body());
+        assertFalse(error.has("data"));assertFalse(error.has("content"));assertFalse(error.has("allowedFields"));
+        for(String secret:List.of(id(6),"student@example.test","0901234567","private-t211-cv","synthetic T211 private bytes"))
+            assertFalse(response.body().contains(secret),response.body());
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"revoke","expiry","policy","permission"})
+    void t211CurrentAuthorityBlocksProfileProposalAndSuccessfulDecisionReplay(String cause) throws Exception {
+        var shared=share();
+        var profile=http(hr,"GET",profilePath(),null,id(12),null,true);
+        assertEquals(200,profile.statusCode(),profile.body());
+        assertEquals(Set.of("majorCode","skills","projects"),new HashSet<>(JSON.readTree(profile.body()).get("data").propertyNames()));
+        assertEquals(200,http(hr,"GET",legacyProfilePath(shared.share().shareId()),null,id(12),null,true).statusCode());
+        var visible=http(hr,"GET",listPath(),null,id(12),null,true);assertEquals(200,visible.statusCode(),visible.body());
+        assertEquals(1,JSON.readTree(visible.body()).get("totalElements").asInt());
+        String request=JSON.writeValueAsString(new ProposalService.EnterpriseDecision(4L,"ACCEPT",null)),operation=key();
+        var accepted=http(hr,"PATCH",decisionPath(),request,id(12),operation,true);
+        assertEquals(200,accepted.statusCode(),accepted.body());
+        var replay=http(hr,"PATCH",decisionPath(),request,id(12),operation,true);
+        assertEquals(200,replay.statusCode(),replay.body());assertEquals(accepted.body(),replay.body());
+        try {
+            t211LoseAccess(cause,shared);
+            assertHidden();
+            t211Denied(http(hr,"GET",profilePath(),null,id(12),null,true),403);
+            t211Denied(http(hr,"GET",legacyProfilePath(shared.share().shareId()),null,id(12),null,true),
+                "permission".equals(cause)?404:403);
+            t211Denied(http(hr,"PATCH",decisionPath(),request,id(12),operation,true),403);
+            t211Denied(http(hr,"PATCH",decisionPath(),JSON.writeValueAsString(new ProposalService.EnterpriseDecision(5L,"DECLINE","OTHER")),id(12),key(),true),403);
+            assertEquals("ENTERPRISE_ACCEPTED",proposals.item(f.proposalId()).state());
+            assertEquals(5,proposals.item(f.proposalId()).version());
+            assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE action='PROPOSAL_ITEM_DECIDED' AND resource_id=?",Integer.class,f.proposalId()));
+        } finally {t211RestoreAccessFixture(cause);}
+    }
+
+    @Test void t211PolicyNarrowingOmitsRemovedFieldsOnBothProfileRoutes() throws Exception {
+        var shared=share();String policyPath="/school/terms/"+id(21)+"/profile-sharing-policy";
+        var before=http(hr,"GET",profilePath(),null,id(12),null,true);assertEquals(200,before.statusCode(),before.body());
+        assertEquals(Set.of("majorCode","skills","projects"),new HashSet<>(JSON.readTree(before.body()).get("data").propertyNames()));
+        try {
+            var update=http(school,"PUT",policyPath,JSON.writeValueAsString(new SchoolSharingPolicyService.Update(0L,List.of("skills"))),id(11),key(),true);
+            assertEquals(200,update.statusCode(),update.body());assertEquals(1,JSON.readTree(update.body()).get("version").asInt());
+            for(String path:List.of(profilePath(),legacyProfilePath(shared.share().shareId()).replace("fields=skills","fields=skills,majorCode,projects,email"))) {
+                var reduced=http(hr,"GET",path,null,id(12),null,true);assertEquals(200,reduced.statusCode(),reduced.body());
+                var data=JSON.readTree(reduced.body());
+                assertEquals(List.of("skills"),JSON.readValue(data.get("allowedFields").toString(),List.class));
+                assertEquals(Set.of("skills"),new HashSet<>(data.get("data").propertyNames()));
+                assertFalse(reduced.body().contains("student@example.test"));
+            }
+            assertEquals(1,JSON.readTree(http(hr,"GET",listPath(),null,id(12),null,true).body()).get("totalElements").asInt());
+            t211Denied(http(hr,"GET",legacyProfilePath(shared.share().shareId()).replace("fields=skills","fields=majorCode"),null,id(12),null,true),403);
+            var stale=http(school,"PUT",policyPath,JSON.writeValueAsString(new SchoolSharingPolicyService.Update(0L,List.of("email"))),id(11),key(),true);
+            t211Denied(stale,409);
+        } finally {t211RestoreAccessFixture("policy");}
+    }
+
+    @Test void t211ForeignRecipientCannotReadEitherProfileRouteOrReplayDecision() throws Exception {
+        var shared=share();String other=key(),operation=key();
+        String request=JSON.writeValueAsString(new ProposalService.EnterpriseDecision(4L,"ACCEPT",null));
+        assertEquals(200,http(hr,"GET",profilePath(),null,id(12),null,true).statusCode());
+        assertEquals(200,http(hr,"GET",legacyProfilePath(shared.share().shareId()),null,id(12),null,true).statusCode());
+        assertEquals(200,http(hr,"PATCH",decisionPath(),request,id(12),operation,true).statusCode());
+        jdbc.update("INSERT INTO organizations(id,name,type,status,created_at) VALUES(?,'T211 foreign recipient','ENTERPRISE','VERIFIED',UTC_TIMESTAMP(6))",other);
+        try {
+            jdbc.update("INSERT INTO memberships(id,user_id,organization_id,role,active,created_at) VALUES(?,?,?,'ENTERPRISE',true,UTC_TIMESTAMP(6))",key(),id(4),other);
+            for(String path:List.of(profilePath(),listPath())) t211Denied(http(hr,"GET",path,null,other,null,true),404);
+            t211Denied(http(hr,"PATCH",decisionPath(),request,other,operation,true),404);
+            // A distinct principal has only the foreign membership, so the generic route cannot
+            // fall back to the original recipient membership of this test's HR principal.
+            jdbc.update("INSERT INTO memberships(id,user_id,organization_id,role,active,created_at) VALUES(?,?,?,'ENTERPRISE',true,UTC_TIMESTAMP(6))",key(),id(7),other);
+            var foreign=login("intern@example.test");
+            t211Denied(http(foreign,"GET",legacyProfilePath(shared.share().shareId()),null,other,null,true),404);
+        } finally {jdbc.update("DELETE FROM memberships WHERE organization_id=?",other);jdbc.update("DELETE FROM organizations WHERE id=?",other);}
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"revoke","expiry","policy","permission"})
+    void t211FileHttpRechecksAuthorityOnMetadataContentAndRange(String cause) throws Exception {
+        var invitation=proposals.invite(as(2),f.proposalId(),key(),new ProposalService.Invite(1L,null));
+        proposals.decide(as(6),invitation.invitationId(),key(),new ProposalService.InvitationDecision("ACCEPT",1L,null,null));
+        var policy=http(school,"PUT","/school/terms/"+id(21)+"/profile-sharing-policy",
+            JSON.writeValueAsString(new SchoolSharingPolicyService.Update(0L,List.of("cv"))),id(11),key(),true);
+        assertEquals(200,policy.statusCode(),policy.body());
+        String originalCv=jdbc.queryForObject("SELECT cv_file_id FROM student_profiles WHERE user_id=?",String.class,id(6));
+        try {
+            long lineage=jdbc.queryForObject("SELECT COALESCE(MAX(version),0) FROM student_consent_lineages WHERE student_user_id=? AND term_id=? AND recipient_org_id=?",Long.class,id(6),id(21),id(12));
+            var consent=consents.grant(as(6),key(),new StudentConsentService.GrantConsent(invitation.invitationId(),"INTERNSHIP_SELECTION",List.of("cv"),Instant.now().plusSeconds(3600),"demo-consent-v1",1L,lineage));
+            var shared=shares.grant(as(2),f.proposalId(),key(),new ProfileShareService.GrantProfileShare(f.proposalId(),consent.consentId(),1L,3L,List.of("cv"),consent.expiresAt()));
+            String bytes="%PDF-1.4\nsynthetic T211 private bytes\n%%EOF";
+            var file=files.upload(as(6),key(),new FileContracts.ResourceRef(FileContracts.ResourceType.STUDENT_PROFILE,id(6)),FileContracts.FilePurpose.CV,
+                new MockMultipartFile("file","private-t211-cv.pdf","application/pdf",bytes.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+            jdbc.update("UPDATE student_profiles SET cv_file_id=? WHERE user_id=?",file.fileId(),id(6));
+            // Scanner-output fixture only, never a replacement for T1-07 runtime scanning.
+            jdbc.update("UPDATE files SET scan_status='CLEAN' WHERE id=?",file.fileId());
+            String path="/files/"+file.fileId();
+            var metadata=http(hr,"GET",path+"/metadata",null,id(12),null,true);assertEquals(200,metadata.statusCode(),metadata.body());
+            assertFalse(metadata.body().contains("private-t211-cv"));
+            var content=http(hr,"GET",path+"/content",null,id(12),null,true);assertEquals(200,content.statusCode(),content.body());assertEquals(bytes,content.body());
+            var range=t211Range(path);assertEquals(206,range.statusCode(),range.body());assertEquals("%PDF",range.body());
+            assertEquals(200,http(hr,"GET",profilePath(),null,id(12),null,true).statusCode());
+            if("policy".equals(cause)) {
+                var reduced=http(school,"PUT","/school/terms/"+id(21)+"/profile-sharing-policy",
+                    JSON.writeValueAsString(new SchoolSharingPolicyService.Update(1L,List.of())),id(11),key(),true);
+                assertEquals(200,reduced.statusCode(),reduced.body());
+            } else t211LoseAccess(cause,new Shared(shared,consent));
+            t211Denied(http(hr,"GET",path+"/metadata",null,id(12),null,true),404);
+            t211Denied(http(hr,"GET",path+"/content",null,id(12),null,true),404);
+            var denied=t211Range(path);t211Denied(denied,404);
+            assertTrue(denied.headers().firstValue("Content-Range").isEmpty());
+            assertTrue(denied.headers().firstValue("Content-Disposition").isEmpty());
+            t211Denied(http(hr,"GET",profilePath(),null,id(12),null,true),403);
+        } finally {
+            jdbc.update("UPDATE student_profiles SET cv_file_id=? WHERE user_id=?",originalCv,id(6));
+            jdbc.update("DELETE FROM school_sharing_policies WHERE school_org_id=? AND term_id=?",id(11),id(21));
+            if("permission".equals(cause)) jdbc.update("INSERT IGNORE INTO role_permissions VALUES('ENTERPRISE','student_profile:shared:read')");
+        }
+    }
+    HttpResponse<String> t211Range(String path) throws Exception {
+        return hr.client().send(HttpRequest.newBuilder(URI.create("http://localhost:"+port+"/api/v1"+path+"/content"))
+            .header("Range","bytes=0-3").header("X-Organization-Id",id(12)).GET().build(),HttpResponse.BodyHandlers.ofString());
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"revoked","expired","wrongTerm","otherSchool"})
+    void t211SchoolScopeBlocksProfilePolicyProposalAndPolicyReplay(String cause) throws Exception {
+        share();
+        // The seed also contains a T3-only delegation; select the workflow grant explicitly.
+        var roots=jdbc.queryForList("SELECT id,active,valid_until,profile_read_fields_json FROM school_delegations WHERE user_id=? AND school_org_id=? AND term_id=? AND decision_ref='DEMO-WEEK3-TEST'",id(2),id(11),id(21));
+        assertEquals(1,roots.size());var root=roots.getFirst();String rootId=(String)root.get("id");
+        String otherSchool="otherSchool".equals(cause)?key():id(11),otherTerm=null,otherGrant=null;
+        String review="/students/"+id(6)+"/profile?termId="+id(21)+"&fields=skills,email&purpose=SCHOOL_REVIEW";
+        String policyPath="/school/terms/"+id(21)+"/profile-sharing-policy",operation=key();
+        String request=JSON.writeValueAsString(new SchoolSharingPolicyService.Update(0L,List.of("skills")));
+        int inserted=jdbc.update("INSERT IGNORE INTO school_delegation_permissions VALUES(?,'student_profile:school:read')",rootId);
+        jdbc.update("UPDATE school_delegations SET profile_read_fields_json=? WHERE id=?",JSON.writeValueAsString(List.of("skills")),rootId);
+        try {
+            var allowed=http(school,"GET",review,null,id(11),null,true);assertEquals(200,allowed.statusCode(),allowed.body());
+            assertEquals(Set.of("skills"),new HashSet<>(JSON.readTree(allowed.body()).get("data").propertyNames()));
+            assertEquals(200,http(school,"GET",policyPath,null,id(11),null,true).statusCode());
+            schoolItem();
+            var changed=http(school,"PUT",policyPath,request,id(11),operation,true);assertEquals(200,changed.statusCode(),changed.body());
+            var replay=http(school,"PUT",policyPath,request,id(11),operation,true);assertEquals(200,replay.statusCode(),replay.body());assertEquals(changed.body(),replay.body());
+            if("wrongTerm".equals(cause) || "otherSchool".equals(cause)) {
+                if("otherSchool".equals(cause)) {
+                    jdbc.update("INSERT INTO organizations(id,name,type,status,created_at) VALUES(?,'T211 other school','UNIVERSITY','VERIFIED',UTC_TIMESTAMP(6))",otherSchool);
+                    jdbc.update("INSERT INTO memberships(id,user_id,organization_id,role,active,created_at) VALUES(?,?,?,'SCHOOL_STAFF',true,UTC_TIMESTAMP(6))",key(),id(2),otherSchool);
+                }
+                otherTerm=key();
+                jdbc.update("INSERT INTO terms(id,school_org_id,term_code,start_date,end_date,status,version,created_at,updated_at) SELECT ?,?,?,start_date,end_date,'ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6) FROM terms WHERE id=?",otherTerm,otherSchool,"T211-"+otherTerm,id(21));
+                var admin=core.currentSubject(jdbc.queryForObject("SELECT id FROM users WHERE email='admin@example.test'",String.class)).orElseThrow();
+                SecurityContextHolder.getContext().setAuthentication(admin);
+                otherGrant=delegations.bootstrap(admin,key(),new SchoolDelegationService.Bootstrap(id(2),otherSchool,otherTerm,
+                    List.of("student_profile:school:read","student_profile:share:school:manage","t5:proposal:manage"),List.of("skills"),
+                    Instant.now().minusSeconds(60),Instant.now().plusSeconds(3600),"DEMO-T211-OTHER-SCOPE")).id();
+                // Real delegation grants invalidate sessions; use a fresh session so the negative
+                // control below proves scope denial rather than a stale-session 401.
+                school=login("school@example.test");
+                // This actor still has valid authority, but only in the alternate school/term.
+                var alternate=http(school,"GET","/school/terms/"+otherTerm+"/profile-sharing-policy",null,otherSchool,null,true);
+                assertEquals(200,alternate.statusCode(),alternate.body());
+            }
+            if("expired".equals(cause)) jdbc.update("UPDATE school_delegations SET valid_until=DATE_SUB(UTC_TIMESTAMP(6),INTERVAL 1 SECOND) WHERE id=?",rootId);
+            else jdbc.update("UPDATE school_delegations SET active=false WHERE id=?",rootId);
+            t211Denied(http(school,"GET",review,null,id(11),null,true),404);
+            t211Denied(http(school,"GET",policyPath,null,id(11),null,true),404);
+            t211Denied(http(school,"GET","/school/cooperations/"+f.cooperation().cooperationId()+"/proposals",null,id(11),null,true),404);
+            t211Denied(http(school,"PUT",policyPath,request,id(11),operation,true),404);
+            assertEquals(1,jdbc.queryForObject("SELECT version FROM school_sharing_policies WHERE school_org_id=? AND term_id=?",Integer.class,id(11),id(21)));
+        } finally {
+            jdbc.update("UPDATE school_delegations SET active=?,valid_until=?,profile_read_fields_json=? WHERE id=?",root.get("active"),root.get("valid_until"),root.get("profile_read_fields_json"),rootId);
+            if(inserted==1) jdbc.update("DELETE FROM school_delegation_permissions WHERE assignment_id=? AND permission_code='student_profile:school:read'",rootId);
+            if(otherGrant!=null) {jdbc.update("DELETE FROM school_delegation_permissions WHERE assignment_id=?",otherGrant);jdbc.update("DELETE FROM school_delegations WHERE id=?",otherGrant);}
+            if(otherTerm!=null) jdbc.update("DELETE FROM terms WHERE id=?",otherTerm);
+            if("otherSchool".equals(cause)) {jdbc.update("DELETE FROM memberships WHERE organization_id=?",otherSchool);jdbc.update("DELETE FROM organizations WHERE id=?",otherSchool);}
+            t211RestoreAccessFixture("policy");
+        }
+    }
     @Test void demandReferenceChoicesUseCurrentOwnerCatalogAndEnterpriseAccess() throws Exception {
         String base="/enterprise/demand-references";
         var schools=http(hr,"GET",base+"/schools?page=0&size=100",null,id(12),null,true);
