@@ -76,6 +76,9 @@ jobs:
           -Dfailsafe.includesFile=target/ci-includes.txt
           -Dfrontend.e2e=true -Dt5.week3.browser=true
       - run: python scripts/ci/integration_shards.py check
+      - name: Annotate failed integration tests
+        if: failure()
+        run: python scripts/ci/report_failures.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:

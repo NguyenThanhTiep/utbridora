@@ -64,7 +64,8 @@ PDF/ảnh đầy đủ hoặc thay antivirus bằng magic header.
 ## Cấu hình để vận hành sau này
 
 Source có `FILE_SCAN_ENABLED=false` mặc định, giữ môi trường hiện hành không tự
-đổi. Khi được triển khai trên môi trường riêng có scanner:
+đổi. Compose local/staging truyền ba biến scan vào backend; không tự tạo daemon
+hoặc kết nối khi worker tắt. Khi được triển khai trên môi trường riêng có scanner:
 
 ```text
 FILE_STORAGE_ROOT=<absolute private directory>
