@@ -28,6 +28,19 @@ class ProtectedAggregatePolicyTest {
         assertNotEquals(fingerprint, ProtectedAggregatePolicy.fingerprint(identity("criteria-b")));
     }
 
+    @Test void fingerprintSeparatesEnterpriseSchoolTermAndFrozenDatasetScopes() {
+        var base=identity("criteria-a");
+        String fingerprint=ProtectedAggregatePolicy.fingerprint(base);
+        assertNotEquals(fingerprint,ProtectedAggregatePolicy.fingerprint(new ProtectedAggregatePolicy.ReleaseIdentity(
+            "enterprise-b",base.schoolOrgId(),base.termId(),base.datasetSnapshotId(),base.criteriaHash(),base.profileSnapshotVersion(),base.ruleVersion(),base.taxonomyVersion())));
+        assertNotEquals(fingerprint,ProtectedAggregatePolicy.fingerprint(new ProtectedAggregatePolicy.ReleaseIdentity(
+            base.enterpriseOrgId(),"school-b",base.termId(),base.datasetSnapshotId(),base.criteriaHash(),base.profileSnapshotVersion(),base.ruleVersion(),base.taxonomyVersion())));
+        assertNotEquals(fingerprint,ProtectedAggregatePolicy.fingerprint(new ProtectedAggregatePolicy.ReleaseIdentity(
+            base.enterpriseOrgId(),base.schoolOrgId(),"term-b",base.datasetSnapshotId(),base.criteriaHash(),base.profileSnapshotVersion(),base.ruleVersion(),base.taxonomyVersion())));
+        assertNotEquals(fingerprint,ProtectedAggregatePolicy.fingerprint(new ProtectedAggregatePolicy.ReleaseIdentity(
+            base.enterpriseOrgId(),base.schoolOrgId(),base.termId(),"dataset-b",base.criteriaHash(),base.profileSnapshotVersion(),base.ruleVersion(),base.taxonomyVersion())));
+    }
+
     private static ProtectedAggregatePolicy.ReleaseIdentity identity(String criteriaHash) {
         return new ProtectedAggregatePolicy.ReleaseIdentity("enterprise", "school", "term", "dataset",
             criteriaHash, "profile-v1", "strict-v1", "taxonomy-v1");

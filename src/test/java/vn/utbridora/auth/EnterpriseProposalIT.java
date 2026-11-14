@@ -56,7 +56,7 @@ class EnterpriseProposalIT {
     @Autowired FileService files;
     @org.springframework.test.context.bean.override.mockito.MockitoBean(name="placementClock") java.time.Clock placementClock;
     @LocalServerPort int port;
-    DemandInput input; Session hr,student,school; Fixture f;
+    DemandInput input; Session hr,coordinator,student,school; Fixture f;
     record Fixture(CooperationService.CooperationDto cooperation,String proposalId) {}
     record Shared(ProfileShareService.Share share,ConsentGrant consent) {}
     record Session(HttpClient client,String header,String token) {}
@@ -73,7 +73,7 @@ class EnterpriseProposalIT {
         var update=new StudentProfileDtos.ProfileInput(profile.profileVersion(),id(21),old.majorCode(),true,skills,List.of(),true,List.of(new StudentProfileDtos.DateRange(range.startDate().toString(),range.endDate().toString())),old.orientationCodes(),old.subjectCodes(),old.projects(),old.certificates(),old.cvFileId(),old.phone());
         profiles.save(as(6),key(),JSON.writeValueAsString(update));
         eligibility.decide(as(2),key(),new StudentEligibilityService.EligibilityDecision(id(6),id(21),1L,true,"ELIGIBLE","WEEK3-ELIGIBILITY"));
-        hr=login("hr@example.test");student=login("student@example.test");school=login("school@example.test");
+        hr=login("hr@example.test");coordinator=login("coordinator@example.test");student=login("student@example.test");school=login("school@example.test");
     }
     @BeforeEach void fixture() {
         org.mockito.Mockito.when(placementClock.instant()).thenAnswer(call->Instant.now());
@@ -795,6 +795,128 @@ class EnterpriseProposalIT {
     private void activatePrivacyBatch(String batch,String dataset) {
         jdbc.update("INSERT INTO matching_demo_batches VALUES(?,?,?,?,UTC_TIMESTAMP(6))",batch,id(11),id(21),dataset);
         jdbc.update("INSERT INTO matching_active_demo_batches VALUES(?,?,?) ON DUPLICATE KEY UPDATE demo_batch_id=VALUES(demo_batch_id)",id(11),id(21),batch);
+    }
+    @Test void privacyReleaseBlocksNearIdenticalDifferencingAcrossActorsAndKeys() throws Exception {
+        jdbc.update("UPDATE matching_privacy_release_settings SET enabled=true WHERE id=1");
+        try {
+            var source=snapshots.captureForMatching(as(2),id(21),input.academicCatalogVersion(),input.taxonomyVersion(),key());
+            var seed=snapshots.readPage(as(2),source.datasetSnapshotId(),null,100).items().stream()
+                .filter(profile->profile.studentUserId().equals(id(6))).findFirst().orElseThrow();
+            var baseRequired=input.required();
+            var firstCriterion=baseRequired.skills().getFirst();
+            var baseYears=firstCriterion.minYearsPractice()==null?java.math.BigDecimal.ZERO:firstCriterion.minYearsPractice();
+            var raisedYears=baseYears.add(new java.math.BigDecimal("0.5"));
+            var profiles=new ArrayList<StudentProfileSnapshotPort.ProfileSnapshot>();
+            String dataset=key(),batch=key();
+            var snapshotSet=new StudentProfileSnapshotPort.SnapshotSet(dataset,id(11),id(21),"privacy-differencing-v1",
+                input.academicCatalogVersion(),input.taxonomyVersion(),Instant.now(),30);
+            jdbc.update("INSERT INTO student_snapshot_sets VALUES(?,?,?,?)",dataset,id(11),id(21),JSON.writeValueAsString(snapshotSet));
+            for(int index=0;index<30;index++) {
+                String user=key(),snapshotId=key();
+                jdbc.update("INSERT INTO users(id,email,password_hash,display_name,status,created_at,updated_at) SELECT ?,?,password_hash,'Synthetic privacy profile','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6) FROM users WHERE id=?",
+                    user,"privacy-diff-"+user+"@example.test",id(6));
+                boolean missing=index>=10&&index<20,notMatch=index>=20;
+                var skills=new ArrayList<StudentProfileSnapshotPort.SkillValue>(seed.skills());
+                if(index<10) {
+                    var targetYears=index==0?baseYears:raisedYears.add(java.math.BigDecimal.ONE);
+                    for(int skillIndex=0;skillIndex<skills.size();skillIndex++) {
+                        var current=skills.get(skillIndex);
+                        if(current.skillCode().equals(firstCriterion.skillCode())) {
+                            skills.set(skillIndex,new StudentProfileSnapshotPort.SkillValue(current.skillCode(),current.level(),targetYears,current.source()));
+                            break;
+                        }
+                    }
+                }
+                var profile=new StudentProfileSnapshotPort.ProfileSnapshot(snapshotId,user,id(11),id(21),
+                    notMatch?"PRIVACY_NON_MATCH_MAJOR":seed.majorCode(),!missing,missing?List.of():List.copyOf(skills),
+                    true,seed.availablePeriods(),seed.profileVersion(),"privacy-differencing-"+index,seed.completenessVersion(),
+                    seed.academicCatalogVersion(),seed.taxonomyVersion(),Instant.now());
+                profiles.add(profile);
+                jdbc.update("INSERT INTO student_profile_snapshots VALUES(?,?,?,?)",snapshotId,dataset,user,JSON.writeValueAsString(profile));
+            }
+            activatePrivacyBatch(batch,dataset);
+
+            var initialRequest=new MatchingService.Evaluate(f.cooperation().demandId(),2L,1L);
+            var initial=http(hr,"POST","/matching/evaluate",JSON.writeValueAsString(initialRequest),id(12),key(),true);
+            assertEquals(200,initial.statusCode(),initial.body());
+            var first=JSON.readValue(initial.body(),MatchingService.Evaluated.class);
+            assertEquals("10-19",first.release().eligibleBand());
+            String foreignOrg=key(),foreignUser=key(),foreignEmail="privacy-outsider-"+foreignUser+"@example.test";
+            jdbc.update("INSERT INTO organizations(id,name,type,status,created_at) VALUES(?,?,'ENTERPRISE','VERIFIED',UTC_TIMESTAMP(6))",foreignOrg,"Synthetic privacy outsider");
+            jdbc.update("INSERT INTO users(id,email,password_hash,display_name,status,created_at,updated_at) SELECT ?,?,password_hash,'Synthetic privacy outsider','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6) FROM users WHERE id=?",foreignUser,foreignEmail,id(4));
+            jdbc.update("INSERT INTO memberships(id,user_id,organization_id,role,active,created_at) VALUES(?,?,?,'ENTERPRISE',true,UTC_TIMESTAMP(6))",key(),foreignUser,foreignOrg);
+            try {
+                var outsider=login(foreignEmail);
+                var hidden=http(outsider,"GET","/matching/runs/"+first.release().matchRunId()+"/summary",null,foreignOrg,null,false);
+                assertEquals(404,hidden.statusCode(),hidden.body());
+                assertFalse(hidden.body().contains(first.release().eligibleBand()),hidden.body());
+                assertFalse(hidden.body().contains(first.release().releaseId()),hidden.body());
+            } finally {
+                jdbc.update("DELETE FROM audit_logs WHERE actor_id=?",foreignUser);
+                jdbc.update("DELETE FROM memberships WHERE user_id=?",foreignUser);
+                jdbc.update("DELETE FROM users WHERE id=?",foreignUser);
+                jdbc.update("DELETE FROM organizations WHERE id=?",foreignOrg);
+            }
+            var firstCounts=jdbc.query("SELECT overall_status,COUNT(*) amount FROM match_results WHERE run_id=? GROUP BY overall_status",
+                (row,n)->Map.entry(row.getString("overall_status"),row.getInt("amount")),first.release().matchRunId());
+            assertEquals(Map.of("MATCH",10,"MISSING_DATA",10,"NOT_MATCH",10),firstCounts.stream().collect(java.util.stream.Collectors.toMap(Map.Entry::getKey,Map.Entry::getValue)));
+
+            var changedSkills=new ArrayList<SkillCriterion>(baseRequired.skills());
+            changedSkills.set(0,new SkillCriterion(firstCriterion.skillCode(),firstCriterion.minLevel(),raisedYears));
+            var changedCriteria=new RequiredCriteria(baseRequired.majorCodes(),List.copyOf(changedSkills),baseRequired.dateRange());
+            var changedDemandData=new DemandInput(input.schoolOrgId(),input.termId(),"Privacy differencing probe "+key(),input.quantity(),input.description(),input.location(),input.benefits(),input.deadline(),changedCriteria,input.preferred(),input.academicCatalogVersion(),input.taxonomyVersion());
+            var changedDemand=demands.create(as(4),id(12),key(),changedDemandData);
+            int changedDemandRunsBefore=jdbc.queryForObject("SELECT COUNT(*) FROM match_runs WHERE demand_id=?",Integer.class,changedDemand.demandId());
+            var expectedDifferencedCounts=profiles.stream().map(profile->vn.utbridora.auth.modules.matching.domain.StrictClassifier.evaluate(profile,changedCriteria,input.preferred(),Map.of()).overallStatus())
+                .collect(java.util.stream.Collectors.groupingBy(status->status,java.util.stream.Collectors.counting()));
+            assertEquals(Map.of("MATCH",9L,"MISSING_DATA",10L,"NOT_MATCH",11L),expectedDifferencedCounts);
+
+            int runsBeforeReplay=jdbc.queryForObject("SELECT COUNT(*) FROM match_runs WHERE demand_id=?",Integer.class,f.cooperation().demandId());
+            var replay=http(coordinator,"POST","/matching/evaluate",JSON.writeValueAsString(initialRequest),id(12),key(),true);
+            assertEquals(200,replay.statusCode(),replay.body());
+            assertEquals(first.release(),JSON.readValue(replay.body(),MatchingService.Evaluated.class).release());
+            assertEquals(runsBeforeReplay,jdbc.queryForObject("SELECT COUNT(*) FROM match_runs WHERE demand_id=?",Integer.class,f.cooperation().demandId()));
+            assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM matching_privacy_releases WHERE demo_batch_id=?",Integer.class,batch));
+            var schoolCannotRead=http(school,"GET","/matching/runs/"+first.release().matchRunId()+"/summary",null,id(11),null,false);
+            assertEquals(404,schoolCannotRead.statusCode(),schoolCannotRead.body());
+            assertFalse(schoolCannotRead.body().contains(first.release().releaseId()),schoolCannotRead.body());
+
+            var blocked=http(hr,"POST","/matching/evaluate",JSON.writeValueAsString(new MatchingService.Evaluate(changedDemand.demandId(),changedDemand.version(),changedDemand.criteriaVersion())),id(12),key(),true);
+            assertEquals(409,blocked.statusCode(),blocked.body());
+            assertTrue(blocked.body().contains("PRIVACY_RELEASE_LOCKED"),blocked.body());
+            assertFalse(blocked.body().contains("%"),blocked.body());
+            var error=JSON.readTree(blocked.body());
+            var forbiddenKeys=Set.of("total","rawCount","count","matched","missingData","notMatched","percent","percentage","difference","fingerprint","criteriaHash","eligibleCount");
+            var actualKeys=new HashSet<String>();collectJsonKeys(error,actualKeys);
+            assertTrue(Collections.disjoint(forbiddenKeys,actualKeys),"Blocked response leaked a count-like field: "+actualKeys);
+            assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM matching_privacy_releases WHERE demo_batch_id=?",Integer.class,batch));
+            assertEquals(changedDemandRunsBefore,jdbc.queryForObject("SELECT COUNT(*) FROM match_runs WHERE demand_id=?",Integer.class,changedDemand.demandId()));
+
+            var denial=jdbc.queryForMap("SELECT actor_id,result,metadata_json FROM audit_logs WHERE action='PRIVACY_RELEASE_BLOCKED' ORDER BY created_at DESC LIMIT 1");
+            assertEquals(id(4),denial.get("actor_id"));
+            assertEquals("DENIED",denial.get("result"));
+            var denialMetadata=JSON.readTree((String)denial.get("metadata_json"));
+            assertEquals(Set.of("enterpriseOrgId","schoolOrgId","termId","demoBatchId","reasonCode"),new HashSet<>(denialMetadata.propertyNames()));
+            assertEquals("PRIVACY_RELEASE_LOCKED",denialMetadata.get("reasonCode").asString());
+
+            // Chỉ thao tác chuyển batch rõ ràng của Ops mới tạo phạm vi release riêng; batch cũ vẫn được giữ nguyên.
+            String nextBatch=key();activatePrivacyBatch(nextBatch,dataset);
+            var nextBatchRelease=http(hr,"POST","/matching/evaluate",JSON.writeValueAsString(initialRequest),id(12),key(),true);
+            assertEquals(200,nextBatchRelease.statusCode(),nextBatchRelease.body());
+            var secondBatch=JSON.readValue(nextBatchRelease.body(),MatchingService.Evaluated.class).release();
+            assertNotEquals(first.release().releaseId(),secondBatch.releaseId());
+            assertEquals(first.release().eligibleBand(),secondBatch.eligibleBand());
+            assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM matching_privacy_releases WHERE demo_batch_id=?",Integer.class,nextBatch));
+            assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM matching_privacy_releases WHERE demo_batch_id=?",Integer.class,batch));
+        } finally {
+            jdbc.update("UPDATE matching_privacy_release_settings SET enabled=false WHERE id=1");
+        }
+    }
+    private static void collectJsonKeys(tools.jackson.databind.JsonNode node,Set<String> keys) {
+        if(node.isObject()) {
+            node.propertyNames().forEach(name->{keys.add(name);collectJsonKeys(node.get(name),keys);});
+        }
+        else if(node.isArray()) node.forEach(child->collectJsonKeys(child,keys));
     }
     @Test void protectedReleaseRollsBackAuditFailureAndSerializesTwentyRequests() throws Exception {
         var dataset=snapshots.captureForMatching(as(2),id(21),input.academicCatalogVersion(),input.taxonomyVersion(),key());
