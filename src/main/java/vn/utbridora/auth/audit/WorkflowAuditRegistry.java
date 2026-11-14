@@ -3,10 +3,12 @@ package vn.utbridora.auth.audit;
 import java.util.Map;
 import java.util.Set;
 
-/** Exact E registry subset used by week-2 producers. */
+/** Exact E registry subset used by implemented workflow producers. */
 final class WorkflowAuditRegistry {
     record Spec(String resourceType,Set<String> fields) {}
     static final Map<String,Spec> ACTIONS=Map.ofEntries(
+        Map.entry("FILE_UPLOADED",new Spec("file",Set.of("purpose","contentType","sizeBytes","scanStatus"))),
+        Map.entry("FILE_DOWNLOADED",new Spec("file",Set.of("purpose","resourceType","resourceId","rangeRequest","consentVersion","shareVersion"))),
         Map.entry("CAPABILITY_GRANTED",new Spec("capability_assignment",Set.of("permissionCode","scopeKind","scopeId","termId","assignmentKind","validFrom","validUntil","securityVersion","decisionRef"))),
         Map.entry("CAPABILITY_REVOKED",new Spec("capability_assignment",Set.of("permissionCode","scopeKind","scopeId","termId","assignmentKind","securityVersion","reasonCode"))),
         Map.entry("CONSENT_GRANTED",new Spec("student_consent",Set.of("recipientOrgId","schoolOrgId","termId","purpose","fieldCodes","consentVersion","expiresAt"))),
@@ -22,6 +24,14 @@ final class WorkflowAuditRegistry {
         Map.entry("INVITATION_RESPONDED",new Spec("internship_invitation",Set.of("decision","invitationVersion","operationId"))),
         Map.entry("INTERNSHIP_INVITATION_REVOKED",new Spec("internship_invitation",Set.of("version","reasonCode"))),
         Map.entry("TASK_UPDATED",new Spec("task_assignment",Set.of("taskId","caseId","fromStatus","toStatus","assignmentVersion"))),
+        Map.entry("TASK_COMMENTED",new Spec("task_assignment",Set.of("commentId","assignmentVersion"))),
+        Map.entry("WEEKLY_REPORT_DRAFT_SAVED",new Spec("weekly_report",Set.of("caseId","weekStart","revisionNo","reportVersion"))),
+        Map.entry("WEEKLY_REPORT_REVISION_CREATED",new Spec("weekly_report",Set.of("caseId","weekStart","revisionNo","reportVersion","reasonCode"))),
+        Map.entry("WEEKLY_REPORT_SUBMITTED",new Spec("weekly_report",Set.of("caseId","weekStart","revisionNo","lateFlag"))),
+        Map.entry("WEEKLY_REPORT_REVIEWED",new Spec("weekly_report",Set.of("caseId","weekStart","revisionNo","reportVersion"))),
+        Map.entry("SUBMISSION_CREATED",new Spec("submission",Set.of("assignmentId","versionNo","fileId","fileIds","lateFlag"))),
+        Map.entry("SUBMISSION_REVISED",new Spec("submission",Set.of("assignmentId","versionNo","previousSubmissionId","fileId","fileIds","lateFlag"))),
+        Map.entry("SUBMISSION_REVIEWED",new Spec("submission",Set.of("assignmentId","reviewedVersion","verdict","assignmentVersion"))),
         Map.entry("MATCH_RUN_REQUESTED",new Spec("match_run",Set.of("demandId","criteriaHash","criteriaVersion","ruleVersion","taxonomyVersion"))),
         Map.entry("MATCH_RUN_COMPLETED",new Spec("match_run",Set.of("demandId","runVersion","status","ruleVersion"))),
         Map.entry("MATCH_DETAILS_VIEWED",new Spec("match_run",Set.of("schoolOrgId","termId","page","size"))),

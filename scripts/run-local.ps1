@@ -1,9 +1,15 @@
-param([ValidateSet('start','stop','logs')][string]$Action='start')
+param(
+    [ValidateSet('start','stop','logs','seed-demo')][string]$Action='start',
+    [ValidatePattern('^[a-z0-9][a-z0-9_-]*$')][string]$ProjectName='utbridora-local',
+    [ValidatePattern('^\.env\.[A-Za-z0-9][A-Za-z0-9._-]*$')][string]$EnvironmentFileName='.env.local'
+)
 $ErrorActionPreference='Stop'
 $project=Split-Path -Parent $PSScriptRoot
 $configuration=Join-Path $project 'compose.local.yaml'
-$environmentFile=Join-Path $project '.env.local'
-$projectName='utbridora-local'
+$environmentFile=Join-Path $project $EnvironmentFileName
+if (($ProjectName -ne 'utbridora-local') -xor ($EnvironmentFileName -ne '.env.local')) {
+    throw 'ProjectName rieng phai di kem EnvironmentFileName rieng de tranh dung nham database.'
+}
 
 function New-LocalSecret {
     $random=[Security.Cryptography.RandomNumberGenerator]::Create()
@@ -98,6 +104,39 @@ try {
         $compose=@('compose','--project-name',$projectName,'--env-file',$environmentFile,'-f',$configuration)
         Invoke-LocalDocker ($compose+@('config','--quiet'))
         switch ($Action) {
+            'seed-demo' {
+                if ([string]::IsNullOrWhiteSpace($settings['DEMO_PASSWORD'])) {
+                    $demoFile=$environmentFile+'-demo'
+                    if (!(Test-Path -LiteralPath $demoFile)) {
+                        $stream=[IO.File]::Open($demoFile,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
+                        try {
+                            $bytes=[Text.UTF8Encoding]::new($false).GetBytes(('DEMO_PASSWORD='+(New-LocalSecret))+"`n")
+                            $stream.Write($bytes,0,$bytes.Length)
+                        } finally { $stream.Dispose() }
+                    }
+                    foreach ($line in Get-Content -LiteralPath $demoFile) {
+                        if ($line -match '^DEMO_PASSWORD=(.+)$') { $settings['DEMO_PASSWORD']=$matches[1] }
+                    }
+                    if ([string]::IsNullOrWhiteSpace($settings['DEMO_PASSWORD'])) { throw 'Thieu DEMO_PASSWORD trong .env.local-demo.' }
+                }
+                # Credentials pass by environment name only, never as command-line values.
+                [Environment]::SetEnvironmentVariable('DEMO_PASSWORD',$settings['DEMO_PASSWORD'],'Process')
+                Invoke-LocalDocker ($compose+@('up','-d','--wait','mysql','mailpit'))
+                $backupDirectory=Join-Path $project '.local-demo-backups'
+                New-Item -ItemType Directory -Path $backupDirectory -Force | Out-Null
+                $backupName='before-demo-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss')+'-'+[Guid]::NewGuid().ToString('N')+'.sql'
+                Invoke-LocalDocker ($compose+@('cp',(Join-Path $PSScriptRoot 'backup-local-db.sh'),'mysql:/tmp/bridora-backup-local-db.sh'))
+                Invoke-LocalDocker ($compose+@('exec','-T','mysql','sh','/tmp/bridora-backup-local-db.sh',('/tmp/'+$backupName)))
+                Invoke-LocalDocker ($compose+@('cp',('mysql:/tmp/'+$backupName),(Join-Path $backupDirectory $backupName)))
+                Invoke-LocalDocker ($compose+@('exec','-T','mysql','rm',('/tmp/'+$backupName),'/tmp/bridora-backup-local-db.sh'))
+                Write-Host 'Da sao luu database vao .local-demo-backups (khong commit/chia se).'
+                Invoke-LocalDocker ($compose+@('build','backend'))
+                Invoke-LocalDocker ($compose+@('run','--rm','--no-deps','-e','DEMO_PASSWORD','--entrypoint','java','backend',
+                    '-Dloader.main=vn.utbridora.auth.bootstrap.LocalDemoImport','-cp','/app/app.jar','org.springframework.boot.loader.launch.PropertiesLauncher'))
+                Write-Host 'Da nap/kiem tra demo; mat khau tai khoan cu duoc giu nguyen.'
+                Write-Host 'Mat khau demo xem DEMO_PASSWORD trong .env.local hoac .env.local-demo; khong in ra log.'
+                Write-Host 'Chay run-local.cmd start de cap nhat frontend/backend; khong bat LOCAL_DEMO_ENABLED cho database cu.'
+            }
             'start' {
                 Write-Host 'Dang build va khoi dong MySQL, Mailpit, backend, frontend. Lan dau can tai image/dependencies.'
                 Invoke-LocalDocker ($compose+@('up','-d','--build','--wait','--wait-timeout','300'))

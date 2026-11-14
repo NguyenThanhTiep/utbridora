@@ -10,6 +10,7 @@ ARG SOURCE_REVISION=unknown
 LABEL org.opencontainers.image.revision=$SOURCE_REVISION
 RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
+RUN mkdir -p /data/files && chown 10001:10001 /data/files && chmod 700 /data/files
 COPY --from=build /source/target/utbridora-auth-foundation-*.jar app.jar
 USER 10001:10001
 EXPOSE 8080

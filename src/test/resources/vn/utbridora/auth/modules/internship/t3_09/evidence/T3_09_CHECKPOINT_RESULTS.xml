@@ -1,0 +1,136 @@
+<testsuites id="" name="" tests="62" failures="0" skipped="0" errors="0" time="27.907346">
+<testsuite name="internship-week3.ui.spec.ts" timestamp="2026-11-10T07:57:09.986Z" hostname="" tests="16" failures="0" skipped="0" time="17.752" errors="0">
+<testcase name="T3-09 URL submit uses CSRF/version/key and reload reads saved fixture history" classname="internship-week3.ui.spec.ts" time="1.495">
+</testcase>
+<testcase name="T3-09 409 preserves URL/note and explicit refresh uses latest version with a new key" classname="internship-week3.ui.spec.ts" time="1.521">
+</testcase>
+<testcase name="T3-09 lost response retries identical payload/key and blocks edits while uncertain" classname="internship-week3.ui.spec.ts" time="0.847">
+</testcase>
+<testcase name="T3-09 Mentor requests revision with selected context; student starts and submits v2, v1 stays intact" classname="internship-week3.ui.spec.ts" time="1.709">
+</testcase>
+<testcase name="T3-09 HR can read but has no submission, review or comment mutation controls" classname="internship-week3.ui.spec.ts" time="0.355">
+</testcase>
+<testcase name="T3-09 comments append through API and unsafe submission URLs never become links" classname="internship-week3.ui.spec.ts" time="2.29">
+</testcase>
+<testcase name="T3-09 denied mutation clears private data and drafts; session revocation closes workspace" classname="internship-week3.ui.spec.ts" time="1.381">
+</testcase>
+<testcase name="T3-09 delayed response from previous context cannot restore its artifacts" classname="internship-week3.ui.spec.ts" time="0.44">
+</testcase>
+<testcase name="T3-09 missing report backend is visible as unavailable, not successful empty history" classname="internship-week3.ui.spec.ts" time="0.327">
+</testcase>
+<testcase name="T3-09 create draft, save, submit, revise and read old server revision" classname="internship-week3.ui.spec.ts" time="3.172">
+</testcase>
+<testcase name="T3-09 report 409 preserves edits and file refs, refresh updates expectedVersion" classname="internship-week3.ui.spec.ts" time="0.977">
+</testcase>
+<testcase name="T3-09 Mentor report review is scoped; HR has read-only reports" classname="internship-week3.ui.spec.ts" time="1.589">
+</testcase>
+<testcase name="T3-09 mobile URL form stays within viewport and can submit" classname="internship-week3.ui.spec.ts" time="0.396">
+</testcase>
+<testcase name="T3-09 history reads every page and permits review only for current submission" classname="internship-week3.ui.spec.ts" time="0.353">
+</testcase>
+<testcase name="T3-09 report response for another case closes scope without exposing content" classname="internship-week3.ui.spec.ts" time="0.444">
+</testcase>
+<testcase name="T3-09 student without tasks verifies a case through scoped API before opening reports" classname="internship-week3.ui.spec.ts" time="0.456">
+</testcase>
+</testsuite>
+<testsuite name="internship.ui.spec.ts" timestamp="2026-11-10T07:57:09.986Z" hostname="" tests="18" failures="0" skipped="0" time="7.432" errors="0">
+<testcase name="T3 UI fixture: HR selects assignment, cohort and group; navigation returns to list" classname="internship.ui.spec.ts" time="0.431">
+</testcase>
+<testcase name="T3 UI fixture: Mentor only opens the assigned group" classname="internship.ui.spec.ts" time="0.373">
+</testcase>
+<testcase name="T3 UI contract fixture: repeated mentor IDs count people once in cards and details" classname="internship.ui.spec.ts" time="0.409">
+</testcase>
+<testcase name="T3 UI contract fixture: HR can view an existing group with empty member lists" classname="internship.ui.spec.ts" time="0.383">
+</testcase>
+<testcase name="T3 UI fixture: foreign group response fails closed without rendering names or counts" classname="internship.ui.spec.ts" time="0.339">
+</testcase>
+<testcase name="T3 UI fixture: foreign school cohort is never rendered" classname="internship.ui.spec.ts" time="0.32">
+</testcase>
+<testcase name="T3 UI fixture: no valid assignment does not request cohorts or groups" classname="internship.ui.spec.ts" time="0.257">
+</testcase>
+<testcase name="T3 UI fixture: empty cohorts and groups are distinguished" classname="internship.ui.spec.ts" time="0.431">
+</testcase>
+<testcase name="T3 UI fixture: loading, safe error and retry" classname="internship.ui.spec.ts" time="0.317">
+</testcase>
+<testcase name="T3 UI fixture: forbidden group read clears data and offers assignment refresh" classname="internship.ui.spec.ts" time="0.443">
+</testcase>
+<testcase name="T3 UI fixture: changing assignment discards delayed responses from the previous scope" classname="internship.ui.spec.ts" time="0.367">
+</testcase>
+<testcase name="T3 UI fixture: exact assignment expiry removes already open group" classname="internship.ui.spec.ts" time="0.341">
+</testcase>
+<testcase name="T3 UI fixture: assignment refresh clears an open group after revocation" classname="internship.ui.spec.ts" time="0.476">
+</testcase>
+<testcase name="T3 UI fixture: changing cohort discards old groups including delayed responses" classname="internship.ui.spec.ts" time="0.373">
+</testcase>
+<testcase name="T3 UI fixture: responsive group view and keyboard navigation" classname="internship.ui.spec.ts" time="0.528">
+</testcase>
+<testcase name="T3 shell UI mock: enterprise loads current assignments; logout removes it" classname="internship.ui.spec.ts" time="0.615">
+</testcase>
+<testcase name="T3 shell UI mock: global ADMIN has no implicit internship menu" classname="internship.ui.spec.ts" time="0.428">
+</testcase>
+<testcase name="T3 shell UI mock: session expiry leaves workspace and requires login" classname="internship.ui.spec.ts" time="0.601">
+</testcase>
+</testsuite>
+<testsuite name="internship.unit.spec.ts" timestamp="2026-11-10T07:57:09.986Z" hostname="" tests="17" failures="0" skipped="0" time="0.016" errors="0">
+<testcase name="T3 unit: enterprise entry point does not confer assignment authority" classname="internship.unit.spec.ts" time="0.001">
+</testcase>
+<testcase name="T3 unit: valid HR and group Mentor accepted; coordinator is not HR" classname="internship.unit.spec.ts" time="0.001">
+</testcase>
+<testcase name="T3 unit: rejects foreign actor" classname="internship.unit.spec.ts" time="0">
+</testcase>
+<testcase name="T3 unit: rejects revoked assignment" classname="internship.unit.spec.ts" time="0">
+</testcase>
+<testcase name="T3 unit: rejects not yet active" classname="internship.unit.spec.ts" time="0">
+</testcase>
+<testcase name="T3 unit: rejects expired at exact boundary" classname="internship.unit.spec.ts" time="0">
+</testcase>
+<testcase name="T3 unit: rejects invalid timestamp" classname="internship.unit.spec.ts" time="0">
+</testcase>
+<testcase name="T3 unit: rejects missing enterprise" classname="internship.unit.spec.ts" time="0">
+</testcase>
+<testcase name="T3 unit: rejects foreign enterprise" classname="internship.unit.spec.ts" time="0">
+</testcase>
+<testcase name="T3 unit: rejects case-only scope" classname="internship.unit.spec.ts" time="0">
+</testcase>
+<testcase name="T3 unit: rejects mentor without group" classname="internship.unit.spec.ts" time="0">
+</testcase>
+<testcase name="T3 unit: inclusive start, exclusive end" classname="internship.unit.spec.ts" time="0">
+</testcase>
+<testcase name="T3 unit: membership, exact permission and matching grant org are all necessary" classname="internship.unit.spec.ts" time="0.001">
+</testcase>
+<testcase name="T3 unit: cohort must match enterprise, school and term" classname="internship.unit.spec.ts" time="0.001">
+</testcase>
+<testcase name="T3 unit: group must match cohort, assigned group and mentor identity" classname="internship.unit.spec.ts" time="0.001">
+</testcase>
+<testcase name="T3 unit: production gateway fails closed for every unintegrated read" classname="internship.unit.spec.ts" time="0.001">
+</testcase>
+<testcase name="T3 unit: contract reads preserve business page and use core transport" classname="internship.unit.spec.ts" time="0.01">
+</testcase>
+</testsuite>
+<testsuite name="unit\internship-workflow.spec.ts" timestamp="2026-11-10T07:57:09.986Z" hostname="" tests="8" failures="0" skipped="0" time="0.009" errors="0">
+<testcase name="T3-09 URL rejects executable schemes, userinfo, whitespace and ambiguous backslashes" classname="unit\internship-workflow.spec.ts" time="0.002">
+</testcase>
+<testcase name="T3-09 date is an actual Monday independent of browser timezone" classname="unit\internship-workflow.spec.ts" time="0.001">
+</testcase>
+<testcase name="T3-09 text limits use trimmed Unicode codepoints" classname="unit\internship-workflow.spec.ts" time="0.001">
+</testcase>
+<testcase name="T3-09 expectedVersion must be a safe positive integer" classname="unit\internship-workflow.spec.ts" time="0.001">
+</testcase>
+<testcase name="T3-09 attempt freezes the submitted payload and creates a distinct operation key" classname="unit\internship-workflow.spec.ts" time="0.001">
+</testcase>
+<testcase name="T3-09 uncertain outcomes preserve operation; definite version conflict permits refresh" classname="unit\internship-workflow.spec.ts" time="0.001">
+</testcase>
+<testcase name="T3-09 CSRF expiry does not discard draft as a revoked permission" classname="unit\internship-workflow.spec.ts" time="0.001">
+</testcase>
+<testcase name="T3-09 conflict exposes support code without displaying a raw server message" classname="unit\internship-workflow.spec.ts" time="0.001">
+</testcase>
+</testsuite>
+<testsuite name="unit\student-terms.spec.ts" timestamp="2026-11-10T07:57:09.986Z" hostname="" tests="3" failures="0" skipped="0" time="0.006" errors="0">
+<testcase name="keeps active terms on later pages and the selected school filter" classname="unit\student-terms.spec.ts" time="0.002">
+</testcase>
+<testcase name="an empty first page does not request another page" classname="unit\student-terms.spec.ts" time="0.001">
+</testcase>
+<testcase name="a failed later page rejects rather than presenting a partial term list" classname="unit\student-terms.spec.ts" time="0.003">
+</testcase>
+</testsuite>
+</testsuites>

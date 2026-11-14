@@ -62,7 +62,7 @@ Trang **Tài khoản của tôi** là trang mặc định sau đăng nhập; dan
 | Kỳ | `00000000-0000-4000-8000-000000000021` |
 | Ngành | `SE`, `AI` |
 | Danh mục học vụ | `school-demo-v1` |
-| Taxonomy / kỹ năng | `skills-v1` / `JAVA` |
+| Taxonomy / kỹ năng | Database mới: `skills-v1` / `JAVA`; database cũ dùng version hiện hành thể hiện trong mẫu nhu cầu |
 
 **Nhóm thực tập HR/Mentor** — lần lượt đăng nhập `hr@example.test`, `mentor@example.test`:
 
@@ -85,9 +85,22 @@ Nếu checkout sạch và nhánh cho phép cập nhật fast-forward, dùng `git
 
 Seed có receipt `LOCAL_SYNTHETIC_V1` trong `local_demo_seed_receipts`. Khi `DONE`, restart không nạp lại hồ sơ, đổi mật khẩu, phân công hay thời hạn. Nếu ứng dụng dừng sau khi nguồn Placement đã commit, restart tiếp tục delivery và gắn nhóm mà không tạo lại dữ liệu nguồn. Thời hạn mẫu tính từ lần seed đầu; sau khi hết hạn cần chuẩn bị lại dữ liệu bằng quy trình phù hợp, restart không gia hạn quyền.
 
-**Database đã có từ trước:** file `.env.local` cũ thiếu `LOCAL_DEMO_ENABLED` được hiểu là `false`; script không tự thêm seed vào database đó. Không xóa `.env.local` khi còn volume. Nếu bật seed trên database có dữ liệu nhưng chưa có receipt, ứng dụng từ chối seed; đặt `LOCAL_DEMO_ENABLED=false` để tiếp tục dùng dữ liệu cũ. Tạo môi trường demo mới trong dự án/volume riêng khi cần; không dùng `down -v` để dọn database đang cần giữ.
+**Máy dev đã có database hoặc `.env.local` cũ:** `start` chỉ cập nhật ứng dụng và giữ dữ liệu, không tự nhập demo. Sau khi cập nhật code, chạy lệnh nhập riêng:
 
-Riêng máy đã nhập demo vào database chung ngày 09/11/2026: giữ `.env.local` và dữ liệu hiện tại, mật khẩu sáu tài khoản tổng hợp ở `DEMO_PASSWORD` trong `.env.local-demo`. Không bật seed mới để nhập lại.
+```powershell
+.\run-local.cmd seed-demo
+.\run-local.cmd start
+```
+
+`seed-demo` sao lưu database vào `.local-demo-backups/` trước khi nhập. Nếu backup thất bại thì dừng. Thư mục backup chứa dữ liệu/password hash, bị Git và Docker build context loại trừ; giữ riêng và không chia sẻ. Lệnh dùng Admin ACTIVE có membership ADMIN toàn cục khớp `BOOTSTRAP_ADMIN_EMAIL` hiện tại, không đặt lại mật khẩu Admin hoặc tạo Admin thay thế.
+
+Chỉ những tài khoản và dữ liệu mẫu chưa có được thêm vào. Nếu email/ID fixture đã tồn tại nhưng không có receipt hoàn tất, lệnh từ chối để tránh ghi đè. Với taxonomy đã có, lệnh dùng mã `JAVA` ACTIVE và version hiện hành; nếu chưa có tham chiếu phù hợp thì dừng để ánh xạ riêng, không đổi taxonomy cũ. Lần nhập nguồn là một transaction; lỗi làm rollback phần thêm mới. Nếu dừng sau khi nguồn Placement đã commit, chạy lại `seed-demo` để tiếp tục delivery. Khi receipt `DONE`, chạy lại không tạo trùng hoặc reset chỉnh sửa.
+
+Nếu `.env.local` đã có `DEMO_PASSWORD`, lệnh dùng lại giá trị đó. Nếu chưa có, mật khẩu các tài khoản demo **mới tạo** nằm trong `.env.local-demo` tự sinh; các tài khoản cũ tiếp tục dùng mật khẩu cũ. Hai file mật khẩu không đưa lên Git. Không cần thêm `LOCAL_DEMO_ENABLED=true` cho database cũ; giữ cờ false hoặc để thiếu như trước. Không xóa `.env.local`, volume hoặc dùng `down -v` để xử lý thiếu dữ liệu demo.
+
+Riêng máy đã nhập demo vào database chung ngày 09/11/2026: giữ `.env.local` và dữ liệu hiện tại, mật khẩu sáu tài khoản tổng hợp ở `DEMO_PASSWORD` trong `.env.local-demo`. Công cụ nhận receipt của lần nhập trước và bỏ qua nhập lại; không bật seed khởi động cho database cũ.
+
+Để kiểm thử bằng project riêng, dùng đồng thời `-ProjectName` và `-EnvironmentFileName` riêng trên các lệnh; ví dụ `-ProjectName utbridora-demo-check -EnvironmentFileName .env.demo-check`. Cấu hình riêng phải đặt cổng khác, tránh dùng volume hoặc mật khẩu của môi trường đang cần giữ.
 
 ## 5. Giới hạn
 

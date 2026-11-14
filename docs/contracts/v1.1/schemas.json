@@ -2718,7 +2718,7 @@
           "const": "REVIEWED"
         }
       ],
-      "x-source-line": 474
+      "x-source-line": 477
     },
     "ReportInput": {
       "type": "object",
@@ -2763,7 +2763,7 @@
         "evidenceFileIds"
       ],
       "additionalProperties": false,
-      "x-source-line": 475
+      "x-source-line": 478
     },
     "ReportDto": {
       "type": "object",
@@ -2855,7 +2855,7 @@
         "lateFlag"
       ],
       "additionalProperties": false,
-      "x-source-line": 476
+      "x-source-line": 479
     },
     "UpdateReport": {
       "type": "object",
@@ -2896,7 +2896,7 @@
         "evidenceFileIds"
       ],
       "additionalProperties": false,
-      "x-source-line": 477
+      "x-source-line": 480
     },
     "SubmitReport": {
       "type": "object",
@@ -2909,7 +2909,7 @@
         "expectedVersion"
       ],
       "additionalProperties": false,
-      "x-source-line": 478
+      "x-source-line": 481
     },
     "ReportReview": {
       "type": "object",
@@ -2928,7 +2928,7 @@
         "comment"
       ],
       "additionalProperties": false,
-      "x-source-line": 479
+      "x-source-line": 482
     },
     "CreateReportRevision": {
       "type": "object",
@@ -2945,7 +2945,7 @@
         "reasonCode"
       ],
       "additionalProperties": false,
-      "x-source-line": 480
+      "x-source-line": 483
     },
     "ReportQuery": {
       "type": "object",
@@ -2971,7 +2971,7 @@
         "caseId"
       ],
       "additionalProperties": false,
-      "x-source-line": 481
+      "x-source-line": 484
     },
     "ReportReadQuery": {
       "type": "object",
@@ -2983,7 +2983,39 @@
       },
       "required": [],
       "additionalProperties": false,
-      "x-source-line": 482
+      "x-source-line": 485
+    },
+    "ReportReviewDto": {
+      "type": "object",
+      "properties": {
+        "reportId": {
+          "$ref": "#/$defs/U"
+        },
+        "revisionNo": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "reviewerUserId": {
+          "$ref": "#/$defs/U"
+        },
+        "comment": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "reviewedAt": {
+          "$ref": "#/$defs/I"
+        }
+      },
+      "required": [
+        "reportId",
+        "revisionNo",
+        "reviewerUserId",
+        "comment",
+        "reviewedAt"
+      ],
+      "additionalProperties": false,
+      "x-source-line": 486
     },
     "EvaluationState": {
       "anyOf": [
@@ -2997,7 +3029,7 @@
           "const": "PUBLISHED"
         }
       ],
-      "x-source-line": 549
+      "x-source-line": 554
     },
     "Score": {
       "type": "object",
@@ -3042,7 +3074,7 @@
         "evidenceFileIds"
       ],
       "additionalProperties": false,
-      "x-source-line": 550
+      "x-source-line": 555
     },
     "RubricCriterion": {
       "type": "object",
@@ -3069,7 +3101,7 @@
         "weight"
       ],
       "additionalProperties": false,
-      "x-source-line": 551
+      "x-source-line": 556
     },
     "RubricTemplate": {
       "type": "object",
@@ -3095,7 +3127,7 @@
         "criteria"
       ],
       "additionalProperties": false,
-      "x-source-line": 552
+      "x-source-line": 557
     },
     "EvaluationInput": {
       "type": "object",
@@ -3125,7 +3157,7 @@
         "scores"
       ],
       "additionalProperties": false,
-      "x-source-line": 553
+      "x-source-line": 558
     },
     "EvaluationDto": {
       "type": "object",
@@ -3197,7 +3229,7 @@
         "decisionRef"
       ],
       "additionalProperties": false,
-      "x-source-line": 554
+      "x-source-line": 559
     },
     "UpdateEvaluation": {
       "type": "object",
@@ -3219,7 +3251,7 @@
         "scores"
       ],
       "additionalProperties": false,
-      "x-source-line": 555
+      "x-source-line": 560
     },
     "SubmitEvaluation": {
       "type": "object",
@@ -3232,7 +3264,7 @@
         "expectedVersion"
       ],
       "additionalProperties": false,
-      "x-source-line": 556
+      "x-source-line": 561
     },
     "PublishEvaluation": {
       "type": "object",
@@ -3249,7 +3281,7 @@
         "decisionRef"
       ],
       "additionalProperties": false,
-      "x-source-line": 557
+      "x-source-line": 562
     },
     "CreateEvaluationRevision": {
       "type": "object",
@@ -3270,7 +3302,7 @@
         "reasonCode"
       ],
       "additionalProperties": false,
-      "x-source-line": 558
+      "x-source-line": 563
     },
     "SetVisibility": {
       "type": "object",
@@ -3287,7 +3319,7 @@
         "enabled"
       ],
       "additionalProperties": false,
-      "x-source-line": 559
+      "x-source-line": 564
     },
     "SchoolResultVisibilityDto": {
       "type": "object",
@@ -3312,7 +3344,7 @@
         "version"
       ],
       "additionalProperties": false,
-      "x-source-line": 560
+      "x-source-line": 565
     },
     "GradeVisibilityDto": {
       "type": "object",
@@ -3359,7 +3391,7 @@
         "version"
       ],
       "additionalProperties": false,
-      "x-source-line": 561
+      "x-source-line": 566
     },
     "StudentResultDto": {
       "type": "object",
@@ -3405,7 +3437,7 @@
         "reasonCode"
       ],
       "additionalProperties": false,
-      "x-source-line": 562
+      "x-source-line": 567
     },
     "CloseCase": {
       "type": "object",
@@ -3437,7 +3469,7 @@
         "reasonCode"
       ],
       "additionalProperties": false,
-      "x-source-line": 563
+      "x-source-line": 568
     },
     "EvaluationQuery": {
       "type": "object",
@@ -3466,7 +3498,7 @@
         "termId"
       ],
       "additionalProperties": false,
-      "x-source-line": 564
+      "x-source-line": 569
     },
     "GradeVisibilityQuery": {
       "type": "object",
@@ -3482,7 +3514,7 @@
         "termId"
       ],
       "additionalProperties": false,
-      "x-source-line": 565
+      "x-source-line": 570
     },
     "AssignmentCount": {
       "type": "object",
@@ -3500,7 +3532,7 @@
         "count"
       ],
       "additionalProperties": false,
-      "x-source-line": 642
+      "x-source-line": 647
     },
     "WorkspaceSummary": {
       "type": "object",
@@ -3548,7 +3580,7 @@
         "pendingReviewCount"
       ],
       "additionalProperties": false,
-      "x-source-line": 643
+      "x-source-line": 648
     },
     "DashboardQuery": {
       "type": "object",
@@ -3564,7 +3596,7 @@
         "termId"
       ],
       "additionalProperties": false,
-      "x-source-line": 644
+      "x-source-line": 649
     },
     "CalendarQuery": {
       "type": "object",
@@ -3594,7 +3626,7 @@
         "until"
       ],
       "additionalProperties": false,
-      "x-source-line": 645
+      "x-source-line": 650
     },
     "CalendarEvent": {
       "type": "object",
@@ -3639,7 +3671,7 @@
         "state"
       ],
       "additionalProperties": false,
-      "x-source-line": 646
+      "x-source-line": 651
     },
     "EnterpriseQualityCriterion": {
       "type": "object",
@@ -3660,7 +3692,7 @@
         "label"
       ],
       "additionalProperties": false,
-      "x-source-line": 647
+      "x-source-line": 652
     },
     "EnterpriseQualityTemplate": {
       "type": "object",
@@ -3686,7 +3718,7 @@
         "criteria"
       ],
       "additionalProperties": false,
-      "x-source-line": 648
+      "x-source-line": 653
     },
     "EnterpriseRating": {
       "type": "object",
@@ -3720,7 +3752,7 @@
         "comment"
       ],
       "additionalProperties": false,
-      "x-source-line": 649
+      "x-source-line": 654
     },
     "EnterpriseQualityInput": {
       "type": "object",
@@ -3767,7 +3799,7 @@
         "note"
       ],
       "additionalProperties": false,
-      "x-source-line": 650
+      "x-source-line": 655
     },
     "EnterpriseQualityDto": {
       "type": "object",
@@ -3796,7 +3828,7 @@
         "createdAt"
       ],
       "additionalProperties": false,
-      "x-source-line": 651
+      "x-source-line": 656
     },
     "IssueCategory": {
       "anyOf": [
@@ -3810,7 +3842,7 @@
           "const": "OTHER"
         }
       ],
-      "x-source-line": 652
+      "x-source-line": 657
     },
     "IssueState": {
       "anyOf": [
@@ -3824,7 +3856,7 @@
           "const": "RESOLVED"
         }
       ],
-      "x-source-line": 653
+      "x-source-line": 658
     },
     "CreateCoordinationIssue": {
       "type": "object",
@@ -3851,7 +3883,7 @@
         "ownerUserId"
       ],
       "additionalProperties": false,
-      "x-source-line": 654
+      "x-source-line": 659
     },
     "UpdateCoordinationIssue": {
       "type": "object",
@@ -3875,7 +3907,7 @@
         "state"
       ],
       "additionalProperties": false,
-      "x-source-line": 655
+      "x-source-line": 660
     },
     "CoordinationIssue": {
       "type": "object",
@@ -3922,7 +3954,7 @@
         "updatedAt"
       ],
       "additionalProperties": false,
-      "x-source-line": 656
+      "x-source-line": 661
     },
     "IssueQuery": {
       "type": "object",
@@ -3948,7 +3980,7 @@
         "caseId"
       ],
       "additionalProperties": false,
-      "x-source-line": 657
+      "x-source-line": 662
     },
     "DateRange": {
       "type": "object",
@@ -3965,7 +3997,7 @@
         "endDate"
       ],
       "additionalProperties": false,
-      "x-source-line": 722
+      "x-source-line": 727
     },
     "SkillValue": {
       "type": "object",
@@ -4000,7 +4032,7 @@
         "source"
       ],
       "additionalProperties": false,
-      "x-source-line": 723
+      "x-source-line": 728
     },
     "CanonicalSkillInput": {
       "type": "object",
@@ -4037,7 +4069,7 @@
         "note"
       ],
       "additionalProperties": false,
-      "x-source-line": 724
+      "x-source-line": 729
     },
     "SelfSkillView": {
       "type": "object",
@@ -4085,7 +4117,7 @@
         "note"
       ],
       "additionalProperties": false,
-      "x-source-line": 725
+      "x-source-line": 730
     },
     "CustomSkillInput": {
       "type": "object",
@@ -4139,7 +4171,7 @@
         "note"
       ],
       "additionalProperties": false,
-      "x-source-line": 726
+      "x-source-line": 731
     },
     "CustomSkillView": {
       "type": "object",
@@ -4186,7 +4218,7 @@
         "note"
       ],
       "additionalProperties": false,
-      "x-source-line": 727
+      "x-source-line": 732
     },
     "SkillCriterion": {
       "type": "object",
@@ -4224,7 +4256,7 @@
         "minYearsPractice"
       ],
       "additionalProperties": false,
-      "x-source-line": 728
+      "x-source-line": 733
     },
     "Project": {
       "type": "object",
@@ -4288,7 +4320,7 @@
         "evidenceFileIds"
       ],
       "additionalProperties": false,
-      "x-source-line": 729
+      "x-source-line": 734
     },
     "Certificate": {
       "type": "object",
@@ -4346,7 +4378,7 @@
         "fileId"
       ],
       "additionalProperties": false,
-      "x-source-line": 730
+      "x-source-line": 735
     },
     "ProfileInput": {
       "type": "object",
@@ -4455,7 +4487,7 @@
         "phone"
       ],
       "additionalProperties": false,
-      "x-source-line": 731,
+      "x-source-line": 736,
       "allOf": [
         {
           "if": {
@@ -4597,7 +4629,7 @@
         "phone"
       ],
       "additionalProperties": false,
-      "x-source-line": 732,
+      "x-source-line": 737,
       "allOf": [
         {
           "if": {
@@ -4716,7 +4748,7 @@
         "capturedAt"
       ],
       "additionalProperties": false,
-      "x-source-line": 733
+      "x-source-line": 738
     },
     "SnapshotSet": {
       "type": "object",
@@ -4758,7 +4790,7 @@
         "profileCount"
       ],
       "additionalProperties": false,
-      "x-source-line": 734
+      "x-source-line": 739
     },
     "SnapshotPage": {
       "type": "object",
@@ -4795,7 +4827,7 @@
         "nextCursor"
       ],
       "additionalProperties": false,
-      "x-source-line": 735
+      "x-source-line": 740
     },
     "DecisionProfileRef": {
       "type": "object",
@@ -4820,7 +4852,7 @@
         "relevantHash"
       ],
       "additionalProperties": false,
-      "x-source-line": 736
+      "x-source-line": 741
     },
     "CompletenessResult": {
       "type": "object",
@@ -4907,7 +4939,7 @@
         "checks"
       ],
       "additionalProperties": false,
-      "x-source-line": 737
+      "x-source-line": 742
     },
     "SelfProfileView": {
       "type": "object",
@@ -4936,7 +4968,7 @@
         "completeness"
       ],
       "additionalProperties": false,
-      "x-source-line": 738
+      "x-source-line": 743
     },
     "ProfileDecisionValidation": {
       "type": "object",
@@ -4955,7 +4987,7 @@
         "validatedAt"
       ],
       "additionalProperties": false,
-      "x-source-line": 739
+      "x-source-line": 744
     },
     "SkillCatalogItem": {
       "type": "object",
@@ -5004,7 +5036,7 @@
         "version"
       ],
       "additionalProperties": false,
-      "x-source-line": 777
+      "x-source-line": 782
     },
     "PageOfSkillCatalogItem": {
       "type": "object",
@@ -5057,7 +5089,7 @@
         "skills"
       ],
       "additionalProperties": false,
-      "x-source-line": 778
+      "x-source-line": 783
     },
     "SkillResolution": {
       "type": "object",
@@ -5098,7 +5130,7 @@
         "skillCode"
       ],
       "additionalProperties": false,
-      "x-source-line": 779
+      "x-source-line": 784
     },
     "ResolveSkillsRequest": {
       "type": "object",
@@ -5118,7 +5150,7 @@
         "values"
       ],
       "additionalProperties": false,
-      "x-source-line": 780
+      "x-source-line": 785
     },
     "ResolveSkillsResponse": {
       "type": "object",
@@ -5138,7 +5170,7 @@
         "items"
       ],
       "additionalProperties": false,
-      "x-source-line": 781
+      "x-source-line": 786
     },
     "AcademicCatalogItem": {
       "type": "object",
@@ -5175,7 +5207,7 @@
         "status"
       ],
       "additionalProperties": false,
-      "x-source-line": 782
+      "x-source-line": 787
     },
     "PageOfAcademicCatalogItem": {
       "type": "object",
@@ -5250,7 +5282,7 @@
         "entries"
       ],
       "additionalProperties": false,
-      "x-source-line": 783
+      "x-source-line": 788
     },
     "TermReference": {
       "type": "object",
@@ -5297,7 +5329,7 @@
         "version"
       ],
       "additionalProperties": false,
-      "x-source-line": 825
+      "x-source-line": 830
     },
     "StudentTermEligibility": {
       "type": "object",
@@ -5369,7 +5401,7 @@
         "decisionReasonCode"
       ],
       "additionalProperties": false,
-      "x-source-line": 826
+      "x-source-line": 831
     },
     "EligibilityDecision": {
       "type": "object",
@@ -5402,7 +5434,7 @@
         "expectedVersion"
       ],
       "additionalProperties": false,
-      "x-source-line": 827
+      "x-source-line": 832
     },
     "OpportunityView": {
       "type": "object",
@@ -5488,7 +5520,7 @@
         "version"
       ],
       "additionalProperties": false,
-      "x-source-line": 860
+      "x-source-line": 865
     },
     "PreferenceView": {
       "type": "object",
@@ -5590,7 +5622,7 @@
         "reviewedByUserId"
       ],
       "additionalProperties": false,
-      "x-source-line": 861
+      "x-source-line": 866
     },
     "SubmitPreference": {
       "type": "object",
@@ -5625,7 +5657,7 @@
         "expectedIntentVersion"
       ],
       "additionalProperties": false,
-      "x-source-line": 862
+      "x-source-line": 867
     },
     "WithdrawPreference": {
       "type": "object",
@@ -5650,7 +5682,7 @@
         "reasonCode"
       ],
       "additionalProperties": false,
-      "x-source-line": 863
+      "x-source-line": 868
     },
     "InvitationState": {
       "anyOf": [
@@ -5670,7 +5702,7 @@
           "const": "WITHDRAWN"
         }
       ],
-      "x-source-line": 899
+      "x-source-line": 904
     },
     "InternshipInvitation": {
       "type": "object",
@@ -5780,7 +5812,7 @@
         "placementId"
       ],
       "additionalProperties": false,
-      "x-source-line": 900
+      "x-source-line": 905
     },
     "InvitationDecision": {
       "type": "object",
@@ -5828,7 +5860,7 @@
         "reasonText"
       ],
       "additionalProperties": false,
-      "x-source-line": 901
+      "x-source-line": 906
     },
     "InvitationWithdrawal": {
       "type": "object",
@@ -5858,7 +5890,7 @@
         "reasonText"
       ],
       "additionalProperties": false,
-      "x-source-line": 902
+      "x-source-line": 907
     },
     "ProfileField": {
       "anyOf": [
@@ -5899,7 +5931,7 @@
           "const": "transcript"
         }
       ],
-      "x-source-line": 935
+      "x-source-line": 940
     },
     "SchoolSharingPolicy": {
       "type": "object",
@@ -5950,7 +5982,7 @@
         "updatedByUserId"
       ],
       "additionalProperties": false,
-      "x-source-line": 936
+      "x-source-line": 941
     },
     "GrantConsent": {
       "type": "object",
@@ -5993,7 +6025,7 @@
         "expectedLineageVersion"
       ],
       "additionalProperties": false,
-      "x-source-line": 937
+      "x-source-line": 942
     },
     "ConsentGrant": {
       "type": "object",
@@ -6080,7 +6112,7 @@
         "replacedByConsentId"
       ],
       "additionalProperties": false,
-      "x-source-line": 938
+      "x-source-line": 943
     },
     "GrantProfileShare": {
       "type": "object",
@@ -6119,7 +6151,7 @@
         "expiresAt"
       ],
       "additionalProperties": false,
-      "x-source-line": 939
+      "x-source-line": 944
     },
     "ProfileShareGrant": {
       "type": "object",
@@ -6199,7 +6231,7 @@
         "grantedByUserId"
       ],
       "additionalProperties": false,
-      "x-source-line": 940
+      "x-source-line": 945
     },
     "GrantCheck": {
       "type": "object",
@@ -6257,7 +6289,7 @@
         "requestedFields"
       ],
       "additionalProperties": false,
-      "x-source-line": 941
+      "x-source-line": 946
     },
     "GrantValidation": {
       "type": "object",
@@ -6329,7 +6361,7 @@
         "reasonCode"
       ],
       "additionalProperties": false,
-      "x-source-line": 942
+      "x-source-line": 947
     },
     "ProfileAccessQuery": {
       "type": "object",
@@ -6378,7 +6410,7 @@
         "purpose"
       ],
       "additionalProperties": false,
-      "x-source-line": 943
+      "x-source-line": 948
     },
     "ProfileAccessDecision": {
       "type": "object",
@@ -6456,7 +6488,7 @@
         "reasonCode"
       ],
       "additionalProperties": false,
-      "x-source-line": 944
+      "x-source-line": 949
     },
     "RequiredCriteria": {
       "type": "object",
@@ -6483,7 +6515,7 @@
         "dateRange"
       ],
       "additionalProperties": false,
-      "x-source-line": 996
+      "x-source-line": 1001
     },
     "DemandCriteriaSnapshot": {
       "type": "object",
@@ -6574,7 +6606,7 @@
         "capturedAt"
       ],
       "additionalProperties": false,
-      "x-source-line": 997
+      "x-source-line": 1002
     },
     "NominationCandidate": {
       "type": "object",
@@ -6599,7 +6631,7 @@
         "relevantHash"
       ],
       "additionalProperties": false,
-      "x-source-line": 998
+      "x-source-line": 1003
     },
     "NominateCandidates": {
       "type": "object",
@@ -6648,7 +6680,7 @@
         "expectedBatchVersion"
       ],
       "additionalProperties": false,
-      "x-source-line": 999
+      "x-source-line": 1004
     },
     "NominationResult": {
       "type": "object",
@@ -6713,7 +6745,7 @@
         "openForNomination"
       ],
       "additionalProperties": false,
-      "x-source-line": 1000
+      "x-source-line": 1005
     },
     "MatchRunRef": {
       "type": "object",
@@ -6808,7 +6840,7 @@
         "failureCode"
       ],
       "additionalProperties": false,
-      "x-source-line": 1035
+      "x-source-line": 1040
     },
     "CriterionEvaluation": {
       "type": "object",
@@ -6864,7 +6896,7 @@
         "reasonCode"
       ],
       "additionalProperties": false,
-      "x-source-line": 1036
+      "x-source-line": 1041
     },
     "MatchResult": {
       "type": "object",
@@ -6923,7 +6955,7 @@
         "details"
       ],
       "additionalProperties": false,
-      "x-source-line": 1037
+      "x-source-line": 1042
     },
     "SchoolMatchSummary": {
       "type": "object",
@@ -6951,7 +6983,7 @@
         "notMatched"
       ],
       "additionalProperties": false,
-      "x-source-line": 1038
+      "x-source-line": 1043
     },
     "PageOfMatchResult": {
       "type": "object",
@@ -7004,7 +7036,7 @@
         "results"
       ],
       "additionalProperties": false,
-      "x-source-line": 1039
+      "x-source-line": 1044
     },
     "ProtectedAggregate": {
       "type": "object",
@@ -7038,7 +7070,7 @@
         "eligibleBand"
       ],
       "additionalProperties": false,
-      "x-source-line": 1040
+      "x-source-line": 1045
     },
     "EvaluateMatchRequest": {
       "type": "object",
@@ -7059,7 +7091,7 @@
         "expectedCriteriaVersion"
       ],
       "additionalProperties": false,
-      "x-source-line": 1041
+      "x-source-line": 1046
     },
     "EvaluateMatchResponse": {
       "oneOf": [
@@ -7096,7 +7128,7 @@
           "additionalProperties": false
         }
       ],
-      "x-source-line": 1042
+      "x-source-line": 1047
     },
     "NominateMatchRequest": {
       "type": "object",
@@ -7137,7 +7169,7 @@
         "expectedBatchVersion"
       ],
       "additionalProperties": false,
-      "x-source-line": 1043
+      "x-source-line": 1048
     },
     "PlacementView": {
       "type": "object",
@@ -7258,7 +7290,7 @@
         "decisionRef"
       ],
       "additionalProperties": false,
-      "x-source-line": 1076
+      "x-source-line": 1081
     },
     "CaseParticipantRef": {
       "type": "object",
@@ -7291,7 +7323,7 @@
         "termId"
       ],
       "additionalProperties": false,
-      "x-source-line": 1077
+      "x-source-line": 1082
     },
     "CaseClosureProof": {
       "type": "object",
@@ -7374,7 +7406,7 @@
         "evaluationPublished"
       ],
       "additionalProperties": false,
-      "x-source-line": 1078
+      "x-source-line": 1083
     },
     "PlacementLifecycleEvent": {
       "type": "object",
@@ -7470,7 +7502,7 @@
         "decisionRef"
       ],
       "additionalProperties": false,
-      "x-source-line": 1079
+      "x-source-line": 1084
     },
     "CaseClosedEvent": {
       "type": "object",
@@ -7534,7 +7566,7 @@
         "traceId"
       ],
       "additionalProperties": false,
-      "x-source-line": 1080
+      "x-source-line": 1085
     },
     "EventConsumeResult": {
       "type": "object",
@@ -7619,7 +7651,7 @@
         "retryAfterSeconds"
       ],
       "additionalProperties": false,
-      "x-source-line": 1081
+      "x-source-line": 1086
     },
     "TrustedEventContext": {
       "type": "object",
@@ -7647,7 +7679,7 @@
         "requestId"
       ],
       "additionalProperties": false,
-      "x-source-line": 1082
+      "x-source-line": 1087
     },
     "SchoolVerificationView": {
       "type": "object",
@@ -7724,7 +7756,7 @@
         "schoolApproved"
       ],
       "additionalProperties": false,
-      "x-source-line": 1117
+      "x-source-line": 1122
     },
     "VerificationState": {
       "anyOf": [
@@ -7744,7 +7776,7 @@
           "const": "REJECTED"
         }
       ],
-      "x-source-line": 1142
+      "x-source-line": 1147
     },
     "CooperationState": {
       "anyOf": [
@@ -7767,7 +7799,7 @@
           "const": "CANCELLED"
         }
       ],
-      "x-source-line": 1143
+      "x-source-line": 1148
     },
     "ProposalState": {
       "anyOf": [
@@ -7799,7 +7831,7 @@
           "const": "REVOKED"
         }
       ],
-      "x-source-line": 1144
+      "x-source-line": 1149
     },
     "VerificationInput": {
       "type": "object",
@@ -7867,7 +7899,7 @@
         "evidenceFileIds"
       ],
       "additionalProperties": false,
-      "x-source-line": 1145
+      "x-source-line": 1150
     },
     "VerificationDto": {
       "type": "object",
@@ -7958,7 +7990,7 @@
         "missingFields"
       ],
       "additionalProperties": false,
-      "x-source-line": 1146
+      "x-source-line": 1151
     },
     "VerificationDecision": {
       "type": "object",
@@ -8009,7 +8041,7 @@
         "missingFields"
       ],
       "additionalProperties": false,
-      "x-source-line": 1147
+      "x-source-line": 1152
     },
     "DemandInput": {
       "type": "object",
@@ -8093,7 +8125,7 @@
         "taxonomyVersion"
       ],
       "additionalProperties": false,
-      "x-source-line": 1148
+      "x-source-line": 1153
     },
     "DemandDto": {
       "type": "object",
@@ -8166,7 +8198,7 @@
         "softDeletedAt"
       ],
       "additionalProperties": false,
-      "x-source-line": 1149
+      "x-source-line": 1154
     },
     "CooperationDto": {
       "type": "object",
@@ -8230,7 +8262,7 @@
         "decisionRef"
       ],
       "additionalProperties": false,
-      "x-source-line": 1150
+      "x-source-line": 1155
     },
     "CooperationDecision": {
       "type": "object",
@@ -8281,7 +8313,7 @@
         "missingFields"
       ],
       "additionalProperties": false,
-      "x-source-line": 1151
+      "x-source-line": 1156
     },
     "SubmissionHistory": {
       "type": "object",
@@ -8362,7 +8394,7 @@
         "decisionRef"
       ],
       "additionalProperties": false,
-      "x-source-line": 1152
+      "x-source-line": 1157
     },
     "ProposalItemView": {
       "type": "object",
@@ -8432,7 +8464,7 @@
         "placementId"
       ],
       "additionalProperties": false,
-      "x-source-line": 1153
+      "x-source-line": 1158
     },
     "CapacityView": {
       "type": "object",
@@ -8474,7 +8506,7 @@
         "declinedCount"
       ],
       "additionalProperties": false,
-      "x-source-line": 1154
+      "x-source-line": 1159
     },
     "CreatePlacement": {
       "type": "object",
@@ -8507,7 +8539,7 @@
         "endDate"
       ],
       "additionalProperties": false,
-      "x-source-line": 1155
+      "x-source-line": 1160
     },
     "PlacementCommand": {
       "type": "object",
@@ -8528,7 +8560,7 @@
         "reasonCode"
       ],
       "additionalProperties": false,
-      "x-source-line": 1156
+      "x-source-line": 1161
     },
     "InternshipLink": {
       "type": "object",
@@ -8576,7 +8608,7 @@
         "route"
       ],
       "additionalProperties": false,
-      "x-source-line": 1157
+      "x-source-line": 1162
     },
     "PlacementSummary": {
       "type": "object",
@@ -8620,7 +8652,7 @@
         "remaining"
       ],
       "additionalProperties": false,
-      "x-source-line": 1158
+      "x-source-line": 1163
     },
     "JobState": {
       "anyOf": [
@@ -8646,7 +8678,7 @@
           "const": "FAILED"
         }
       ],
-      "x-source-line": 1481
+      "x-source-line": 1486
     },
     "ValidationState": {
       "anyOf": [
@@ -8660,7 +8692,7 @@
           "const": "NEEDS_REVIEW"
         }
       ],
-      "x-source-line": 1482
+      "x-source-line": 1487
     },
     "RowState": {
       "anyOf": [
@@ -8689,7 +8721,7 @@
           "const": "TRANSIENT_FAILED"
         }
       ],
-      "x-source-line": 1483
+      "x-source-line": 1488
     },
     "MailState": {
       "anyOf": [
@@ -8721,7 +8753,7 @@
           "const": "CANCELLED"
         }
       ],
-      "x-source-line": 1484
+      "x-source-line": 1489
     },
     "ActivationState": {
       "anyOf": [
@@ -8738,7 +8770,7 @@
           "const": "BLOCKED"
         }
       ],
-      "x-source-line": 1485
+      "x-source-line": 1490
     },
     "ImportJobDto": {
       "type": "object",
@@ -8881,7 +8913,7 @@
         "observedAt"
       ],
       "additionalProperties": false,
-      "x-source-line": 1486
+      "x-source-line": 1491
     },
     "ImportSourceData": {
       "type": "object",
@@ -8971,7 +9003,7 @@
         "classCode"
       ],
       "additionalProperties": false,
-      "x-source-line": 1487
+      "x-source-line": 1492
     },
     "ImportRowDto": {
       "type": "object",
@@ -9097,7 +9129,7 @@
         "mailState"
       ],
       "additionalProperties": false,
-      "x-source-line": 1488
+      "x-source-line": 1493
     },
     "PageOfImportRowDto": {
       "type": "object",
@@ -9150,7 +9182,7 @@
         "rows"
       ],
       "additionalProperties": false,
-      "x-source-line": 1489
+      "x-source-line": 1494
     },
     "ConfirmImport": {
       "type": "object",
@@ -9177,7 +9209,7 @@
         "selectedRowIds"
       ],
       "additionalProperties": false,
-      "x-source-line": 1490
+      "x-source-line": 1495
     },
     "ImportAccepted": {
       "type": "object",
@@ -9204,7 +9236,7 @@
         "selectedRows"
       ],
       "additionalProperties": false,
-      "x-source-line": 1491
+      "x-source-line": 1496
     },
     "ResumeImport": {
       "type": "object",
@@ -9217,7 +9249,7 @@
         "expectedJobVersion"
       ],
       "additionalProperties": false,
-      "x-source-line": 1492
+      "x-source-line": 1497
     },
     "ResendActivation": {
       "type": "object",
@@ -9234,7 +9266,7 @@
         "expectedInvitationVersion"
       ],
       "additionalProperties": false,
-      "x-source-line": 1493
+      "x-source-line": 1498
     },
     "ResendAccepted": {
       "type": "object",
@@ -9267,7 +9299,7 @@
         "acceptedAt"
       ],
       "additionalProperties": false,
-      "x-source-line": 1494
+      "x-source-line": 1499
     },
     "ImportRowError": {
       "anyOf": [
@@ -9326,7 +9358,7 @@
           "const": "PERMANENT_VALIDATION"
         }
       ],
-      "x-source-line": 1495
+      "x-source-line": 1500
     },
     "EnsureRoster": {
       "type": "object",
@@ -9393,7 +9425,7 @@
         "operationId"
       ],
       "additionalProperties": false,
-      "x-source-line": 1520
+      "x-source-line": 1525
     },
     "AccountOnboardingRef": {
       "type": "object",
@@ -9439,7 +9471,7 @@
         "securityVersion"
       ],
       "additionalProperties": false,
-      "x-source-line": 1521
+      "x-source-line": 1526
     },
     "StudentAccountActivatedEvent": {
       "type": "object",
@@ -9499,7 +9531,7 @@
         "traceId"
       ],
       "additionalProperties": false,
-      "x-source-line": 1523
+      "x-source-line": 1528
     },
     "RosterProvisionResult": {
       "type": "object",
@@ -9564,7 +9596,7 @@
         "reasonCode"
       ],
       "additionalProperties": false,
-      "x-source-line": 1524
+      "x-source-line": 1529
     },
     "BindActivatedUser": {
       "type": "object",
@@ -9589,7 +9621,7 @@
         "operationId"
       ],
       "additionalProperties": false,
-      "x-source-line": 1525
+      "x-source-line": 1530
     },
     "BindResult": {
       "type": "object",
@@ -9621,7 +9653,7 @@
         "profileCreated"
       ],
       "additionalProperties": false,
-      "x-source-line": 1526
+      "x-source-line": 1531
     },
     "Role": {
       "anyOf": [
@@ -9638,7 +9670,7 @@
           "const": "ADMIN"
         }
       ],
-      "x-source-line": 1816
+      "x-source-line": 1821
     },
     "AccountStatus": {
       "anyOf": [
@@ -9655,7 +9687,7 @@
           "const": "DEACTIVATED"
         }
       ],
-      "x-source-line": 1817
+      "x-source-line": 1822
     },
     "FieldError": {
       "type": "object",
@@ -9680,7 +9712,7 @@
         "message"
       ],
       "additionalProperties": false,
-      "x-source-line": 1818
+      "x-source-line": 1823
     },
     "ErrorEnvelope": {
       "type": "object",
@@ -9726,7 +9758,7 @@
         "retryAfterSeconds"
       ],
       "additionalProperties": false,
-      "x-source-line": 1819
+      "x-source-line": 1824
     },
     "DomainError": {
       "type": "object",
@@ -9758,7 +9790,7 @@
         "retryAfterSeconds"
       ],
       "additionalProperties": false,
-      "x-source-line": 1820
+      "x-source-line": 1825
     },
     "AuditEventInput": {
       "type": "object",
@@ -9830,7 +9862,7 @@
         "eventVersion"
       ],
       "additionalProperties": false,
-      "x-source-line": 1821,
+      "x-source-line": 1826,
       "allOf": [
         {
           "if": {
@@ -12787,7 +12819,7 @@
         "newPassword"
       ],
       "additionalProperties": false,
-      "x-source-line": 1823
+      "x-source-line": 1828
     },
     "CaptureProfilesRequest": {
       "type": "object",
@@ -12808,7 +12840,7 @@
         "expectedTaxonomyVersion"
       ],
       "additionalProperties": false,
-      "x-source-line": 1824
+      "x-source-line": 1829
     },
     "AssertEligibilityRequest": {
       "type": "object",
@@ -12829,7 +12861,7 @@
         "expectedVersion"
       ],
       "additionalProperties": false,
-      "x-source-line": 1825
+      "x-source-line": 1830
     },
     "SubmitCooperationRequest": {
       "type": "object",
@@ -12846,7 +12878,7 @@
         "expectedDemandVersion"
       ],
       "additionalProperties": false,
-      "x-source-line": 1826
+      "x-source-line": 1831
     },
     "CategoryDto": {
       "type": "object",
@@ -12891,7 +12923,7 @@
         "version"
       ],
       "additionalProperties": false,
-      "x-source-line": 1827
+      "x-source-line": 1832
     },
     "SkillAliasDto": {
       "type": "object",
@@ -12918,7 +12950,7 @@
         "version"
       ],
       "additionalProperties": false,
-      "x-source-line": 1828
+      "x-source-line": 1833
     },
     "ProfileProjection": {
       "type": "object",
@@ -12947,7 +12979,7 @@
         "data"
       ],
       "additionalProperties": false,
-      "x-source-line": 1829
+      "x-source-line": 1834
     },
     "ProfileDataProjection": {
       "type": "object",
@@ -13045,7 +13077,7 @@
       },
       "required": [],
       "additionalProperties": false,
-      "x-source-line": 1830
+      "x-source-line": 1835
     },
     "ProfileSkillProjection": {
       "oneOf": [
@@ -13082,7 +13114,7 @@
           "additionalProperties": false
         }
       ],
-      "x-source-line": 1831
+      "x-source-line": 1836
     },
     "PageQuery": {
       "type": "object",
@@ -13100,7 +13132,7 @@
       },
       "required": [],
       "additionalProperties": false,
-      "x-source-line": 1832
+      "x-source-line": 1837
     },
     "OrganizationReadPort_getIdentityInput": {
       "type": "object",
@@ -13406,11 +13438,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 740
+      "x-source-line": 745
     },
     "StudentProfileSnapshotPort_captureForMatchingValue": {
       "$ref": "#/$defs/SnapshotSet",
-      "x-source-line": 740
+      "x-source-line": 745
     },
     "StudentProfileSnapshotPort_readPageInput": {
       "type": "object",
@@ -13451,11 +13483,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 741
+      "x-source-line": 746
     },
     "StudentProfileSnapshotPort_readPageValue": {
       "$ref": "#/$defs/SnapshotPage",
-      "x-source-line": 741
+      "x-source-line": 746
     },
     "StudentProfileSnapshotPort_readSnapshotInput": {
       "type": "object",
@@ -13468,11 +13500,11 @@
         "profileSnapshotId"
       ],
       "additionalProperties": false,
-      "x-source-line": 742
+      "x-source-line": 747
     },
     "StudentProfileSnapshotPort_readSnapshotValue": {
       "$ref": "#/$defs/ProfileSnapshot",
-      "x-source-line": 742
+      "x-source-line": 747
     },
     "StudentProfileSnapshotPort_assertCurrentForDecisionInput": {
       "type": "object",
@@ -13499,11 +13531,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 743
+      "x-source-line": 748
     },
     "StudentProfileSnapshotPort_assertCurrentForDecisionValue": {
       "$ref": "#/$defs/ProfileDecisionValidation",
-      "x-source-line": 743
+      "x-source-line": 748
     },
     "CompletenessPort_evaluateInput": {
       "type": "object",
@@ -13533,11 +13565,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 744
+      "x-source-line": 749
     },
     "CompletenessPort_evaluateValue": {
       "$ref": "#/$defs/CompletenessResult",
-      "x-source-line": 744
+      "x-source-line": 749
     },
     "SkillCatalogPort_listInput": {
       "type": "object",
@@ -13582,11 +13614,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 784
+      "x-source-line": 789
     },
     "SkillCatalogPort_listValue": {
       "$ref": "#/$defs/SkillCatalogPage",
-      "x-source-line": 784
+      "x-source-line": 789
     },
     "SkillCatalogPort_resolveInput": {
       "type": "object",
@@ -13599,11 +13631,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 785
+      "x-source-line": 790
     },
     "SkillCatalogPort_resolveValue": {
       "$ref": "#/$defs/ResolveSkillsResponse",
-      "x-source-line": 785
+      "x-source-line": 790
     },
     "AcademicCatalogPort_listInput": {
       "type": "object",
@@ -13660,11 +13692,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 786
+      "x-source-line": 791
     },
     "AcademicCatalogPort_listValue": {
       "$ref": "#/$defs/AcademicCatalogPage",
-      "x-source-line": 786
+      "x-source-line": 791
     },
     "TermReadPort_getInput": {
       "type": "object",
@@ -13677,11 +13709,11 @@
         "termId"
       ],
       "additionalProperties": false,
-      "x-source-line": 828
+      "x-source-line": 833
     },
     "TermReadPort_getValue": {
       "$ref": "#/$defs/TermReference",
-      "x-source-line": 828
+      "x-source-line": 833
     },
     "StudentEligibilityPort_readInput": {
       "type": "object",
@@ -13707,11 +13739,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 829
+      "x-source-line": 834
     },
     "StudentEligibilityPort_readValue": {
       "$ref": "#/$defs/StudentTermEligibility",
-      "x-source-line": 829
+      "x-source-line": 834
     },
     "StudentEligibilityPort_decideInput": {
       "type": "object",
@@ -13724,11 +13756,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 830
+      "x-source-line": 835
     },
     "StudentEligibilityPort_decideValue": {
       "$ref": "#/$defs/StudentTermEligibility",
-      "x-source-line": 830
+      "x-source-line": 835
     },
     "StudentEligibilityPort_assertEligibleForPlacementInput": {
       "type": "object",
@@ -13758,11 +13790,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 831
+      "x-source-line": 836
     },
     "StudentEligibilityPort_assertEligibleForPlacementValue": {
       "$ref": "#/$defs/StudentTermEligibility",
-      "x-source-line": 831
+      "x-source-line": 836
     },
     "OpportunityPort_listInput": {
       "type": "object",
@@ -13829,7 +13861,7 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 864
+      "x-source-line": 869
     },
     "PageOfOpportunityView": {
       "type": "object",
@@ -13869,7 +13901,7 @@
     },
     "OpportunityPort_listValue": {
       "$ref": "#/$defs/PageOfOpportunityView",
-      "x-source-line": 864
+      "x-source-line": 869
     },
     "OpportunityPort_publishInput": {
       "type": "object",
@@ -13903,11 +13935,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 865
+      "x-source-line": 870
     },
     "OpportunityPort_publishValue": {
       "$ref": "#/$defs/OpportunityView",
-      "x-source-line": 865
+      "x-source-line": 870
     },
     "PreferencePort_submitInput": {
       "type": "object",
@@ -13920,11 +13952,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 866
+      "x-source-line": 871
     },
     "PreferencePort_submitValue": {
       "$ref": "#/$defs/PreferenceView",
-      "x-source-line": 866
+      "x-source-line": 871
     },
     "PreferencePort_withdrawInput": {
       "type": "object",
@@ -13937,11 +13969,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 867
+      "x-source-line": 872
     },
     "PreferencePort_withdrawValue": {
       "$ref": "#/$defs/PreferenceView",
-      "x-source-line": 867
+      "x-source-line": 872
     },
     "PreferencePort_reviewInput": {
       "type": "object",
@@ -13971,11 +14003,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 868
+      "x-source-line": 873
     },
     "PreferencePort_reviewValue": {
       "$ref": "#/$defs/PreferenceView",
-      "x-source-line": 868
+      "x-source-line": 873
     },
     "InternshipInvitationPort_listMineInput": {
       "type": "object",
@@ -14025,7 +14057,7 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 903
+      "x-source-line": 908
     },
     "PageOfInternshipInvitation": {
       "type": "object",
@@ -14065,7 +14097,7 @@
     },
     "InternshipInvitationPort_listMineValue": {
       "$ref": "#/$defs/PageOfInternshipInvitation",
-      "x-source-line": 903
+      "x-source-line": 908
     },
     "InternshipInvitationPort_readMineInput": {
       "type": "object",
@@ -14078,11 +14110,11 @@
         "invitationId"
       ],
       "additionalProperties": false,
-      "x-source-line": 904
+      "x-source-line": 909
     },
     "InternshipInvitationPort_readMineValue": {
       "$ref": "#/$defs/InternshipInvitation",
-      "x-source-line": 904
+      "x-source-line": 909
     },
     "InternshipInvitationPort_decideInput": {
       "type": "object",
@@ -14099,11 +14131,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 905
+      "x-source-line": 910
     },
     "InternshipInvitationPort_decideValue": {
       "$ref": "#/$defs/InternshipInvitation",
-      "x-source-line": 905
+      "x-source-line": 910
     },
     "InternshipInvitationPort_withdrawInput": {
       "type": "object",
@@ -14120,11 +14152,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 906
+      "x-source-line": 911
     },
     "InternshipInvitationPort_withdrawValue": {
       "$ref": "#/$defs/InternshipInvitation",
-      "x-source-line": 906
+      "x-source-line": 911
     },
     "SchoolSharingPolicyPort_getInput": {
       "type": "object",
@@ -14141,11 +14173,11 @@
         "termId"
       ],
       "additionalProperties": false,
-      "x-source-line": 951
+      "x-source-line": 956
     },
     "SchoolSharingPolicyPort_getValue": {
       "$ref": "#/$defs/SchoolSharingPolicy",
-      "x-source-line": 951
+      "x-source-line": 956
     },
     "SchoolSharingPolicyPort_updateInput": {
       "type": "object",
@@ -14178,11 +14210,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 952
+      "x-source-line": 957
     },
     "SchoolSharingPolicyPort_updateValue": {
       "$ref": "#/$defs/SchoolSharingPolicy",
-      "x-source-line": 952
+      "x-source-line": 957
     },
     "StudentConsentPort_grantInput": {
       "type": "object",
@@ -14195,11 +14227,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 953
+      "x-source-line": 958
     },
     "StudentConsentPort_grantValue": {
       "$ref": "#/$defs/ConsentGrant",
-      "x-source-line": 953
+      "x-source-line": 958
     },
     "StudentConsentPort_revokeInput": {
       "type": "object",
@@ -14229,11 +14261,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 954
+      "x-source-line": 959
     },
     "StudentConsentPort_revokeValue": {
       "$ref": "#/$defs/ConsentGrant",
-      "x-source-line": 954
+      "x-source-line": 959
     },
     "StudentConsentPort_checkInput": {
       "type": "object",
@@ -14246,11 +14278,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 955
+      "x-source-line": 960
     },
     "StudentConsentPort_checkValue": {
       "$ref": "#/$defs/GrantValidation",
-      "x-source-line": 955
+      "x-source-line": 960
     },
     "StudentConsentPort_lockAndCheckForShareInput": {
       "type": "object",
@@ -14263,11 +14295,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 956
+      "x-source-line": 961
     },
     "StudentConsentPort_lockAndCheckForShareValue": {
       "$ref": "#/$defs/GrantValidation",
-      "x-source-line": 956
+      "x-source-line": 961
     },
     "ProfileSharePort_grantInput": {
       "type": "object",
@@ -14280,11 +14312,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 957
+      "x-source-line": 962
     },
     "ProfileSharePort_grantValue": {
       "$ref": "#/$defs/ProfileShareGrant",
-      "x-source-line": 957
+      "x-source-line": 962
     },
     "ProfileSharePort_revokeInput": {
       "type": "object",
@@ -14314,11 +14346,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 958
+      "x-source-line": 963
     },
     "ProfileSharePort_revokeValue": {
       "$ref": "#/$defs/ProfileShareGrant",
-      "x-source-line": 958
+      "x-source-line": 963
     },
     "ProfileSharePort_checkInput": {
       "type": "object",
@@ -14331,11 +14363,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 959
+      "x-source-line": 964
     },
     "ProfileSharePort_checkValue": {
       "$ref": "#/$defs/GrantValidation",
-      "x-source-line": 959
+      "x-source-line": 964
     },
     "ProfileAccessPort_decideInput": {
       "type": "object",
@@ -14348,11 +14380,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 960
+      "x-source-line": 965
     },
     "ProfileAccessPort_decideValue": {
       "$ref": "#/$defs/ProfileAccessDecision",
-      "x-source-line": 960
+      "x-source-line": 965
     },
     "StudentProfileProjectionPort_readAllowedInput": {
       "type": "object",
@@ -14369,11 +14401,11 @@
         "decision"
       ],
       "additionalProperties": false,
-      "x-source-line": 961
+      "x-source-line": 966
     },
     "StudentProfileProjectionPort_readAllowedValue": {
       "$ref": "#/$defs/ProfileProjection",
-      "x-source-line": 961
+      "x-source-line": 966
     },
     "DemandCriteriaPort_readInput": {
       "type": "object",
@@ -14420,11 +14452,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 1001
+      "x-source-line": 1006
     },
     "DemandCriteriaPort_readValue": {
       "$ref": "#/$defs/DemandCriteriaSnapshot",
-      "x-source-line": 1001
+      "x-source-line": 1006
     },
     "ProposalNominationPort_nominateInput": {
       "type": "object",
@@ -14437,11 +14469,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 1002
+      "x-source-line": 1007
     },
     "ProposalNominationPort_nominateValue": {
       "$ref": "#/$defs/NominationResult",
-      "x-source-line": 1002
+      "x-source-line": 1007
     },
     "MatchingPort_evaluateInput": {
       "type": "object",
@@ -14454,11 +14486,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 1044
+      "x-source-line": 1049
     },
     "MatchingPort_evaluateValue": {
       "$ref": "#/$defs/EvaluateMatchResponse",
-      "x-source-line": 1044
+      "x-source-line": 1049
     },
     "MatchingPort_readRunForNominationInput": {
       "type": "object",
@@ -14471,11 +14503,11 @@
         "matchRunId"
       ],
       "additionalProperties": false,
-      "x-source-line": 1045
+      "x-source-line": 1050
     },
     "MatchingPort_readRunForNominationValue": {
       "$ref": "#/$defs/MatchRunRef",
-      "x-source-line": 1045
+      "x-source-line": 1050
     },
     "MatchingPort_detailsInput": {
       "type": "object",
@@ -14521,11 +14553,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 1046
+      "x-source-line": 1051
     },
     "MatchingPort_detailsValue": {
       "$ref": "#/$defs/SchoolMatchDetailsPage",
-      "x-source-line": 1046
+      "x-source-line": 1051
     },
     "MatchingPort_protectedSummaryInput": {
       "type": "object",
@@ -14538,11 +14570,11 @@
         "matchRunId"
       ],
       "additionalProperties": false,
-      "x-source-line": 1047
+      "x-source-line": 1052
     },
     "MatchingPort_protectedSummaryValue": {
       "$ref": "#/$defs/ProtectedAggregate",
-      "x-source-line": 1047
+      "x-source-line": 1052
     },
     "MatchingPort_nominateInput": {
       "type": "object",
@@ -14559,11 +14591,11 @@
         "request"
       ],
       "additionalProperties": false,
-      "x-source-line": 1048
+      "x-source-line": 1053
     },
     "MatchingPort_nominateValue": {
       "$ref": "#/$defs/NominationResult",
-      "x-source-line": 1048
+      "x-source-line": 1053
     },
     "PlacementReadPort_readForInternshipInput": {
       "type": "object",
@@ -14576,11 +14608,11 @@
         "placementId"
       ],
       "additionalProperties": false,
-      "x-source-line": 1083
+      "x-source-line": 1088
     },
     "PlacementReadPort_readForInternshipValue": {
       "$ref": "#/$defs/PlacementView",
-      "x-source-line": 1083
+      "x-source-line": 1088
     },
     "PlacementReadPort_readCurrentForGuardInput": {
       "type": "object",
@@ -14593,11 +14625,11 @@
         "placementId"
       ],
       "additionalProperties": false,
-      "x-source-line": 1084
+      "x-source-line": 1089
     },
     "PlacementReadPort_readCurrentForGuardValue": {
       "$ref": "#/$defs/PlacementView",
-      "x-source-line": 1084
+      "x-source-line": 1089
     },
     "InternshipCaseReadPort_participantInput": {
       "type": "object",
@@ -14610,11 +14642,11 @@
         "caseId"
       ],
       "additionalProperties": false,
-      "x-source-line": 1085
+      "x-source-line": 1090
     },
     "InternshipCaseReadPort_participantValue": {
       "$ref": "#/$defs/CaseParticipantRef",
-      "x-source-line": 1085
+      "x-source-line": 1090
     },
     "InternshipCaseReadPort_readClosureProofInput": {
       "type": "object",
@@ -14627,11 +14659,11 @@
         "caseId"
       ],
       "additionalProperties": false,
-      "x-source-line": 1086
+      "x-source-line": 1091
     },
     "InternshipCaseReadPort_readClosureProofValue": {
       "$ref": "#/$defs/CaseClosureProof",
-      "x-source-line": 1086
+      "x-source-line": 1091
     },
     "PlacementLifecycleConsumer_consumeInput": {
       "type": "object",
@@ -14644,11 +14676,11 @@
         "event"
       ],
       "additionalProperties": false,
-      "x-source-line": 1087
+      "x-source-line": 1092
     },
     "PlacementLifecycleConsumer_consumeValue": {
       "$ref": "#/$defs/EventConsumeResult",
-      "x-source-line": 1087
+      "x-source-line": 1092
     },
     "CaseClosedConsumer_consumeInput": {
       "type": "object",
@@ -14661,11 +14693,11 @@
         "event"
       ],
       "additionalProperties": false,
-      "x-source-line": 1088
+      "x-source-line": 1093
     },
     "CaseClosedConsumer_consumeValue": {
       "$ref": "#/$defs/EventConsumeResult",
-      "x-source-line": 1088
+      "x-source-line": 1093
     },
     "OrganizationSchoolVerificationPort_getInput": {
       "type": "object",
@@ -14682,11 +14714,11 @@
         "schoolOrgId"
       ],
       "additionalProperties": false,
-      "x-source-line": 1118
+      "x-source-line": 1123
     },
     "OrganizationSchoolVerificationPort_getValue": {
       "$ref": "#/$defs/SchoolVerificationView",
-      "x-source-line": 1118
+      "x-source-line": 1123
     },
     "AccountProvisioningPort_inspectForOnboardingInput": {
       "type": "object",
@@ -14723,11 +14755,11 @@
         "input"
       ],
       "additionalProperties": false,
-      "x-source-line": 1522
+      "x-source-line": 1527
     },
     "AccountProvisioningPort_inspectForOnboardingValue": {
       "$ref": "#/$defs/AccountOnboardingRef",
-      "x-source-line": 1522
+      "x-source-line": 1527
     },
     "StudentRosterProvisionPort_ensureRosterInput": {
       "type": "object",
@@ -14740,11 +14772,11 @@
         "input"
       ],
       "additionalProperties": false,
-      "x-source-line": 1527
+      "x-source-line": 1532
     },
     "StudentRosterProvisionPort_ensureRosterValue": {
       "$ref": "#/$defs/RosterProvisionResult",
-      "x-source-line": 1527
+      "x-source-line": 1532
     },
     "StudentRosterProvisionPort_bindActivatedUserInput": {
       "type": "object",
@@ -14757,11 +14789,11 @@
         "input"
       ],
       "additionalProperties": false,
-      "x-source-line": 1528
+      "x-source-line": 1533
     },
     "StudentRosterProvisionPort_bindActivatedUserValue": {
       "$ref": "#/$defs/BindResult",
-      "x-source-line": 1528
+      "x-source-line": 1533
     },
     "StudentRosterProvisionPort_readForActivationInput": {
       "type": "object",
@@ -14774,7 +14806,7 @@
         "rosterId"
       ],
       "additionalProperties": false,
-      "x-source-line": 1529
+      "x-source-line": 1534
     },
     "StudentRosterProvisionPort_readForActivationValue": {
       "type": "object",
@@ -14823,7 +14855,7 @@
         "termIds"
       ],
       "additionalProperties": false,
-      "x-source-line": 1529
+      "x-source-line": 1534
     },
     "AuditEventPort_writeInput": {
       "type": "object",
@@ -14836,11 +14868,11 @@
         "input"
       ],
       "additionalProperties": false,
-      "x-source-line": 1822
+      "x-source-line": 1827
     },
     "AuditEventPort_writeValue": {
       "type": "null",
-      "x-source-line": 1822
+      "x-source-line": 1827
     },
     "LegacyLogin": {
       "type": "object",

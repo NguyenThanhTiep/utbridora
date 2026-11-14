@@ -1,0 +1,837 @@
+{
+  "task": "T3-09",
+  "owner": "DEV07 - Lai Thai Thuan",
+  "recordedAtUtc": "2026-11-12T11:42:12.367990+00:00",
+  "status": "DEV_URL_SUBMISSION_REVIEW_AND_WEEKLY_REPORT_INTEGRATION_PASS_READY_FOR_QA",
+  "branch": "feature/t3-week3",
+  "head": "4d187abfc5c084c6959c70ef91556b46fca3b69d",
+  "mergeHead": "c3d0dbc67b66ba21af84a7d4095def5d32324696",
+  "uncommitted": true,
+  "stagedMainPaths": [
+    ".dockerignore",
+    ".gitattributes",
+    ".gitignore",
+    "README.md",
+    "docs/contracts/v1.1/manifest.json",
+    "docs/guides/LOCAL_DEMO.md",
+    "scripts/backup-local-db.sh",
+    "scripts/run-local.ps1",
+    "src/main/java/vn/utbridora/auth/bootstrap/LocalDemoBootstrap.java",
+    "src/main/java/vn/utbridora/auth/bootstrap/LocalDemoImport.java",
+    "src/main/resources/demo/local.sql",
+    "src/test/java/vn/utbridora/auth/LocalDemoAppendIT.java"
+  ],
+  "build": {
+    "frontend": "PASS (71 modules)",
+    "mavenVerify": "BUILD SUCCESS",
+    "command": ".\\mvnw.cmd -B '-Dit.test=T309WorkflowBrowserIT,T307SubmissionRuntimeIT,T308CommentRuntimeIT,T308ReportRuntimeIT,T307SchemaUpgradeIT,T308SchemaUpgradeIT,MigrationUpgradeIT' verify",
+    "jdk": "21.0.13+9",
+    "database": "isolated Testcontainers MySQL 8.4"
+  },
+  "frontendFixtureAndUnit": {
+    "tests": 73,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "realBrowserWithinJavaHarness": {
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "mavenUnit": {
+    "counts": {
+      "tests": 1264,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1
+    },
+    "suites": [
+      {
+        "name": "vn.utbridora.auth.audit.SubmissionCreatedAuditTest",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.audit.WeeklyReportWorkflowAuditTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.files.FileByteRangeTest",
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.files.PrivateFileStorageTest",
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1,
+        "timestamp": null,
+        "skippedCases": [
+          "rejectsSymlinkObjectAndRoot"
+        ]
+      },
+      {
+        "name": "vn.utbridora.auth.LocalDemoActivationTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.cooperation.application.DemandServiceTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.cooperation.domain.DemandDomainTest",
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.cooperation.integration.DemandReferenceConfigurationTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.api.CohortGroupDtosTest",
+        "tests": 26,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.api.ReportDtosTest",
+        "tests": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.api.ReportJsonTest",
+        "tests": 32,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.api.SubmissionControllerTest",
+        "tests": 56,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.api.SubmissionDtosTest",
+        "tests": 40,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.api.SubmissionJsonTest",
+        "tests": 67,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.api.SubmissionReviewControllerTest",
+        "tests": 31,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.api.SubmissionSecurityTest",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.api.TaskDtosTest",
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.api.Week3HttpControllerTest",
+        "tests": 30,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.api.WorkspaceErrorMappingTest",
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.application.SubmissionServiceTest",
+        "tests": 138,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.application.TaskCommentServiceTest",
+        "tests": 19,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.application.WeeklyReportServiceTest",
+        "tests": 29,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.application.WorkspaceConcurrencyTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.application.WorkspaceServiceTest",
+        "tests": 33,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.contract.WorkspaceFrontendContractTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.domain.CohortGroupPolicyTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.domain.InternshipActivityPolicyTest",
+        "tests": 41,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.domain.PlacementEventEnvelopePolicyTest",
+        "tests": 58,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.domain.SubmissionPolicyTest",
+        "tests": 42,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.domain.TaskCommentTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.domain.WeeklyReportPolicyTest",
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.domain.WeeklyReportRestoreTest",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.domain.WeeklyReportTest",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.domain.WorkspaceDomainTest",
+        "tests": 17,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.infrastructure.CoreWorkspaceAccessTest",
+        "tests": 14,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.infrastructure.Dev06HttpWorkflowTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.infrastructure.Dev06WorkflowScenarioTest",
+        "tests": 35,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.infrastructure.JdbcTaskCommentSessionTest",
+        "tests": 17,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.infrastructure.JdbcWeeklyReportSessionTest",
+        "tests": 25,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.infrastructure.SubmissionRuntimeTest",
+        "tests": 71,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.infrastructure.TaskCommentAdaptersTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.infrastructure.TaskCommentCaseGuardTest",
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.infrastructure.TaskCommentCommandsTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.infrastructure.TransactionalWorkspaceUnitOfWorkTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.infrastructure.WeeklyReportAdaptersTest",
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.infrastructure.WeeklyReportAuditAdapterTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.infrastructure.WeeklyReportCommandsTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.infrastructure.WeeklyReportFileAdapterTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.infrastructure.WeeklyReportUnitOfWorkTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.internship.integration.PlacementLifecycleContractTest",
+        "tests": 174,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.matching.StrictClassifierTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.student.application.ProfileReferenceConfigurationTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.taxonomy.application.SkillTaxonomyServiceTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.modules.taxonomy.domain.SkillNameNormalizerTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.operations.OperationLedgerTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.security.AccountStatusPolicyTest",
+        "tests": 18,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.security.AppPrincipalSerializationTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.security.AuthorizationPolicyTest",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.security.DemandSecurityErrorsTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.security.TokenCodecTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.student.eligibility.StudentTermEligibilityTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.student.roster.StudentRosterTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.student.StudentEligibilityQueryServiceTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.student.StudentRosterQueryServiceTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      },
+      {
+        "name": "vn.utbridora.auth.student.StudentSchoolAccessGuardTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "skippedCases": []
+      }
+    ]
+  },
+  "backendIntegration": {
+    "counts": {
+      "tests": 41,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "suites": [
+      {
+        "name": "MigrationUpgradeIT",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "cases": [
+          "demandReferencesUseCanonicalSchoolTermAndSharedLedger",
+          "privateFileUpgradePreservesLegacyMetadataBindingsAndScanState",
+          "upgradesV2DataWithoutChangingIdentityAndEnforcesCoreConstraints"
+        ]
+      },
+      {
+        "name": "T307SchemaUpgradeIT",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "cases": [
+          "v27AssignmentsSurviveOrderedV28V29AndOwnershipConstraintsAreEnforced"
+        ]
+      },
+      {
+        "name": "T307SubmissionRuntimeIT",
+        "tests": 20,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "cases": [
+          "reviewReadProtectsPrivateFeedbackAndHandlesMissingResources",
+          "realSourceGuardRejectsPlacementThatIsNoLongerActive",
+          "revisionAndReviewAuditFailuresRollBackAllEffectsAndPermitRetry(String)[1]",
+          "revisionAndReviewAuditFailuresRollBackAllEffectsAndPermitRetry(String)[2]",
+          "realRevisionCycleKeepsV1V2AndRejectsOldReview",
+          "fileModeStaysClosedAndInvalidUrlsCannotCreateArtifacts",
+          "explicitHandoverControlsReviewOfHistoricalTasksAndIsLostOnAnotherMove",
+          "studentAndHrCannotUseTheMentorReviewEndpoint",
+          "realUniqueAndForeignKeyConstraintsProtectImmutableHistory",
+          "effectiveAtCannotBeBypassedByAStaleInProgressCase",
+          "simultaneousDifferentKeysWithTheSameExpectedVersionHaveExactlyOneWinner",
+          "deadlineBoundaryUsesServerClockAndStoredPolicy(int, boolean, int, boolean)[1]",
+          "deadlineBoundaryUsesServerClockAndStoredPolicy(int, boolean, int, boolean)[2]",
+          "deadlineBoundaryUsesServerClockAndStoredPolicy(int, boolean, int, boolean)[3]",
+          "realSecurityRejectsAnonymousMissingCsrfAndCrossSchoolOwner",
+          "concurrentReplayCommitsOneArtifactAndDifferentKeysCannotDuplicateVersion",
+          "mandatoryJpaAuditFailureRollsBackJdbcAndLedgerThenSameKeyCanRetry",
+          "flywayReallyAppliedV28BeforeV29AndUrlPersistsAcrossHttpReads",
+          "ledgerDoneFailureRollsBackJdbcAndJpaAuditThenSameKeyCanRetry",
+          "wrongMentorAndRevokedParentCannotReviewOrReplayPrivateResults"
+        ]
+      },
+      {
+        "name": "T308CommentRuntimeIT",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "cases": [
+          "csrfRequiredAndUnknownFieldsRejected",
+          "commentPersistsReplaysAndDoesNotChangeAssignment",
+          "revokedParentBlocksMentorIncludingCachedReplay",
+          "concurrentReplayHasOneCommentAndOneAudit",
+          "cancelledSourceBlocksNewCommentButRetainsAuthorizedHistory",
+          "auditFailureRollsBackCommentAndRetrySameKeySucceeds",
+          "mentorCanCommentButHrAndOtherStudentCannot"
+        ]
+      },
+      {
+        "name": "T308ReportRuntimeIT",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "cases": [
+          "scopeSourceAndRevocationAreRechecked",
+          "deadlineNanosecondRemainderSurvivesDatabaseReload",
+          "duplicatesStaleVersionsAndCsrfAreRejected",
+          "concurrentSameKeyCreatesOneReport",
+          "auditFailureRollsBackEntireReportAndLedger",
+          "evidenceUsesRealFileServiceAndRequiresCleanScanState",
+          "concurrentDifferentKeysWithSameVersionHaveOneWinner",
+          "reportLifecyclePreservesReviewedHistoryAndReplay"
+        ]
+      },
+      {
+        "name": "T308SchemaUpgradeIT",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "cases": [
+          "upgradeFromV29PreservesCaseAndEnforcesReportConstraints"
+        ]
+      },
+      {
+        "name": "T309WorkflowBrowserIT",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "timestamp": null,
+        "cases": [
+          "browserUsesRealSubmissionCommentReportAndFileApis"
+        ]
+      }
+    ],
+    "note": "40 backend IT + 1 T309 harness. Four browser scenarios run inside that one harness; not four extra Java integration tests."
+  },
+  "contracts": {
+    "bundleCheck": "PASS",
+    "counts": {
+      "schemas": 375,
+      "examples": 69,
+      "regressionCases": 795,
+      "checks": 868,
+      "passed": 868,
+      "failed": 0
+    },
+    "checkedAtUtc": "2026-11-12T11:18:31.214393+00:00"
+  },
+  "executionHistory": [
+    "Initial UI run 71 PASS/2 FAIL due to broad textbox locator matching new review region.",
+    "Changed tests to exact textbox role; final UI 73 PASS. Final full Maven verify BUILD SUCCESS."
+  ],
+  "completedDependency": "DEV05 GET /api/v1/t3/submissions/{id}/reviews (200 object / 204 empty), delivered at 4d187ab; integrated and tested.",
+  "notRun": [
+    "GitHub CI",
+    "Human QA/Lead signoff",
+    "T1-07 real scanner lifecycle",
+    "T5 real Placement workflow acceptance",
+    "Shared database migration"
+  ],
+  "limits": [
+    "File-only submission remains unsupported; URL acceptance path tested.",
+    "Uploaded report files remain PENDING; CLEAN download fixture does not certify antivirus.",
+    "V30 absent in T3 checkout; coordinate before V31 on shared deployments.",
+    "ACTIVE Placement/IN_PROGRESS Case in tests are synthetic prerequisites."
+  ],
+  "preservation": {
+    "t3_03CanonicalFiles": 11,
+    "t3_03ByteIdenticalEvidence": 7,
+    "priorT3_09EvidenceUnchanged": [
+      "src/test/resources/vn/utbridora/auth/modules/internship/t3_09/evidence/T3_09_CHECKPOINT_RESULTS.xml",
+      "src/test/resources/vn/utbridora/auth/modules/internship/t3_09/evidence/T3_09_CONTRACT_VERIFICATION_2026_11_12.json",
+      "src/test/resources/vn/utbridora/auth/modules/internship/t3_09/evidence/T3_09_DEV_VERIFICATION.json",
+      "src/test/resources/vn/utbridora/auth/modules/internship/t3_09/evidence/T3_09_INTEGRATION_VERIFICATION_2026_11_12.json",
+      "src/test/resources/vn/utbridora/auth/modules/internship/t3_09/evidence/T3_09_RUNTIME_RESULTS_2026_11_12.xml",
+      "src/test/resources/vn/utbridora/auth/modules/internship/t3_09/evidence/T3_09_UI_RESULTS_2026_11_12.xml",
+      "src/test/resources/vn/utbridora/auth/modules/internship/t3_09/evidence/t3-09-mobile-fixture.png",
+      "src/test/resources/vn/utbridora/auth/modules/internship/t3_09/evidence/t3-09-real-pending-evidence-20261112.png",
+      "src/test/resources/vn/utbridora/auth/modules/internship/t3_09/evidence/t3-09-real-report-history-20261112.png",
+      "src/test/resources/vn/utbridora/auth/modules/internship/t3_09/evidence/t3-09-real-submission-20261112.png"
+    ],
+    "unmergedPaths": 0,
+    "stashAppliedAndRetained": "stash@{0}: On feature/t3-week3: wip: DEV07 T3-09 before DEV05 review GET integration 2026-11-12"
+  },
+  "sourceHashEncoding": "UTF-8 normalized LF",
+  "sourceHashes": {
+    "web-demo/src/App.tsx": "20ec1587e7f4be84449867feacb61d8308dc52dfe1b7a5a84c7d51fb495952d8",
+    "web-demo/src/api.ts": "e9d56b28c3e96548ff07693b96a116f879606fe6a270bc73a9efdde6fb5bf384",
+    "web-demo/src/modules/internship/pages/TaskBoard.tsx": "872443965931fd885ca4f524eb636425b82665f025a4d7270379ef157bdc5a55",
+    "web-demo/src/modules/internship/pages/SubmissionWorkspace.tsx": "551a730dff332176f616c81a978ab8fb74384bdf8d07d2f19a43ae2ae1484e74",
+    "web-demo/src/modules/internship/pages/WeeklyReports.tsx": "dae382a7b8fcc4929ce361e6413e374c6272f730b2f7c070ccd1dab2f8f951c6",
+    "web-demo/src/modules/internship/pages/ReportEvidence.tsx": "a4e1745f4e9e7015145e9c7b14c40bf482ab1ff65709e7fbb96f6a3f59cee7a2",
+    "web-demo/src/modules/internship/workflow.ts": "ffb4eec92973875813cd3d9368cd0878fc7666ffdc9daecc933f455b8f8e49cd",
+    "web-demo/src/modules/internship/workflow-api.ts": "38d59b7aed1af210555481210aee5040c847eff2260aa7cc1d5369d469246aeb",
+    "web-demo/src/modules/internship/useWorkflowCommand.tsx": "09ebcf5edbcb55a74a43ef5650b87f1f8fad323774e93c65fe7a35756e4f7d51",
+    "web-demo/src/modules/internship/styles.css": "8072f1c5e82533a92bc6b2058fc746e40506d6b3c7b9748a88cd5f3100a07eea",
+    "web-demo/tests/internship-week3.ui.spec.ts": "9f33a10e36df4a6b6ffc3ed946ba0bd2bc2c4aee678f13c6e24199b5f2197d20",
+    "web-demo/tests/internship-week3-runtime.spec.ts": "b91ba1866497685cb32a7a895838d8b25b6cf0b8a71679ff803f1941156d6d2d",
+    "web-demo/tests/unit/internship-workflow.spec.ts": "e28eeab3725c759f58f1a9f48e17d0d90a98dcdba63332be45f3da74d94f9522",
+    "web-demo/tests/fixtures/internship-week3-harness.tsx": "6548831917ea0286cd8fa56d04ae6ea0795275ae7ecf2b6cab17d246d38972bb",
+    "web-demo/tests/fixtures/internship-week3.html": "1108455497b5f7185433d721ef53cfb172f86a986d9b3d603083464d8c1fcffb",
+    "src/test/java/vn/utbridora/auth/T309WorkflowBrowserIT.java": "843576779b7ee46239085648187378cce8cb1b5b00ae3a1e6bbc4537f5dbebfe"
+  },
+  "evidenceHashes": {
+    "T3_09_REVIEW_GET_UI_RESULTS_2026_11_12.xml": "7d6266a43d216abdf11feda8ce3c5c91ac776e32cb75180735f90244c6aab241",
+    "T3_09_REVIEW_GET_RUNTIME_RESULTS_2026_11_12.xml": "0bccd800b2312e086b67f7421e12cbfaba0fe00fa2c6fbc60aa3d73e4ac6db8f",
+    "T3_09_REVIEW_GET_CONTRACTS_2026_11_12.json": "912b41ee83f5605657257941ae8cf123ced7a9e0711d13ad32e91e3191223623",
+    "t3-09-review-get-submission-20261112.png": "0691dcb18032887186303aa90e832e058e75e45cc7a97e3ec366e170a8400b9d",
+    "t3-09-review-get-report-history-20261112.png": "7372301f38356829968036e21583f46f9dd5f78e16949de6e2b9df4173e830c6",
+    "t3-09-review-get-pending-evidence-20261112.png": "028dd8cf5a24cfc0ae1cef435899e0d09eb00f639bd91779715d5ffa34d49ff4"
+  }
+}

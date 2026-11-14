@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.UUID;
 import jakarta.persistence.*;
 
-/** Only metadata. Storage adapter and antivirus workflow are deliberately not implemented. */
+/** Private file metadata; FileService owns storage/binding. Antivirus workflow remains T1-07. */
 @Entity @Table(name="files")
 public class FileMetadata {
     public enum Classification { PRIVATE, ORGANIZATION, SHARED }
