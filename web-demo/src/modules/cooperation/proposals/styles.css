@@ -325,3 +325,28 @@
   .proposal-capacity { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .proposal-card, .proposal-publication, .proposal-nomination, .proposal-placement, .workflow-detail-drawer { padding: 14px; }
 }
+.proposal-placement .placement-quota-status[role="status"] { display: inline-flex; align-items: center; margin: 0 0 16px; padding: 7px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; border: 1px solid transparent; }
+.proposal-placement .placement-quota-status.quota-full { color: #087463; background: #e7f6f0; border-color: #b8dacf; }
+.proposal-placement .placement-quota-status.quota-waiting { color: #875b0c; background: #fff8e6; border-color: #f1dfb0; }
+.proposal-placement .placement-quota-status.quota-short { color: #526878; background: #f1f5f8; border-color: #dfe7ee; }
+.placement-overview-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 18px 0; }
+.placement-overview-filters label { flex: 1 1 170px; min-width: 0; }
+.placement-overview-filters label:first-child { flex-basis: 280px; }
+.placement-progress-counters { display: grid; grid-template-columns: repeat(auto-fit,minmax(130px,1fr)); gap: 10px; padding: 0; margin: 18px 0; list-style: none; }
+.placement-progress-counters li { border: 1px solid var(--line); border-radius: 12px; background: #f8fafb; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.placement-progress-counters span, .placement-overview-help { color: var(--muted); font-size: 13px; }
+.placement-progress-counters strong { font-size: 22px; color: var(--ink); }
+.placement-progress-pill { display: inline-block; padding: 5px 10px; border-radius: 999px; white-space: nowrap; background: #f1f5f8; color: #526878; font-size: 12px; }
+.placement-progress-pill.progress-full { background: #e7f6f0; color: #087463; }
+.placement-progress-pill.progress-waiting { background: #fff8e6; color: #875b0c; }
+.placement-progress-pill.progress-rejected { background: #fff0f2; color: #aa3043; }
+.placement-filter-bar form { display: flex; align-items: end; gap: 10px; flex: 1 1 300px; }
+.placement-filter-bar form label { flex: 1; min-width: 0; }
+@media (max-width:600px) { .placement-overview-filters { flex-direction: column; align-items: stretch; } .placement-overview-filters label, .placement-overview-filters label:first-child { flex-basis: auto; } .placement-filter-bar form { flex-wrap: wrap; } }
+.proposal-batch-reference { display: block; margin-top: 5px; color: var(--muted); font-size: 12px; font-weight: 400; overflow-wrap: anywhere; }
+.school-placement-followup { margin-top: 24px; }
+.school-placement-followup > h4 { color: var(--ink); font-size: 20px; line-height: 28px; margin: 0 0 8px; }
+.school-placement-followup > p { color: var(--muted); font-size: 14px; line-height: 20px; margin-bottom: 24px; }
+.school-evaluation-list { list-style: none; padding: 0; margin: 16px 0; display: grid; gap: 16px; }
+.school-evaluation-list > li { background: var(--t5-bg-neutral); border: 1px solid var(--line); padding: 16px; border-radius: 8px; }
+.school-evaluation-list p { margin: 8px 0; font-size: 14px; line-height: 20px; white-space: pre-wrap; }

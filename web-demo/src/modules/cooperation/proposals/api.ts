@@ -27,6 +27,8 @@ export function workflowError(error: unknown): string {
     INVITATION_NOT_ACCEPTED: 'Sinh viên chưa chấp nhận lời mời. Kiểm tra lại trạng thái lời mời trước khi tạo tiếp nhận.',
     TERM_INVALID: 'Kỳ thực tập chưa ở trạng thái hoạt động.',
     REQUEST_IN_PROGRESS: 'Yêu cầu đang được xử lý. Chờ kết quả rồi thử lại sau vài giây.',
+    SCHOOL_VERIFICATION_REQUIRED: 'Doanh nghiệp chưa được nhà trường xác thực hợp lệ.',
+    INVALID_DATE_RANGE: 'Khoảng thời gian thực tập không hợp lệ.',
     RESERVATION_EXPIRED: 'Thời gian giữ chỗ đã hết. Không thể thay đổi đề xuất này.',
     ACCESS_DENIED: 'Bạn không còn quyền truy cập hoặc hồ sơ đã ngừng được chia sẻ.',
     RESOURCE_NOT_FOUND: 'Nội dung không còn tồn tại hoặc không thuộc phạm vi của bạn.',

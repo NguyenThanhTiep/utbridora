@@ -68,6 +68,25 @@ test('enterprise receives the five API-driven cases, real timestamps, and transl
   await page.screenshot({ path: '../target/t5-notifications-enterprise.png', fullPage: true });
 });
 
+test('quick unread filters retain browser read state after refresh without writing notification records', async ({ page }) => {
+  await session(page);await openCenter(page);
+  const panel = page.locator('.notification-center'), writes: string[] = [];
+  page.on('request', request => {if (request.url().includes('/api/v1/') && request.method() !== 'GET') writes.push(request.method() + ' ' + request.url());});
+  await panel.getByRole('tab', { name: 'Chưa đọc', exact: true }).click();
+  await expect(panel.locator('tbody tr')).toHaveCount(5);
+  await panel.locator('tbody tr').first().getByRole('button', { name: /^Đánh dấu đã đọc / }).click();
+  await expect(panel.locator('tbody tr')).toHaveCount(4);
+  await panel.getByRole('tab', { name: 'Đã đọc', exact: true }).click();await expect(panel.locator('tbody tr')).toHaveCount(1);
+  await panel.getByRole('button', { name: 'Làm mới', exact: true }).click();
+  await expect(panel.getByRole('button', { name: 'Làm mới', exact: true })).toBeEnabled();
+  await expect(panel.locator('tbody tr')).toHaveCount(1);
+  await expect(panel.locator('.notification-filter-summary')).toHaveText('1 thông báo đang hiển thị · 4 chưa đọc');
+  await panel.getByRole('tab', { name: 'Chưa đọc', exact: true }).click();await expect(panel.locator('tbody tr')).toHaveCount(4);
+  await panel.getByRole('button', { name: 'Đánh dấu tất cả đã đọc', exact: true }).click();
+  await expect(panel.getByText('Không có thông báo phù hợp', { exact: true })).toBeVisible();
+  expect(writes).toEqual([]);
+});
+
 test('read IDs persist by organization and viewer; a new source version becomes unread', async ({ page }) => {
   const f = await session(page);
   await expect(bellCount(page)).toHaveText('5'); await openCenter(page);

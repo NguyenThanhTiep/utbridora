@@ -6,6 +6,7 @@ import { canLeaveDemand } from '../navigation';
 import { DemandEditor } from './DemandEditor';
 import { failureMessage } from './errors';
 import { DemandSummary } from './DemandSummary';
+import { DemandSkillSummary } from './DemandSkillSummary';
 import { api } from '../../../api';
 import { newIdempotencyKey } from '../../student/api';
 
@@ -63,7 +64,7 @@ export function ScopedDemands({ organizationId, onLoaded }: { organizationId: st
         <div className="proposal-table portal-demands-table">
           <table><thead><tr><th>Vị trí / nhu cầu</th><th>Trạng thái</th><th>Thời gian thực tập</th><th>Chỉ tiêu</th><th>Thao tác</th></tr></thead>
             <tbody>{page.content.map(record => <tr key={record.demandId}>
-              <th scope="row"><h3>{record.data.title}</h3><DemandSummary demand={record} /></th>
+              <th scope="row"><h3>{record.data.title}</h3><DemandSkillSummary required={record.data.required.skills.length} preferred={record.data.preferred.length} /><DemandSummary demand={record} /></th>
               <td><span className={'cooperation-state ' + (record.state === 'DRAFT' ? 'state-draft' : 'state-ready')}>
                 {record.state === 'DRAFT' ? 'Bản nháp' : record.cooperationId ? 'Đã gửi hợp tác' : 'Đã sẵn sàng'}</span>
                 {record.validationState !== 'VALID' && <p className="field-hint">Tiêu chí cần kiểm tra</p>}</td>

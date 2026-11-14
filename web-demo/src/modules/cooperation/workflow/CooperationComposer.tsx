@@ -12,6 +12,7 @@ export function CooperationComposer({ org, demands, busy, close, save, submit }:
   const demand = rows.find(row => row.demandId === selected) || rows[0];
   return <section className="workflow-review-form portal-cooperation-composer" aria-label="Soạn yêu cầu hợp tác">
     <h3>Soạn yêu cầu hợp tác</h3>
+    <div className="t5-rule-note" role="note"><strong>Điều kiện gửi hợp tác</strong><p>Doanh nghiệp cần được xác minh trên hệ thống và có hồ sơ xác minh được trường tiếp nhận phê duyệt. Kết quả của trường khác không thay thế xác minh tại trường này.</p></div>
     <fieldset disabled={busy}><div className="cooperation-form-grid">
       <label>Nhu cầu gửi hợp tác<select value={demand?.demandId || ''} onChange={event => setSelected(event.target.value)} disabled={!rows.length}>
         {!rows.length && <option value="">Chưa có nhu cầu nháp sẵn sàng</option>}

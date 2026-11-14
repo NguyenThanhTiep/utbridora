@@ -5,6 +5,7 @@ import { readAll } from '../portal/data';
 import { workflowError } from '../proposals/api';
 import { canLeaveDemand } from '../navigation';
 import type { VerificationInput, VerificationRecord } from '../WorkflowViews';
+import { VerificationJourney } from './VerificationJourney';
 
 export function VerificationEditor({ org, existing, busy, onCancel, save }: {
   org: string; existing: VerificationRecord | null; busy: boolean; onCancel: () => void;
@@ -44,6 +45,7 @@ export function VerificationEditor({ org, existing, busy, onCancel, save }: {
   ] as const;
   return <form className="workflow-review-form" onSubmit={event => { event.preventDefault();void save(data); }}>
     <h3>{existing ? 'Bổ sung thông tin xác minh' : 'Tạo hồ sơ xác minh'}</h3>
+    <VerificationJourney state={existing?.state} />
     <Notice tone="error" message={error} />
     <fieldset disabled={busy}>
       <label>Trường nhận hồ sơ<select required value={data.schoolOrgId} disabled={!!existing || loading || !schools.length}

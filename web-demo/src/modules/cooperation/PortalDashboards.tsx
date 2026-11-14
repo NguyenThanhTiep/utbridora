@@ -4,6 +4,7 @@ import type { Demand } from './types';
 import type { Resource } from './portal/data';
 import type { PortalPage, PortalSide } from './portal/navigation';
 import type { NotificationStore } from './notifications/useNotifications';
+import { StudentRosterPanel } from './portal/StudentRosterPanel';
 
 export function PortalDashboard({ side, demands, cooperations, verifications, navigate, notifications }: {
   side: PortalSide; demands: Resource<Demand>; cooperations: Resource<CooperationRecord>;
@@ -52,10 +53,11 @@ export function PortalDashboard({ side, demands, cooperations, verifications, na
           <td><button className="secondary" onClick={() => navigate(task.page)}>Xem hồ sơ</button></td></tr>)}</tbody>
       </table></div> : !failed.length ? <EmptyState icon="shield" title="Không có hồ sơ cần xử lý" description="Các hồ sơ mới sẽ xuất hiện tại đây khi được gửi lên hệ thống." /> : null}
     </section>
-    {school && <section className="panel"><h2>Truy cập nhanh</h2><div className="portal-shortcuts">
+    <section className="panel" aria-label="Truy cập nhanh"><h2>Truy cập nhanh</h2><div className="portal-shortcuts">
       <button className="secondary" onClick={() => navigate('cooperations')}><Icon name="building" />{school ? 'Duyệt hợp tác doanh nghiệp' : 'Gửi yêu cầu hợp tác'}</button>
       <button className="secondary" onClick={() => navigate('proposals')}><Icon name="users" />{school ? 'Đề xuất sinh viên' : 'Xem ứng viên được đề xuất'}</button>
-      <button className="secondary" onClick={() => navigate('placements')}><Icon name="graduation" />Theo dõi tiếp nhận thực tập</button>
-    </div></section>}
+      <button className="secondary" onClick={() => navigate('placements')}><Icon name="graduation" />{school ? 'Theo dõi tiếp nhận thực tập' : 'Thực tập & bàn giao'}</button>
+    </div></section>
+    {school && <StudentRosterPanel />}
   </>;
 }

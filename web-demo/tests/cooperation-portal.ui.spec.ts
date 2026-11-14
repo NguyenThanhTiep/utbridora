@@ -11,6 +11,13 @@ const demand = { demandId: 'demand-1', enterpriseOrgId: enterprise, state: 'READ
   data: { schoolOrgId: school, termId: term, title: 'API Java Intern', quantity: 3, description: 'Vị trí từ API', location: null, benefits: null,
     deadline: '2027-01-01T00:00:00Z', required: { majorCodes: [], skills: [], dateRange: { startDate: '2027-02-01', endDate: '2027-05-01' } }, preferred: [], academicCatalogVersion: 'v1', taxonomyVersion: 'v1' } };
 const cooperation = { cooperationId, demandId: demand.demandId, schoolOrgId: school, enterpriseOrgId: enterprise, termId: term, state: 'APPROVED', submissionNo: 1, version: 3 };
+function progressRows(schoolSide: boolean, counters = { target: 3, placed: 0, pending: 0, remaining: 3 }) {
+  const totals = schoolSide ? { ...counters, reservations: counters.pending, declined: 0, enterpriseAccepted: 0, pendingCreation: 0, pendingApproval: counters.pending, openForNomination: Math.max(0, counters.remaining - counters.pending) } : counters;
+  return { content: [{ demandId: demand.demandId, title: demand.data.title, schoolOrgId: school, schoolName: 'Trường A', enterpriseOrgId: enterprise,
+    enterpriseName: 'Công ty FPT Software', termId: term, termCode: 'HK1', cooperationId, cooperationState: 'APPROVED',
+    status: counters.placed >= counters.target ? 'FULL' : counters.pending ? 'WAITING' : 'SHORT', counters: totals }],
+    page: 0, size: 10, totalElements: 1, totalPages: 1, totals, schools: [{ id: school, name: 'Trường A' }], terms: [{ id: term, name: 'HK1' }] };
+}
 
 async function session(page: Page, schoolSide = false, signedOut = false) {
   let authenticated = !signedOut;
@@ -34,8 +41,12 @@ async function session(page: Page, schoolSide = false, signedOut = false) {
     if (path.endsWith('/cooperations')) return route.fulfill({ json: rows(route.request().headers()['x-organization-id'] === other ? [] : [cooperation]) });
     if (path.endsWith('/cooperations/' + cooperationId)) return route.fulfill({ json: { demand, cooperation, feedback: null } });
     if (path.endsWith('/proposals')) return route.fulfill({ json: rows([]) });
+    if (path.endsWith('/proposal-batches')) return route.fulfill({ json: rows([]) });
     if (path.endsWith('/capacity')) return route.fulfill({ json: { quantity: 3, activeReservations: 0, placedCount: 0, openForNomination: 3 } });
     if (path.endsWith('/publication')) return route.fulfill({ json: { cooperationId, version: 3, publishedAt: null, closedAt: null } });
+    if (path === `/${schoolSide ? 'school' : 'enterprise'}/placements/progress`) return route.fulfill({ json: progressRows(schoolSide) });
+    if (path === `/${schoolSide ? 'school' : 'enterprise'}/placements/summary`) return route.fulfill({ json: { demandId: demand.demandId, cooperationId, target: 3, placed: 0, pending: 0, remaining: 3 } });
+    if (path === `/${schoolSide ? 'school' : 'enterprise'}/placements`) return route.fulfill({ json: rows([]) });
     return route.fulfill({ status: 404, json: { errorCode: 'RESOURCE_NOT_FOUND' } });
   });
   await page.goto('/');
@@ -103,6 +114,46 @@ test('enterprise overview counts all API pages and contains no fabricated panels
   await expect(page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Thông báo', exact: true })).toBeVisible();
   await expect(page.getByText(/Lâm Gia Hân|Huỳnh Thị Minh Thơ|2026–2027|Hôm qua|FIGMA|T5-UI-/)).toHaveCount(0);
   await page.screenshot({ path: '../target/t5-enterprise-portal.png', fullPage: true });
+});
+
+test('school overview keeps the three live KPIs and explains roster import without provisioning fake students', async ({ page }) => {
+  await session(page, true);const imports: string[] = [];
+  page.on('request', request => {if (/\/api\/v1\/.*(imports|roster|resend)/.test(request.url())) imports.push(request.url());});
+  await expect(page.locator('.portal-stat')).toHaveCount(3);
+  const panel = page.getByRole('region', { name: 'Nhập danh sách & Kích hoạt sinh viên', exact: true });
+  await expect(panel).toBeVisible();
+  for (const field of ['studentCode', 'fullName', 'schoolEmail', 'cohort', 'majorCode']) await expect(panel.getByText(field, { exact: true })).toBeVisible();
+  await expect(panel.getByLabel('Chọn tệp danh sách sinh viên', { exact: true })).toBeDisabled();
+  await expect(panel.getByRole('button', { name: 'Xem trước danh sách', exact: true })).toBeDisabled();
+  await expect(panel.getByText(/Chờ kết nối API nhập danh sách sinh viên/)).toBeVisible();
+  await expect(panel.getByText('Nhập tài khoản không tự xác nhận sinh viên đủ điều kiện thực tập.', { exact: true })).toBeVisible();
+  await expect(panel.getByText('Đang chờ xử lý', { exact: true })).toHaveCSS('background-color', 'rgb(232, 242, 255)');
+  await expect(panel.getByText('Đã hoàn thành', { exact: true })).toHaveCSS('background-color', 'rgb(229, 246, 237)');
+  await expect(panel.getByText('Thất bại', { exact: true })).toHaveCSS('color', 'rgb(211, 47, 47)');
+  expect(imports).toEqual([]);
+  await page.screenshot({ path: '../target/t5-ui-school-overview.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+});
+
+for (const schoolSide of [true, false]) test(`${schoolSide ? 'school' : 'enterprise'} dashboard shortcut opens the existing placement workspace`, async ({ page }) => {
+  await session(page, schoolSide);
+  await page.getByRole('region', { name: 'Truy cập nhanh', exact: true }).getByRole('button', {
+    name: schoolSide ? 'Theo dõi tiếp nhận thực tập' : 'Thực tập & bàn giao', exact: true,
+  }).click();
+  await expect(page.getByRole('region', { name: 'Tổng hợp tiếp nhận theo phạm vi', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: demand.data.title, exact: true })).toBeVisible();
+});
+
+test('demand cards expose actual required and preferred skill counts without changing the draft', async ({ page }) => {
+  await session(page);
+  await page.route('**/api/v1/enterprise/demands?*', route => route.fulfill({ json: rows([{ ...demand,
+    data: { ...demand.data, required: { ...demand.data.required, skills: [{ skillCode: 'JAVA', minLevel: 2, minYearsPractice: null }, { skillCode: 'SQL', minLevel: null, minYearsPractice: 1 }] },
+      preferred: [{ skillCode: 'REACT', minLevel: 2, minYearsPractice: null }] },
+  }]) }));
+  await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Nhu cầu thực tập', exact: true }).click();
+  await expect(page.getByLabel('Tóm tắt kỹ năng tuyển dụng').locator('dd')).toHaveText(['2', '1']);
+  await expect(page.getByRole('heading', { name: demand.data.title, exact: true })).toBeVisible();
 });
 
 test('enterprise candidates use the approved cooperation API and switching organization clears the old scope', async ({ page }) => {
@@ -178,6 +229,56 @@ test('selected cooperation stays selected when switching from candidates to plac
   await expect(page.getByRole('heading', { name: secondDemand.data.title, exact: true })).toBeVisible();
 });
 
+test('school portal keeps the placement conflict visible while refreshing its approved detail and candidates', async ({ page }) => {
+  const crashes: string[] = [];page.on('pageerror', error => crashes.push(error.message));
+  await session(page, true);let conflicted = false, candidateReads = 0, detailReads = 0;
+  await page.route('**/api/v1/school/cooperations/' + cooperationId, route => {
+    detailReads++;return route.fulfill({ json: { demand, cooperation, feedback: null } });
+  });
+  await page.route('**/api/v1/school/cooperations/' + cooperationId + '/proposals?*', route => {
+    candidateReads++;return route.fulfill({ json: rows([]) });
+  });
+  await page.route('**/api/v1/school/placements**', route => {
+    const path = new URL(route.request().url()).pathname;
+    const counters = { target: 3, placed: conflicted ? 1 : 0, pending: conflicted ? 0 : 1, remaining: conflicted ? 2 : 3 };
+    if (path.endsWith('/progress')) return route.fulfill({ json: progressRows(true, counters) });
+    if (path.endsWith('/summary')) return route.fulfill({ json: { demandId: demand.demandId, cooperationId, ...counters } });
+    return route.fulfill({ json: rows([{ placementId: 'placement-week4', schoolOrgId: school, enterpriseOrgId: enterprise, cooperationId, proposalItemId: 'proposal-week4', state: conflicted ? 'APPROVED' : 'PENDING_APPROVAL',
+      version: conflicted ? 2 : 1, effectiveAt: '2027-02-01T00:00:00Z', startDate: '2027-02-01', endDate: '2027-05-01' }]) });
+  });
+  await page.route('**/api/v1/placements/placement-week4/approve', route => {
+    conflicted = true;return route.fulfill({ status: 409, json: { errorCode: 'VERSION_CONFLICT' } });
+  });
+  await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Tiếp nhận thực tập', exact: true }).click();
+  await page.getByRole('button', { name: 'Phê duyệt tiếp nhận', exact: true }).click();
+  await page.getByLabel('Căn cứ thao tác tiếp nhận').fill('QD-WEEK4');const beforeCandidates = candidateReads, beforeDetail = detailReads;
+  await page.getByRole('button', { name: 'Xác nhận phê duyệt', exact: true }).click();
+  await expect(page.getByText('Tiếp nhận 1 · Đã duyệt, chờ bắt đầu')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Tiếp nhận thực tập', exact: true })).toContainText('Dữ liệu vừa thay đổi.');
+  await expect.poll(() => candidateReads).toBeGreaterThan(beforeCandidates);expect(detailReads).toBeGreaterThan(beforeDetail);
+  await expect(page.getByLabel('Căn cứ thao tác tiếp nhận')).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Tổng hợp tiếp nhận theo phạm vi' }).getByRole('rowheader', { name: /API Java Intern/ })).toBeVisible();
+  expect(crashes).toEqual([]);
+});
+
+test('placement overview can select rejected and no-cooperation demands without opening approval actions', async ({ page }) => {
+  await session(page, true);
+  const counters = { target: 0, placed: 0, pending: 0, reservations: 0, declined: 0, enterpriseAccepted: 0, pendingCreation: 0, pendingApproval: 0, remaining: 0, openForNomination: 0 };
+  await page.route('**/api/v1/school/placements/progress?*', route => route.fulfill({ json: {
+    content: [{ demandId: 'draft-only', title: 'Nhu cầu chưa có phiếu', schoolOrgId: school, schoolName: 'Trường A', enterpriseOrgId: enterprise, enterpriseName: 'Công ty A', termId: term, termCode: 'HK1', cooperationId: null, cooperationState: null, status: 'NO_COOP', counters },
+      { demandId: 'rejected-only', title: 'Nhu cầu đã từ chối', schoolOrgId: school, schoolName: 'Trường A', enterpriseOrgId: enterprise, enterpriseName: 'Công ty A', termId: term, termCode: 'HK1', cooperationId: 'rejected-coop', cooperationState: 'REJECTED', status: 'REJECTED', counters }],
+    page: 0, size: 10, totalElements: 2, totalPages: 1, totals: counters, schools: [], terms: [],
+  } }));
+  await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Tiếp nhận thực tập', exact: true }).click();
+  await page.getByRole('row').filter({ hasText: 'Nhu cầu chưa có phiếu' }).getByRole('button', { name: 'Xem tiếp nhận' }).click();
+  await expect(page.getByRole('heading', { name: 'Nhu cầu chưa có phiếu', exact: true })).toBeVisible();
+  await expect(page.getByText('Nhu cầu chưa có hợp tác được duyệt.', { exact: false })).toBeVisible();
+  await page.getByRole('row').filter({ hasText: 'Nhu cầu đã từ chối' }).getByRole('button', { name: 'Xem tiếp nhận' }).click();
+  await expect(page.getByText('Yêu cầu hợp tác đã bị từ chối.', { exact: false })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Phê duyệt tiếp nhận', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Tạo hồ sơ chờ phê duyệt', exact: true })).toHaveCount(0);
+});
+
 test('enterprise statistics consumes protected release and rejects raw-count payloads without querying school results', async ({ page }) => {
   await session(page);
   const matchingRequests: string[] = [];let unsafe = false;
@@ -217,16 +318,82 @@ test('notification filters and keyboard tabs use current records without a separ
   await page.screenshot({ path: '../target/t5-enterprise-notifications-mobile.png', fullPage: true });
 });
 
-test('batch UI remains empty while the shared candidate API stays available', async ({ page }) => {
+test('batch UI reads the API and displays empty when no shared batch is visible', async ({ page }) => {
   await session(page);
+  const requests: string[] = [];
+  page.on('request', request => {if (request.url().includes('/proposal-batches')) {requests.push(request.url());expect(request.headers()['x-organization-id']).toBe(enterprise);}});
   await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Ứng viên đề xuất', exact: true }).click();
   await expect(page.getByText('Chưa có hồ sơ được chia sẻ hợp lệ.', { exact: true })).toBeVisible();
   await page.getByRole('tab', { name: 'Lô đề xuất', exact: true }).click();
   await expect(page.getByText('Chưa có dữ liệu lô đề xuất', { exact: true })).toBeVisible();
+  // Focus revalidation may read again; every request must retain the selected cooperation.
+  expect([...new Set(requests.map(url => new URL(url).pathname))]).toEqual([`/api/v1/enterprise/cooperations/${cooperationId}/proposal-batches`]);
   await expect(page.getByText(/DEMO-PROP|Hôm qua|07\/11\/2026/)).toHaveCount(0);
   await page.screenshot({ path: '../target/t5-enterprise-batches.png', fullPage: true });
   await page.getByRole('button', { name: 'Xem ứng viên được chia sẻ', exact: true }).click();
   await expect(page.getByText('Chưa có hồ sơ được chia sẻ hợp lệ.', { exact: true })).toBeVisible();
+});
+
+test('enterprise batch uses live-shaped API data and opens the same cooperation candidates', async ({ page }) => {
+  await session(page);let candidateReads = 0;
+  const batchId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  await page.route(`**/api/v1/enterprise/cooperations/${cooperationId}/proposal-batches?*`, route => {
+    const query = new URL(route.request().url()).searchParams;
+    expect(query.get('page')).toBe('0');expect(query.get('size')).toBe('10');expect(route.request().headers()['x-organization-id']).toBe(enterprise);
+    return route.fulfill({ json: rows([{ batchId, cooperationId, visibleProposalCount: 1 }]) });
+  });
+  const candidate = { proposalItemId: 'candidate-batch', cooperationId, state: 'SHARED', version: 4, shareId: 'share-batch', reservationUntil: '2027-01-01T00:00:00Z' };
+  await page.route(`**/api/v1/enterprise/cooperations/${cooperationId}/proposals?*`, route => {
+    candidateReads++;expect(route.request().headers()['x-organization-id']).toBe(enterprise);return route.fulfill({ json: rows([candidate]) });
+  });
+  await page.route('**/api/v1/enterprise/proposals/candidate-batch/profile', route => route.fulfill({ json: {
+    profileVersion: 2, validUntil: candidate.reservationUntil, allowedFields: ['majorCode'], data: { majorCode: 'IT' },
+  } }));
+  await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Ứng viên đề xuất', exact: true }).click();
+  await expect(page.locator('.proposal-profile')).toBeVisible();
+  await page.getByRole('tab', { name: 'Lô đề xuất', exact: true }).click();
+  const batch = page.getByRole('region', { name: 'Lô đề xuất được chia sẻ', exact: true });
+  await expect(batch.getByText(batchId, { exact: true })).toBeVisible();
+  await expect(batch.getByRole('cell', { name: '1 hồ sơ được chia sẻ', exact: true })).toBeVisible();
+  await expect(batch.getByText(/chưa sẵn sàng|chưa.*kết nối|Cập nhật/)).toHaveCount(0);
+  await page.screenshot({ path: '../target/t5-enterprise-batches-populated.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+  const reads = candidateReads;
+  await batch.getByRole('button', { name: 'Xem ứng viên trong lô', exact: true }).click();
+  await expect(page.getByRole('tab', { name: 'Ứng viên được chia sẻ', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('.proposal-profile')).toBeVisible();await expect.poll(() => candidateReads).toBeGreaterThan(reads);
+});
+
+test('enterprise batch refresh removes revoked data and organization switching clears the old batch', async ({ page }) => {
+  await session(page);let visible = true, reads = 0;
+  const batchId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  await page.route(`**/api/v1/enterprise/cooperations/${cooperationId}/proposal-batches?*`, route => {
+    reads++;return route.fulfill({ json: rows(visible ? [{ batchId, cooperationId, visibleProposalCount: 1 }] : []) });
+  });
+  await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Ứng viên đề xuất', exact: true }).click();
+  await page.getByRole('tab', { name: 'Lô đề xuất', exact: true }).click();await expect(page.getByText(batchId, { exact: true })).toBeVisible();
+  const before = reads;visible = false;await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await expect(page.getByText('Chưa có dữ liệu lô đề xuất', { exact: true })).toBeVisible();expect(reads).toBeGreaterThan(before);
+  await expect(page.getByText(batchId, { exact: true })).toHaveCount(0);await expect(page.getByRole('button', { name: 'Xem ứng viên trong lô', exact: true })).toHaveCount(0);
+  visible = true;await page.getByRole('button', { name: 'Tải lại lô đề xuất', exact: true }).click();await expect(page.getByText(batchId, { exact: true })).toBeVisible();
+  await page.getByLabel('Doanh nghiệp đang làm việc', { exact: true }).selectOption(other);
+  await expect(page.getByRole('heading', { name: 'Chưa có hợp tác được duyệt', exact: true })).toBeVisible();
+  await expect(page.getByText(batchId, { exact: true })).toHaveCount(0);
+});
+
+for (const failure of ['denied', 'foreign-cooperation']) test(`enterprise batches handle ${failure} without exposing rows and can retry`, async ({ page }) => {
+  await session(page);let retry = false;
+  const batchId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+  await page.route(`**/api/v1/enterprise/cooperations/${cooperationId}/proposal-batches?*`, route => !retry && failure === 'denied'
+    ? route.fulfill({ status: 403, json: { errorCode: 'ACCESS_DENIED' } })
+    : route.fulfill({ json: rows([{ batchId, cooperationId: !retry && failure === 'foreign-cooperation' ? other : cooperationId, visibleProposalCount: 1 }]) }));
+  await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Ứng viên đề xuất', exact: true }).click();
+  await page.getByRole('tab', { name: 'Lô đề xuất', exact: true }).click();
+  await expect(page.getByText(failure === 'denied' ? /Bạn không còn quyền truy cập/ : /Chưa nhận được danh sách lô hợp lệ/)).toBeVisible();
+  await expect(page.getByText(batchId, { exact: true })).toHaveCount(0);await expect(page.getByText('Chưa có dữ liệu lô đề xuất', { exact: true })).toHaveCount(0);
+  retry = true;await page.getByRole('button', { name: 'Tải lại lô đề xuất', exact: true }).click();
+  await expect(page.getByText(batchId, { exact: true })).toBeVisible();
 });
 
 test('switching to batch UI cannot discard an uncertain enterprise decision', async ({ page }) => {
@@ -282,7 +449,7 @@ test('batch layout is accessible without inventing an approved cooperation', asy
   await page.getByRole('button', { name: 'Tải lại dữ liệu', exact: true }).click();
   await expect(page.locator('.portal-stat').filter({ hasText: 'Hợp tác đã duyệt' }).locator('strong')).toHaveText('0');
   const reads: string[] = [];
-  page.on('request', request => { if (/\/cooperations\/[^/?]+\/proposals/.test(request.url())) reads.push(request.url()); });
+  page.on('request', request => { if (/\/cooperations\/[^/?]+\/(proposals|proposal-batches)/.test(request.url())) reads.push(request.url()); });
   await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Ứng viên đề xuất', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Chưa có hợp tác được duyệt', exact: true })).toBeVisible();
   await page.getByRole('tab', { name: 'Lô đề xuất', exact: true }).click();

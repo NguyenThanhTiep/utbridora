@@ -30,6 +30,9 @@ test('week 3 school, student and enterprise use real share, decision, Placement 
     await school.page.getByRole('button', {name: 'Gửi lời mời thực tập', exact: true}).click();
     const invitationResponse = await issued;expect(invitationResponse.status()).toBe(202);const invitation = await invitationResponse.json();
     await openCooperation(hr.page, false);await expect(hr.page.getByText('Chưa có hồ sơ được chia sẻ hợp lệ.', {exact: true})).toBeVisible();
+    await hr.page.getByRole('tab', {name: 'Lô đề xuất', exact: true}).click();
+    await expect(hr.page.getByText('Chưa có dữ liệu lô đề xuất', {exact: true})).toBeVisible();
+    await hr.page.getByRole('button', {name: 'Xem ứng viên được chia sẻ', exact: true}).click();
 
     await student.page.getByRole('button', {name: 'Lời mời & nguyện vọng', exact: true}).click();
     const invitations = await (await student.page.request.get('/api/v1/invitations/me?page=0&size=100')).json();
@@ -56,6 +59,10 @@ test('week 3 school, student and enterprise use real share, decision, Placement 
     await hr.page.getByRole('button', {name: 'Tải lại ứng viên', exact: true}).click();
     await expect(hr.page.getByText(/JAVA · Cấp độ/)).toBeVisible();
     await expect(hr.page.locator('.proposal-profile').getByText('student@example.test')).toHaveCount(0);
+    await hr.page.getByRole('tab', {name: 'Lô đề xuất', exact: true}).click();
+    await expect(hr.page.getByRole('cell', {name: '1 hồ sơ được chia sẻ', exact: true})).toBeVisible();
+    await hr.page.getByRole('button', {name: 'Xem ứng viên trong lô', exact: true}).click();
+    await expect(hr.page.getByText(/JAVA · Cấp độ/)).toBeVisible();
     await hr.page.locator('.proposal-card').getByRole('button', {name: 'Tiếp nhận thực tập', exact: true}).click();
     await expect(hr.page.locator('.proposal-card .cooperation-state').getByText('Doanh nghiệp đã đồng ý', {exact: true})).toBeVisible();
     await school.page.getByRole('button', {name: 'Tải lại tiến trình', exact: true}).click();
@@ -86,6 +93,8 @@ test('week 3 school, student and enterprise use real share, decision, Placement 
     await expect(consentArticle.getByText('Đã thu hồi', {exact: true})).toBeVisible();
     await hr.page.getByRole('button', {name: 'Tải lại ứng viên', exact: true}).click();
     await expect(hr.page.getByText('Chưa có hồ sơ được chia sẻ hợp lệ.', {exact: true})).toBeVisible();
+    await hr.page.getByRole('tab', {name: 'Lô đề xuất', exact: true}).click();
+    await expect(hr.page.getByText('Chưa có dữ liệu lô đề xuất', {exact: true})).toBeVisible();
     await openCooperation(school.page, true, true);
     await expect(school.page.getByRole('heading', {name: 'Tiếp nhận 1 · Đã duyệt, chờ bắt đầu', exact: true})).toBeVisible();
     await school.page.getByRole('button', {name: 'Hủy tiếp nhận', exact: true}).click();
