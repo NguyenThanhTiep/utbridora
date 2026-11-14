@@ -18,6 +18,7 @@ import vn.utbridora.auth.modules.cooperation.persistence.DemandRepository;
 import vn.utbridora.auth.modules.cooperation.integration.DemandReferencePort;
 import vn.utbridora.auth.modules.matching.application.MatchingService;
 import vn.utbridora.auth.operations.OperationLedger;
+import vn.utbridora.auth.operations.OperationFailure;
 import vn.utbridora.auth.user.Role;
 import static vn.utbridora.auth.operations.WorkflowValues.*;
 
@@ -60,6 +61,33 @@ public class PlacementService {
 
     public record InternshipLink(
             String placementId, String caseId, String state, String route) {}
+
+    public sealed interface ProgressCounters permits OperationalCounters, SchoolProgressCounters {
+        int target(); int placed(); int pending(); int remaining();
+    }
+    public record OperationalCounters(int target, int placed, int pending, int remaining) implements ProgressCounters {
+        static OperationalCounters empty() {return new OperationalCounters(0,0,0,0);}
+        OperationalCounters plus(ProgressCounters other) {
+            return new OperationalCounters(target+other.target(),placed+other.placed(),pending+other.pending(),remaining+other.remaining());
+        }
+    }
+    public record SchoolProgressCounters(int target,int placed,int pending,int remaining,int reservations,int declined,
+                                        int enterpriseAccepted,int pendingCreation,int pendingApproval,int openForNomination) implements ProgressCounters {
+        static SchoolProgressCounters empty() {return new SchoolProgressCounters(0,0,0,0,0,0,0,0,0,0);}
+        SchoolProgressCounters plus(SchoolProgressCounters other) {
+            return new SchoolProgressCounters(target+other.target,placed+other.placed,pending+other.pending,remaining+other.remaining,
+                reservations+other.reservations,declined+other.declined,enterpriseAccepted+other.enterpriseAccepted,
+                pendingCreation+other.pendingCreation,pendingApproval+other.pendingApproval,openForNomination+other.openForNomination);
+        }
+    }
+    public record ProgressChoice(String id,String name) {}
+    public record Progress<C extends ProgressCounters>(String demandId,String title,String schoolOrgId,String schoolName,
+            String enterpriseOrgId,String enterpriseName,String termId,String termCode,String cooperationId,
+            String cooperationState,String status,C counters) {}
+    public record ProgressPage<C extends ProgressCounters>(List<Progress<C>> content,int page,int size,long totalElements,
+            int totalPages,C totals,List<ProgressChoice> schools,List<ProgressChoice> terms) {}
+    private record ProgressDemand(String id,String title,String school,String schoolName,String enterprise,
+                                  String enterpriseName,String term,String termCode,String cooperation,String state) {}
 
     // ── Dependencies ─────────────────────────────────────────────────────────
 
@@ -409,9 +437,27 @@ public class PlacementService {
     public Page<PlacementView> listForSchool(Authentication auth, String schoolOrgId,
                                               String termId, String cooperationId, String state,
                                               int page, int size) {
+        return listForSchool(auth, schoolOrgId, termId, null, cooperationId, state, page, size);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PlacementView> listForSchool(Authentication auth, String schoolOrgId,
+                                              String termId, String demandId, String cooperationId, String state,
+                                              int page, int size) {
+        return listForSchool(auth,schoolOrgId,termId,demandId,cooperationId,state,null,null,page,size);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PlacementView> listForSchool(Authentication auth,String schoolOrgId,String termId,String demandId,
+                                              String cooperationId,String state,String filterSchoolOrgId,String query,int page,int size) {
         page(page, size);
-        scope.require(auth, uuid(schoolOrgId), termId, "placement:school:write");
-        return queryPlacements(auth,"school_org_id", schoolOrgId, termId, cooperationId, state, page, size);
+        schoolOrgId=uuid(schoolOrgId);termId=optionalId(termId);demandId=optionalId(demandId);cooperationId=optionalId(cooperationId);
+        requireSchoolRead(auth, schoolOrgId, termId);
+        filterSchoolOrgId=optionalId(filterSchoolOrgId);
+        if(filterSchoolOrgId!=null && !schoolOrgId.equals(filterSchoolOrgId)) throw failure(404,"RESOURCE_NOT_FOUND");
+        String resourceTerm=filterTerm("school_org_id",schoolOrgId,demandId,cooperationId);
+        if(resourceTerm!=null) requireSchoolRead(auth,schoolOrgId,resourceTerm);
+        return queryPlacements(auth,"school_org_id", schoolOrgId, termId!=null?termId:resourceTerm, demandId, cooperationId, state, filterSchoolOrgId, query, page, size);
     }
 
     @Transactional(readOnly = true)
@@ -425,33 +471,45 @@ public class PlacementService {
     public Page<PlacementView> listForEnterprise(Authentication auth, String enterpriseOrgId,
                                                   String termId, String cooperationId, String state,
                                                   int page, int size) {
+        return listForEnterprise(auth, enterpriseOrgId, termId, null, cooperationId, state, page, size);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PlacementView> listForEnterprise(Authentication auth, String enterpriseOrgId,
+                                                  String termId, String demandId, String cooperationId, String state,
+                                                  int page, int size) {
+        return listForEnterprise(auth,enterpriseOrgId,termId,demandId,cooperationId,state,null,null,page,size);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PlacementView> listForEnterprise(Authentication auth,String enterpriseOrgId,String termId,String demandId,
+                                                  String cooperationId,String state,String schoolOrgId,String query,int page,int size) {
         page(page, size);
+        enterpriseOrgId=uuid(enterpriseOrgId);termId=optionalId(termId);demandId=optionalId(demandId);cooperationId=optionalId(cooperationId);
         requireEnterpriseRead(auth, enterpriseOrgId);
-        return queryPlacements(auth,"enterprise_org_id", enterpriseOrgId, termId, cooperationId, state, page, size);
+        schoolOrgId=optionalId(schoolOrgId);
+        if(schoolOrgId!=null && jdbc.queryForObject("SELECT COUNT(*) FROM demands WHERE enterprise_org_id=? AND school_org_id=? AND soft_deleted_at IS NULL",Integer.class,enterpriseOrgId,schoolOrgId)==0)
+            throw failure(404,"RESOURCE_NOT_FOUND");
+        filterTerm("enterprise_org_id",enterpriseOrgId,demandId,cooperationId);
+        return queryPlacements(auth,"enterprise_org_id", enterpriseOrgId, termId, demandId, cooperationId, state, schoolOrgId, query, page, size);
     }
 
     @Transactional(readOnly = true)
     public PlacementSummary summaryForSchool(Authentication auth, String schoolOrgId,
                                               String demandId) {
-        uuid(demandId);
-        scope.require(auth, uuid(schoolOrgId), null, "placement:school:write");
-        int exists = jdbc.queryForObject(
-            "SELECT COUNT(*) FROM demands WHERE id=? AND school_org_id=? AND soft_deleted_at IS NULL",
-            Integer.class, demandId, schoolOrgId);
-        if (exists == 0) throw failure(404, "RESOURCE_NOT_FOUND");
-        scope.require(auth,schoolOrgId,jdbc.queryForObject("SELECT term_id FROM demands WHERE id=?",String.class,demandId),"placement:school:write");
+        demandId=uuid(demandId);schoolOrgId=uuid(schoolOrgId);
+        requireSchoolRead(auth, schoolOrgId, null);
+        String termId=filterTerm("school_org_id",schoolOrgId,demandId,null);
+        requireSchoolRead(auth,schoolOrgId,termId);
         return buildSummary(demandId);
     }
 
     @Transactional(readOnly = true)
     public PlacementSummary summaryForEnterprise(Authentication auth, String enterpriseOrgId,
                                                   String demandId) {
-        uuid(demandId);
+        demandId=uuid(demandId);enterpriseOrgId=uuid(enterpriseOrgId);
         requireEnterpriseRead(auth, enterpriseOrgId);
-        int exists = jdbc.queryForObject(
-            "SELECT COUNT(*) FROM demands WHERE id=? AND enterprise_org_id=? AND soft_deleted_at IS NULL",
-            Integer.class, demandId, enterpriseOrgId);
-        if (exists == 0) throw failure(404, "RESOURCE_NOT_FOUND");
+        filterTerm("enterprise_org_id",enterpriseOrgId,demandId,null);
         return buildSummary(demandId);
     }
 
@@ -460,7 +518,7 @@ public class PlacementService {
                                                    String placementId) {
         var p = readPlacement(placementId);
         if (!p.schoolOrgId().equals(uuid(schoolOrgId))) throw failure(404, "RESOURCE_NOT_FOUND");
-        scope.require(auth, schoolOrgId, p.termId(), "placement:school:write");
+        requireSchoolRead(auth, uuid(schoolOrgId), p.termId());
         return buildLink(p);
     }
 
@@ -473,7 +531,127 @@ public class PlacementService {
         return buildLink(p);
     }
 
+    @Transactional(readOnly=true)
+    public ProgressPage<ProgressCounters> progressForSchool(Authentication actor,String org,String schoolFilter,String termFilter,
+            String demandFilter,String cooperationFilter,String status,String query,int page,int size) {
+        return readProgress(actor,org,true,schoolFilter,termFilter,demandFilter,cooperationFilter,status,query,page,size);
+    }
+
+    @Transactional(readOnly=true)
+    public ProgressPage<ProgressCounters> progressForEnterprise(Authentication actor,String org,String schoolFilter,String termFilter,
+            String demandFilter,String cooperationFilter,String status,String query,int page,int size) {
+        return readProgress(actor,org,false,schoolFilter,termFilter,demandFilter,cooperationFilter,status,query,page,size);
+    }
+
+    private ProgressPage<ProgressCounters> readProgress(Authentication actor,String org,boolean school,String schoolFilter,String termFilter,
+            String demandFilter,String cooperationFilter,String status,String query,int page,int size) {
+        org=uuid(org);page(page,size);schoolFilter=optionalId(schoolFilter);termFilter=optionalId(termFilter);
+        demandFilter=optionalId(demandFilter);cooperationFilter=optionalId(cooperationFilter);
+        if(status!=null && !status.isBlank() && !Set.of("FULL","SHORT","WAITING","REJECTED","NO_COOP").contains(status)) throw failure(400,"SCHEMA_VALIDATION");
+        String search=query==null || query.isBlank()?"":text(query,150).toLowerCase(Locale.ROOT);
+        if(school) {requireSchoolRead(actor,org,termFilter);if(schoolFilter!=null && !schoolFilter.equals(org)) throw failure(404,"RESOURCE_NOT_FOUND");}
+        else requireEnterpriseRead(actor,org);
+        String resourceTerm=filterTerm(school?"school_org_id":"enterprise_org_id",org,demandFilter,cooperationFilter);
+        if(school && resourceTerm!=null) requireSchoolRead(actor,org,resourceTerm);
+        var rows=jdbc.query("SELECT d.id,JSON_UNQUOTE(JSON_EXTRACT(d.data_json,'$.title')) title,d.school_org_id,s.name school_name,d.enterprise_org_id,e.name enterprise_name,d.term_id,t.term_code,c.id cooperation_id,c.state " +
+            "FROM demands d JOIN organizations s ON s.id=d.school_org_id JOIN organizations e ON e.id=d.enterprise_org_id " +
+            "JOIN terms t ON t.id=d.term_id AND t.school_org_id=d.school_org_id LEFT JOIN cooperations c ON c.demand_id=d.id AND c.school_org_id=d.school_org_id AND c.enterprise_org_id=d.enterprise_org_id AND c.term_id=d.term_id " +
+            "WHERE d."+(school?"school_org_id":"enterprise_org_id")+"=? AND d.soft_deleted_at IS NULL ORDER BY d.created_at DESC,d.id ASC",
+            (r,n)->new ProgressDemand(r.getString("id"),r.getString("title"),r.getString("school_org_id"),r.getString("school_name"),r.getString("enterprise_org_id"),r.getString("enterprise_name"),r.getString("term_id"),r.getString("term_code"),r.getString("cooperation_id"),r.getString("state")),org);
+        List<ProgressDemand> visible=new ArrayList<>();
+        for(var row:rows) {
+            if(school) try {requireSchoolRead(actor,org,row.term());}
+            catch(OperationFailure denied) {if(denied.status==403 || denied.status==404) continue;throw denied;}
+            visible.add(row);
+        }
+        if(schoolFilter!=null) {
+            boolean found=false;for(var row:visible) if(row.school().equals(schoolFilter)) {found=true;break;}
+            if(!found) throw failure(404,"RESOURCE_NOT_FOUND");
+        }
+        List<Progress<ProgressCounters>> result=new ArrayList<>();
+        OperationalCounters operationalTotals=OperationalCounters.empty();SchoolProgressCounters schoolTotals=SchoolProgressCounters.empty();
+        for(var row:visible) {
+            if(schoolFilter!=null && !schoolFilter.equals(row.school()) || termFilter!=null && !termFilter.equals(row.term())
+                || demandFilter!=null && !demandFilter.equals(row.id()) || cooperationFilter!=null && !cooperationFilter.equals(row.cooperation())) continue;
+            if(!search.isEmpty() && !(row.id()+" "+row.title()+" "+Objects.toString(row.cooperation(),"")).toLowerCase(Locale.ROOT).contains(search)
+                && jdbc.queryForObject("SELECT COUNT(*) FROM placements WHERE demand_id=? AND cooperation_id=? AND school_org_id=? AND enterprise_org_id=? AND term_id=? " +
+                    "AND LOCATE(LOWER(?),LOWER(CONCAT_WS(' ',id,proposal_item_id,student_user_id)))>0",Integer.class,row.id(),row.cooperation(),row.school(),row.enterprise(),row.term(),search)==0) continue;
+            // The enterprise branch never computes or serializes the school's nomination/consent pipeline.
+            ProgressCounters counters;
+            if(!"APPROVED".equals(row.state())) counters=school?SchoolProgressCounters.empty():OperationalCounters.empty();
+            else if(school) counters=schoolProgressCounters(row);
+            else {
+                var summary=buildSummary(row.id());
+                counters=new OperationalCounters(summary.target(),summary.placed(),summary.pending(),summary.remaining());
+            }
+            String aggregate=row.cooperation()==null?"NO_COOP":"REJECTED".equals(row.state())?"REJECTED":!"APPROVED".equals(row.state())?"WAITING"
+                :counters.target()>0 && counters.placed()>=counters.target()?"FULL":counters.pending()>0?"WAITING":"SHORT";
+            if(status!=null && !status.isBlank() && !status.equals(aggregate)) continue;
+            result.add(new Progress<>(row.id(),row.title(),row.school(),row.schoolName(),row.enterprise(),row.enterpriseName(),row.term(),row.termCode(),row.cooperation(),row.state(),aggregate,counters));
+            if(school) schoolTotals=schoolTotals.plus((SchoolProgressCounters)counters);
+            else operationalTotals=operationalTotals.plus(counters);
+        }
+        int from=Math.min(page*size,result.size());
+        return new ProgressPage<>(List.copyOf(result.subList(from,Math.min(from+size,result.size()))),page,size,result.size(),(result.size()+size-1)/size,
+            school?schoolTotals:operationalTotals,progressChoices(visible,true),progressChoices(visible,false));
+    }
+
+    /** Called only after the exact demand-term delegation guard; never used for enterprise reads. */
+    private SchoolProgressCounters schoolProgressCounters(ProgressDemand row) {
+        var summary=buildSummary(row.id());
+        var counts=jdbc.queryForMap("SELECT " +
+            "COUNT(DISTINCT CASE WHEN i.state='DECLINED' THEN i.student_user_id END) declined," +
+            "COUNT(DISTINCT CASE WHEN i.state IN ('ENTERPRISE_ACCEPTED','PLACED') THEN i.student_user_id END) accepted " +
+            "FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id WHERE b.cooperation_id=?",row.cooperation());
+        int declined=((Number)counts.get("declined")).intValue(),accepted=((Number)counts.get("accepted")).intValue();
+        int pendingApproval=jdbc.queryForObject("SELECT COUNT(DISTINCT student_user_id) FROM placements WHERE cooperation_id=? AND demand_id=? AND school_org_id=? AND enterprise_org_id=? AND term_id=? AND state='PENDING_APPROVAL'",
+            Integer.class,row.cooperation(),row.id(),row.school(),row.enterprise(),row.term());
+        var candidates=jdbc.query("SELECT i.* FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id WHERE b.cooperation_id=? AND i.state='ENTERPRISE_ACCEPTED' AND i.reservation_until>? " +
+            "AND EXISTS(SELECT 1 FROM internship_invitations v WHERE v.id=i.invitation_id AND v.student_user_id=i.student_user_id AND v.state='ACCEPTED') " +
+            "AND NOT EXISTS(SELECT 1 FROM placements p WHERE p.proposal_item_id=i.id)",
+            (r,n)->new ProposalService.Item(r.getString("id"),r.getString("batch_id"),r.getString("student_user_id"),row.cooperation(),r.getString("state"),r.getLong("version"),instant(r,"reservation_until"),r.getString("invitation_id"),r.getString("share_id"),r.getString("placement_id")),row.cooperation(),utc(clock.instant()));
+        int pendingCreation=0;if(!candidates.isEmpty()) {
+            var cooperation=cooperations.read(row.cooperation());
+            for(var candidate:candidates) {var consent=consentSummary.read(candidate,cooperation);if(consent.activeConsentId()!=null && consent.shareIsActive()) pendingCreation++;}
+        }
+        return new SchoolProgressCounters(summary.target(),summary.placed(),summary.pending(),summary.remaining(),summary.pending(),declined,
+            accepted,pendingCreation,pendingApproval,Math.max(0,summary.target()-summary.placed()-summary.pending()));
+    }
+
+    private static List<ProgressChoice> progressChoices(List<ProgressDemand> rows,boolean school) {
+        Map<String,String> names=new TreeMap<>();for(var row:rows) names.put(school?row.school():row.term(),school?row.schoolName():row.termCode());
+        return names.entrySet().stream().map(entry->new ProgressChoice(entry.getKey(),entry.getValue())).sorted(Comparator.comparing(ProgressChoice::name).thenComparing(ProgressChoice::id)).toList();
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private void requireSchoolRead(Authentication auth,String schoolOrgId,String termId) {
+        try {scope.require(auth,uuid(schoolOrgId),termId,"placement:school:write");}
+        catch(vn.utbridora.auth.operations.OperationFailure denied) {
+            if(denied.status!=403 && denied.status!=404) throw denied;
+            scope.require(auth,uuid(schoolOrgId),termId,"t3:workspace:read");
+        }
+    }
+
+    private static String optionalId(String value) {
+        return value==null || value.isBlank()?null:uuid(value);
+    }
+
+    /** Validate each reference against the selected owner before returning even an empty page. */
+    private String filterTerm(String column,String orgId,String demandId,String cooperationId) {
+        String term=null;
+        if(cooperationId!=null) {
+            var rows=jdbc.queryForList("SELECT term_id FROM cooperations WHERE id=? AND "+column+"=?",String.class,cooperationId,orgId);
+            if(rows.size()!=1) throw failure(404,"RESOURCE_NOT_FOUND");
+            term=rows.getFirst();
+        }
+        if(demandId!=null) {
+            var rows=jdbc.queryForList("SELECT JSON_UNQUOTE(JSON_EXTRACT(data_json,'$.termId')) FROM demands WHERE id=? AND "+column+"=? AND soft_deleted_at IS NULL",String.class,demandId,orgId);
+            if(rows.size()!=1 || rows.getFirst()==null || term!=null && !term.equals(rows.getFirst())) throw failure(404,"RESOURCE_NOT_FOUND");
+            term=rows.getFirst();
+        }
+        return term;
+    }
 
     private void requireEnterpriseRead(Authentication auth, String enterpriseOrgId) {
         uuid(enterpriseOrgId);
@@ -547,102 +725,64 @@ public class PlacementService {
         if (placed >= quantity) throw failure(409, "CAPACITY_EXCEEDED");
     }
 
-    private Page<PlacementView> queryPlacements(Authentication auth, String column, String orgId,
-                                                  String termId, String cooperationId, String state,
-                                                  int page, int size) {
-        if (termId != null && !termId.isBlank()) uuid(termId);
-        if (cooperationId != null && !cooperationId.isBlank()) uuid(cooperationId);
-        if (state != null && !state.isBlank() &&
-            !Set.of("PENDING_APPROVAL","APPROVED","ACTIVE","CANCELLED","COMPLETED").contains(state))
-            throw failure(400, "SCHEMA_VALIDATION");
-
-        // ── Hàng 79: filter + sort + pagination fully server-side ────────────
-        // Sort order: active/approved first (operational), then by effective_at DESC, then id ASC for stability.
-        String where = " WHERE " + column + "=?"
-            + " AND (?='' OR term_id=?)"
-            + " AND (?='' OR cooperation_id=?)"
-            + " AND (?='' OR state=?)";
-        String tFilter = termId        != null ? termId        : "";
-        String cFilter = cooperationId != null ? cooperationId : "";
-        String sFilter = state         != null ? state         : "";
-
-        // For school: pre-filter by delegation at DB level using a subquery, not in-memory loop.
-        // This avoids loading all IDs into memory for scope-checking.
-        String scopeClause = "";
-        Object[] extraArgs = new Object[0];
-        if (column.equals("school_org_id")) {
-            // Only include placements whose term the caller has active delegation for.
-            // Falls back to N+1 guard only when delegation check truly needs it.
-            scopeClause = " AND term_id IN (" +
-                "SELECT term_id FROM school_delegations " +
-                "WHERE user_id=? AND school_org_id=? AND active=1 " +
-                "AND CAST(valid_from AS DATETIME) <= UTC_TIMESTAMP(6) " +
-                "AND CAST(valid_until AS DATETIME) > UTC_TIMESTAMP(6)" +
-                ")";
-            extraArgs = new Object[]{ actor(auth), orgId };
+    private Page<PlacementView> queryPlacements(Authentication auth,String column,String orgId,
+            String termId,String demandId,String cooperationId,String state,String schoolOrgId,String query,int page,int size) {
+        if(termId!=null && !termId.isBlank()) uuid(termId);
+        if(demandId!=null && !demandId.isBlank()) uuid(demandId);
+        if(cooperationId!=null && !cooperationId.isBlank()) uuid(cooperationId);
+        if(state!=null && !state.isBlank() && !Set.of("PENDING_APPROVAL","APPROVED","ACTIVE","CANCELLED","COMPLETED").contains(state))
+            throw failure(400,"SCHEMA_VALIDATION");
+        String from=" FROM placements p JOIN demands d ON d.id=p.demand_id AND d.enterprise_org_id=p.enterprise_org_id AND d.school_org_id=p.school_org_id AND d.term_id=p.term_id " +
+            "JOIN cooperations c ON c.id=p.cooperation_id AND c.demand_id=d.id AND c.school_org_id=p.school_org_id AND c.enterprise_org_id=p.enterprise_org_id AND c.term_id=p.term_id";
+        String where=" WHERE p."+column+"=? AND (?='' OR p.term_id=?) AND (?='' OR p.demand_id=?) AND (?='' OR p.cooperation_id=?) AND (?='' OR p.state=?)" +
+            " AND (?='' OR p.school_org_id=?) AND (?='' OR LOCATE(LOWER(?),LOWER(CONCAT_WS(' ',p.id,p.demand_id,p.cooperation_id,p.proposal_item_id,p.student_user_id,p.state,p.start_date,p.end_date,JSON_UNQUOTE(JSON_EXTRACT(d.data_json,'$.title')))))>0)";
+        String t=termId==null?"":termId,d=demandId==null?"":demandId,c=cooperationId==null?"":cooperationId;
+        String s=state==null || state.isBlank()?"":state,school=schoolOrgId==null?"":schoolOrgId,q=query==null || query.isBlank()?"":text(query,150);
+        List<Object> args=new ArrayList<>(List.of(orgId,t,t,d,d,c,c,s,s,school,school,q,q));
+        if(column.equals("school_org_id")) {
+            // Use the core guard, including permission and delegation ancestry, before SQL count/page.
+            List<String> allowedTerms=new ArrayList<>();
+            for(String term:jdbc.queryForList("SELECT DISTINCT p.term_id"+from+where,String.class,args.toArray())) {
+                try {requireSchoolRead(auth,orgId,term);allowedTerms.add(term);}
+                catch(OperationFailure denied) {if(denied.status!=403 && denied.status!=404) throw denied;}
+            }
+            if(allowedTerms.isEmpty()) return new Page<>(List.of(),page,size,0,0);
+            where+=" AND p.term_id IN ("+String.join(",",Collections.nCopies(allowedTerms.size(),"?"))+")";
+            args.addAll(allowedTerms);
         }
-
-        // Count total for pagination metadata (server-side, single query)
-        String countSql = "SELECT COUNT(*) FROM placements" + where + scopeClause;
-        Object[] countArgs = concat(new Object[]{orgId, tFilter, tFilter, cFilter, cFilter, sFilter, sFilter}, extraArgs);
-        int total = jdbc.queryForObject(countSql, Integer.class, countArgs);
-
-        // Fetch page with stable sort: FIELD() puts active states first, then by effective_at DESC, id ASC
-        String pageSql = "SELECT id FROM placements" + where + scopeClause
-            + " ORDER BY FIELD(state,'ACTIVE','APPROVED','PENDING_APPROVAL','COMPLETED','CANCELLED'),"
-            + " effective_at DESC, id ASC"
-            + " LIMIT ? OFFSET ?";
-        int offset = page * size;
-        Object[] pageArgs = concat(countArgs, new Object[]{size, offset});
-        var ids = jdbc.queryForList(pageSql, String.class, pageArgs);
-
-        // Batch-load placements to avoid N+1
-        var rows = ids.stream().map(this::readPlacement).toList();
-        return new Page<>(rows, page, size, total, (total + size - 1) / size);
-    }
-
-    /** Concatenate two Object arrays. */
-    private static Object[] concat(Object[] a, Object[] b) {
-        var result = new Object[a.length + b.length];
-        System.arraycopy(a, 0, result, 0, a.length);
-        System.arraycopy(b, 0, result, a.length, b.length);
-        return result;
+        long total=jdbc.queryForObject("SELECT COUNT(*)"+from+where,Long.class,args.toArray());
+        args.add(size);args.add(page*size);
+        var ids=jdbc.queryForList("SELECT p.id"+from+where+
+            " ORDER BY FIELD(p.state,'ACTIVE','APPROVED','PENDING_APPROVAL','COMPLETED','CANCELLED'),p.effective_at DESC,p.id ASC LIMIT ? OFFSET ?",
+            String.class,args.toArray());
+        return new Page<>(ids.stream().map(this::readPlacement).toList(),page,size,total,Math.toIntExact((total+size-1)/size));
     }
 
     private PlacementSummary buildSummary(String demandId) {
-        int target = jdbc.queryForObject(
-            "SELECT JSON_UNQUOTE(JSON_EXTRACT(data_json,'$.quantity')) FROM demands WHERE id=?",
-            Integer.class, demandId);
         String coopId = jdbc.queryForObject(
             "SELECT cooperation_id FROM demands WHERE id=?", String.class, demandId);
-
-        if (coopId == null) return new PlacementSummary(demandId, null, target, 0, 0, target);
-
-        // ── Hàng 83: immutable snapshot-based counts, no double-count ───────
-        // placed = DISTINCT placements in terminal-active states (APPROVED/ACTIVE/COMPLETED).
-        // These are immutable decisions: each proposalItemId maps to at most one such placement.
-        int placed = jdbc.queryForObject(
-            "SELECT COUNT(DISTINCT p.student_user_id) FROM placements p " +
-            "JOIN proposal_items i ON i.id=p.proposal_item_id " +
-            "JOIN proposal_batches b ON b.id=i.batch_id " +
-            "WHERE b.cooperation_id=? AND p.state IN ('APPROVED','ACTIVE','COMPLETED')",
+        var approvedTargets = coopId==null?List.<Integer>of():jdbc.queryForList(
+            // Submission snapshots are stored in cooperation_history in this checkout.
+            "SELECT JSON_UNQUOTE(JSON_EXTRACT(s.data_json,'$.demand.data.quantity')) FROM cooperation_history s " +
+            "WHERE s.cooperation_id=? AND s.operation='SUBMIT' AND EXISTS (" +
+            "SELECT 1 FROM cooperation_history d WHERE d.cooperation_id=s.cooperation_id AND d.submission_no=s.submission_no AND d.operation='APPROVE') " +
+            "ORDER BY s.submission_no DESC,s.created_at DESC,s.id ASC LIMIT 1",
             Integer.class, coopId);
-
-        // pending = students with PENDING_APPROVAL placement but no APPROVED/ACTIVE/COMPLETED one.
-        // Does NOT count CANCELLED — those are resolved and no longer pending.
-        // Uses p.student_user_id directly for correctness; avoids joining through proposal_items twice.
-        int pending = jdbc.queryForObject(
-            "SELECT COUNT(DISTINCT p.student_user_id) FROM placements p " +
-            "JOIN proposal_items i ON i.id=p.proposal_item_id " +
-            "JOIN proposal_batches b ON b.id=i.batch_id " +
-            "WHERE b.cooperation_id=? AND p.state='PENDING_APPROVAL' " +
-            "AND NOT EXISTS (" +
-            "  SELECT 1 FROM placements p2 " +
-            "  WHERE p2.student_user_id=p.student_user_id AND p2.term_id=p.term_id " +
-            "  AND p2.state IN ('APPROVED','ACTIVE','COMPLETED')" +
-            ")",
-            Integer.class, coopId);
-
+        int target = approvedTargets.isEmpty()?jdbc.queryForObject(
+            "SELECT JSON_UNQUOTE(JSON_EXTRACT(data_json,'$.quantity')) FROM demands WHERE id=?",
+            Integer.class, demandId):approvedTargets.getFirst();
+        int placed = coopId == null ? 0 : jdbc.queryForObject(
+            "SELECT COUNT(DISTINCT p.id) FROM placements p JOIN demands d ON d.id=p.demand_id AND d.school_org_id=p.school_org_id AND d.enterprise_org_id=p.enterprise_org_id AND d.term_id=p.term_id " +
+            "WHERE p.cooperation_id=? AND p.demand_id=? AND p.state IN ('APPROVED','ACTIVE','COMPLETED')",
+            Integer.class, coopId,demandId);
+        int pending = coopId == null ? 0 : jdbc.queryForObject(
+            "SELECT COUNT(DISTINCT i.student_user_id) " +
+            "FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id " +
+            "WHERE b.cooperation_id=? " +
+            "AND ((i.state IN ('RESERVED','INVITED','ACCEPTED','SHARED','ENTERPRISE_ACCEPTED') AND i.reservation_until>?) " +
+            "  OR EXISTS (SELECT 1 FROM placements p WHERE p.proposal_item_id=i.id AND p.state='PENDING_APPROVAL')) " +
+            "AND NOT EXISTS (SELECT 1 FROM placements p WHERE p.proposal_item_id=i.id AND p.state IN ('APPROVED','ACTIVE','COMPLETED','CANCELLED'))",
+            Integer.class, coopId, utc(clock.instant()));
         int remaining = Math.max(0, target - placed);
         return new PlacementSummary(demandId, coopId, target, placed, pending, remaining);
     }

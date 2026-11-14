@@ -87,12 +87,13 @@ public class SecurityConfig {
                .requestMatchers(HttpMethod.GET,"/api/v1/matching/runs/*/summary","/api/v1/matching/runs/*/summary.csv","/api/v1/matching/runs/*/summary.chart").authenticated()
                .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/cooperations/*/submit","/api/v1/enterprise/cooperations/*/reopen","/api/v1/school/cooperations/*/decision").authenticated()
                .requestMatchers(HttpMethod.DELETE,"/api/v1/school/delegations/*","/api/v1/t3/context-assignments/*").authenticated()
-               .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/cooperations/*/proposals","/api/v1/enterprise/proposals/*/profile","/api/v1/opportunities","/api/v1/opportunities/*").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/cooperations/*/proposals","/api/v1/enterprise/cooperations/*/proposal-batches","/api/v1/enterprise/proposals/*/profile","/api/v1/opportunities","/api/v1/opportunities/*").authenticated()
                .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/proposals/*/decision").authenticated()
                .requestMatchers(HttpMethod.PUT,"/api/v1/school/cooperations/*/publication").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/school/cooperations/*/publication").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/school/cooperations/*/nomination-candidates").authenticated()
                // T5-07 Placement state machine (both CP-T5UI1 header-based and path-variable routes)
+               .requestMatchers(HttpMethod.GET,"/api/v1/school/placements/progress","/api/v1/enterprise/placements/progress").authenticated()
                .requestMatchers(HttpMethod.POST,"/api/v1/school/placements","/api/v1/school/*/placements",
                    "/api/v1/placements/*/approve","/api/v1/placements/*/activate","/api/v1/placements/*/cancel").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/school/placements","/api/v1/school/placements/summary","/api/v1/school/placements/*/internship-link",

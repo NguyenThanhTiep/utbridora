@@ -35,6 +35,7 @@ public class ProposalService implements InternshipInvitationPort {
     public record Invite(Long expectedVersion,Instant expiresAt) {}
     public record EnterpriseDecision(Long expectedVersion,String decision,String reasonCode) {}
     public record EnterpriseItem(String proposalItemId,String cooperationId,String state,long version,String shareId,Instant reservationUntil) {}
+    public record EnterpriseBatch(String batchId,String cooperationId,int visibleProposalCount) {}
     public record ProfileTarget(Item item,String termId) {}
     private static final Set<String> ENTERPRISE_VISIBLE=Set.of("SHARED","ENTERPRISE_ACCEPTED","PLACED","DECLINED");
     private static final Set<String> ITEM_STATES=Set.of("RESERVED","INVITED","ACCEPTED","SHARED","ENTERPRISE_ACCEPTED","PLACED","DECLINED","EXPIRED","REVOKED");
@@ -134,14 +135,28 @@ public class ProposalService implements InternshipInvitationPort {
     @Transactional public Page<EnterpriseItem> enterpriseList(Authentication auth,String org,String coopId,String state,int page,int size) {
         page(page,size);enterprise(auth,org,false);var c=cooperations.read(coopId);owned(c,org);
         validateState(state);
-        var ids=jdbc.queryForList("SELECT i.id FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id WHERE b.cooperation_id=? AND i.share_id IS NOT NULL AND i.state IN ('SHARED','ENTERPRISE_ACCEPTED','PLACED','DECLINED') AND (? IS NULL OR i.state=?) ORDER BY i.id",String.class,coopId,state,state);
-        var visible=new ArrayList<EnterpriseItem>();
+        var visible=visibleEnterpriseItems(auth,c,state);
+        int from=Math.min(page*size,visible.size());
+        return new Page<>(visible.subList(from,Math.min(from+size,visible.size())).stream().map(ProposalService::enterpriseView).toList(),page,size,visible.size(),(visible.size()+size-1)/size);
+    }
+    @Transactional public Page<EnterpriseBatch> enterpriseBatches(Authentication auth,String org,String coopId,int page,int size) {
+        org=uuid(org);coopId=uuid(coopId);page(page,size);enterprise(auth,org,false);
+        var cooperation=cooperations.read(coopId);owned(cooperation,org);
+        var visible=visibleEnterpriseItems(auth,cooperation,null);
+        // One batch per cooperation. Its existence and count are visible only through currently shared items.
+        List<EnterpriseBatch> batches=visible.isEmpty()?List.of():List.of(new EnterpriseBatch(visible.getFirst().batchId(),coopId,visible.size()));
+        int from=Math.min(page*size,batches.size());
+        return new Page<>(batches.subList(from,Math.min(from+size,batches.size())),page,size,batches.size(),(batches.size()+size-1)/size);
+    }
+    /** Shared authority path for enterprise item and batch reads, before either counting or paging. */
+    private List<Item> visibleEnterpriseItems(Authentication auth,CooperationService.CooperationDto cooperation,String state) {
+        var ids=jdbc.queryForList("SELECT i.id FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id WHERE b.cooperation_id=? AND i.share_id IS NOT NULL AND i.state IN ('SHARED','ENTERPRISE_ACCEPTED','PLACED','DECLINED') AND (? IS NULL OR i.state=?) ORDER BY i.id",String.class,cooperation.cooperationId(),state,state);
+        var visible=new ArrayList<Item>();
         for(String id:ids) {
             var item=item(id);
-            if(ENTERPRISE_VISIBLE.contains(item.state()) && item.shareId()!=null && shareAccess.visible(auth,item,c)) visible.add(enterpriseView(item));
+            if(ENTERPRISE_VISIBLE.contains(item.state()) && item.shareId()!=null && shareAccess.visible(auth,item,cooperation)) visible.add(item);
         }
-        int from=Math.min(page*size,visible.size());
-        return new Page<>(visible.subList(from,Math.min(from+size,visible.size())),page,size,visible.size(),(visible.size()+size-1)/size);
+        return visible;
     }
     /** Internal target for the proposal-scoped profile endpoint; never serialized to enterprise clients. */
     @Transactional public ProfileTarget sharedProfileTarget(Authentication auth,String org,String id) {

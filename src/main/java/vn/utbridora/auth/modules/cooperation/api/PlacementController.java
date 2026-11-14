@@ -79,11 +79,14 @@ public class PlacementController {
             Authentication auth,
             @RequestHeader("X-Organization-Id") String schoolOrgId,
             @RequestParam(required = false) String termId,
+            @RequestParam(required = false) String demandId,
             @RequestParam(required = false) String cooperationId,
             @RequestParam(required = false) String state,
+            @RequestParam(name="schoolOrgId",required=false) String filterSchoolOrgId,
+            @RequestParam(name="q",required=false) String query,
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "25") int size) {
-        return placements.listForSchool(auth, schoolOrgId, termId, cooperationId, state, page, size);
+        return placements.listForSchool(auth, schoolOrgId, termId, demandId, cooperationId, state, filterSchoolOrgId, query, page, size);
     }
 
     @GetMapping("/api/v1/enterprise/placements")
@@ -91,11 +94,32 @@ public class PlacementController {
             Authentication auth,
             @RequestHeader("X-Organization-Id") String enterpriseOrgId,
             @RequestParam(required = false) String termId,
+            @RequestParam(required = false) String demandId,
             @RequestParam(required = false) String cooperationId,
             @RequestParam(required = false) String state,
+            @RequestParam(required=false) String schoolOrgId,
+            @RequestParam(name="q",required=false) String query,
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "25") int size) {
-        return placements.listForEnterprise(auth, enterpriseOrgId, termId, cooperationId, state, page, size);
+        return placements.listForEnterprise(auth, enterpriseOrgId, termId, demandId, cooperationId, state, schoolOrgId, query, page, size);
+    }
+
+    @GetMapping("/api/v1/school/placements/progress")
+    public ProgressPage<ProgressCounters> progressSchool(Authentication auth,@RequestHeader("X-Organization-Id") String org,
+            @RequestParam(required=false) String schoolOrgId,@RequestParam(required=false) String termId,
+            @RequestParam(required=false) String demandId,@RequestParam(required=false) String cooperationId,
+            @RequestParam(required=false) String status,@RequestParam(name="q",required=false) String query,
+            @RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="25") int size) {
+        return placements.progressForSchool(auth,org,schoolOrgId,termId,demandId,cooperationId,status,query,page,size);
+    }
+
+    @GetMapping("/api/v1/enterprise/placements/progress")
+    public ProgressPage<ProgressCounters> progressEnterprise(Authentication auth,@RequestHeader("X-Organization-Id") String org,
+            @RequestParam(required=false) String schoolOrgId,@RequestParam(required=false) String termId,
+            @RequestParam(required=false) String demandId,@RequestParam(required=false) String cooperationId,
+            @RequestParam(required=false) String status,@RequestParam(name="q",required=false) String query,
+            @RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="25") int size) {
+        return placements.progressForEnterprise(auth,org,schoolOrgId,termId,demandId,cooperationId,status,query,page,size);
     }
 
     @GetMapping("/api/v1/school/placements/summary")
@@ -137,11 +161,14 @@ public class PlacementController {
             Authentication auth,
             @PathVariable String schoolOrgId,
             @RequestParam(required = false) String termId,
+            @RequestParam(required = false) String demandId,
             @RequestParam(required = false) String cooperationId,
             @RequestParam(required = false) String state,
+            @RequestParam(name="schoolOrgId",required=false) String filterSchoolOrgId,
+            @RequestParam(name="q",required=false) String query,
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "25") int size) {
-        return placements.listForSchool(auth, schoolOrgId, termId, cooperationId, state, page, size);
+        return placements.listForSchool(auth, schoolOrgId, termId, demandId, cooperationId, state, filterSchoolOrgId, query, page, size);
     }
 
     @GetMapping("/api/v1/enterprise/{enterpriseOrgId}/placements")
@@ -149,11 +176,14 @@ public class PlacementController {
             Authentication auth,
             @PathVariable String enterpriseOrgId,
             @RequestParam(required = false) String termId,
+            @RequestParam(required = false) String demandId,
             @RequestParam(required = false) String cooperationId,
             @RequestParam(required = false) String state,
+            @RequestParam(required=false) String schoolOrgId,
+            @RequestParam(name="q",required=false) String query,
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "25") int size) {
-        return placements.listForEnterprise(auth, enterpriseOrgId, termId, cooperationId, state, page, size);
+        return placements.listForEnterprise(auth, enterpriseOrgId, termId, demandId, cooperationId, state, schoolOrgId, query, page, size);
     }
 
     @GetMapping("/api/v1/school/{schoolOrgId}/placements/summary")
