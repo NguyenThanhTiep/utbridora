@@ -585,7 +585,7 @@ public class PlacementService {
         // Count total for pagination metadata (server-side, single query)
         String countSql = "SELECT COUNT(*) FROM placements" + where + scopeClause;
         Object[] countArgs = concat(new Object[]{orgId, tFilter, tFilter, cFilter, cFilter, sFilter, sFilter}, extraArgs);
-        long total = jdbc.queryForObject(countSql, Long.class, countArgs);
+        int total = jdbc.queryForObject(countSql, Integer.class, countArgs);
 
         // Fetch page with stable sort: FIELD() puts active states first, then by effective_at DESC, id ASC
         String pageSql = "SELECT id FROM placements" + where + scopeClause
