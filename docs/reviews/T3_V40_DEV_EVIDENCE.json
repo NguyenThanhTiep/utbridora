@@ -1,0 +1,130 @@
+{
+    "recordedAt":  "2026-11-14T12:30:06.6456507+07:00",
+    "status":  "DEV_VERIFIED_NOT_DEPLOYED_NOT_QA",
+    "branch":  "feature/t3-week4",
+    "baseCommit":  "e480abc2bf0a7dd474487dbdff46c857b0cb40b5",
+    "t1SourceCommit":  "32478e6b4a7431b33989a8ac318a5cc46fd9eb4b",
+    "migration":  40,
+    "environment":  "JDK 21 / private MySQL 8.4 Testcontainers",
+    "unit":  {
+                 "passed":  1333,
+                 "skipReason":  "Windows symlink creation unavailable",
+                 "failed":  0,
+                 "tests":  1334,
+                 "errors":  0,
+                 "skipped":  1
+             },
+    "integration":  {
+                        "passed":  59,
+                        "failed":  0,
+                        "tests":  59,
+                        "errors":  0,
+                        "suites":  [
+                                       {
+                                           "suite":  "MigrationUpgradeIT",
+                                           "tests":  4,
+                                           "failures":  0,
+                                           "errors":  0,
+                                           "skipped":  0
+                                       },
+                                       {
+                                           "suite":  "T308SchemaUpgradeIT",
+                                           "tests":  1,
+                                           "failures":  0,
+                                           "errors":  0,
+                                           "skipped":  0
+                                       },
+                                       {
+                                           "suite":  "T310EvaluationRuntimeIT",
+                                           "tests":  15,
+                                           "failures":  0,
+                                           "errors":  0,
+                                           "skipped":  0
+                                       },
+                                       {
+                                           "suite":  "T311GradeRuntimeIT",
+                                           "tests":  20,
+                                           "failures":  0,
+                                           "errors":  0,
+                                           "skipped":  0
+                                       },
+                                       {
+                                           "suite":  "T311SchemaUpgradeIT",
+                                           "tests":  1,
+                                           "failures":  0,
+                                           "errors":  0,
+                                           "skipped":  0
+                                       },
+                                       {
+                                           "suite":  "Week3MigrationIT",
+                                           "tests":  1,
+                                           "failures":  0,
+                                           "errors":  0,
+                                           "skipped":  0
+                                       },
+                                       {
+                                           "suite":  "Week4ConvergenceIT",
+                                           "tests":  13,
+                                           "failures":  0,
+                                           "errors":  0,
+                                           "skipped":  0
+                                       },
+                                       {
+                                           "suite":  "Week4MigrationCollisionIT",
+                                           "tests":  3,
+                                           "failures":  0,
+                                           "errors":  0,
+                                           "skipped":  0
+                                       },
+                                       {
+                                           "suite":  "Week4SchemaReferenceIT",
+                                           "tests":  1,
+                                           "failures":  0,
+                                           "errors":  0,
+                                           "skipped":  0
+                                       }
+                                   ],
+                        "skipped":  0
+                    },
+    "legacyLineages":  13,
+    "week4PositiveLineages":  [
+                                  "clean",
+                                  "main37",
+                                  "T3 V38 old base layout",
+                                  "T3 V39 old base layout",
+                                  "T1 V38 old base layout"
+                              ],
+    "contractChecks":  {
+                           "pythonTestsPassed":  4,
+                           "failed":  0,
+                           "passed":  868
+                       },
+    "log":  {
+                "path":  "D:\\TeamCodeHKDN\\week4-convergence-final.log",
+                "sha256":  "7a6365389453c2ed75d5611d032e1e61cd8559f4f597aad2a27603206a1f4377",
+                "finishedAt":  "2026-11-14T12:27:51+07:00",
+                "result":  "BUILD SUCCESS"
+            },
+    "rawSourceSha256":  {
+                            "src/main/java/db/convergence/Week4Schema.java":  "cd5ce851a145427d8aa726c4a27260bd677d16a5785d98505da8baeb661e4226",
+                            "src/main/java/db/migration/base/V40__converge_week4_file_and_grade_lineages.java":  "e10630e1dac18409b865b3321e3f32a497ef38c46459a3319a34d5b4c3570424",
+                            "src/main/resources/db/convergence/week4-shapes.txt":  "ac5dac80b943d69e39987d6af3eed783f529b73567f0f79a8e1e3e9923ba7afc",
+                            "src/main/resources/db/migration/week4-t3/V38__t3_rubric_evaluation_history.sql":  "59756f32a40e155b8fa8ef619e9c0d4cef8dd918cd66f916c0984c635b612dbd",
+                            "src/main/resources/db/migration/week4-t3/V39__t3_grade_visibility.sql":  "d24ce3dc1ced8241e7c8f567f8481030d083010e5d2b623cbe3954e91b11691f",
+                            "src/main/resources/db/legacy/t1-week4/V38__durable_private_file_scans.sql":  "11642f9a5e86a965dae417e1bb33286e5e8a87edf1e68d52317aff3670523cc1",
+                            "src/test/java/vn/utbridora/auth/Week4ConvergenceIT.java":  "55aac8f4263e4092caba0b6f87f7362cc919716fa334d8491a8f176146cfeaa3",
+                            "src/test/java/vn/utbridora/auth/Week4SchemaReferenceIT.java":  "9e187f0a8a0c8deec9193f791e3e8aa9b057f6020b3ab78d1d4d0e54ca1dbf96",
+                            "src/test/java/vn/utbridora/auth/Week4MigrationCollisionIT.java":  "746aa9703561ea2d45bedd3999bc18400e69a13492b669ecb354921eaa1aca3f",
+                            "docs/contracts/v1.1/manifest.json":  "b1609b110cc8660440b3a5c4f5f171c4d99ae7ffc7590545c54be094e1ff4366"
+                        },
+    "limitations":  [
+                        "No shared database deployment or changes",
+                        "No scanner worker code merge/runtime acceptance",
+                        "No GitHub CI or human QA approval",
+                        "MySQL DDL recovery requires backup; no repair/reset/out-of-order",
+                        "Keep T1 scanner SQL only in legacy/t1-week4 when merging T1"
+                    ],
+    "committed":  false,
+    "pushed":  false,
+    "merged":  false
+}

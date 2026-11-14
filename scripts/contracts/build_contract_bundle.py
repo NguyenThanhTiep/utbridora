@@ -406,6 +406,7 @@ def build(check=False):
     # Path ordering on Windows is case-insensitive; use the same order as Linux CI.
     frozen += sorted((ROOT/'src/main').rglob('*.java'), key=lambda p: p.relative_to(ROOT).as_posix())
     frozen += sorted((ROOT/'src/main/resources/db').rglob('*.sql'), key=lambda p: p.relative_to(ROOT).as_posix())
+    frozen += sorted((ROOT/'src/main/resources/db/convergence').glob('*.txt'), key=lambda p: p.relative_to(ROOT).as_posix())
     frozen += [ROOT/'pom.xml',ROOT/'docs/openapi.json',ROOT/'docs/contracts/permission_matrix.csv']
     frozen += [ROOT/'src/main/resources/application.yml']
     errors = sorted(set(re.findall(r'\b(?:400|401|403|404|409|413|416|422|429|500|503)\s*([A-Z][A-Z0-9_]{2,})', text)))

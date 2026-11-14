@@ -92,6 +92,12 @@ public class JdbcEvaluationStore {
         v.scores().stream().flatMap(s -> s.evidenceFileIds().stream()).distinct().sorted().forEach(id ->
             jdbc.update("INSERT INTO internship_evaluation_files(evaluation_id,evaluation_version,file_id) VALUES (?,?,?)",v.evaluationId().toString(),v.version(),id.toString()));
     }
+    public void publish(EvaluationDto value,long expected,UUID actor,Instant now) {
+        if(value.state()!=EvaluationState.PUBLISHED) throw failure(409,"STATE_CONFLICT");
+        append(value,expected,actor,now);
+        if(jdbc.update("UPDATE internship_evaluations SET published_version=? WHERE id=? AND current_version=?",
+                value.version(),value.evaluationId().toString(),value.version())!=1) throw failure(409,"VERSION_CONFLICT");
+    }
     public boolean attached(UUID evaluation, String fileId) {
         return jdbc.queryForObject("SELECT COUNT(*) FROM internship_evaluation_files WHERE evaluation_id=? AND file_id=?",Long.class,evaluation.toString(),fileId)>0;
     }

@@ -32,14 +32,21 @@ public class WorkspaceAuthority implements CoreWorkspaceAccess.BusinessAuthority
         String user=actor(actor);
         if(!core.isSelf(actor,user)) throw new WorkspaceRuleException(UNAUTHENTICATED);
         return jdbc.queryForList("SELECT id FROM internship_context_assignments WHERE user_id=? ORDER BY id",String.class,user)
-            .stream().map(this::load).filter(Objects::nonNull).filter(g->valid(g,new HashSet<>())).map(Grant::value).toList();
+            .stream().map(this::load).filter(Objects::nonNull).filter(g->valid(g,new HashSet<>(),true)).map(Grant::value).toList();
     }
     public Assignment selected(Authentication actor) {
+        return selected(actor,false);
+    }
+    /** Scoped HR is accepted only by the grade policy boundary, never by legacy broad HR operations. */
+    public Assignment selectedGradeHr(Authentication actor) {
+        return selected(actor,true);
+    }
+    private Assignment selected(Authentication actor,boolean scopedHr) {
         var attributes=RequestContextHolder.getRequestAttributes();
         String id=attributes instanceof ServletRequestAttributes web?web.getRequest().getHeader("X-Context-Assignment-Id"):null;
         if(id==null || !id.matches("[0-9a-fA-F-]{36}")) throw new WorkspaceRuleException(DENIED);
         Grant grant=load(id);
-        if(!core.isSelf(actor,actor(actor)) || grant==null || !grant.value.userId.equals(actor(actor)) || !valid(grant,new HashSet<>())) throw new WorkspaceRuleException(DENIED);
+        if(!core.isSelf(actor,actor(actor)) || grant==null || !grant.value.userId.equals(actor(actor)) || !valid(grant,new HashSet<>(),scopedHr)) throw new WorkspaceRuleException(DENIED);
         if(!core.holdOrganization(actor,grant.value.scope.enterpriseOrgId,Role.ENTERPRISE,"t3:workspace:read")) throw new WorkspaceRuleException(DENIED);
         return grant.value;
     }
@@ -90,6 +97,9 @@ public class WorkspaceAuthority implements CoreWorkspaceAccess.BusinessAuthority
         } catch(WorkspaceRuleException denied) {return false;}
     }
     private boolean valid(Grant grant,Set<String> seen) {
+        return valid(grant,seen,false);
+    }
+    private boolean valid(Grant grant,Set<String> seen,boolean scopedHr) {
         Assignment a=grant.value;
         if(!seen.add(a.id) || seen.size()>4 || !a.active || a.validFrom.isAfter(Instant.now()) || !Instant.now().isBefore(a.validUntil)) return false;
         Authentication subject=core.currentSubject(a.userId).orElse(null);
@@ -107,11 +117,15 @@ public class WorkspaceAuthority implements CoreWorkspaceAccess.BusinessAuthority
         Assignment p=parent.value;
         if(!a.grantedBy.equals(p.userId) || a.userId.equals(a.grantedBy) || !same(a.scope,p.scope)
             || a.validFrom.isBefore(p.validFrom) || a.validUntil.isAfter(p.validUntil)) return false;
-        return a.kind.equals("HR")?p.kind.equals("COORDINATOR") && a.scope.groupId==null && a.scope.caseId==null
+        return a.kind.equals("HR")?p.kind.equals("COORDINATOR") && (a.scope.groupId==null && a.scope.caseId==null || scopedHr && validGradeScope(a.scope))
             :a.kind.equals("MENTOR") && p.kind.equals("HR") && grant.invitationAccepted && a.scope.groupId!=null
                 && jdbc.queryForObject("SELECT COUNT(*) FROM internship_groups g JOIN internship_cohorts c ON c.id=g.cohort_id WHERE g.id=? AND c.enterprise_org_id=? AND c.school_org_id=? AND c.term_id=?",Integer.class,
                     a.scope.groupId,a.scope.enterpriseOrgId,a.scope.schoolOrgId,a.scope.termId)==1
                 && (a.scope.caseId==null || jdbc.queryForObject("SELECT COUNT(*) FROM internship_cohort_cases WHERE group_id=? AND case_id=?",Integer.class,a.scope.groupId,a.scope.caseId)==1);
+    }
+    boolean validGradeScope(Scope s) {
+        return s.groupId()!=null && jdbc.queryForObject("SELECT COUNT(*) FROM internship_groups g JOIN internship_cohorts c ON c.id=g.cohort_id WHERE g.id=? AND c.enterprise_org_id=? AND c.school_org_id=? AND c.term_id=?",Integer.class,s.groupId(),s.enterpriseOrgId(),s.schoolOrgId(),s.termId())==1
+            && (s.caseId()==null || currentCaseGroup(UUID.fromString(s.caseId()),s.groupId()));
     }
     private Grant load(String id) {
         if(id==null) return null;

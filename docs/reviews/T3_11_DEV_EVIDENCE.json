@@ -1,0 +1,113 @@
+﻿{
+    "task":  "T3-11",
+    "owner":  "DEV06 - Le Nguyen Nhat Duy",
+    "recordedAt":  "2026-11-14T11:06:35.2170029+07:00",
+    "branch":  "feature/t3-week4",
+    "baseCommit":  "e480abc2bf0a7dd474487dbdff46c857b0cb40b5",
+    "status":  "DEV_IMPLEMENTED_TESTED_NOT_QA",
+    "committed":  false,
+    "pushed":  false,
+    "merged":  false,
+    "java":  "Temurin 21.0.13+9-LTS",
+    "database":  "Private MySQL 8.4 Testcontainers",
+    "unitTests":  {
+                      "passed":  1333,
+                      "skipReason":  "OS does not permit creating symlinks",
+                      "errors":  0,
+                      "tests":  1334,
+                      "failures":  0,
+                      "skipped":  1
+                  },
+    "integrationSuites":  [
+                              {
+                                  "suite":  "T311GradeRuntimeIT",
+                                  "tests":  20,
+                                  "failures":  0,
+                                  "errors":  0,
+                                  "skipped":  0
+                              },
+                              {
+                                  "suite":  "T311SchemaUpgradeIT",
+                                  "tests":  1,
+                                  "failures":  0,
+                                  "errors":  0,
+                                  "skipped":  0
+                              },
+                              {
+                                  "suite":  "T310EvaluationRuntimeIT",
+                                  "tests":  15,
+                                  "failures":  0,
+                                  "errors":  0,
+                                  "skipped":  0
+                              },
+                              {
+                                  "suite":  "T310SchemaUpgradeIT",
+                                  "tests":  1,
+                                  "failures":  0,
+                                  "errors":  0,
+                                  "skipped":  0
+                              },
+                              {
+                                  "suite":  "T308CommentRuntimeIT",
+                                  "tests":  7,
+                                  "failures":  0,
+                                  "errors":  0,
+                                  "skipped":  0
+                              },
+                              {
+                                  "suite":  "T308ReportRuntimeIT",
+                                  "tests":  8,
+                                  "failures":  0,
+                                  "errors":  0,
+                                  "skipped":  0
+                              },
+                              {
+                                  "suite":  "T307SubmissionRuntimeIT",
+                                  "tests":  20,
+                                  "failures":  0,
+                                  "errors":  0,
+                                  "skipped":  0
+                              },
+                              {
+                                  "suite":  "InternshipRuntimeIT",
+                                  "tests":  12,
+                                  "failures":  0,
+                                  "errors":  0,
+                                  "skipped":  1
+                              },
+                              {
+                                  "suite":  "Week3MigrationIT",
+                                  "tests":  1,
+                                  "failures":  0,
+                                  "errors":  0,
+                                  "skipped":  0
+                              }
+                          ],
+    "integrationSkipReason":  "InternshipRuntimeIT browser case requires frontend.e2e; backend scope only",
+    "contracts":  {
+                      "passed":  868,
+                      "pythonTests":  4,
+                      "checks":  868,
+                      "manifestSha256":  "32636738f55ab7d2c0d973874c4d423d4b0a0bc8784c348f374de1a060d3f62e",
+                      "failed":  0,
+                      "frozenPackSha256":  "805b2db30c7a9d4acd76c3d4ed93eeefa149d121a9848f846441294101c68012"
+                  },
+    "logs":  [
+                 {
+                     "path":  "D:\\TeamCodeHKDN\\t3-11-final-verify.log",
+                     "mavenResult":  "BUILD SUCCESS",
+                     "sha256":  "9952bab5826a78972ce8014ac40ff5c7ba81165db26714b7a406b4ddf1924c35"
+                 },
+                 {
+                     "path":  "D:\\TeamCodeHKDN\\t3-11-scope-regression.log",
+                     "mavenResult":  "BUILD SUCCESS",
+                     "sha256":  "fb88bf8788674066f6b5a892fc1b2111f16603c2cadb71a72039617b51d35071"
+                 }
+             ],
+    "limitations":  [
+                        "Synthetic ACTIVE placements and CLEAN file fixtures are not T5/antivirus production evidence",
+                        "V38 collision with T1 scanner branch requires integration coordination",
+                        "No shared demo database changed; no browser UI/QA/remote CI acceptance"
+                    ],
+    "shellNote":  "PowerShell wrapper returned 1 after native stderr redirection; Maven log BUILD SUCCESS and XML reports confirm both completed runs."
+}

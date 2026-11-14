@@ -1,0 +1,218 @@
+@@scanner-before
+CHECK	files	chk_file_size	YES	(`size_bytes` >= 0)
+COLUMN	files	classification	9	varchar(32)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	files	content_type	6	varchar(150)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	files	created_at	11	datetime(6)	NO	<NULL>		<NULL>	<NULL>	
+COLUMN	files	deleted_at	12	datetime(6)	YES	<NULL>		<NULL>	<NULL>	
+COLUMN	files	id	1	varchar(36)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	files	organization_id	3	varchar(36)	YES	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	files	original_name	5	varchar(255)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	files	owner_user_id	2	varchar(36)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	files	scan_status	10	varchar(32)	NO	PENDING		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	files	sha256	8	char(64)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	files	size_bytes	7	bigint	NO	<NULL>		<NULL>	<NULL>	
+COLUMN	files	storage_key	4	varchar(512)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+FK	files	fk_files_org	NO ACTION	NO ACTION
+FK	files	fk_files_owner	NO ACTION	NO ACTION
+INDEX	files	PRIMARY	0	1	id	<NULL>	BTREE	YES
+INDEX	files	ix_files_org	1	1	organization_id	<NULL>	BTREE	YES
+INDEX	files	ix_files_org	1	2	created_at	<NULL>	BTREE	YES
+INDEX	files	ix_files_owner	1	1	owner_user_id	<NULL>	BTREE	YES
+INDEX	files	ix_files_owner	1	2	created_at	<NULL>	BTREE	YES
+INDEX	files	storage_key	0	1	storage_key	<NULL>	BTREE	YES
+KEY	files	PRIMARY	id	1	<NULL>	<NULL>
+KEY	files	fk_files_org	organization_id	1	organizations	id
+KEY	files	fk_files_owner	owner_user_id	1	users	id
+KEY	files	storage_key	storage_key	1	<NULL>	<NULL>
+TABLE	files	InnoDB	utf8mb4_0900_ai_ci
+@@scanner
+CHECK	files	chk_file_size	YES	(`size_bytes` >= 0)
+CHECK	files	ck_file_scan_attempt	YES	(`scan_attempt` between 0 and 4)
+CHECK	files	ck_file_scan_lease	YES	((`scan_lease_id` is null) = (`scan_lease_until` is null))
+CHECK	files	ck_file_version	YES	(`version` between 1 and 9007199254740991)
+COLUMN	files	classification	9	varchar(32)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	files	content_type	6	varchar(150)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	files	created_at	11	datetime(6)	NO	<NULL>		<NULL>	<NULL>	
+COLUMN	files	deleted_at	12	datetime(6)	YES	<NULL>		<NULL>	<NULL>	
+COLUMN	files	id	1	varchar(36)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	files	organization_id	3	varchar(36)	YES	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	files	original_name	5	varchar(255)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	files	owner_user_id	2	varchar(36)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	files	scan_attempt	13	int	NO	0		<NULL>	<NULL>	
+COLUMN	files	scan_lease_id	16	varchar(36)	YES	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	files	scan_lease_until	17	datetime(6)	YES	<NULL>		<NULL>	<NULL>	
+COLUMN	files	scan_next_attempt_at	15	datetime(6)	YES	<NULL>		<NULL>	<NULL>	
+COLUMN	files	scan_status	10	varchar(32)	NO	PENDING		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	files	scanner_reason_code	14	varchar(64)	YES	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	files	sha256	8	char(64)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	files	size_bytes	7	bigint	NO	<NULL>		<NULL>	<NULL>	
+COLUMN	files	storage_key	4	varchar(512)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	files	version	18	bigint	NO	1		<NULL>	<NULL>	
+FK	files	fk_files_org	NO ACTION	NO ACTION
+FK	files	fk_files_owner	NO ACTION	NO ACTION
+INDEX	files	PRIMARY	0	1	id	<NULL>	BTREE	YES
+INDEX	files	ix_file_scan_due	1	1	scan_status	<NULL>	BTREE	YES
+INDEX	files	ix_file_scan_due	1	2	deleted_at	<NULL>	BTREE	YES
+INDEX	files	ix_file_scan_due	1	3	scan_next_attempt_at	<NULL>	BTREE	YES
+INDEX	files	ix_file_scan_due	1	4	scan_lease_until	<NULL>	BTREE	YES
+INDEX	files	ix_files_org	1	1	organization_id	<NULL>	BTREE	YES
+INDEX	files	ix_files_org	1	2	created_at	<NULL>	BTREE	YES
+INDEX	files	ix_files_owner	1	1	owner_user_id	<NULL>	BTREE	YES
+INDEX	files	ix_files_owner	1	2	created_at	<NULL>	BTREE	YES
+INDEX	files	storage_key	0	1	storage_key	<NULL>	BTREE	YES
+KEY	files	PRIMARY	id	1	<NULL>	<NULL>
+KEY	files	fk_files_org	organization_id	1	organizations	id
+KEY	files	fk_files_owner	owner_user_id	1	users	id
+KEY	files	storage_key	storage_key	1	<NULL>	<NULL>
+TABLE	files	InnoDB	utf8mb4_0900_ai_ci
+@@evaluation
+CHECK	internship_evaluation_versions	internship_evaluation_versions_chk_1	YES	(`version` between 1 and 9007199254740991)
+CHECK	internship_evaluation_versions	internship_evaluation_versions_chk_2	YES	(`revision_no` >= 1)
+CHECK	internship_evaluation_versions	internship_evaluation_versions_chk_3	YES	(`state` in (_utf8mb4\'DRAFT\',_utf8mb4\'SUBMITTED\',_utf8mb4\'PUBLISHED\'))
+CHECK	internship_evaluation_versions	internship_evaluation_versions_chk_4	YES	(`total100` between 0 and 100)
+CHECK	internship_evaluation_versions	internship_evaluation_versions_chk_5	YES	json_valid(`snapshot_json`)
+CHECK	internship_evaluations	internship_evaluations_chk_1	YES	((`current_version` is null) or (`current_version` between 1 and 9007199254740991))
+CHECK	internship_evaluations	internship_evaluations_chk_2	YES	((`published_version` is null) or (`published_version` between 1 and 9007199254740991))
+CHECK	internship_rubric_templates	internship_rubric_templates_chk_1	YES	(`template_version` between 0 and 9007199254740991)
+CHECK	internship_rubric_templates	internship_rubric_templates_chk_2	YES	json_valid(`template_json`)
+COLUMN	internship_evaluation_files	evaluation_id	1	varchar(36)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	internship_evaluation_files	evaluation_version	2	bigint	NO	<NULL>		<NULL>	<NULL>	
+COLUMN	internship_evaluation_files	file_id	3	varchar(36)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	internship_evaluation_versions	created_at	10	datetime(6)	NO	<NULL>		<NULL>	<NULL>	
+COLUMN	internship_evaluation_versions	created_by	9	varchar(36)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	internship_evaluation_versions	evaluation_id	1	varchar(36)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	internship_evaluation_versions	revision_no	3	int	NO	<NULL>		<NULL>	<NULL>	
+COLUMN	internship_evaluation_versions	snapshot_json	7	longtext	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	internship_evaluation_versions	state	4	varchar(16)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	internship_evaluation_versions	template_id	5	varchar(36)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	internship_evaluation_versions	template_version	6	bigint	NO	<NULL>		<NULL>	<NULL>	
+COLUMN	internship_evaluation_versions	total100	8	decimal(5,2)	NO	<NULL>		<NULL>	<NULL>	
+COLUMN	internship_evaluation_versions	version	2	bigint	NO	<NULL>		<NULL>	<NULL>	
+COLUMN	internship_evaluations	case_id	2	varchar(36)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	internship_evaluations	current_version	3	bigint	YES	<NULL>		<NULL>	<NULL>	
+COLUMN	internship_evaluations	id	1	varchar(36)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	internship_evaluations	published_version	4	bigint	YES	<NULL>		<NULL>	<NULL>	
+COLUMN	internship_rubric_templates	id	1	varchar(36)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	internship_rubric_templates	school_org_id	3	varchar(36)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	internship_rubric_templates	template_json	5	longtext	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	internship_rubric_templates	template_version	2	bigint	NO	<NULL>		<NULL>	<NULL>	
+COLUMN	internship_rubric_templates	term_id	4	varchar(36)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+FK	internship_evaluation_files	internship_evaluation_files_ibfk_1	NO ACTION	NO ACTION
+FK	internship_evaluation_files	internship_evaluation_files_ibfk_2	NO ACTION	NO ACTION
+FK	internship_evaluation_versions	internship_evaluation_versions_ibfk_1	NO ACTION	NO ACTION
+FK	internship_evaluation_versions	internship_evaluation_versions_ibfk_2	NO ACTION	NO ACTION
+FK	internship_evaluation_versions	internship_evaluation_versions_ibfk_3	NO ACTION	NO ACTION
+FK	internship_evaluations	fk_evaluation_current	NO ACTION	NO ACTION
+FK	internship_evaluations	fk_evaluation_published	NO ACTION	NO ACTION
+FK	internship_evaluations	internship_evaluations_ibfk_1	NO ACTION	NO ACTION
+FK	internship_rubric_templates	internship_rubric_templates_ibfk_1	NO ACTION	NO ACTION
+FK	internship_rubric_templates	internship_rubric_templates_ibfk_2	NO ACTION	NO ACTION
+INDEX	internship_evaluation_files	PRIMARY	0	1	evaluation_id	<NULL>	BTREE	YES
+INDEX	internship_evaluation_files	PRIMARY	0	2	evaluation_version	<NULL>	BTREE	YES
+INDEX	internship_evaluation_files	PRIMARY	0	3	file_id	<NULL>	BTREE	YES
+INDEX	internship_evaluation_files	file_id	1	1	file_id	<NULL>	BTREE	YES
+INDEX	internship_evaluation_versions	PRIMARY	0	1	evaluation_id	<NULL>	BTREE	YES
+INDEX	internship_evaluation_versions	PRIMARY	0	2	version	<NULL>	BTREE	YES
+INDEX	internship_evaluation_versions	created_by	1	1	created_by	<NULL>	BTREE	YES
+INDEX	internship_evaluation_versions	ix_evaluation_revision	1	1	evaluation_id	<NULL>	BTREE	YES
+INDEX	internship_evaluation_versions	ix_evaluation_revision	1	2	revision_no	<NULL>	BTREE	YES
+INDEX	internship_evaluation_versions	ix_evaluation_revision	1	3	version	<NULL>	BTREE	YES
+INDEX	internship_evaluation_versions	template_id	1	1	template_id	<NULL>	BTREE	YES
+INDEX	internship_evaluation_versions	template_id	1	2	template_version	<NULL>	BTREE	YES
+INDEX	internship_evaluations	PRIMARY	0	1	id	<NULL>	BTREE	YES
+INDEX	internship_evaluations	case_id	0	1	case_id	<NULL>	BTREE	YES
+INDEX	internship_evaluations	fk_evaluation_current	1	1	id	<NULL>	BTREE	YES
+INDEX	internship_evaluations	fk_evaluation_current	1	2	current_version	<NULL>	BTREE	YES
+INDEX	internship_evaluations	fk_evaluation_published	1	1	id	<NULL>	BTREE	YES
+INDEX	internship_evaluations	fk_evaluation_published	1	2	published_version	<NULL>	BTREE	YES
+INDEX	internship_rubric_templates	PRIMARY	0	1	id	<NULL>	BTREE	YES
+INDEX	internship_rubric_templates	PRIMARY	0	2	template_version	<NULL>	BTREE	YES
+INDEX	internship_rubric_templates	ix_rubric_scope	1	1	school_org_id	<NULL>	BTREE	YES
+INDEX	internship_rubric_templates	ix_rubric_scope	1	2	term_id	<NULL>	BTREE	YES
+INDEX	internship_rubric_templates	ix_rubric_scope	1	3	id	<NULL>	BTREE	YES
+INDEX	internship_rubric_templates	ix_rubric_scope	1	4	template_version	<NULL>	BTREE	YES
+INDEX	internship_rubric_templates	term_id	1	1	term_id	<NULL>	BTREE	YES
+KEY	internship_evaluation_files	PRIMARY	evaluation_id	1	<NULL>	<NULL>
+KEY	internship_evaluation_files	PRIMARY	evaluation_version	2	<NULL>	<NULL>
+KEY	internship_evaluation_files	PRIMARY	file_id	3	<NULL>	<NULL>
+KEY	internship_evaluation_files	internship_evaluation_files_ibfk_1	evaluation_id	1	internship_evaluation_versions	evaluation_id
+KEY	internship_evaluation_files	internship_evaluation_files_ibfk_1	evaluation_version	2	internship_evaluation_versions	version
+KEY	internship_evaluation_files	internship_evaluation_files_ibfk_2	file_id	1	files	id
+KEY	internship_evaluation_versions	PRIMARY	evaluation_id	1	<NULL>	<NULL>
+KEY	internship_evaluation_versions	PRIMARY	version	2	<NULL>	<NULL>
+KEY	internship_evaluation_versions	internship_evaluation_versions_ibfk_1	evaluation_id	1	internship_evaluations	id
+KEY	internship_evaluation_versions	internship_evaluation_versions_ibfk_2	template_id	1	internship_rubric_templates	id
+KEY	internship_evaluation_versions	internship_evaluation_versions_ibfk_2	template_version	2	internship_rubric_templates	template_version
+KEY	internship_evaluation_versions	internship_evaluation_versions_ibfk_3	created_by	1	users	id
+KEY	internship_evaluations	PRIMARY	id	1	<NULL>	<NULL>
+KEY	internship_evaluations	case_id	case_id	1	<NULL>	<NULL>
+KEY	internship_evaluations	fk_evaluation_current	current_version	2	internship_evaluation_versions	version
+KEY	internship_evaluations	fk_evaluation_current	id	1	internship_evaluation_versions	evaluation_id
+KEY	internship_evaluations	fk_evaluation_published	id	1	internship_evaluation_versions	evaluation_id
+KEY	internship_evaluations	fk_evaluation_published	published_version	2	internship_evaluation_versions	version
+KEY	internship_evaluations	internship_evaluations_ibfk_1	case_id	1	internship_cases	id
+KEY	internship_rubric_templates	PRIMARY	id	1	<NULL>	<NULL>
+KEY	internship_rubric_templates	PRIMARY	template_version	2	<NULL>	<NULL>
+KEY	internship_rubric_templates	internship_rubric_templates_ibfk_1	school_org_id	1	organizations	id
+KEY	internship_rubric_templates	internship_rubric_templates_ibfk_2	term_id	1	terms	id
+TABLE	internship_evaluation_files	InnoDB	utf8mb4_0900_ai_ci
+TABLE	internship_evaluation_versions	InnoDB	utf8mb4_0900_ai_ci
+TABLE	internship_evaluations	InnoDB	utf8mb4_0900_ai_ci
+TABLE	internship_rubric_templates	InnoDB	utf8mb4_0900_ai_ci
+@@visibility
+CHECK	internship_grade_visibility	internship_grade_visibility_chk_1	YES	(((`case_id` is null) and (`scope_key` = _utf8mb4\'ORGANIZATION_TERM\')) or ((`case_id` is not null) and (`scope_key` = `case_id`)))
+CHECK	internship_grade_visibility	internship_grade_visibility_chk_2	YES	(`version` between 1 and 9007199254740991)
+CHECK	internship_school_result_policies	internship_school_result_policies_chk_1	YES	(`version` between 1 and 9007199254740991)
+COLUMN	internship_evaluation_revision_decisions	decision_ref	3	varchar(120)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	internship_evaluation_revision_decisions	evaluation_id	1	varchar(36)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	internship_evaluation_revision_decisions	evaluation_version	2	bigint	NO	<NULL>		<NULL>	<NULL>	
+COLUMN	internship_evaluation_revision_decisions	reason_code	4	varchar(64)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	internship_grade_visibility	case_id	4	varchar(36)	YES	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	internship_grade_visibility	enabled	5	tinyint(1)	NO	<NULL>		<NULL>	<NULL>	
+COLUMN	internship_grade_visibility	enterprise_org_id	1	varchar(36)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	internship_grade_visibility	scope_key	3	varchar(36)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	internship_grade_visibility	term_id	2	varchar(36)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	internship_grade_visibility	version	6	bigint	NO	<NULL>		<NULL>	<NULL>	
+COLUMN	internship_school_result_policies	enabled	3	tinyint(1)	NO	<NULL>		<NULL>	<NULL>	
+COLUMN	internship_school_result_policies	school_org_id	1	varchar(36)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	internship_school_result_policies	term_id	2	varchar(36)	NO	<NULL>		utf8mb4	utf8mb4_0900_ai_ci	
+COLUMN	internship_school_result_policies	version	4	bigint	NO	<NULL>		<NULL>	<NULL>	
+FK	internship_evaluation_revision_decisions	internship_evaluation_revision_decisions_ibfk_1	NO ACTION	NO ACTION
+FK	internship_grade_visibility	internship_grade_visibility_ibfk_1	NO ACTION	NO ACTION
+FK	internship_grade_visibility	internship_grade_visibility_ibfk_2	NO ACTION	NO ACTION
+FK	internship_grade_visibility	internship_grade_visibility_ibfk_3	NO ACTION	NO ACTION
+FK	internship_school_result_policies	internship_school_result_policies_ibfk_1	NO ACTION	NO ACTION
+FK	internship_school_result_policies	internship_school_result_policies_ibfk_2	NO ACTION	NO ACTION
+INDEX	internship_evaluation_revision_decisions	PRIMARY	0	1	evaluation_id	<NULL>	BTREE	YES
+INDEX	internship_evaluation_revision_decisions	PRIMARY	0	2	evaluation_version	<NULL>	BTREE	YES
+INDEX	internship_grade_visibility	PRIMARY	0	1	enterprise_org_id	<NULL>	BTREE	YES
+INDEX	internship_grade_visibility	PRIMARY	0	2	term_id	<NULL>	BTREE	YES
+INDEX	internship_grade_visibility	PRIMARY	0	3	scope_key	<NULL>	BTREE	YES
+INDEX	internship_grade_visibility	case_id	1	1	case_id	<NULL>	BTREE	YES
+INDEX	internship_grade_visibility	term_id	1	1	term_id	<NULL>	BTREE	YES
+INDEX	internship_school_result_policies	PRIMARY	0	1	school_org_id	<NULL>	BTREE	YES
+INDEX	internship_school_result_policies	PRIMARY	0	2	term_id	<NULL>	BTREE	YES
+INDEX	internship_school_result_policies	term_id	1	1	term_id	<NULL>	BTREE	YES
+KEY	internship_evaluation_revision_decisions	PRIMARY	evaluation_id	1	<NULL>	<NULL>
+KEY	internship_evaluation_revision_decisions	PRIMARY	evaluation_version	2	<NULL>	<NULL>
+KEY	internship_evaluation_revision_decisions	internship_evaluation_revision_decisions_ibfk_1	evaluation_id	1	internship_evaluation_versions	evaluation_id
+KEY	internship_evaluation_revision_decisions	internship_evaluation_revision_decisions_ibfk_1	evaluation_version	2	internship_evaluation_versions	version
+KEY	internship_grade_visibility	PRIMARY	enterprise_org_id	1	<NULL>	<NULL>
+KEY	internship_grade_visibility	PRIMARY	scope_key	3	<NULL>	<NULL>
+KEY	internship_grade_visibility	PRIMARY	term_id	2	<NULL>	<NULL>
+KEY	internship_grade_visibility	internship_grade_visibility_ibfk_1	enterprise_org_id	1	organizations	id
+KEY	internship_grade_visibility	internship_grade_visibility_ibfk_2	term_id	1	terms	id
+KEY	internship_grade_visibility	internship_grade_visibility_ibfk_3	case_id	1	internship_cases	id
+KEY	internship_school_result_policies	PRIMARY	school_org_id	1	<NULL>	<NULL>
+KEY	internship_school_result_policies	PRIMARY	term_id	2	<NULL>	<NULL>
+KEY	internship_school_result_policies	internship_school_result_policies_ibfk_1	school_org_id	1	organizations	id
+KEY	internship_school_result_policies	internship_school_result_policies_ibfk_2	term_id	1	terms	id
+TABLE	internship_evaluation_revision_decisions	InnoDB	utf8mb4_0900_ai_ci
+TABLE	internship_grade_visibility	InnoDB	utf8mb4_0900_ai_ci
+TABLE	internship_school_result_policies	InnoDB	utf8mb4_0900_ai_ci
+PERMISSION	t3:grade_visibility:manage	t3:grade_visibility	manage	HR scoped result visibility
+PERMISSION	t3:grades:publish	t3:grades	publish	School scoped evaluation publication and revision
+PERMISSION	t3:result_policy:manage	t3:result_policy	manage	School scoped result visibility policy
+ROLE	ENTERPRISE	t3:grade_visibility:manage
+ROLE	SCHOOL_STAFF	t3:grades:publish
+ROLE	SCHOOL_STAFF	t3:result_policy:manage
