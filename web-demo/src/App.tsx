@@ -4,6 +4,7 @@ import { Brand, EmptyState, Field, Icon, Notice, useAction, roleNames, permissio
 import { UserManagement, OrganizationManagement, AuditViewer } from './management';
 import { InternshipWorkspace } from './modules/internship/pages/InternshipWorkspace';
 import { CaseEntry } from './modules/internship/pages/CaseEntry';
+import { EvaluationsPage } from './modules/internship/pages/EvaluationsPage';
 import { canDiscoverWorkspace } from './modules/internship/access';
 
 import { studentGrants } from './modules/student/access';
@@ -20,6 +21,7 @@ import { DemandWorkspace, SchoolWorkspace, PortalNavigation, portalPageTitle, ca
 import { SchoolDelegations } from './modules/delegations/SchoolDelegations';
 
 const screens = [
+  { id: 'evaluations', title: 'Đánh giá thực tập', description: 'Chấm rubric, công bố và xem kết quả theo quyền được phân công.', icon: 'graduation', permission: null },
   { id: 'internship-case', title: 'Hồ sơ thực tập', description: 'Hồ sơ trong phạm vi được phân công.', icon: 'briefcase', permission: null },
   { id: 'school', title: 'Hợp tác doanh nghiệp', description: 'Không gian phối hợp thực tập dành cho nhà trường.', icon: 'building', permission: null },
   { id: 'account', title: 'Tài khoản của tôi', description: 'Thông tin cá nhân, vai trò và bảo mật tài khoản.', icon: 'grid', permission: null },
@@ -74,6 +76,7 @@ export default function App() {
   const permissions = new Set(grants.filter(grant => grant.role === 'ADMIN' && grant.organizationId === null).flatMap(grant => grant.permissions));
   const schools = studentGrants(grants);
   const menus = screens.filter(item => item.id === 'internship-case' ? !!caseId : item.id === 'internship' ? !!me && canDiscoverWorkspace(me)
+    : item.id === 'evaluations' ? grants.some(grant => ['SCHOOL_STAFF','ENTERPRISE','STUDENT'].includes(grant.role) && !!grant.organizationId)
     : item.id === 'school' ? grants.some(grant => grant.role === 'SCHOOL_STAFF' && !!grant.organizationId)
     : item.id === 'demands' ? grants.some(canAuthorDemands)
     : item.id === 'delegations' ? permissions.has('membership:admin:write') || grants.some(g => g.role === 'SCHOOL_STAFF' && g.permissions.includes('school:delegation:manage'))
@@ -208,13 +211,13 @@ export default function App() {
       <nav aria-label="Điều hướng chính">
         {portalSide && <PortalNavigation side={portalSide} page={portalScreen ? portalPage : undefined} navigate={navigatePortal} />}
         <p className="nav-group-label">{portalSide ? 'TÀI KHOẢN & TIỆN ÍCH' : 'KHÔNG GIAN CỦA BẠN'}</p>
-        {menus.filter(item => ['account', 'mentor-invitations', 'internship', 'demands', 'school', 'taxonomy'].includes(item.id) && (!portalSide || item.id !== portalEntry)).map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
+        {menus.filter(item => ['account', 'mentor-invitations', 'internship', 'evaluations', 'demands', 'school', 'taxonomy'].includes(item.id) && (!portalSide || item.id !== portalEntry)).map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
           aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
         {menus.some(item => item.group === 'student') && <p className="nav-group-label student-nav-group">SINH VIÊN</p>}
         {menus.filter(item => item.group === 'student').map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
           aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
-        {menus.some(item => !['account', 'mentor-invitations', 'internship', 'demands', 'school', 'taxonomy'].includes(item.id) && item.group !== 'student') && <p className="nav-group-label nav-group-admin">QUẢN TRỊ HỆ THỐNG</p>}
-        {menus.filter(item => !['account', 'mentor-invitations', 'internship', 'demands', 'school', 'taxonomy'].includes(item.id) && item.group !== 'student').map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
+        {menus.some(item => !['account', 'mentor-invitations', 'internship', 'evaluations', 'demands', 'school', 'taxonomy'].includes(item.id) && item.group !== 'student') && <p className="nav-group-label nav-group-admin">QUẢN TRỊ HỆ THỐNG</p>}
+        {menus.filter(item => !['account', 'mentor-invitations', 'internship', 'evaluations', 'demands', 'school', 'taxonomy'].includes(item.id) && item.group !== 'student').map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
           aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
       </nav>
       <div className="sidebar-bottom">
@@ -233,7 +236,7 @@ export default function App() {
           <button className="profile-shortcut" aria-label="Mở tài khoản của tôi" onClick={() => navigate('account')}><span className="avatar avatar-small">{initials(me.displayName)}</span><span>{me.displayName}</span><Icon name="chevron-down" size={14} /></button></div>
       </header>
       <main className="content" id="main-content">
-        <div className="page-header"><div><p className="section-kicker">{screen === 'account' || screen === 'mentor-invitations' ? 'KHÔNG GIAN CÁ NHÂN' : screen === 'demands' || screen === 'school' ? current.title : screen === 'internship' ? 'QUẢN LÝ THỰC TẬP' : current.group === 'student' ? 'KHÔNG GIAN SINH VIÊN' : 'QUẢN TRỊ NỀN TẢNG'}</p>
+        <div className="page-header"><div><p className="section-kicker">{screen === 'account' || screen === 'mentor-invitations' ? 'KHÔNG GIAN CÁ NHÂN' : screen === 'demands' || screen === 'school' ? current.title : screen === 'internship' || screen === 'evaluations' ? 'QUẢN LÝ THỰC TẬP' : current.group === 'student' ? 'KHÔNG GIAN SINH VIÊN' : 'QUẢN TRỊ NỀN TẢNG'}</p>
           <h1 ref={heading} tabIndex={-1}>{current.title}</h1><p className="page-description">{current.description}</p></div>
           <span className="workspace-label"><span className="live-dot" />UT.Bridora</span></div>
         <Notice message={action.message} tone={action.error ? 'error' : 'info'} />
@@ -245,6 +248,7 @@ export default function App() {
           : screen === 'audit' ? <AuditViewer />
           : screen === 'delegations' ? <SchoolDelegations key={me.userId} grants={grants} />
           : screen === 'internship-case' ? <CaseEntry key={me.userId + caseId} caseId={caseId} me={me} grants={grants} />
+          : screen === 'evaluations' ? <EvaluationsPage key={me.userId} me={me} grants={grants} />
           : screen === 'internship' ? <InternshipWorkspace key={me.userId} me={me} grants={grants} />
           : screen === 'student-overview' ? <StudentOverviewPage me={me} schools={schools} openProfile={() => navigate('student-profile')} />
           : screen === 'student-profile' ? <MyProfilePage me={me} schools={schools} />

@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { apiBlob } from '../../../api';
 import { accessLost, contextHeaders, workflowError, workflowRead } from '../workflow-api';
 import type { ReportFile } from '../workflow';
+import { ApiError } from '../../../api';
 
-export function ReportEvidence({ reportId, fileIds, contextId, editable, disabled, changed, denied }: {
+export function ReportEvidence({ reportId, fileIds, contextId, editable, disabled, changed, denied, evaluation = false }: {
   reportId: string; fileIds: string[]; contextId?: string; editable: boolean; disabled: boolean;
   changed: (ids: string[]) => void; denied: () => void;
+  evaluation?: boolean;
 }) {
   const [files, setFiles] = useState<ReportFile[]>([]), [message, setMessage] = useState(''), [refresh, setRefresh] = useState(0);
   const [busy, setBusy] = useState(false), life = useRef<AbortController | null>(null);
@@ -17,9 +19,9 @@ export function ReportEvidence({ reportId, fileIds, contextId, editable, disable
       .then(values => {
         if (c.signal.aborted) return;
         if (values.some((v, i) => v.fileId !== fileIds[i] || v.resource.resourceId !== reportId
-          || v.resource.resourceType !== 'WEEKLY_REPORT' || v.purpose !== 'WEEKLY_REPORT' || v.deletedAt)) { denied(); return; }
+          || v.resource.resourceType !== (evaluation ? 'EVALUATION' : 'WEEKLY_REPORT') || v.purpose !== (evaluation ? 'EVIDENCE' : 'WEEKLY_REPORT') || v.deletedAt)) { denied(); return; }
         setFiles(values);
-      }).catch(error => { if (!c.signal.aborted) { if (accessLost(error)) denied(); else setMessage(workflowError(error)); } });
+      }).catch(error => { if (!c.signal.aborted) { if (accessLost(error) || evaluation && error instanceof ApiError && error.status === 404) denied(); else setMessage(workflowError(error)); } });
     return () => c.abort();
   }, [idsKey, contextId, reportId, refresh]);
   const download = async (file: ReportFile) => {
@@ -32,10 +34,10 @@ export function ReportEvidence({ reportId, fileIds, contextId, editable, disable
       const url = URL.createObjectURL(blob), anchor = document.createElement('a');
       anchor.href = url; anchor.download = file.originalName; document.body.append(anchor); anchor.click(); anchor.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
-    } catch (error) { if (!signal.aborted) { setFiles([]); if (accessLost(error)) denied(); else setMessage(workflowError(error)); } }
+    } catch (error) { if (!signal.aborted) { setFiles([]); if (accessLost(error) || evaluation && error instanceof ApiError && error.status === 404) denied(); else setMessage(workflowError(error)); } }
     finally { if (!signal.aborted) setBusy(false); }
   };
-  return <section aria-label="Minh chứng báo cáo" className="stack"><h5>Minh chứng đính kèm ({fileIds.length}/20)</h5>
+  return <section aria-label={evaluation ? 'Minh chứng đánh giá' : 'Minh chứng báo cáo'} className="stack"><h5>Minh chứng đính kèm ({fileIds.length}/20)</h5>
     {message && <p role="alert">{message}</p>}
     {fileIds.length > 0 && <button type="button" className="secondary" disabled={busy || disabled} onClick={() => setRefresh(n => n + 1)}>Kiểm tra trạng thái minh chứng</button>}
     {fileIds.map(id => { const file = files.find(value => value.fileId === id); return <div key={id}>

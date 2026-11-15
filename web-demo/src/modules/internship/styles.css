@@ -28,3 +28,9 @@
 .t3-workflow textarea { min-height: 96px; width: 100%; box-sizing: border-box; }
 .t3-workflow input, .t3-workflow select { max-width: 100%; }
 .t3-preserve-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.t3-evaluations, .t3-evaluations > *, .t3-evaluations fieldset { min-width: 0; overflow-wrap: anywhere; }
+.t3-evaluations fieldset { display: grid; gap: 12px; }
+.t3-evaluations input, .t3-evaluations select, .t3-evaluations textarea { max-width: 100%; box-sizing: border-box; }
+.t3-evaluations textarea { min-height: 90px; }
+.t3-evaluations input[type="checkbox"] { width: 20px; height: 20px; min-height: 0; margin-right: 8px; vertical-align: middle; }
+@media (max-width: 600px) { .t3-evaluations .panel { padding: 14px; } }

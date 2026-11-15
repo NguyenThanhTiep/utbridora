@@ -3,7 +3,7 @@ import { accessLost, executeAttempt, newAttempt, uncertainOutcome, workflowError
 import { newIdempotencyKey } from '../student/api';
 
 type Pending = { attempt: WorkflowAttempt; success: (value: unknown) => void };
-export function useWorkflowCommand(contextId: string | undefined, denied: () => void) {
+export function useWorkflowCommand(contextId: string | undefined, denied: () => void, lost = accessLost) {
   const lifecycle = useRef<AbortController | null>(null), active = useRef(false), saved = useRef<Pending | null>(null);
   const [busy, setBusy] = useState(false), [pending, setPending] = useState(false), [message, setMessage] = useState('');
   useEffect(() => { const c = new AbortController(); lifecycle.current = c; return () => { c.abort(); saved.current = null; }; }, []);
@@ -16,7 +16,7 @@ export function useWorkflowCommand(contextId: string | undefined, denied: () => 
       saved.current = null; setPending(false); item.success(value);
     } catch (error) {
       if (signal.aborted) return;
-      if (accessLost(error)) { saved.current = null; denied(); return; }
+      if (lost(error)) { saved.current = null; denied(); return; }
       saved.current = uncertainOutcome(error) ? item : null;
       setPending(saved.current !== null); setMessage(workflowError(error));
     } finally { active.current = false; if (!signal.aborted) setBusy(false); }
@@ -28,10 +28,11 @@ export function useWorkflowCommand(contextId: string | undefined, denied: () => 
       // Ref prevents two clicks before React has rendered the disabled button.
       saved.current = item; void execute(item);
     },
-    upload: <T,>(resourceId: string, file: File, success: (value: T) => void) => {
+    upload: <T,>(resourceId: string, file: File, success: (value: T) => void,
+      binding = { resourceType: 'WEEKLY_REPORT', purpose: 'WEEKLY_REPORT' }) => {
       if (saved.current || active.current) return;
-      const body = new FormData(); body.set('file', file); body.set('resourceType', 'WEEKLY_REPORT');
-      body.set('resourceId', resourceId); body.set('purpose', 'WEEKLY_REPORT');
+      const body = new FormData(); body.set('file', file); body.set('resourceType', binding.resourceType);
+      body.set('resourceId', resourceId); body.set('purpose', binding.purpose);
       const item: Pending = { attempt: { path: '/files', method: 'POST', body, key: newIdempotencyKey() }, success: success as (value: unknown) => void };
       saved.current = item; void execute(item);
     },
