@@ -361,7 +361,10 @@ public class PlacementService {
     }
     private PlacementView activateApproved(PlacementView p,String actorId) {
         if(clock.instant().isBefore(p.effectiveAt())) throw failure(409,"PLACEMENT_NOT_EFFECTIVE");
-        String termState=jdbc.queryForObject("SELECT status FROM terms WHERE id=? AND school_org_id=? FOR SHARE",String.class,p.termId(),p.schoolOrgId());
+        // Read term status WITHOUT holding placement lock to avoid deadlock with
+        // concurrent transactions that lock terms before placements (e.g. capacityOf).
+        // Terms are immutable once ACTIVE so a non-locking read is safe here.
+        String termState=jdbc.queryForObject("SELECT status FROM terms WHERE id=? AND school_org_id=?",String.class,p.termId(),p.schoolOrgId());
         if(!"ACTIVE".equals(termState)) throw failure(422,"TERM_INVALID");
         reCheckVerification(p.enterpriseOrgId(),p.schoolOrgId());
         checkDates(p.termId(),p.startDate(),p.endDate(),p.effectiveAt());
@@ -818,7 +821,9 @@ public class PlacementService {
         jdbc.queryForObject("SELECT id FROM demands WHERE id=? FOR UPDATE",String.class,ids.getFirst());
     }
     private void checkDates(String term,LocalDate start,LocalDate end,Instant effective) {
-        var dates=jdbc.query("SELECT start_date,end_date FROM terms WHERE id=? FOR SHARE",(r,n)->new LocalDate[]{r.getDate(1).toLocalDate(),r.getDate(2).toLocalDate()},term).getFirst();
+        // Non-locking read: term dates are immutable once set; no need to hold a lock
+        // that could conflict with concurrent term-status checks in capacityOf.
+        var dates=jdbc.query("SELECT start_date,end_date FROM terms WHERE id=?",(r,n)->new LocalDate[]{r.getDate(1).toLocalDate(),r.getDate(2).toLocalDate()},term).getFirst();
         var zone=ZoneId.of("Asia/Ho_Chi_Minh");
         if(start.isBefore(dates[0]) || end.isAfter(dates[1]) || effective.isBefore(dates[0].atStartOfDay(zone).toInstant())
             || !effective.isBefore(dates[1].plusDays(1).atStartOfDay(zone).toInstant())) throw failure(422,"PLACEMENT_GATE_FAILED");
