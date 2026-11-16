@@ -77,7 +77,7 @@ function ScopedPortal({ org, side, page, navigate, viewerId, organizationPicker,
     {page === 'demands' && !school && <ScopedDemands key={'d:' + revision} organizationId={org} />}
     {page === 'statistics' && !school && <ProtectedStatistics org={org} demands={data.demands} navigate={navigate} />}
     {page === 'matching' && school && <MatchingWorkspace organizationId={org} grants={grants} />}
-    {page === 'notifications' && <NotificationCenter store={notifications} open={openNotification} />}
+    {page === 'notifications' && <NotificationCenter store={notifications} open={openNotification} refresh={refresh} />}
     {page === 'verifications' && <VerificationFlows key={'v:' + revision + (focus?.key || '')} org={org} school={school} focusId={focus?.target.recordId} />}
     {page === 'cooperations' && <>
       {!school && <Notice tone="error" message={data.demands.error} />}

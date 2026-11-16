@@ -11,7 +11,7 @@ import { WorkspaceHandoff } from './WorkspaceHandoff';
 type Placement = { placementId: string; schoolOrgId: string; enterpriseOrgId: string; cooperationId: string; proposalItemId: string;
   state: string; version: number; effectiveAt: string; startDate: string; endDate: string };
 type Summary = { demandId: string; cooperationId: string | null; target: number; placed: number; pending: number; remaining: number };
-type Link = { state: 'WAITING_HANDOFF' | 'AVAILABLE'; route: string | null };
+type Link = { state: 'WAITING_HANDOFF' | 'AVAILABLE'; route: string | null; caseId?: string | null };
 const states: Record<string, string> = { PENDING_APPROVAL: 'Chờ trường phê duyệt', APPROVED: 'Đã duyệt, chờ bắt đầu', ACTIVE: 'Đang thực tập', CANCELLED: 'Đã hủy', COMPLETED: 'Đã hoàn thành' };
 const statusGuides: Record<string, { school: string; enterprise: string }> = {
   PENDING_APPROVAL: {
@@ -56,6 +56,7 @@ export function PlacementWorkspace({ org, school, cooperationId, demand, candida
 }) {
   const [result, setResult] = useState<ContractPage<Placement> | null>(null), [summary, setSummary] = useState<Summary | null>(null);
   const [page, setPage] = useState(0), [filter, setFilter] = useState(''), [search, setSearch] = useState(''), [revision, setRevision] = useState(0), [loading, setLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState('');
   const [error, setError] = useState(''), [notice, setNotice] = useState(''), [selected, setSelected] = useState('');
   const [start, setStart] = useState(demand.data.required.dateRange.startDate), [end, setEnd] = useState(demand.data.required.dateRange.endDate), [effective, setEffective] = useState('');
   const [decision, setDecision] = useState<{ item: Placement; action: string } | null>(null), [reference, setReference] = useState(''), [reason, setReason] = useState('');
@@ -63,25 +64,32 @@ export function PlacementWorkspace({ org, school, cooperationId, demand, candida
   const [expandedPlacement, setExpandedPlacement] = useState<string | null>(null);
   const pendingRef = useRef(pendingChanged); pendingRef.current = pendingChanged;
   const side = school ? 'school' : 'enterprise';
+  const notifyProgress = () => window.setTimeout(() => window.dispatchEvent(new Event('placement-updated')), 0);
   const command = useWorkflowCommand<Placement>(org, value => {
-    setDecision(null); setSelected(''); setNotice(`Đã ghi nhận: ${states[value.state] || value.state}.`);setRevision(n => n + 1);changed?.();
+    setDecision(null); setSelected(''); setNotice(`Đã ghi nhận: ${states[value.state] || value.state}.`);setRevision(n => n + 1);changed?.();notifyProgress();
   }, error => {
-    // ── T5-09: reset decision form on 409 version/state conflict so user gets fresh version ──
-    const msg = workflowError(error);
-    const needsReset = error instanceof ApiError
-      && [409].includes(error.status)
-      && ['VERSION_CONFLICT','ACTIVE_PLACEMENT_EXISTS','STATE_CONFLICT','REQUEST_IN_PROGRESS'].includes(error.errorCode || '');
-    if (needsReset) setDecision(null);
-    setError(msg);
-    setRevision(n => n + 1); // always reload list after any mutation error
+    // State/scope conflicts invalidate the selected version; schema errors keep the entered decision.
+    if (error instanceof ApiError && [401, 403, 404, 409].includes(error.status)) {setDecision(null);setSelected('');}
+    setError(workflowError(error));setRevision(n => n + 1);changed?.();notifyProgress();
   });
+  const refreshRef = useRef(changed);refreshRef.current = changed;
   useEffect(() => { pendingRef.current?.(command.blocked);return () => pendingRef.current?.(false); }, [command.blocked]);
+  useEffect(() => {
+    const refresh = () => {
+      if (!document.hidden && !locked && !command.blocked && !decision) {
+        setRevision(n => n + 1);refreshRef.current?.();
+      }
+    };
+    window.addEventListener('focus', refresh);document.addEventListener('visibilitychange', refresh);
+    return () => {window.removeEventListener('focus', refresh);document.removeEventListener('visibilitychange', refresh);};
+  }, [locked, command.blocked, decision]);
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 15000);return () => window.clearInterval(timer);
   }, []);
   useEffect(() => {
     const c = new AbortController();setLoading(true);setResult(null);setSummary(null);setLinks({});setError('');
-    const query = new URLSearchParams({ cooperationId, page: String(page), size: '25', ...(filter ? { state: filter } : {}) });
+    const query = new URLSearchParams({ cooperationId, demandId: demand.demandId, termId: demand.data.termId, schoolOrgId: demand.data.schoolOrgId,
+      page: String(page), size: '25', ...(filter ? { state: filter } : {}), ...(search ? { q: search } : {}) });
     void Promise.all([
       scopedRead<ContractPage<Placement>>(org, `/${side}/placements?${query}`, c.signal),
       scopedRead<Summary>(org, `/${side}/placements/summary?demandId=${encodeURIComponent(demand.demandId)}`, c.signal),
@@ -89,32 +97,26 @@ export function PlacementWorkspace({ org, school, cooperationId, demand, candida
       if (c.signal.aborted) return;
       if (list.content.some(p => p.cooperationId !== cooperationId || (school ? p.schoolOrgId : p.enterpriseOrgId) !== org)
           || totals.demandId !== demand.demandId || totals.cooperationId !== null && totals.cooperationId !== cooperationId) throw new Error('Scope mismatch');
+      if (page > 0 && page >= list.totalPages) {setPage(Math.max(0, list.totalPages - 1));return;}
       setResult(list);setSummary(totals);
     }).catch(error => { if (!c.signal.aborted) setError(error instanceof ApiError && [403, 404, 503].includes(error.status)
       ? 'Chưa truy cập được chức năng tiếp nhận thực tập. Kiểm tra quyền hoặc chờ chức năng sẵn sàng rồi tải lại.' : workflowError(error)); })
       .finally(() => { if (!c.signal.aborted) setLoading(false); });
     return () => c.abort();
-  }, [org, school, side, cooperationId, demand.demandId, page, filter, revision]);
+  }, [org, school, side, cooperationId, demand.demandId, demand.data.termId, demand.data.schoolOrgId, page, filter, search, revision]);
   const ready = candidates.filter(item => item.state === 'ENTERPRISE_ACCEPTED' && !item.placementId && item.shareIsActive && item.eligibilityVersion > 0);
   useEffect(() => {
     if (initialCandidateId && candidates.some(item => item.proposalItemId === initialCandidateId && item.state === 'ENTERPRISE_ACCEPTED'
       && !item.placementId && item.shareIsActive && item.eligibilityVersion > 0)) setSelected(initialCandidateId);
   }, [initialCandidateId, candidates]);
   const blocked = locked || command.blocked || loading;
-  const visibleItems = (result?.content || []).map((item, n) => ({ item, seq: page * 25 + n + 1 })).filter(({ item, seq }) => {
-    if (!search.trim()) return true;
-    const q = search.trim().toLowerCase();
-    return (
-      `tiếp nhận ${seq}`.includes(q)
-      || item.placementId.toLowerCase().includes(q)
-      || item.proposalItemId.toLowerCase().includes(q)
-      || item.startDate.toLowerCase().includes(q)
-      || item.endDate.toLowerCase().includes(q)
-      || (states[item.state] || item.state).toLowerCase().includes(q)
-    );
-  });
+  const visibleItems = (result?.content || []).map((item, n) => ({ item, seq: page * 25 + n + 1 }));
   const placedPct = summary && summary.target > 0 ? Math.min(100, Math.round((summary.placed / summary.target) * 100)) : 0;
   const pendingPct = summary && summary.target > 0 ? Math.min(100 - placedPct, Math.round((summary.pending / summary.target) * 100)) : 0;
+  const quotaStatus = summary && (summary.target > 0 && summary.placed >= summary.target
+    ? { code: 'FULL', label: 'Đủ chỉ tiêu' } : summary.placed < summary.target
+      ? summary.pending > 0 ? { code: 'WAITING', label: 'Đang chờ tiếp nhận' } : { code: 'SHORT', label: 'Còn thiếu chỉ tiêu' }
+      : null);
   const checkHandoff = (item: Placement) => {
     const controller = new AbortController();
     void scopedRead<Link>(org, `/${side}/placements/${item.placementId}/internship-link`, controller.signal).then(link => {
@@ -135,6 +137,8 @@ export function PlacementWorkspace({ org, school, cooperationId, demand, candida
     {summary && <>
       <dl className="proposal-capacity"><div><dt>Chỉ tiêu tiếp nhận</dt><dd>{summary.target}</dd></div><div><dt>Đã chốt</dt><dd>{summary.placed}</dd></div>
         <div><dt>Đang chờ</dt><dd>{summary.pending}</dd></div><div><dt>Còn chỗ</dt><dd>{summary.remaining}</dd></div></dl>
+      {quotaStatus && <p className={'placement-quota-status quota-' + quotaStatus.code.toLowerCase()} role="status"
+        aria-label="Tình trạng chỉ tiêu tiếp nhận" data-state={quotaStatus.code}>{quotaStatus.label}</p>}
       {school && <div className="placement-quota-bar" aria-label="Tiến độ lấp đầy chỉ tiêu tiếp nhận">
         <div className="placement-quota-legend">
           <span>Tiến độ lấp đầy chỉ tiêu: <strong>{summary.placed}/{summary.target}</strong> đã chốt ({placedPct}%)</span>
@@ -151,11 +155,13 @@ export function PlacementWorkspace({ org, school, cooperationId, demand, candida
         <label>Trạng thái tiếp nhận<select disabled={blocked} value={filter} onChange={e => {setFilter(e.target.value);setPage(0);}}>
           <option value="">Tất cả trạng thái</option>{Object.entries(states).map(([key, text]) => <option value={key} key={key}>{text}</option>)}
         </select></label>
-        <label>Tìm kiếm tiếp nhận<input type="search" disabled={blocked} placeholder="Tìm theo mã tiếp nhận, số thứ tự, ngày thực tập…" value={search} onChange={e => setSearch(e.target.value)} /></label>
-        {(filter || search) && <button type="button" className="secondary" disabled={blocked} onClick={() => { setFilter(''); setSearch(''); setPage(0); }}>Xóa bộ lọc</button>}
+        <form onSubmit={event => {event.preventDefault();if (!blocked) {setSearch(searchInput.trim());setPage(0);}}}>
+          <label>Tìm kiếm tiếp nhận<input type="search" maxLength={150} disabled={blocked} placeholder="Mã tiếp nhận, nhu cầu, phiếu hợp tác, mã sinh viên, vị trí tuyển…" value={searchInput} onChange={e => setSearchInput(e.target.value)} /></label>
+          <button className="secondary" disabled={blocked}>Tìm tiếp nhận</button>
+        </form>
+        {(filter || search) && <button type="button" className="secondary" disabled={blocked} onClick={() => { setFilter(''); setSearch(''); setSearchInput(''); setPage(0); }}>Xóa bộ lọc</button>}
       </div>
-      {!result.content.length && <p>Chưa có hồ sơ tiếp nhận trong nhóm trạng thái này.</p>}
-      {!!result.content.length && !visibleItems.length && <p>Không tìm thấy hồ sơ tiếp nhận khớp từ khóa tìm kiếm trên trang này.</p>}
+      {!result.content.length && <p>{search ? 'Không tìm thấy hồ sơ tiếp nhận khớp từ khóa trong phạm vi được phép.' : 'Chưa có hồ sơ tiếp nhận trong nhóm trạng thái này.'}</p>}
       {!school && <div className="proposal-table"><table><thead><tr><th>Tiếp nhận</th><th>Trạng thái</th><th>Thời gian thực tập</th><th>Thao tác</th></tr></thead>
         <tbody>{visibleItems.map(({ item, seq }) => <tr key={item.placementId}>
           <th scope="row">Tiếp nhận {seq} · {states[item.state] || item.state}</th>
@@ -213,7 +219,8 @@ export function PlacementWorkspace({ org, school, cooperationId, demand, candida
           {item.state === 'APPROVED' && now < Date.parse(item.effectiveAt) && <p className="placement-time-warning">Chưa đến thời điểm kích hoạt. Hồ sơ chưa cho phép giao hoặc nộp nhiệm vụ thực tập.</p>}
           {school && ['APPROVED', 'ACTIVE', 'COMPLETED'].includes(item.state) && <button className="secondary" disabled={blocked}
             onClick={() => checkHandoff(item)}>Kiểm tra bàn giao sang không gian thực tập</button>}
-          {handoff && <WorkspaceHandoff link={handoff} placementId={item.placementId} effectiveAt={item.effectiveAt} locked={blocked} />}
+          {handoff && <WorkspaceHandoff link={handoff} placementId={item.placementId} placementState={item.state} effectiveAt={item.effectiveAt} locked={blocked}
+            schoolOrgId={school ? org : undefined} termId={demand.data.termId} />}
         </article>;
       })}
       {result.totalPages > 1 && <div className="button-row"><button className="secondary" disabled={blocked || page === 0} onClick={() => setPage(n => n - 1)}>Trang tiếp nhận trước</button>

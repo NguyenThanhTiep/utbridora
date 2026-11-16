@@ -2,6 +2,7 @@ export type EnterpriseProposal = {
   proposalItemId: string; cooperationId: string; state: string; version: number;
   shareId: string; reservationUntil: string;
 };
+export type EnterpriseProposalBatch = { batchId: string; cooperationId: string; visibleProposalCount: number };
 export type SchoolProposal = Omit<EnterpriseProposal, 'shareId'> & {
   studentUserId: string; invitationId: string | null; shareId: string | null; placementId: string | null;
   activeConsentId: string | null; activeConsentVersion: number | null; activeConsentExpiresAt: string | null;

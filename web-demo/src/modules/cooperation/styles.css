@@ -1,4 +1,4 @@
-.cooperation-workspace {
+.workspace-t5, .cooperation-workspace {
   --t5-teal-primary: #0B927C;
   --t5-teal-secondary: #11AA91;
   --t5-bg-neutral: #F3F6FB;
@@ -6,15 +6,48 @@
   --t5-border: #E3EAF2;
   --t5-text-primary: #142F40;
   --t5-text-secondary: #64788A;
+  --t5-brand-mint: #E7F6F0;
+  --t5-success-bg: #E5F6ED;
+  --t5-success-text: #0B927C;
+  --t5-success-border: #BFE6D2;
+  --t5-warning-bg: #FFF2DB;
+  --t5-warning-text: #B76E00;
+  --t5-warning-border: #F5DCA8;
+  --t5-danger-bg: #FFF0F0;
+  --t5-danger-text: #D32F2F;
+  --t5-danger-border: #F7C6C6;
+  --t5-info-bg: #E8F2FF;
+  --t5-info-text: #2868B0;
+  --t5-info-border: #C3DBF6;
+  --t5-suppressed-bg: #F0EAFA;
+  --t5-suppressed-text: #7750B9;
+  --t5-suppressed-border: #DBCEF2;
+  --brand: var(--t5-teal-primary);
+  --brand-dark: #087463;
+  --ink: var(--t5-text-primary);
+  --muted: var(--t5-text-secondary);
+  --line: var(--t5-border);
   min-width: 0;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: Inter, "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--t5-text-primary);
 }
+
+.cooperation-workspace :is(.status-pill, .cooperation-state, .t5-badge) { border: 1px solid var(--t5-border); border-radius: 999px; font-size: 12px; line-height: 16px; font-weight: 500; }
+.cooperation-workspace :is(.t5-badge-success, .pill-approved, .pill-active, .pill-completed, .pill-placed, .pill-published, .state-ready, .state-approved, .state-active, .state-completed, .state-placed, .state-published, .state-enterprise_accepted, .progress-full) { background: var(--t5-success-bg); color: var(--t5-success-text); border-color: var(--t5-success-border); }
+.cooperation-workspace :is(.t5-badge-warning, .pill-draft, .pill-submitted, .pill-pending_approval, .pill-needs_changes, .pill-shared, .state-draft, .state-submitted, .state-pending_approval, .state-needs_changes, .state-shared, .state-reserved, .state-invited, .state-accepted, .progress-short) { background: var(--t5-warning-bg); color: var(--t5-warning-text); border-color: var(--t5-warning-border); }
+.cooperation-workspace :is(.t5-badge-danger, .pill-rejected, .pill-cancelled, .pill-failed, .pill-declined, .state-rejected, .state-cancelled, .state-failed, .state-declined, .state-revoked, .state-expired, .progress-rejected) { background: var(--t5-danger-bg); color: var(--t5-danger-text); border-color: var(--t5-danger-border); }
+.cooperation-workspace :is(.t5-badge-info, .pill-waiting, .pill-queued, .pill-processing, .state-waiting, .state-queued, .state-processing, .progress-waiting, .progress-no_coop) { background: var(--t5-info-bg); color: var(--t5-info-text); border-color: var(--t5-info-border); }
+.cooperation-workspace :is(.t5-badge-suppressed, .pill-suppressed, .pill-summary_only, .state-suppressed, .state-summary_only) { background: var(--t5-suppressed-bg); color: var(--t5-suppressed-text); border-color: var(--t5-suppressed-border); }
+.cooperation-workspace :is(button:not([class]), .t5-btn-teal, .btn-enterprise-accept):not(:disabled):hover { background: var(--t5-teal-secondary); border-color: var(--t5-teal-secondary); }
+.cooperation-workspace :is(button, a, input, select, textarea):focus-visible { outline-color: var(--brand-dark); }
 .cooperation-workspace .panel {
   background: var(--t5-surface);
   border: 1px solid var(--t5-border);
   border-radius: 12px;
 }
+.demand-skill-summary { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.demand-skill-summary > div { display: inline-flex; align-items: center; gap: 8px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--t5-bg-neutral); font-size: 12px; line-height: 16px; font-weight: 400; }
+.demand-skill-summary dd { margin: 0; color: var(--brand-dark); font-weight: 600; }
 .cooperation-workspace .field-error { color: #D32F2F; margin: 6px 0; }
 .cooperation-workspace [aria-invalid="true"] { border-color: #D32F2F; }
 .cooperation-scope label { margin-top: 0; }

@@ -5,7 +5,7 @@ import type { PortalNotification } from './notificationService';
 import type { NotificationStore } from './useNotifications';
 
 const tabs = [{ value: 'all', label: 'Tất cả' }, { value: 'unread', label: 'Chưa đọc' }, { value: 'read', label: 'Đã đọc' }] as const;
-export function NotificationCenter({ store, open }: { store: NotificationStore; open: (notification: PortalNotification) => void }) {
+export function NotificationCenter({ store, open, refresh }: { store: NotificationStore; open: (notification: PortalNotification) => void; refresh?: () => void }) {
   const id = useId();
   const [tab, setTab] = useState<typeof tabs[number]['value']>('all');
   const [search, setSearch] = useState(''), [category, setCategory] = useState('');
@@ -20,10 +20,12 @@ export function NotificationCenter({ store, open }: { store: NotificationStore; 
           <option value="">Tất cả loại</option><option value="verification">Xác minh</option><option value="cooperation">Hợp tác</option>
           <option value="proposal">Ứng viên</option><option value="placement">Tiếp nhận thực tập</option>
         </select></div>
+        {refresh && <button type="button" className="secondary" disabled={store.loading} onClick={refresh}><Icon name="refresh" size={16} />Làm mới</button>}
         <button className="secondary" disabled={store.loading || !!store.errors.length || !store.unread} onClick={store.markAllRead}><Icon name="check-circle" size={16} />Đánh dấu tất cả đã đọc</button>
       </div>
       {store.errors.map(error => <Notice key={error} tone="error" message={error} />)}
       {store.loading && <p role="status">Đang tải thông báo…</p>}
+      {!store.loading && !store.errors.length && <p className="notification-filter-summary" aria-live="polite">{rows.length} thông báo đang hiển thị · {store.unread} chưa đọc</p>}
       <div className="proposal-table"><table><thead><tr><th>Thông báo</th><th>Nội dung liên quan</th><th>Thời gian</th><th>Trạng thái / Hành động</th></tr></thead>
         <tbody>{rows.map(row => <tr key={row.id} className={store.read.has(row.id) ? 'notification-read' : 'notification-unread'}>
           <th scope="row"><span className={'notification-kind tone-' + row.tone}>{row.title}</span><p className="notification-description">{row.description}</p></th>

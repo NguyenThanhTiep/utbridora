@@ -91,11 +91,16 @@ class EnterpriseProposalIT {
         } finally {SecurityContextHolder.clearContext();}
     }
     String listPath() {return "/enterprise/cooperations/"+f.cooperation().cooperationId()+"/proposals";}
+    String batchPath() {return "/enterprise/cooperations/"+f.cooperation().cooperationId()+"/proposal-batches";}
     String decisionPath() {return "/enterprise/proposals/"+f.proposalId()+"/decision";}
     String profilePath() {return "/enterprise/proposals/"+f.proposalId()+"/profile";}
     void assertHidden() throws Exception {
         var response=http(hr,"GET",listPath(),null,id(12),null,true);assertEquals(200,response.statusCode(),response.body());
         assertEquals(0,JSON.readTree(response.body()).get("totalElements").asInt());assertFalse(response.body().contains(id(6)));
+        var batches=http(hr,"GET",batchPath(),null,id(12),null,false);
+        assertEquals(200,batches.statusCode(),batches.body());var page=JSON.readTree(batches.body());
+        assertEquals(0,page.get("totalElements").asInt());assertEquals(0,page.get("totalPages").asInt());assertTrue(page.get("content").isEmpty());
+        assertFalse(batches.body().contains("batchId"));
     }
     Shared share() {
         var invitation=proposals.invite(as(2),f.proposalId(),key(),new ProposalService.Invite(1L,null));
@@ -377,15 +382,63 @@ class EnterpriseProposalIT {
         assertEquals(placed,jdbc.queryForObject("SELECT COUNT(*) FROM placements",Integer.class));
         assertEquals(5,jdbc.queryForObject("SELECT version FROM proposal_items WHERE id=?",Integer.class,f.proposalId()));
     }
+    @Test void enterpriseBatchesCountOnlySharedItemsWithoutExposingInternalBatchChanges() throws Exception {
+        assertHidden();var shared=share();String hidden=key();
+        var item=proposals.item(f.proposalId());
+        long batchVersion=jdbc.queryForObject("SELECT version FROM proposal_batches WHERE id=?",Long.class,item.batchId());
+        try {
+            jdbc.update("INSERT INTO proposal_items(id,batch_id,student_user_id,state,version,reservation_until,profile_snapshot_id,match_run_id,share_id) SELECT ?,batch_id,?,'SHARED',1,reservation_until,profile_snapshot_id,match_run_id,? FROM proposal_items WHERE id=?",hidden,id(7),key(),f.proposalId());
+            jdbc.update("UPDATE proposal_batches SET version=version+17 WHERE id=?",item.batchId());
+            var response=http(hr,"GET",batchPath()+"?size=1",null,id(12),null,false);
+            assertEquals(200,response.statusCode(),response.body());var page=JSON.readTree(response.body());
+            assertEquals(1,page.get("totalElements").asInt());assertEquals(1,page.get("totalPages").asInt());
+            var batch=page.get("content").get(0);
+            assertEquals(Set.of("batchId","cooperationId","visibleProposalCount"),new HashSet<>(batch.propertyNames()));
+            assertEquals(item.batchId(),batch.get("batchId").asString());assertEquals(f.cooperation().cooperationId(),batch.get("cooperationId").asString());
+            assertEquals(1,batch.get("visibleProposalCount").asInt());assertFalse(response.body().contains(id(7)));assertFalse(response.body().contains(hidden));
+            var after=http(hr,"GET",batchPath()+"?page=1&size=1",null,id(12),null,false);
+            assertEquals(200,after.statusCode(),after.body());var next=JSON.readTree(after.body());
+            assertTrue(next.get("content").isEmpty());assertEquals(1,next.get("totalElements").asInt());assertEquals(1,next.get("totalPages").asInt());
+            shares.revoke(as(2),shared.share().shareId(),key(),new ProfileShareService.Revoke(1L,"SCHOOL_REVOKED"));
+            assertHidden();
+        } finally {
+            jdbc.update("DELETE FROM proposal_items WHERE id=?",hidden);
+            jdbc.update("UPDATE proposal_batches SET version=? WHERE id=?",batchVersion,item.batchId());
+        }
+    }
+    @Test void enterpriseBatchesRecheckShareExpiryAndCurrentConsentOnEachRead() throws Exception {
+        var shared=share();String json=jdbc.queryForObject("SELECT data_json FROM profile_shares WHERE id=?",String.class,shared.share().shareId());
+        assertEquals(1,JSON.readTree(http(hr,"GET",batchPath(),null,id(12),null,false).body()).get("totalElements").asInt());
+        try {
+            jdbc.update("UPDATE profile_shares SET data_json=JSON_SET(data_json,'$.expiresAt',?) WHERE id=?",Instant.now().minusSeconds(1).toString(),shared.share().shareId());
+            assertHidden();
+        } finally {jdbc.update("UPDATE profile_shares SET data_json=? WHERE id=?",json,shared.share().shareId());}
+        assertEquals(1,JSON.readTree(http(hr,"GET",batchPath(),null,id(12),null,false).body()).get("totalElements").asInt());
+        consents.revoke(as(6),shared.consent().consentId(),key(),new StudentConsentService.Revoke(shared.consent().lineageVersion(),"STUDENT_REVOKED"));
+        assertHidden();
+    }
+    @Test void enterpriseBatchesValidatePaginationAndRecheckReadPermissions() throws Exception {
+        share();
+        for(String query:List.of("page=-1","size=0","size=101","page=10001"))
+            assertEquals(400,http(hr,"GET",batchPath()+"?"+query,null,id(12),null,false).statusCode());
+        assertEquals(400,http(hr,"GET","/enterprise/cooperations/invalid/proposal-batches",null,id(12),null,false).statusCode());
+        assertEquals(404,http(hr,"GET","/enterprise/cooperations/"+key()+"/proposal-batches",null,id(12),null,false).statusCode());
+        var permissions=jdbc.queryForList("SELECT permission_code FROM role_permissions WHERE role='ENTERPRISE' AND permission_code IN ('t5:proposal:read','cooperation:enterprise:read')",String.class);
+        jdbc.update("DELETE FROM role_permissions WHERE role='ENTERPRISE' AND permission_code IN ('t5:proposal:read','cooperation:enterprise:read')");
+        try {assertEquals(403,http(hr,"GET",batchPath(),null,id(12),null,false).statusCode());}
+        finally {for(String permission:permissions) jdbc.update("INSERT INTO role_permissions VALUES('ENTERPRISE',?)",permission);}
+    }
     @Test void rejectsOtherEnterpriseAndMissingPermissionsAndCsrf() throws Exception {
         share();String other=key();
         jdbc.update("INSERT INTO organizations(id,name,type,status,created_at) VALUES(?,'Other enterprise','ENTERPRISE','VERIFIED',UTC_TIMESTAMP(6))",other);
         try {
             jdbc.update("INSERT INTO memberships(id,user_id,organization_id,role,active,created_at) VALUES(?,?,?,'ENTERPRISE',true,UTC_TIMESTAMP(6))",key(),id(4),other);
             assertEquals(404,http(hr,"GET",listPath(),null,other,null,true).statusCode());
+            assertEquals(404,http(hr,"GET",batchPath(),null,other,null,false).statusCode());
             assertEquals(404,http(hr,"GET",profilePath(),null,other,null,true).statusCode());
             assertEquals(404,http(hr,"PATCH",decisionPath(),"{\"expectedVersion\":4,\"decision\":\"ACCEPT\"}",other,key(),true).statusCode());
             assertEquals(403,http(student,"GET",listPath(),null,id(12),null,true).statusCode());
+            assertEquals(403,http(student,"GET",batchPath(),null,id(12),null,false).statusCode());
             assertEquals(403,http(hr,"PATCH",decisionPath(),"{\"expectedVersion\":4,\"decision\":\"ACCEPT\"}",id(12),key(),false).statusCode());
             jdbc.update("DELETE FROM role_permissions WHERE role='ENTERPRISE' AND permission_code='proposal:enterprise:decide'");
             try {assertEquals(403,http(hr,"PATCH",decisionPath(),"{\"expectedVersion\":4,\"decision\":\"ACCEPT\"}",id(12),key(),true).statusCode());}
@@ -655,6 +708,226 @@ class EnterpriseProposalIT {
         assertEquals(404,http(hr,"POST","/school/preferences/"+submitted.preferenceId()+"/review","{\"expectedVersion\":"+second.version()+",\"reasonCode\":\"SCHOOL_REVIEWED\"}",id(12),key(),true).statusCode());
     }
 
+    @Test void placementSearchFiltersBeforePagingAcrossBothRouteStyles() throws Exception {
+        enterpriseAccepted();var p=pending(Instant.now().plusSeconds(3600));String second=key();
+        jdbc.update("INSERT INTO placements(id,student_user_id,school_org_id,enterprise_org_id,term_id,demand_id,cooperation_id,proposal_item_id,state,version,effective_at,start_date,end_date) SELECT ?,?,school_org_id,enterprise_org_id,term_id,demand_id,cooperation_id,?,'PENDING_APPROVAL',1,effective_at,start_date,end_date FROM placements WHERE id=?",second,id(7),key(),p.placementId());
+        try {
+            for(String side:List.of("school","enterprise")) {
+                var session=side.equals("school")?school:hr;String org=side.equals("school")?id(11):id(12);
+                for(String route:List.of("/"+side+"/placements","/"+side+"/"+org+"/placements")) {
+                    String path=route+"?demandId="+p.demandId()+"&schoolOrgId="+id(11)+"&size=1";
+                    var first=http(session,"GET",path,null,org,null,false);assertEquals(200,first.statusCode(),first.body());
+                    assertEquals(2,JSON.readTree(first.body()).get("totalElements").asInt());
+                    var next=http(session,"GET",path+"&page=1",null,org,null,false);assertEquals(200,next.statusCode(),next.body());
+                    assertNotEquals(JSON.readTree(first.body()).get("content").get(0).get("placementId").asString(),JSON.readTree(next.body()).get("content").get(0).get("placementId").asString());
+                    for(String query:List.of(second,id(7))) {
+                        var found=http(session,"GET",path+"&q="+query,null,org,null,false);assertEquals(200,found.statusCode(),found.body());
+                        var rows=JSON.readTree(found.body());assertEquals(1,rows.get("totalElements").asInt());assertEquals(second,rows.get("content").get(0).get("placementId").asString());
+                    }
+                    var literal=http(session,"GET",path+"&q=%25",null,org,null,false);assertEquals(200,literal.statusCode(),literal.body());assertEquals(0,JSON.readTree(literal.body()).get("totalElements").asInt());
+                    assertEquals(404,http(session,"GET",route+"?schoolOrgId="+key(),null,org,null,false).statusCode());
+                }
+            }
+        } finally {jdbc.update("DELETE FROM placements WHERE id=?",second);}
+    }
+
+    @Test void placementProgressSeparatesReservationConsentPendingAndApproval() throws Exception {
+        String demand=f.cooperation().demandId();var reserved=progress(demand,"WAITING");
+        assertEquals(1,reserved.totals().reservations());assertEquals(0,reserved.totals().pendingCreation());assertEquals(input.quantity(),reserved.totals().target());
+        var shared=enterpriseAccepted();var accepted=progress(demand,"WAITING");assertEquals(1,accepted.totals().enterpriseAccepted());assertEquals(1,accepted.totals().pendingCreation());
+        consents.revoke(as(6),shared.consent().consentId(),key(),new StudentConsentService.Revoke(shared.consent().lineageVersion(),"STUDENT_REVOKED"));
+        assertEquals(0,progress(demand,"WAITING").totals().pendingCreation());
+        jdbc.update("UPDATE proposal_items SET reservation_until=DATE_SUB(UTC_TIMESTAMP(6),INTERVAL 1 SECOND) WHERE id=?",f.proposalId());
+        var shortResult=progress(demand,"SHORT");assertEquals(0,shortResult.totals().reservations());assertEquals(input.quantity(),shortResult.totals().remaining());
+    }
+
+    @Test void placementProgressIncludesNoCooperationAndRejectedWithoutInflatingApprovedTargets() throws Exception {
+        var draft=demands.create(as(4),id(12),key(),input);
+        var empty=progress(draft.demandId(),"NO_COOP");assertEquals(0,empty.totals().target());assertNull(empty.content().getFirst().cooperationId());
+        var submitted=cooperations.submitWithCooperation(as(4),id(12),key(),new CooperationService.Submit(draft.demandId(),draft.version()));
+        cooperations.decide(as(2),id(11),submitted.cooperation().cooperationId(),key(),new CooperationService.Decision(2L,"REJECT","NEEDS_REVISION","WEEK4-REJECT",List.of()));
+        var rejected=progress(draft.demandId(),"REJECTED");assertEquals(0,rejected.totals().target());assertEquals("REJECTED",rejected.content().getFirst().cooperationState());
+        for(String side:List.of("school","enterprise")) {
+            var session=side.equals("school")?school:hr;String org=side.equals("school")?id(11):id(12);
+            var first=http(session,"GET","/"+side+"/placements/progress?size=1",null,org,null,false);
+            assertEquals(200,first.statusCode(),first.body());var page=JSON.readTree(first.body());
+            assertTrue(page.get("totalElements").asLong()>page.get("content").size());assertTrue(page.get("totals").get("target").asInt()>=input.quantity());
+            if(side.equals("enterprise")) assertEnterpriseProgressPrivacy(first.body());
+            var second=http(session,"GET","/"+side+"/placements/progress?size=1&page=1",null,org,null,false);
+            assertEquals(page.get("totals"),JSON.readTree(second.body()).get("totals"));
+            if(side.equals("enterprise")) assertEnterpriseProgressPrivacy(second.body());
+            assertEquals(400,http(session,"GET","/"+side+"/placements/progress?status=ACTIVE",null,org,null,false).statusCode());
+            assertEquals(404,http(session,"GET","/"+side+"/placements/progress?schoolOrgId="+key(),null,org,null,false).statusCode());
+        }
+        assertEquals(403,http(student,"GET","/enterprise/placements/progress",null,id(12),null,false).statusCode());
+    }
+
+    @Test void placementProgressCountsFullDistinctPlacementsWithoutReadingStudentProfiles() throws Exception {
+        var inserted=new ArrayList<String>();
+        try {
+            for(int n=0;n<input.quantity();n++) {
+                String placement=key();inserted.add(placement);
+                jdbc.update("INSERT INTO placements(id,student_user_id,school_org_id,enterprise_org_id,term_id,demand_id,cooperation_id,proposal_item_id,state,version,effective_at,start_date,end_date,approved_at,completed_at) VALUES(?,?,?,?,?,?,?,?,'COMPLETED',4,UTC_TIMESTAMP(6),'2026-01-01','2028-01-01',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",placement,id(6),id(11),id(12),id(21),f.cooperation().demandId(),f.cooperation().cooperationId(),key());
+            }
+            var full=progress(f.cooperation().demandId(),"FULL");assertEquals(input.quantity(),full.totals().placed());assertEquals(0,full.totals().remaining());
+        } finally {for(String placement:inserted) jdbc.update("DELETE FROM placements WHERE id=?",placement);}
+    }
+
+    private PlacementService.ProgressPage<PlacementService.SchoolProgressCounters> progress(String demand,String status) throws Exception {
+        PlacementService.ProgressPage<PlacementService.SchoolProgressCounters> result=null;
+        for(String side:List.of("school","enterprise")) {
+            var session=side.equals("school")?school:hr;String org=side.equals("school")?id(11):id(12);
+            var reply=http(session,"GET","/"+side+"/placements/progress?demandId="+demand+"&status="+status,null,org,null,false);
+            assertEquals(200,reply.statusCode(),reply.body());var page=JSON.readTree(reply.body());
+            assertEquals(1,page.get("totalElements").asInt());assertEquals(status,page.get("content").get(0).get("status").asText());assertFalse(reply.body().contains("studentUserId"));
+            if(side.equals("school")) result=JSON.readValue(reply.body(),new tools.jackson.core.type.TypeReference<PlacementService.ProgressPage<PlacementService.SchoolProgressCounters>>() {});
+            else {
+                assertEnterpriseProgressPrivacy(reply.body());
+                var schoolTotals=JSON.valueToTree(result.totals());
+                for(String field:List.of("target","placed","pending","remaining")) assertEquals(schoolTotals.get(field),page.get("totals").get(field));
+            }
+        }
+        return result;
+    }
+
+    private void assertEnterpriseProgressPrivacy(String body) throws Exception {
+        var page=JSON.readTree(body);var fields=Set.of("target","placed","pending","remaining");
+        assertEquals(fields,new HashSet<>(page.get("totals").propertyNames()));
+        for(var row:page.get("content")) assertEquals(fields,new HashSet<>(row.get("counters").propertyNames()));
+        for(String internal:List.of("reservations","declined","enterpriseAccepted","openForNomination","pendingCreation","pendingApproval"))
+            assertFalse(body.contains("\""+internal+"\""),body);
+    }
+
+    @Test void placementReadFiltersAndSummaryFollowApprovalAndCancellation() throws Exception {
+        String demand=f.cooperation().demandId(),coop=f.cooperation().cooperationId();int target=input.quantity();
+        assertPlacementSummary(demand,target,0,1,target);
+        enterpriseAccepted();var p=pending(Instant.now().plusSeconds(3600));
+        assertPlacementSummary(demand,target,0,1,target);
+        for(String side:List.of("school","enterprise")) {
+            var session=side.equals("school")?school:hr;String org=side.equals("school")?id(11):id(12);
+            for(String base:List.of("/"+side+"/placements","/"+side+"/"+org+"/placements")) {
+                for(String filter:List.of("demandId="+demand,"cooperationId="+coop,
+                    "demandId="+demand+"&cooperationId="+coop+"&termId="+id(21)+"&state=PENDING_APPROVAL")) {
+                    var reply=http(session,"GET",base+"?"+filter+"&page=0&size=1",null,org,null,false);
+                    assertEquals(200,reply.statusCode(),reply.body());var page=JSON.readTree(reply.body());
+                    assertEquals(1,page.get("totalElements").asInt());assertEquals(p.placementId(),page.get("content").get(0).get("placementId").asString());
+                }
+                var empty=http(session,"GET",base+"?demandId="+demand+"&state=APPROVED",null,org,null,false);
+                assertEquals(200,empty.statusCode(),empty.body());assertEquals(0,JSON.readTree(empty.body()).get("totalElements").asInt());
+            }
+        }
+        var approved=placements.approve(as(2),p.placementId(),key(),new PlacementService.PlacementCommand(p.version(),"WEEK4-APPROVE","SCHOOL_APPROVED"));
+        assertPlacementSummary(demand,target,1,0,target-1);
+        placements.cancel(as(2),p.placementId(),key(),new PlacementService.PlacementCommand(approved.version(),"WEEK4-CANCEL","SCHOOL_CANCELLED"));
+        assertPlacementSummary(demand,target,0,0,target);
+    }
+
+    @Test void placementSummaryUsesApprovedSnapshotAndCountsWithoutProposalBacklink() throws Exception {
+        enterpriseAccepted();var p=pending(Instant.now().plusSeconds(3600));
+        placements.approve(as(2),p.placementId(),key(),new PlacementService.PlacementCommand(p.version(),"WEEK4-SNAPSHOT","SCHOOL_APPROVED"));
+        String original=jdbc.queryForObject("SELECT data_json FROM demands WHERE id=?",String.class,p.demandId());
+        try {
+            jdbc.update("UPDATE demands SET data_json=JSON_SET(data_json,'$.quantity',?) WHERE id=?",input.quantity()+50,p.demandId());
+            jdbc.update("UPDATE proposal_items SET placement_id=NULL WHERE id=?",f.proposalId());
+            assertPlacementSummary(p.demandId(),input.quantity(),1,0,input.quantity()-1);
+        } finally {
+            jdbc.update("UPDATE demands SET data_json=? WHERE id=?",original,p.demandId());
+            jdbc.update("UPDATE proposal_items SET placement_id=? WHERE id=?",p.placementId(),f.proposalId());
+        }
+        var draft=demands.create(as(4),id(12),key(),input);
+        assertPlacementSummary(draft.demandId(),input.quantity(),0,0,input.quantity());
+    }
+
+    @Test void placementSummaryIgnoresExpiredReservationsButKeepsPendingPlacements() throws Exception {
+        var reservation=jdbc.queryForObject("SELECT reservation_until FROM proposal_items WHERE id=?",java.time.LocalDateTime.class,f.proposalId());
+        jdbc.update("UPDATE proposal_items SET reservation_until=DATE_SUB(UTC_TIMESTAMP(6),INTERVAL 1 SECOND) WHERE id=?",f.proposalId());
+        assertPlacementSummary(f.cooperation().demandId(),input.quantity(),0,0,input.quantity());
+        jdbc.update("UPDATE proposal_items SET reservation_until=? WHERE id=?",reservation,f.proposalId());
+        enterpriseAccepted();var p=pending(Instant.now().plusSeconds(3600));
+        jdbc.update("UPDATE proposal_items SET reservation_until=DATE_SUB(UTC_TIMESTAMP(6),INTERVAL 1 SECOND) WHERE id=?",f.proposalId());
+        assertPlacementSummary(p.demandId(),input.quantity(),0,1,input.quantity());
+    }
+
+    @Test void placementReadReferencesRejectForeignMissingDeletedAndMalformedFilters() throws Exception {
+        String foreignSchool=key(),foreignEnterprise=key(),foreignTerm=key();var copies=new ArrayList<String[]>();
+        jdbc.update("INSERT INTO organizations(id,name,type,status,created_at) VALUES(?,'Other school','UNIVERSITY','VERIFIED',UTC_TIMESTAMP(6)),(?,'Other enterprise','ENTERPRISE','VERIFIED',UTC_TIMESTAMP(6))",foreignSchool,foreignEnterprise);
+        jdbc.update("INSERT INTO terms(id,school_org_id,term_code,start_date,end_date,status,version,created_at,updated_at) SELECT ?,?,?,start_date,end_date,'ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6) FROM terms WHERE id=?",foreignTerm,foreignSchool,"WEEK4-"+foreignTerm,id(21));
+        try {
+            copies.add(copyPlacementReadDemand(foreignSchool,id(12),foreignTerm));
+            copies.add(copyPlacementReadDemand(id(11),foreignEnterprise,id(21)));
+            for(int n=0;n<2;n++) {
+                String side=n==0?"school":"enterprise",org=n==0?id(11):id(12);var session=n==0?school:hr;
+                for(String base:List.of("/"+side+"/placements","/"+side+"/"+org+"/placements")) {
+                    for(String filter:List.of("demandId="+copies.get(n)[0],"cooperationId="+copies.get(n)[1],"demandId="+key(),"cooperationId="+key())) {
+                        var denied=http(session,"GET",base+"?"+filter,null,org,null,false);
+                        assertEquals(404,denied.statusCode(),denied.body());assertFalse(denied.body().contains("studentUserId"));
+                    }
+                    for(String field:List.of("demandId","cooperationId","termId"))
+                        assertEquals(400,http(session,"GET",base+"?"+field+"=invalid",null,org,null,false).statusCode());
+                    assertEquals(404,http(session,"GET",base+"/summary?demandId="+copies.get(n)[0],null,org,null,false).statusCode());
+                }
+                for(String filter:List.of("demandId="+copies.get(n)[0],"cooperationId="+copies.get(n)[1])) {
+                    var denied=http(session,"GET","/"+side+"/placements/progress?"+filter,null,org,null,false);
+                    assertEquals(404,denied.statusCode(),denied.body());assertFalse(denied.body().contains("totals"));
+                }
+            }
+            jdbc.update("UPDATE demands SET soft_deleted_at=UTC_TIMESTAMP(6) WHERE id=?",f.cooperation().demandId());
+            try {
+                for(String side:List.of("school","enterprise")) {
+                    var session=side.equals("school")?school:hr;String org=side.equals("school")?id(11):id(12);
+                    for(String path:List.of("?demandId=","/summary?demandId="))
+                        assertEquals(404,http(session,"GET","/"+side+"/placements"+path+f.cooperation().demandId(),null,org,null,false).statusCode());
+                }
+            } finally {jdbc.update("UPDATE demands SET soft_deleted_at=NULL WHERE id=?",f.cooperation().demandId());}
+            assertEquals(403,http(student,"GET","/enterprise/placements?demandId="+f.cooperation().demandId(),null,id(12),null,false).statusCode());
+        } finally {
+            for(var copy:copies) {jdbc.update("DELETE FROM cooperations WHERE id=?",copy[1]);jdbc.update("DELETE FROM demands WHERE id=?",copy[0]);}
+            jdbc.update("DELETE FROM terms WHERE id=?",foreignTerm);jdbc.update("DELETE FROM organizations WHERE id IN (?,?)",foreignSchool,foreignEnterprise);
+        }
+    }
+
+    @Test void placementReadsSupportReadOnlyDelegationWithoutGrantingMutations() throws Exception {
+        enterpriseAccepted();var p=pending(Instant.now().plusSeconds(3600));
+        var grants=jdbc.queryForList("SELECT id FROM school_delegations WHERE user_id=? AND school_org_id=? AND term_id=?",String.class,id(2),id(11),id(21));
+        var original=jdbc.queryForList("SELECT p.assignment_id,p.permission_code FROM school_delegation_permissions p JOIN school_delegations d ON d.id=p.assignment_id WHERE d.user_id=? AND d.school_org_id=? AND d.term_id=? AND p.permission_code IN ('placement:school:write','t3:workspace:read')",id(2),id(11),id(21));
+        try {
+            for(String grant:grants) {
+                jdbc.update("DELETE FROM school_delegation_permissions WHERE assignment_id=? AND permission_code IN ('placement:school:write','t3:workspace:read')",grant);
+                jdbc.update("INSERT INTO school_delegation_permissions VALUES(?,'t3:workspace:read')",grant);
+            }
+            assertPlacementSummary(p.demandId(),input.quantity(),0,1,input.quantity());
+            assertEquals(1,placements.listForSchool(as(2),id(11),null,p.demandId(),null,null,0,25).totalElements());
+            assertEquals(1,placements.listForSchool(as(2),id(11),null,null,p.cooperationId(),null,0,25).totalElements());
+            assertEquals(200,http(school,"GET","/school/placements/progress?demandId="+p.demandId(),null,id(11),null,false).statusCode());
+            assertEquals(200,http(school,"GET","/school/placements/"+p.placementId()+"/internship-link",null,id(11),null,false).statusCode());
+            failure(404,"RESOURCE_NOT_FOUND",()->placements.approve(as(2),p.placementId(),key(),new PlacementService.PlacementCommand(1L,"WEEK4-READ-ONLY","SCHOOL_APPROVED")));
+            for(String grant:grants) jdbc.update("DELETE FROM school_delegation_permissions WHERE assignment_id=? AND permission_code='t3:workspace:read'",grant);
+            failure(404,"RESOURCE_NOT_FOUND",()->placements.summaryForSchool(as(2),id(11),p.demandId()));
+            failure(404,"RESOURCE_NOT_FOUND",()->placements.listForSchool(as(2),id(11),null,p.demandId(),null,null,0,25));
+            failure(404,"RESOURCE_NOT_FOUND",()->placements.internshipLinkForSchool(as(2),id(11),p.placementId()));
+            assertEquals(404,http(school,"GET","/school/placements/progress?demandId="+p.demandId(),null,id(11),null,false).statusCode());
+        } finally {
+            for(String grant:grants) jdbc.update("DELETE FROM school_delegation_permissions WHERE assignment_id=? AND permission_code IN ('placement:school:write','t3:workspace:read')",grant);
+            for(var row:original) jdbc.update("INSERT INTO school_delegation_permissions VALUES(?,?)",row.get("assignment_id"),row.get("permission_code"));
+        }
+    }
+
+    private void assertPlacementSummary(String demand,int target,int placed,int pending,int remaining) throws Exception {
+        for(String side:List.of("school","enterprise")) {
+            var session=side.equals("school")?school:hr;String org=side.equals("school")?id(11):id(12);
+            var reply=http(session,"GET","/"+side+"/placements/summary?demandId="+demand,null,org,null,false);
+            assertEquals(200,reply.statusCode(),reply.body());var value=JSON.readValue(reply.body(),PlacementService.PlacementSummary.class);
+            assertEquals(demand,value.demandId());assertEquals(target,value.target());assertEquals(placed,value.placed());assertEquals(pending,value.pending());assertEquals(remaining,value.remaining());
+            if(side.equals("enterprise")) assertEquals(Set.of("demandId","cooperationId","target","placed","pending","remaining"),new HashSet<>(JSON.readTree(reply.body()).propertyNames()));
+        }
+    }
+    private String[] copyPlacementReadDemand(String schoolOrg,String enterpriseOrg,String term) {
+        String demand=key(),coop=key();
+        jdbc.update("INSERT INTO demands(id,enterprise_org_id,school_org_id,term_id,state,validation_state,version,criteria_version,criteria_hash,data_json,created_at,updated_at) SELECT ?,?,?,?,'READY',validation_state,version,criteria_version,criteria_hash,JSON_SET(data_json,'$.schoolOrgId',?,'$.termId',?),UTC_TIMESTAMP(6),UTC_TIMESTAMP(6) FROM demands WHERE id=?",demand,enterpriseOrg,schoolOrg,term,schoolOrg,term,f.cooperation().demandId());
+        jdbc.update("INSERT INTO cooperations(id,demand_id,school_org_id,enterprise_org_id,term_id,state,created_at) VALUES(?,?,?,?,?,'APPROVED',UTC_TIMESTAMP(6))",coop,demand,schoolOrg,enterpriseOrg,term);
+        return new String[]{demand,coop};
+    }
+
     @Test void placementsRecheckEligibilitySnapshotsAndRollbackAuditBeforePublishing() throws Exception {
         enterpriseAccepted();var item=proposals.item(f.proposalId());Instant effective=Instant.now().plusSeconds(3600);
         var request=new PlacementService.CreatePlacement(item.proposalItemId(),item.version(),eligibilityVersion(),effective.toString(),input.required().dateRange().startDate().toString(),input.required().dateRange().endDate().toString());
@@ -867,6 +1140,11 @@ class EnterpriseProposalIT {
             failure(404,"RESOURCE_NOT_FOUND",()->placements.create(as(2),id(11),createKey,request));
             failure(404,"RESOURCE_NOT_FOUND",()->placements.approve(as(2),p.placementId(),approveKey,approve));
             assertEquals(0,placements.listForSchool(as(2),id(11),null,null,0,25).totalElements());
+            var overview=placements.progressForSchool(as(2),id(11),null,null,null,null,null,null,0,1);
+            assertEquals(0,overview.totalElements());assertEquals(0,overview.totalPages());assertTrue(overview.content().isEmpty());
+            assertEquals(new PlacementService.SchoolProgressCounters(0,0,0,0,0,0,0,0,0,0),overview.totals());
+            assertFalse(overview.terms().stream().anyMatch(choice->choice.id().equals(id(21))));
+            failure(404,"RESOURCE_NOT_FOUND",()->placements.progressForSchool(as(2),id(11),null,null,p.demandId(),null,null,null,0,1));
             failure(404,"RESOURCE_NOT_FOUND",()->placements.summaryForSchool(as(2),id(11),p.demandId()));
             assertEquals("APPROVED",currentPlacement(p.placementId()).state());
         } finally {for(var row:original) jdbc.update("UPDATE school_delegations SET valid_until=? WHERE id=?",row.get("valid_until"),row.get("id"));}
