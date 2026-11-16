@@ -208,7 +208,10 @@ public class PlacementService {
             UUID.randomUUID().toString());
 
         audit.workflow(actor(auth), "PLACEMENT_CREATED", id, schoolOrgId,
-            Map.of("termId", coop.termId(), "placementVersion", 1));
+            Map.of("termId", coop.termId(), "placementVersion", 1,
+                "effectiveAt", effectiveAt.toString(),
+                "reasonCode", "PLACEMENT_CREATED",
+                "operationId", UUID.randomUUID().toString()));
         return readPlacement(id);
     }
 
@@ -390,8 +393,10 @@ public class PlacementService {
         } else {
             audit.workflow(actor(auth), "PLACEMENT_CANCELLED", placementId, schoolOrgId,
                 Map.of("termId", p.termId(), "placementVersion", p.version() + 1,
+                    "effectiveAt", p.effectiveAt().toString(),
                     "reasonCode", body.reasonCode(),
-                    "decisionRef", body.decisionRef() != null ? body.decisionRef() : ""));
+                    "decisionRef", body.decisionRef() != null ? body.decisionRef() : "",
+                    "operationId", UUID.randomUUID().toString()));
         }
         return readPlacement(placementId);
     }

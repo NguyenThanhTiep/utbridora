@@ -68,8 +68,7 @@ public class ProposalService implements InternshipInvitationPort {
                 refs.add(new DecisionProfileRef(user,result.profileSnapshotId(),result.profileVersion(),result.relevantHash()));eligibility.assertEligibleForNomination(auth,user,c.schoolOrgId(),c.termId());
             }
             profiles.assertCurrentForDecision(auth,refs);
-            var batch=jdbc.queryForList("SELECT id FROM proposal_batches WHERE cooperation_id=? FOR UPDATE",String.class,c.cooperationId());String batchId;long batchVersion;
-            if(batch.isEmpty()) {
+            var batch=jdbc.queryForList("SELECT id FROM proposal_batches WHERE cooperation_id=? FOR UPDATE",String.class,c.cooperationId());String batchId;long batchVersion;            if(batch.isEmpty()) {
                 if(request.expectedBatchVersion()!=null) throw failure(409,"VERSION_CONFLICT");batchId=UUID.randomUUID().toString();batchVersion=1;
                 jdbc.update("INSERT INTO proposal_batches VALUES(?,?,1)",batchId,c.cooperationId());
             } else {
@@ -77,10 +76,16 @@ public class ProposalService implements InternshipInvitationPort {
                 batchVersion=jdbc.queryForObject("SELECT version FROM proposal_batches WHERE id=?",Long.class,batchId);
                 if(batchVersion!=request.expectedBatchVersion()) throw failure(409,"VERSION_CONFLICT");batchVersion++;jdbc.update("UPDATE proposal_batches SET version=? WHERE id=?",batchVersion,batchId);
             }
-            Capacity capacity=capacityOf(c,d.data().quantity());if(capacity.openForNomination()<refs.size()) throw failure(409,"CAPACITY_EXCEEDED");
+            // ── Hàng 82: Re-check capacity AFTER batch lock to prevent race overbook ─
+            // Two concurrent requests may both pass the pre-lock capacity check.
+            // After acquiring the batch FOR UPDATE, we re-read capacity to serialize.
+            Capacity capacityAfterLock = capacityOf(c, d.data().quantity());
+            if (capacityAfterLock.openForNomination() < refs.size()) throw failure(409, "CAPACITY_EXCEEDED");
             Instant until=earlier(clock.instant().plusSeconds(86400),d.data().deadline());if(!clock.instant().isBefore(until)) throw failure(409,"RESERVATION_EXPIRED");
             var items=new ArrayList<Reserved>();
             for(var ref:refs) {
+                // UNIQUE(batch_id, student_user_id) at DB level is the final safety net.
+                // This check is an early fail-fast before hitting the constraint.
                 if(jdbc.queryForObject("SELECT COUNT(*) FROM proposal_items WHERE batch_id=? AND student_user_id=?",Integer.class,batchId,ref.studentUserId())>0) throw failure(409,"PROPOSAL_ALREADY_EXISTS");
                 String id=UUID.randomUUID().toString();jdbc.update("INSERT INTO proposal_items(id,batch_id,student_user_id,state,version,reservation_until,profile_snapshot_id,match_run_id) VALUES(?,?,?,'RESERVED',1,?,?,?)",id,batchId,ref.studentUserId(),utc(until),ref.profileSnapshotId(),runId);
                 audit.workflow(actor(auth),"PROPOSAL_ITEM_RESERVED",id,c.schoolOrgId(),Map.of("batchId",batchId,"reservationUntil",until.toString(),"version",1));items.add(new Reserved(id,ref.studentUserId(),"RESERVED",until));
@@ -91,12 +96,39 @@ public class ProposalService implements InternshipInvitationPort {
     @Transactional public Capacity capacity(Authentication auth,String coopId) {var c=cooperations.read(coopId);scope.require(auth,c.schoolOrgId(),c.termId(),"t5:proposal:manage");var d=demands.findLocked(c.demandId(),c.enterpriseOrgId()).orElseThrow();return capacityOf(c,d.data().quantity());}
     private Capacity capacityOf(CooperationService.CooperationDto c,int quantity) {
         expireReservations(c.cooperationId());
-        int placed=jdbc.queryForList("SELECT p.id FROM placements p WHERE p.cooperation_id=? AND p.state IN ('APPROVED','ACTIVE','COMPLETED') FOR SHARE",String.class,c.cooperationId()).size()
-            + jdbc.queryForList("SELECT i.id FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id WHERE b.cooperation_id=? AND i.state='PLACED' AND i.placement_id IS NULL FOR SHARE",String.class,c.cooperationId()).size();
-        int reserved=jdbc.queryForList("SELECT i.id FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id WHERE b.cooperation_id=? AND ((i.state IN ('RESERVED','INVITED','ACCEPTED','SHARED','ENTERPRISE_ACCEPTED') AND i.reservation_until>?) OR EXISTS (SELECT 1 FROM placements p WHERE p.id=i.placement_id AND p.state='PENDING_APPROVAL')) FOR SHARE",String.class,c.cooperationId(),utc(clock.instant())).size();
-        int declined=jdbc.queryForObject("SELECT COUNT(*) FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id WHERE b.cooperation_id=? AND i.state='DECLINED'",Integer.class,c.cooperationId());
-        Long batchVersion=jdbc.queryForList("SELECT version FROM proposal_batches WHERE cooperation_id=?",Long.class,c.cooperationId()).stream().findFirst().orElse(null);
-        return new Capacity(c.cooperationId(),c.demandId(),quantity,placed,reserved,Math.max(0,quantity-placed-reserved),declined,batchVersion);
+        // ── Hàng 75: Chỉ tiêu trừ đúng slot đang giữ, không cộng kép ────────
+        // placed = placements in terminal-active states (approved/active/completed)
+        //        + proposal_items PLACED but not yet linked to a placement (transition window)
+        // These two sets are disjoint: once placement_id is set, the item moves to PLACED
+        // and the placement row is the authoritative count.
+        int placed = jdbc.queryForList(
+            "SELECT p.id FROM placements p WHERE p.cooperation_id=? " +
+            "AND p.state IN ('APPROVED','ACTIVE','COMPLETED') FOR SHARE",
+            String.class, c.cooperationId()).size()
+            + jdbc.queryForList(
+            "SELECT i.id FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id " +
+            "WHERE b.cooperation_id=? AND i.state='PLACED' AND i.placement_id IS NULL FOR SHARE",
+            String.class, c.cooperationId()).size();
+        // reserved = items actively holding a slot (not yet placed/declined/expired)
+        // Includes PENDING_APPROVAL placements via EXISTS subquery to avoid double-releasing
+        // slots that are in the create→approve window.
+        int reserved = jdbc.queryForList(
+            "SELECT i.id FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id " +
+            "WHERE b.cooperation_id=? " +
+            "AND ((i.state IN ('RESERVED','INVITED','ACCEPTED','SHARED','ENTERPRISE_ACCEPTED') " +
+            "      AND i.reservation_until>?) " +
+            "  OR EXISTS (SELECT 1 FROM placements p WHERE p.id=i.placement_id AND p.state='PENDING_APPROVAL')) " +
+            "FOR SHARE",
+            String.class, c.cooperationId(), utc(clock.instant())).size();
+        int declined = jdbc.queryForObject(
+            "SELECT COUNT(*) FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id " +
+            "WHERE b.cooperation_id=? AND i.state='DECLINED'",
+            Integer.class, c.cooperationId());
+        Long batchVersion = jdbc.queryForList(
+            "SELECT version FROM proposal_batches WHERE cooperation_id=?",
+            Long.class, c.cooperationId()).stream().findFirst().orElse(null);
+        return new Capacity(c.cooperationId(), c.demandId(), quantity, placed, reserved,
+            Math.max(0, quantity - placed - reserved), declined, batchVersion);
     }
     @Transactional public Page<SchoolItem> list(Authentication auth,String coopId,int page,int size) {
         return list(auth,coopId,null,page,size);
