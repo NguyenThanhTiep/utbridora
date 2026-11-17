@@ -127,6 +127,44 @@ class PrivateFileServiceIT {
         }
     }
 
+    @Test void qa01T106DeniedForeignReadHasNoSuccessAudit() throws Exception {
+        // QA01 Security 04: a denied metadata/download request must not create a success audit.
+        var owner = as(6);
+        var uploaded = files.upload(owner, key(), PROFILE, FilePurpose.CV, part(PDF));
+        syntheticClean(uploaded.fileId()); // Test-only fixture; this is NOT an antivirus scan.
+        String fileId = uploaded.fileId();
+        int before = jdbc.queryForObject(
+            "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_DOWNLOADED' AND resource_id=?",
+            Integer.class, fileId);
+
+        for (var unauthorized : List.of(login("intern"), login("admin"), login("hr"))) {
+            var metadata = get(unauthorized, fileId, "metadata", null);
+            assertError(metadata, 404, "RESOURCE_NOT_FOUND");
+            privateHeaders(metadata);
+
+            // The caller must not learn that the file exists, even with a syntactically valid Range.
+            var content = get(unauthorized, fileId, "content", "bytes=0-1");
+            assertError(content, 404, "RESOURCE_NOT_FOUND");
+            privateHeaders(content);
+            assertFalse(body(content).contains("Synthetic transport fixture"),
+                "Denied download must not return private file bytes");
+            assertFalse(body(metadata).contains(ROOT.toString()),
+                "Denied metadata must not expose the private storage path");
+        }
+
+        assertEquals(before, jdbc.queryForObject(
+            "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_DOWNLOADED' AND resource_id=?",
+            Integer.class, fileId), "Denied reads must not write FILE_DOWNLOADED success audit");
+
+        // Positive control: owner can still read and must generate exactly one success audit.
+        var allowed = get(login("student"), fileId, "content", "bytes=0-1");
+        assertEquals(206, allowed.statusCode(), body(allowed));
+        assertArrayEquals(Arrays.copyOfRange(PDF, 0, 2), allowed.body());
+        assertEquals(before + 1, jdbc.queryForObject(
+            "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_DOWNLOADED' AND resource_id=?",
+            Integer.class, fileId));
+    }
+
     @Test void realMultipartOwnerMetadataPendingAndForeignScope() throws Exception {
         Session student=login("student"),other=login("intern"),admin=login("admin"),hr=login("hr");
         String command=key();var created=post(student,command,"STUDENT_PROFILE",id(6),"CV","../../cv.pdf","application/pdf",PDF,true,"");assertEquals(202,created.statusCode(),body(created));
