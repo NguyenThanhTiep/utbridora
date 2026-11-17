@@ -30,7 +30,7 @@ test('Sai mật khẩu có lỗi chung và khôi phục không tiết lộ email
   await expect(page.getByRole('status')).toContainText('Email, mật khẩu không đúng');
   await page.getByRole('button', { name: 'Quên mật khẩu?' }).click();
   await page.getByLabel('Email', { exact: true }).fill('missing@example.test');
-  await page.getByRole('button', { name: 'Quên mật khẩu', exact: true }).click();
+  await page.getByRole('button', { name: 'Gửi hướng dẫn', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Nếu địa chỉ hợp lệ');
 });
 test('Kích hoạt lời mời và đăng nhập bằng tài khoản mới', async ({ page }) => {
@@ -48,14 +48,14 @@ test('Đặt lại mật khẩu một lần, liên kết cũ bị từ chối', 
   const path = '/reset-password#token=' + env('E2E_RESET_TOKEN'); await page.goto(path);
   await page.getByLabel('Mật khẩu mới', { exact: true }).fill(env('E2E_NEW_PASSWORD'));
   await page.getByLabel('Xác nhận mật khẩu', { exact: true }).fill(env('E2E_NEW_PASSWORD'));
-  await page.getByRole('button', { name: 'Đặt lại mật khẩu', exact: true }).click();
+  await page.getByRole('button', { name: 'Lưu mật khẩu mới', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible();
   await signIn(page, env('E2E_RESET_EMAIL'), env('E2E_NEW_PASSWORD'));
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible();
   await page.goto(path); await page.getByLabel('Mật khẩu mới', { exact: true }).fill(env('E2E_NEW_PASSWORD'));
   await page.getByLabel('Xác nhận mật khẩu', { exact: true }).fill(env('E2E_NEW_PASSWORD'));
-  await page.getByRole('button', { name: 'Đặt lại mật khẩu', exact: true }).click();
+  await page.getByRole('button', { name: 'Lưu mật khẩu mới', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Liên kết không hợp lệ');
 });
 test('Sinh viên bị chặn API quản trị và giao diện vừa màn hình di động', async ({ page }) => {

@@ -129,10 +129,10 @@ test('UX UI mock: kết quả tìm kiếm cũ không ghi đè truy vấn mới',
 });
 
 test('UX: liên kết kích hoạt và đặt lại thiếu mã giải thích được cách tiếp tục', async ({ page }) => {
-  for (const [path, title] of [['/reset-password', 'Đặt lại mật khẩu'], ['/accept-invitation', 'Kích hoạt tài khoản']]) {
+  for (const [path, title, submit] of [['/reset-password', 'Mật khẩu mới', 'Lưu mật khẩu mới'], ['/accept-invitation', 'Kích hoạt tài khoản', 'Kích hoạt tài khoản']]) {
     await page.goto(path);
     await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: title, exact: true })).toBeDisabled();
+    await expect(page.getByRole('button', { name: submit, exact: true })).toBeDisabled();
     await expect(page.locator('main')).toContainText(/mã xác nhận|thiếu mã|mở lại liên kết/i);
     await page.getByRole('button', { name: 'Quay lại đăng nhập', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible();

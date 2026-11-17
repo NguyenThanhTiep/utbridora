@@ -181,14 +181,16 @@ export default function App() {
   const navigateAuth = (next: string) => { setAuthScreen(next); action.setMessage(''); setSessionMessage(''); };
 
   if (initializing) return <main className="startup"><Brand /><div className="startup-status" role="status"><span className="spinner" />Đang chuẩn bị không gian của bạn…</div></main>;
-  if (!me) return <AuthLayout><AuthForm screen={authScreen} token={token} clearToken={() => setToken('')}
+  if (!me) return <AuthLayout screen={authScreen}><AuthForm screen={authScreen} token={token} clearToken={() => setToken('')}
     navigate={navigateAuth} signedIn={signedIn} />
-    <Notice message={sessionMessage || action.message} tone={sessionMessage ? 'info' : action.error ? 'error' : 'info'} />
+    <div className={sessionMessage ? 'auth-warning' : undefined}>
+      <Notice message={sessionMessage || action.message} tone={sessionMessage ? 'info' : action.error ? 'error' : 'info'} />
+    </div>
   </AuthLayout>;
 
   // A mail link can be opened in a browser which is already signed in.
   // Keep its token in memory and provide an explicit session switch.
-  if (token && ['reset', 'activate'].includes(authScreen)) return <AuthLayout>
+  if (token && ['reset', 'activate'].includes(authScreen)) return <AuthLayout screen={authScreen}>
     <span className="auth-form-icon"><Icon name="mail" size={26} /></span>
     <h2 className="auth-title">Tiếp tục với liên kết email</h2>
     <p className="auth-description">Bạn đang đăng nhập bằng tài khoản <strong>{me.email}</strong>. Đăng xuất trước khi sử dụng liên kết này.</p>
@@ -264,27 +266,68 @@ export default function App() {
   </div>;
 }
 
-function AuthLayout({ children }: { children: ReactNode }) {
+function AuthBrand() {
+  return <a href="/" className="auth-brand" aria-label="UT.Bridora trang chủ">
+    <span className="auth-monogram" aria-hidden="true">U</span>
+    <span><b>UT.BRIDORA</b><small>Kết nối thực tập</small></span>
+  </a>;
+}
+
+function AuthLayout({ screen, children }: { screen: string; children: ReactNode }) {
+  const helpDialog = useRef<HTMLDialogElement>(null);
+  const labels: Record<string, string> = { login: 'CỔNG ĐĂNG NHẬP', forgot: 'KHÔI PHỤC MẬT KHẨU', reset: 'KHÔI PHỤC MẬT KHẨU', activate: 'KÍCH HOẠT TÀI KHOẢN' };
   return <main className="auth-shell">
     <section className="auth-story">
-      <a href="/" className="auth-brand" aria-label="UT.Bridora trang chủ"><Brand inverse /></a>
-      <div className="auth-story-content"><span className="auth-tag"><span />NHÀ TRƯỜNG · DOANH NGHIỆP · SINH VIÊN</span>
-        <h1>Kết nối tri thức<br />với <em>cơ hội thực tế.</em></h1>
-        <p>Một không gian chung để nhà trường, doanh nghiệp và sinh viên cùng xây dựng hành trình phát triển.</p>
+      <AuthBrand />
+      <div className="auth-story-content"><span className="auth-tag">NỀN TẢNG KẾT NỐI THỰC TẬP</span>
+        <h1>Kết nối tiềm năng<br />Kiến tạo tương lai.</h1>
+        <span className="auth-heading-rule" aria-hidden="true" />
+        <p className="auth-story-description">Cùng quản lý hành trình thực tập giữa sinh viên, nhà trường và doanh nghiệp trên một nền tảng thống nhất.</p>
         <div className="connection-art" aria-hidden="true">
-          <svg viewBox="0 0 480 220" className="connection-lines"><path d="M85 136C150 136 145 66 240 66s90 70 155 70M85 136c55 0 65 50 155 50s100-50 155-50" /><path className="connection-line-dashed" d="M85 136h310M240 66v120" /><circle cx="240" cy="136" r="42" /><circle cx="240" cy="136" r="66" /></svg>
-          <div className="connection-node node-school"><span><Icon name="graduation" size={24} /></span><b>Nhà trường</b><small>Nền tảng tri thức</small></div>
-          <div className="connection-center"><Icon name="layers" size={28} /></div>
-          <div className="connection-node node-enterprise"><span><Icon name="briefcase" size={24} /></span><b>Doanh nghiệp</b><small>Cơ hội thực tế</small></div>
-          <div className="connection-student"><Icon name="user" size={17} /><span>Sinh viên</span></div>
+          <p className="connection-title">MỘT NỀN TẢNG CHUNG</p>
+          <div className="connection-map">
+          <svg viewBox="0 0 460 460" className="connection-lines">
+            <path d="M121.747 144.5 230 207l108.253-62.5M230 207v125" />
+            <circle cx="230" cy="207" r="60" /><circle cx="230" cy="207" r="76" />
+            <circle className="connection-wave" cx="230" cy="207" r="98" />
+            <circle className="connection-orbit" cx="230" cy="207" r="125" />
+            <path className="connection-flow flow-student" d="M121.747 144.5 230 207" />
+            <path className="connection-flow flow-school" d="M338.253 144.5 230 207" />
+            <path className="connection-flow flow-enterprise" d="M230 332V207" />
+            <g className="connection-sparks"><circle cx="278" cy="378" r="2" /><circle cx="316" cy="366" r="2" /><circle cx="354" cy="378" r="2" /><circle cx="392" cy="366" r="2" /><circle cx="430" cy="378" r="2" /></g>
+          </svg>
+          <div className="connection-node node-student"><span><Icon name="graduation" size={22} /></span><b>Sinh viên</b></div>
+          <div className="connection-center">UT.Bridora</div>
+          <div className="connection-node node-school"><span><Icon name="university" size={22} /></span><b>Nhà trường</b></div>
+          <div className="connection-node node-enterprise"><span><Icon name="briefcase" size={22} /></span><b>Doanh nghiệp</b></div>
+          </div>
         </div>
+        <p className="auth-protected"><span />KẾT NỐI ĐƯỢC BẢO VỆ</p>
       </div>
-      <div className="auth-story-footer"><span className="auth-footer-rule" /><span>Cùng kết nối. Cùng phát triển.</span></div>
+      <p className="auth-story-footer">UT.BRIDORA / UNIVERSITY • INDUSTRY</p>
     </section>
-    <section className="auth-entry"><div className="auth-mobile-brand"><Brand /></div><div className="auth-card">{children}</div>
-      <div className="auth-entry-footer"><Icon name="shield" size={15} /><span>Chỉ sử dụng tài khoản được cấp cho bạn.</span></div>
-      <p className="auth-copyright">© {new Date().getFullYear()} UT.Bridora. Mọi quyền được bảo lưu.</p>
+    <section className="auth-entry">
+      <header className="auth-entry-header">
+        <div className="auth-mobile-brand"><AuthBrand /></div>
+        <span className="auth-entry-label">{labels[screen]}</span>
+        <button className="text-button auth-help-button" type="button" aria-haspopup="dialog" aria-controls="auth-help" onClick={() => helpDialog.current?.showModal()}>Cần hỗ trợ?</button>
+        <span className="auth-security-tag"><Icon name="shield" size={13} />AN TOÀN · BẢO MẬT</span>
+      </header>
+      <div className="auth-entry-body">
+        <div className="auth-card">{children}</div>
+        <p className="auth-entry-footer">Bảo mật phiên đăng nhập · Quản lý quyền truy cập theo vai trò</p>
+        <p className="auth-copyright">UT.Bridora · Cổng truy cập chính thức</p>
+      </div>
     </section>
+    <dialog className="auth-help-dialog" id="auth-help" ref={helpDialog} aria-labelledby="auth-help-title">
+      <div className="auth-help-heading"><h2 id="auth-help-title">Hỗ trợ truy cập</h2><button className="secondary" type="button" onClick={() => helpDialog.current?.close()}>Đóng</button></div>
+      <ol>
+        <li><b>Đăng nhập tài khoản</b><p>Sử dụng email được cấp và mật khẩu bạn đã đặt. Kiểm tra chữ hoa, chữ thường và trạng thái phím Caps Lock.</p></li>
+        <li><b>Chưa kích hoạt tài khoản</b><p>Mở liên kết lời mời trong email để điền họ tên và tự đặt mật khẩu. Lời mời có hiệu lực 48 giờ và chỉ dùng một lần.</p></li>
+        <li><b>Quên mật khẩu hoặc liên kết hết hạn</b><p>Chọn “Quên mật khẩu?” tại màn đăng nhập để yêu cầu hướng dẫn mới. Liên kết đặt lại có hiệu lực 30 phút. Kiểm tra cả hộp thư và thư rác.</p></li>
+      </ol>
+      <p className="auth-help-contact">Nếu chưa nhận được lời mời, tài khoản bị khóa hoặc vẫn không đăng nhập được, hãy liên hệ quản trị viên đã cấp tài khoản cho bạn. Không chia sẻ mật khẩu hoặc liên kết xác nhận.</p>
+    </dialog>
   </main>;
 }
 
@@ -337,19 +380,29 @@ function AuthForm({ screen, token, clearToken, navigate, signedIn }: {
   screen: string; token: string; clearToken: () => void; navigate: (screen: string) => void; signedIn: (user: Me) => Promise<void>;
 }) {
   const [email, setEmail] = useState(''), [password, setPassword] = useState(''), [confirm, setConfirm] = useState(''), [name, setName] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const action = useAction();
   const submitting = useRef(false);
-  const titles: Record<string, string> = { login: 'Đăng nhập', forgot: 'Quên mật khẩu', reset: 'Đặt lại mật khẩu', activate: 'Kích hoạt tài khoản' };
+  const titles: Record<string, string> = { login: 'Đăng nhập', forgot: 'Quên mật khẩu', reset: 'Mật khẩu mới', activate: 'Kích hoạt tài khoản' };
+  const overlines: Record<string, string> = { login: 'CHÀO MỪNG TRỞ LẠI', forgot: 'BƯỚC 01 / YÊU CẦU', reset: 'BƯỚC 03 / ĐẶT LẠI', activate: 'TÀI KHOẢN / LỜI MỜI' };
+  const submitLabels: Record<string, string> = { login: 'Đăng nhập', forgot: 'Gửi hướng dẫn', reset: 'Lưu mật khẩu mới', activate: 'Kích hoạt tài khoản' };
   const descriptions: Record<string, string> = {
-    login: 'Chào mừng trở lại! Đăng nhập để tiếp tục hành trình của bạn.',
-    forgot: 'Nhập email tài khoản. Chúng tôi sẽ gửi hướng dẫn giúp bạn đặt lại mật khẩu.',
-    reset: 'Tạo mật khẩu mới để tiếp tục sử dụng tài khoản của bạn.',
-    activate: 'Hoàn tất thông tin dưới đây để bắt đầu cùng UT.Bridora.'
+    login: 'Nhập thông tin tài khoản để tiếp tục.',
+    forgot: 'Nhập email tài khoản để nhận hướng dẫn đặt lại mật khẩu.',
+    reset: 'Tạo mật khẩu mới để bảo vệ tài khoản của bạn.',
+    activate: 'Hoàn tất thông tin để bắt đầu sử dụng UT.Bridora.'
+  };
+  const guidanceTitles: Record<string, string> = { forgot: 'Bảo vệ tài khoản', reset: 'Thông tin liên kết', activate: 'Thông tin lời mời' };
+  const guidance: Record<string, string> = {
+    forgot: 'Kết quả phản hồi không xác nhận email có tồn tại trong hệ thống. Không chia sẻ liên kết khôi phục.',
+    reset: 'Liên kết đặt lại mật khẩu có hiệu lực trong 30 phút kể từ khi được gửi và chỉ sử dụng một lần.',
+    activate: 'Lời mời có hiệu lực trong 48 giờ kể từ khi được gửi và chỉ sử dụng một lần. Bạn tự đặt mật khẩu để kích hoạt tài khoản.'
   };
   const tokenFlow = ['reset', 'activate'].includes(screen);
+  const linkError = tokenFlow && action.error && action.message.startsWith('Liên kết');
   const changeScreen = () => {
     if (action.busy) return;
-    action.setMessage(''); setPassword(''); setConfirm(''); navigate(screen === 'login' ? 'forgot' : 'login');
+    action.setMessage(''); setPassword(''); setConfirm(''); setPasswordVisible(false); navigate(screen === 'login' ? 'forgot' : 'login');
   };
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -368,29 +421,34 @@ function AuthForm({ screen, token, clearToken, navigate, signedIn }: {
       } finally { submitting.current = false; }
     });
   };
-  return <form className="auth-form" onSubmit={submit} aria-busy={action.busy}>
-    <span className="auth-form-icon"><Icon name={screen === 'login' ? 'user' : screen === 'forgot' ? 'mail' : screen === 'reset' ? 'key' : 'graduation'} size={25} /></span>
-    <p className="auth-overline">{screen === 'login' ? 'KHÔNG GIAN CỦA BẠN' : 'TÀI KHOẢN UT.BRIDORA'}</p>
-    <h2 className="auth-title">{titles[screen]}</h2><p className="auth-description">{descriptions[screen]}</p>
+  return <form className={'auth-form' + (screen === 'login' ? ' auth-form-login' : '')} onSubmit={submit} aria-busy={action.busy} aria-label={'Biểu mẫu ' + titles[screen]}>
+    <span className="auth-form-icon" aria-hidden="true"><Icon name="check" size={16} /></span>
+    <p className="auth-overline">{overlines[screen]}</p>
+    <h2 className="auth-title" id="auth-title">{titles[screen]}</h2><p className="auth-description">{descriptions[screen]}</p>
     <div className="auth-fields">
       {['login', 'forgot'].includes(screen) && <Field label="Email" icon="mail" type="email" value={email} onChange={setEmail}
-        placeholder="tenban@example.com" autoComplete="username" maxLength={254} disabled={action.busy} />}
+        placeholder="Nhập địa chỉ email" autoComplete="username" maxLength={254} disabled={action.busy} />}
       {screen === 'activate' && <Field label="Họ và tên" icon="user" value={name} onChange={setName} maxLength={150} autoComplete="name" placeholder="Nhập họ và tên của bạn" disabled={action.busy} />}
-      {screen !== 'forgot' && <Field label={screen === 'login' ? 'Mật khẩu' : 'Mật khẩu mới'} icon="lock" type="password" value={password}
-        onChange={setPassword} placeholder={screen === 'login' ? 'Nhập mật khẩu của bạn' : 'Tạo mật khẩu mới'}
+      {screen !== 'forgot' && <Field label={screen === 'login' ? 'Mật khẩu' : 'Mật khẩu mới'} type="password" value={password}
+        onChange={setPassword} placeholder={screen === 'login' ? 'Nhập mật khẩu' : 'Tạo mật khẩu mới'}
+        passwordVisible={screen === 'login' ? passwordVisible : undefined} onPasswordVisibilityChange={screen === 'login' ? setPasswordVisible : undefined}
         autoComplete={screen === 'login' ? 'current-password' : 'new-password'} disabled={action.busy} />}
-      {tokenFlow && <Field label="Xác nhận mật khẩu" icon="lock" type="password" value={confirm} onChange={setConfirm}
+      {tokenFlow && <Field label="Xác nhận mật khẩu" type="password" value={confirm} onChange={setConfirm}
         placeholder="Nhập lại mật khẩu mới" autoComplete="new-password" disabled={action.busy} />}
     </div>
-    {screen === 'login' && <div className="auth-options"><button className="text-button" type="button" disabled={action.busy} onClick={changeScreen}>Quên mật khẩu?</button></div>}
+    {screen === 'login' && <div className="auth-options">
+      <label className="auth-show-password"><input type="checkbox" checked={passwordVisible} onChange={event => setPasswordVisible(event.target.checked)} disabled={action.busy} />Hiện mật khẩu</label>
+      <button className="text-button" type="button" disabled={action.busy} onClick={changeScreen}>Quên mật khẩu?</button>
+    </div>}
     {tokenFlow && <p className="password-requirement"><Icon name="info" size={15} />Tối thiểu 12 ký tự, tối đa 72 byte UTF-8.</p>}
-    <Notice message={action.message} tone={action.error ? 'error' : 'success'} />
-    {tokenFlow && !token && <Notice tone="error" message="Liên kết thiếu mã xác nhận. Vui lòng mở lại liên kết trong email hoặc yêu cầu liên kết mới." />}
+    <div className={linkError ? 'auth-warning' : undefined}><Notice message={action.message} tone={action.error ? 'error' : 'success'} /></div>
+    {tokenFlow && !token && <div className="auth-warning"><Notice tone="error" message="Liên kết thiếu mã xác nhận. Vui lòng mở lại liên kết trong email hoặc yêu cầu liên kết mới." /></div>}
     <button className="auth-submit full" disabled={action.busy || tokenFlow && !token}>
-      {action.busy ? <><span className="spinner spinner-light" />Đang xử lý…</> : <>{titles[screen]}<Icon name="arrow-right" size={18} /></>}
+      {action.busy ? <><span className="spinner spinner-light" />Đang xử lý…</> : <>{submitLabels[screen]}{screen === 'login' && <Icon name="arrow-right" size={18} />}</>}
     </button>
+    {guidance[screen] && <div className="auth-guidance"><b>{guidanceTitles[screen]}</b><p>{guidance[screen]}</p></div>}
     {screen !== 'login' && <button className="text-button auth-back full" type="button" disabled={action.busy} onClick={changeScreen}><Icon name="arrow-left" size={16} />Quay lại đăng nhập</button>}
-    {screen === 'login' && <p className="auth-invitation-note">Chưa có tài khoản? Liên hệ quản trị viên để nhận lời mời tham gia.</p>}
+    {screen === 'login' && <p className="auth-invitation-note">Sau khi đăng nhập, hệ thống đưa bạn đến không gian phù hợp với quyền truy cập.</p>}
   </form>;
 }
 
