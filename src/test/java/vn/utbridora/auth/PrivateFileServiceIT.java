@@ -57,6 +57,42 @@ class PrivateFileServiceIT {
     FileDto upload() {return files.upload(as(6),key(),PROFILE,FilePurpose.CV,part(PDF));}
     void syntheticClean(String file) {jdbc.update("UPDATE files SET scan_status='CLEAN' WHERE id=?",file);}
 
+    @Test void qa01T106RetryAfterMembershipRevocationCannotReplaySuccess() throws Exception {
+        // QA01: a historical successful idempotency record must not bypass current authorization.
+        var student = as(6);
+        String requestKey = key();
+        var created = files.upload(student, requestKey, PROFILE, FilePurpose.CV, part(PDF));
+        long objectCount = objects();
+        int operationCount = jdbc.queryForObject(
+            "SELECT COUNT(*) FROM operation_records WHERE idempotency_key=?",
+            Integer.class, requestKey);
+        int auditCount = jdbc.queryForObject(
+            "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED' AND resource_id=?",
+            Integer.class, created.fileId());
+
+        jdbc.update("UPDATE memberships SET active=false WHERE user_id=?", id(6));
+        try {
+            var denied = assertThrows(OperationFailure.class,
+                () -> files.upload(student, requestKey, PROFILE, FilePurpose.CV, part(PDF)));
+            assertEquals(403, denied.status, "Revoked membership must block upload retry");
+            assertEquals("ACCESS_DENIED", denied.code);
+            assertEquals(objectCount, objects(), "Denied retry must not write a new private object");
+            assertEquals(operationCount, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM operation_records WHERE idempotency_key=?",
+                Integer.class, requestKey));
+            assertEquals(auditCount, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED' AND resource_id=?",
+                Integer.class, created.fileId()));
+        } finally {
+            jdbc.update("UPDATE memberships SET active=true WHERE user_id=?", id(6));
+        }
+
+        // After restoring the original right, the same request remains idempotent.
+        var replay = files.upload(student, requestKey, PROFILE, FilePurpose.CV, part(PDF));
+        assertEquals(created.fileId(), replay.fileId());
+        assertEquals(objectCount, objects());
+    }
+
     @Test void realMultipartOwnerMetadataPendingAndForeignScope() throws Exception {
         Session student=login("student"),other=login("intern"),admin=login("admin"),hr=login("hr");
         String command=key();var created=post(student,command,"STUDENT_PROFILE",id(6),"CV","../../cv.pdf","application/pdf",PDF,true,"");assertEquals(202,created.statusCode(),body(created));
