@@ -191,6 +191,51 @@ class PrivateFileServiceIT {
             assertEquals(404,assertThrows(OperationFailure.class,()->files.upload(auth,command,PROFILE,FilePurpose.CV,part(PDF))).status);
         } finally {jdbc.update("UPDATE terms SET status='ACTIVE' WHERE id=?",id(21));}
     }
+    @Test void qa01T106EnterpriseMembershipRevocationHidesPrivateFile() throws Exception {
+        // QA01: a formerly authorized HR session must lose access to a private
+        // enterprise verification file when its organization membership is revoked.
+        String verification = jdbc.queryForObject(
+            "SELECT id FROM enterprise_verifications WHERE enterprise_org_id=?",
+            String.class, id(12));
+        String priorState = jdbc.queryForObject(
+            "SELECT state FROM enterprise_verifications WHERE id=?",
+            String.class, verification);
+        String hrId = jdbc.queryForObject(
+            "SELECT id FROM users WHERE email=?", String.class, "hr@example.test");
+        List<String> activeMemberships = jdbc.queryForList(
+            "SELECT id FROM memberships WHERE user_id=? AND active=true",
+            String.class, hrId);
+        assertFalse(activeMemberships.isEmpty(), "HR fixture requires an active membership");
+
+        jdbc.update("UPDATE enterprise_verifications SET state='DRAFT' WHERE id=?", verification);
+        try {
+            Session hr = login("hr");
+            var created = post(hr, key(), "ENTERPRISE_VERIFICATION", verification,
+                "VERIFICATION", "evidence.pdf", "application/pdf", PDF, true, "");
+            assertEquals(202, created.statusCode(), body(created));
+            String fileId = json(created).get("fileId").asString();
+            syntheticClean(fileId); // Test fixture only, not real antivirus evidence.
+
+            assertEquals(200, get(hr, fileId, "metadata", null).statusCode());
+            assertEquals(200, get(hr, fileId, "content", null).statusCode());
+            int downloadedBefore = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_DOWNLOADED' AND resource_id=?",
+                Integer.class, fileId);
+
+            jdbc.update("UPDATE memberships SET active=false WHERE user_id=? AND active=true", hrId);
+            assertError(get(hr, fileId, "metadata", null), 404, "RESOURCE_NOT_FOUND");
+            assertError(get(hr, fileId, "content", "bytes=0-1"), 404, "RESOURCE_NOT_FOUND");
+            assertEquals(downloadedBefore, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_DOWNLOADED' AND resource_id=?",
+                Integer.class, fileId), "Denied download must not create a success audit");
+        } finally {
+            for (String membershipId : activeMemberships) {
+                jdbc.update("UPDATE memberships SET active=true WHERE id=?", membershipId);
+            }
+            jdbc.update("UPDATE enterprise_verifications SET state=? WHERE id=?", priorState, verification);
+        }
+    }
+
     @Test void verificationUsesCurrentOrganizationAndNeutralNameButNoColleagueShortcut() throws Exception {
         String verification=jdbc.queryForObject("SELECT id FROM enterprise_verifications WHERE enterprise_org_id=?",String.class,id(12));
         jdbc.update("UPDATE enterprise_verifications SET state='DRAFT' WHERE id=?",verification);
