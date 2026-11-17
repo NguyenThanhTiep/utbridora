@@ -165,6 +165,50 @@ class PrivateFileServiceIT {
             Integer.class, fileId));
     }
 
+    @Test void qa01T106AnonymousUploadWithValidCsrfCannotCreatePrivateFile() throws Exception {
+        // TC02: an anonymous HTTP session may hold a valid CSRF token but must not upload files.
+        // This isolates authentication (401) from the separate no-CSRF rejection (403).
+        String command = key();
+        long privateObjectsBefore = objects();
+        int filesBefore = jdbc.queryForObject("SELECT COUNT(*) FROM files", Integer.class);
+        int bindingsBefore = jdbc.queryForObject("SELECT COUNT(*) FROM file_bindings", Integer.class);
+        int successfulAuditBefore = jdbc.queryForObject(
+            "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED'", Integer.class);
+
+        var browser = HttpClient.newBuilder()
+            .cookieHandler(new CookieManager(null, CookiePolicy.ACCEPT_ALL))
+            .connectTimeout(Duration.ofSeconds(10))
+            .build();
+        var csrfResponse = browser.send(
+            HttpRequest.newBuilder(uri("/auth/csrf")).GET().build(),
+            HttpResponse.BodyHandlers.ofByteArray());
+        assertEquals(200, csrfResponse.statusCode(), body(csrfResponse));
+        var csrf = json(csrfResponse);
+        var anonymous = new Session(browser,
+            csrf.get("headerName").asString(), csrf.get("token").asString());
+
+        var denied = post(anonymous, command, "STUDENT_PROFILE", id(6), "CV",
+            "cv.pdf", "application/pdf", PDF, true, "");
+        assertEquals(401, denied.statusCode(), body(denied));
+        assertFalse(body(denied).contains(ROOT.toString()),
+            "Anonymous rejection must not expose a private filesystem path");
+        assertFalse(body(denied).contains("Synthetic transport fixture"),
+            "Anonymous rejection must not echo uploaded bytes");
+
+        assertEquals(filesBefore, jdbc.queryForObject("SELECT COUNT(*) FROM files", Integer.class),
+            "Unauthenticated POST must not create file metadata");
+        assertEquals(bindingsBefore, jdbc.queryForObject("SELECT COUNT(*) FROM file_bindings", Integer.class),
+            "Unauthenticated POST must not create a file binding");
+        assertEquals(0, jdbc.queryForObject(
+            "SELECT COUNT(*) FROM operation_records WHERE operation_code='FILE_UPLOAD' AND idempotency_key=?",
+            Integer.class, command), "Unauthenticated POST must not create a success ledger entry");
+        assertEquals(successfulAuditBefore, jdbc.queryForObject(
+            "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED'", Integer.class),
+            "Unauthenticated POST must not create a FILE_UPLOADED audit");
+        assertEquals(privateObjectsBefore, objects(),
+            "Unauthenticated POST must not promote a private binary object");
+    }
+
     @Test void realMultipartOwnerMetadataPendingAndForeignScope() throws Exception {
         Session student=login("student"),other=login("intern"),admin=login("admin"),hr=login("hr");
         String command=key();var created=post(student,command,"STUDENT_PROFILE",id(6),"CV","../../cv.pdf","application/pdf",PDF,true,"");assertEquals(202,created.statusCode(),body(created));
