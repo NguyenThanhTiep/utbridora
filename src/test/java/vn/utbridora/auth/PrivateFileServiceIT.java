@@ -352,6 +352,81 @@ class PrivateFileServiceIT {
         }
     }
 
+    @Test void qa01T106SameEnterpriseColleagueCannotReadPrivateVerificationFile() throws Exception {
+        // QA01 TC14: two distinct users with active ENTERPRISE rights in the same organization
+        // do not automatically share access to a private verification file.
+        String enterpriseId = id(12);
+        String verificationId = jdbc.queryForObject(
+            "SELECT id FROM enterprise_verifications WHERE enterprise_org_id=?",
+            String.class, enterpriseId);
+        String originalVerificationState = jdbc.queryForObject(
+            "SELECT state FROM enterprise_verifications WHERE id=?",
+            String.class, verificationId);
+
+        // Reuse a synthetic user as a second HR only inside this disposable Testcontainers DB.
+        // Keep all original membership fields so the test can restore its fixture in finally.
+        record OriginalMembership(String id, String organizationId, String role, boolean active) {}
+        OriginalMembership originalMember = jdbc.query(
+            "SELECT id,organization_id,role,active FROM memberships " +
+            "WHERE user_id=? AND active=true ORDER BY id LIMIT 1",
+            (rs, row) -> new OriginalMembership(
+                rs.getString(1), rs.getString(2), rs.getString(3), rs.getBoolean(4)),
+            id(5)).stream().findFirst().orElseThrow(
+                () -> new AssertionError("Missing active membership for synthetic colleague fixture"));
+
+        jdbc.update("UPDATE enterprise_verifications SET state='DRAFT' WHERE id=?", verificationId);
+        try {
+            Session ownerHr = login("hr");
+            var upload = post(ownerHr, key(), "ENTERPRISE_VERIFICATION", verificationId,
+                "VERIFICATION", "evidence.pdf", "application/pdf", PDF, true, "");
+            assertEquals(202, upload.statusCode(), body(upload));
+            String fileId = json(upload).get("fileId").asString();
+            syntheticClean(fileId); // Test fixture only; NOT evidence of a working scanner.
+            assertEquals(200, get(ownerHr, fileId, "metadata", null).statusCode());
+            assertEquals(200, get(ownerHr, fileId, "content", null).statusCode());
+
+            // Promote the other synthetic account to active ENTERPRISE membership in the SAME org.
+            // This distinguishes owner-only file access from missing organizational permission.
+            jdbc.update("UPDATE memberships SET organization_id=?,role='ENTERPRISE',active=true " +
+                "WHERE id=?", enterpriseId, originalMember.id());
+            try {
+                var colleagueAuth = as(5);
+                var resource = new ResourceRef(ResourceType.ENTERPRISE_VERIFICATION, verificationId);
+                assertTrue(authorizer.authorize(
+                    ActorContext.fromAuthenticatedWorkflow(colleagueAuth, null),
+                    resource, FilePurpose.VERIFICATION, Action.DOWNLOAD, Instant.now()).allowed(),
+                    "Colleague must have CURRENT enterprise resource/download rights; otherwise this is not a true same-org test");
+
+                Session colleague = login("mentor"); // Synthetic account now has ENTERPRISE role in this org.
+                int successfulDownloadsBefore = jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_DOWNLOADED' AND resource_id=?",
+                    Integer.class, fileId);
+
+                var metadata = get(colleague, fileId, "metadata", null);
+                assertError(metadata, 404, "RESOURCE_NOT_FOUND");
+                privateHeaders(metadata);
+                var content = get(colleague, fileId, "content", "bytes=0-1");
+                assertError(content, 404, "RESOURCE_NOT_FOUND");
+                privateHeaders(content);
+                assertFalse(body(content).contains("Synthetic transport fixture"),
+                    "Denied same-enterprise colleague must not receive private bytes");
+                assertEquals(successfulDownloadsBefore, jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_DOWNLOADED' AND resource_id=?",
+                    Integer.class, fileId), "Denied reads must not generate a success audit");
+
+                // Owner access must remain intact while the other user is denied.
+                assertEquals(200, get(ownerHr, fileId, "metadata", null).statusCode());
+            } finally {
+                jdbc.update("UPDATE memberships SET organization_id=?,role=?,active=? WHERE id=?",
+                    originalMember.organizationId(), originalMember.role(),
+                    originalMember.active(), originalMember.id());
+            }
+        } finally {
+            jdbc.update("UPDATE enterprise_verifications SET state=? WHERE id=?",
+                originalVerificationState, verificationId);
+        }
+    }
+
     @Test void verificationUsesCurrentOrganizationAndNeutralNameButNoColleagueShortcut() throws Exception {
         String verification=jdbc.queryForObject("SELECT id FROM enterprise_verifications WHERE enterprise_org_id=?",String.class,id(12));
         jdbc.update("UPDATE enterprise_verifications SET state='DRAFT' WHERE id=?",verification);
