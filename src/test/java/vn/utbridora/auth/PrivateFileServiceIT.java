@@ -93,6 +93,40 @@ class PrivateFileServiceIT {
         assertEquals(objectCount, objects());
     }
 
+    @Test void qa01T106ForgedActorRoleAndForeignProfileUploadAreDenied() throws Exception {
+        // QA01 Security 03: caller identity comes from the authenticated session, never multipart fields.
+        var foreignStudent = login("intern");
+        var ownerStudent = login("student");
+        long objectsBefore = objects();
+        int filesBefore = jdbc.queryForObject("SELECT COUNT(*) FROM files", Integer.class);
+        int bindingsBefore = jdbc.queryForObject("SELECT COUNT(*) FROM file_bindings", Integer.class);
+        int auditBefore = jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED'", Integer.class);
+        String foreignKey = key(), reverseKey = key(), actorKey = key(), roleKey = key();
+
+        // A valid account cannot upload a private CV into another student's profile.
+        assertError(post(foreignStudent, foreignKey, "STUDENT_PROFILE", id(6), "CV",
+                "cv.pdf", "application/pdf", PDF, true, ""), 404, "RESOURCE_NOT_FOUND");
+        assertError(post(ownerStudent, reverseKey, "STUDENT_PROFILE", id(7), "CV",
+                "cv.pdf", "application/pdf", PDF, true, ""), 404, "RESOURCE_NOT_FOUND");
+
+        // Multipart actor/role spoofing must be rejected by the strict API schema.
+        assertError(post(foreignStudent, actorKey, "STUDENT_PROFILE", id(6), "CV",
+                "cv.pdf", "application/pdf", PDF, true, field("actorId", id(6))), 400, "SCHEMA_VALIDATION");
+        assertError(post(foreignStudent, roleKey, "STUDENT_PROFILE", id(6), "CV",
+                "cv.pdf", "application/pdf", PDF, true, field("role", "ADMIN")), 400, "SCHEMA_VALIDATION");
+
+        // All denied requests must leave file metadata, bindings, audit and physical objects unchanged.
+        assertEquals(objectsBefore, objects());
+        assertEquals(filesBefore, jdbc.queryForObject("SELECT COUNT(*) FROM files", Integer.class));
+        assertEquals(bindingsBefore, jdbc.queryForObject("SELECT COUNT(*) FROM file_bindings", Integer.class));
+        assertEquals(auditBefore, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED'", Integer.class));
+        for (String deniedKey : List.of(foreignKey, reverseKey, actorKey, roleKey)) {
+            assertEquals(0, jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM operation_records WHERE idempotency_key=?", Integer.class, deniedKey));
+        }
+    }
+
     @Test void realMultipartOwnerMetadataPendingAndForeignScope() throws Exception {
         Session student=login("student"),other=login("intern"),admin=login("admin"),hr=login("hr");
         String command=key();var created=post(student,command,"STUDENT_PROFILE",id(6),"CV","../../cv.pdf","application/pdf",PDF,true,"");assertEquals(202,created.statusCode(),body(created));
