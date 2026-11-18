@@ -1534,6 +1534,19 @@ class EnterpriseProposalIT {
             } finally {release.countDown();}
         }
     }
+    @Test void concurrentProfileSharingPolicyUpdatesUseOneCurrentVersion() throws Exception {
+        String path="/school/terms/"+id(21)+"/profile-sharing-policy";
+        String body=JSON.writeValueAsString(new SchoolSharingPolicyService.Update(0L,List.of("majorCode")));
+        var gate=new java.util.concurrent.CountDownLatch(1);
+        try(var pool=java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var calls=new ArrayList<java.util.concurrent.Future<HttpResponse<String>>>();
+            for(int n=0;n<2;n++)calls.add(pool.submit(()->{gate.await();return http(school,"PUT",path,body,id(11),key(),true);}));
+            gate.countDown();var statuses=new ArrayList<Integer>();
+            for(var call:calls)statuses.add(call.get(20,java.util.concurrent.TimeUnit.SECONDS).statusCode());
+            Collections.sort(statuses);assertEquals(List.of(200,409),statuses);
+            assertEquals(1,jdbc.queryForObject("SELECT version FROM school_sharing_policies WHERE school_org_id=? AND term_id=?",Long.class,id(11),id(21)));
+        } finally {jdbc.update("DELETE FROM school_sharing_policies WHERE school_org_id=? AND term_id=?",id(11),id(21));}
+    }
 
     @Test void systemWorkerUsesSystemActorAndNeverApprovesPendingRows() {
         enterpriseAccepted();var p=pending(Instant.now().minusSeconds(5));

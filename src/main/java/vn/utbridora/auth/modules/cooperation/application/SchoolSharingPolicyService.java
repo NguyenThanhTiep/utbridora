@@ -27,10 +27,13 @@ public class SchoolSharingPolicyService implements SchoolSharingPolicyPort {
         return current(school,term);
     }
     @Transactional public SchoolSharingPolicy update(Authentication auth,String term,String key,Update input) {
-        String school=school(term);scope.require(auth,school,term,"student_profile:share:school:manage");fields(input.allowedFields(),true);
+        String school=school(term);
+        // Take the write fence before authority checks acquire a shared term fence.
+        jdbc.queryForObject("SELECT id FROM terms WHERE id=? FOR UPDATE",String.class,term);
+        scope.require(auth,school,term,"student_profile:share:school:manage");fields(input.allowedFields(),true);
         if(input.expectedVersion()==null || input.expectedVersion()<0) throw failure(400,"SCHEMA_VALIDATION");
         return ledger.execute(new OperationLedger.Command(actor(auth),school,"SCHOOL_SHARING_POLICY_UPDATE",key,Map.of("termId",term,"request",input),200),SchoolSharingPolicy.class,()->{
-            jdbc.queryForObject("SELECT id FROM terms WHERE id=? FOR UPDATE",String.class,term);var before=current(school,term);if(before.version()!=input.expectedVersion()) throw failure(409,"VERSION_CONFLICT");
+            var before=current(school,term);if(before.version()!=input.expectedVersion()) throw failure(409,"VERSION_CONFLICT");
             jdbc.update("INSERT INTO school_sharing_policies VALUES(?,?,?,?,UTC_TIMESTAMP(6),?) AS incoming ON DUPLICATE KEY UPDATE version=incoming.version,allowed_fields=incoming.allowed_fields,updated_at=incoming.updated_at,updated_by=incoming.updated_by",school,term,before.version()+1,JSON.writeValueAsString(input.allowedFields()),actor(auth));
             audit.workflow(actor(auth),"SCHOOL_PROFILE_SHARING_POLICY_CHANGED",term,school,Map.of("schoolOrgId",school,"termId",term,"fieldCodes",input.allowedFields(),"version",before.version()+1));return current(school,term);
         },r->term);

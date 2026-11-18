@@ -5073,7 +5073,7 @@
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/ProposalProfileService.java": "3fee2f6e9c43a68b80c924dc6d55666b0d309542432e2191c41bd5f51546c0be",
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/ProposalService.java": "c6f0d9c22269d4d243a8e926d9f9cb111991c26729f5a62ecef5ee7421681441",
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/ProposalShareAccess.java": "f2f9a0ed0b2baedf9c691d07ff717f73b765c9fe3b502f12004653815a61dd77",
-    "src/main/java/vn/utbridora/auth/modules/cooperation/application/SchoolSharingPolicyService.java": "6ee59b0e3b26286fd3f318b8d380f3346cdf8b8c32452f4c9abaed0c81c41775",
+    "src/main/java/vn/utbridora/auth/modules/cooperation/application/SchoolSharingPolicyService.java": "86d36707d56bfce0b0c803f74f9006545f37ff949e6a90ead4e461a0c40cdfd7",
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/VerificationService.java": "1b490638c91787edb52f3f82def3ee3d4ec849ba94d42173e4ad92b19a991bd8",
     "src/main/java/vn/utbridora/auth/modules/cooperation/domain/DemandFailure.java": "49381feeafa8ca5d5d8e1dd676af3e66e17c44ccad1bf65ae4215752d6a5d1b2",
     "src/main/java/vn/utbridora/auth/modules/cooperation/domain/DemandJson.java": "ed1b0585db5d5a2de1ceb76e185f2ebea151fa3409490ed2ded7eaefa3d00019",

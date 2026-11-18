@@ -61,6 +61,9 @@ có thay đổi riêng của người dùng, chỉ đọc để đối chiếu, 
    PESSIMISTIC_READ; đường ghi giữ phương thức UPDATE riêng. Regression ép hai
    validation cùng giữ SHARE rồi chạy song song, và xác minh writer vẫn phải
    chờ reader commit. Không bỏ guard trạng thái/kỳ hoặc hạ thành read không khóa.
+8. Writer của SchoolSharingPolicy cũng lấy term UPDATE trước authority SHARE,
+   theo cùng thứ tự với policy điểm; hai cập nhật expectedVersion=0 phải có
+   đúng một 200 và một 409. Giữ việc thu hẹp policy chặn share ở lần đọc kế tiếp.
 
 ## Kiểm chứng và giới hạn
 
