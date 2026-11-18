@@ -51,6 +51,8 @@ class EnterpriseProposalIT {
     @Autowired ProposalService proposals; @Autowired StudentConsentService consents; @Autowired ProfileShareService shares;
     @Autowired OpportunityPort opportunityPort; @Autowired PlatformTransactionManager transactions;
     @Autowired PlacementService placements;
+    @Autowired vn.utbridora.auth.modules.cooperation.persistence.TermRepository terms;
+    @Autowired vn.utbridora.auth.modules.cooperation.integration.DemandReferencePort demandReferences;
     @Autowired StudentPreferenceService preferences;
     @Autowired StudentProfileSnapshotPort snapshots;
     @Autowired FileService files;
@@ -68,7 +70,7 @@ class EnterpriseProposalIT {
         if(failure.status!=503)return failure.code;
         try {
             // This is the test's private disposable MySQL, never the developer DB.
-            var output=MYSQL.execInContainer("mysql","-uroot","-p"+MYSQL.getPassword(),"-e","SHOW ENGINE INNODB STATUS").getStdout();
+            var output=MYSQL.execInContainer("mysql","-uroot","-p"+MYSQL.getPassword(),"--raw","-e","SHOW ENGINE INNODB STATUS").getStdout();
             int start=output.indexOf("LATEST DETECTED DEADLOCK"),end=output.indexOf("TRANSACTIONS",Math.max(0,start));
             if(start<0)return failure.code+" (no InnoDB deadlock report)";
             String report=output.substring(start,end>start?end:output.length());
@@ -1503,6 +1505,34 @@ class EnterpriseProposalIT {
             failure(409,"CAPACITY_EXCEEDED",()->placements.approve(as(2),pending.placementId(),key(),new PlacementService.PlacementCommand(pending.version(),"DEMO-FULL-QUOTA","SCHOOL_APPROVED")));
             assertPlacementSummary(pending.demandId(),input.quantity(),input.quantity(),0,0);
         } finally {for(String completed:inserted)jdbc.update("DELETE FROM placements WHERE id=?",completed);}
+    }
+
+    @Test void referenceReadLocksAllowParallelValidationAndFenceTermWrites() throws Exception {
+        var ready=new java.util.concurrent.CyclicBarrier(2);
+        try(var pool=java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var calls=new ArrayList<java.util.concurrent.Future<?>>();
+            for(int n=0;n<2;n++)calls.add(pool.submit(()->new TransactionTemplate(transactions).execute(status->{
+                jdbc.queryForList("SELECT id FROM terms WHERE id=? FOR SHARE",String.class,id(21));
+                try {ready.await(10,java.util.concurrent.TimeUnit.SECONDS);}catch(Exception error){throw new RuntimeException(error);}
+                demandReferences.validate(id(12),input);return null;
+            })));
+            for(var call:calls)call.get(20,java.util.concurrent.TimeUnit.SECONDS);
+        }
+        var held=new java.util.concurrent.CountDownLatch(1);var release=new java.util.concurrent.CountDownLatch(1);var writerStarted=new java.util.concurrent.CountDownLatch(1);
+        try(var pool=java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var reader=pool.submit(()->new TransactionTemplate(transactions).execute(status->{
+                assertTrue(terms.findByIdForRead(id(21)).isPresent());held.countDown();
+                try {assertTrue(release.await(10,java.util.concurrent.TimeUnit.SECONDS));}catch(InterruptedException error){throw new RuntimeException(error);}
+                return null;
+            }));
+            try {
+                assertTrue(held.await(10,java.util.concurrent.TimeUnit.SECONDS));
+                var writer=pool.submit(()->new TransactionTemplate(transactions).execute(status->{writerStarted.countDown();return terms.findByIdForUpdate(id(21)).isPresent();}));
+                assertTrue(writerStarted.await(10,java.util.concurrent.TimeUnit.SECONDS));
+                assertThrows(java.util.concurrent.TimeoutException.class,()->writer.get(300,java.util.concurrent.TimeUnit.MILLISECONDS));
+                release.countDown();reader.get(10,java.util.concurrent.TimeUnit.SECONDS);assertTrue(writer.get(10,java.util.concurrent.TimeUnit.SECONDS));
+            } finally {release.countDown();}
+        }
     }
 
     @Test void systemWorkerUsesSystemActorAndNeverApprovesPendingRows() {

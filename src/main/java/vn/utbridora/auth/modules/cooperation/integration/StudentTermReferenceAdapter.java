@@ -15,7 +15,7 @@ public class StudentTermReferenceAdapter implements TermReferencePort {
     public Optional<TermReference> findById(String id) {
         boolean lock=org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive()
             && !org.springframework.transaction.support.TransactionSynchronizationManager.isCurrentTransactionReadOnly();
-        return (lock?terms.findByIdForUpdate(id):terms.findById(id)).map(term->new TermReference(term.id,term.termCode,term.schoolOrgId,
+        return (lock?terms.findByIdForRead(id):terms.findById(id)).map(term->new TermReference(term.id,term.termCode,term.schoolOrgId,
                 term.startDate,term.endDate,Status.valueOf(term.status.name()),term.version));
     }
 }

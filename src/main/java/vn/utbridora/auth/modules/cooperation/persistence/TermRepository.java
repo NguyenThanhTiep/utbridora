@@ -28,4 +28,9 @@ public interface TermRepository extends JpaRepository<Term, String> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select t from Term t where t.id = :id")
     Optional<Term> findByIdForUpdate(@Param("id") String id);
+
+    /** Reference validation fences status changes without upgrading authority SHARE locks. */
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("select t from Term t where t.id = :id")
+    Optional<Term> findByIdForRead(@Param("id") String id);
 }

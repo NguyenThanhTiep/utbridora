@@ -39,7 +39,7 @@ public class DemandReferenceService {
     }
     public AcademicOption academic(Authentication actor,String enterprise,String school,String term) {
         demands.checkWorkspaceAccess(actor,enterprise);school(school);DemandValidator.uuid(term,"termId");
-        var current=terms.findByIdForUpdate(term).orElseThrow(DemandReferenceService::missing);
+        var current=terms.findByIdForRead(term).orElseThrow(DemandReferenceService::missing);
         if(!school.equals(current.schoolOrgId) || current.status!=TermStatus.ACTIVE) throw missing();
         var source=catalogs.getIfAvailable();
         if(source==null) throw new DemandFailure(503,"DEPENDENCY_UNAVAILABLE","Chưa thể tải danh mục học vụ.");

@@ -20,7 +20,7 @@ public class TermAcademicReferences implements DemandAcademicPort {
     @Override @Transactional(propagation=Propagation.MANDATORY)
     public void validate(String enterpriseOrgId,DemandInput input) {
         try {
-            var term=terms.findByIdForUpdate(input.termId()).orElseThrow(()->invalid("termId","Không tìm thấy kỳ thực tập hợp lệ."));
+            var term=terms.findByIdForRead(input.termId()).orElseThrow(()->invalid("termId","Không tìm thấy kỳ thực tập hợp lệ."));
             if(!term.schoolOrgId.equals(input.schoolOrgId())) throw invalid("termId","Kỳ thực tập không thuộc trường được chọn.");
             if(term.status!=TermStatus.ACTIVE) throw invalid("termId","Kỳ thực tập chưa hoạt động hoặc đã đóng.");
             var school=organizations.findById(input.schoolOrgId()).orElseThrow(()->invalid("schoolOrgId","Trường không hợp lệ."));

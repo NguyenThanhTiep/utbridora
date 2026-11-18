@@ -56,6 +56,11 @@ có thay đổi riêng của người dùng, chỉ đọc để đối chiếu, 
    cooperation/demand sau khi lấy mutex, không khóa các pending row không liên quan.
    Kiểm active student/term sau owner lock và giữ unique index làm guard cuối.
    Không nới test để chấp nhận 503 hoặc bỏ assertion một outbox/active key.
+7. Báo cáo InnoDB từ runner chỉ ra reference validation nâng term SHARE lên
+   PESSIMISTIC_WRITE sau khi giữ demand mutex. Các adapter chỉ đọc dùng
+   PESSIMISTIC_READ; đường ghi giữ phương thức UPDATE riêng. Regression ép hai
+   validation cùng giữ SHARE rồi chạy song song, và xác minh writer vẫn phải
+   chờ reader commit. Không bỏ guard trạng thái/kỳ hoặc hạ thành read không khóa.
 
 ## Kiểm chứng và giới hạn
 
