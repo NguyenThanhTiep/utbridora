@@ -10,7 +10,8 @@ import '../styles.css';
 type CalendarEvent = { taskId: string; assignmentId: string | null; title: string; dueAt: string; state: string | null };
 const states = ['NEW', 'IN_PROGRESS', 'SUBMITTED', 'REVISION_REQUIRED', 'COMPLETED'];
 const names: Record<string, string> = { NEW: 'Chưa bắt đầu', IN_PROGRESS: 'Đang làm', SUBMITTED: 'Đã nộp', REVISION_REQUIRED: 'Cần sửa', COMPLETED: 'Hoàn thành' };
-type BoardProps = { assignment?: WorkspaceAssignment; group?: InternshipGroup; student?: boolean };
+// showReports=false: S07 sinh viên (T2-10) mở báo cáo tuần ở S08; Mentor/HR vẫn mở báo cáo ngay trong bảng việc.
+type BoardProps = { assignment?: WorkspaceAssignment; group?: InternshipGroup; student?: boolean; showReports?: boolean };
 export function TaskBoard(props: BoardProps) {
   return <ScopedTaskBoard key={(props.assignment?.id || 'student') + ':' + (props.assignment?.version || '') + ':' + (props.group?.groupId || '')} {...props} />;
 }
@@ -21,7 +22,7 @@ function ScopedTaskBoard(props: BoardProps) {
   return denied ? <section className="panel"><p role="alert">Phiên hoặc quyền truy cập đã thay đổi. Dữ liệu của phạm vi này đã được đóng.</p>
     <button onClick={() => setDenied(false)}>Xác nhận lại quyền truy cập</button></section> : <TaskBoardContent {...props} denied={invalidate} />;
 }
-function TaskBoardContent({ assignment, group, student = false, denied }: BoardProps & { denied: () => void }) {
+function TaskBoardContent({ assignment, group, student = false, showReports = true, denied }: BoardProps & { denied: () => void }) {
   const [tasks, setTasks] = useState<Task[]>([]), [refresh, setRefresh] = useState(0), [page, setPage] = useState(0), [total, setTotal] = useState(0);
   const [state, setState] = useState(''), [person, setPerson] = useState(''), [until, setUntil] = useState(''), [selected, setSelected] = useState('');
   const [message, setMessage] = useState(''), [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -56,8 +57,8 @@ function TaskBoardContent({ assignment, group, student = false, denied }: BoardP
   const date = new Date(month + '-01T00:00:00'), days = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   return <div className="stack workflow-surface"><h3>Bảng công việc</h3><Notice message={message} tone="error" />
     <CommandFeedback command={mutation} />
-    <button className="secondary" onClick={() => setReports(value => !value)}>{reports ? 'Đóng báo cáo tuần' : 'Mở báo cáo tuần'}</button>
-    {reports && <WeeklyReports contextId={assignment?.id} caseIds={group?.caseIds} student={student} mentor={assignment?.kind === 'MENTOR'} denied={denied} />}
+    {showReports && <button className="secondary" onClick={() => setReports(value => !value)}>{reports ? 'Đóng báo cáo tuần' : 'Mở báo cáo tuần'}</button>}
+    {showReports && reports && <WeeklyReports contextId={assignment?.id} caseIds={group?.caseIds} student={student} mentor={assignment?.kind === 'MENTOR'} denied={denied} />}
     <div className="button-row"><label>Trạng thái<select value={state} onChange={e => { setState(e.target.value); setPage(0); }}><option value="">Tất cả</option>{states.map(s => <option value={s} key={s}>{names[s]}</option>)}</select></label>
       <label>Hồ sơ được giao<select value={person} onChange={e => setPerson(e.target.value)}><option value="">Tất cả</option>{people.map(p => <option key={p} value={p}>Hồ sơ …{p.slice(-6)}</option>)}</select></label>
       <label>Hạn đến ngày<input type="date" value={until} onChange={e => { setUntil(e.target.value); setPage(0); }} /></label>

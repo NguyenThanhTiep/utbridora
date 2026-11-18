@@ -62,7 +62,7 @@ test('week 2 skills, cooperation, consent and tasks use real authenticated APIs'
   await mentor.page.screenshot({ path: '../target/week2-browser-mentor.png', fullPage: true }); await mentor.context.close();
 
   const intern = await actor(browser, 'intern@example.test');
-  await intern.page.getByRole('button', { name: 'Công việc của tôi', exact: true }).click();
+  await intern.page.getByRole('button', { name: 'Nhiệm vụ & sản phẩm', exact: true }).click();
   const card = intern.page.locator('article').filter({ has: intern.page.getByRole('button', { name: 'W2 browser task', exact: true }) });
   await card.getByRole('button', { name: 'Bắt đầu làm', exact: true }).click();
   await expect(card.getByRole('button', { name: 'Bắt đầu làm', exact: true })).toHaveCount(0);

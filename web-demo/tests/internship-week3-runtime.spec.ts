@@ -14,7 +14,7 @@ async function actor(browser: Browser, role: 'student' | 'mentor' | 'hr' | 'outs
   await board(page, role); return { context, page };
 }
 async function board(page: Page, role: 'student' | 'mentor' | 'hr' | 'outsider') {
-  if (role === 'student' || role === 'outsider') await page.getByRole('button', { name: 'Công việc của tôi', exact: true }).click();
+  if (role === 'student' || role === 'outsider') await page.getByRole('button', { name: 'Nhiệm vụ & sản phẩm', exact: true }).click();
   else {
     await page.getByRole('button', { name: 'Không gian thực tập', exact: true }).click();
     await page.getByLabel('Phân công đang làm việc').selectOption(cfg![role === 'mentor' ? 'mentorContext' : 'hrContext']);
@@ -26,8 +26,10 @@ async function detail(page: Page) {
   // Mentor/HR calendar entries have a task title without an assignment; open the actual board card.
   await page.locator('article').getByRole('button', { name: 'Synthetic T309', exact: true }).click();
 }
-async function reports(page: Page) {
-  await page.getByRole('button', { name: 'Mở báo cáo tuần', exact: true }).click();
+// Sinh viên mở báo cáo tuần ở S08 "Báo cáo & đánh giá" (T2-10); Mentor mở trong bảng việc của nhóm.
+async function reports(page: Page, role: 'student' | 'mentor') {
+  if (role === 'student') await page.getByRole('button', { name: 'Báo cáo & đánh giá', exact: true }).click();
+  else await page.getByRole('button', { name: 'Mở báo cáo tuần', exact: true }).click();
   await page.getByRole('combobox', { name: 'Hồ sơ cho báo cáo', exact: true }).selectOption(cfg!.caseId);
 }
 async function createReport(page: Page, week: string, work: string) {
@@ -86,13 +88,13 @@ test('T3-09 real backend: student URL v1, Mentor revision, URL v2, ACCEPT, comme
 test('T3-09 real backend: report review survives reload and historical revision remains immutable', async ({ browser }) => {
   test.setTimeout(90_000); const student = await actor(browser, 'student'), mentor = await actor(browser, 'mentor');
   try {
-    await reports(student.page); const editor = await createReport(student.page, '2026-11-09', 'Browser report v1');
+    await reports(student.page, 'student'); const editor = await createReport(student.page, '2026-11-09', 'Browser report v1');
     await editor.getByRole('button', { name: 'Nộp báo cáo tuần', exact: true }).click(); await expect(editor).toContainText('SUBMITTED');
-    await reports(mentor.page); await mentor.page.getByRole('button', { name: 'Tuần 2026-11-09 · Bản 1 · SUBMITTED', exact: true }).click();
+    await reports(mentor.page, 'mentor'); await mentor.page.getByRole('button', { name: 'Tuần 2026-11-09 · Bản 1 · SUBMITTED', exact: true }).click();
     await mentor.page.getByRole('textbox', { name: 'Nhận xét báo cáo', exact: true }).fill('Mentor report feedback');
     await mentor.page.getByRole('button', { name: 'Gửi nhận xét báo cáo', exact: true }).click();
     await expect(mentor.page.getByRole('region', { name: 'Nhận xét báo cáo đã lưu' })).toContainText('Mentor report feedback');
-    await student.page.reload(); await board(student.page, 'student'); await reports(student.page);
+    await student.page.reload(); await board(student.page, 'student'); await reports(student.page, 'student');
     await student.page.getByRole('button', { name: 'Tuần 2026-11-09 · Bản 1 · REVIEWED', exact: true }).click();
     await expect(student.page.getByRole('region', { name: 'Nhận xét báo cáo đã lưu' })).toContainText('Mentor report feedback');
     await editor.getByLabel('Mã lý do sửa báo cáo').fill('UPDATE_PROGRESS'); await editor.getByRole('button', { name: 'Tạo bản sửa báo cáo' }).click();
@@ -109,7 +111,7 @@ test('T3-09 real backend: report review survives reload and historical revision 
 test('T3-09 real backend: multipart attachment stays PENDING, submit is denied and draft survives reload', async ({ browser }) => {
   test.setTimeout(60_000); const student = await actor(browser, 'student');
   try {
-    await reports(student.page); const editor = await createReport(student.page, '2026-11-16', 'Browser pending evidence');
+    await reports(student.page, 'student'); const editor = await createReport(student.page, '2026-11-16', 'Browser pending evidence');
     await editor.getByLabel('Chọn tệp minh chứng').setInputFiles({ name: 't309-evidence.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.7\nSynthetic browser evidence\n%%EOF') });
     await editor.getByRole('button', { name: 'Tải lên minh chứng', exact: true }).click();
     await expect(editor.getByRole('region', { name: 'Minh chứng báo cáo' })).toContainText('Đang chờ quét');
@@ -117,7 +119,7 @@ test('T3-09 real backend: multipart attachment stays PENDING, submit is denied a
     await editor.getByRole('button', { name: 'Nộp báo cáo tuần', exact: true }).click();
     await expect(editor.getByRole('alert')).toContainText('FILE_NOT_CLEAN');
     await expect(editor.getByRole('button', { name: /Tải minh chứng/ })).toBeDisabled();
-    await student.page.reload(); await board(student.page, 'student'); await reports(student.page);
+    await student.page.reload(); await board(student.page, 'student'); await reports(student.page, 'student');
     await student.page.getByRole('button', { name: 'Tuần 2026-11-16 · Bản 1 · DRAFT', exact: true }).click();
     await expect(editor.getByRole('region', { name: 'Minh chứng báo cáo' })).toContainText('Đang chờ quét');
     await expect(editor.getByRole('textbox', { name: 'Việc đã làm', exact: true })).toHaveValue('Browser pending evidence');

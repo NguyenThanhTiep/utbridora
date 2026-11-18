@@ -5,7 +5,7 @@ Cập nhật 12/11/2026 với backend DEV05/DEV06 tại `4d187ab`. Xem thêm
 
 ## Sử dụng
 
-Sinh viên mở **Công việc của tôi**, chọn nhiệm vụ. Trong trạng thái IN_PROGRESS,
+Sinh viên mở **Nhiệm vụ & sản phẩm** (S07), chọn nhiệm vụ. Trong trạng thái IN_PROGRESS,
 nhập URL HTTPS không chứa user/password, ghi chú tối đa 2.000 codepoints rồi
 **Gửi bài nộp**. Browser gọi POST Submission với expectedAssignmentVersion và
 fileIds=[], không PATCH trạng thái thành SUBMITTED. Lịch sử được GET từ server,
@@ -22,7 +22,8 @@ Các nút này là hướng dẫn UX; server luôn phải kiểm quyền hiện 
 review. Text render bằng React, không chèn HTML. URL bất thường từ response
 không được biến thành liên kết có thể chạy mã.
 
-Chọn **Mở báo cáo tuần**, chọn hồ sơ. Mentor/HR lấy các case trong group hiện tại;
+Mentor/HR chọn **Mở báo cáo tuần** trong bảng việc; sinh viên mở **Báo cáo & đánh giá**
+(S08), tab **Báo cáo tuần**. Chọn hồ sơ. Mentor/HR lấy các case trong group hiện tại;
 sinh viên lấy case từ toàn bộ trang Task API, độc lập bộ lọc trên board. Nếu chưa
 có Task, sinh viên có thể nhập mã hồ sơ được cấp; GET `/t3/cases/{id}` phải xác
 nhận quyền và trả đúng caseId trước khi đưa vào lựa chọn. Chưa có case-list API

@@ -214,6 +214,25 @@ class Week2WorkflowIT {
         long lineage=jdbc.queryForObject("SELECT version FROM student_consent_lineages WHERE student_user_id=? AND recipient_org_id=?",Long.class,id(6),id(12));
         var current=consents.grant(as(6),key(),new vn.utbridora.auth.modules.student.application.StudentConsentService.GrantConsent(invitation,"INTERNSHIP_SELECTION",List.of("skills"),Instant.now().plusSeconds(3600),"demo-consent-v1",0L,lineage));
         final var enterprise=as(4);
+        // T2-11: real owner port validates every scope dimension before returning any fields.
+        var actorContext=vn.utbridora.auth.contracts.ActorContext.fromAuthenticatedWorkflow(enterprise,id(12));
+        var valid=new vn.utbridora.auth.modules.student.port.StudentConsentPort.GrantCheck(current.consentId(),current.consentVersion(),null,id(6),id(11),id(21),id(12),"INTERNSHIP_SELECTION",List.of("skills"));
+        var allowed=transactions.execute(status->consents.lockAndCheckForShare(actorContext,valid));
+        assertTrue(allowed.valid());assertEquals(List.of("skills"),allowed.allowedFields());assertEquals(current.expiresAt(),allowed.validUntil());
+        var invalidChecks=List.of(
+            new vn.utbridora.auth.modules.student.port.StudentConsentPort.GrantCheck(current.consentId(),current.consentVersion(),null,id(7),id(11),id(21),id(12),"INTERNSHIP_SELECTION",List.of("skills")),
+            new vn.utbridora.auth.modules.student.port.StudentConsentPort.GrantCheck(current.consentId(),current.consentVersion(),null,id(6),key(),id(21),id(12),"INTERNSHIP_SELECTION",List.of("skills")),
+            new vn.utbridora.auth.modules.student.port.StudentConsentPort.GrantCheck(current.consentId(),current.consentVersion(),null,id(6),id(11),key(),id(12),"INTERNSHIP_SELECTION",List.of("skills")),
+            new vn.utbridora.auth.modules.student.port.StudentConsentPort.GrantCheck(current.consentId(),current.consentVersion(),null,id(6),id(11),id(21),id(12),"SCHOOL_REVIEW",List.of("skills")),
+            new vn.utbridora.auth.modules.student.port.StudentConsentPort.GrantCheck(current.consentId(),current.consentVersion()+1,null,id(6),id(11),id(21),id(12),"INTERNSHIP_SELECTION",List.of("skills")),
+            new vn.utbridora.auth.modules.student.port.StudentConsentPort.GrantCheck(current.consentId(),current.consentVersion(),null,id(6),id(11),id(21),id(12),"INTERNSHIP_SELECTION",List.of("email")));
+        var reasons=List.of("SCOPE_MISMATCH","SCOPE_MISMATCH","SCOPE_MISMATCH","PURPOSE_MISMATCH","REPLACED","FIELD_DENIED");
+        for(int i=0;i<invalidChecks.size();i++) {
+            var invalid=invalidChecks.get(i);var denial=transactions.execute(status->consents.lockAndCheckForShare(actorContext,invalid));
+            assertFalse(denial.valid());assertEquals(reasons.get(i),denial.reasonCode());
+            assertTrue(denial.allowedFields().isEmpty());assertNull(denial.validUntil());
+            if(i<3) assertNull(denial.currentVersion(),"Foreign scope must not disclose the consent version");
+        }
         assertEquals(403,assertThrows(OperationFailure.class,()->shares.read(enterprise,id(6),id(21),oldShare,List.of("skills"),"INTERNSHIP_SELECTION")).status,"Regrant must not revive an older share");
         final var student=as(6);var pool=java.util.concurrent.Executors.newFixedThreadPool(2);var gate=new java.util.concurrent.CountDownLatch(1);
         try {

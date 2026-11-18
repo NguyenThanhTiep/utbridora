@@ -8,11 +8,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.utbridora.auth.audit.AuditService;
 import vn.utbridora.auth.authorization.AuthorizationPolicy;
+import vn.utbridora.auth.contracts.ActorContext;
+import vn.utbridora.auth.files.FileContracts.FilePurpose;
+import vn.utbridora.auth.files.FileContracts.ResourceRef;
+import vn.utbridora.auth.files.FileContracts.ResourceType;
+import vn.utbridora.auth.files.FileReadPort;
 import vn.utbridora.auth.modules.student.api.StudentProfileDtos.*;
 import vn.utbridora.auth.modules.student.persistence.StudentProfileRepository;
 import vn.utbridora.auth.modules.student.persistence.StudentProfileRepository.ProfileRow;
 import vn.utbridora.auth.modules.student.persistence.StudentProfileRepository.TermRow;
 import vn.utbridora.auth.organization.MembershipRepository;
+import vn.utbridora.auth.operations.OperationFailure;
 import vn.utbridora.auth.operations.OperationLedger;
 import vn.utbridora.auth.security.AppPrincipal;
 import vn.utbridora.auth.user.Role;
@@ -36,18 +42,20 @@ public class StudentProfileService {
     private final AcademicCatalogService catalogs;
     private final vn.utbridora.auth.modules.taxonomy.port.TaxonomyReferencePort taxonomy;
     private final vn.utbridora.auth.modules.matching.port.CompletenessPort completeness;
+    private final FileReadPort files;
     @jakarta.persistence.PersistenceContext private jakarta.persistence.EntityManager entityManager;
 
     public StudentProfileService(StudentProfileRepository profiles,MembershipRepository memberships,
                                  AuthorizationPolicy policy,AuditService audit,StudentTermScopePort terms,OperationLedger operations,
                                  ProfileReferenceValidator references,AcademicCatalogService catalogs,
                                  vn.utbridora.auth.modules.taxonomy.port.TaxonomyReferencePort taxonomy,
-                                 vn.utbridora.auth.modules.matching.port.CompletenessPort completeness) {
+                                 vn.utbridora.auth.modules.matching.port.CompletenessPort completeness,FileReadPort files) {
         this.profiles=profiles;this.memberships=memberships;this.policy=policy;this.audit=audit;this.terms=terms;
         this.operations=operations;
         this.references=references;
         this.catalogs=catalogs;this.taxonomy=taxonomy;
         this.completeness=completeness;
+        this.files=files;
     }
 
     @Transactional(readOnly=true)
@@ -69,12 +77,13 @@ public class StudentProfileService {
             List.of(new FieldErrorView("Idempotency-Key","INVALID_REQUEST","Phải là UUID.")));
         ProfileInput input=new ProfileInputParser().parse(body);
         String actor=actor(auth), school=schoolOf(auth,input.termId(),WRITE);
+        ActorContext context=ActorContext.fromAuthenticatedWorkflow(auth,null);
         return operations.execute(new OperationLedger.Command(actor,school,"STUDENT_PROFILE_PUT",idempotencyKey,input,200),
-            SelfProfileView.class,()->saveAuthorized(actor,school,input),
+            SelfProfileView.class,()->saveAuthorized(context,actor,school,input),
             result->profiles.findByUser(actor).orElseThrow(StudentProfileService::notFound).id());
     }
 
-    private SelfProfileView saveAuthorized(String actor,String school,ProfileInput input) {
+    private SelfProfileView saveAuthorized(ActorContext context,String actor,String school,ProfileInput input) {
         references.validate(school,input);
         ProfileRow current=profiles.lockByUser(actor).orElse(null);
         // First save uses expectedProfileVersion 0; later saves must match exactly.
@@ -110,7 +119,7 @@ public class StudentProfileService {
         if(before!=null && !Objects.equals(before.majorCode(),input.majorCode())
             && !keepsDeclaredRecords(before,skills,customSkills,projects,certificates,input))
             throw StudentProfileException.of(422,"MAJOR_CHANGE_WOULD_DROP_DATA","Đổi ngành phải giữ lại kỹ năng, dự án, chứng chỉ và minh chứng đã khai.");
-        rejectNewFileReferences(before,input,projects,certificates);
+        requireNewFileReferences(context,actor,before,input,projects,certificates);
 
         ProfileRow next=new ProfileRow(current==null?UUID.randomUUID().toString():current.id(),actor,input.phone(),input.cvFileId(),
             input.skillsDeclared(),version+1);
@@ -150,20 +159,37 @@ public class StudentProfileService {
         audit.securityDenied(actor,"AUTHORIZATION_DENIED");
         return StudentProfileException.of(403,"ACCESS_DENIED","Bạn không có quyền với hồ sơ sinh viên.");
     }
-    /** Interim until the T1 file service and T2-09: only file references already in the profile may be kept. */
-    private static void rejectNewFileReferences(SelfProfileData before,ProfileInput input,List<Project> projects,List<Certificate> certificates) {
-        Set<String> known=before==null?Set.of():fileRefs(before.cvFileId(),before.projects(),before.certificates());
-        List<FieldErrorView> errors=new ArrayList<>();
-        String message="Chưa hỗ trợ gắn tệp mới; chỉ giữ tệp đã có trong hồ sơ.";
-        if(input.cvFileId()!=null && !known.contains(input.cvFileId())) errors.add(new FieldErrorView("cvFileId","BUSINESS_VALIDATION",message));
+    /**
+     * T2-09, BC11 v1.0 line 778: a newly attached fileId must be CLEAN, uploaded by the owner and bound to this
+     * STUDENT_PROFILE with the slot's purpose (CV for cvFileId, EVIDENCE for projects/certificates). T1 checks all of it
+     * in requireCleanBound; refs already kept in the same purpose are not re-checked. Any failure rolls the save back.
+     */
+    private void requireNewFileReferences(ActorContext context,String actor,SelfProfileData before,ProfileInput input,
+                                          List<Project> projects,List<Certificate> certificates) {
+        Set<String> knownCv=before==null || before.cvFileId()==null?Set.of():Set.of(before.cvFileId());
+        Set<String> knownEvidence=before==null?Set.of():fileRefs(null,before.projects(),before.certificates());
+        var resource=new ResourceRef(ResourceType.STUDENT_PROFILE,actor);
+        List<FieldErrorView> binding=new ArrayList<>(), pending=new ArrayList<>();
+        requireFile(context,resource,knownCv,input.cvFileId(),FilePurpose.CV,"cvFileId",binding,pending);
         for(int i=0;i<projects.size();i++) for(int j=0;j<projects.get(i).evidenceFileIds().size();j++)
-            if(!known.contains(projects.get(i).evidenceFileIds().get(j)))
-                errors.add(new FieldErrorView("projects["+i+"].evidenceFileIds["+j+"]","BUSINESS_VALIDATION",message));
-        for(int i=0;i<certificates.size();i++) {
-            String fileId=certificates.get(i).fileId();
-            if(fileId!=null && !known.contains(fileId)) errors.add(new FieldErrorView("certificates["+i+"].fileId","BUSINESS_VALIDATION",message));
+            requireFile(context,resource,knownEvidence,projects.get(i).evidenceFileIds().get(j),FilePurpose.EVIDENCE,
+                "projects["+i+"].evidenceFileIds["+j+"]",binding,pending);
+        for(int i=0;i<certificates.size();i++)
+            requireFile(context,resource,knownEvidence,certificates.get(i).fileId(),FilePurpose.EVIDENCE,"certificates["+i+"].fileId",binding,pending);
+        if(!binding.isEmpty()) throw new StudentProfileException(422,"FILE_BINDING_INVALID","Tệp không thuộc hồ sơ của bạn hoặc sai loại tệp.",binding);
+        if(!pending.isEmpty()) throw new StudentProfileException(409,"FILE_NOT_CLEAN","Tệp chưa được xác nhận an toàn; chờ quét xong rồi lưu lại.",pending);
+    }
+    private void requireFile(ActorContext context,ResourceRef resource,Set<String> known,String fileId,FilePurpose purpose,String field,
+                             List<FieldErrorView> binding,List<FieldErrorView> pending) {
+        if(fileId==null || known.contains(fileId)) return;
+        try {
+            files.requireCleanBound(fileId,resource,purpose,context);
+        } catch(OperationFailure failure) {
+            if(failure.status==409 && "FILE_NOT_CLEAN".equals(failure.code)) pending.add(new FieldErrorView(field,"FILE_NOT_CLEAN","Tệp chưa được xác nhận an toàn."));
+            // Foreign, missing, deleted or wrong-purpose files look the same so the response does not reveal other owners' files.
+            else if(failure.status==403 || failure.status==404 || failure.status==422) binding.add(new FieldErrorView(field,"FILE_BINDING_INVALID","Tệp không thuộc hồ sơ của bạn hoặc sai loại tệp."));
+            else throw failure;
         }
-        if(!errors.isEmpty()) throw new StudentProfileException(422,"BUSINESS_VALIDATION","Chưa thể gắn tệp mới vào hồ sơ.",errors);
     }
     private static boolean keepsDeclaredRecords(SelfProfileData before,List<SelfSkillView> skills,List<CustomSkillView> customSkills,
                                                 List<Project> projects,List<Certificate> certificates,ProfileInput input) {
