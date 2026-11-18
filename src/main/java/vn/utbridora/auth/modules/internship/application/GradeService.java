@@ -49,9 +49,12 @@ public class GradeService {
         access.school(auth,school,term,GradeAccess.SCHOOL);access.holdTerm(term,false);return schoolDto(school,term,schoolPolicy(school,term));
     }
     public SchoolResultVisibilityDto setSchool(Authentication auth,UUID school,UUID term,String key,SetVisibility input){
+        // Acquire the write fence before authority reads join/SHARE-lock terms.
+        // Two writers must not both hold SHARE and then attempt an upgrade.
+        access.holdTerm(term,true);
         access.school(auth,school,term,GradeAccess.SCHOOL);
         return ledger.execute(command(auth,school,"T3_SCHOOL_RESULT_VISIBILITY",key,Map.of("schoolOrgId",school,"termId",term,"request",input),200),SchoolResultVisibilityDto.class,()->{
-            access.holdTerm(term,true);var old=schoolPolicy(school,term);check(old,input);
+            var old=schoolPolicy(school,term);check(old,input);
             if(old.version()==0)jdbc.update("INSERT INTO internship_school_result_policies VALUES (?,?,?,1)",school.toString(),term.toString(),input.enabled());
             else if(jdbc.update("UPDATE internship_school_result_policies SET enabled=?,version=version+1 WHERE school_org_id=? AND term_id=? AND version=?",input.enabled(),school.toString(),term.toString(),old.version())!=1)throw failure(409,"VERSION_CONFLICT");
             var next=schoolDto(school,term,new Policy(input.enabled(),old.version()+1));
@@ -63,9 +66,10 @@ public class GradeService {
         access.hr(auth,enterprise,term,caseId);access.holdTerm(term,false);return hrDto(enterprise,term,caseId,hrPolicy(enterprise,term,caseId));
     }
     public GradeVisibilityDto setHr(Authentication auth,UUID enterprise,UUID term,UUID caseId,String key,SetVisibility input){
+        access.holdTerm(term,true);
         access.hr(auth,enterprise,term,caseId);var payload=new LinkedHashMap<String,Object>();payload.put("enterpriseOrgId",enterprise);payload.put("termId",term);payload.put("caseId",caseId);payload.put("request",input);
         return ledger.execute(command(auth,enterprise,"T3_GRADE_VISIBILITY",key,payload,200),GradeVisibilityDto.class,()->{
-            access.holdTerm(term,true);var old=hrPolicy(enterprise,term,caseId);check(old,input);
+            var old=hrPolicy(enterprise,term,caseId);check(old,input);
             if(old.version()==0)jdbc.update("INSERT INTO internship_grade_visibility VALUES (?,?,?,?,?,1)",enterprise.toString(),term.toString(),scopeKey(caseId),caseId==null?null:caseId.toString(),input.enabled());
             else if(jdbc.update("UPDATE internship_grade_visibility SET enabled=?,version=version+1 WHERE enterprise_org_id=? AND term_id=? AND scope_key=? AND version=?",input.enabled(),enterprise.toString(),term.toString(),scopeKey(caseId),old.version())!=1)throw failure(409,"VERSION_CONFLICT");
             var next=hrDto(enterprise,term,caseId,new Policy(input.enabled(),old.version()+1));

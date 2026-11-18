@@ -34,6 +34,8 @@ có thay đổi riêng của người dùng, chỉ đọc để đối chiếu, 
    kiểm tra ủy quyền nâng khóa Core SHARE thành UPDATE. Authority read dùng
    SHARE để vẫn fence revocation tới commit. Regression ép hai giao dịch cùng
    giữ Core SHARE trước khi kiểm chuỗi; ca riêng xác minh revoke vẫn phải chờ.
+   Policy writer lấy term UPDATE trước các authority read có thể giữ term SHARE,
+   tránh hai writer cùng nâng khóa. Giữ kỳ vọng CAS đúng một 200 và một 409.
    Giữ nguyên assertion luồng browser thật từng bị lỗi ở nhánh T3.
 3. PLC-10 `pending` là DISTINCT ứng viên ENTERPRISE_ACCEPTED, lời mời ACCEPTED,
    còn reservation/consent/share và chưa có Placement. Không cộng RESERVED,
