@@ -50,8 +50,11 @@ public class SchoolDelegationAccess {
         return Set.copyOf(result);
     }
     private static String lockSuffix() {
+        // Authority checks read the chain; SHARE fences revocation through commit.
+        // UPDATE would upgrade Core's user/org SHARE locks and deadlock parallel
+        // reads (for example school evaluation list + visibility policy).
         return org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive()
-            && !org.springframework.transaction.support.TransactionSynchronizationManager.isCurrentTransactionReadOnly()?" FOR UPDATE":"";
+            && !org.springframework.transaction.support.TransactionSynchronizationManager.isCurrentTransactionReadOnly()?" FOR SHARE":"";
     }
     private static OperationFailure missing() {return new OperationFailure(404,"RESOURCE_NOT_FOUND","Không tìm thấy tài nguyên trong phạm vi được ủy quyền hiện hành.",null);}
 }

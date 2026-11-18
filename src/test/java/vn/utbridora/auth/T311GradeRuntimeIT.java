@@ -47,6 +47,9 @@ class T311GradeRuntimeIT {
     @LocalServerPort int port;
     @Autowired JdbcTemplate jdbc;@Autowired PasswordEncoder encoder;
     @Autowired UserRepository users;@Autowired OrganizationRepository organizations;@Autowired MembershipRepository memberships;
+    @Autowired vn.utbridora.auth.authorization.AuthorizationPolicy core;
+    @Autowired vn.utbridora.auth.authorization.SchoolDelegationAccess delegationAccess;
+    @Autowired org.springframework.transaction.PlatformTransactionManager transactions;
     final JsonMapper json=JsonMapper.builder().build();final String password="Synthetic-T311-"+UUID.randomUUID();String hash;
     String school,enterprise,term,caseId,placement,cohort,group,task,assignment,mentorGrant,hrGrant,template;
     UserAccount admin,staff,coordinator,hr,mentor,student,outsider;
@@ -187,6 +190,49 @@ class T311GradeRuntimeIT {
         jdbc.update("UPDATE school_delegations SET active=false,version=version+1 WHERE user_id=?",staff.id);
         node(s.call("POST",path(evaluation)+"/publish",publication(2),key,true),404);
         node(s.call("GET",schoolPath(),null,null,true),404);
+    }
+    @Test void parallelSchoolReadsDoNotUpgradeCoreAuthorityLocks() throws Exception {
+        var auth=core.currentSubject(staff.id).orElseThrow();
+        var ready=new CyclicBarrier(2);
+        try(var pool=Executors.newFixedThreadPool(2)) {
+            var calls=new ArrayList<Future<?>>();
+            for(String permission:List.of("t3:grades:publish","t3:result_policy:manage")) {
+                calls.add(pool.submit(()->new org.springframework.transaction.support.TransactionTemplate(transactions).execute(status->{
+                    assertTrue(core.holdOrganization(auth,school,Role.SCHOOL_STAFF,permission));
+                    try { ready.await(10,TimeUnit.SECONDS); } catch(Exception error) { throw new RuntimeException(error); }
+                    delegationAccess.require(auth,school,term,permission);
+                    return null;
+                })));
+            }
+            for(var call:calls)call.get(20,TimeUnit.SECONDS);
+        }
+        // The same parallel GETs made by the real School UI must both succeed.
+        var s=login(staff,null);
+        try(var pool=Executors.newFixedThreadPool(2)) {
+            var policy=pool.submit(()->s.call("GET",schoolPath(),null,null,true));
+            var list=pool.submit(()->s.call("GET","/api/v1/t3/school/evaluations?termId="+term,null,null,true));
+            node(policy.get(20,TimeUnit.SECONDS),200);node(list.get(20,TimeUnit.SECONDS),200);
+        }
+    }
+    @Test void sharedAuthorityReadStillFencesDelegationRevocationUntilCommit() throws Exception {
+        var auth=core.currentSubject(staff.id).orElseThrow();
+        var held=new CountDownLatch(1);var release=new CountDownLatch(1);var writerStarted=new CountDownLatch(1);
+        try(var pool=Executors.newFixedThreadPool(2)) {
+            var reader=pool.submit(()->new org.springframework.transaction.support.TransactionTemplate(transactions).execute(status->{
+                assertTrue(core.holdOrganization(auth,school,Role.SCHOOL_STAFF,"t3:grades:publish"));
+                delegationAccess.require(auth,school,term,"t3:grades:publish");held.countDown();
+                try { assertTrue(release.await(10,TimeUnit.SECONDS)); } catch(InterruptedException error) { throw new RuntimeException(error); }
+                return null;
+            }));
+            try {
+                assertTrue(held.await(10,TimeUnit.SECONDS));
+                var writer=pool.submit(()->{writerStarted.countDown();return jdbc.update("UPDATE school_delegations SET active=false,version=version+1 WHERE user_id=?",staff.id);});
+                assertTrue(writerStarted.await(10,TimeUnit.SECONDS));
+                assertThrows(TimeoutException.class,()->writer.get(300,TimeUnit.MILLISECONDS));
+                release.countDown();reader.get(10,TimeUnit.SECONDS);assertEquals(1,writer.get(10,TimeUnit.SECONDS));
+            } finally { release.countDown(); }
+        }
+        node(login(staff,null).call("GET",schoolPath(),null,null,true),404);
     }
     @Test void groupHrCannotChangeOrganizationOrOtherGroupCase() throws Exception {
         String parent=jdbc.queryForObject("SELECT parent_assignment_id FROM internship_context_assignments WHERE id=?",String.class,hrGrant);
