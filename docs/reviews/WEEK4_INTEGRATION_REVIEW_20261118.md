@@ -50,6 +50,12 @@ có thay đổi riêng của người dùng, chỉ đọc để đối chiếu, 
    không sửa Contract Pack đóng băng. Có HTTP regression đúng/sai scope/page.
 5. Rebuild machine-readable contract manifest theo source hợp nhất; không lấy
    manifest riêng của một team làm bằng chứng cho toàn bộ source.
+6. Race 20 approvals phát hiện vòng khóa giữa Placement và eligibility khi quota
+   dùng locking join qua proposal backlink. Approve dùng READ_COMMITTED, vẫn giữ
+   demand mutex và eligibility owner lock; đếm DISTINCT Placement trực tiếp theo
+   cooperation/demand sau khi lấy mutex, không khóa các pending row không liên quan.
+   Kiểm active student/term sau owner lock và giữ unique index làm guard cuối.
+   Không nới test để chấp nhận 503 hoặc bỏ assertion một outbox/active key.
 
 ## Kiểm chứng và giới hạn
 

@@ -5065,7 +5065,7 @@
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/PlacementLifecyclePublisher.java": "686c242df78b91b0fef1c19dccfc0a6043f4dc07034a5c1684fbf0aa804cb3be",
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/PlacementOutboxWorker.java": "44299a7857bd58f3ed4431a014529df4e4f1073e4a6bd4ae2c53c3f9256750f2",
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/PlacementRuntimeConfiguration.java": "ab2c9f219598a7f2b894c99de9a0f780d1439eca01eb29baabc2cbb5157d7d98",
-    "src/main/java/vn/utbridora/auth/modules/cooperation/application/PlacementService.java": "26d40acd3a676e009ff09199c52b05e9520b81b46c4ff0ee2b98ed8e96d85606",
+    "src/main/java/vn/utbridora/auth/modules/cooperation/application/PlacementService.java": "e918e1b44da33877cd7f751065b2d7cf39bc375a2eb6ba6073bdeaf75157bf14",
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/PortalOrganizationService.java": "fcf9fbbcabbfda2b73c025ad0c4a17c2ec0a1cf696871b0f35a05e8ba9389231",
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/ProfileShareService.java": "a8886c790f6bf83d1867b193c5c1dda1fbf7af83cc96b9cae14ba86fa5fe610f",
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/ProposalConsentSummary.java": "f122e4e09992e88fa01d80b8568c37f9e6d9e0d2bd2ab6fc679d2f1a34b4884f",

@@ -1466,6 +1466,33 @@ class EnterpriseProposalIT {
         } finally {pool.shutdownNow();}
     }
 
+    @Test void twentyApprovalsCannotExceedQuotaWhenLegacyPlacementsHaveNoProposalBacklinks() throws Exception {
+        enterpriseAccepted();var pending=pending(Instant.now().plusSeconds(3600));var inserted=new ArrayList<String>();
+        try {
+            for(int n=0;n<input.quantity();n++) {
+                String completed=key();inserted.add(completed);
+                jdbc.update("INSERT INTO placements(id,student_user_id,school_org_id,enterprise_org_id,term_id,demand_id,cooperation_id,proposal_item_id,state,version,effective_at,start_date,end_date,approved_at,completed_at) VALUES(?,?,?,?,?,?,?,?,'COMPLETED',4,UTC_TIMESTAMP(6),'2026-01-01','2028-01-01',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",completed,id(6),id(11),id(12),id(21),pending.demandId(),pending.cooperationId(),key());
+            }
+            var auth=as(2);var gate=new java.util.concurrent.CountDownLatch(1);
+            try(var pool=java.util.concurrent.Executors.newFixedThreadPool(20)) {
+                var calls=new ArrayList<java.util.concurrent.Future<?>>();
+                for(int n=0;n<20;n++)calls.add(pool.submit(()->{
+                    gate.await();SecurityContextHolder.getContext().setAuthentication(auth);
+                    try {
+                        var denied=assertThrows(OperationFailure.class,()->placements.approve(auth,pending.placementId(),key(),new PlacementService.PlacementCommand(pending.version(),"DEMO-FULL-QUOTA","SCHOOL_APPROVED")));
+                        assertEquals(409,denied.status);assertTrue(Set.of("CAPACITY_EXCEEDED","REQUEST_IN_PROGRESS").contains(denied.code),denied.code);
+                    }
+                    finally {SecurityContextHolder.clearContext();}return null;
+                }));
+                gate.countDown();for(var call:calls)call.get(90,java.util.concurrent.TimeUnit.SECONDS);
+            }
+            assertEquals("PENDING_APPROVAL",jdbc.queryForObject("SELECT state FROM placements WHERE id=?",String.class,pending.placementId()));
+            assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM placement_outbox WHERE placement_id=?",Integer.class,pending.placementId()));
+            failure(409,"CAPACITY_EXCEEDED",()->placements.approve(as(2),pending.placementId(),key(),new PlacementService.PlacementCommand(pending.version(),"DEMO-FULL-QUOTA","SCHOOL_APPROVED")));
+            assertPlacementSummary(pending.demandId(),input.quantity(),input.quantity(),0,0);
+        } finally {for(String completed:inserted)jdbc.update("DELETE FROM placements WHERE id=?",completed);}
+    }
+
     @Test void systemWorkerUsesSystemActorAndNeverApprovesPendingRows() {
         enterpriseAccepted();var p=pending(Instant.now().minusSeconds(5));
         var worker=new PlacementActivationWorker(jdbc,placements);worker.activatePending();

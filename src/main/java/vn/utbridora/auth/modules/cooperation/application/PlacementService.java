@@ -249,7 +249,7 @@ public class PlacementService {
      * Re-checks all gates. Sets approved_at which activates the active-key unique constraint.
      * Publishes PlacementApproved → T3 creates WAITING_START case.
      */
-    @Transactional
+    @Transactional(isolation=Isolation.READ_COMMITTED)
     public PlacementView approve(Authentication auth, String placementId,
                                   String idempotencyKey, PlacementCommand body) {
         version(body.expectedVersion());
@@ -286,6 +286,10 @@ public class PlacementService {
         if (!coop.state().equals("APPROVED")) throw failure(409, "STATE_CONFLICT");
         var item = proposals.item(p.proposalItemId());
         eligibility.assertCurrentForPlacement(auth,p.studentUserId(),schoolOrgId,p.termId());
+        // The owner eligibility row is locked through commit. Read current state
+        // after waiting for it, before attempting the active-key insert/update.
+        if(jdbc.queryForObject("SELECT COUNT(*) FROM placements WHERE student_user_id=? AND term_id=? AND state IN ('APPROVED','ACTIVE')",Integer.class,p.studentUserId(),p.termId())>0)
+            throw failure(409,"ACTIVE_PLACEMENT_EXISTS");
         checkCurrentCandidate(auth,item,coop);
         checkDates(p.termId(),p.startDate(),p.endDate(),p.effectiveAt());
         reCheckQuota(p.cooperationId(),p.demandId());
@@ -729,12 +733,13 @@ public class PlacementService {
         int quantity = jdbc.queryForObject(
             "SELECT JSON_UNQUOTE(JSON_EXTRACT(d.data_json,'$.quantity')) FROM demands d " +
             "WHERE d.id=?", Integer.class, demandId);
-        int placed = jdbc.queryForList(
-            "SELECT p.id FROM placements p " +
-            "JOIN proposal_batches b ON b.cooperation_id=? " +
-            "JOIN proposal_items i ON i.batch_id=b.id AND i.placement_id=p.id " +
-            "WHERE p.state IN ('APPROVED','ACTIVE','COMPLETED') FOR SHARE",
-            String.class, cooperationId).size();
+        // Every placement mutation holds the demand mutex. READ_COMMITTED on
+        // approve gives a fresh count after that wait, without locking unrelated
+        // pending rows in a join scan (which can deadlock on student eligibility).
+        // Placement is authoritative even when a legacy proposal backlink is absent.
+        int placed = jdbc.queryForObject(
+            "SELECT COUNT(DISTINCT id) FROM placements WHERE cooperation_id=? AND demand_id=? AND state IN ('APPROVED','ACTIVE','COMPLETED')",
+            Integer.class, cooperationId,demandId);
         if (placed >= quantity) throw failure(409, "CAPACITY_EXCEEDED");
     }
 
