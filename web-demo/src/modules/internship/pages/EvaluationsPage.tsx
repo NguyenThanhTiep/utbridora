@@ -98,14 +98,14 @@ function SchoolScope({grants,denied}:{grants:Grant[];denied:()=>void}) {
   </div>;
 }
 function SchoolTerm({schoolId,grant,denied}:{schoolId:string;grant:Grant;denied:()=>void}) {
-  const [terms,setTerms]=useState<{termId:string;schoolOrgId:string;code:string}[]>([]),[term,setTerm]=useState(''),[input,setInput]=useState(''),[error,setError]=useState('');
+  const [terms,setTerms]=useState<{termId:string;schoolOrgId:string;termCode:string}[]>([]),[term,setTerm]=useState(''),[input,setInput]=useState(''),[error,setError]=useState('');
   useEffect(()=>{const c=new AbortController();
-    void workflowPages<{termId:string;schoolOrgId:string;code:string}>('/terms?schoolOrgId='+schoolId,undefined,c.signal).then(v=>{
+    void workflowPages<{termId:string;schoolOrgId:string;termCode:string}>('/terms?schoolOrgId='+schoolId,undefined,c.signal).then(v=>{
       if(c.signal.aborted)return;if(v.some(t=>t.schoolOrgId!==schoolId)){denied();return;}setTerms(v);
     }).catch(e=>{if(!c.signal.aborted)setError('Không tải được danh sách kỳ. Nhập mã kỳ trong phân công của bạn để kiểm tra quyền.');});return ()=>c.abort();
   },[schoolId]);
   return <div className="stack"><section className="panel stack">
-    {terms.length>0 && <label>Kỳ đánh giá<select value={term} onChange={e=>setTerm(e.target.value)}><option value="">Chọn kỳ…</option>{terms.map(t=><option key={t.termId} value={t.termId}>{t.code}</option>)}</select></label>}
+    {terms.length>0 && <label>Kỳ đánh giá<select value={term} onChange={e=>setTerm(e.target.value)}><option value="">Chọn kỳ…</option>{terms.map(t=><option key={t.termId} value={t.termId}>{t.termCode}</option>)}</select></label>}
     {error && <p role="alert">{error}</p>}
     <details><summary>Nhập mã kỳ được phân công</summary><form onSubmit={e=>{e.preventDefault();if(uuidPattern.test(input))setTerm(input.toLowerCase());}}>
       <label>Mã kỳ thực tập<input value={input} onChange={e=>{setInput(e.target.value);setTerm('');}}/></label><button disabled={!uuidPattern.test(input)}>Mở kỳ đánh giá</button>

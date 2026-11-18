@@ -17,7 +17,11 @@ import vn.utbridora.auth.modules.internship.integration.PlacementLifecycleConsum
 public class PlacementOutboxWorker {
     private static final int[] RETRY_DELAYS={1,5,30,300,1800};
     private final JdbcTemplate jdbc;private final PlacementLifecycleConsumer consumer;
-    private final JsonMapper json=JsonMapper.builder().build();
+    private final JsonMapper json=JsonMapper.builder()
+        .enable(tools.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
+            tools.jackson.databind.DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES)
+        .disable(tools.jackson.databind.DeserializationFeature.ACCEPT_FLOAT_AS_INT)
+        .disable(tools.jackson.databind.MapperFeature.ALLOW_COERCION_OF_SCALARS).build();
     public PlacementOutboxWorker(JdbcTemplate jdbc,PlacementLifecycleConsumer consumer) {this.jdbc=jdbc;this.consumer=consumer;}
     @Scheduled(fixedDelayString="${app.t5.placement-delivery.delay-ms:5000}",initialDelay=5000)
     public void deliverPending() {
@@ -26,8 +30,12 @@ public class PlacementOutboxWorker {
             EventConsumeResult result;
             try {
                 var event=json.readValue((String)row.get("payload_json"),PlacementLifecycleEvent.class);
+                if(event==null || !id.equals(event.eventId())) throw new IllegalArgumentException("Invalid delivery identity");
                 result=consumer.consume(new TrustedEventContext("T5",(String)row.get("delivery_operation_id"),event.traceId()),event);
-            } catch(IllegalArgumentException invalid) {result=new EventConsumeResult(id,"REJECT",null,"INVALID_SCHEMA",null);}
+                // A mismatched/uncommitted ACK must not discard the producer's pending delivery.
+                if(result==null || !id.equals(result.eventId()) || result.outcome().startsWith("ACK_") && result.appliedAggregateVersion()==null)
+                    result=new EventConsumeResult(id,"RETRY",null,"SOURCE_UNAVAILABLE",1);
+            } catch(tools.jackson.core.JacksonException | IllegalArgumentException invalid) {result=new EventConsumeResult(id,"REJECT",null,"INVALID_SCHEMA",null);}
             catch(RuntimeException unavailable) {result=new EventConsumeResult(id,"RETRY",null,"SOURCE_UNAVAILABLE",1);}
             if(result.outcome().startsWith("ACK_")) jdbc.update("UPDATE placement_outbox SET state='DONE',last_reason=? WHERE event_id=? AND state='PENDING'",result.reasonCode(),id);
             else if(result.outcome().equals("REJECT") || retries>=RETRY_DELAYS.length)

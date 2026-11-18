@@ -5063,7 +5063,7 @@
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/DemandService.java": "b51b86492c98fe2ff2b9da028425ab2466257c9ecb70a9a21f4ac7d532973937",
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/PlacementActivationWorker.java": "4eafc4f0fea1858b49efa7461ddf4c1ea36caa3d301e579ba3e0eaede2238e5e",
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/PlacementLifecyclePublisher.java": "686c242df78b91b0fef1c19dccfc0a6043f4dc07034a5c1684fbf0aa804cb3be",
-    "src/main/java/vn/utbridora/auth/modules/cooperation/application/PlacementOutboxWorker.java": "44299a7857bd58f3ed4431a014529df4e4f1073e4a6bd4ae2c53c3f9256750f2",
+    "src/main/java/vn/utbridora/auth/modules/cooperation/application/PlacementOutboxWorker.java": "c4bcee430aa90acaa2fddd7a388bfc328adaec0fb1767c5431944b06850d1bf6",
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/PlacementRuntimeConfiguration.java": "ab2c9f219598a7f2b894c99de9a0f780d1439eca01eb29baabc2cbb5157d7d98",
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/PlacementService.java": "e918e1b44da33877cd7f751065b2d7cf39bc375a2eb6ba6073bdeaf75157bf14",
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/PortalOrganizationService.java": "fcf9fbbcabbfda2b73c025ad0c4a17c2ec0a1cf696871b0f35a05e8ba9389231",

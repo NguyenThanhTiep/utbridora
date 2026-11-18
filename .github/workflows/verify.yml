@@ -104,6 +104,7 @@ jobs:
             target/*browser.log
             target/week3-*.png
             target/*e2e.log
+            target/week5-restore-verification.json
             target/student-browser.log
             web-demo/test-results/
   # Keep the existing required-check name, and fail if any dependency is skipped/failed.

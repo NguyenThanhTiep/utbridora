@@ -122,6 +122,26 @@ class InternshipRuntimeIT {
         finally {jdbc.execute("ALTER TABLE internship_case_projection_history DROP CHECK reject_projection");}
         assertEquals("ACK_APPLIED",consume(approved).outcome());
     }
+    @Test void cancellationBeforeFirstDeliveryCannotOpenTasksAndDelayedApprovalStaysTerminal() throws Exception {
+        jdbc.update("UPDATE placements SET state='CANCELLED',version=3,cancelled_at=UTC_TIMESTAMP(6) WHERE id=?",placement);
+        var cancelled=tx.execute(status->publisher.publish(staff.id,placement,"WITHDRAWN"));
+        // Deliver an older APPROVED envelope while the authoritative T5 row is already cancelled.
+        assertEquals("ACK_APPLIED",consume(approved).outcome());
+        String c=caseId(placement);
+        assertEquals("CANCELLED",jdbc.queryForObject("SELECT state FROM internship_cases WHERE id=?",String.class,c));
+        assertEquals("ACK_STALE",consume(cancelled).outcome());
+        assertEquals("ACK_DUPLICATE",consume(approved).outcome());
+        assertEquals(1,count("internship_cases","placement_id",placement));
+        assertEquals(1,count("internship_case_projection_history","case_id",c));
+        assertEquals(3,jdbc.queryForObject("SELECT last_applied_version FROM internship_cases WHERE id=?",Integer.class,c));
+        var h=login(hr,hrGrant);String cohort=cohort(h);
+        // A terminal case is rejected by the real cohort intake guard before any Task can be created.
+        var intake=h.call("POST","/t3/cohorts/"+cohort+"/members:batch",
+            new vn.utbridora.auth.modules.internship.infrastructure.WorkspaceRuntime.BatchCases(1L,List.of(UUID.fromString(placement)),null,null),id(),true);
+        assertTrue(Set.of(200,409).contains(intake.statusCode()),intake.body());
+        assertEquals(0,count("internship_cohort_cases","case_id",c));
+        assertEquals(0,count("internship_task_assignments","case_id",c));
+    }
     @Test void inboxConcurrentRedeliveryProducesOneCaseAndOneAudit() throws Exception {
         try(var executor=Executors.newFixedThreadPool(2)) {
             var one=executor.submit(()->consume(approved));var two=executor.submit(()->consume(approved));

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { ApiError } from '../../../api';
 import { EmptyState, Icon, LoadingState } from '../../../components';
-import { accessLost, workflowError } from '../../internship/workflow-api';
+import { accessLost, workflowError, workflowRead } from '../../internship/workflow-api';
+import { uuidPattern } from '../../internship/workflow';
 import { getMyResult } from '../api';
 import { useMyCaseIds } from '../internship';
 import { dateTime } from '../preferences';
@@ -27,26 +28,59 @@ export function EvaluationResults({ userId }: { userId: string }) {
   const { caseIds, error: caseError } = useMyCaseIds(userId);
   const [caseId, setCaseId] = useState(''), [result, setResult] = useState<StudentResultDto | null>(null);
   const [error, setError] = useState(''), [attempt, setAttempt] = useState(0);
+  const [lookup, setLookup] = useState(''), [lookupId, setLookupId] = useState(''), [verified, setVerified] = useState('');
+  const [lookupError, setLookupError] = useState(''), [checking, setChecking] = useState(false), [closed, setClosed] = useState(false);
+  const [lookupAttempt, setLookupAttempt] = useState(0);
+  const choices = [...new Set([...(caseIds || []), ...(verified ? [verified] : [])])];
+  useEffect(() => {
+    if (!lookupId || closed) return;
+    const c = new AbortController(); setChecking(true); setLookupError('');
+    void workflowRead<{ caseId: string; studentUserId: string }>('/t3/cases/' + lookupId, undefined, c.signal).then(value => {
+      if (c.signal.aborted) return;
+      if (value.caseId !== lookupId || value.studentUserId !== userId) { setClosed(true); return; }
+      setVerified(value.caseId); setCaseId(value.caseId);
+    }).catch(failure => { if (!c.signal.aborted) {
+      if (accessLost(failure)) setClosed(true);
+      else setLookupError('Không thể mở hồ sơ này. Kiểm tra mã hồ sơ và quyền truy cập.');
+    } }).finally(() => { if (!c.signal.aborted) setChecking(false); });
+    return () => c.abort();
+  }, [lookupId, lookupAttempt, userId, closed]);
+  useEffect(() => {
+    const clear = () => { setResult(null); setError(''); setAttempt(n => n + 1); };
+    const visibility = () => { clear(); };
+    const close = () => { setResult(null); setCaseId(''); setVerified(''); setClosed(true); };
+    window.addEventListener('focus', clear); document.addEventListener('visibilitychange', visibility);
+    window.addEventListener('session-expired', close);
+    return () => { window.removeEventListener('focus', clear); document.removeEventListener('visibilitychange', visibility); window.removeEventListener('session-expired', close); };
+  }, []);
   useEffect(() => { if (caseIds) setCaseId(previous => caseIds.includes(previous) ? previous : caseIds.length === 1 ? caseIds[0] : ''); }, [caseIds]);
   useEffect(() => {
     setResult(null); setError('');
-    if (!caseId) return;
+    if (!caseId || closed || document.hidden) return;
     const c = new AbortController();
     getMyResult(caseId, c.signal).then(value => { if (!c.signal.aborted) setResult(value); })
-      .catch(failure => { if (!c.signal.aborted) setError(resultError(failure)); });
+      .catch(failure => { if (!c.signal.aborted) { if (accessLost(failure)) setClosed(true); else setError(resultError(failure)); } });
     return () => c.abort();
-  }, [caseId, attempt]);
-  const evaluation = result && publishedOf(result, caseId);
+  }, [caseId, attempt, closed]);
+  const evaluation = !closed && result && publishedOf(result, caseId);
+  if (closed) return <section className="panel"><p role="alert">Phiên hoặc quyền truy cập đã thay đổi. Dữ liệu kết quả đã được đóng. Vui lòng đăng nhập lại.</p></section>;
   return <section className="panel student-results">
     <div className="section-heading"><div><p className="section-kicker">KẾT QUẢ THỰC TẬP</p><h2>Kết quả kỳ thực tập</h2>
       <p className="section-description">Chỉ hiển thị sau khi nhà trường công bố và cho phép sinh viên xem.</p></div>
       <button type="button" className="secondary" disabled={!caseId} onClick={() => setAttempt(previous => previous + 1)}><Icon name="refresh" size={16} />Tải lại kết quả</button></div>
-    {caseError ? <p className="student-error-note" role="alert">{workflowError(caseError)}</p>
-      : caseIds === null ? <LoadingState label="Đang tìm hồ sơ thực tập…" />
-      : caseIds.length === 0 ? <EmptyState icon="briefcase" title="Chưa có hồ sơ thực tập" description="Kết quả đánh giá gắn với hồ sơ thực tập. Hồ sơ hiện ở đây khi bạn được giao nhiệm vụ." />
+    <details><summary>Mở hồ sơ bằng mã được cấp</summary><form onSubmit={event => { event.preventDefault();
+      if (uuidPattern.test(lookup)) { setResult(null); setCaseId(''); setVerified(''); setLookupError(''); setLookupId(lookup.toLowerCase()); setLookupAttempt(n => n + 1); }
+    }}><label>Mã hồ sơ để xem kết quả<input required value={lookup} onChange={event => setLookup(event.target.value)} /></label>
+      <p>Có thể mở hồ sơ chưa được giao nhiệm vụ. Máy chủ kiểm tra quyền sở hữu trước khi hiển thị.</p>
+      <button type="submit" disabled={checking || !uuidPattern.test(lookup)}>Xác nhận hồ sơ kết quả</button>
+    </form></details>
+    {checking && <LoadingState label="Đang xác nhận hồ sơ…" />}{lookupError && <p role="alert">{lookupError}</p>}
+    {!!caseError && <p className="student-error-note" role="alert">{workflowError(caseError)}</p>}
+    {caseIds === null && !verified ? <LoadingState label="Đang tìm hồ sơ thực tập…" />
+      : choices.length === 0 ? <EmptyState icon="briefcase" title="Chưa có hồ sơ thực tập" description="Bạn có thể dùng mã hồ sơ được cấp để xem kết quả của hồ sơ chưa có nhiệm vụ." />
       : <>
-        {caseIds.length > 1 && <label>Hồ sơ thực tập<select value={caseId} onChange={event => setCaseId(event.target.value)}>
-          <option value="" disabled>Chọn hồ sơ thực tập…</option>{caseIds.map(id => <option key={id} value={id}>Hồ sơ …{id.slice(-6)}</option>)}</select></label>}
+        {choices.length > 1 && <label>Hồ sơ thực tập<select value={caseId} onChange={event => setCaseId(event.target.value)}>
+          <option value="" disabled>Chọn hồ sơ thực tập…</option>{choices.map(id => <option key={id} value={id}>Hồ sơ …{id.slice(-6)}</option>)}</select></label>}
         <div role="region" aria-label="Kết quả đánh giá" aria-live="polite">
           {!caseId ? <p className="muted">Chọn hồ sơ thực tập để xem kết quả.</p>
             : error ? <p className="student-error-note" role="alert">{error}</p>

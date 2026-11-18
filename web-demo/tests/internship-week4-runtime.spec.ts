@@ -11,7 +11,11 @@ async function actor(browser:Browser,role:string) {
   if(role==='mentor'||role==='hr')await page.getByRole('combobox',{name:'Phân công đánh giá',exact:true}).selectOption(cfg![role+'Context']);
   if(role==='mentor')await page.getByRole('combobox',{name:'Hồ sơ trong nhóm',exact:true}).selectOption(cfg!.caseId);
   if(role==='student'||role==='outsider')await selectCase(page);
-  if(role==='school')await page.getByRole('combobox',{name:'Kỳ đánh giá',exact:true}).selectOption(cfg!.termId);
+  if(role==='school'){
+    const terms=page.getByRole('combobox',{name:'Kỳ đánh giá',exact:true});
+    await expect(terms.locator('option[value="'+cfg!.termId+'"]')).toHaveText(/^SYNTHETIC-/);
+    await terms.selectOption(cfg!.termId);
+  }
   return {context,page};
 }
 async function selectCase(page:Page) {await page.getByLabel('Mã hồ sơ thực tập',{exact:true}).fill(cfg!.caseId);await page.getByRole('button',{name:'Mở đánh giá hồ sơ',exact:true}).click();}
@@ -83,4 +87,31 @@ test('T3-12 real outsider denied and logout clears private result',async({browse
     await result(student.page,'20.00');await student.page.getByRole('button',{name:'Đăng xuất',exact:true}).click();await expect(student.page.getByRole('heading',{name:'Đăng nhập',exact:true})).toBeVisible();
     await expect(student.page.getByRole('region',{name:'Nội dung đánh giá'})).toHaveCount(0);
   } finally {await outsider.context.close();await student.context.close();}
+});
+
+test('week 5 S08 opens an owner case without tasks and clears a withdrawn result on focus',async({browser})=>{
+  const student=await actor(browser,'student'),school=await actor(browser,'school'),outsider=await actor(browser,'outsider');
+  try {
+    const tasks=await student.page.request.get('/api/v1/t3/tasks?page=0&size=100');
+    expect(tasks.ok()).toBe(true);expect((await tasks.json()).content).toEqual([]);
+    for(const a of [student,outsider]) {
+      await a.page.getByRole('button',{name:'Báo cáo & đánh giá',exact:true}).click();
+      await a.page.getByRole('tab',{name:'Kết quả đánh giá',exact:true}).click();
+      await a.page.getByText('Mở hồ sơ bằng mã được cấp',{exact:true}).click();
+      await a.page.getByLabel('Mã hồ sơ để xem kết quả',{exact:true}).fill(cfg!.caseId);
+      await a.page.getByRole('button',{name:'Xác nhận hồ sơ kết quả',exact:true}).click();
+    }
+    await expect(outsider.page.getByText('Không thể mở hồ sơ này. Kiểm tra mã hồ sơ và quyền truy cập.',{exact:true})).toBeVisible();
+    await expect(outsider.page.getByRole('table')).toHaveCount(0);
+    await expect(student.page.getByRole('table',{name:'Điểm theo tiêu chí'})).toBeVisible();
+    await expect(student.page.getByText('20,00',{exact:true})).toBeVisible();
+    await policy(school.page,'Chính sách nhà trường',false);
+    const checked=student.page.waitForResponse(r=>r.url().includes('/t3/me/results?'));
+    await student.page.evaluate(()=>window.dispatchEvent(new Event('focus')));expect((await checked).ok()).toBe(true);
+    await expect(student.page.getByRole('heading',{name:'Chưa có kết quả được công bố',exact:true})).toBeVisible();
+    await expect(student.page.getByRole('table')).toHaveCount(0);
+    await policy(school.page,'Chính sách nhà trường',true);
+    await student.page.getByRole('button',{name:'Tải lại kết quả',exact:true}).click();
+    await expect(student.page.getByText('20,00',{exact:true})).toBeVisible();
+  } finally {for(const a of [student,school,outsider])await a.context.close();}
 });

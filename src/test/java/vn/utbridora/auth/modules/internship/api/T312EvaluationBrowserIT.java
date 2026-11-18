@@ -62,8 +62,7 @@ class T312EvaluationBrowserIT {
         jdbc.update("INSERT INTO internship_cohorts(id,enterprise_org_id,school_org_id,term_id,code,name,version) VALUES (?,?,?,?,?,'Synthetic T312',1)",cohort,enterprise,school,term,"T312-"+id());
         jdbc.update("INSERT INTO internship_groups(id,cohort_id,code,version) VALUES (?,?,'G1',1)",group,cohort);
         jdbc.update("INSERT INTO internship_cohort_cases(cohort_id,case_id,group_id) VALUES (?,?,?)",cohort,caseId,group);
-        jdbc.update("INSERT INTO internship_tasks(id,group_id,title,description,due_at,priority,late_allowed,version) VALUES (?,?,'Synthetic T312','Synthetic description',DATE_ADD(UTC_TIMESTAMP(6),INTERVAL 1 DAY),'NORMAL',true,1)",task,group);
-        jdbc.update("INSERT INTO internship_task_assignments(id,task_id,case_id,student_user_id,state,version) VALUES (?,?,?,?,'IN_PROGRESS',2)",assignment,task,caseId,student.id);
+        // Week 5 regression: a published grade does not require a Task to exist.
         mentorGrant=grant("MENTOR",mentor.id,hr.id,hrGrant,null,group);
         for(String permission:List.of("t3:grades:publish","t3:result_policy:manage","t3:workspace:read"))
             jdbc.update("INSERT INTO school_delegation_permissions(assignment_id,permission_code) VALUES (?,?)",delegation,permission);

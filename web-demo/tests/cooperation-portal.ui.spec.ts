@@ -298,6 +298,30 @@ test('enterprise statistics consumes protected release and rejects raw-count pay
   await page.screenshot({ path: '../target/t5-enterprise-statistics.png', fullPage: true });
 });
 
+test('week 5 protected statistics forgets the previous release when the demand version changes', async ({ page }) => {
+  // UI regression fixture only. Real privacy/Matching/MySQL remain covered by EnterpriseProposalIT.
+  await session(page);
+  let current = demand;
+  const bodies: { expectedDemandVersion: number; expectedCriteriaVersion: number }[] = [];
+  await page.route('**/api/v1/enterprise/demands?*', route => route.fulfill({ json: rows([current]) }));
+  await page.route('**/api/v1/matching/evaluate', route => {
+    bodies.push(route.request().postDataJSON());
+    return route.fulfill({ json: { audience: 'ENTERPRISE', release: {
+      releaseId: '00000000-0000-4000-8000-000000000077', matchRunId: '00000000-0000-4000-8000-000000000078', eligibleBand: '5-9',
+    } } });
+  });
+  await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Thống kê bảo mật', exact: true }).click();
+  await page.getByRole('button', { name: 'Xem thống kê đối chiếu', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: '5–9 ứng viên' })).toBeVisible();
+  current = { ...demand, version: 3, criteriaVersion: 2, data: { ...demand.data, title: 'Updated criteria' } };
+  const refreshed = page.waitForResponse(r => r.url().includes('/enterprise/demands?'));
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent('cooperation-data-updated')));await refreshed;
+  await expect(page.getByRole('status').filter({ hasText: '5–9 ứng viên' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Xem thống kê đối chiếu', exact: true }).click();
+  await expect.poll(() => bodies.length).toBe(2);
+  expect(bodies.map(body => [body.expectedDemandVersion, body.expectedCriteriaVersion])).toEqual([[2, 1], [3, 2]]);
+});
+
 test('notification filters and keyboard tabs use current records without a separate notification endpoint', async ({ page }) => {
   await session(page);
   const requests: string[] = [];

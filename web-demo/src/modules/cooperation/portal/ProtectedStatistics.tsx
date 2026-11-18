@@ -19,7 +19,7 @@ export function ProtectedStatistics({ org, demands, navigate }: { org: string; d
         {rows.map(row => <option key={row.demandId} value={row.demandId}>{row.data.title}</option>)}
       </select><Notice tone="error" message={demands.error} />
     </section>
-    {demand && <EnterpriseMatchingSummary key={demand.demandId} org={org} demand={demand} />}
+    {demand && <EnterpriseMatchingSummary key={[org, demand.demandId, demand.version, demand.criteriaVersion].join(':')} org={org} demand={demand} />}
     <section className="panel"><h3>Nhu cầu đang áp dụng</h3>
       {demands.loading ? <p role="status">Đang tải nhu cầu…</p> : demand ? <>
         <dl className="portal-key-values"><div><dt>Vị trí tuyển dụng</dt><dd>{demand.data.title}</dd></div>
