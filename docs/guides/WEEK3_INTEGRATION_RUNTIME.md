@@ -1,5 +1,9 @@
 # Runtime tích hợp tuần 3 và đường nâng cấp database
 
+> Cập nhật tuần 4: V38 scanner T1 và V38/V39 T3 được hội tụ bằng V40.
+> Xem [locations, preflight và kiểm thử tuần 4](WEEK4_MIGRATION_RUNTIME.md).
+> Các bảng V28–V33 bên dưới mô tả lịch sử tuần 3; không dùng chúng để tự chọn đường nâng cấp DB đã chạy V38.
+
 Ngày 13/11/2026. Source tích hợp T1/T2/T3/T4/T5; [ma trận task và evidence](../testing/WEEK3_INTEGRATION_ACCEPTANCE.md). Chỉ dựng môi trường test/dev riêng trong lần kiểm chứng này. Không deploy/rebuild `utbridora-local:8088`, không seed/import hoặc đổi dữ liệu/tài khoản/volume hiện có. UI 8088 có thể chưa phản ánh main mới.
 
 Sự cố trong lượt full local đầu: container MySQL test tích lũy làm cạn bộ nhớ Docker; backend shared cũ bị OOM-kill (exit137). Đã dừng local IT, chỉ dọn các container test của lượt đó và start lại **đúng container/image backend cũ**; bốn container shared đã healthy. Không rebuild, thay source/config/image hay chạy seed/import. Các lượt full tiếp theo chạy trên GitHub CI riêng. Failsafe nay chạy tuần tự, mỗi class IT một JVM để giải phóng Testcontainers sau class; vẫn phải theo dõi tài nguyên khi chạy local.

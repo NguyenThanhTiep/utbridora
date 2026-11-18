@@ -1,0 +1,449 @@
+{
+  "task": "T3-12",
+  "owner": "DEV07 - Lai Thai Thuan",
+  "completedDate": "2026-11-15",
+  "timezone": "Asia/Bangkok",
+  "branch": "feature/t3-week4",
+  "baseCommit": "8c399161a65063db48a0affb594814b9b86b2c93",
+  "worktree": "uncommitted DEV07 changes; no commit/push/QA signoff",
+  "runs": {
+    "javaUnit": {
+      "counts": {
+        "tests": 1334,
+        "passed": 1333,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "rawReports": [
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.audit.EvaluationWorkflowAuditTest.xml",
+          "sha256": "b0b168334c351dace5f33802dea16de1f60667aa6a77652c0e2df41cd8f0a839"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.audit.GradeWorkflowAuditTest.xml",
+          "sha256": "e5f883cee04452b9e817e5608aff0649e95ae7245335f426531cd38bcce961e0"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.audit.SubmissionCreatedAuditTest.xml",
+          "sha256": "39abe648b334afa2473c4db9b9fd193d9412506675b6193f12552cc344eaea4a"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.audit.WeeklyReportWorkflowAuditTest.xml",
+          "sha256": "7faf0baba30186377dd8d35c11fc90e875153c8b80990f476de7c12f8fcdb003"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.files.FileByteRangeTest.xml",
+          "sha256": "fb87c598d71b45e52285321c361a88e9e0d47c92703c2671763a86765ac3069b"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.files.PrivateFileStorageTest.xml",
+          "sha256": "7a869c2611b4cdd883ee4b3c00cf2196a6d85cc5d897d76cfa2baba2dafcc37b"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.LocalDemoActivationTest.xml",
+          "sha256": "dc8f4be079fc48ecfb5a363b15903fd56c1c189bcae70fac2527e5c25fc90b43"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.cooperation.application.DemandServiceTest.xml",
+          "sha256": "bfb4a4feedbef60eec0bd6b542bb95d28c4daf91ea4017944788622dc2238cf9"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.cooperation.application.PortalOrganizationServiceTest.xml",
+          "sha256": "855dccd941ec20f848381f47bc022627569952a178df0139660685d4cc7cfbb8"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.cooperation.domain.DemandDomainTest.xml",
+          "sha256": "5d195b0e970349456b7abf8f50374c82f679007efdb53bb9da1d0e11180c875b"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.cooperation.integration.DemandReferenceConfigurationTest.xml",
+          "sha256": "98c8fdd0366b194ee618162247412569388067165599ff4c27e2c79e9809de92"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.api.CohortGroupDtosTest.xml",
+          "sha256": "05f09966b4ca02b9e2589a37c3935b1c2214495803f4e89d66075f30ccdfc1a5"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.api.EvaluationJsonTest.xml",
+          "sha256": "86c5ba79bbaf924e284479c18a48ed11adfaf9ffac6b8bd02870cec7609258b1"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.api.GradeJsonTest.xml",
+          "sha256": "22263591eb0a87544b002bc351d60f025fdd15dc4830742ced1fb50e768951e1"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.api.ReportDtosTest.xml",
+          "sha256": "776d6c5738894a4905c0e8d1d83bd42e5b4f17da4d39cde7928a25941d66f147"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.api.ReportJsonTest.xml",
+          "sha256": "4761c0ebff02b0852f599b397fc7f5f5ec0262c620010d45e93bfffea756d23c"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.api.SubmissionControllerTest.xml",
+          "sha256": "0bfb703629258f7e34ad8a8f3266d2eb00aa355b1bd2ec8ac5757bf33eae5e7c"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.api.SubmissionDtosTest.xml",
+          "sha256": "28d937b4a99c8e2955ffb65db8cb69b1f063fb51ec93addd7c1963cad4d4a86d"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.api.SubmissionJsonTest.xml",
+          "sha256": "6749bb7e5013a213b98c1a045d0acb6e7b844087821b3d5080ddb43c51cf77d7"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.api.SubmissionReviewControllerTest.xml",
+          "sha256": "e008a24ffce54c2376b49dcd83e6aa6fc66b1be6a5c2d43ec2109b4c137489ad"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.api.SubmissionSecurityTest.xml",
+          "sha256": "4a336a4cea863c6f28695b794009c6c3ed97f59f1baa995dfb932f8164b4fecd"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.api.TaskDtosTest.xml",
+          "sha256": "5092057a354e0129205c280b569db04a47eba044b258e42ee4064ffa2944c9f7"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.api.Week3HttpControllerTest.xml",
+          "sha256": "bfe9a5b934bde0ed5e2be328b4796e94151ab8ea747a746ea036b2c446f9b73b"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.api.WorkspaceErrorMappingTest.xml",
+          "sha256": "5238a4f4d943cb1aa31f2a60d34417c087e86b340b354e9b7581e07044c396a6"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.application.SubmissionServiceTest.xml",
+          "sha256": "db962b36124d6504968c3bc4dcaa5989f67e64fe21442091991d88d9d664aac2"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.application.TaskCommentServiceTest.xml",
+          "sha256": "e1f81d6d888b617804380875eecde9b9a1ad76c6138feada4951ed78a14d3cb6"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.application.WeeklyReportServiceTest.xml",
+          "sha256": "4ea86fe60422c178203eb625ef4d999b2f08eb3543a666d1a4caa76fcab74e87"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.application.WorkspaceConcurrencyTest.xml",
+          "sha256": "c8533cecf629482a547f738a440368b2849794fdfa6fc813887dfcf4ef21f39a"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.application.WorkspaceServiceTest.xml",
+          "sha256": "23d744ee751b260cef863c30404914c2fd9601b495b11071de6ec82500219456"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.contract.WorkspaceFrontendContractTest.xml",
+          "sha256": "a55ae3ae53c6b100068a557da9bf01a3c703931bc80dc0ba2cff30290c7e52bb"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.domain.CohortGroupPolicyTest.xml",
+          "sha256": "3a40e2c2d63f5cf32491c73a5fce467fcd04580c2b0b4cc4bf8e417081596ab5"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.domain.EvaluationPolicyTest.xml",
+          "sha256": "c7af6f3f596125cc83e2fee86bec982d9d9ef7df157eae633ea2aed525caeee2"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.domain.InternshipActivityPolicyTest.xml",
+          "sha256": "59236ffd9f636cdf1bd19a77f4e1f61b5deba81ef3be2b46f8af6a4969b22a49"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.domain.PlacementEventEnvelopePolicyTest.xml",
+          "sha256": "3eff08c826c5832e20b7d9c727752a2891f1475729f83810ab676c54eeedcc0b"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.domain.SubmissionPolicyTest.xml",
+          "sha256": "94ad479927d689dc234e6c192770bf75a9e68dbe33f632970c255505049e8fff"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.domain.TaskCommentTest.xml",
+          "sha256": "ffc5b207381bb4a9c9de8294a7aa3e8e07708489d12eb3515b7f69cca0c4c928"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.domain.WeeklyReportPolicyTest.xml",
+          "sha256": "004bc57a36c81eca6a9011cb3a969a84ee70e2d3aa3ac89c1e7f9e0d9fef5523"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.domain.WeeklyReportRestoreTest.xml",
+          "sha256": "276210a2ea4992c1f82839a5aa7ef61602376e1f39c296ef6917f320f6615c53"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.domain.WeeklyReportTest.xml",
+          "sha256": "f410d38a59489f80eaa8c795626fcbb34f45b88a14863281e8abdb264ba6f42c"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.domain.WorkspaceDomainTest.xml",
+          "sha256": "4dc1108f7b925224092f5c7791b60c774fd14da4926f4880c1c4e49a7e95d7a4"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.infrastructure.CoreWorkspaceAccessTest.xml",
+          "sha256": "2a9a44503ed10492c27c0cbe4355d384b4c7bc2b555c99395f776f1abcc6e33e"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.infrastructure.Dev06HttpWorkflowTest.xml",
+          "sha256": "2194dc178465977cb6a748e4228829ede4a8e255d8688c00ebd3fb6c454357c8"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.infrastructure.Dev06WorkflowScenarioTest.xml",
+          "sha256": "605057fa323842b15ea091f553171f8f044fbc9fc36290d904d8b613f4d88a9e"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.infrastructure.JdbcTaskCommentSessionTest.xml",
+          "sha256": "cf007becb796f27e1ffe5fb7e40c9fcb078607e6a2ab264c54459d5f377097aa"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.infrastructure.JdbcWeeklyReportSessionTest.xml",
+          "sha256": "fb0b495950e46a331198ccafae964caa2888d55861433e6e6d0c28c35ca00668"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.infrastructure.SubmissionRuntimeTest.xml",
+          "sha256": "af32135444aec89c57cd73111ac6891b440491d6fe454637a133be03fe8678a0"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.infrastructure.TaskCommentAdaptersTest.xml",
+          "sha256": "e9911c9748a740fb37295e032bdbd93fd5bbcb3a11c309668e4744dfebd736fb"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.infrastructure.TaskCommentCaseGuardTest.xml",
+          "sha256": "a0a092ade5e9204b79f9a7cc87cd73f57031e54af792062c87425c00600a88f1"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.infrastructure.TaskCommentCommandsTest.xml",
+          "sha256": "f89f934ef57e8bc9bc903a1d17e1cec18c74bd600f519c2471d5191671c74800"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.infrastructure.TransactionalWorkspaceUnitOfWorkTest.xml",
+          "sha256": "e122f1b81f6358fd189c3b2ca2f56d682bf1aecd589d5398b3e4839041d63751"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.infrastructure.WeeklyReportAdaptersTest.xml",
+          "sha256": "d457439f3a043dfaa63fb178203ac129ef71d2c240ca52132697522df42af573"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.infrastructure.WeeklyReportAuditAdapterTest.xml",
+          "sha256": "ee5549a0969c1818d451f70e12f8e05c2661afad2985c94bba0dd40f50af590d"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.infrastructure.WeeklyReportCommandsTest.xml",
+          "sha256": "b65388d9f428fcdde161679016716d0585d0a0b285582f7723a8cee030a9aedb"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.infrastructure.WeeklyReportFileAdapterTest.xml",
+          "sha256": "22a3d2a651ea0c6e3918bb2196a2a4f17233ae50389b9580de9c5b7b6f4a7651"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.infrastructure.WeeklyReportUnitOfWorkTest.xml",
+          "sha256": "c281dd98276bca5e394107288105fac439006e56d51f61ea9d321032ab4df114"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.internship.integration.PlacementLifecycleContractTest.xml",
+          "sha256": "ba40f17d3b761ce04a739463895ff838729e7510b4e7ba8ae1e9c91562410fef"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.matching.ProtectedAggregatePolicyTest.xml",
+          "sha256": "ce8d3820bc8b0049d182330bb6b475f999cef763ea1df90c26c330e99ccb26d3"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.matching.StrictClassifierTest.xml",
+          "sha256": "2c12b35f5c58b541dfc069e1b15aebb31dbcf4d8bc751c57ecc795f30326fe86"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.student.application.ProfileDecimalTest.xml",
+          "sha256": "41de19bf5495e09d192ac1622049fe4354f0ef2902495ea8f68890489211fbca"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.student.application.ProfileReferenceConfigurationTest.xml",
+          "sha256": "fba55cc7fefc797919aa3e741be01b2452df201cacd77bd694b8092a6958679d"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.taxonomy.application.SkillTaxonomyServiceTest.xml",
+          "sha256": "b5d1f890599ac5c211a73552b87e154bce13d23dddcaaa5a3089e8cf91c9338e"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.modules.taxonomy.domain.SkillNameNormalizerTest.xml",
+          "sha256": "7e2425d16330d739e7be3a283b23f586581f77eee3bfa4eaf7b946cea0cd30bd"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.operations.OperationLedgerTest.xml",
+          "sha256": "97df090f775749dc18656b1ed303e00be88f99d6161cd0cedc479716df5cbd56"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.security.AccountStatusPolicyTest.xml",
+          "sha256": "257afb1bbd5778916500d455f569300e0b46daf59d37566ad0a00af47bd941ad"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.security.AppPrincipalSerializationTest.xml",
+          "sha256": "4bb68364fcc6b3d42d7e0e369a16aef46732158b267cf261d991cedf55af252e"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.security.AuthorizationPolicyTest.xml",
+          "sha256": "6651ccb2a6885b76b8c77219cf6b7dc8d70a78b4fe458292234f4b9b425491c4"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.security.DemandSecurityErrorsTest.xml",
+          "sha256": "e0db7b44dd5674b2d3405e301fe0cf35354a375ec7f5f59d6d94cad163e1cc2a"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.security.TokenCodecTest.xml",
+          "sha256": "cdabca658ffa7951db95f0643c2c1c0b1026f1a8df0ed3cdba44e419b25effaa"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.student.eligibility.StudentTermEligibilityTest.xml",
+          "sha256": "2b451153085b6a27a94c1b49e6954b4e3dfbe50e1cfe83f48b109a46e6b22131"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.student.roster.StudentRosterTest.xml",
+          "sha256": "750566bea3c0452960b9d014cac090d23ea03a4c75a3e1927f407bafee1b62fc"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.student.StudentEligibilityQueryServiceTest.xml",
+          "sha256": "e52001217afbf49ea0c603b80ed6ec1d1cd75491d53abbe88f8f8d011f5499cb"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.student.StudentRosterQueryServiceTest.xml",
+          "sha256": "f81eda438d80bdb7633739831ffe9e55fbc0cbd556f7a99a5a97a8a1da96cdfc"
+        },
+        {
+          "path": "target/surefire-reports/TEST-vn.utbridora.auth.student.StudentSchoolAccessGuardTest.xml",
+          "sha256": "e8b326601a1cf38210d59e7c08f93a1b1b833249a4b4c3c5ab80ef393b6eae22"
+        }
+      ],
+      "artifact": "T3_12_JAVA_UNIT_RESULTS.xml"
+    },
+    "javaIntegration": {
+      "counts": {
+        "tests": 56,
+        "passed": 56,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "rawReports": [
+        {
+          "path": "target/failsafe-reports/TEST-vn.utbridora.auth.modules.internship.api.T312EvaluationBrowserIT.xml",
+          "sha256": "11c3451f96e90c8462b85de17737632363f50b73a1a2aa63ece6ac11239801be"
+        },
+        {
+          "path": "target/failsafe-reports/TEST-vn.utbridora.auth.T309WorkflowBrowserIT.xml",
+          "sha256": "01d3b2ea0368c10711b03e98be07fa52f5f5f4aa599fefa8148c6fd309804c90"
+        },
+        {
+          "path": "target/failsafe-reports/TEST-vn.utbridora.auth.T310EvaluationRuntimeIT.xml",
+          "sha256": "f46e075a8607c47a9e9f8f87d4610e1b3d345ec6f2cdbc4f8768fd45a44df9f7"
+        },
+        {
+          "path": "target/failsafe-reports/TEST-vn.utbridora.auth.T310SchemaUpgradeIT.xml",
+          "sha256": "62648e7c4dee28f6f1c2eb3c04c8ab7e70ff4fd1e7b20ce037c285cf4c467b54"
+        },
+        {
+          "path": "target/failsafe-reports/TEST-vn.utbridora.auth.T311GradeRuntimeIT.xml",
+          "sha256": "aabc9baecb2850623aa5fc6d91fca85f1e2cd92adb63f3d68745acc68d62b8c4"
+        },
+        {
+          "path": "target/failsafe-reports/TEST-vn.utbridora.auth.T311SchemaUpgradeIT.xml",
+          "sha256": "f0eb09ccbe9f35729d786f383bf387192016fc96b4c34b9beffd29960e1e3137"
+        },
+        {
+          "path": "target/failsafe-reports/TEST-vn.utbridora.auth.Week4ConvergenceIT.xml",
+          "sha256": "12e2891c979d964f11558aef4fb41f453447fb61405ac38e200bd2ce29547ffe"
+        },
+        {
+          "path": "target/failsafe-reports/TEST-vn.utbridora.auth.Week4MigrationCollisionIT.xml",
+          "sha256": "e1500e4bda12c333cec365a37e8828bf8026a08fd887e1f314b39792f9df130c"
+        },
+        {
+          "path": "target/failsafe-reports/TEST-vn.utbridora.auth.Week4SchemaReferenceIT.xml",
+          "sha256": "c853d5a94e5ef8aaa552ed4570d43dc9268b2e6830bbae67955decf83363b6ca"
+        }
+      ],
+      "artifact": "T3_12_INTEGRATION_RESULTS.xml"
+    },
+    "frontend": {
+      "counts": {
+        "tests": 89,
+        "passed": 89,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "rawReports": [
+        {
+          "path": "target/t3-12-frontend.xml",
+          "sha256": "377369b8fe5975233dde3d4f4a2009429fc4c091ce5957c323031992dc20b6e2"
+        },
+        {
+          "path": "target/t3-12-frontend-unit.xml",
+          "sha256": "8cbaa99b7320a381648012533e6d643366b8ad6ac40dcc86dc561f47067e4e5f"
+        }
+      ],
+      "artifact": "T3_12_FRONTEND_RESULTS.xml"
+    },
+    "runtimeBrowser": {
+      "counts": {
+        "tests": 7,
+        "passed": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "rawReports": [
+        {
+          "path": "target/t3-12-runtime-browser.xml",
+          "sha256": "a6f5cc7fa8c28e381bf3cec463b2669a0e6e117463e161771311136ee888c45c"
+        },
+        {
+          "path": "target/t3-09-runtime-browser.xml",
+          "sha256": "07d42f282c611e6621fef4b178331a70f8357f583b290811701a2e4a007ebb86"
+        }
+      ],
+      "artifact": "T3_12_RUNTIME_BROWSER_RESULTS.xml"
+    }
+  },
+  "contract": {
+    "passed": 868,
+    "failed": 0
+  },
+  "additionalStaticChecks": {
+    "auditRegistryTests": 3,
+    "bundlePortabilityTests": 1,
+    "t4FixtureExpectations": 11
+  },
+  "build": {
+    "frontendTypecheckAndVite": "PASS",
+    "javaCompileAndPackaging": "PASS",
+    "combinedVerify20261114": "55 integration PASS, 1 browser harness FAIL due to test selector; Java unit 1333 PASS + 1 skipped",
+    "targetedRerun20261115": "T312EvaluationBrowserIT PASS including all 3 browser scenarios; no skipped scenarios"
+  },
+  "sourceHashesLF": {
+    "web-demo/src/App.tsx": "b6cdf1163951f18fcac03554a156b1ad6702fd072203c02d10fecca3992c9cce",
+    "web-demo/src/modules/internship/evaluation.ts": "05d3a383048d92f67e2b38994a1eeddcaf842979386955f5cbdb0ed2864d413d",
+    "web-demo/src/modules/internship/pages/EvaluationsPage.tsx": "cae70f308efd942271f8b6986821c92e539793a6a7d3a4582e8a4811bfd7f1d3",
+    "web-demo/src/modules/internship/pages/EvaluationPanels.tsx": "5b7084ce2b92aaacb8b9f3cb40dda79dc164ce4b7f006914e0fddedd0656d72d",
+    "web-demo/src/modules/internship/pages/ReportEvidence.tsx": "8c934f7d1cedb17b79518c3ffeab893b569f09dac86f7688ffcdb8379a524932",
+    "web-demo/src/modules/internship/useWorkflowCommand.tsx": "3ad67ba501df5d88f69d48dfa5b018bc04a6174efd5257c8a28061dc5235b3c6",
+    "web-demo/src/modules/internship/styles.css": "c3dcff845cbdfb032bf1ed070a6b73dfc06277903c123d7b44587e0d0ae8ec12",
+    "web-demo/tests/unit/internship-evaluation.spec.ts": "a0983ddadf8fb619a0ed0c2a6039658e613547939140eec7648b3a4cdf1c5134",
+    "web-demo/tests/internship-week4.ui.spec.ts": "469d1a49e09025392e753d03306fec0224db04b171ec1b076d6bedc6746c01dc",
+    "web-demo/tests/internship-week4-runtime.spec.ts": "6d7150dd61830cc3c17127635b83ec91b972ded07b696c92b98ae91fa0b3ab52",
+    "web-demo/tests/fixtures/internship-week4.html": "363d6f02b84546adec88dd87e321693e5a119099cbbde4bec32ec98ebdaa9a1a",
+    "web-demo/tests/fixtures/internship-week4-harness.tsx": "2099ade2c517ab253327b3f2c3571140af719fe8b9336203066df83c0401ef5f",
+    "src/test/java/vn/utbridora/auth/modules/internship/api/T312EvaluationBrowserIT.java": "81ec22a818195edc02c0d003bfdbc8f3087ad158ce533e050b04907d757757b7"
+  },
+  "localRawLogs": {
+    "target/t3-12-verify.log": "3c5a309499e2a0e4649b912cffbfd17075acd06a64f18f7940c9142f96b2d8ac",
+    "target/t3-12-runtime-final.log": "9d3113161c425d506f34ed90a6a266fc2dfe2a9fc679f07f3ee86812248d37d7",
+    "target/t3-12-frontend-final.log": "c51fc8fbf1eb8f5fc88f22e44596d046300ac6e719102f58a03033659167268c",
+    "target/t3-12-unit-final.log": "76a3b8ce12a0beb1d379d7f17c6ca68f76b2cc42cf5e5e90be45627dd842031c",
+    "target/t3-12-build-final.log": "75e403f816b0ae9a93cbe89c5e0e0de413d842349ec102ccc12ca94d2ef5adc8"
+  },
+  "limitations": [
+    "DEV results, not QA/CI approval",
+    "Private MySQL 8.4 and synthetic ACTIVE Placement/Case prerequisites",
+    "Scanner worker unavailable: actual uploads PENDING; no fake CLEAN",
+    "Shared database at 8088 unchanged",
+    "Java unit skip is OS symlink privilege, not a T3 feature skip",
+    "Integration results combine unchanged backend tests on 2026-11-14 with corrected browser-selector rerun on 2026-11-15"
+  ],
+  "sanitization": "JUnit properties/system-out/system-err/stack traces omitted; original result attributes and testcase names retained"
+}

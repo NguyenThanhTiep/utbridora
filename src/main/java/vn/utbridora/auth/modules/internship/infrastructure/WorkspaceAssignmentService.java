@@ -42,7 +42,7 @@ public class WorkspaceAssignmentService implements MentorScopePort {
     @Transactional public Assignment grantHr(Authentication auth,String key,GrantHrAssignment request) {
         uuid(request.userId());period(request.validFrom(),request.validUntil());text(request.decisionRef(),120);
         var p=authority.selected(auth);var s=request.scope();
-        if(s==null || !p.kind().equals("COORDINATOR") || !same(p.scope(),s) || s.groupId()!=null || s.caseId()!=null || request.validFrom().isBefore(p.validFrom()) || request.validUntil().isAfter(p.validUntil()) || !core.holdOrganization(auth,p.scope().enterpriseOrgId(),Role.ENTERPRISE,"t3:hr:manage")) throw failure(403,"ACCESS_DENIED");
+        if(s==null || !p.kind().equals("COORDINATOR") || !same(p.scope(),s) || (s.groupId()!=null || s.caseId()!=null) && !authority.validGradeScope(s) || request.validFrom().isBefore(p.validFrom()) || request.validUntil().isAfter(p.validUntil()) || !core.holdOrganization(auth,p.scope().enterpriseOrgId(),Role.ENTERPRISE,"t3:hr:manage")) throw failure(403,"ACCESS_DENIED");
         return ledger.execute(new OperationLedger.Command(actor(auth),s.enterpriseOrgId(),"T3_HR_GRANT",key,request,201),Assignment.class,()->insert(auth,request.userId(),"HR",s,p.id(),null,request.validFrom(),request.validUntil(),request.decisionRef(),null),Assignment::id);
     }
     @Override @Transactional(propagation=Propagation.MANDATORY) public InviteScope validateInvite(Authentication auth,String enterprise,String term,List<String> groups) {

@@ -1,0 +1,77 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites tests="56" failures="0" errors="0" skipped="0">
+  <testsuite name="vn.utbridora.auth.modules.internship.api.T312EvaluationBrowserIT" tests="1" failures="0" errors="0" skipped="0" time="73.97">
+    <testcase name="fourRolesUseRealEvaluationPublicationAndResultApis" classname="vn.utbridora.auth.modules.internship.api.T312EvaluationBrowserIT" time="32.806" />
+  </testsuite>
+  <testsuite name="vn.utbridora.auth.T309WorkflowBrowserIT" tests="1" failures="0" errors="0" skipped="0" time="67.76">
+    <testcase name="browserUsesRealSubmissionCommentReportAndFileApis" classname="vn.utbridora.auth.T309WorkflowBrowserIT" time="35.191" />
+  </testsuite>
+  <testsuite name="vn.utbridora.auth.T310EvaluationRuntimeIT" tests="15" failures="0" errors="0" skipped="0" time="53.84">
+    <testcase name="revocationDeniesCachedReplayAndReads" classname="vn.utbridora.auth.T310EvaluationRuntimeIT" time="2.123" />
+    <testcase name="publishedSnapshotAndPointerCannotBeOverwrittenByMentor" classname="vn.utbridora.auth.T310EvaluationRuntimeIT" time="1.247" />
+    <testcase name="auditFailureRollsBackSnapshotsRootPointerAndLedger(String)[1]" classname="vn.utbridora.auth.T310EvaluationRuntimeIT" time="1.211" />
+    <testcase name="auditFailureRollsBackSnapshotsRootPointerAndLedger(String)[2]" classname="vn.utbridora.auth.T310EvaluationRuntimeIT" time="1.357" />
+    <testcase name="movingCaseRevokesOldMentorAndAllowsCurrentGroupMentor" classname="vn.utbridora.auth.T310EvaluationRuntimeIT" time="1.951" />
+    <testcase name="concurrentSameKeyAndChangedPayloadUseExistingLedger" classname="vn.utbridora.auth.T310EvaluationRuntimeIT" time="1.521" />
+    <testcase name="malformedInputsRubricMismatchAndDuplicateRootsFailWithoutEffects" classname="vn.utbridora.auth.T310EvaluationRuntimeIT" time="1.32" />
+    <testcase name="evidenceCannotBeBorrowedFromAnotherAuthorizedEvaluation" classname="vn.utbridora.auth.T310EvaluationRuntimeIT" time="1.228" />
+    <testcase name="currentMentorOnlyNoDraftLeakToStudentHrOrWrongGroup" classname="vn.utbridora.auth.T310EvaluationRuntimeIT" time="3.025" />
+    <testcase name="concurrentUpdateSubmitHaveOneWinnerAndRetryKeepsOneEffect" classname="vn.utbridora.auth.T310EvaluationRuntimeIT" time="1.245" />
+    <testcase name="newerTemplateVersionCannotChangeExistingEvaluationSnapshot" classname="vn.utbridora.auth.T310EvaluationRuntimeIT" time="1.032" />
+    <testcase name="templateCreateEditSubmitAndReloadKeepEverySnapshot" classname="vn.utbridora.auth.T310EvaluationRuntimeIT" time="2.23" />
+    <testcase name="evidenceUploadBindingAndCleanGuardUseRealT1Service" classname="vn.utbridora.auth.T310EvaluationRuntimeIT" time="2.058" />
+    <testcase name="sourceCancellationAndFutureEffectiveTimeBlockMutationsButPreserveHistory" classname="vn.utbridora.auth.T310EvaluationRuntimeIT" time="0.91" />
+    <testcase name="readsUseStrictQueriesAndMutationRequiresOperationKey" classname="vn.utbridora.auth.T310EvaluationRuntimeIT" time="0.903" />
+  </testsuite>
+  <testsuite name="vn.utbridora.auth.T310SchemaUpgradeIT" tests="1" failures="0" errors="0" skipped="0" time="22.744">
+    <testcase name="forwardUpgradePreservesCasesAndEvaluationPointersCannotCrossRoots" classname="vn.utbridora.auth.T310SchemaUpgradeIT" time="22.717" />
+  </testsuite>
+  <testsuite name="vn.utbridora.auth.T311GradeRuntimeIT" tests="20" failures="0" errors="0" skipped="0" time="75.091">
+    <testcase name="policyConcurrentCompareAndSetAndAuditRollback" classname="vn.utbridora.auth.T311GradeRuntimeIT" time="2.16" />
+    <testcase name="studentEvidenceRequiresAllGatesAndOnlyPublishedReferences" classname="vn.utbridora.auth.T311GradeRuntimeIT" time="3.653" />
+    <testcase name="auditFaultRollsBackSnapshotPointerAndLedger" classname="vn.utbridora.auth.T311GradeRuntimeIT" time="1.444" />
+    <testcase name="concurrentPublishHasOneSnapshotAndAudit" classname="vn.utbridora.auth.T311GradeRuntimeIT" time="1.466" />
+    <testcase name="sourceCancellationBlocksPublishAndSchoolListHasScope" classname="vn.utbridora.auth.T311GradeRuntimeIT" time="1.908" />
+    <testcase name="wrongActorsAndForeignStudentsCannotPublishOrRead" classname="vn.utbridora.auth.T311GradeRuntimeIT" time="4.156" />
+    <testcase name="revokedDelegationBlocksCachedPublicationAndSchoolPolicy" classname="vn.utbridora.auth.T311GradeRuntimeIT" time="1.499" />
+    <testcase name="revisionPreservesPublishedPointerUntilRepublished" classname="vn.utbridora.auth.T311GradeRuntimeIT" time="3.389" />
+    <testcase name="missingPoliciesAreFalseAndCaseOverrideWins" classname="vn.utbridora.auth.T311GradeRuntimeIT" time="2.791" />
+    <testcase name="groupHrCannotChangeOrganizationOrOtherGroupCase" classname="vn.utbridora.auth.T311GradeRuntimeIT" time="1.447" />
+    <testcase name="allEightVisibilityCombinations(boolean, boolean, boolean)[1]" classname="vn.utbridora.auth.T311GradeRuntimeIT" time="2.043" />
+    <testcase name="allEightVisibilityCombinations(boolean, boolean, boolean)[2]" classname="vn.utbridora.auth.T311GradeRuntimeIT" time="1.946" />
+    <testcase name="allEightVisibilityCombinations(boolean, boolean, boolean)[3]" classname="vn.utbridora.auth.T311GradeRuntimeIT" time="1.998" />
+    <testcase name="allEightVisibilityCombinations(boolean, boolean, boolean)[4]" classname="vn.utbridora.auth.T311GradeRuntimeIT" time="1.949" />
+    <testcase name="allEightVisibilityCombinations(boolean, boolean, boolean)[5]" classname="vn.utbridora.auth.T311GradeRuntimeIT" time="2.173" />
+    <testcase name="allEightVisibilityCombinations(boolean, boolean, boolean)[6]" classname="vn.utbridora.auth.T311GradeRuntimeIT" time="2.239" />
+    <testcase name="allEightVisibilityCombinations(boolean, boolean, boolean)[7]" classname="vn.utbridora.auth.T311GradeRuntimeIT" time="2.177" />
+    <testcase name="allEightVisibilityCombinations(boolean, boolean, boolean)[8]" classname="vn.utbridora.auth.T311GradeRuntimeIT" time="2.206" />
+    <testcase name="strictValidationVersionReplayAndCsrf" classname="vn.utbridora.auth.T311GradeRuntimeIT" time="1.822" />
+    <testcase name="revokedHrCannotReadOrReplayPolicy" classname="vn.utbridora.auth.T311GradeRuntimeIT" time="0.74" />
+  </testsuite>
+  <testsuite name="vn.utbridora.auth.T311SchemaUpgradeIT" tests="1" failures="0" errors="0" skipped="0" time="25.083">
+    <testcase name="forwardUpgradePreservesCasesAndEvaluationPointersCannotCrossRoots" classname="vn.utbridora.auth.T311SchemaUpgradeIT" time="25.056" />
+  </testsuite>
+  <testsuite name="vn.utbridora.auth.Week4ConvergenceIT" tests="13" failures="0" errors="0" skipped="0" time="149.638">
+    <testcase name="wrongHistoricalChecksumRemainsRejected" classname="vn.utbridora.auth.Week4ConvergenceIT" time="10.01" />
+    <testcase name="malformedSchemaStopsBeforeConvergenceDdl(String)[1]" classname="vn.utbridora.auth.Week4ConvergenceIT" time="9.981" />
+    <testcase name="malformedSchemaStopsBeforeConvergenceDdl(String)[2]" classname="vn.utbridora.auth.Week4ConvergenceIT" time="9.765" />
+    <testcase name="malformedSchemaStopsBeforeConvergenceDdl(String)[3]" classname="vn.utbridora.auth.Week4ConvergenceIT" time="9.775" />
+    <testcase name="malformedSchemaStopsBeforeConvergenceDdl(String)[4]" classname="vn.utbridora.auth.Week4ConvergenceIT" time="9.936" />
+    <testcase name="malformedSchemaStopsBeforeConvergenceDdl(String)[5]" classname="vn.utbridora.auth.Week4ConvergenceIT" time="9.892" />
+    <testcase name="malformedSchemaStopsBeforeConvergenceDdl(String)[6]" classname="vn.utbridora.auth.Week4ConvergenceIT" time="10.205" />
+    <testcase name="malformedSchemaStopsBeforeConvergenceDdl(String)[7]" classname="vn.utbridora.auth.Week4ConvergenceIT" time="9.86" />
+    <testcase name="upgradesPreserveDataAndHistory(String)[1]" classname="vn.utbridora.auth.Week4ConvergenceIT" time="9.79" />
+    <testcase name="upgradesPreserveDataAndHistory(String)[2]" classname="vn.utbridora.auth.Week4ConvergenceIT" time="11.531" />
+    <testcase name="upgradesPreserveDataAndHistory(String)[3]" classname="vn.utbridora.auth.Week4ConvergenceIT" time="12.068" />
+    <testcase name="upgradesPreserveDataAndHistory(String)[4]" classname="vn.utbridora.auth.Week4ConvergenceIT" time="12.704" />
+    <testcase name="upgradesPreserveDataAndHistory(String)[5]" classname="vn.utbridora.auth.Week4ConvergenceIT" time="11.668" />
+  </testsuite>
+  <testsuite name="vn.utbridora.auth.Week4MigrationCollisionIT" tests="3" failures="0" errors="0" skipped="0" time="32.24">
+    <testcase name="combinedDefaultLocationsRejectDuplicate38BeforeDdl" classname="vn.utbridora.auth.Week4MigrationCollisionIT" time="0.727" />
+    <testcase name="t1HistoryCannotUseT3DefaultEvenThoughBothSay38" classname="vn.utbridora.auth.Week4MigrationCollisionIT" time="9.075" />
+    <testcase name="t3HistoryCannotUseT1LocationsAndRemainsUnchanged" classname="vn.utbridora.auth.Week4MigrationCollisionIT" time="11.093" />
+  </testsuite>
+  <testsuite name="vn.utbridora.auth.Week4SchemaReferenceIT" tests="1" failures="0" errors="0" skipped="0" time="27.4">
+    <testcase name="canonicalSqlMatchesCommittedReference" classname="vn.utbridora.auth.Week4SchemaReferenceIT" time="27.371" />
+  </testsuite>
+</testsuites>

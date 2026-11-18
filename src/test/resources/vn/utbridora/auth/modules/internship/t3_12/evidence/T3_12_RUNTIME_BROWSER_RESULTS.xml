@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites tests="7" failures="0" errors="0" skipped="0">
+  <testsuite name="internship-week4-runtime.spec.ts" tests="3" failures="0" errors="0" skipped="0" time="29.069">
+    <testcase name="T3-12 real four-role rubric submit, triple gate, revision, publication and CASE override" classname="internship-week4-runtime.spec.ts" time="18.753" />
+    <testcase name="T3-12 real evidence PENDING draft cannot submit or leak into published student result" classname="internship-week4-runtime.spec.ts" time="7.233" />
+    <testcase name="T3-12 real outsider denied and logout clears private result" classname="internship-week4-runtime.spec.ts" time="3.083" />
+  </testsuite>
+  <testsuite name="internship-week3-runtime.spec.ts" tests="4" failures="0" errors="0" skipped="0" time="30.233">
+    <testcase name="T3-09 real backend: student URL v1, Mentor revision, URL v2, ACCEPT, comments and reload" classname="internship-week3-runtime.spec.ts" time="13.107" />
+    <testcase name="T3-09 real backend: report review survives reload and historical revision remains immutable" classname="internship-week3-runtime.spec.ts" time="9.626" />
+    <testcase name="T3-09 real backend: multipart attachment stays PENDING, submit is denied and draft survives reload" classname="internship-week3-runtime.spec.ts" time="3.589" />
+    <testcase name="T3-09 real backend: outsider reads denied and HR cannot mutate review UI" classname="internship-week3-runtime.spec.ts" time="3.911" />
+  </testsuite>
+</testsuites>

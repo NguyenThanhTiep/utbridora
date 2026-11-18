@@ -1,5 +1,9 @@
 # DEV06 — Bảng đối chiếu lũy kế và phạm vi T3-08
 
+> 14/11/2026: đã triển khai T3-11 trên feature/t3-week4 từ base DEV05 e480abc.
+> Publish/revision, School/HR policies, Student triple gate và evidence-file guard: xem [bàn giao T3-11](T3_11_IMPLEMENTATION_HANDOFF.md). Kết quả DEV ghi trong evidence; chưa QA/commit/push/merge. Các mục dưới giữ làm lịch sử.
+> Bổ sung V40 hội tụ các lịch sử V38 T1/T3: [kiểm thử và giới hạn](T3_V40_CONVERGENCE_VERIFICATION.md), [cấu hình database](../guides/WEEK4_MIGRATION_RUNTIME.md). Các báo cáo V39 trước đó là bằng chứng lịch sử, không thay kết quả V40.
+
 > Bản triển khai mới nhất 12/11/2026: [T3_08_COMPLETION_EVIDENCE.md](T3_08_COMPLETION_EVIDENCE.md).
 > Đã bổ sung V31, Report/Review DB runtime, file integration và API đọc nhận xét.
 > Các ghi chú chờ migration trong snapshot cũ bên dưới được thay thế bởi bản mới này.
