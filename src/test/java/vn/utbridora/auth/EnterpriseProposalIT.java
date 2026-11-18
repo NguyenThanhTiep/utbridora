@@ -64,6 +64,18 @@ class EnterpriseProposalIT {
     record Session(HttpClient client,String header,String token) {}
     static String id(int n) {return "00000000-0000-4000-8000-"+String.format("%012d",n);}
     static String key() {return UUID.randomUUID().toString();}
+    private String raceDiagnostics(OperationFailure failure) {
+        if(failure.status!=503)return failure.code;
+        try {
+            // This is the test's private disposable MySQL, never the developer DB.
+            var output=MYSQL.execInContainer("mysql","-uroot","-p"+MYSQL.getPassword(),"-e","SHOW ENGINE INNODB STATUS").getStdout();
+            int start=output.indexOf("LATEST DETECTED DEADLOCK"),end=output.indexOf("TRANSACTIONS",Math.max(0,start));
+            if(start<0)return failure.code+" (no InnoDB deadlock report)";
+            String report=output.substring(start,end>start?end:output.length());
+            String diagnostic=report.lines().filter(line->line.contains("***") || line.contains("TRANSACTION") || line.contains("index ") || line.contains("lock_mode") || line.matches("(?i).*(SELECT |UPDATE |INSERT |DELETE ).*")).map(line->line.substring(0,Math.min(line.length(),1000))).limit(70).collect(java.util.stream.Collectors.joining("\n"));
+            System.err.println("PRIVATE_MYSQL_RACE_DIAGNOSTIC\n"+diagnostic);return failure.code+"\n"+diagnostic;
+        } catch(Exception ignored) {return failure.code+" (diagnostic unavailable)";}
+    }
     Authentication as(int n) {var auth=core.currentSubject(id(n)).orElseThrow();SecurityContextHolder.getContext().setAuthentication(auth);return auth;}
     @BeforeAll void setup() throws Exception {
         var admin=core.currentSubject(jdbc.queryForObject("SELECT id FROM users WHERE email='admin@example.test'",String.class)).orElseThrow();
@@ -1459,7 +1471,7 @@ class EnterpriseProposalIT {
         var auth=as(2);var pool=java.util.concurrent.Executors.newFixedThreadPool(20);var gate=new java.util.concurrent.CountDownLatch(1);
         try {
             var futures=new ArrayList<java.util.concurrent.Future<Boolean>>();
-            for(var p:pending) futures.add(pool.submit(()->{gate.await();SecurityContextHolder.getContext().setAuthentication(auth);try {placements.approve(auth,p.placementId(),key(),new PlacementService.PlacementCommand(p.version(),"DEMO-RACE","SCHOOL_APPROVED"));return true;}catch(OperationFailure denied){assertEquals(409,denied.status);assertTrue(Set.of("ACTIVE_PLACEMENT_EXISTS","REQUEST_IN_PROGRESS").contains(denied.code),denied.code);return false;}finally{SecurityContextHolder.clearContext();}}));
+            for(var p:pending) futures.add(pool.submit(()->{gate.await();SecurityContextHolder.getContext().setAuthentication(auth);try {placements.approve(auth,p.placementId(),key(),new PlacementService.PlacementCommand(p.version(),"DEMO-RACE","SCHOOL_APPROVED"));return true;}catch(OperationFailure denied){assertEquals(409,denied.status,raceDiagnostics(denied));assertTrue(Set.of("ACTIVE_PLACEMENT_EXISTS","REQUEST_IN_PROGRESS").contains(denied.code),denied.code);return false;}finally{SecurityContextHolder.clearContext();}}));
             gate.countDown();int winners=0;for(var future:futures) if(future.get(90,java.util.concurrent.TimeUnit.SECONDS)) winners++;assertEquals(1,winners);
             assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM placements WHERE student_user_id=? AND term_id=? AND state IN ('APPROVED','ACTIVE')",Integer.class,id(6),id(21)));
             assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM placement_outbox o JOIN placements p ON p.id=o.placement_id WHERE p.student_user_id=? AND p.term_id=? AND p.state='APPROVED' AND o.event_type='PlacementApproved'",Integer.class,id(6),id(21)));
@@ -1480,7 +1492,7 @@ class EnterpriseProposalIT {
                     gate.await();SecurityContextHolder.getContext().setAuthentication(auth);
                     try {
                         var denied=assertThrows(OperationFailure.class,()->placements.approve(auth,pending.placementId(),key(),new PlacementService.PlacementCommand(pending.version(),"DEMO-FULL-QUOTA","SCHOOL_APPROVED")));
-                        assertEquals(409,denied.status);assertTrue(Set.of("CAPACITY_EXCEEDED","REQUEST_IN_PROGRESS").contains(denied.code),denied.code);
+                        assertEquals(409,denied.status,raceDiagnostics(denied));assertTrue(Set.of("CAPACITY_EXCEEDED","REQUEST_IN_PROGRESS").contains(denied.code),denied.code);
                     }
                     finally {SecurityContextHolder.clearContext();}return null;
                 }));
