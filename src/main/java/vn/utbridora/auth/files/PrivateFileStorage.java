@@ -24,6 +24,7 @@ public class PrivateFileStorage implements FileStorage {
         public long size() {return size;}
         public String sha256() {return hash;}
         public byte[] prefix(int limit) throws IOException {try(var input=Files.newInputStream(path,LinkOption.NOFOLLOW_LINKS)) {return input.readNBytes(limit);}}
+        public InputStream open() throws IOException {return Files.newInputStream(path,LinkOption.NOFOLLOW_LINKS);}
         @Override public void close() {if(!promoted) remove(path);}
     }
     private synchronized Path root() throws IOException {

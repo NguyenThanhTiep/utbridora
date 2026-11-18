@@ -56,6 +56,10 @@ app:
   files:
     # Absolute private directory; missing configuration keeps uploads unavailable.
     storage-root: ${FILE_STORAGE_ROOT:}
+    scan:
+      enabled: ${FILE_SCAN_ENABLED:false}
+      host: ${FILE_SCAN_HOST:}
+      port: ${FILE_SCAN_PORT:3310}
   t3:
     week3:
       http:

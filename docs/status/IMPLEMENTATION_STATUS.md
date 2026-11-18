@@ -1,5 +1,13 @@
 # Trạng thái triển khai Core Platform
 
+## T1-07 tuần 4 — 14/11/2026
+
+Đã bổ sung source scanner ClamD thật, retry/lease fencing/audit atomic, validators
+ZIP/XLSX/CSV và regression quyền tải sau CLEAN/revoke; V38 áp dụng mọi lineage.
+Runtime worker opt-in, không deploy môi trường 8088. CI/test mới phải xem đúng SHA
+nhánh T1-07; chưa thay QA01/Lead nghiệm thu. Xem [hướng dẫn T1-07](../guides/T1_07_FILE_SCANNING.md).
+Các ghi nhận scanner chưa có bên dưới là checkpoint lịch sử trước T1-07.
+
 ## Tích hợp tuần 3 — 13/11/2026
 
 Bản tích hợp T1-06 và DEV T2/T3/T4/T5 giữ lịch sử nhánh nguồn, bổ sung các điểm nối thật Opportunity/Preference, shared file và Placement/Case, sửa privacy/scope/replay và hội tụ Flyway theo từng lịch sử DB. Xem [ma trận task và giới hạn](../testing/WEEK3_INTEGRATION_ACCEPTANCE.md), [evidence đúng source](../testing/evidence/WEEK3_INTEGRATION_VERIFICATION.json), [runtime/nâng cấp DB](../guides/WEEK3_INTEGRATION_RUNTIME.md) và [bàn giao tuần 4](../README.md#bàn-giao-tuần-3--tuần-4). Các ghi nhận bên dưới là checkpoint lịch sử. Plan, QA/Lead và nghiệm thu SRS không được tự đánh dấu hoàn thành; không deploy stack 8088 và scanner T1-07 vẫn chưa có.

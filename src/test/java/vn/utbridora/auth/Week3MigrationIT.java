@@ -32,7 +32,7 @@ class Week3MigrationIT {
                 var after = history(url, mysql);
                 before.forEach((key, value) -> assertEquals(value, after.get(key), "Changed installed history " + lineage + target + ":" + key));
                 if (immutable != null) assertEquals(immutable, criteria(url, mysql), "Changed immutable criteria " + lineage + target);
-                assertEquals("37", flyway.info().current().getVersion().getVersion());
+                assertEquals("38", flyway.info().current().getVersion().getVersion());
                 var dataSource = new org.springframework.jdbc.datasource.DriverManagerDataSource(url, mysql.getUsername(), mysql.getPassword());
                 var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
                 var submission = new vn.utbridora.auth.modules.internship.infrastructure.JdbcSubmissionSession(jdbc,
