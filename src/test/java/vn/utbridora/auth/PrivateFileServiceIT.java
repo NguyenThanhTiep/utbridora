@@ -418,6 +418,54 @@ class PrivateFileServiceIT {
         }
     }
 
+    @Test void qa01T106ValidPngAndJpegUploadReturnPendingMetadata() throws Exception {
+        // QA01 T1-06-TC08: real ImageIO-encoded PNG/JPEG (not merely renamed PDF bytes).
+        // CLEAN is not asserted: uploaded files must remain PENDING without an AV scanner.
+        var student = login("student");
+        int beforeFiles = jdbc.queryForObject("SELECT COUNT(*) FROM files", Integer.class);
+        int beforeBindings = jdbc.queryForObject("SELECT COUNT(*) FROM file_bindings", Integer.class);
+        var image = new java.awt.image.BufferedImage(2, 2, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        image.setRGB(0, 0, 0x00FF0000);
+        image.setRGB(1, 0, 0x0000FF00);
+        image.setRGB(0, 1, 0x000000FF);
+        image.setRGB(1, 1, 0x00FFFFFF);
+
+        for (String format : List.of("png", "jpeg")) {
+            var encoded = new ByteArrayOutputStream();
+            assertTrue(javax.imageio.ImageIO.write(image, format, encoded),
+                "ImageIO encoder is unavailable for " + format);
+            byte[] payload = encoded.toByteArray();
+            String type = format.equals("png") ? "image/png" : "image/jpeg";
+            String filename = format.equals("png") ? "proof.png" : "proof.jpg";
+
+            var created = post(student, key(), "STUDENT_PROFILE", id(6), "EVIDENCE",
+                filename, type, payload, true, "");
+            assertEquals(202, created.statusCode(), format + ": " + body(created));
+            var dto = json(created);
+            String fileId = dto.get("fileId").asString();
+            assertEquals(type, dto.get("contentType").asString());
+            assertEquals(filename, dto.get("originalName").asString());
+            assertEquals("PENDING", dto.get("scanStatus").asString());
+            assertEquals("EVIDENCE", dto.get("purpose").asString());
+            assertEquals(payload.length, dto.get("sizeBytes").asInt());
+            assertFalse(body(created).contains("storageKey"));
+            assertFalse(body(created).contains(ROOT.toString()));
+
+            var metadata = get(student, fileId, "metadata", null);
+            assertEquals(200, metadata.statusCode(), format + ": " + body(metadata));
+            assertEquals(type, json(metadata).get("contentType").asString());
+            assertEquals("PENDING", json(metadata).get("scanStatus").asString());
+            privateHeaders(metadata);
+            assertError(get(student, fileId, "content", null), 409, "FILE_NOT_CLEAN");
+            assertEquals(1, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM file_bindings WHERE file_id=?", Integer.class, fileId));
+        }
+        assertEquals(beforeFiles + 2,
+            jdbc.queryForObject("SELECT COUNT(*) FROM files", Integer.class));
+        assertEquals(beforeBindings + 2,
+            jdbc.queryForObject("SELECT COUNT(*) FROM file_bindings", Integer.class));
+    }
+
     @Test void realMultipartOwnerMetadataPendingAndForeignScope() throws Exception {
         Session student=login("student"),other=login("intern"),admin=login("admin"),hr=login("hr");
         String command=key();var created=post(student,command,"STUDENT_PROFILE",id(6),"CV","../../cv.pdf","application/pdf",PDF,true,"");assertEquals(202,created.statusCode(),body(created));
