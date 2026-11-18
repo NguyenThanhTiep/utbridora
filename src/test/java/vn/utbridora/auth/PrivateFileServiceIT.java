@@ -272,6 +272,60 @@ class PrivateFileServiceIT {
         assertEquals(202, allowed.statusCode(), body(allowed));
     }
 
+    @Test void qa01T106MissingRequiredMultipartFieldsDoNotCreatePrivateFile() throws Exception {
+        // QA01 T1-06-TC05: every required multipart field must be present exactly once.
+        // Existing DEV coverage handles unknown/duplicated fields; this fills the missing-field matrix.
+        var student = login("student");
+        long objectsBefore = objects();
+        int filesBefore = jdbc.queryForObject("SELECT COUNT(*) FROM files", Integer.class);
+        int bindingsBefore = jdbc.queryForObject("SELECT COUNT(*) FROM file_bindings", Integer.class);
+        int auditsBefore = jdbc.queryForObject(
+            "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED'", Integer.class);
+
+        for (String omitted : List.of("resourceType", "resourceId", "purpose", "file")) {
+            String requestKey = key();
+            var payload = new ByteArrayOutputStream();
+            if (!"resourceType".equals(omitted)) {
+                payload.write(field("resourceType", "STUDENT_PROFILE").getBytes(StandardCharsets.UTF_8));
+            }
+            if (!"resourceId".equals(omitted)) {
+                payload.write(field("resourceId", id(6)).getBytes(StandardCharsets.UTF_8));
+            }
+            if (!"purpose".equals(omitted)) {
+                payload.write(field("purpose", "CV").getBytes(StandardCharsets.UTF_8));
+            }
+            if (!"file".equals(omitted)) {
+                payload.write(("--" + BOUNDARY + "\r\n" +
+                    "Content-Disposition: form-data; name=\"file\"; filename=\"cv.pdf\"\r\n" +
+                    "Content-Type: application/pdf\r\n\r\n").getBytes(StandardCharsets.UTF_8));
+                payload.write(PDF);
+                payload.write("\r\n".getBytes(StandardCharsets.UTF_8));
+            }
+            payload.write(("--" + BOUNDARY + "--\r\n").getBytes(StandardCharsets.UTF_8));
+
+            var request = HttpRequest.newBuilder(uri("/files"))
+                .timeout(Duration.ofSeconds(30))
+                .header("Content-Type", "multipart/form-data; boundary=" + BOUNDARY)
+                .header("Idempotency-Key", requestKey)
+                .header(student.header(), student.token())
+                .POST(HttpRequest.BodyPublishers.ofByteArray(payload.toByteArray()))
+                .build();
+            var denied = student.client().send(request, HttpResponse.BodyHandlers.ofByteArray());
+            assertError(denied, 400, "SCHEMA_VALIDATION");
+            assertEquals(objectsBefore, objects(), "No bytes after omitting " + omitted);
+            assertEquals(filesBefore, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM files", Integer.class), "No file row after omitting " + omitted);
+            assertEquals(bindingsBefore, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM file_bindings", Integer.class), "No binding after omitting " + omitted);
+            assertEquals(auditsBefore, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED'", Integer.class),
+                "No success audit after omitting " + omitted);
+            assertEquals(0, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM operation_records WHERE idempotency_key=?",
+                Integer.class, requestKey), "No operation record after omitting " + omitted);
+        }
+    }
+
     @Test void realMultipartOwnerMetadataPendingAndForeignScope() throws Exception {
         Session student=login("student"),other=login("intern"),admin=login("admin"),hr=login("hr");
         String command=key();var created=post(student,command,"STUDENT_PROFILE",id(6),"CV","../../cv.pdf","application/pdf",PDF,true,"");assertEquals(202,created.statusCode(),body(created));
