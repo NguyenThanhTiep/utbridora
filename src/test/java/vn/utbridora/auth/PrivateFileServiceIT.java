@@ -466,6 +466,52 @@ class PrivateFileServiceIT {
             jdbc.queryForObject("SELECT COUNT(*) FROM file_bindings", Integer.class));
     }
 
+    @Test void qa01T106OwnerCanReadPendingAndRejectedMetadataWithoutContentAccess() throws Exception {
+        // QA01 T1-06-TC12: REJECTED is a synthetic test state, not an actual AV scan.
+        var student = login("student");
+        var other = login("intern");
+        var response = post(student, key(), "STUDENT_PROFILE", id(6), "CV",
+            "cv.pdf", "application/pdf", PDF, true, "");
+        assertEquals(202, response.statusCode(), body(response));
+        String fileId = json(response).get("fileId").asString();
+        int beforeDownloads = jdbc.queryForObject(
+            "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_DOWNLOADED' AND resource_id=?",
+            Integer.class, fileId);
+
+        var pending = get(student, fileId, "metadata", null);
+        assertEquals(200, pending.statusCode(), body(pending));
+        assertEquals(fileId, json(pending).get("fileId").asString());
+        assertEquals("PENDING", json(pending).get("scanStatus").asString());
+        assertEquals("CV", json(pending).get("purpose").asString());
+        assertEquals("application/pdf", json(pending).get("contentType").asString());
+        assertFalse(body(pending).contains("storageKey"));
+        assertFalse(body(pending).contains(ROOT.toString()));
+        privateHeaders(pending);
+        assertError(get(student, fileId, "content", null), 409, "FILE_NOT_CLEAN");
+        assertError(get(other, fileId, "metadata", null), 404, "RESOURCE_NOT_FOUND");
+
+        int changed = jdbc.update(
+            "UPDATE files SET scan_status='REJECTED' WHERE id=? AND scan_status='PENDING'", fileId);
+        assertEquals(1, changed, "The fixture must transition from PENDING to REJECTED");
+        try {
+            var rejected = get(student, fileId, "metadata", null);
+            assertEquals(200, rejected.statusCode(), body(rejected));
+            assertEquals(fileId, json(rejected).get("fileId").asString());
+            assertEquals("REJECTED", json(rejected).get("scanStatus").asString());
+            assertEquals("CV", json(rejected).get("purpose").asString());
+            assertFalse(body(rejected).contains("storageKey"));
+            assertFalse(body(rejected).contains(ROOT.toString()));
+            privateHeaders(rejected);
+            assertError(get(student, fileId, "content", null), 409, "FILE_NOT_CLEAN");
+            assertError(get(other, fileId, "metadata", null), 404, "RESOURCE_NOT_FOUND");
+            assertEquals(beforeDownloads, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_DOWNLOADED' AND resource_id=?",
+                Integer.class, fileId));
+        } finally {
+            jdbc.update("UPDATE files SET scan_status='PENDING' WHERE id=? AND scan_status='REJECTED'", fileId);
+        }
+    }
+
     @Test void realMultipartOwnerMetadataPendingAndForeignScope() throws Exception {
         Session student=login("student"),other=login("intern"),admin=login("admin"),hr=login("hr");
         String command=key();var created=post(student,command,"STUDENT_PROFILE",id(6),"CV","../../cv.pdf","application/pdf",PDF,true,"");assertEquals(202,created.statusCode(),body(created));
