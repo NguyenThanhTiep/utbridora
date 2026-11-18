@@ -209,6 +209,69 @@ class PrivateFileServiceIT {
             "Unauthenticated POST must not promote a private binary object");
     }
 
+    @Test void qa01T106ActiveOwnerWithoutFileUploadPermissionIsDenied() throws Exception {
+        // TC04: an active student can own the profile but still needs file:upload.
+        var student = login("student");
+        assertEquals(1, jdbc.queryForObject(
+            "SELECT COUNT(*) FROM memberships WHERE user_id=? AND role='STUDENT' AND active=true",
+            Integer.class, id(6)), "Student membership must remain active");
+        assertEquals(1, jdbc.queryForObject(
+            "SELECT COUNT(*) FROM role_permissions WHERE role='STUDENT' AND permission_code='file:upload'",
+            Integer.class), "Fixture must initially grant file:upload");
+        assertEquals(1, jdbc.queryForObject(
+            "SELECT COUNT(*) FROM role_permissions WHERE role='STUDENT' AND permission_code='file:download'",
+            Integer.class), "Fixture must retain file:download");
+
+        String requestKey = key();
+        long objectsBefore = objects();
+        int filesBefore = jdbc.queryForObject("SELECT COUNT(*) FROM files", Integer.class);
+        int bindingsBefore = jdbc.queryForObject("SELECT COUNT(*) FROM file_bindings", Integer.class);
+        int auditBefore = jdbc.queryForObject(
+            "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED'", Integer.class);
+
+        // Modify only the isolated Testcontainers database; restore mapping in finally.
+        int removed = jdbc.update(
+            "DELETE FROM role_permissions WHERE role='STUDENT' AND permission_code='file:upload'");
+        try {
+            assertEquals(1, removed, "Must remove exactly the test fixture permission");
+            assertEquals(0, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM memberships m JOIN role_permissions p ON p.role=m.role " +
+                "WHERE m.user_id=? AND m.active=true AND p.permission_code='file:upload'",
+                Integer.class, id(6)), "No other active membership may grant upload");
+            assertEquals(1, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM memberships WHERE user_id=? AND role='STUDENT' AND active=true",
+                Integer.class, id(6)), "Membership itself must remain active");
+
+            var denied = post(student, requestKey, "STUDENT_PROFILE", id(6), "CV",
+                "cv.pdf", "application/pdf", PDF, true, "");
+            assertError(denied, 403, "ACCESS_DENIED");
+            assertFalse(body(denied).contains(ROOT.toString()), "No storage path leak");
+            assertEquals(objectsBefore, objects(), "Denied upload must not store bytes");
+            assertEquals(filesBefore, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM files", Integer.class), "No file metadata");
+            assertEquals(bindingsBefore, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM file_bindings", Integer.class), "No file binding");
+            assertEquals(auditBefore, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED'", Integer.class),
+                "No successful upload audit");
+            assertEquals(0, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM operation_records WHERE operation_code='FILE_UPLOAD' AND idempotency_key=?",
+                Integer.class, requestKey), "Denied request must not create upload ledger");
+        } finally {
+            if (removed == 1) {
+                jdbc.update("INSERT INTO role_permissions (role,permission_code) VALUES ('STUDENT','file:upload')");
+            }
+        }
+
+        // Positive control: restored permission allows the same owner to upload.
+        assertEquals(1, jdbc.queryForObject(
+            "SELECT COUNT(*) FROM role_permissions WHERE role='STUDENT' AND permission_code='file:upload'",
+            Integer.class));
+        var allowed = post(student, key(), "STUDENT_PROFILE", id(6), "CV",
+            "cv.pdf", "application/pdf", PDF, true, "");
+        assertEquals(202, allowed.statusCode(), body(allowed));
+    }
+
     @Test void realMultipartOwnerMetadataPendingAndForeignScope() throws Exception {
         Session student=login("student"),other=login("intern"),admin=login("admin"),hr=login("hr");
         String command=key();var created=post(student,command,"STUDENT_PROFILE",id(6),"CV","../../cv.pdf","application/pdf",PDF,true,"");assertEquals(202,created.statusCode(),body(created));
