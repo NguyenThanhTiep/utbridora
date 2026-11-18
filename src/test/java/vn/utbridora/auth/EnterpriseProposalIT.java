@@ -940,9 +940,12 @@ class EnterpriseProposalIT {
     @Test void placementProgressSeparatesReservationConsentPendingAndApproval() throws Exception {
         String demand=f.cooperation().demandId();var reserved=progress(demand,"WAITING");
         assertEquals(1,reserved.totals().reservations());assertEquals(0,reserved.totals().pendingCreation());assertEquals(input.quantity(),reserved.totals().target());
+        assertPlacementSummary(demand,input.quantity(),0,0,input.quantity());
         var shared=enterpriseAccepted();var accepted=progress(demand,"WAITING");assertEquals(1,accepted.totals().enterpriseAccepted());assertEquals(1,accepted.totals().pendingCreation());
+        assertPlacementSummary(demand,input.quantity(),0,1,input.quantity());
         consents.revoke(as(6),shared.consent().consentId(),key(),new StudentConsentService.Revoke(shared.consent().lineageVersion(),"STUDENT_REVOKED"));
         assertEquals(0,progress(demand,"WAITING").totals().pendingCreation());
+        assertPlacementSummary(demand,input.quantity(),0,0,input.quantity());
         jdbc.update("UPDATE proposal_items SET reservation_until=DATE_SUB(UTC_TIMESTAMP(6),INTERVAL 1 SECOND) WHERE id=?",f.proposalId());
         var shortResult=progress(demand,"SHORT");assertEquals(0,shortResult.totals().reservations());assertEquals(input.quantity(),shortResult.totals().remaining());
     }
@@ -966,6 +969,21 @@ class EnterpriseProposalIT {
             assertEquals(404,http(session,"GET","/"+side+"/placements/progress?schoolOrgId="+key(),null,org,null,false).statusCode());
         }
         assertEquals(403,http(student,"GET","/enterprise/placements/progress",null,id(12),null,false).statusCode());
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"revoke","expiry","policy","share-expiry","share-revoke","reservation-expiry"})
+    void placementPendingCreationRechecksConsentShareAndExpiryOnEveryRead(String cause) throws Exception {
+        var shared=enterpriseAccepted();String demand=f.cooperation().demandId();
+        assertPlacementSummary(demand,input.quantity(),0,1,input.quantity());
+        try {
+            switch(cause) {
+                case "share-expiry" -> jdbc.update("UPDATE profile_shares SET data_json=JSON_SET(data_json,'$.expiresAt',?) WHERE id=?",Instant.now().minusSeconds(1).toString(),shared.share().shareId());
+                case "share-revoke" -> jdbc.update("UPDATE profile_shares SET data_json=JSON_SET(data_json,'$.revokedAt',?) WHERE id=?",Instant.now().toString(),shared.share().shareId());
+                case "reservation-expiry" -> jdbc.update("UPDATE proposal_items SET reservation_until=DATE_SUB(UTC_TIMESTAMP(6),INTERVAL 1 SECOND) WHERE id=?",f.proposalId());
+                default -> t211LoseAccess(cause,shared);
+            }
+            assertPlacementSummary(demand,input.quantity(),0,0,input.quantity());
+        } finally {t211RestoreAccessFixture(cause);}
     }
 
     @Test void placementProgressCountsFullDistinctPlacementsWithoutReadingStudentProfiles() throws Exception {
@@ -1006,9 +1024,10 @@ class EnterpriseProposalIT {
 
     @Test void placementReadFiltersAndSummaryFollowApprovalAndCancellation() throws Exception {
         String demand=f.cooperation().demandId(),coop=f.cooperation().cooperationId();int target=input.quantity();
-        assertPlacementSummary(demand,target,0,1,target);
-        enterpriseAccepted();var p=pending(Instant.now().plusSeconds(3600));
-        assertPlacementSummary(demand,target,0,1,target);
+        assertPlacementSummary(demand,target,0,0,target);
+        enterpriseAccepted();assertPlacementSummary(demand,target,0,1,target);
+        var p=pending(Instant.now().plusSeconds(3600));
+        assertPlacementSummary(demand,target,0,0,target);
         for(String side:List.of("school","enterprise")) {
             var session=side.equals("school")?school:hr;String org=side.equals("school")?id(11):id(12);
             for(String base:List.of("/"+side+"/placements","/"+side+"/"+org+"/placements")) {
@@ -1041,17 +1060,17 @@ class EnterpriseProposalIT {
             jdbc.update("UPDATE proposal_items SET placement_id=? WHERE id=?",p.placementId(),f.proposalId());
         }
         var draft=demands.create(as(4),id(12),key(),input);
-        assertPlacementSummary(draft.demandId(),input.quantity(),0,0,input.quantity());
+        assertPlacementSummary(draft.demandId(),0,0,0,0);
     }
 
-    @Test void placementSummaryIgnoresExpiredReservationsButKeepsPendingPlacements() throws Exception {
+    @Test void placementSummaryExcludesExpiredCandidatesAndExistingPendingPlacements() throws Exception {
         var reservation=jdbc.queryForObject("SELECT reservation_until FROM proposal_items WHERE id=?",java.time.LocalDateTime.class,f.proposalId());
         jdbc.update("UPDATE proposal_items SET reservation_until=DATE_SUB(UTC_TIMESTAMP(6),INTERVAL 1 SECOND) WHERE id=?",f.proposalId());
         assertPlacementSummary(f.cooperation().demandId(),input.quantity(),0,0,input.quantity());
         jdbc.update("UPDATE proposal_items SET reservation_until=? WHERE id=?",reservation,f.proposalId());
         enterpriseAccepted();var p=pending(Instant.now().plusSeconds(3600));
         jdbc.update("UPDATE proposal_items SET reservation_until=DATE_SUB(UTC_TIMESTAMP(6),INTERVAL 1 SECOND) WHERE id=?",f.proposalId());
-        assertPlacementSummary(p.demandId(),input.quantity(),0,1,input.quantity());
+        assertPlacementSummary(p.demandId(),input.quantity(),0,0,input.quantity());
     }
 
     @Test void placementReadReferencesRejectForeignMissingDeletedAndMalformedFilters() throws Exception {
@@ -1101,7 +1120,7 @@ class EnterpriseProposalIT {
                 jdbc.update("DELETE FROM school_delegation_permissions WHERE assignment_id=? AND permission_code IN ('placement:school:write','t3:workspace:read')",grant);
                 jdbc.update("INSERT INTO school_delegation_permissions VALUES(?,'t3:workspace:read')",grant);
             }
-            assertPlacementSummary(p.demandId(),input.quantity(),0,1,input.quantity());
+            assertPlacementSummary(p.demandId(),input.quantity(),0,0,input.quantity());
             assertEquals(1,placements.listForSchool(as(2),id(11),null,p.demandId(),null,null,0,25).totalElements());
             assertEquals(1,placements.listForSchool(as(2),id(11),null,null,p.cooperationId(),null,0,25).totalElements());
             assertEquals(200,http(school,"GET","/school/placements/progress?demandId="+p.demandId(),null,id(11),null,false).statusCode());

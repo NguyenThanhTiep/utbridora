@@ -37,9 +37,9 @@ public class GradeController {
     public StudentResultDto result(Authentication auth,@RequestParam MultiValueMap<String,String> query){var q=query(query,Set.of("caseId"));return grades.result(auth,identifier(q.get("caseId")));}
     @GetMapping("/school/evaluations")
     public Page<EvaluationDto> list(Authentication auth,@RequestParam MultiValueMap<String,String> query){
-        var q=query(query,Set.of("termId","cohortId","state","page","size"));EvaluationState state=null;
+        var q=query(query,Set.of("termId","cohortId","caseId","placementId","state","page","size"));EvaluationState state=null;
         try{if(q.containsKey("state"))state=EvaluationState.valueOf(q.get("state"));}catch(IllegalArgumentException e){throw failure(400,"SCHEMA_VALIDATION");}
-        return grades.schoolList(auth,identifier(q.get("termId")),optional(q,"cohortId"),state,integer(q,"page",0),integer(q,"size",25));
+        return grades.schoolList(auth,identifier(q.get("termId")),optional(q,"cohortId"),state,optional(q,"caseId"),optional(q,"placementId"),integer(q,"page",0),integer(q,"size",25));
     }
     private static UUID optional(Map<String,String> q,String key){return q.containsKey(key)?identifier(q.get(key)):null;}
     private static Map<String,String> query(MultiValueMap<String,String> q,Set<String> allowed){var map=unique(q);if(!allowed.containsAll(map.keySet()))throw failure(400,"SCHEMA_VALIDATION");return map;}

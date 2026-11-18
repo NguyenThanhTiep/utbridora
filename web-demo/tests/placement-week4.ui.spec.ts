@@ -153,7 +153,7 @@ for (const school of [true, false]) test(`${school ? 'school' : 'enterprise'} ov
   });
   await page.goto(fixture + '?progress=' + side);
   const counters = page.getByLabel('Chỉ tiêu của toàn bộ kết quả lọc');
-  const commonLabels = ['Chỉ tiêu đã duyệt', 'Đã tiếp nhận', 'Chờ duyệt hoặc còn giữ chỗ', 'Còn thiếu'];
+  const commonLabels = ['Chỉ tiêu đã duyệt', 'Đã tiếp nhận', 'Chờ tạo Placement', 'Còn thiếu'];
   if (school) {
     await expect(counters.locator('li')).toHaveCount(10);
     await expect(counters.getByText('Còn có thể đề cử', { exact: true })).toBeVisible();

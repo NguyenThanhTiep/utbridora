@@ -34,7 +34,7 @@ export function PlacementOverview({ org, school, select }: { org: string; school
   const resetPage = (action: () => void) => {if (canLeaveDemand()) {action();setPage(0);}};
   const progress = result && result.totals && Array.isArray(result.content) && validProgress(result, org, school) ? result : null;
   const tiles: [keyof ProgressCounters, string][] = [['target', 'Chỉ tiêu đã duyệt'], ['placed', 'Đã tiếp nhận'],
-    ['pending', 'Chờ duyệt hoặc còn giữ chỗ'], ['remaining', 'Còn thiếu']];
+    ['pending', 'Chờ tạo Placement'], ['remaining', 'Còn thiếu']];
   if (school) tiles.push(['reservations', 'Đang giữ chỗ'], ['declined', 'Đã từ chối'], ['enterpriseAccepted', 'DN chấp thuận'],
     ['pendingCreation', 'Đủ điều kiện tạo tiếp nhận'], ['pendingApproval', 'Chờ phê duyệt'], ['openForNomination', 'Còn có thể đề cử']);
   return <section className="panel placement-overview" aria-label="Tổng hợp tiếp nhận theo phạm vi">

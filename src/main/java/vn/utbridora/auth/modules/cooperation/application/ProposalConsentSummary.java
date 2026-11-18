@@ -9,7 +9,7 @@ import vn.utbridora.auth.modules.cooperation.port.SchoolSharingPolicyPort;
 import vn.utbridora.auth.modules.student.port.StudentConsentPort.ConsentGrant;
 import static vn.utbridora.auth.operations.WorkflowValues.*;
 
-/** School-only metadata. Caller must authorize the cooperation's school/term first. */
+/** School-only metadata; the boolean projection also serves scoped operational counters. */
 @Component
 public class ProposalConsentSummary {
     public record Summary(String activeConsentId,Long activeConsentVersion,Instant activeConsentExpiresAt,
@@ -19,6 +19,15 @@ public class ProposalConsentSummary {
     public ProposalConsentSummary(JdbcTemplate jdbc,SchoolSharingPolicyPort policies) {this.jdbc=jdbc;this.policies=policies;}
     @Transactional(propagation=Propagation.MANDATORY)
     public Summary read(ProposalService.Item item,CooperationService.CooperationDto cooperation) {
+        return current(item,cooperation);
+    }
+    /** Internal aggregate use only, after authorizing the owning school or enterprise.
+     * No consent identifiers, fields or student profile leave this projection. */
+    @Transactional(propagation=Propagation.MANDATORY)
+    public boolean hasCurrentConsentAndShare(ProposalService.Item item,CooperationService.CooperationDto cooperation) {
+        return current(item,cooperation).shareIsActive();
+    }
+    private Summary current(ProposalService.Item item,CooperationService.CooperationDto cooperation) {
         var consent=jdbc.query("SELECT s.data_json FROM student_consent_lineages l JOIN student_consents s ON s.id=l.current_consent_id AND s.lineage_id=l.id WHERE l.student_user_id=? AND l.school_org_id=? AND l.term_id=? AND l.recipient_org_id=? AND l.purpose='INTERNSHIP_SELECTION' FOR SHARE",
             (r,n)->JSON.readValue(r.getString(1),ConsentGrant.class),item.studentUserId(),cooperation.schoolOrgId(),cooperation.termId(),cooperation.enterpriseOrgId())
             .stream().findFirst().orElse(null);

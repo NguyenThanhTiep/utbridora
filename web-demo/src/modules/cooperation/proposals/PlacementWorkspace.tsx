@@ -136,13 +136,13 @@ export function PlacementWorkspace({ org, school, cooperationId, demand, candida
     {command.retryable && <button disabled={command.busy} onClick={() => void command.retry()}>Thử lại thao tác tiếp nhận đã gửi</button>}
     {summary && <>
       <dl className="proposal-capacity"><div><dt>Chỉ tiêu tiếp nhận</dt><dd>{summary.target}</dd></div><div><dt>Đã chốt</dt><dd>{summary.placed}</dd></div>
-        <div><dt>Đang chờ</dt><dd>{summary.pending}</dd></div><div><dt>Còn chỗ</dt><dd>{summary.remaining}</dd></div></dl>
+        <div><dt>Chờ tạo Placement</dt><dd>{summary.pending}</dd></div><div><dt>Còn thiếu chỉ tiêu</dt><dd>{summary.remaining}</dd></div></dl>
       {quotaStatus && <p className={'placement-quota-status quota-' + quotaStatus.code.toLowerCase()} role="status"
         aria-label="Tình trạng chỉ tiêu tiếp nhận" data-state={quotaStatus.code}>{quotaStatus.label}</p>}
       {school && <div className="placement-quota-bar" aria-label="Tiến độ lấp đầy chỉ tiêu tiếp nhận">
         <div className="placement-quota-legend">
           <span>Tiến độ lấp đầy chỉ tiêu: <strong>{summary.placed}/{summary.target}</strong> đã chốt ({placedPct}%)</span>
-          <span>Đang chờ phê duyệt: <strong>{summary.pending}</strong> · Còn trống: <strong>{summary.remaining}</strong></span>
+          <span>Chờ tạo Placement: <strong>{summary.pending}</strong> · Còn thiếu: <strong>{summary.remaining}</strong></span>
         </div>
         <div className="placement-quota-track">
           <div className="placement-quota-fill placed" style={{ width: `${placedPct}%` }} />

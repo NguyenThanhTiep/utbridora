@@ -87,12 +87,24 @@ public class GradeService {
     /** School reload is scoped and separate from Mentor/student endpoints. */
     public EvaluationDto schoolRead(Authentication auth,UUID id){var r=root(id,false);access.schoolCase(auth,r.caseId());return evaluations.current(root(id,true));}
     public WorkspaceRuntime.Page<EvaluationDto> schoolList(Authentication auth,UUID term,UUID cohort,EvaluationState state,int page,int size){
+        return schoolList(auth,term,cohort,state,null,null,page,size);
+    }
+    public WorkspaceRuntime.Page<EvaluationDto> schoolList(Authentication auth,UUID term,UUID cohort,EvaluationState state,UUID caseId,UUID placementId,int page,int size){
         page(page,size);
         var schools=jdbc.queryForList("SELECT school_org_id FROM terms WHERE id=?",String.class,term.toString());
         if(schools.isEmpty())throw failure(404,"RESOURCE_NOT_FOUND");var school=UUID.fromString(schools.getFirst());
         access.school(auth,school,term,"t3:workspace:read");access.school(auth,school,term,GradeAccess.PUBLISH);
         String filter=" FROM internship_evaluations e JOIN internship_cases c ON c.id=e.case_id JOIN internship_evaluation_versions v ON v.evaluation_id=e.id AND v.version=e.current_version WHERE c.school_org_id=? AND c.term_id=?";
         var args=new ArrayList<Object>(List.of(school.toString(),term.toString()));
+        // Filters narrow an already authorized school/term; they never grant access.
+        if(caseId!=null){
+            var c=access.caseRef(caseId);
+            if(!c.schoolOrgId().equals(school) || !c.termId().equals(term) || placementId!=null && !c.placementId().equals(placementId))throw failure(404,"RESOURCE_NOT_FOUND");
+            filter+=" AND c.id=?";args.add(caseId.toString());
+        }else if(placementId!=null){
+            if(jdbc.queryForObject("SELECT COUNT(*) FROM internship_cases WHERE placement_id=? AND school_org_id=? AND term_id=?",Long.class,placementId.toString(),school.toString(),term.toString())!=1)throw failure(404,"RESOURCE_NOT_FOUND");
+            filter+=" AND c.placement_id=?";args.add(placementId.toString());
+        }
         if(cohort!=null){
             if(jdbc.queryForObject("SELECT COUNT(*) FROM internship_cohorts WHERE id=? AND school_org_id=? AND term_id=?",Long.class,cohort.toString(),school.toString(),term.toString())!=1)throw failure(404,"RESOURCE_NOT_FOUND");
             filter+=" AND EXISTS(SELECT 1 FROM internship_cohort_cases cc WHERE cc.case_id=c.id AND cc.cohort_id=?)";args.add(cohort.toString());

@@ -593,7 +593,7 @@ public class PlacementService {
                 counters=new OperationalCounters(summary.target(),summary.placed(),summary.pending(),summary.remaining());
             }
             String aggregate=row.cooperation()==null?"NO_COOP":"REJECTED".equals(row.state())?"REJECTED":!"APPROVED".equals(row.state())?"WAITING"
-                :counters.target()>0 && counters.placed()>=counters.target()?"FULL":counters.pending()>0?"WAITING":"SHORT";
+                :counters.target()>0 && counters.placed()>=counters.target()?"FULL":activeReservationCount(row.cooperation())>0?"WAITING":"SHORT";
             if(status!=null && !status.isBlank() && !status.equals(aggregate)) continue;
             result.add(new Progress<>(row.id(),row.title(),row.school(),row.schoolName(),row.enterprise(),row.enterpriseName(),row.term(),row.termCode(),row.cooperation(),row.state(),aggregate,counters));
             if(school) schoolTotals=schoolTotals.plus((SchoolProgressCounters)counters);
@@ -614,16 +614,21 @@ public class PlacementService {
         int declined=((Number)counts.get("declined")).intValue(),accepted=((Number)counts.get("accepted")).intValue();
         int pendingApproval=jdbc.queryForObject("SELECT COUNT(DISTINCT student_user_id) FROM placements WHERE cooperation_id=? AND demand_id=? AND school_org_id=? AND enterprise_org_id=? AND term_id=? AND state='PENDING_APPROVAL'",
             Integer.class,row.cooperation(),row.id(),row.school(),row.enterprise(),row.term());
+        int reservations=activeReservationCount(row.cooperation());
+        return new SchoolProgressCounters(summary.target(),summary.placed(),summary.pending(),summary.remaining(),reservations,declined,
+            accepted,summary.pending(),pendingApproval,Math.max(0,summary.target()-summary.placed()-reservations));
+    }
+
+    /** PLC-10 pending means eligible to CREATE a Placement, not a reserved/approval slot. */
+    private int pendingCreationCount(String cooperationId) {
+        var cooperation=cooperations.read(cooperationId);
         var candidates=jdbc.query("SELECT i.* FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id WHERE b.cooperation_id=? AND i.state='ENTERPRISE_ACCEPTED' AND i.reservation_until>? " +
             "AND EXISTS(SELECT 1 FROM internship_invitations v WHERE v.id=i.invitation_id AND v.student_user_id=i.student_user_id AND v.state='ACCEPTED') " +
             "AND NOT EXISTS(SELECT 1 FROM placements p WHERE p.proposal_item_id=i.id)",
-            (r,n)->new ProposalService.Item(r.getString("id"),r.getString("batch_id"),r.getString("student_user_id"),row.cooperation(),r.getString("state"),r.getLong("version"),instant(r,"reservation_until"),r.getString("invitation_id"),r.getString("share_id"),r.getString("placement_id")),row.cooperation(),utc(clock.instant()));
-        int pendingCreation=0;if(!candidates.isEmpty()) {
-            var cooperation=cooperations.read(row.cooperation());
-            for(var candidate:candidates) {var consent=consentSummary.read(candidate,cooperation);if(consent.activeConsentId()!=null && consent.shareIsActive()) pendingCreation++;}
-        }
-        return new SchoolProgressCounters(summary.target(),summary.placed(),summary.pending(),summary.remaining(),summary.pending(),declined,
-            accepted,pendingCreation,pendingApproval,Math.max(0,summary.target()-summary.placed()-summary.pending()));
+            (r,n)->new ProposalService.Item(r.getString("id"),r.getString("batch_id"),r.getString("student_user_id"),cooperationId,r.getString("state"),r.getLong("version"),instant(r,"reservation_until"),r.getString("invitation_id"),r.getString("share_id"),r.getString("placement_id")),cooperationId,utc(clock.instant()));
+        var students=new HashSet<String>();
+        for(var candidate:candidates) if(consentSummary.hasCurrentConsentAndShare(candidate,cooperation)) students.add(candidate.studentUserId());
+        return students.size();
     }
 
     private static List<ProgressChoice> progressChoices(List<ProgressDemand> rows,boolean school) {
@@ -769,6 +774,8 @@ public class PlacementService {
     private PlacementSummary buildSummary(String demandId) {
         String coopId = jdbc.queryForObject(
             "SELECT cooperation_id FROM demands WHERE id=?", String.class, demandId);
+        if(coopId==null || jdbc.queryForObject("SELECT COUNT(*) FROM cooperations WHERE id=? AND demand_id=? AND state='APPROVED'",Integer.class,coopId,demandId)!=1)
+            return new PlacementSummary(demandId,coopId,0,0,0,0);
         var approvedTargets = coopId==null?List.<Integer>of():jdbc.queryForList(
             // Submission snapshots are stored in cooperation_history in this checkout.
             "SELECT JSON_UNQUOTE(JSON_EXTRACT(s.data_json,'$.demand.data.quantity')) FROM cooperation_history s " +
@@ -783,7 +790,14 @@ public class PlacementService {
             "SELECT COUNT(DISTINCT p.id) FROM placements p JOIN demands d ON d.id=p.demand_id AND d.school_org_id=p.school_org_id AND d.enterprise_org_id=p.enterprise_org_id AND d.term_id=p.term_id " +
             "WHERE p.cooperation_id=? AND p.demand_id=? AND p.state IN ('APPROVED','ACTIVE','COMPLETED')",
             Integer.class, coopId,demandId);
-        int pending = coopId == null ? 0 : jdbc.queryForObject(
+        int pending = pendingCreationCount(coopId);
+        int remaining = Math.max(0, target - placed);
+        return new PlacementSummary(demandId, coopId, target, placed, pending, remaining);
+    }
+
+    /** G09/R09 capacity is separate from PLC-10 pending creation. */
+    private int activeReservationCount(String coopId) {
+        return coopId == null ? 0 : jdbc.queryForObject(
             "SELECT COUNT(DISTINCT i.student_user_id) " +
             "FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id " +
             "WHERE b.cooperation_id=? " +
@@ -791,8 +805,6 @@ public class PlacementService {
             "  OR EXISTS (SELECT 1 FROM placements p WHERE p.proposal_item_id=i.id AND p.state='PENDING_APPROVAL')) " +
             "AND NOT EXISTS (SELECT 1 FROM placements p WHERE p.proposal_item_id=i.id AND p.state IN ('APPROVED','ACTIVE','COMPLETED','CANCELLED'))",
             Integer.class, coopId, utc(clock.instant()));
-        int remaining = Math.max(0, target - placed);
-        return new PlacementSummary(demandId, coopId, target, placed, pending, remaining);
     }
 
     private InternshipLink buildLink(PlacementView p) {

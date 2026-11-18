@@ -184,6 +184,24 @@ class T311GradeRuntimeIT {
         var other=user(Role.SCHOOL_STAFF,org(Organization.Type.UNIVERSITY));node(login(other,null).call("POST",path(evaluation)+"/publish",publication(2),id(),true),404);
         var noDelegation=user(Role.SCHOOL_STAFF,school);node(login(noDelegation,null).call("POST",path(evaluation)+"/publish",publication(2),id(),true),404);
     }
+    @Test void schoolPlacementFollowUpFiltersRealEvaluationsBeforePaging() throws Exception {
+        String evaluation=submitted();var s=login(staff,null);
+        String list="/api/v1/t3/school/evaluations?termId="+term+"&size=1";
+        for(String filter:List.of("&caseId="+caseId,"&placementId="+placement,"&caseId="+caseId+"&placementId="+placement)) {
+            var response=node(s.call("GET",list+filter,null,null,true),200);
+            assertEquals(1,response.get("totalElements").asInt());
+            assertEquals(evaluation,response.get("content").get(0).get("evaluationId").asString());
+            assertEquals(0,node(s.call("GET",list+filter+"&page=1",null,null,true),200).get("content").size());
+        }
+        node(s.call("GET",list+"&caseId="+caseId+"&placementId="+id(),null,null,true),404);
+        node(s.call("GET",list+"&placementId="+id(),null,null,true),404);
+        String foreign=id(),foreignTerm=id();
+        String foreignSchool=jdbc.queryForObject("SELECT organization_id FROM memberships WHERE user_id=?",String.class,outsider.id);
+        jdbc.update("INSERT INTO terms(id,school_org_id,term_code,start_date,end_date,status,version,created_at,updated_at) VALUES (?,?,?,'2020-01-01','2099-01-01','ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",foreignTerm,foreignSchool,"SYNTHETIC-"+id());
+        jdbc.update("INSERT INTO internship_cases(id,placement_id,student_user_id,school_org_id,enterprise_org_id,term_id,state,version,last_applied_version) VALUES (?,?,?,?,?,?,'IN_PROGRESS',2,2)",foreign,id(),outsider.id,foreignSchool,enterprise,foreignTerm);
+        var denied=s.call("GET",list+"&caseId="+foreign,null,null,true);node(denied,404);assertFalse(denied.body().contains("total100"));
+        node(s.call("GET",list+"&caseId=invalid",null,null,true),400);
+    }
     @Test void revokedDelegationBlocksCachedPublicationAndSchoolPolicy() throws Exception {
         String evaluation=submitted();var s=login(staff,null);String key=id();
         node(s.call("POST",path(evaluation)+"/publish",publication(2),key,true),200);
