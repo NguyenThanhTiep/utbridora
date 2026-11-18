@@ -326,6 +326,47 @@ class PrivateFileServiceIT {
         }
     }
 
+    @Test void qa01T106DuplicateMultipartFieldsDoNotCreatePrivateFile() throws Exception {
+        // TC05 completion: multipart scalar fields and file must appear exactly once.
+        // The previous QA01 method covered missing fields; this covers duplicate fields.
+        var student = login("student");
+        long objectsBefore = objects();
+        int filesBefore = jdbc.queryForObject("SELECT COUNT(*) FROM files", Integer.class);
+        int bindingsBefore = jdbc.queryForObject("SELECT COUNT(*) FROM file_bindings", Integer.class);
+        int auditsBefore = jdbc.queryForObject(
+            "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED'", Integer.class);
+
+        String duplicateFile = "--" + BOUNDARY + "\r\n" +
+            "Content-Disposition: form-data; name=\"file\"; filename=\"second.pdf\"\r\n" +
+            "Content-Type: application/pdf\r\n\r\n" +
+            "%PDF-1.4\nsecond file\n%%EOF\r\n";
+        String[] duplicates = {
+            field("resourceType", "STUDENT_PROFILE"),
+            field("resourceId", id(6)),
+            field("purpose", "CV"),
+            duplicateFile
+        };
+        String[] names = {"resourceType", "resourceId", "purpose", "file"};
+
+        for (int i = 0; i < duplicates.length; i++) {
+            String operationKey = key();
+            var denied = post(student, operationKey, "STUDENT_PROFILE", id(6), "CV",
+                "cv.pdf", "application/pdf", PDF, true, duplicates[i]);
+            assertError(denied, 400, "SCHEMA_VALIDATION");
+            assertEquals(objectsBefore, objects(), "No storage bytes after duplicate " + names[i]);
+            assertEquals(filesBefore, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM files", Integer.class), "No metadata after duplicate " + names[i]);
+            assertEquals(bindingsBefore, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM file_bindings", Integer.class), "No binding after duplicate " + names[i]);
+            assertEquals(auditsBefore, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED'", Integer.class),
+                "No success audit after duplicate " + names[i]);
+            assertEquals(0, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM operation_records WHERE idempotency_key=?",
+                Integer.class, operationKey), "No idempotency ledger after duplicate " + names[i]);
+        }
+    }
+
     @Test void realMultipartOwnerMetadataPendingAndForeignScope() throws Exception {
         Session student=login("student"),other=login("intern"),admin=login("admin"),hr=login("hr");
         String command=key();var created=post(student,command,"STUDENT_PROFILE",id(6),"CV","../../cv.pdf","application/pdf",PDF,true,"");assertEquals(202,created.statusCode(),body(created));
