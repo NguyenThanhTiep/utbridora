@@ -367,6 +367,57 @@ class PrivateFileServiceIT {
         }
     }
 
+    @Test void qa01T106MissingAndBlankIdempotencyKeyCannotUploadPrivateFile() throws Exception {
+        // QA01 TC06: A valid, authenticated multipart upload must reject a missing/blank
+        // Idempotency-Key before writing metadata, storage, bindings, audit, or ledger.
+        // DEV already checks a malformed non-UUID key; these cover two remaining inputs.
+        var student = login("student");
+        long beforeObjects = objects();
+        int beforeFiles = jdbc.queryForObject("SELECT COUNT(*) FROM files", Integer.class);
+        int beforeBindings = jdbc.queryForObject("SELECT COUNT(*) FROM file_bindings", Integer.class);
+        int beforeAudits = jdbc.queryForObject(
+            "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED'", Integer.class);
+        int beforeOperations = jdbc.queryForObject(
+            "SELECT COUNT(*) FROM operation_records WHERE operation_code='FILE_UPLOAD'", Integer.class);
+
+        var multipart = new ByteArrayOutputStream();
+        multipart.write((field("resourceType", "STUDENT_PROFILE")
+            + field("resourceId", id(6))
+            + field("purpose", "CV")
+            + "--" + BOUNDARY + "\r\n"
+            + "Content-Disposition: form-data; name=\"file\"; filename=\"cv.pdf\"\r\n"
+            + "Content-Type: application/pdf\r\n\r\n").getBytes(StandardCharsets.UTF_8));
+        multipart.write(PDF);
+        multipart.write(("\r\n--" + BOUNDARY + "--\r\n").getBytes(StandardCharsets.UTF_8));
+        byte[] requestBytes = multipart.toByteArray();
+
+        for (boolean missingHeader : new boolean[] {true, false}) {
+            String scenario = missingHeader ? "missing Idempotency-Key" : "blank Idempotency-Key";
+            var request = HttpRequest.newBuilder(uri("/files"))
+                .timeout(Duration.ofSeconds(30))
+                .header("Content-Type", "multipart/form-data; boundary=" + BOUNDARY)
+                .header(student.header(), student.token());
+            if (!missingHeader) request.header("Idempotency-Key", "");
+            var denied = student.client().send(
+                request.POST(HttpRequest.BodyPublishers.ofByteArray(requestBytes)).build(),
+                HttpResponse.BodyHandlers.ofByteArray());
+            // Missing @RequestHeader can be rejected by Spring MVC before the controller.
+            // Assert the contract status without assuming the same error body at both layers.
+            assertEquals(400, denied.statusCode(), scenario + ": " + body(denied));
+            assertEquals(beforeObjects, objects(), "No stored object after " + scenario);
+            assertEquals(beforeFiles, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM files", Integer.class), "No file row after " + scenario);
+            assertEquals(beforeBindings, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM file_bindings", Integer.class), "No binding after " + scenario);
+            assertEquals(beforeAudits, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED'", Integer.class),
+                "No successful upload audit after " + scenario);
+            assertEquals(beforeOperations, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM operation_records WHERE operation_code='FILE_UPLOAD'", Integer.class),
+                "No upload operation record after " + scenario);
+        }
+    }
+
     @Test void realMultipartOwnerMetadataPendingAndForeignScope() throws Exception {
         Session student=login("student"),other=login("intern"),admin=login("admin"),hr=login("hr");
         String command=key();var created=post(student,command,"STUDENT_PROFILE",id(6),"CV","../../cv.pdf","application/pdf",PDF,true,"");assertEquals(202,created.statusCode(),body(created));
