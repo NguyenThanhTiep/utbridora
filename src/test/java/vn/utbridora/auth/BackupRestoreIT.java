@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /** T1-08: real dump/restore of synthetic data on an ephemeral runner, never staging/shared Docker. */
 class BackupRestoreIT {
     @Test void restoresEveryTableAndImmutableFlywayHistoryBeforeNoOpMigration() throws Exception {
-        try (var mysql=new MySQLContainer<>("mysql:8.4").withUsername("root").withDatabaseName("rehearsal_source")) {
+        try (var mysql=new MySQLContainer<>("mysql:8.4").withUsername("root").withDatabaseName("utbridora")) {
             mysql.start();
             var flyway=Flyway.configure().dataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword()).load();
             flyway.migrate();
@@ -31,11 +31,12 @@ class BackupRestoreIT {
             try (var c=connection(mysql,mysql.getDatabaseName());var s=c.createStatement()) {s.execute("CREATE DATABASE `"+clone+"`");}
             // Credentials stay inside the container. No dump, password, email or row values enter the report.
             long started=System.nanoTime();
-            exec(mysql,"export MYSQL_PWD=\"$MYSQL_ROOT_PASSWORD\"; exec mysqldump -uroot --single-transaction --hex-blob --no-tablespaces --set-gtid-purged=OFF --routines --events --triggers --result-file=/tmp/rehearsal.sql rehearsal_source");
+            exec(mysql,"export MYSQL_PWD=\"$MYSQL_ROOT_PASSWORD\"; exec mysqldump -uroot --single-transaction --hex-blob --no-tablespaces --set-gtid-purged=OFF --routines --events --triggers --result-file=/tmp/rehearsal.sql utbridora");
             var digest=exec(mysql,"sha256sum /tmp/rehearsal.sql").split(" ")[0];
             exec(mysql,"export MYSQL_PWD=\"$MYSQL_ROOT_PASSWORD\"; exec mysql -uroot "+clone+" < /tmp/rehearsal.sql");
             var after=fingerprints(mysql,clone);
             assertEquals(before,after,"Every row in every table must survive restore, including empty tables and history");
+            assertEquals(before,fingerprints(mysql,mysql.getDatabaseName()),"Restore must not write back into the source schema");
             var restored=Flyway.configure().dataSource(url(mysql,clone),mysql.getUsername(),mysql.getPassword()).load();
             restored.validate();assertEquals(0,restored.migrate().migrationsExecuted);
             assertEquals(before,fingerprints(mysql,clone),"No-op migration must not change restored history/data");
@@ -51,7 +52,7 @@ class BackupRestoreIT {
             Files.writeString(Path.of("target/week5-restore-verification.json"),JsonMapper.builder().build().writerWithDefaultPrettyPrinter().writeValueAsString(report));
         }
     }
-    record TableDigest(long rows,String sha256) {}
+    record TableDigest(long rows,String sha256,String ddlSha256) {}
     private static Map<String,TableDigest> fingerprints(MySQLContainer<?> mysql,String schema) throws Exception {
         var result=new TreeMap<String,TableDigest>();
         try (var c=connection(mysql,schema)) {
@@ -72,7 +73,10 @@ class BackupRestoreIT {
                 }
                 Collections.sort(rows);var hash=MessageDigest.getInstance("SHA-256");
                 for(String row:rows)hash.update(HexFormat.of().parseHex(row));
-                result.put(table,new TableDigest(rows.size(),HexFormat.of().formatHex(hash.digest())));
+                String ddl;
+                try(var s=c.createStatement();var r=s.executeQuery("SHOW CREATE TABLE `"+table.replace("`","``")+"`")) {assertTrue(r.next());ddl=r.getString(2);}
+                String ddlHash=HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(ddl.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+                result.put(table,new TableDigest(rows.size(),HexFormat.of().formatHex(hash.digest()),ddlHash));
             }
         }
         return result;

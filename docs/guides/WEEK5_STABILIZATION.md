@@ -56,7 +56,8 @@ không phải quyết định nhà trường thật.
 fixture synthetic có FK rồi dump bằng `mysqldump --single-transaction --hex-blob`.
 Test restore vào schema mới; so SHA-256 từng hàng có length prefix và null
 marker, sắp xếp multiset, đối chiếu **mọi bảng**, kể cả Flyway và bảng rỗng.
-Sau restore, Flyway validate phải PASS và migrate lần hai phải no-op.
+Digest `SHOW CREATE TABLE` kiểm cả cấu trúc/index/FK; schema nguồn phải giữ
+nguyên sau restore. Flyway validate phải PASS và migrate lần hai phải no-op.
 
 Chạy chỉ trên máy/VM/runner tách biệt tài nguyên khỏi demo dùng chung 8088:
 

@@ -53,7 +53,7 @@ export function EvaluationResults({ userId }: { userId: string }) {
     window.addEventListener('session-expired', close);
     return () => { window.removeEventListener('focus', clear); document.removeEventListener('visibilitychange', visibility); window.removeEventListener('session-expired', close); };
   }, []);
-  useEffect(() => { if (caseIds) setCaseId(previous => caseIds.includes(previous) ? previous : caseIds.length === 1 ? caseIds[0] : ''); }, [caseIds]);
+  useEffect(() => { if (caseIds) setCaseId(previous => (!!verified && previous === verified) || caseIds.includes(previous) ? previous : caseIds.length === 1 ? caseIds[0] : ''); }, [caseIds, verified]);
   useEffect(() => {
     setResult(null); setError('');
     if (!caseId || closed || document.hidden) return;
