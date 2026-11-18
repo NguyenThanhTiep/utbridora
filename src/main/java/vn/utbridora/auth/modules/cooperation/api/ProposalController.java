@@ -16,6 +16,11 @@ public class ProposalController {
     public ProposalController(ProposalService service,ProposalProfileService profiles) {this.service=service;this.profiles=profiles;}
     @GetMapping("/enterprise/cooperations/{id}/proposals")
     public Page<EnterpriseItem> enterpriseList(Authentication a,@RequestHeader("X-Organization-Id") String org,@PathVariable String id,@RequestParam(required=false) String state,@RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="25") int size) {return service.enterpriseList(a,org,id,state,page,size);}
+    @GetMapping("/enterprise/cooperations/{id}/proposal-batches")
+    public Page<EnterpriseBatch> enterpriseBatches(Authentication a,@RequestHeader("X-Organization-Id") String org,@PathVariable String id,
+            @RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="25") int size) {
+        return service.enterpriseBatches(a,org,id,page,size);
+    }
     @PatchMapping("/enterprise/proposals/{id}/decision")
     public EnterpriseItem enterpriseDecision(Authentication a,@RequestHeader("X-Organization-Id") String org,@PathVariable String id,@RequestHeader("Idempotency-Key") String key,@RequestBody String data) {
         try {

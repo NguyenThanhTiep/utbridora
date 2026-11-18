@@ -23,6 +23,9 @@ export function PublicationEditor({ org, cooperationId }: { org: string; coopera
     return () => c.abort();
   }, [org, path, revision]);
   return <section className="proposal-publication"><h4>Công bố cơ hội cho sinh viên</h4>
+    <div className="t5-rule-note" role="note"><strong>Phạm vi công bố</strong>
+      <p>Toàn bộ sinh viên đủ điều kiện trong cùng trường và kỳ của hợp tác; máy chủ kiểm tra quyền truy cập khi sinh viên xem cơ hội.</p>
+      <p>Theo khóa / ngành: chưa có cấu hình giới hạn riêng trong API công bố hiện tại. Ngành tuyển dụng vẫn theo tiêu chí của nhu cầu đã duyệt.</p></div>
     <Notice message={error || command.message} tone="error" /><p role="status">{notice}</p>
     {!value && !error && <p>Đang tải thời gian công bố…</p>}
     {error && <button className="secondary" onClick={() => setRevision(n => n + 1)}>Tải lại thời gian công bố</button>}

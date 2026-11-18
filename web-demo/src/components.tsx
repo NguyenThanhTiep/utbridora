@@ -7,6 +7,7 @@ export function Icon({ name, size = 20, className = '' }: { name: string; size?:
     users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /><circle cx="9" cy="7" r="4" /></>,
     user: <><circle cx="12" cy="8" r="4" /><path d="M4 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2" /></>,
     building: <><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 7h1m4 0h1M9 11h1m4 0h1M9 15h1m4 0h1M10 21v-3h4v3" /></>,
+    university: <><path d="m3 9 9-6 9 6H3ZM5 10v9m5-9v9m4-9v9m5-9v9M3 21h18M2 18h20" /></>,
     activity: <><path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4M13 3h8v8M21 3l-9 9" /><path d="M7 14v3m4-2v2m4-4v4" /></>,
     shield: <><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z" /><path d="m8.5 12 2.5 2.5 4.5-5" /></>,
     lock: <><rect x="5" y="10" width="14" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3" /></>,
@@ -59,10 +60,12 @@ export function Notice({ message, tone = 'info' }: { message: string; tone?: 'in
 
 type FieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> & {
   label: string; value: string; onChange: (value: string) => void; hint?: string; icon?: string; error?: string;
+  passwordVisible?: boolean; onPasswordVisibilityChange?: (visible: boolean) => void;
 };
-export function Field({ label, value, onChange, type = 'text', required = true, hint, icon, error, ...props }: FieldProps) {
+export function Field({ label, value, onChange, type = 'text', required = true, hint, icon, error, passwordVisible, onPasswordVisibilityChange, ...props }: FieldProps) {
   const id = useId();
-  const [visible, setVisible] = useState(false);
+  const [localVisible, setLocalVisible] = useState(false);
+  const visible = passwordVisible ?? localVisible;
   const password = type === 'password';
   return <div className="field">
     <label htmlFor={id}>{label}</label>
@@ -73,7 +76,7 @@ export function Field({ label, value, onChange, type = 'text', required = true, 
         aria-invalid={error ? true : undefined}
         aria-describedby={[hint ? id + '-hint' : '', error ? id + '-error' : ''].filter(Boolean).join(' ') || undefined} {...props} />
       {password && <button className="password-toggle" type="button" disabled={props.disabled} aria-label={visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'} aria-pressed={visible}
-        onClick={() => setVisible(previous => !previous)}><Icon name={visible ? 'eye-off' : 'eye'} size={19} /></button>}
+        onClick={() => { setLocalVisible(!visible); onPasswordVisibilityChange?.(!visible); }}><Icon name={visible ? 'eye-off' : 'eye'} size={19} /></button>}
     </div>
     {hint && <p className="field-hint" id={id + '-hint'}>{hint}</p>}
     {error && <p className="field-error" id={id + '-error'}>{error}</p>}

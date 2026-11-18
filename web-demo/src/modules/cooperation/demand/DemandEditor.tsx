@@ -8,6 +8,7 @@ import { failureMessage } from './errors';
 import { SkillFields } from './SkillFields';
 import { SkillCatalogPicker } from './SkillCatalogPicker';
 import { DemandReferenceFields } from './DemandReferenceFields';
+import { DemandSkillSummary } from './DemandSkillSummary';
 
 export function DemandEditor({ organizationId, existing, onBusy, onUnconfirmed, onClose, onSaved }: {
   organizationId: string; existing: Demand | null; onBusy: (value: boolean) => void;
@@ -113,6 +114,7 @@ export function DemandEditor({ organizationId, existing, onBusy, onUnconfirmed, 
           <div className="bm01-rule-note" role="note">
             Kỹ năng bắt buộc cần đạt đầy đủ. Kỹ năng ưu tiên giúp xếp hạng ứng viên. Mỗi kỹ năng chỉ chọn trong một nhóm.
           </div>
+          <DemandSkillSummary required={form.required.filter(row => row.skillCode.trim()).length} preferred={form.preferred.filter(row => row.skillCode.trim()).length} />
           <fieldset disabled={locked} className="cooperation-fields"><legend>Tiêu chí bắt buộc</legend>
             <SkillCatalogPicker selected={[...form.required, ...form.preferred].map(row => row.skillCode.trim())}
               onVersion={version => set('taxonomyVersion', version)} onPick={(skill, group, version) => setForm(previous => {

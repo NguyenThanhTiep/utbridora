@@ -8,6 +8,7 @@ import { useCommand } from './workflow/useCommand';
 import { ReviewDecision } from './workflow/ReviewDecision';
 import { CooperationComposer } from './workflow/CooperationComposer';
 import { VerificationEditor } from './workflow/VerificationEditor';
+import { VerificationJourney } from './workflow/VerificationJourney';
 import { useSchoolNames } from './portal/useSchoolNames';
 import type { Demand } from './types';
 import { EnterpriseProposals } from './proposals/EnterpriseProposals';
@@ -263,6 +264,7 @@ export function VerificationFlows({ org, school, onLoaded, focusId }: { org: str
     <div className="workflow-section-header">
       <div>
         <h2>Danh sách hồ sơ xác minh</h2>
+        <p className="field-hint">Mỗi trường xét duyệt hồ sơ độc lập. Xác minh tổ chức trên hệ thống và phê duyệt của trường là hai điều kiện riêng.</p>
       </div>
       <div className="button-row">
         {!school && <button className="t5-btn-teal" disabled={action.busy} onClick={() => { if (canLeaveDemand()) setEditing(null); }}>Tạo hồ sơ xác minh</button>}
@@ -320,6 +322,7 @@ export function VerificationFlows({ org, school, onLoaded, focusId }: { org: str
           </div>
         </div>
 
+        <VerificationJourney state={v.state} />
         <div className="placement-meta-grid">
           <div className="placement-meta-item">
             <span className="placement-meta-label">Thông tin liên hệ</span>
