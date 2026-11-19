@@ -64,11 +64,14 @@ export function MatchingWorkspace({ organizationId, grants }: { organizationId: 
   const [profiles, setProfiles] = useState<Record<string, Projection | null>>({});
   const [capacity, setCapacity] = useState<Capacity | null>(null);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [candidateQuery, setCandidateQuery] = useState('');
+  const [activeCandidateId, setActiveCandidateId] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [refresh, setRefresh] = useState(0);
   const pendingNomination = useRef<{ signature: string; key: string } | null>(null);
+  const autoEvaluateKey = useRef('');
 
   useEffect(() => {
     const controller = new AbortController();
@@ -152,6 +155,16 @@ export function MatchingWorkspace({ organizationId, grants }: { organizationId: 
     finally { setBusy(false); }
   };
 
+  // Run once when the workspace opens, a different approved demand is selected,
+  // or the demand list is refreshed. The ref avoids duplicate POSTs from effects.
+  useEffect(() => {
+    if (!loaded || !current) return;
+    const key = `${organizationId}:${current.cooperation.cooperationId}:${refresh}`;
+    if (autoEvaluateKey.current === key) return;
+    autoEvaluateKey.current = key;
+    void evaluate();
+  }, [loaded, current, organizationId, refresh]);
+
   const nominate = async () => {
     if (!run || !current || !capacity || selectedStudents.length === 0) return;
     if (capacity.openForNomination < selectedStudents.length) {
@@ -182,20 +195,31 @@ export function MatchingWorkspace({ organizationId, grants }: { organizationId: 
   const toggleStudent = (studentId: string) => setSelectedStudents(previous => previous.includes(studentId)
     ? previous.filter(id => id !== studentId) : [...previous, studentId]);
   const counts = run?.evaluation.summary;
+  const visibleResults = useMemo(() => {
+    const query = candidateQuery.trim().toLocaleLowerCase('vi');
+    return (details?.results.content || []).filter(result => {
+      if (!query) return true;
+      const profile = profiles[result.studentUserId];
+      const name = typeof profile?.data.displayName === 'string' ? profile.data.displayName : '';
+      const code = typeof profile?.data.studentCode === 'string' ? profile.data.studentCode : '';
+      return `${name} ${code}`.toLocaleLowerCase('vi').includes(query);
+    });
+  }, [candidateQuery, details, profiles]);
+  const activeCandidate = visibleResults.find(result => result.studentUserId === activeCandidateId) || visibleResults[0] || null;
 
   return <section className="panel matching-workspace" aria-busy={busy}>
-    <div className="matching-heading"><div><p className="section-kicker">T4 · MATCHING</p><h2>Kết quả ghép sinh viên</h2>
-      <p className="section-description">Dữ liệu nhu cầu và hồ sơ được đọc từ T5, T2; kết quả được tạo bởi Matching API.</p></div>
+    <div className="matching-heading"><div><p className="section-kicker">T4 · MATCHING</p><h2>Kết quả ghép sinh viên</h2></div>
       <button className="secondary" disabled={busy} onClick={() => setRefresh(value => value + 1)}>Tải lại nhu cầu</button></div>
     <Notice message={error || notice} tone={error ? 'error' : 'success'} />
     {!loaded ? <p role="status">Đang tải nhu cầu đã duyệt…</p> : scopes.length === 0
-      ? <EmptyState icon="search" title="Chưa có nhu cầu phù hợp để ghép" description="Cần có hợp tác đã được duyệt và nhu cầu còn hiệu lực trong phạm vi trường." />
+      ? error
+        ? <p className="matching-load-error" role="status">Chưa xác nhận được danh sách nhu cầu. Hãy kiểm tra kết nối rồi chọn “Tải lại nhu cầu”.</p>
+        : <EmptyState icon="search" title="Chưa có nhu cầu phù hợp để ghép" description="Cần có hợp tác đã được duyệt và nhu cầu còn hiệu lực trong phạm vi trường." />
       : <>
         <div className="matching-controls">
           <label>Nhu cầu đã duyệt<select value={selectedId} onChange={event => { setSelectedId(event.target.value); setRun(null); setDetails(null); setProfiles({}); setCapacity(null); setSelectedStudents([]); setError(''); setNotice(''); }} disabled={busy}>
             {scopes.map(item => <option key={item.cooperation.cooperationId} value={item.cooperation.cooperationId}>{item.demand.data.title} · {item.demand.data.quantity} vị trí</option>)}
           </select></label>
-          <button disabled={busy || !current} onClick={() => void evaluate()}>{busy ? 'Đang xử lý…' : run ? 'Chạy lại Matching' : 'Chạy Matching'}</button>
         </div>
         {current && <div className="matching-demand-summary"><span>Kỳ: <code>{current.cooperation.termId}</code></span><span>Phiên bản nhu cầu: {current.demand.version}</span><span>Tiêu chí: {current.demand.criteriaVersion}</span>
           <span>Kỹ năng bắt buộc: {current.demand.data.required.skills.map(skill => skill.skillCode).join(', ') || 'Không có'}</span>
@@ -203,22 +227,35 @@ export function MatchingWorkspace({ organizationId, grants }: { organizationId: 
       </>}
 
     {run && counts && <>
-      <div className="matching-run-meta"><h3>Kết quả lần chạy</h3><p>Rule <code>{counts.run.ruleVersion}</code> · Taxonomy <code>{counts.run.taxonomyVersion}</code> · Snapshot <code>{counts.run.profileSnapshotVersion.slice(0, 12)}</code> · Run <code>{counts.run.matchRunId}</code></p></div>
-      <div className="matching-counts" aria-label="Tổng hợp kết quả cho nhà trường">
-        <button className={status === 'MATCH' ? 'selected' : ''} onClick={() => { setStatus('MATCH'); setPage(0); }}>Đáp ứng <strong>{counts.matched}</strong></button>
-        <button className={status === 'MISSING_DATA' ? 'selected' : ''} onClick={() => { setStatus('MISSING_DATA'); setPage(0); }}>Thiếu dữ liệu <strong>{counts.missingData}</strong></button>
-        <button className={status === 'NOT_MATCH' ? 'selected' : ''} onClick={() => { setStatus('NOT_MATCH'); setPage(0); }}>Không đáp ứng <strong>{counts.notMatched}</strong></button>
+      <div className="matching-counts" aria-label="Thống kê ba nhóm kết quả">
+        <div className="matching-count-tile match"><span>Phù hợp</span><strong>{counts.matched}</strong><small>Sinh viên đáp ứng điều kiện</small></div>
+        <div className="matching-count-tile missing"><span>Thiếu dữ liệu</span><strong>{counts.missingData}</strong><small>Cần bổ sung hồ sơ</small></div>
+        <div className="matching-count-tile not-match"><span>Không phù hợp</span><strong>{counts.notMatched}</strong><small>Không đạt điều kiện bắt buộc</small></div>
+      </div>
+      <div className="matching-filter-bar">
+        <label htmlFor="matching-candidate-search">Tìm MSSV / tên</label>
+        <input id="matching-candidate-search" type="search" value={candidateQuery} onChange={event => setCandidateQuery(event.target.value)} placeholder="Nhập MSSV hoặc tên sinh viên" />
+      </div>
+      <div className="matching-tabs" role="group" aria-label="Nhóm kết quả Matching">
+        {(['MATCH', 'MISSING_DATA', 'NOT_MATCH'] as const).map((key) => <button key={key} type="button" aria-pressed={status === key}
+          className={`${status === key ? 'selected ' : ''}${key.toLowerCase()}`} onClick={() => { setStatus(key); setPage(0); setActiveCandidateId(''); setSelectedStudents([]); }}>
+          {outcomeLabels[key]} <span>{key === 'MATCH' ? counts.matched : key === 'MISSING_DATA' ? counts.missingData : counts.notMatched}</span>
+        </button>)}
       </div>
       <div className="matching-result-header"><h3>{outcomeLabels[status]}</h3>
         {canNominate && status === 'MATCH' && <button onClick={() => void nominate()} disabled={busy || !selectedStudents.length || !capacity || selectedStudents.length > capacity.openForNomination}>
           Đề cử {selectedStudents.length ? `(${selectedStudents.length})` : 'sinh viên đã chọn'}
         </button>}
       </div>
-      {canNominate && status === 'MATCH' && capacity && <p className="field-hint">Còn {capacity.openForNomination} / {capacity.quantity} vị trí · Đã xếp {capacity.placedCount} · Đang giữ chỗ {capacity.activeReservations}.</p>}
-      {details ? details.results.content.length === 0 ? <EmptyState title="Không có sinh viên trong nhóm này" description="Hãy xem nhóm kết quả khác hoặc kiểm tra tiêu chí của nhu cầu." />
-        : <div className="matching-candidates">{details.results.content.map(result => <Candidate key={result.studentUserId} result={result}
-          profile={profiles[result.studentUserId]} selectable={canNominate && status === 'MATCH'} checked={selectedStudents.includes(result.studentUserId)}
-          onToggle={() => toggleStudent(result.studentUserId)} />)}</div>
+      {canNominate && status === 'MATCH' && capacity && <p className="matching-capacity">Còn <strong>{capacity.openForNomination}</strong> / {capacity.quantity} vị trí · Đã xếp {capacity.placedCount} · Đang giữ chỗ {capacity.activeReservations}</p>}
+      {details ? details.results.content.length === 0 || visibleResults.length === 0 ? <EmptyState title={details.results.content.length ? 'Không tìm thấy sinh viên' : 'Không có sinh viên trong nhóm này'} description={details.results.content.length ? 'Thử từ khóa MSSV hoặc tên khác.' : 'Hãy xem nhóm kết quả khác hoặc kiểm tra tiêu chí của nhu cầu.'} />
+        : <>
+          <div className="matching-table-wrap"><table className="matching-table"><thead><tr><th scope="col">Ứng viên</th><th scope="col">Ngành / Kỳ</th><th scope="col">Kết quả</th><th scope="col">Điểm phù hợp</th>{canNominate && status === 'MATCH' && <th scope="col">Chọn</th>}</tr></thead>
+            <tbody>{visibleResults.map(result => <CandidateRow key={result.studentUserId} result={result} profile={profiles[result.studentUserId]}
+              selectable={canNominate && status === 'MATCH'} checked={selectedStudents.includes(result.studentUserId)} active={activeCandidate?.studentUserId === result.studentUserId}
+              onToggle={() => toggleStudent(result.studentUserId)} onOpen={() => setActiveCandidateId(result.studentUserId)} />)}</tbody></table></div>
+          {activeCandidate && <CandidateDetails result={activeCandidate} profile={profiles[activeCandidate.studentUserId]} />}
+        </>
         : <p role="status">Đang tải kết quả…</p>}
       <div className="matching-pagination"><span>{details?.results.totalElements ?? 0} kết quả · Trang {(details?.results.page ?? page) + 1}/{Math.max(1, details?.results.totalPages ?? 1)}</span>
         <button className="secondary" disabled={page === 0 || busy} onClick={() => setPage(value => value - 1)}>Trước</button>
@@ -227,24 +264,31 @@ export function MatchingWorkspace({ organizationId, grants }: { organizationId: 
   </section>;
 }
 
-function Candidate({ result, profile, selectable, checked, onToggle }: { result: MatchResult; profile?: Projection | null;
-  selectable: boolean; checked: boolean; onToggle: () => void }) {
+function CandidateRow({ result, profile, selectable, checked, active, onToggle, onOpen }: { result: MatchResult; profile?: Projection | null;
+  selectable: boolean; checked: boolean; active: boolean; onToggle: () => void; onOpen: () => void }) {
   const name = profile?.data.displayName;
   const code = profile?.data.studentCode;
   const major = profile?.data.majorCode;
+  const outcome = outcomeLabels[result.overallStatus] || result.overallStatus;
+  return <tr className={active ? 'active' : ''}>
+    <td><button className="matching-candidate-link" type="button" onClick={onOpen}><strong>{typeof name === 'string' ? name : profile === null ? 'Thông tin định danh không được cấp' : 'Đang tải hồ sơ…'}</strong><small>{typeof code === 'string' ? `MSSV ${code}` : 'MSSV chưa được cấp'}</small></button></td>
+    <td>{typeof major === 'string' ? major : '—'}</td>
+    <td><span className={`matching-outcome-pill ${result.overallStatus.toLowerCase()}`}>{outcome}</span></td>
+    <td>{result.fitScore === null ? '—' : result.fitScore.toFixed(2)}</td>
+    {selectable && <td><input type="checkbox" checked={checked} onChange={onToggle} aria-label={`Chọn sinh viên ${typeof code === 'string' ? code : ''}`} /></td>}
+  </tr>;
+}
+
+function CandidateDetails({ result, profile }: { result: MatchResult; profile?: Projection | null }) {
   const skills = Array.isArray(profile?.data.skills) ? profile.data.skills as { kind?: string; skill?: { skillCode?: string; name?: string } }[] : [];
-  return <article className="matching-candidate">
-    <div className="matching-candidate-top">
-      {selectable && <label className="matching-select"><input type="checkbox" checked={checked} onChange={onToggle} aria-label={`Chọn sinh viên ${typeof code === 'string' ? code : ''}`} /></label>}
-      <div className="matching-candidate-ident"><h4>{typeof name === 'string' ? name : profile === null ? 'Thông tin định danh không được cấp' : 'Đang tải hồ sơ…'}</h4>
-        <p>{typeof code === 'string' ? `MSSV ${code}` : ''}{typeof major === 'string' ? ` · Ngành ${major}` : ''}</p></div>
-      {result.fitScore !== null && <span className="matching-score">Điểm ưu tiên {result.fitScore.toFixed(2)}</span>}
-    </div>
-    {profile?.allowedFields.includes('skills') && <p className="matching-skills">Kỹ năng: {skills.map(item => item.skill?.skillCode || item.skill?.name).filter(Boolean).join(', ') || 'Chưa có kỹ năng khai báo'}</p>}
+  return <section className="matching-detail" aria-label="Chi tiết điều kiện nghiệp vụ">
+    <div className="matching-detail-heading"><div><p className="section-kicker">CHI TIẾT / ĐIỀU KIỆN NGHIỆP VỤ</p><h4>{typeof profile?.data.displayName === 'string' ? profile.data.displayName : 'Chi tiết ứng viên'}</h4></div>
+      <span className={`matching-outcome-pill ${result.overallStatus.toLowerCase()}`}>{outcomeLabels[result.overallStatus] || result.overallStatus}</span></div>
+    {profile?.allowedFields.includes('skills') && <p className="matching-skills">Kỹ năng hồ sơ: {skills.map(item => item.skill?.skillCode || item.skill?.name).filter(Boolean).join(', ') || 'Chưa có kỹ năng khai báo'}</p>}
     <ul className="matching-criteria">{result.details.map((criterion, index) => <li key={`${criterion.criterionCode}-${index}`}>
-      <span className={`matching-criterion-status ${criterion.status.toLowerCase()}`}>{criterion.status === 'PASS' ? 'Đạt' : criterion.status === 'FAIL' ? 'Không đạt' : 'Chưa rõ'}</span>
-      <span>{criterion.kind === 'MAJOR' ? 'Ngành' : criterion.kind === 'AVAILABILITY' ? 'Lịch thực tập' : `Kỹ năng ${criterion.criterionCode}`}</span>
+      <span className={`matching-criterion-status ${criterion.status.toLowerCase()}`}>{criterion.status === 'PASS' ? 'Đạt' : criterion.status === 'FAIL' ? 'Không đạt' : 'Thiếu dữ liệu'}</span>
+      <span>{criterion.kind === 'MAJOR' ? 'Ngành học' : criterion.kind === 'AVAILABILITY' ? 'Lịch thực tập' : `Kỹ năng ${criterion.criterionCode}`}</span>
       <small>{reasonLabels[criterion.reasonCode] || criterion.reasonCode}</small>
     </li>)}</ul>
-  </article>;
+  </section>;
 }

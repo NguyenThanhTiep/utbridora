@@ -79,23 +79,30 @@ test('school publication, student preference and matching use real T5 and T2 pro
     student.once('dialog', dialog => void dialog.accept());
     await preference.getByRole('button', { name: 'Rút nguyện vọng', exact: true }).click();
     await expect(preference.getByText('Đã rút', { exact: true })).toBeVisible();
+    const initialEvaluation = school.waitForResponse(r => r.url().endsWith('/matching/evaluate') && r.request().method() === 'POST');
     await school.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Đối chiếu hồ sơ', exact: true }).click();
     const matching = school.locator('.matching-workspace');
-    // The picker uses Cooperation identity; evaluate derives the authoritative demandId.
-    await matching.getByLabel('Nhu cầu đã duyệt').selectOption(coop);
-    const evaluated = school.waitForResponse(r => r.url().endsWith('/matching/evaluate') && r.request().method() === 'POST');
-    await matching.getByRole('button', { name: 'Chạy Matching', exact: true }).click();
-    const firstResponse = await evaluated; expect(firstResponse.ok()).toBeTruthy(); const first = await firstResponse.json();
+    // Entering the workspace automatically evaluates its initial approved demand.
+    const initialResponse = await initialEvaluation; expect(initialResponse.ok()).toBeTruthy();
+    const selectedDemand = matching.getByLabel('Nhu cầu đã duyệt');
+    const selectedBefore = await selectedDemand.inputValue();
+    let first = await initialResponse.json();
+    // The picker uses Cooperation identity; changing it automatically evaluates the selected demand.
+    if (selectedBefore !== coop) {
+      const selectedEvaluation = school.waitForResponse(r => r.url().endsWith('/matching/evaluate') && r.request().method() === 'POST');
+      await selectedDemand.selectOption(coop);
+      const selectedResponse = await selectedEvaluation; expect(selectedResponse.ok()).toBeTruthy(); first = await selectedResponse.json();
+    }
     await expect(matching.getByRole('button', { name: new RegExp(`^Đáp ứng\\s+${first.summary.matched}$`) })).toBeVisible();
     original = await (await student.request.get(`/api/v1/students/me/profile?termId=${term}`)).json();
     await saveSkills([]);
     const rerun = school.waitForResponse(r => r.url().endsWith('/matching/evaluate') && r.request().method() === 'POST');
-    await matching.getByRole('button', { name: 'Chạy lại Matching', exact: true }).click();
+    await matching.getByRole('button', { name: 'Tải lại nhu cầu', exact: true }).click();
     const nextResponse = await rerun; expect(nextResponse.ok()).toBeTruthy(); const next = await nextResponse.json();
     expect(next.summary.matched).toBe(first.summary.matched - 1);
     await expect(matching.getByRole('button', { name: new RegExp(`^Đáp ứng\\s+${next.summary.matched}$`) })).toBeVisible();
     await matching.getByRole('button', { name: new RegExp(`^Không đáp ứng\\s+${next.summary.notMatched}$`) }).click();
-    await expect(matching.locator('.matching-candidate')).not.toHaveCount(0);
+    await expect(matching.locator('.matching-table tbody tr')).not.toHaveCount(0);
     await matching.screenshot({ path: '../target/week3-matching-school.png', animations: 'disabled' });
     await student.setViewportSize({ width: 390, height: 844 });
     await expect(student.locator('#main-navigation')).not.toBeInViewport();
