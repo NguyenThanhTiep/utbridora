@@ -44,7 +44,9 @@ public class OperationsAccess {
     }
     public CaseRuntime.CaseRef readCase(Authentication auth,UUID id) {
         var c=cases.read(id);String user=actor(auth);
-        if(core.hasOrganization(auth,c.schoolOrgId().toString(),Role.SCHOOL_STAFF,"t3:workspace:read")) {
+        var attributes=org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+        boolean selected=attributes instanceof org.springframework.web.context.request.ServletRequestAttributes web && web.getRequest().getHeader("X-Context-Assignment-Id")!=null;
+        if(!selected && core.hasOrganization(auth,c.schoolOrgId().toString(),Role.SCHOOL_STAFF,"t3:workspace:read")) {
             school(auth,c.termId(),"t3:workspace:read");return c;
         }
         var a=authority.selectedGradeHr(auth);
@@ -68,7 +70,7 @@ public class OperationsAccess {
     public boolean owner(UUID user,CaseRuntime.CaseRef c) {
         var auth=core.currentSubject(user.toString()).orElse(null);if(auth==null) return false;
         if(core.hasOrganization(auth,c.schoolOrgId().toString(),Role.SCHOOL_STAFF,"t3:workspace:read")) {
-            try {schoolCase(auth,c,"t3:workspace:read");return true;} catch(vn.utbridora.auth.operations.OperationFailure denied) {if(denied.status>=500 || denied.status==401)throw denied;return false;}
+            try {schoolCase(auth,c,"t3:workspace:read");return true;} catch(vn.utbridora.auth.operations.OperationFailure denied) {if(denied.status>=500 || denied.status==401)throw denied;}
         }
         return authority.assignments(auth).stream().anyMatch(a->Set.of("HR","MENTOR").contains(a.kind()) && same(c,a.scope())
             && (a.scope().caseId()==null || c.caseId().toString().equals(a.scope().caseId()))

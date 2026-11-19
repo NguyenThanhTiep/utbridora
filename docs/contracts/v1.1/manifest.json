@@ -5225,7 +5225,7 @@
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/JdbcTaskCommentSession.java": "b154900b4aac0affd5a88c91a3b996fc5041e62d609b7e04d6efe96ac9e3b3fe",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/JdbcWeeklyReportSession.java": "c881e29aa47933d1ed66f393d1903541169f5a3a5b90e6de5b9d2c2bcec6fa41",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/JdbcWorkspaceSession.java": "bb59a403098081b0490c6784f7e3414906cfa6c44a58138aa966ce062112db5b",
-    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/OperationsAccess.java": "031a8e30f8f7482ff643db0f13aa4f1030be81b0afdac30403ca1063c1f9d022",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/OperationsAccess.java": "97cc005916f95bd82ab73857ee35a68d9cc53634cb43840fb8aa428a1f7a2707",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/OperationsConfiguration.java": "549d03b5fc92d573625458c6e3f315536c8d031acea0908413e771841db0e956",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/PlacementInbox.java": "b5240db01d4c03bd3220e887162cb44565768ed998dec6ef6cfae3abdd21647d",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/PlacementIntakeService.java": "43f47acea3162860add9fe1db1368d27485ad0f131f4ad1dee24d0cef1b81304",

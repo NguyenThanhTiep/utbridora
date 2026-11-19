@@ -245,6 +245,12 @@ class T3OperationsIT {
         jdbc.update("INSERT INTO internship_task_assignments(id,task_id,case_id,student_user_id,state,version) VALUES(?,?,?,?,'NEW',1)",id(),ownTask,ownCase,staff.id);
         var mixed=json.readTree(ok(login(staff,null).call("GET",query.substring(0,query.indexOf("&caseId=")),null,null,false),200)).get("content");assertEquals(2,mixed.size());
         for(var event:mixed){boolean own=event.get("taskId").asString().equals(ownTask);assertEquals(own,!event.get("assignmentId").isNull());assertEquals(own,!event.get("state").isNull());}
+        // Explicit HR mode stays usable when this same identity has no school workspace
+        // delegation. The reviewed coordinator ancestry still has its independent capability.
+        var enterpriseMembership=new Membership();enterpriseMembership.userId=staff.id;enterpriseMembership.organizationId=enterprise;enterpriseMembership.role=Role.ENTERPRISE;memberships.saveAndFlush(enterpriseMembership);
+        String staffHr=grant("HR",staff.id,coordinator.id,coordinatorGrant,null,null);
+        jdbc.update("DELETE FROM school_delegation_permissions WHERE assignment_id=? AND permission_code='t3:workspace:read'",sd);
+        var selectedHr=login(staff,staffHr);assertEquals(200,selectedHr.call("GET","/t3/school/issues?caseId="+c,null,null,false).statusCode());assertEquals(200,selectedHr.call("GET","/t3/cases/"+c,null,null,false).statusCode());
         var input=new vn.utbridora.auth.modules.internship.api.InternshipOperationsDtos.HiringInterestInput(0L,caseVersion(c),true,null);String key=id();
         assertEquals(403,h.call("PUT","/t3/cases/"+c+"/hiring-interest",input,key,false).statusCode());
         assertEquals(404,st.call("POST","/t3/cases/"+c+"/close",closing(c,"EARLY_TERMINATION"),id(),true).statusCode());

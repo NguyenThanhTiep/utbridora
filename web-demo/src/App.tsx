@@ -247,7 +247,7 @@ export default function App() {
           <button className="profile-shortcut" aria-label="Mở tài khoản của tôi" onClick={() => navigate('account')}><span className="avatar avatar-small">{initials(me.displayName)}</span><span>{me.displayName}</span><Icon name="chevron-down" size={14} /></button></div>
       </header>
       <main className="content" id="main-content">
-        <div className="page-header"><div><p className="section-kicker">{screen === 'account' || screen === 'mentor-invitations' ? 'KHÔNG GIAN CÁ NHÂN' : screen === 'demands' || screen === 'school' ? current.title : screen === 'internship' || screen === 'evaluations' ? 'QUẢN LÝ THỰC TẬP' : current.group === 'student' ? 'KHÔNG GIAN SINH VIÊN' : 'QUẢN TRỊ NỀN TẢNG'}</p>
+        <div className="page-header"><div><p className="section-kicker">{screen === 'account' || screen === 'mentor-invitations' ? 'KHÔNG GIAN CÁ NHÂN' : screen === 'demands' || screen === 'school' ? current.title : screen === 'internship' || screen === 'internship-operations' || screen === 'evaluations' ? 'QUẢN LÝ THỰC TẬP' : current.group === 'student' ? 'KHÔNG GIAN SINH VIÊN' : 'QUẢN TRỊ NỀN TẢNG'}</p>
           <h1 ref={heading} tabIndex={-1}>{current.title}</h1><p className="page-description">{current.description}</p></div>
           <span className="workspace-label"><span className="live-dot" />UT.Bridora</span></div>
         <Notice message={action.message} tone={action.error ? 'error' : 'info'} />
