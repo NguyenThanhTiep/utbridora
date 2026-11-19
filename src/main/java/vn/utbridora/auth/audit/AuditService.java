@@ -28,8 +28,8 @@ public class AuditService {
     }
     @Transactional
     public void taxonomyChanged(String actor,String id,String entityType,String operation,String skillCode,String taxonomyVersion) {
-        if(!java.util.Set.of("CATEGORY","SKILL","ALIAS").contains(entityType)
-            || !java.util.Set.of("CREATE","UPDATE","DEPRECATE","DELETE_ALIAS").contains(operation)
+        if(!java.util.Set.of("CATEGORY","SKILL","ALIAS","CATALOG").contains(entityType)
+            || !java.util.Set.of("CREATE","UPDATE","DEPRECATE","DELETE_ALIAS","REINDEX").contains(operation)
             || skillCode!=null && !skillCode.matches("[A-Z][A-Z0-9_]{0,63}")
             || taxonomyVersion==null || !taxonomyVersion.matches("skills-v[1-9][0-9]*")) throw new IllegalArgumentException("Invalid taxonomy audit metadata");
         var metadata=new java.util.LinkedHashMap<String,Object>();

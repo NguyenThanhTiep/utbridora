@@ -72,4 +72,9 @@ public final class TaxonomyContracts {
 
     public record MutationAck(String resourceId, long version, String changedAt) {
     }
+
+    public record TaxonomyReindexResult(String operationId, String status, int progressPercent,
+            int categoriesProcessed, int skillsProcessed, int aliasesProcessed,
+            int normalizedValuesChanged, String taxonomyVersion, String completedAt) {
+    }
 }

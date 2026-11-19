@@ -25,6 +25,7 @@ services:
       DB_URL: jdbc:mysql://mysql:3306/utbridora?connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true
       DB_USER: bridora
       DB_PASSWORD: ${DB_PASSWORD:?Run run-local.cmd first}
+      SPRING_FLYWAY_LOCATIONS: ${SPRING_FLYWAY_LOCATIONS:-classpath:db/migration}
       BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:?Set local admin email}
       BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:?Set local admin password}
       APP_PUBLIC_URL: http://localhost:${LOCAL_HTTP_PORT:-8088}

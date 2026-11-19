@@ -27,6 +27,10 @@ public class SkillTaxonomyController {
         try { access.requireEditor(actor(a));return Map.of("allowed",true); }
         catch(OperationFailure denied) { if(denied.status!=403) throw denied;return Map.of("allowed",false); }
     }
+    @PostMapping("/reindex")
+    public TaxonomyReindexResult reindex(Authentication a,@RequestHeader("Idempotency-Key") String key) {
+        return commands.reindex(actor(a),key);
+    }
     @GetMapping("/categories")
     public Page<CategoryDto> categories(Authentication a,@RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="25") int size) {
         return taxonomy.listCategories(actor(a),page,size);

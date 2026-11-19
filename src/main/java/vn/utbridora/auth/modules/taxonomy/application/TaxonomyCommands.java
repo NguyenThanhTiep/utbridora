@@ -37,6 +37,11 @@ public class TaxonomyCommands {
     public MutationAck deleteAlias(AppPrincipal a,String key,String code,String id,DeleteAlias request) {
         return execute(a,key,"ALIAS_DELETE",Map.of("code",code,"aliasId",id,"data",request),200,MutationAck.class,()->taxonomy.deleteAlias(a,code,id,request),MutationAck::resourceId);
     }
+    public TaxonomyReindexResult reindex(AppPrincipal a,String key) {
+        access.requireEditor(a);
+        return ledger.execute(new OperationLedger.Command(a.userId(),null,"TAXONOMY_REINDEX",key,Map.of("action","REINDEX"),200),
+                TaxonomyReindexResult.class,()->taxonomy.reindex(a),TaxonomyReindexResult::operationId);
+    }
     private <T> T execute(AppPrincipal actor,String key,String operation,Object payload,int status,Class<T> type,Supplier<T> effect,Function<T,String> reference) {
         access.requireEditor(actor);
         return ledger.execute(new OperationLedger.Command(actor.userId(),null,"TAXONOMY_"+operation,key,payload,status),type,effect,reference);

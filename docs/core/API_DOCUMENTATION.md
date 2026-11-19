@@ -62,3 +62,7 @@ Page thực tế có thể có thêm metadata Spring Data; client chỉ nên dù
 | 5xx | Hạ tầng/SMTP admin invite/audit lỗi; không hiển thị stacktrace, dùng X-Request-ID điều tra |
 
 429 chưa có limiter theo IP ở application; cần cấu hình và test gateway trước vận hành công khai. Forgot luôn phản hồi chung kể cả SMTP thất bại; hiện gửi mail đồng bộ, chưa có outbox/retry. Không tuyên bố chống enumeration theo timing đã hoàn tất.
+
+## Taxonomy reindex
+
+`POST /taxonomy/reindex` rebuilds the canonical normalized lookup values for categories, skills, and aliases in one transaction. It is synchronous: the request stays open until the work completes. The caller must have current taxonomy editor access and send `Idempotency-Key` as a UUID. The response reports `status`, `progressPercent`, processed counts, changed normalized-value count, resulting `taxonomyVersion`, operation ID, and completion time. A normalization collision returns HTTP 409 and leaves the catalog unchanged. Reindex is audited as `TAXONOMY_CHANGED` with operation `REINDEX`; a changed normalized value increments its row version and the catalog version.

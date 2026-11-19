@@ -1,6 +1,7 @@
 /* DEV08 đã tạo kiểu hiển thị cho cây danh mục kỹ năng và biểu mẫu quản lý. */
 .taxonomy-module { display: grid; gap: 20px; min-width: 0; }
 .taxonomy-summary { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.taxonomy-summary-actions { display: flex; align-items: center; gap: 12px; }
 .taxonomy-summary h1, .taxonomy-heading h2 { margin: 0; }
 .taxonomy-version { display: grid; gap: 4px; min-width: 150px; padding: 13px 16px; border: 1px solid #dcebea; border-radius: 12px; background: #f3faf9; }
 .taxonomy-version span { color: var(--muted); font-size: var(--text-xs); }
@@ -8,6 +9,19 @@
 .taxonomy-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, .82fr); align-items: start; gap: 20px; }
 .taxonomy-tree-panel, .taxonomy-side, .taxonomy-editor { min-width: 0; }
 .taxonomy-side { display: grid; gap: 20px; }
+.taxonomy-filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(140px, .4fr); align-items: end; gap: 12px; padding: 14px; margin: 0 0 14px; border: 1px solid #e7eef0; border-radius: 10px; background: #f8fbfb; }
+.taxonomy-filters label { margin: 0; }
+.taxonomy-search { min-width: 0; }
+.taxonomy-code { margin: -6px 0 16px; color: var(--muted); font-size: var(--text-sm); }
+.taxonomy-code strong { color: var(--brand-dark); font-family: "Cascadia Code", Consolas, monospace; }
+.taxonomy-editor-empty { min-height: 160px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
+.taxonomy-create-actions { display: flex; flex-wrap: wrap; gap: 9px; }
+.taxonomy-reindex-result { display: grid; gap: 9px; }
+.taxonomy-reindex-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.taxonomy-reindex-heading strong { color: var(--brand-dark); }
+.taxonomy-reindex-heading > span { color: var(--brand-dark); font-weight: 700; }
+.taxonomy-reindex-result progress { width: 100%; height: 10px; accent-color: #168c83; }
+.taxonomy-reindex-result p, .taxonomy-reindex-result small { margin: 0; color: var(--muted); }
 .taxonomy-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .taxonomy-tree { list-style: none; padding: 0; margin: 0; }
 .taxonomy-tree ul { list-style: none; padding: 0 0 0 22px; margin: 4px 0 4px 11px; border-left: 1px solid #dce7ea; }
@@ -33,6 +47,8 @@
 .taxonomy-resolver .section-description { margin-bottom: 12px; }
 .taxonomy-results { display: grid; gap: 8px; margin-top: 17px; }
 .taxonomy-results > div { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 9px; background: #fbfdfd; }
+.taxonomy-results > div > span { display: grid; gap: 2px; }
+.taxonomy-results small { color: var(--muted); font-size: var(--text-xs); }
 .taxonomy-results strong { color: var(--brand-dark); text-align: right; }
 @media (max-width: 900px) { .taxonomy-layout { grid-template-columns: 1fr; } }
-@media (max-width: 600px) { .taxonomy-summary { align-items: flex-start; flex-direction: column; } .taxonomy-version { width: 100%; } .taxonomy-heading { align-items: flex-start; } .taxonomy-results > div { align-items: flex-start; flex-direction: column; } .taxonomy-results strong { text-align: left; } }
+@media (max-width: 600px) { .taxonomy-summary { align-items: flex-start; flex-direction: column; } .taxonomy-summary-actions { width: 100%; align-items: stretch; flex-direction: column; } .taxonomy-version { width: 100%; } .taxonomy-heading { align-items: flex-start; } .taxonomy-filters { grid-template-columns: 1fr; } .taxonomy-results > div { align-items: flex-start; flex-direction: column; } .taxonomy-results strong { text-align: left; } }

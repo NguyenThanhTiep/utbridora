@@ -111,6 +111,55 @@ public class SkillTaxonomyService implements SkillTaxonomyPort {
     }
 
     @Transactional
+    public TaxonomyReindexResult reindex(AppPrincipal actor) {
+        access.requireEditor(actor);
+        TaxonomyCatalogState state = lockState();
+        var categoryRows = categories.findAllByOrderByCategoryCodeAsc();
+        var skillRows = skills.findAll();
+        var aliasRows = aliases.findAll();
+
+        Set<String> categoryKeys = new HashSet<>();
+        for (SkillCategory category : categoryRows) {
+            String key = SkillNameNormalizer.normalize(category.name);
+            if (!categoryKeys.add(key)) throw new IllegalStateException("Category names collide after normalization");
+        }
+        Set<String> skillKeys = new HashSet<>();
+        for (Skill skill : skillRows) {
+            String key = SkillNameNormalizer.normalize(skill.name);
+            if (!skillKeys.add(key)) throw new IllegalStateException("Skill names collide after normalization");
+        }
+        for (SkillAlias alias : aliasRows) {
+            String key = SkillNameNormalizer.normalize(alias.alias);
+            if (!skillKeys.add(key)) throw new IllegalStateException("Skill or alias names collide after normalization");
+        }
+
+        int changed = 0;
+        for (SkillCategory category : categoryRows) {
+            String key = SkillNameNormalizer.normalize(category.name);
+            if (!key.equals(category.normalizedName)) { category.normalizedName = key; category.version = nextVersion(category.version); changed++; }
+        }
+        for (Skill skill : skillRows) {
+            String key = SkillNameNormalizer.normalize(skill.name);
+            if (!key.equals(skill.normalizedName)) { skill.normalizedName = key; skill.version = nextVersion(skill.version); changed++; }
+        }
+        for (SkillAlias alias : aliasRows) {
+            String key = SkillNameNormalizer.normalize(alias.alias);
+            if (!key.equals(alias.normalizedAlias)) { alias.normalizedAlias = key; alias.version = nextVersion(alias.version); changed++; }
+        }
+        if (changed > 0) {
+            categories.saveAll(categoryRows);
+            skills.saveAll(skillRows);
+            aliases.saveAll(aliasRows);
+            bump(state);
+        }
+        String currentVersion = "skills-v" + state.taxonomyVersion;
+        String operationId = UUID.randomUUID().toString();
+        audit.taxonomyChanged(actor.userId(), operationId, "CATALOG", "REINDEX", null, currentVersion);
+        return new TaxonomyReindexResult(operationId, "COMPLETED", 100, categoryRows.size(), skillRows.size(),
+                aliasRows.size(), changed, currentVersion, Instant.now().toString());
+    }
+
+    @Transactional
     CategoryDto createCategory(AppPrincipal actor, CreateCategory request) {
         requireActor(actor);
         validateCode(request.categoryCode(), "categoryCode");
@@ -283,6 +332,11 @@ public class SkillTaxonomyService implements SkillTaxonomyPort {
         state.taxonomyVersion++;
         state.changedAt = Instant.now();
         catalogState.save(state);
+    }
+
+    private long nextVersion(long current) {
+        if (current >= 9_007_199_254_740_991L) throw new IllegalStateException("Taxonomy entry version exhausted");
+        return current + 1;
     }
 
     private SkillCategory category(String code) {

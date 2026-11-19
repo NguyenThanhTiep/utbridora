@@ -51,7 +51,7 @@ public class SecurityConfig {
                .requestMatchers(HttpMethod.POST,"/api/v1/auth/login","/api/v1/auth/password/forgot",
                        "/api/v1/auth/password/reset","/api/v1/auth/invitations/accept").permitAll()
                .requestMatchers(HttpMethod.GET,"/api/v1/taxonomy/**").authenticated()
-               .requestMatchers(HttpMethod.POST,"/api/v1/taxonomy/categories","/api/v1/taxonomy/skills","/api/v1/taxonomy/skills/resolve","/api/v1/taxonomy/skills/*/aliases").authenticated()
+               .requestMatchers(HttpMethod.POST,"/api/v1/taxonomy/categories","/api/v1/taxonomy/skills","/api/v1/taxonomy/skills/resolve","/api/v1/taxonomy/skills/*/aliases","/api/v1/taxonomy/reindex").authenticated()
                .requestMatchers(HttpMethod.PATCH,"/api/v1/taxonomy/categories/*","/api/v1/taxonomy/skills/*").authenticated()
                .requestMatchers(HttpMethod.DELETE,"/api/v1/taxonomy/skills/*/aliases/*").authenticated()
                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
