@@ -57,7 +57,7 @@ public class DemandService implements DemandCriteriaPort {
         Instant now=Instant.now();
         StoredDemand old=find(demandId,org);
         if(!old.state().equals("DRAFT") || old.deletedAt()!=null) throw new DemandFailure(409,"DEMAND_LOCKED","Nhu cầu hiện không cho phép chỉnh sửa.");
-        if(!repository.lifecycleUnlocked(demandId)) throw new DemandFailure(409,"DEMAND_LOCKED","Nhu cầu đang có hợp tác hoặc tiếp nhận hiệu lực.");
+        if(!repository.draftEditable(demandId)) throw new DemandFailure(409,"DEMAND_LOCKED","Nhu cầu đang có hợp tác hoặc tiếp nhận hiệu lực.");
         if(old.version()!=expected) throw new DemandFailure(409,"VERSION_CONFLICT","Dữ liệu đã thay đổi, vui lòng tải lại.");
         if(!old.data().schoolOrgId().equals(input.schoolOrgId()) || !old.data().termId().equals(input.termId()))
             throw new DemandFailure(422,"INVALID_CRITERIA","Không được đổi trường hoặc kỳ của nhu cầu đã tạo.");

@@ -47,7 +47,12 @@ public class DemandRepository {
     }
     /** Caller holds the demand row, the common fence for lifecycle, submit and nomination. */
     public boolean lifecycleUnlocked(String id) {
-        if (!jdbc.queryForList("SELECT id FROM cooperations WHERE demand_id=? AND state NOT IN ('DRAFT','REJECTED') FOR UPDATE",String.class,id).isEmpty()) return false;
+        return lifecycleUnlocked(id,false);
+    }
+    /** NEEDS_CHANGES explicitly returns the demand to DRAFT for the enterprise to revise. */
+    public boolean draftEditable(String id) {return lifecycleUnlocked(id,true);}
+    private boolean lifecycleUnlocked(String id,boolean editing) {
+        if (!jdbc.queryForList("SELECT id FROM cooperations WHERE demand_id=? AND state NOT IN ('DRAFT','REJECTED'"+(editing?",'NEEDS_CHANGES'":"")+") FOR UPDATE",String.class,id).isEmpty()) return false;
         if (!jdbc.queryForList("SELECT p.id FROM placements p JOIN cooperations c ON c.id=p.cooperation_id WHERE c.demand_id=? AND p.state<>'CANCELLED' FOR UPDATE",String.class,id).isEmpty()) return false;
         return jdbc.queryForList("SELECT i.id FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id JOIN cooperations c ON c.id=b.cooperation_id WHERE c.demand_id=? AND i.state NOT IN ('DECLINED','EXPIRED','REVOKED') FOR UPDATE",String.class,id).isEmpty();
     }

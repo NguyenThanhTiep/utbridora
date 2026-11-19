@@ -74,6 +74,7 @@ public class SecurityConfig {
                .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/demand-references/schools","/api/v1/enterprise/demand-references/terms","/api/v1/enterprise/demand-references/academic-catalog").authenticated()
                .requestMatchers(HttpMethod.POST,"/api/v1/enterprise/demands").authenticated()
                .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/demands/{id}").authenticated()
+               .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/demands/*/reopen","/api/v1/enterprise/demands/*/restore").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/verifications","/api/v1/enterprise/verifications/*","/api/v1/school/verifications","/api/v1/school/verifications/*").authenticated()
                .requestMatchers(HttpMethod.POST,"/api/v1/enterprise/verifications").authenticated()
                .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/verifications/*","/api/v1/enterprise/verifications/*/submit","/api/v1/school/verifications/*/decision").authenticated()
