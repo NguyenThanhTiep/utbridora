@@ -137,9 +137,22 @@ class T3OperationsIT {
         jdbc.update("UPDATE placements SET school_org_id=?,enterprise_org_id=?,term_id=? WHERE id=?",foreignSchool,foreignEnterprise,foreignTerm,p);consume(publish(p));return p;
     }
     HttpResponse<String> upload(Browser browser,String cohort,String csv,long version,String key) throws Exception {
-        String boundary="synthetic-"+id();String body="--"+boundary+"\r\nContent-Disposition: form-data; name=\"expectedCohortVersion\"\r\n\r\n"+version+"\r\n--"+boundary+"\r\nContent-Disposition: form-data; name=\"file\"; filename=\"placements.csv\"\r\nContent-Type: text/csv\r\n\r\n"+csv+"\r\n--"+boundary+"--\r\n";
-        var request=HttpRequest.newBuilder(URI.create("http://localhost:"+port+"/api/v1/t3/cohorts/"+cohort+"/placements/preview")).timeout(Duration.ofSeconds(90)).header("Content-Type","multipart/form-data; boundary="+boundary).header("X-CSRF-TOKEN",browser.csrf).header("X-Context-Assignment-Id",browser.assignment).header("Idempotency-Key",key).POST(HttpRequest.BodyPublishers.ofString(body));
+        return uploadFile(browser,cohort,csv.getBytes(java.nio.charset.StandardCharsets.UTF_8),"placements.csv","text/csv",version,key);
+    }
+    HttpResponse<String> uploadFile(Browser browser,String cohort,byte[] bytes,String name,String type,long version,String key) throws Exception {
+        String boundary="synthetic-"+id();var body=new java.io.ByteArrayOutputStream();
+        body.write(("--"+boundary+"\r\nContent-Disposition: form-data; name=\"expectedCohortVersion\"\r\n\r\n"+version+"\r\n--"+boundary+"\r\nContent-Disposition: form-data; name=\"file\"; filename=\""+name+"\"\r\nContent-Type: "+type+"\r\n\r\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));body.write(bytes);body.write(("\r\n--"+boundary+"--\r\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        var request=HttpRequest.newBuilder(URI.create("http://localhost:"+port+"/api/v1/t3/cohorts/"+cohort+"/placements/preview")).timeout(Duration.ofSeconds(90)).header("Content-Type","multipart/form-data; boundary="+boundary).header("X-CSRF-TOKEN",browser.csrf).header("X-Context-Assignment-Id",browser.assignment).header("Idempotency-Key",key).POST(HttpRequest.BodyPublishers.ofByteArray(body.toByteArray()));
         return browser.client.send(request.build(),HttpResponse.BodyHandlers.ofString());
+    }
+    @Test void scannedXlsxPreservesTextIdsAndRejectsNumericAndFormulaIdentifiers() throws Exception {
+        schoolCapabilities();consume(approved);var b=login(hr,hrGrant);String cohort=cohort(b);
+        var parts=new LinkedHashMap<String,String>();parts.put("[Content_Types].xml","<Types/>");parts.put("_rels/.rels","<Relationships/>");parts.put("xl/workbook.xml","<workbook><sheets><sheet name=\"Placements\" sheetId=\"1\"/></sheets></workbook>");
+        parts.put("xl/worksheets/sheet1.xml","<worksheet><sheetData><row r=\"1\"><c r=\"A1\" t=\"inlineStr\"><is><t>placementId</t></is></c></row><row r=\"2\"><c r=\"A2\" t=\"inlineStr\"><is><t>"+placement+"</t></is></c></row><row r=\"3\"><c r=\"A3\"><v>123</v></c></row><row r=\"4\"><c r=\"A4\" t=\"str\"><f>EXTERNAL()</f><v>"+placement+"</v></c></row></sheetData></worksheet>");
+        var bytes=new java.io.ByteArrayOutputStream();try(var zip=new java.util.zip.ZipOutputStream(bytes)){for(var part:parts.entrySet()){zip.putNextEntry(new java.util.zip.ZipEntry(part.getKey()));zip.write(part.getValue().getBytes(java.nio.charset.StandardCharsets.UTF_8));zip.closeEntry();}}
+        var response=uploadFile(b,cohort,bytes.toByteArray(),"placements.xlsx","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",1,id());var rows=json.readTree(ok(response,200)).get("rows");
+        assertEquals(placement,rows.get(0).get("placementId").asString());for(int i=1;i<3;i++){assertEquals("INVALID_IDENTIFIER",rows.get(i).get("errorCode").asString());assertTrue(rows.get(i).get("placementId").isNull());}
+        assertEquals(0,count("internship_cohort_cases","cohort_id",cohort));
     }
     @Test void scannedPlacementPreviewIsScopeBoundAndFortyCasesBecomeFourGroupsWithoutNewIdentities() throws Exception {
         schoolCapabilities();consume(approved);var b=login(hr,hrGrant);String cohort=cohort(b);List<String> ids=new ArrayList<>(List.of(placement));
@@ -212,6 +225,22 @@ class T3OperationsIT {
         assertEquals("CANCELLED",jdbc.queryForObject("SELECT state FROM placements WHERE id=?",String.class,placement));assertEquals(1,count("placement_history","placement_id",placement));assertEquals(1,count("case_closed_inbox","event_id",event.eventId()));
         assertEquals(409,s.call("POST","/t3/cases/"+c+"/close",closing(c,"EARLY_TERMINATION"),id(),true).statusCode());
         var cancel=json.readValue(jdbc.queryForObject("SELECT payload_json FROM placement_outbox WHERE placement_id=? AND event_type='PlacementCancelled'",String.class,placement),PlacementLifecycleEvent.class);consume(cancel);assertEquals(1,count("internship_case_closed_outbox","case_id",c));
+    }
+    @Test void calendarAndInterestCommandsCannotBypassOwnerSourceOrClosedWireGuards() throws Exception {
+        schoolCapabilities();String c=readyCase();var h=login(hr,hrGrant);String cohort=cohort(h),g=group(h,cohort,List.of(placement));String mg=grant("MENTOR",mentor.id,hr.id,hrGrant,null,g);var m=login(mentor,mg);var s=login(staff,null);var st=login(student,null);
+        String task=field(ok(m.call("POST","/t3/tasks",task(g,List.of(c)),id(),true),201),"taskId");
+        String query="/t3/calendar?from="+Instant.now().minusSeconds(60)+"&until="+Instant.now().plusSeconds(172800)+"&caseId="+c;
+        var schoolEvents=json.readTree(ok(s.call("GET",query,null,null,false),200)).get("content");assertEquals(1,schoolEvents.size());assertEquals(task,schoolEvents.get(0).get("taskId").asString());assertTrue(schoolEvents.get(0).get("assignmentId").isNull());
+        var ownEvents=json.readTree(ok(st.call("GET",query,null,null,false),200)).get("content");assertEquals(1,ownEvents.size());assertEquals("NEW",ownEvents.get(0).get("state").asString());assertFalse(ownEvents.get(0).get("assignmentId").isNull());
+        assertEquals(404,login(otherStudent,null).call("GET",query,null,null,false).statusCode());assertEquals(422,s.call("GET","/t3/calendar?from=2026-01-01T00:00:00Z&until=2027-01-01T00:00:00Z",null,null,false).statusCode());
+        var input=new vn.utbridora.auth.modules.internship.api.InternshipOperationsDtos.HiringInterestInput(0L,caseVersion(c),true,null);String key=id();
+        assertEquals(403,h.call("PUT","/t3/cases/"+c+"/hiring-interest",input,key,false).statusCode());
+        assertEquals(404,st.call("POST","/t3/cases/"+c+"/close",closing(c,"EARLY_TERMINATION"),id(),true).statusCode());
+        ok(h.call("PUT","/t3/cases/"+c+"/hiring-interest",input,key,true),200);
+        var changed=new vn.utbridora.auth.modules.internship.api.InternshipOperationsDtos.HiringInterestInput(0L,caseVersion(c),false,null);
+        assertEquals(409,h.call("PUT","/t3/cases/"+c+"/hiring-interest",changed,key,true).statusCode());
+        jdbc.update("UPDATE placements SET state='CANCELLED',version=version+1,cancelled_at=UTC_TIMESTAMP(6) WHERE id=?",placement);
+        assertEquals(409,h.call("PUT","/t3/cases/"+c+"/hiring-interest",new vn.utbridora.auth.modules.internship.api.InternshipOperationsDtos.HiringInterestInput(1L,caseVersion(c),false,null),id(),true).statusCode());assertEquals(1,count("internship_hiring_interest_history","case_id",c));
     }
     @Test void normalClosureRequiresEveryWeekCurrentEvaluationAndAllTasksThenSynchronizesCompletion() throws Exception {
         schoolCapabilities();String c=readyCase();var end=LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")).with(java.time.temporal.TemporalAdjusters.previous(java.time.DayOfWeek.MONDAY)).minusDays(1);var week=end.minusDays(6);

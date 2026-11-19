@@ -5186,7 +5186,7 @@
     "src/main/java/vn/utbridora/auth/modules/internship/api/WorkspaceController.java": "e8501a8544c1f61de5da18d63ab2dbd5a7816875d855d179c44612345901a179",
     "src/main/java/vn/utbridora/auth/modules/internship/api/WorkspaceErrorMapping.java": "51a1729f70c9ed0857cbb9ba3b39c0502a899ab20736955fb1de576971af06ed",
     "src/main/java/vn/utbridora/auth/modules/internship/api/WorkspaceErrors.java": "a95c4213b9d32e1fca85da23f5532804674552553dbf98abd7b90bcddac53b4d",
-    "src/main/java/vn/utbridora/auth/modules/internship/api/WorkspaceTaskController.java": "4a237d79f0c158aee30d8713717bf4735293912c0c88653ff2ffaac52b46406b",
+    "src/main/java/vn/utbridora/auth/modules/internship/api/WorkspaceTaskController.java": "9a4aa17a69982e591b5d3af009151c7bbf353cd82d9a4af9596cf16453c526e0",
     "src/main/java/vn/utbridora/auth/modules/internship/application/EvaluationService.java": "566a7d34609a72a96dbb10cbeb1a5a0de87359005a2848a5fd5fb720f452bfc8",
     "src/main/java/vn/utbridora/auth/modules/internship/application/GradeService.java": "983dbba995dbc33abc0f6e336d0cbeea9c561c033ee0cfa545179b2224ab1395",
     "src/main/java/vn/utbridora/auth/modules/internship/application/SubmissionPorts.java": "92739b01909455d40f654f798d4e8f05cf0a117db1665246e3c91a153756302f",
