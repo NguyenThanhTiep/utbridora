@@ -81,12 +81,20 @@ jobs:
         working-directory: web-demo
       - name: Install Chromium and system dependencies
         run: |
-          # Ubuntu mirrors occasionally return HTTP 503. Retry setup, never skip browser tests.
-          for attempt in 1 2 3; do
-            if npx playwright install --with-deps chromium; then exit 0; fi
-            if [ "$attempt" -lt 3 ]; then sleep 10; fi
-          done
-          exit 1
+          retry() {
+            for attempt in 1 2 3; do
+              if "$@"; then return 0; fi
+              if [ "$attempt" -lt 3 ]; then sleep 10; fi
+            done
+            return 1
+          }
+          retry npx playwright install chromium
+          # The pinned hosted image already supplies the runtime libraries. Verify this
+          # with real Chromium; only invoke APT when that preflight actually needs it.
+          if ! node scripts/ci-browser-ready.cjs; then
+            retry npx playwright install-deps chromium
+            node scripts/ci-browser-ready.cjs
+          fi
         working-directory: web-demo
       # Compile tests without running Surefire again. Each runner keeps IT forks sequential.
       - run: >-
