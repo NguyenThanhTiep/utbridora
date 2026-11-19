@@ -29,6 +29,11 @@ public class RosterImportQuarantine {
         @Override public void close() {staged.close();}
     }
     public ScannedRosterFile prepare(MultipartFile file) {
+        return prepare(file,5000);
+    }
+    /** Same real scanner and private staging boundary; T3 uses a smaller accepted row limit. */
+    public ScannedRosterFile preparePlacements(MultipartFile file) {return prepare(file,1000);}
+    private ScannedRosterFile prepare(MultipartFile file,int maximumRows) {
         if(file==null || file.isEmpty()) throw failure(422,"FILE_STRUCTURE_INVALID");
         if(file.getSize()>5L*1024*1024) throw failure(413,"FILE_TOO_LARGE");
         String name=FileUploadPolicy.name(file.getOriginalFilename()),type=file.getContentType();
@@ -37,7 +42,12 @@ public class RosterImportQuarantine {
         catch(IOException unavailable) {throw failure(503,"FILE_STORAGE_UNAVAILABLE");}
         try {
             byte[] bytes;try(var input=staged.open()) {bytes=input.readNBytes(5*1024*1024+1);}
-            var table=TabularFileReader.read(bytes,name,type,5000);
+            TabularFileReader.Table table;
+            try {table=TabularFileReader.read(bytes,name,type,maximumRows);}
+            catch(vn.utbridora.auth.operations.OperationFailure invalid) {
+                if(maximumRows==1000 && invalid.code.equals("IMPORT_ROW_LIMIT_EXCEEDED")) throw failure(422,"PLACEMENT_ROW_LIMIT_EXCEEDED");
+                throw invalid;
+            }
             long[] backoff={0,5000,30000,120000};
             for(int attempt=0;attempt<4;attempt++) {
                 if(attempt>0) pause.sleep(backoff[attempt]);

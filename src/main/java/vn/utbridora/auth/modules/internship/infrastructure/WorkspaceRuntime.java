@@ -40,11 +40,12 @@ public class WorkspaceRuntime {
     private final WorkspaceAuthority authority;private final CaseRuntime cases;private final PlacementReadPort placements;
     private final AuthorizationPolicy core;private final SchoolDelegationAccess delegations;private final OperationLedger ledger;
     private final vn.utbridora.auth.audit.AuditService audit;
+    private final PlacementIntakeService intakePreview;
     private final JsonMapper json=JsonMapper.builder().build();
     public WorkspaceRuntime(JdbcTemplate jdbc,JdbcWorkspaceSession session,WorkspaceService workspace,WorkspaceAuthority authority,
-            CaseRuntime cases,PlacementReadPort placements,AuthorizationPolicy core,SchoolDelegationAccess delegations,OperationLedger ledger,vn.utbridora.auth.audit.AuditService audit) {
+            CaseRuntime cases,PlacementReadPort placements,AuthorizationPolicy core,SchoolDelegationAccess delegations,OperationLedger ledger,vn.utbridora.auth.audit.AuditService audit,PlacementIntakeService intakePreview) {
         this.jdbc=jdbc;this.session=session;this.workspace=workspace;this.authority=authority;this.cases=cases;
-        this.placements=placements;this.core=core;this.delegations=delegations;this.ledger=ledger;this.audit=audit;
+        this.placements=placements;this.core=core;this.delegations=delegations;this.ledger=ledger;this.audit=audit;this.intakePreview=intakePreview;
     }
     @Transactional public CohortDto createCohort(Authentication actor,String key,CreateCohort input) {
         var selected=authority.selected(actor);
@@ -83,9 +84,9 @@ public class WorkspaceRuntime {
     @Transactional public BatchResult intake(Authentication actor,UUID cohortId,String key,BatchCases input) {
         requireKind(actor,"HR");
         Cohort cohort=cohort(cohortId);authority.requireHr(actor,cohort.scope(),null);
-        if(input.previewId()!=null || input.fileHash()!=null) throw new OperationFailure(422,"BUSINESS_VALIDATION","Chỉ nhận danh sách ID trực tiếp ở bước này.",null);
         return ledger.execute(command(actor,cohort.scope(),"T3_COHORT_INTAKE",key,Map.of("cohortId",cohortId,"request",input),200),BatchResult.class,()->{
             requireVersion(cohort,input.expectedVersion());List<BatchItem> items=new ArrayList<>();
+            intakePreview.requireSelection(actor,cohort,input.previewId(),input.fileHash(),input.placementIds());
             for(UUID placementId:input.placementIds().stream().sorted().toList()) {
                 var p=placements.readCurrentForGuard(placementId.toString()).orElse(null);
                 var ids=jdbc.queryForList("SELECT id FROM internship_cases WHERE placement_id=?",String.class,placementId.toString());

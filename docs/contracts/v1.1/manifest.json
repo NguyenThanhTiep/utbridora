@@ -564,6 +564,17 @@
       "owner": "T1",
       "catalogImplemented": false,
       "businessGuardImplemented": null
+    },
+    {
+      "code": "t3:hiring_interest:manage",
+      "legacy": "None",
+      "action": "Record pre-terminal hiring interest",
+      "roles": "ENTERPRISE",
+      "scope": "Current HR assignment for exact case; active source; expected versions",
+      "grantor": "HR",
+      "owner": "T3",
+      "catalogImplemented": false,
+      "businessGuardImplemented": null
     }
   ],
   "permissionAliases": [
@@ -2084,6 +2095,24 @@
       ],
       "producer": "T1",
       "enumImplemented": false
+    },
+    {
+      "action": "HIRING_INTEREST_CHANGED",
+      "legacy": "None",
+      "results": [
+        "SUCCESS"
+      ],
+      "resourceType": "hiring_interest",
+      "metadata": [
+        "caseId",
+        "enterpriseOrgId",
+        "schoolOrgId",
+        "termId",
+        "version",
+        "interested"
+      ],
+      "producer": "T3",
+      "enumImplemented": false
     }
   ],
   "auditAliases": [
@@ -3462,6 +3491,22 @@
       "contractSection": "CP-AUTH1/core OpenAPI",
       "status": "CORE_IMPLEMENTED",
       "evidenceLine": "docs/openapi.json: PATCH /api/v1/demo/admin/organizations/{id}/verify"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/t3/cases/{caseId}/hiring-interest",
+      "contractSection": "FR-27 approved extension",
+      "status": "USER_APPROVED_EXTENSION",
+      "requestSchema": null,
+      "responseSchema": "HiringInterestDto"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/t3/cases/{caseId}/hiring-interest",
+      "contractSection": "FR-27 approved extension",
+      "status": "USER_APPROVED_EXTENSION",
+      "requestSchema": "HiringInterestInput",
+      "responseSchema": "HiringInterestDto"
     }
   ],
   "ports": [
@@ -4986,13 +5031,13 @@
     "src/main/java/vn/utbridora/auth/api/AuthController.java": "bb0368df195a01827522be019fb183b9dff91530c0df9286c9989cf8b4d9cc87",
     "src/main/java/vn/utbridora/auth/api/DemoOrganizationVerificationController.java": "63bb6dff43258261edd682218548672ecb22189018bb1d1d9200a83e8aedf688",
     "src/main/java/vn/utbridora/auth/api/DemoScopeController.java": "cc9f4f48b67640582df3b7cfa0512c75e52a2b3862e2cc273eaf85ef465dc628",
-    "src/main/java/vn/utbridora/auth/audit/AuditAction.java": "d30e04f0c4ebafc8f4ec620e4c9600591c2349a9f103a38dd4958b2d9f845bd4",
+    "src/main/java/vn/utbridora/auth/audit/AuditAction.java": "3824f09d517a42b9dd87a024faa807a8ecac83e3a890a122dedc98975701c98d",
     "src/main/java/vn/utbridora/auth/audit/AuditLog.java": "2f5549c5155cdc582a798757e00507c84efbedc5054f803a65f55acdb4dc40bc",
     "src/main/java/vn/utbridora/auth/audit/AuditLogView.java": "1fbd804b7ee65b23810c25edf454a8070d052267a83257ed3891800910d1ce90",
     "src/main/java/vn/utbridora/auth/audit/AuditRepository.java": "54374400a410a150b54b6527be0b85aed27f62ab7aaa9224d8f0c82ad07bf5df",
     "src/main/java/vn/utbridora/auth/audit/AuditService.java": "7e7d9d0b2d60f72b36466f1b15a7f25b0a694bd2afb515479a06c94b019a71c1",
     "src/main/java/vn/utbridora/auth/audit/RequestIdFilter.java": "f81047b6fd1e918a5936885f60dc3c964f025dcc51d55cf1d310cc13152ae59d",
-    "src/main/java/vn/utbridora/auth/audit/WorkflowAuditRegistry.java": "e4fa21ce111ef2c0d849ed988a7f9e252366905f44cdd41c313ad600cb9abdcd",
+    "src/main/java/vn/utbridora/auth/audit/WorkflowAuditRegistry.java": "413ae9cb445d9beda7d09ddf927cce9ec7d458e1d9cb5cd1eaab987662e958a7",
     "src/main/java/vn/utbridora/auth/authorization/AccountSecurityPort.java": "d67cfdad91268f9277b2818e1e64f459f4a6fcf8a1cd805456a51734c06ad152",
     "src/main/java/vn/utbridora/auth/authorization/AccountSecurityService.java": "d42ee715c5dbb8647d0baf37f4fc0d821d1b86b485ae2b7f1ad9d4018482b756",
     "src/main/java/vn/utbridora/auth/authorization/AdministrationGuard.java": "72a6bf000b4c1c5fd232be320d6c0c2b061b9ff03124a6512227885fbb31046b",
@@ -5016,9 +5061,12 @@
     "src/main/java/vn/utbridora/auth/contracts/ActorContext.java": "b96666fad761c1b6843f38a28e30b34356b756a771b42a1a2e256cf807d2729e",
     "src/main/java/vn/utbridora/auth/contracts/files/FileReadPort.java": "566da263f0ca69a81f45dfefa010a8ea5e2a5362a34ce940124e1bffbacb0e46",
     "src/main/java/vn/utbridora/auth/contracts/onboarding/AccountProvisioningPort.java": "76e35e03bf66a5abebe2d25f07c7e965021fdf017361b4366ca27f78462bf7ab",
+    "src/main/java/vn/utbridora/auth/contracts/placement/CaseClosedConsumer.java": "397c5545fff92b5499e0c5a0a62dae1bba73721758b016e5dfc33156dd47d130",
+    "src/main/java/vn/utbridora/auth/contracts/placement/CaseClosedEvent.java": "c5da7cae5c25bf5471db7ba1b53e08b91517139df8a667b3d45cdb37c4a69c61",
     "src/main/java/vn/utbridora/auth/contracts/placement/EventConsumeResult.java": "eaf0e29c6870103b044813553463bea54144adb416ee7dbfda18317870bd3b87",
+    "src/main/java/vn/utbridora/auth/contracts/placement/InternshipCaseReadPort.java": "23b1785d3a0b9f2ab089ee8eb5ea1c1e0328bce38a8d965bf2a64749e9bb8319",
     "src/main/java/vn/utbridora/auth/contracts/placement/PlacementLifecycleEvent.java": "5edf73e45d0bdae4465a157847b7d7bd3674d77d564d67c012a8dd966ee3fafe",
-    "src/main/java/vn/utbridora/auth/contracts/placement/PlacementReadPort.java": "e720a482ef2186ee1edaf214678a6e6b8cc523dfc0e50c5173c3cce5450801d6",
+    "src/main/java/vn/utbridora/auth/contracts/placement/PlacementReadPort.java": "975fc36d5d200bdcbd191661bd12110a8bc19d0173008b070389b3256d45b3d9",
     "src/main/java/vn/utbridora/auth/contracts/placement/TrustedEventContext.java": "657dea1985dfa498e08ae34a0d71158e9d5f55cc06d00db434adb72ae363c3fa",
     "src/main/java/vn/utbridora/auth/contracts/profile/ProfileAccessPort.java": "e1cf1fdf527646539f8bbb163a0673933ccdd36d86d0262e9394fb6b2d457def",
     "src/main/java/vn/utbridora/auth/core/AccountLifecycleService.java": "6f9b9c7e488a0368b7b06b6bd3220e14889c0fb8b7a1e3b830a4c748ebdd0433",
@@ -5045,7 +5093,7 @@
     "src/main/java/vn/utbridora/auth/files/FileStorage.java": "3d4cc94fb39a135f4b0de1fbb74f9ac7a70ef83f1a9091383e211bf3646166d6",
     "src/main/java/vn/utbridora/auth/files/FileUploadPolicy.java": "35933889a8ac142ae4718ce58de16e6efc9a14bc297c0394e770badd70a6435d",
     "src/main/java/vn/utbridora/auth/files/PrivateFileStorage.java": "ab961044353f4d19eafd0eb589a47eb6b4c91a0cf15de7cc0f7ca26e6181ae9f",
-    "src/main/java/vn/utbridora/auth/files/RosterImportQuarantine.java": "11d771367f120bab8e44389fa5f0739bc39b86b53af27295dd983b68ff1665e5",
+    "src/main/java/vn/utbridora/auth/files/RosterImportQuarantine.java": "8f98fd08b419f50159747509df17920d947e566ed5ca162b33c141412309b127",
     "src/main/java/vn/utbridora/auth/files/TabularFileReader.java": "c7baab23b74ab6577daf0bc461e1bb9713a42d2bbc5861c7d73fea6876109b1f",
     "src/main/java/vn/utbridora/auth/modules/cooperation/api/CooperationController.java": "65cc7e32195eb8f043b15c0a5d90a42edc88776fb400ac140418458637d501a5",
     "src/main/java/vn/utbridora/auth/modules/cooperation/api/CooperationDtos.java": "43b098388214e18d17faf189ef77128d8c862b6017e3ac82462cd0598b3d9c7b",
@@ -5061,11 +5109,12 @@
     "src/main/java/vn/utbridora/auth/modules/cooperation/api/SchoolSharingPolicyController.java": "f2473929577ee8d1ec86194a74375d4619ce8341b21c2639c5236fa447c73ec7",
     "src/main/java/vn/utbridora/auth/modules/cooperation/api/VerificationController.java": "e0968123e6eafc01b4f292aee7234b3d10765a868247aed98a75b55c6f90d1af",
     "src/main/java/vn/utbridora/auth/modules/cooperation/api/VerificationErrors.java": "296337704a97a8ad3e02cfe542ba59557980810352a576251b7a0a10f7278a37",
+    "src/main/java/vn/utbridora/auth/modules/cooperation/application/CaseClosedHandler.java": "32287e4268a1b3ddba2491bd1df952290abb698b5a912c1ea601bf134f167c17",
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/CooperationService.java": "4d9d685cbbb472691dffa94dc09c85826c191084177b34ff5aaa6984cf7b0cf9",
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/DemandReferenceService.java": "cae603297ca4cc1a3050d97f70a8c1dd107bb5a76ba71db5dcfe9b301037aa69",
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/DemandService.java": "43b07a21492c3070004d80a2927b7a423f046d83313853284c1368c050f1534f",
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/PlacementActivationWorker.java": "4eafc4f0fea1858b49efa7461ddf4c1ea36caa3d301e579ba3e0eaede2238e5e",
-    "src/main/java/vn/utbridora/auth/modules/cooperation/application/PlacementLifecyclePublisher.java": "686c242df78b91b0fef1c19dccfc0a6043f4dc07034a5c1684fbf0aa804cb3be",
+    "src/main/java/vn/utbridora/auth/modules/cooperation/application/PlacementLifecyclePublisher.java": "783e0710aa8ccff4cd324c5581915f3e09f3f8745e29d859145c2117b609d3df",
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/PlacementOutboxWorker.java": "c4bcee430aa90acaa2fddd7a388bfc328adaec0fb1767c5431944b06850d1bf6",
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/PlacementRuntimeConfiguration.java": "ab2c9f219598a7f2b894c99de9a0f780d1439eca01eb29baabc2cbb5157d7d98",
     "src/main/java/vn/utbridora/auth/modules/cooperation/application/PlacementService.java": "e918e1b44da33877cd7f751065b2d7cf39bc375a2eb6ba6073bdeaf75157bf14",
@@ -5095,7 +5144,7 @@
     "src/main/java/vn/utbridora/auth/modules/cooperation/integration/DemandReferenceConfiguration.java": "d73efe858bee6694c860abbd06880149bd069f5552258f2199f26535a59359f4",
     "src/main/java/vn/utbridora/auth/modules/cooperation/integration/DemandReferencePort.java": "10aceb51035d3f1a72bed3a56106df0d6508936e761458a212f6460428b64614",
     "src/main/java/vn/utbridora/auth/modules/cooperation/integration/JdbcOpportunityRead.java": "2552260163a3e4eafecbea5e757d63f9b6f77e5c2b03567e929ac1d06f51ef08",
-    "src/main/java/vn/utbridora/auth/modules/cooperation/integration/JdbcPlacementRead.java": "aa290a68a1d311e912bcde236c06712349bd2da78c7d9e698bcc6ca4a8a175c3",
+    "src/main/java/vn/utbridora/auth/modules/cooperation/integration/JdbcPlacementRead.java": "390ac6b4564184661144599cbd94ea653887b8808dcacd05a737c0965a281102",
     "src/main/java/vn/utbridora/auth/modules/cooperation/integration/JdbcProfileShareRead.java": "8dfb6b47b634e213c15c20ef2d328118ba4c830835e8544d9ecaa40b710661b2",
     "src/main/java/vn/utbridora/auth/modules/cooperation/integration/StudentTermReferenceAdapter.java": "40a176f7c447b3e4e40457c9ac7e235732135737783e7e0a391a5412fa65927a",
     "src/main/java/vn/utbridora/auth/modules/cooperation/integration/TermAcademicReferences.java": "ffa6fcb2d7e6fa09443e4e27f40e9305d80bc29abe9e8064969042d60e056973",
@@ -5109,12 +5158,18 @@
     "src/main/java/vn/utbridora/auth/modules/cooperation/port/OrganizationSchoolVerificationPort.java": "d3527331a4015e3bfc0d5497df2f1e7e707c355cfd53865f75387169b7413349",
     "src/main/java/vn/utbridora/auth/modules/cooperation/port/ProfileShareReadPort.java": "0570f6481f902f9a46cfd5155d9321f8c2aea729c15bd27b0f9930162cfb6277",
     "src/main/java/vn/utbridora/auth/modules/cooperation/port/SchoolSharingPolicyPort.java": "91d2a6aa3a733d09db476eb03f9c991817aa9ab623c4947fe8f68930260d224a",
+    "src/main/java/vn/utbridora/auth/modules/internship/api/CaseClosureController.java": "a14f28ba6845537a8ef663d8bb5f6549f6e3c746253144d781c77df69041062b",
     "src/main/java/vn/utbridora/auth/modules/internship/api/CohortGroupDtos.java": "3bb50e78a0487aeef7a34459a813303a4e5674f9d12d0286e033bca4b2e3e3d5",
     "src/main/java/vn/utbridora/auth/modules/internship/api/EvaluationController.java": "dfe97feeef95a5585936f43a312ca60f06b7a33ccec86d16f87c3a20237d3460",
     "src/main/java/vn/utbridora/auth/modules/internship/api/EvaluationDtos.java": "fdefbed07340aef0d5ecfce0eb6e2acda7b869ac872e2cfc67793a3a02d021ef",
     "src/main/java/vn/utbridora/auth/modules/internship/api/EvaluationJson.java": "1a9664d5d3a5060e5b17696becf4b588a480f8e8194cec807d6a5293e651e475",
     "src/main/java/vn/utbridora/auth/modules/internship/api/GradeController.java": "19f41e9389d11aad2cf25761119e4060a46e48dfb4ffeadbd0a12c76f08a8d9d",
     "src/main/java/vn/utbridora/auth/modules/internship/api/GradeDtos.java": "8fd089b6c8d62103e363f770c8ef20f59148eae412f67f52ca9ba1bacab0b956",
+    "src/main/java/vn/utbridora/auth/modules/internship/api/InternshipOperationsController.java": "78e5ad4cf272aad5dc8f720106935a96a80e688a419b32c3b99a4740bddd1b9a",
+    "src/main/java/vn/utbridora/auth/modules/internship/api/InternshipOperationsDtos.java": "69040a4c57fbd46d9abde4aa05c6e0f084bc0a8e6a9932ef615ce8bc44b0f6e1",
+    "src/main/java/vn/utbridora/auth/modules/internship/api/InternshipOperationsJson.java": "b590a6da160fba18aeab9351be65cee7f31d0a76483edfa8c515e97954b154b1",
+    "src/main/java/vn/utbridora/auth/modules/internship/api/OperationsHttpErrors.java": "832da878837fdad4505be3aacfa48726c30a19e166ac688cadb47b06164352be",
+    "src/main/java/vn/utbridora/auth/modules/internship/api/PlacementIntakeController.java": "1b92fc5f5fc2c1a59aed158b7b34b6bf0eeafdadb5f320a114d6abdd1fc44a04",
     "src/main/java/vn/utbridora/auth/modules/internship/api/ReportDtos.java": "1b5962407566be6f395ca9e4eaee23c2cc22516bee670660f95a6ea4fc0c4cc3",
     "src/main/java/vn/utbridora/auth/modules/internship/api/ReportJson.java": "4f54939a7dca4580a385065a088c41f6d58bbd5ee06c6e25614e15f87884da62",
     "src/main/java/vn/utbridora/auth/modules/internship/api/SubmissionController.java": "b422f64cf24e7335d9bacf2301f76285f7e2d3a0401e03ad40bef5bd1a3a6719",
@@ -5155,6 +5210,8 @@
     "src/main/java/vn/utbridora/auth/modules/internship/domain/WeeklyReportPolicy.java": "79b260d0b1b6c3f6a89ea5eb38b9c1dc712bc9638cd2cd63ddecfc38479dd6d2",
     "src/main/java/vn/utbridora/auth/modules/internship/domain/WorkspaceRuleException.java": "9363f64b52cc43ae32311f51dd23f77a843f0d1cf7c8515c07dd5278c35b4721",
     "src/main/java/vn/utbridora/auth/modules/internship/domain/WorkspaceScope.java": "39af0a30c45cbb0405c95af31a2a0f93969ba83d0bbd35343ed09f5d2b8ccc4e",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/CaseClosureOutboxWorker.java": "ae4bf90b18db7f11d7a10ed7eba3848d869e6cd3ea0369df8e8342867dbf3116",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/CaseClosureService.java": "5aa7c4731eabbc52ce53d31af41f89da84fdd96e22219e9e35e48013de2da224",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/CaseRuntime.java": "e24bf3f1e13d3f37fcbee4764cf969283257af808d6670af8760beec3f5ec96a",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/CoreSubmissionAccess.java": "79f701af062e1b508fa7a8b865ad3234ae3b5869904b68aeb1952d670aa90320",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/CoreWorkspaceAccess.java": "6f40753542d2809b42d9814dc145604715254daa7157fef94ad1a12bb23c702e",
@@ -5162,12 +5219,16 @@
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/EvaluationAccess.java": "f4a5cac6839fd0e8d6921be2b9288912e712fddb81352e99804ef412a0ab9ea6",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/EvaluationFilePolicy.java": "877e1e04a61b8417f448d5a6dd5df90e6263a8ffd3bd2b616c3b1487b982cf83",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/GradeAccess.java": "a3dd9b59f3223f3b11b7580b629429db1e54e619e7af45fea20480c1fafb81b1",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/InternshipOperationsService.java": "b16e0f9f6f24c57c59c765f9b571b1eff99ddf60c677e05a14b50a3fe7b074ff",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/JdbcEvaluationStore.java": "f3fcdc4244f1427a0e9da64d49a2d3264048345a9665171687f5d6e45371080a",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/JdbcSubmissionSession.java": "2f19c44a341a6bd707d48c8e16e6e6649b1e79ef869e7f807785c512f22ddd29",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/JdbcTaskCommentSession.java": "b154900b4aac0affd5a88c91a3b996fc5041e62d609b7e04d6efe96ac9e3b3fe",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/JdbcWeeklyReportSession.java": "c881e29aa47933d1ed66f393d1903541169f5a3a5b90e6de5b9d2c2bcec6fa41",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/JdbcWorkspaceSession.java": "bb59a403098081b0490c6784f7e3414906cfa6c44a58138aa966ce062112db5b",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/OperationsAccess.java": "031a8e30f8f7482ff643db0f13aa4f1030be81b0afdac30403ca1063c1f9d022",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/OperationsConfiguration.java": "549d03b5fc92d573625458c6e3f315536c8d031acea0908413e771841db0e956",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/PlacementInbox.java": "b5240db01d4c03bd3220e887162cb44565768ed998dec6ef6cfae3abdd21647d",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/PlacementIntakeService.java": "43f47acea3162860add9fe1db1368d27485ad0f131f4ad1dee24d0cef1b81304",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/SubmissionConfiguration.java": "4e1fa81540dd97ca514cf9d76045e8ad6f82294ef38c99f3a2b3baaff714554b",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/TaskAssignmentFilePolicy.java": "065c2c378b29c0c4e7504b752e65604231b6b34792a0e6840d4c93c9428244f0",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/TaskCommentAccessAdapter.java": "23837d6ed2fd4555ba833ea98f9b237605e416cb06ef55774597a6728bd51417",
@@ -5190,7 +5251,7 @@
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WorkspaceAssignmentService.java": "7bbaed11a31e1a8255e9b1b5564bb8f54f9db5e0627d61e2ffb2eb4cd7ead7ae",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WorkspaceAuthority.java": "328fb40c3571587ec593d2ea485511527d46bf6f004f73c702a1f083f5bd3d08",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WorkspaceConfiguration.java": "7a30d882f1ec0cea00e736e34d03197cf16f6fd12a0c4eccc592e9c94fe46652",
-    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WorkspaceRuntime.java": "7b64fa3f99e13ebc2d0da36438c8218f6385dc0c0cf343bb33a942b0f31039c3",
+    "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WorkspaceRuntime.java": "1eea3eb39251d06443995eb1decc8a5b9d6176c2131768e8ff0c7b2ddd44f055",
     "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WorkspaceTaskActions.java": "bb04a7bd43741b97c5c4252f65609ca02e7978ba1cda57b8e5cff274fe6cf848",
     "src/main/java/vn/utbridora/auth/modules/internship/integration/CaseMembershipPort.java": "f1a364df6f25ac00fdb36803bea48d9435415734810d385327170fe96ad74564",
     "src/main/java/vn/utbridora/auth/modules/internship/integration/PlacementLifecycleConsumer.java": "773a01f3344eab6efc9312eb31cb8e13307b3f5f0392866c73ad6dceb3df8a61",
@@ -5279,7 +5340,7 @@
     "src/main/java/vn/utbridora/auth/security/AppUserDetailsService.java": "7cc716bec37e1f4c14dfb7ca8b113a07b9804bbc62b843b92761fae5ec0d3a31",
     "src/main/java/vn/utbridora/auth/security/DemandSecurityErrors.java": "7d91ff3ff07df57dadbb1047ddc6599dbc9bdb9fc96f4dbd3fe84fb5ed8eabc2",
     "src/main/java/vn/utbridora/auth/security/OrganizationAccess.java": "c04b8ae3357b17e2c24a34e1f17d194cd79178110cfa17fb1252299d2b7722d0",
-    "src/main/java/vn/utbridora/auth/security/SecurityConfig.java": "2390bee4dea65dac5d0fdbcf0f5087f0207f5022d5f8733f53ee6bfac45c3703",
+    "src/main/java/vn/utbridora/auth/security/SecurityConfig.java": "7dcd79a2b769f7180b5ef09afa3d4dfd8d5f83ec6cd9b3ca0c74668f8c7af79d",
     "src/main/java/vn/utbridora/auth/student/StudentEligibilityQueryService.java": "de74551cd0a993394948127fb635e89bc0c396c86ad4c3dcfa521a60288f8407",
     "src/main/java/vn/utbridora/auth/student/StudentRosterQueryService.java": "1f78514ffe715b75bd30a03f637845aaa278acb6da5107113d955e6480567dea",
     "src/main/java/vn/utbridora/auth/student/StudentSchoolAccessGuard.java": "b3fe79f55e592c8dbfed0ea651d26f19fbea60f18e03a28a9de769018eea0b42",
@@ -5353,6 +5414,7 @@
     "src/main/resources/db/migration/base/V3__permissions_and_membership_integrity.sql": "27c715667d66e362248314c32b582dd0bf26f7f10cef04d40ebcc2006893cee6",
     "src/main/resources/db/migration/base/V41__student_roster_provisioning.sql": "cc7c0f7795ab262946672b31b05acf4af297d4f0100829dcae54ac717362956a",
     "src/main/resources/db/migration/base/V42__student_import_claims_jobs_and_mail.sql": "23141265f9eb1b4d83be4b102432739ab5671c167a12de0502c2fb09bc8e362c",
+    "src/main/resources/db/migration/base/V43__t3_operations_and_case_closure.sql": "48f2943f6a89e2e5bf0f6a16366b22f7d17b80f0e6297ef6edffa3b4a8a3149b",
     "src/main/resources/db/migration/base/V4__audit_expansion.sql": "20f9d708b0ddf99ec5f78de01dca361feb2768567edd52eee2eecceb14dc6a28",
     "src/main/resources/db/migration/base/V5__files_metadata.sql": "7fc22062bbaca4ab5ace160abf8e7f6375c5656d833647c93f24da61285e8030",
     "src/main/resources/db/migration/base/V6__membership_status_audit.sql": "935d13fd318ba02feb73b18b0b2a02846dff3b1d4a209134d0b3139337f9cd14",
@@ -5368,7 +5430,18 @@
     "pom.xml": "7b166937d27eb94ca682384cc249878ca90ade950cb46fbd821f4a1e5a04ff4e",
     "docs/openapi.json": "91b8ece0a984c8ca429f9c5ff3a2542aa9edd81f4c856f6567931ba7aaceab5a",
     "docs/contracts/permission_matrix.csv": "264746eb91190a0207bf26e872f08b1fc07d63f809c267e4e4bb95b3ad828ae3",
-    "src/main/resources/application.yml": "20d06936320a4db340d4ea8db1c137da6fa3537f1dcac41dcaf6235ab83d609a"
+    "src/main/resources/application.yml": "20d06936320a4db340d4ea8db1c137da6fa3537f1dcac41dcaf6235ab83d609a",
+    "docs/contracts/extensions/t3_hiring_interest.json": "6e98c8b0c2738b6e1f852cd3ec0d6d8262fbf93a904da63278f3f6eaa9798e11",
+    "docs/contracts/extensions/T3_HIRING_INTEREST_PROPOSAL.md": "3baee8e1ee66a98e232e27de894ba674efe6dfed2ec5f6ab3bff30c8ca0e9555",
+    "docs/contracts/extensions/T3_HIRING_INTEREST_APPROVAL.md": "2f1b41468bab798c914fd960ee9c4e1015343687241f1cdd87669227702e798f"
   },
-  "currentContractHash": "746a8537dca95c1c722f5ce33e4044ecd9414bb072bf9e204632f9a9ad1bea03"
+  "currentContractHash": "746a8537dca95c1c722f5ce33e4044ecd9414bb072bf9e204632f9a9ad1bea03",
+  "approvedExtensions": [
+    {
+      "source": "docs/contracts/extensions/T3_HIRING_INTEREST_PROPOSAL.md",
+      "rawSha256": "3baee8e1ee66a98e232e27de894ba674efe6dfed2ec5f6ab3bff30c8ca0e9555",
+      "approval": "USER_APPROVED_2026-11-19",
+      "approvalRecord": "docs/contracts/extensions/T3_HIRING_INTEREST_APPROVAL.md"
+    }
+  ]
 }

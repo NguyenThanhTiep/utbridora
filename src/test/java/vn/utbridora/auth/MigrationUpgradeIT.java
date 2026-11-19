@@ -14,7 +14,7 @@ class MigrationUpgradeIT {
             var ds=new org.springframework.jdbc.datasource.DriverManagerDataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword());var jdbc=new org.springframework.jdbc.core.JdbcTemplate(ds);
             for(int i=0;i<4;i++) jdbc.update("INSERT INTO one_time_tokens(id,token_hash,purpose,email,invite_role,expires_at,consumed_at,created_at) VALUES(?,?,'INVITATION',?,'ADMIN',DATE_ADD(UTC_TIMESTAMP(6),INTERVAL 1 HOUR),?,UTC_TIMESTAMP(6))",UUID.randomUUID().toString(),String.format("%064d",i+1),i<2?"ambiguous@example.test":i==2?"single@example.test":"consumed@example.test",i==3?java.sql.Timestamp.from(java.time.Instant.now()):null);
             var before=jdbc.queryForList("SELECT id,token_hash,purpose,user_id,email,invite_role,organization_id,expires_at,consumed_at,created_at FROM one_time_tokens ORDER BY id");
-            var flyway=Flyway.configure().dataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword()).load();assertEquals(2,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
+            var flyway=Flyway.configure().dataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword()).load();assertEquals(3,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
             assertEquals(before,jdbc.queryForList("SELECT id,token_hash,purpose,user_id,email,invite_role,organization_id,expires_at,consumed_at,created_at FROM one_time_tokens ORDER BY id"));
             assertEquals("REVIEW_REQUIRED",jdbc.queryForObject("SELECT claim_state FROM invitation_claims WHERE email_canonical='ambiguous@example.test'",String.class));
             assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM one_time_tokens WHERE email='ambiguous@example.test' AND claim_id IS NOT NULL",Integer.class));
@@ -34,7 +34,7 @@ class MigrationUpgradeIT {
                 s.executeUpdate("INSERT INTO files(id,owner_user_id,storage_key,original_name,content_type,size_bytes,sha256,classification,scan_status,created_at) VALUES (UUID(),'"+user+"','legacy-pending-key','pending.pdf','application/pdf',8,REPEAT('b',64),'PRIVATE','PENDING',UTC_TIMESTAMP(6)),(UUID(),'"+user+"','legacy-rejected-key','rejected.pdf','application/pdf',8,REPEAT('c',64),'PRIVATE','REJECTED',UTC_TIMESTAMP(6))");
             }
             var flyway=Flyway.configure().dataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword()).load();
-            assertEquals(14,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
+            assertEquals(15,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
             try(Connection c=DriverManager.getConnection(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword());Statement s=c.createStatement()) {
                 try(ResultSet r=s.executeQuery("SELECT f.owner_user_id,f.storage_key,f.scan_status,b.resource_id,b.purpose FROM files f JOIN file_bindings b ON b.file_id=f.id WHERE f.id='"+file+"'")) {
                     assertTrue(r.next());assertEquals(user,r.getString(1));assertEquals("legacy-storage-key",r.getString(2));assertEquals("CLEAN",r.getString(3));assertEquals(user,r.getString(4));assertEquals("CV",r.getString(5));assertFalse(r.next());

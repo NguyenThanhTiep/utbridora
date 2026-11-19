@@ -92,3 +92,4 @@ PRIVACY_RELEASE_BLOCKED,Không có mã lưu cũ; alias ở E.4,DENIED,protected_
 FILE_UPLOADED,Không có mã lưu cũ; alias ở E.4,SUCCESS,file,"purpose,contentType,sizeBytes,scanStatus",T1,False
 FILE_SCAN_COMPLETED,Không có mã lưu cũ; alias ở E.4,"SUCCESS,FAILURE",file,"scanStatus,attemptNo,reasonCode",T1 worker,False
 FILE_DOWNLOADED,Không có mã lưu cũ; alias ở E.4,SUCCESS,file,"purpose,resourceType,resourceId,rangeRequest,consentVersion,shareVersion",T1,False
+HIRING_INTEREST_CHANGED,None,SUCCESS,hiring_interest,"caseId,enterpriseOrgId,schoolOrgId,termId,version,interested",T3,False

@@ -5,6 +5,7 @@ import { UserManagement, OrganizationManagement, AuditViewer } from './managemen
 import { InternshipWorkspace } from './modules/internship/pages/InternshipWorkspace';
 import { CaseEntry } from './modules/internship/pages/CaseEntry';
 import { EvaluationsPage } from './modules/internship/pages/EvaluationsPage';
+import { OperationsPage } from './modules/internship/pages/OperationsPage';
 import { canDiscoverWorkspace } from './modules/internship/access';
 
 import { studentGrants } from './modules/student/access';
@@ -24,6 +25,7 @@ import { SchoolDelegations } from './modules/delegations/SchoolDelegations';
 
 const screens = [
   { id: 'evaluations', title: 'Đánh giá thực tập', description: 'Chấm rubric, công bố và xem kết quả theo quyền được phân công.', icon: 'graduation', permission: null },
+  { id: 'internship-operations', title: 'Quản lý thực tập', description: 'Tiến độ, phối hợp và tổng kết thực tập theo phạm vi.', icon: 'briefcase', permission: null },
   { id: 'internship-case', title: 'Hồ sơ thực tập', description: 'Hồ sơ trong phạm vi được phân công.', icon: 'briefcase', permission: null },
   { id: 'school', title: 'Hợp tác doanh nghiệp', description: 'Không gian phối hợp thực tập dành cho nhà trường.', icon: 'building', permission: null },
   { id: 'account', title: 'Tài khoản của tôi', description: 'Thông tin cá nhân, vai trò và bảo mật tài khoản.', icon: 'grid', permission: null },
@@ -82,6 +84,7 @@ export default function App() {
   const permissions = new Set(grants.filter(grant => grant.role === 'ADMIN' && grant.organizationId === null).flatMap(grant => grant.permissions));
   const schools = studentGrants(grants);
   const menus = screens.filter(item => item.id === 'internship-case' ? !!caseId : item.id === 'internship' ? !!me && canDiscoverWorkspace(me)
+    : item.id === 'internship-operations' ? grants.some(grant => ['SCHOOL_STAFF','ENTERPRISE'].includes(grant.role) && !!grant.organizationId && grant.permissions.includes('t3:workspace:read'))
     : item.id === 'evaluations' ? grants.some(grant => ['SCHOOL_STAFF','ENTERPRISE','STUDENT'].includes(grant.role) && !!grant.organizationId)
     : item.id === 'school' ? grants.some(grant => grant.role === 'SCHOOL_STAFF' && !!grant.organizationId)
     : item.id === 'demands' ? grants.some(canAuthorDemands)
@@ -257,6 +260,7 @@ export default function App() {
           : screen === 'delegations' ? <SchoolDelegations key={me.userId} grants={grants} />
           : screen === 'internship-case' ? <CaseEntry key={me.userId + caseId} caseId={caseId} me={me} grants={grants} />
           : screen === 'evaluations' ? <EvaluationsPage key={me.userId} me={me} grants={grants} />
+          : screen === 'internship-operations' ? <OperationsPage key={me.userId} me={me} grants={grants} />
           : screen === 'internship' ? <InternshipWorkspace key={me.userId} me={me} grants={grants} />
           : screen === 'student-overview' ? <StudentOverviewPage me={me} schools={schools} openProfile={() => navigate('student-profile')} />
           : screen === 'student-profile' ? <MyProfilePage me={me} schools={schools} />

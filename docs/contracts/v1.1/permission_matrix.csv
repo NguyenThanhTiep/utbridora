@@ -50,3 +50,4 @@ t3:enterprise_quality:school:write,Không có code đã lưu; alias nếu có �
 t3:coordination:manage,Không có code đã lưu; alias nếu có ở D.3,Coordination issue,ENTERPRISE hoặc SCHOOL_STAFF,HR hoặc delegate đúng case; không sửa Cooperation,HR/SD,T3,False
 file:upload,Không có code đã lưu; alias nếu có ở D.3,Private multipart upload,ALL,RESOURCE authorizer xác nhận quyền ghi/purpose,RESOURCE,T1,False
 file:download,Không có code đã lưu; alias nếu có ở D.3,Metadata/content/Range,ALL,RESOURCE read; CLEAN cho bytes; consent/share/assignment hiện hành,RESOURCE,T1,False
+t3:hiring_interest:manage,None,Record pre-terminal hiring interest,ENTERPRISE,Current HR assignment for exact case; active source; expected versions,HR,T3,False

@@ -39,4 +39,18 @@ public class PlacementLifecyclePublisher {
         audit.placementPublished(actor,p,operation,reason);
         return event;
     }
+    /** Only the T5 closure consumer calls this after verifying the current T3 proof and authority. */
+    @Transactional(propagation=Propagation.MANDATORY)
+    public PlacementLifecycleEvent publishClosure(InternshipCaseReadPort.CaseClosureProof proof) {
+        if(proof.decision().equals("EARLY_TERMINATION")) return publish(proof.decisionActorUserId(),proof.placementId(),proof.reasonCode());
+        var p=source.readCurrentForGuard(proof.placementId()).orElseThrow();
+        if(!p.state().equals("COMPLETED") || !proof.state().equals("COMPLETED") || !proof.endDateReached() || !proof.allTasksCompleted() || !proof.allReportsReviewed() || !proof.evaluationPublished()) throw new IllegalStateException("Closure proof required");
+        var old=jdbc.queryForList("SELECT payload_json FROM placement_outbox WHERE placement_id=? AND aggregate_version=? AND event_type='PlacementCompleted'",String.class,p.placementId(),p.version());
+        if(!old.isEmpty()) return json.readValue(old.getFirst(),PlacementLifecycleEvent.class);
+        String operation=UUID.randomUUID().toString();
+        var event=new PlacementLifecycleEvent(UUID.randomUUID().toString(),"PlacementCompleted",1,p.placementId(),p.version(),p.version(),p.studentUserId(),p.schoolOrgId(),p.enterpriseOrgId(),p.termId(),p.effectiveAt(),Clock.systemUTC().instant(),UUID.randomUUID().toString(),proof.reasonCode(),proof.decisionRef());
+        jdbc.update("INSERT INTO placement_outbox(event_id,delivery_operation_id,placement_id,aggregate_version,event_type,payload_json,next_attempt_at,created_at) VALUES(?,?,?,?,? ,?,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",event.eventId(),operation,p.placementId(),p.version(),event.eventType(),json.writeValueAsString(event));
+        audit.workflow(proof.decisionActorUserId(),"PLACEMENT_COMPLETED",p.placementId(),p.schoolOrgId(),java.util.Map.of("termId",p.termId(),"placementVersion",p.version(),"caseId",proof.caseId(),"caseVersion",proof.caseVersion(),"decisionRef",proof.decisionRef(),"operationId",operation));
+        return event;
+    }
 }

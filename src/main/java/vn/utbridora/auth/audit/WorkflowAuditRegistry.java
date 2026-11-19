@@ -69,6 +69,11 @@ final class WorkflowAuditRegistry {
         Map.entry("PLACEMENT_CREATED",new Spec("placement",Set.of("termId","placementVersion","decisionRef","effectiveAt","reasonCode","operationId"))),
         Map.entry("PLACEMENT_APPROVED",new Spec("placement",Set.of("termId","placementVersion","decisionRef","effectiveAt","reasonCode","operationId"))),
         Map.entry("PLACEMENT_ACTIVATED",new Spec("placement",Set.of("termId","placementVersion","decisionRef","effectiveAt","reasonCode","operationId"))),
-        Map.entry("PLACEMENT_CANCELLED",new Spec("placement",Set.of("termId","placementVersion","decisionRef","effectiveAt","reasonCode","operationId")))
+        Map.entry("PLACEMENT_CANCELLED",new Spec("placement",Set.of("termId","placementVersion","decisionRef","effectiveAt","reasonCode","operationId"))),
+        Map.entry("PLACEMENT_COMPLETED",new Spec("placement",Set.of("termId","placementVersion","caseId","caseVersion","decisionRef","operationId"))),
+        Map.entry("CASE_CLOSED",new Spec("internship_case",Set.of("placementId","caseVersion","decision","decisionRef","reasonCode"))),
+        Map.entry("ENTERPRISE_QUALITY_EVALUATED",new Spec("enterprise_quality_evaluation",Set.of("enterpriseOrgId","schoolOrgId","termId","version"))),
+        Map.entry("COORDINATION_ISSUE_CHANGED",new Spec("coordination_issue",Set.of("enterpriseOrgId","schoolOrgId","operation","version"))),
+        Map.entry("HIRING_INTEREST_CHANGED",new Spec("hiring_interest",Set.of("caseId","enterpriseOrgId","schoolOrgId","termId","version","interested")))
     );
 }

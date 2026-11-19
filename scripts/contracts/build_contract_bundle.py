@@ -398,9 +398,20 @@ def inventory_operations(text):
 def build(check=False):
     text = CONTRACT.read_text(encoding='utf-8')
     permissions, aliases, audit, audit_aliases = read_registries(text)
-    compiler = Compiler(text, permissions, audit)
+    extension_path=ROOT/'docs/contracts/extensions/t3_hiring_interest.json'
+    extension=json.loads(extension_path.read_text(encoding='utf-8'))
+    # Separate exact-byte approval; never silently treat a changed extension as approved.
+    source=ROOT/extension['approvedSource']
+    if extension['approvedRawSha256']!='3baee8e1ee66a98e232e27de894ba674efe6dfed2ec5f6ab3bff30c8ca0e9555' or hashlib.sha256(source.read_bytes()).hexdigest()!=extension['approvedRawSha256']:
+        raise ValueError('Approved hiring-interest extension bytes changed')
+    approved_models=re.findall(r'`(HiringInterest(?:Input|Dto) \{[^`]+\})`',source.read_text(encoding='utf-8'))
+    if approved_models!=extension['models']:raise ValueError('Derived extension models differ from approved text')
+    permissions.append(extension['permission']);audit.append(extension['audit'])
+    compiler_text=text+'\n```text\n'+'\n'.join(extension['models'])+'\n```\n'
+    compiler = Compiler(compiler_text, permissions, audit)
     schema = compiler.compile()
     ops,ports,legacy=inventory_operations(text)
+    ops.extend(extension['operations'])
     old=ROOT/'docs/contracts/UTBridora_Contract_Pack_B01_B06_v1.0_Candidate.md'
     frozen=[old,ROOT/'docs/srs/UTBridora_SRS_Tong_The_v1.2.4.docx']
     # Path ordering on Windows is case-insensitive; use the same order as Linux CI.
@@ -409,6 +420,7 @@ def build(check=False):
     frozen += sorted((ROOT/'src/main/resources/db/convergence').glob('*.txt'), key=lambda p: p.relative_to(ROOT).as_posix())
     frozen += [ROOT/'pom.xml',ROOT/'docs/openapi.json',ROOT/'docs/contracts/permission_matrix.csv']
     frozen += [ROOT/'src/main/resources/application.yml']
+    frozen += [extension_path,source,ROOT/extension['approvalRecord']]
     errors = sorted(set(re.findall(r'\b(?:400|401|403|404|409|413|416|422|429|500|503)\s*([A-Z][A-Z0-9_]{2,})', text)))
     manifest=dict(packVersion='1.1',baseVersion='1.0',baseApproval='USER_APPROVED_2026-11-05',
                   candidateApproval=('USER_APPROVED_2026-11-13'
@@ -419,7 +431,7 @@ def build(check=False):
                   legacyCoreOperations=legacy,errorCodesInHttpExamples=errors,
                   sourceHashEncoding='raw for frozen v1.0/DOCX; UTF-8 LF for other text',
                   sourceHashes={str(p.relative_to(ROOT)).replace('\\','/'):digest(p) for p in frozen},
-                  currentContractHash=digest(CONTRACT))
+                  currentContractHash=digest(CONTRACT),approvedExtensions=[dict(source=extension['approvedSource'],rawSha256=extension['approvedRawSha256'],approval=extension['approval'],approvalRecord=extension['approvalRecord'])])
     if not check:OUTPUT.mkdir(parents=True, exist_ok=True)
     rendered_files={name:json.dumps(data,ensure_ascii=False,indent=2)+'\n'
                     for name,data in [('schemas.json',schema),('manifest.json',manifest),('examples.json',examples(text))]}
