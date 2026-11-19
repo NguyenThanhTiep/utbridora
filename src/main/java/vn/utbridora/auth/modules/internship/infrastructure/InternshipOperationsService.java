@@ -55,24 +55,29 @@ public class InternshipOperationsService {
     public WorkspaceRuntime.Page<CalendarEvent> calendar(Authentication auth,Instant from,Instant until,UUID caseId,int page,int size) {
         actor(auth);page(page,size);
         if(from==null || until==null || !from.isBefore(until) || Duration.between(from,until).compareTo(Duration.ofDays(62))>0) throw failure(422,"CALENDAR_RANGE_INVALID");
-        List<String> ids;boolean student;
+        List<String> ids=new ArrayList<>(),studentIds=new ArrayList<>();
         if(caseId!=null) {
-            var c=cases.read(caseId);var s=access.scope(auth,c.termId(),"calendar");ids=new ArrayList<>(access.caseIds(s));ids.removeIf(v->!v.equals(caseId.toString()));student=s.student()!=null;
+            var c=cases.read(caseId);var s=access.scope(auth,c.termId(),"calendar");ids.addAll(access.caseIds(s));ids.removeIf(v->!v.equals(caseId.toString()));if(s.student()!=null)studentIds.addAll(ids);
             if(ids.isEmpty()) throw failure(404,"RESOURCE_NOT_FOUND");
         } else {
             // CalendarQuery has no termId: students use their own cases; staff use all currently authorized terms.
-            ids=new ArrayList<>();student=false;
             for(String term:jdbc.queryForList("SELECT DISTINCT term_id FROM internship_cases ORDER BY term_id",String.class)) try {
-                var s=access.scope(auth,UUID.fromString(term),"calendar");ids.addAll(access.caseIds(s));student|=s.student()!=null;
+                var s=access.scope(auth,UUID.fromString(term),"calendar");var scoped=access.caseIds(s);ids.addAll(scoped);if(s.student()!=null)studentIds.addAll(scoped);
             } catch(vn.utbridora.auth.operations.OperationFailure denied) {if(denied.status>=500 || denied.status==401) throw denied;}
             catch(vn.utbridora.auth.modules.internship.domain.WorkspaceRuleException denied) {if(denied.kind()==vn.utbridora.auth.modules.internship.domain.WorkspaceRuleException.Kind.UNAVAILABLE) throw denied;}
         }
         if(ids.isEmpty()) return new WorkspaceRuntime.Page<>(List.of(),page,size,0,0);
-        String columns=student?"t.id task_id,a.id assignment_id,t.title,t.due_at,a.state":"DISTINCT t.id task_id,NULL assignment_id,t.title,t.due_at,NULL state";
-        String sql=" FROM internship_tasks t JOIN internship_task_assignments a ON a.task_id=t.id WHERE a.case_id IN ("+marks(ids)+") AND t.due_at>=? AND t.due_at<?";
-        var args=append(ids,utc(from),utc(until));
-        long total=jdbc.queryForObject("SELECT COUNT("+(student?"*":"DISTINCT t.id")+")"+sql,Long.class,args);
-        var rows=jdbc.query("SELECT "+columns+sql+" ORDER BY due_at,task_id,assignment_id LIMIT ? OFFSET ?",(r,n)->new CalendarEvent(UUID.fromString(r.getString("task_id")),r.getString("assignment_id")==null?null:UUID.fromString(r.getString("assignment_id")),r.getString("title"),instant(r,"due_at"),r.getString("state")),append(Arrays.asList(args),size,page*size));
+        // Keep each term's actor mode. A student role in one term must not turn school events
+        // from another term into individual assignment/state disclosures.
+        List<String> staffIds=new ArrayList<>(ids);staffIds.removeAll(studentIds);List<String> parts=new ArrayList<>();List<Object> args=new ArrayList<>();
+        for(boolean own:List.of(true,false)) {
+            var scoped=own?studentIds:staffIds;if(scoped.isEmpty())continue;
+            parts.add("SELECT "+(own?"t.id task_id,a.id assignment_id,t.title,t.due_at,a.state":"DISTINCT t.id task_id,NULL assignment_id,t.title,t.due_at,NULL state")+" FROM internship_tasks t JOIN internship_task_assignments a ON a.task_id=t.id WHERE a.case_id IN ("+marks(scoped)+") AND t.due_at>=? AND t.due_at<?");
+            args.addAll(scoped);args.add(utc(from));args.add(utc(until));
+        }
+        String sql=" FROM ("+String.join(" UNION ALL ",parts)+") scoped_events";
+        long total=jdbc.queryForObject("SELECT COUNT(*)"+sql,Long.class,args.toArray());
+        var rows=jdbc.query("SELECT *"+sql+" ORDER BY due_at,task_id,assignment_id LIMIT ? OFFSET ?",(r,n)->new CalendarEvent(UUID.fromString(r.getString("task_id")),r.getString("assignment_id")==null?null:UUID.fromString(r.getString("assignment_id")),r.getString("title"),instant(r,"due_at"),r.getString("state")),append(args,size,page*size));
         return new WorkspaceRuntime.Page<>(rows,page,size,total,(int)Math.ceilDiv(total,size));
     }
     public WorkspaceRuntime.Page<EnterpriseQualityTemplate> templates(Authentication auth,UUID term,int page,int size) {

@@ -233,6 +233,18 @@ class T3OperationsIT {
         var schoolEvents=json.readTree(ok(s.call("GET",query,null,null,false),200)).get("content");assertEquals(1,schoolEvents.size());assertEquals(task,schoolEvents.get(0).get("taskId").asString());assertTrue(schoolEvents.get(0).get("assignmentId").isNull());
         var ownEvents=json.readTree(ok(st.call("GET",query,null,null,false),200)).get("content");assertEquals(1,ownEvents.size());assertEquals("NEW",ownEvents.get(0).get("state").asString());assertFalse(ownEvents.get(0).get("assignmentId").isNull());
         assertEquals(404,login(otherStudent,null).call("GET",query,null,null,false).statusCode());assertEquals(422,s.call("GET","/t3/calendar?from=2026-01-01T00:00:00Z&until=2027-01-01T00:00:00Z",null,null,false).statusCode());
+        // Explicit second-term prerequisites: the same identity is school staff here and
+        // a student there. Global calendar must preserve each term's disclosure mode.
+        var membership=new Membership();membership.userId=staff.id;membership.organizationId=school;membership.role=Role.STUDENT;memberships.saveAndFlush(membership);
+        String secondTerm=id();jdbc.update("INSERT INTO terms(id,school_org_id,term_code,start_date,end_date,status,version,created_at,updated_at) VALUES(?,?,'SYNTHETIC_MIXED_CALENDAR','2026-01-01','2028-01-01','ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",secondTerm,school);
+        String ownPlacement=placement(staff.id);jdbc.update("UPDATE placements SET term_id=? WHERE id=?",secondTerm,ownPlacement);jdbc.update("UPDATE demands SET term_id=? WHERE id=(SELECT demand_id FROM placements WHERE id=?)",secondTerm,ownPlacement);consume(publish(ownPlacement));String ownCase=caseId(ownPlacement);
+        String ownCohort=id(),ownGroup=id(),ownTask=id();
+        jdbc.update("INSERT INTO internship_cohorts(id,enterprise_org_id,school_org_id,term_id,code,name,version) VALUES(?,?,?,?, 'SYNTHETIC_MIXED','Synthetic mixed-role prerequisite',1)",ownCohort,enterprise,school,secondTerm);
+        jdbc.update("INSERT INTO internship_groups(id,cohort_id,code,version) VALUES(?,?,'SYNTHETIC_MIXED',1)",ownGroup,ownCohort);jdbc.update("INSERT INTO internship_cohort_cases(cohort_id,case_id,group_id) VALUES(?,?,?)",ownCohort,ownCase,ownGroup);
+        jdbc.update("INSERT INTO internship_tasks(id,group_id,title,description,due_at,priority,late_allowed,version) SELECT ?,?,'Synthetic own task','Synthetic prerequisite',due_at,priority,late_allowed,1 FROM internship_tasks WHERE id=?",ownTask,ownGroup,task);
+        jdbc.update("INSERT INTO internship_task_assignments(id,task_id,case_id,student_user_id,state,version) VALUES(?,?,?,?,'NEW',1)",id(),ownTask,ownCase,staff.id);
+        var mixed=json.readTree(ok(login(staff,null).call("GET",query.substring(0,query.indexOf("&caseId=")),null,null,false),200)).get("content");assertEquals(2,mixed.size());
+        for(var event:mixed){boolean own=event.get("taskId").asString().equals(ownTask);assertEquals(own,!event.get("assignmentId").isNull());assertEquals(own,!event.get("state").isNull());}
         var input=new vn.utbridora.auth.modules.internship.api.InternshipOperationsDtos.HiringInterestInput(0L,caseVersion(c),true,null);String key=id();
         assertEquals(403,h.call("PUT","/t3/cases/"+c+"/hiring-interest",input,key,false).statusCode());
         assertEquals(404,st.call("POST","/t3/cases/"+c+"/close",closing(c,"EARLY_TERMINATION"),id(),true).statusCode());
