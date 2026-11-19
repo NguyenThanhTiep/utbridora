@@ -224,7 +224,7 @@ export function MatchingWorkspace({ organizationId, grants }: { organizationId: 
         <div className="matching-count-tile not-match"><span>Không phù hợp</span><strong>{counts.notMatched}</strong><small>Không đạt điều kiện bắt buộc</small></div>
       </div>
       <div className="matching-filter-bar">
-        <label htmlFor="matching-candidate-search">Tìm trong toàn bộ kết quả · MSSV / tên</label>
+        <label htmlFor="matching-candidate-search">Tìm trong toàn bộ kết quả · MSSV hoặc tên</label>
         <input id="matching-candidate-search" type="search" value={candidateQuery} onChange={event => { setCandidateQuery(event.target.value); setPage(0); setActiveCandidateId(''); setSelectedStudents([]); }} placeholder="Nhập MSSV hoặc tên sinh viên" />
       </div>
       <div className="matching-tabs" role="group" aria-label="Nhóm kết quả Matching">
