@@ -104,6 +104,8 @@ public class SecurityConfig {
                    "/api/v1/school/*/placements","/api/v1/school/*/placements/summary","/api/v1/school/*/placements/*/internship-link",
                    "/api/v1/enterprise/*/placements","/api/v1/enterprise/*/placements/summary","/api/v1/enterprise/*/placements/*/internship-link").authenticated()
                .requestMatchers(HttpMethod.PATCH,"/api/v1/t3/assignments/*/status","/api/v1/t3/reports/*").authenticated()
+               .requestMatchers(HttpMethod.POST,"/api/v1/school/student-imports/preview","/api/v1/school/student-imports/*/confirm","/api/v1/school/student-imports/*/resume","/api/v1/school/student-imports/*/rows/*/resend").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/school/student-imports/*","/api/v1/school/student-imports/*/rows").authenticated()
                .anyRequest().denyAll())
            .exceptionHandling(ex->ex
                .authenticationEntryPoint((req,res,error)->{

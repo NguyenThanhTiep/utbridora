@@ -29,6 +29,6 @@ public class OperationErrors {
                 ? value : UUID.randomUUID().toString();
         var response=ResponseEntity.status(failure.status);
         if (failure.retryAfterSeconds!=null) response.header("Retry-After",failure.retryAfterSeconds.toString());
-        return response.body(new Error(failure.code,failure.code,failure.getMessage(),id,List.of(),failure.retryAfterSeconds));
+        return response.body(new Error(failure.code,failure.code,failure.getMessage(),id,failure.fieldErrors,failure.retryAfterSeconds));
     }
 }

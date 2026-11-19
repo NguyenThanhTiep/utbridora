@@ -103,8 +103,23 @@ public class AuthController {
         return new Message("Password reset completed; sign in again");
     }
     @PostMapping("/invitations/accept")
-    public Message accept(@Valid @RequestBody AcceptInvitation body) {
-        tokens.acceptInvitation(body.token(),body.displayName(),body.password());
+    public Message accept(@RequestBody String raw,@RequestHeader(value="X-UTB-Contract-Version",required=false) String contract,
+        @RequestHeader(value="Idempotency-Key",required=false) String key) {
+        if("1.1".equals(contract)) {
+            tools.jackson.databind.JsonNode tree;
+            try {tree=vn.utbridora.auth.operations.WorkflowValues.JSON.readTree(raw);}
+            catch(tools.jackson.core.JacksonException invalid) {throw vn.utbridora.auth.operations.WorkflowValues.failure(400,"SCHEMA_VALIDATION");}
+            if(!tree.isObject() || tree.properties().stream().anyMatch(e->!java.util.Set.of("token","newPassword","displayName").contains(e.getKey()))
+                || !tree.hasNonNull("token") || !tree.get("token").isString() || tree.get("token").asString().isBlank() || tree.get("token").asString().length()>128
+                || !tree.hasNonNull("newPassword") || !tree.get("newPassword").isString() || tree.get("newPassword").asString().length()>1000
+                || tree.has("displayName") && (!tree.get("displayName").isString() || tree.get("displayName").asString().isBlank() || tree.get("displayName").asString().codePointCount(0,tree.get("displayName").asString().length())>150)) throw vn.utbridora.auth.operations.WorkflowValues.failure(400,"SCHEMA_VALIDATION");
+            tokens.acceptInvitationV11(tree.get("token").asString(),tree.has("displayName")?tree.get("displayName").asString():null,tree.get("newPassword").asString(),key);
+        } else {
+            if(contract!=null && !contract.equals("1.0")) throw vn.utbridora.auth.operations.WorkflowValues.failure(400,"SCHEMA_VALIDATION");
+            var body=vn.utbridora.auth.operations.WorkflowValues.body(raw,AcceptInvitation.class);
+            if(body.token().isBlank() || body.token().length()>128 || body.displayName().isBlank() || body.displayName().length()>150 || body.password().isBlank() || body.password().length()>1000) throw vn.utbridora.auth.operations.WorkflowValues.failure(400,"SCHEMA_VALIDATION");
+            tokens.acceptInvitation(body.token(),body.displayName(),body.password());
+        }
         return new Message("Account activated; please sign in");
     }
     private AppPrincipal principal(Authentication auth) {

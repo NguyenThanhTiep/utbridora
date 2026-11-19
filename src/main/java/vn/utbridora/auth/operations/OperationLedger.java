@@ -47,10 +47,32 @@ public class OperationLedger {
         String scope() { return "USER:"+actorId+"|ORG:"+(organizationId==null?"GLOBAL":organizationId); }
     }
 
-    private record Stored(String id,String hash,String state,String response,Instant expiresAt) {}
+    private record Stored(String id,String hash,String state,String response,Instant expiresAt,Integer status) {}
+    /** Internal envelope for commands whose successful HTTP status/body depend on recovery state. */
+    public record HttpResult(int status,Object body) {}
 
     @Transactional(propagation=Propagation.MANDATORY)
     public <T> T execute(Command command,Class<T> type,Supplier<T> mutation,Function<T,String> effectReference) {
+        return executeScoped(command,command.scope(),type,mutation,effectReference);
+    }
+    /** Internal import finalizer: one durable operation per job, independent of the resuming staff. */
+    @Transactional(propagation=Propagation.MANDATORY)
+    public <T> T finalizeStudentImport(String jobId,String initiatedBy,Class<T> type,Supplier<T> mutation) {
+        String id=uuid(jobId);
+        var command=new Command(initiatedBy,null,"IMPORT_FINALIZE",id,Map.of("importJobId",id),200);
+        return executeScoped(command,"IMPORT_JOB:"+id,type,mutation,r->id);
+    }
+    /** Public activation is authenticated by its server-issued token, with no user before acceptance. */
+    @Transactional(propagation=Propagation.MANDATORY)
+    public <T> T acceptInvitation(String claimId,String key,Object payload,Class<T> type,Supplier<T> mutation) {
+        String id=uuid(claimId);
+        var command=new Command(id,null,"ACCOUNT_INVITATION_ACCEPT",key,payload,200);
+        return executeScoped(command,"INVITATION_CLAIM:"+id,type,mutation,r->id,null);
+    }
+    private <T> T executeScoped(Command command,String scope,Class<T> type,Supplier<T> mutation,Function<T,String> effectReference) {
+        return executeScoped(command,scope,type,mutation,effectReference,command.actorId());
+    }
+    private <T> T executeScoped(Command command,String scope,Class<T> type,Supplier<T> mutation,Function<T,String> effectReference,String actorId) {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {
             throw new IllegalStateException("Operation ledger requires the domain transaction");
         }
@@ -61,11 +83,11 @@ public class OperationLedger {
         try {
             Instant now=clock.instant();
             jdbc.update("INSERT INTO operation_records (id,actor_id,actor_scope_key,operation_code,idempotency_key,payload_hash,state,created_at) VALUES (?,?,?,?,?,?,'IN_PROGRESS',?) ON DUPLICATE KEY UPDATE id=id",
-                    reservation,command.actorId(),command.scope(),command.operationCode(),command.key(),hash,Timestamp.from(now));
-            Stored stored=jdbc.queryForObject("SELECT id,payload_hash,state,response_json,response_expires_at FROM operation_records WHERE actor_scope_key=? AND operation_code=? AND idempotency_key=? FOR UPDATE",
+                    reservation,actorId,scope,command.operationCode(),command.key(),hash,Timestamp.from(now));
+            Stored stored=jdbc.queryForObject("SELECT id,payload_hash,state,response_json,response_expires_at,response_status FROM operation_records WHERE actor_scope_key=? AND operation_code=? AND idempotency_key=? FOR UPDATE",
                     (row,index)->new Stored(row.getString(1),row.getString(2),row.getString(3),row.getString(4),
-                            row.getTimestamp(5)==null?null:row.getTimestamp(5).toInstant()),
-                    command.scope(),command.operationCode(),command.key());
+                            row.getTimestamp(5)==null?null:row.getTimestamp(5).toInstant(),(Integer)row.getObject(6)),
+                    scope,command.operationCode(),command.key());
             if (!stored.hash().equals(hash)) throw new OperationFailure(409,"IDEMPOTENCY_KEY_REUSED",
                     "Mã thao tác đã được dùng với dữ liệu khác.",null);
             if (!stored.id().equals(reservation)) {
@@ -73,15 +95,18 @@ public class OperationLedger {
                 if (stored.response()==null || stored.expiresAt()==null || !clock.instant().isBefore(stored.expiresAt())) {
                     throw new OperationFailure(409,"IDEMPOTENCY_RESPONSE_EXPIRED","Kết quả thao tác đã hết hạn; không thực hiện lại thao tác.",null);
                 }
-                return JSON.readValue(stored.response(),type);
+                return type==HttpResult.class?type.cast(new HttpResult(stored.status(),JSON.readValue(stored.response(),Object.class))):JSON.readValue(stored.response(),type);
             }
             T result=Objects.requireNonNull(mutation.get(),"Operation response must not be null");
-            Object response=JSON.convertValue(result,Object.class);
+            Object wire=result instanceof HttpResult http?http.body():result;
+            int responseStatus=result instanceof HttpResult http?http.status():command.responseStatus();
+            if(responseStatus<200 || responseStatus>299) throw new IllegalArgumentException("Command response must succeed");
+            Object response=JSON.convertValue(wire,Object.class);
             rejectSecrets(response);
             String effect=effectReference.apply(result);
             if (effect!=null) effect=uuid(effect);
             jdbc.update("UPDATE operation_records SET state='DONE',effect_ref=?,response_status=?,response_json=?,response_expires_at=? WHERE id=?",
-                    effect,command.responseStatus(),JSON.writeValueAsString(result),Timestamp.from(clock.instant().plus(Duration.ofHours(24))),reservation);
+                    effect,responseStatus,JSON.writeValueAsString(wire),Timestamp.from(clock.instant().plus(Duration.ofHours(24))),reservation);
             return result;
         } catch (DataAccessException failure) {
             for (Throwable cause=failure;cause!=null;cause=cause.getCause()) {

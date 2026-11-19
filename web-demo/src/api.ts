@@ -13,7 +13,7 @@ export type FieldError = { field: string; code: string; message: string };
 export type ApiFieldError = FieldError;
 export class ApiError extends Error {
   constructor(public status: number, message: string, public requestId: string | null,
-    public errorCode: string | null = null, public fieldErrors: FieldError[] = []) { super(message); }
+    public errorCode: string | null = null, public fieldErrors: FieldError[] = [], public retryAfterSeconds: number | null = null) { super(message); }
 }
 const messages: Record<string, string> = {
   INVALID_CREDENTIALS: 'Email, mật khẩu không đúng hoặc tài khoản chưa sẵn sàng.',
@@ -40,7 +40,8 @@ async function errorOf(response: Response): Promise<ApiError> {
     : messages[code || ''] || 'Không thể xử lý yêu cầu. Vui lòng thử lại sau.';
   const fields: ApiFieldError[] = Array.isArray(body.fieldErrors) ? body.fieldErrors.filter((field): field is ApiFieldError =>
     field != null && typeof field.field === 'string' && typeof field.code === 'string' && typeof field.message === 'string') : [];
-  return new ApiError(response.status, message, response.headers.get('X-Request-ID') || (typeof body.requestId === 'string' ? body.requestId : null), code, fields.filter(isFieldError));
+  const wait = Number(response.headers.get('Retry-After'));
+  return new ApiError(response.status, message, response.headers.get('X-Request-ID') || (typeof body.requestId === 'string' ? body.requestId : null), code, fields.filter(isFieldError), response.headers.has('Retry-After') && Number.isSafeInteger(wait) && wait >= 0 ? wait : null);
 }
 export async function getCsrf(): Promise<Csrf> {
   const response = await fetch('/api/v1/auth/csrf', { credentials: 'include', cache: 'no-store' });

@@ -15,6 +15,9 @@ import vn.utbridora.auth.tokens.OneTimeToken.Purpose;
 public class AccountTokenService {
     @org.springframework.beans.factory.annotation.Autowired
     private org.springframework.beans.factory.ObjectProvider<MentorActivationPort> mentorActivation;
+    @org.springframework.beans.factory.annotation.Autowired private InvitationClaims invitationClaims;
+    @org.springframework.beans.factory.annotation.Autowired private RosterAccountActivation rosterActivation;
+    @org.springframework.beans.factory.annotation.Autowired private vn.utbridora.auth.operations.OperationLedger operations;
     private final TokenRepository tokens; private final UserRepository users;
     private final MembershipRepository memberships; private final OrganizationRepository organizations;
     private final PasswordEncoder encoder; private final EmailService email; private final AuditService audit;
@@ -27,6 +30,7 @@ public class AccountTokenService {
     @PreAuthorize("@authorizationPolicy.hasGlobal(authentication, 'membership:admin:write')")
     public void invite(String senderId,String requestedEmail,Role role,String organizationId) {
         String addr=requestedEmail.trim().toLowerCase(java.util.Locale.ROOT);
+        if(invitationClaims!=null) invitationClaims.forbidPendingRosterTakeover(addr);
         if(users.existsByEmailIgnoreCase(addr)) throw new IllegalStateException("Email already registered: use role-assignment workflow");
         if(role==Role.ADMIN || role==Role.ENTERPRISE || role==Role.SCHOOL_STAFF || role==Role.STUDENT) {
             if(role!=Role.ADMIN && organizationId==null) throw new IllegalArgumentException("Organization is required");
@@ -42,19 +46,46 @@ public class AccountTokenService {
         OneTimeToken token=new OneTimeToken(); token.purpose=Purpose.INVITATION;
         token.tokenHash=TokenCodec.hash(raw);token.email=addr;token.inviteRole=role;
         token.organizationId=organizationId;token.expiresAt=Instant.now().plusSeconds(48*3600);
-        tokens.save(token);
+        tokens.saveAndFlush(token);
+        if(invitationClaims!=null) {invitationClaims.registerNonRoster(token,"LEGACY",null,organizationId);tokens.flush();}
         // For production, replace direct mail with a transaction-safe outbox/queue.
         email.invite(addr,raw);
         audit.write(senderId,"INVITATION_CREATED","user",null,"SUCCESS");
     }
-    @Transactional
+    @Transactional(isolation=org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public void acceptInvitation(String raw,String displayName,String password) {
+        try {accept(raw,displayName,password);}
+        catch(vn.utbridora.auth.operations.OperationFailure rejected) {throw new IllegalArgumentException("Invalid or expired token");}
+    }
+    public record ActivationResult(String message) {}
+    @Transactional(isolation=org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
+    public ActivationResult acceptInvitationV11(String raw,String displayName,String password,String key) {
+        vn.utbridora.auth.operations.WorkflowValues.uuid(key);
+        try {PasswordPolicy.requireValid(password);}
+        catch(IllegalArgumentException invalid) {throw vn.utbridora.auth.operations.WorkflowValues.failure(422,"PASSWORD_POLICY_VIOLATION");}
+        var candidate=tokens.findByTokenHashAndPurpose(TokenCodec.hash(raw),Purpose.INVITATION)
+            .orElseThrow(()->vn.utbridora.auth.operations.WorkflowValues.failure(422,"TOKEN_INVALID"));
+        var claim=invitationClaims.lockEmail(candidate.email);
+        var payload=new java.util.LinkedHashMap<String,Object>();payload.put("tokenDigest",candidate.tokenHash);payload.put("passwordDigest",TokenCodec.hash(password));payload.put("displayName",displayName);
+        return operations.acceptInvitation(claim.id(),key,payload,ActivationResult.class,()->{
+            invitationClaims.requireCurrentToken(candidate.tokenHash);
+            if(displayName==null && !claim.context().equals("ROSTER")) throw new vn.utbridora.auth.operations.OperationFailure(422,"BUSINESS_VALIDATION","Vui lòng nhập tên hiển thị.",null,java.util.List.of(java.util.Map.of("field","displayName","code","REQUIRED","message","Vui lòng nhập tên hiển thị.")));
+            accept(raw,displayName,password);return new ActivationResult("Account activated; please sign in");
+        });
+    }
+    private void accept(String raw,String displayName,String password) {
         PasswordPolicy.requireValid(password);
         var candidate=tokens.findByTokenHashAndPurpose(TokenCodec.hash(raw),Purpose.INVITATION)
             .orElseThrow(()->new IllegalArgumentException("Invalid or expired token"));
+        if(invitationClaims!=null) {
+            invitationClaims.lockEmail(candidate.email);
+            invitationClaims.requireCurrentToken(candidate.tokenHash);
+            if(rosterActivation.accept(candidate,displayName,password)) return;
+        }
         var mentor=mentorActivation==null?null:mentorActivation.getIfAvailable();
         if(mentor!=null) mentor.lockPendingIdentity(candidate.email);
         var existing=users.findByEmailForUpdate(candidate.email).orElse(null);
+        if(displayName==null) displayName=existing==null?candidate.email.substring(0,candidate.email.indexOf('@')):existing.displayName;
         OneTimeToken token=valid(raw,Purpose.INVITATION);
         // A request may have loaded this entity before waiting for the claim.
         // Check the current database row even when JPA still holds an old token.
@@ -70,6 +101,7 @@ public class AccountTokenService {
         member.organizationId=token.organizationId;memberships.save(member);
         users.flush();memberships.flush();
         if(mentorActivation!=null) mentorActivation.ifAvailable(port->port.activated(token.id,user.id));
+        if(invitationClaims!=null) invitationClaims.activated(token.id,user.id);
         audit.write(user.id,"ACCOUNT_ACTIVATED","user",user.id,"SUCCESS");
     }
     @Transactional
@@ -111,7 +143,7 @@ public class AccountTokenService {
         return token;
     }
     private void requireUsable(OneTimeToken token) {
-        if(token.consumedAt!=null || !token.expiresAt.isAfter(Instant.now()))
+        if(token.consumedAt!=null || token.revokedAt!=null || !token.expiresAt.isAfter(Instant.now()))
             throw new IllegalArgumentException("Invalid or expired token");
     }
 }

@@ -59,6 +59,10 @@
 .t5-detail-card .portal-key-values > div { grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .t5-detail-card .portal-key-values dd { color: var(--muted); }
 .school-roster-panel fieldset { min-width: 0; padding: 0; margin: 16px 0 0; border: 0; }
+.school-roster-panel { min-width: 0; }
+.school-roster-panel code { overflow-wrap: anywhere; }
+.school-roster-panel input, .school-roster-panel select { max-width: 100%; }
+.school-roster-panel .proposal-table { overflow-x: auto; max-width: 100%; }
 .portal-handoff a { color: var(--brand-dark); }
 .t5-roster-columns { margin: 16px 0; display: grid; gap: 12px; }
 .t5-roster-columns > div { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }

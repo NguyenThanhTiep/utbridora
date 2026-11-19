@@ -122,14 +122,10 @@ test('school overview keeps the three live KPIs and explains roster import witho
   await expect(page.locator('.portal-stat')).toHaveCount(3);
   const panel = page.getByRole('region', { name: 'Nhập danh sách & Kích hoạt sinh viên', exact: true });
   await expect(panel).toBeVisible();
-  for (const field of ['studentCode', 'fullName', 'schoolEmail', 'cohort', 'majorCode']) await expect(panel.getByText(field, { exact: true })).toBeVisible();
-  await expect(panel.getByLabel('Chọn tệp danh sách sinh viên', { exact: true })).toBeDisabled();
-  await expect(panel.getByRole('button', { name: 'Xem trước danh sách', exact: true })).toBeDisabled();
-  await expect(panel.getByText(/Chờ kết nối API nhập danh sách sinh viên/)).toBeVisible();
-  await expect(panel.getByText('Nhập tài khoản không tự xác nhận sinh viên đủ điều kiện thực tập.', { exact: true })).toBeVisible();
-  await expect(panel.getByText('Đang chờ xử lý', { exact: true })).toHaveCSS('background-color', 'rgb(232, 242, 255)');
-  await expect(panel.getByText('Đã hoàn thành', { exact: true })).toHaveCSS('background-color', 'rgb(229, 246, 237)');
-  await expect(panel.getByText('Thất bại', { exact: true })).toHaveCSS('color', 'rgb(211, 47, 47)');
+  await expect(panel.getByText('studentCode,email,fullName,majorCode,termCode', { exact: true })).toBeVisible();
+  await expect(panel.getByLabel('Kỳ nhập danh sách', { exact: true })).toHaveValue('');
+  await expect(panel.getByLabel('Tệp danh sách sinh viên', { exact: true })).toHaveCount(0);
+  await expect(panel.getByText(/Dữ liệu nhập không tự xác nhận điều kiện thực tập/)).toBeVisible();
   expect(imports).toEqual([]);
   await page.screenshot({ path: '../target/t5-ui-school-overview.png', fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
