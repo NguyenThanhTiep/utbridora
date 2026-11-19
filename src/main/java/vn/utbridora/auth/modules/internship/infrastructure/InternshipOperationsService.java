@@ -36,7 +36,7 @@ public class InternshipOperationsService {
             var candidates=jdbc.queryForList("SELECT id FROM users WHERE id=? AND status='ACTIVE'",String.class,user);
             if(!candidates.isEmpty()) {
                 var current=jdbc.queryForObject("SELECT COUNT(*) FROM memberships WHERE user_id=? AND role='ENTERPRISE' AND active=true",Integer.class,user);
-                if(current>0 && currentMentor(user,groups)) mentors.add(user);
+                if(current>0 && currentMentor(user,groups,scope.caseId())) mentors.add(user);
             }
         }
         Map<String,Long> counts=new HashMap<>();long late=0;
@@ -47,9 +47,10 @@ public class InternshipOperationsService {
         }
         return new WorkspaceSummary(cohorts.size(),ids.size(),groups.size(),mentors.size(),java.util.Arrays.stream(vn.utbridora.auth.modules.internship.api.TaskDtos.AssignmentState.values()).map(s->new AssignmentCount(s.name(),counts.getOrDefault(s.name(),0L))).toList(),late,counts.getOrDefault("SUBMITTED",0L));
     }
-    private boolean currentMentor(String user,List<String> groups) {
+    private boolean currentMentor(String user,List<String> groups,String caseId) {
         // T1 reads the identity; T3 validates its current assignment chain without replacing request context.
-        return coreSubject(user).map(auth->authority.assignments(auth).stream().anyMatch(a->a.kind().equals("MENTOR") && groups.contains(a.scope().groupId()))).orElse(false);
+        return coreSubject(user).map(auth->authority.assignments(auth).stream().anyMatch(a->a.kind().equals("MENTOR") && groups.contains(a.scope().groupId())
+            && (caseId==null || a.scope().caseId()==null || caseId.equals(a.scope().caseId())))).orElse(false);
     }
     private Optional<Authentication> coreSubject(String user) {return core.currentSubject(user).map(a->(Authentication)a);}
     public WorkspaceRuntime.Page<CalendarEvent> calendar(Authentication auth,Instant from,Instant until,UUID caseId,int page,int size) {
