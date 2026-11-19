@@ -126,14 +126,20 @@ public class MatchingService {
             .orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
         audit.privacyReleaseBlocked(actor(auth),scope[0],scope[1],scope[2],scope[3]);
     }
-    @Transactional public Details details(Authentication auth,String id,String status,int page,int size) {
+    @Transactional public Details details(Authentication auth,String id,String status,String query,int page,int size) {
         if(jdbc.queryForObject("SELECT COUNT(*) FROM memberships m JOIN users u ON u.id=m.user_id JOIN organizations o ON o.id=m.organization_id JOIN role_permissions p ON p.role=m.role WHERE m.user_id=? AND m.role='SCHOOL_STAFF' AND m.active=true AND u.status='ACTIVE' AND u.security_version=? AND o.status='VERIFIED' AND p.permission_code='matching:school:detail_read'",Integer.class,actor(auth),((vn.utbridora.auth.security.AppPrincipal)auth.getPrincipal()).securityVersion())==0) throw failure(403,"ACCESS_DENIED");
         page(page,size);if(!Set.of("MATCH","NOT_MATCH","MISSING_DATA").contains(status)) throw failure(400,"SCHEMA_VALIDATION");
+        String q=query==null?"":query.strip().toLowerCase(java.util.Locale.ROOT);
+        if(q.length()>100) throw failure(400,"SCHEMA_VALIDATION");
         var stored=read(auth,id,"matching:school:detail_read");
-        long count=jdbc.queryForObject("SELECT COUNT(*) FROM match_results WHERE run_id=? AND overall_status=?",Long.class,id,status);
+        String search=q.isEmpty()?"":" AND EXISTS (SELECT 1 FROM student_term_eligibilities e JOIN student_rosters sr ON sr.id=e.student_roster_id JOIN users u ON u.id=e.user_id WHERE e.user_id=mr.student_user_id AND e.school_org_id=? AND e.term_id=? AND (LOWER(u.display_name) LIKE ? OR LOWER(sr.full_name) LIKE ? OR LOWER(sr.student_code) LIKE ?))";
+        String pattern="%"+q+"%";
+        Object[] filterArgs=q.isEmpty()?new Object[]{id,status}:new Object[]{id,status,stored.schoolOrgId(),stored.termId(),pattern,pattern,pattern};
+        long count=jdbc.queryForObject("SELECT COUNT(*) FROM match_results mr WHERE mr.run_id=? AND mr.overall_status=?"+search,Long.class,filterArgs);
         // DEV8 đã sửa từ ORDER BY fit_score cho mọi nhóm thành chỉ sắp điểm nhóm MATCH;
         // nhóm NOT_MATCH/MISSING_DATA chỉ xếp studentUserId để không ngụ ý có xếp hạng, phục vụ R11.
-        var rows=jdbc.query("SELECT data_json FROM match_results WHERE run_id=? AND overall_status=? ORDER BY CASE WHEN overall_status='MATCH' THEN fit_score ELSE NULL END DESC,student_user_id ASC LIMIT ? OFFSET ?",(r,n)->JSON.readValue(r.getString(1),MatchResult.class),id,status,size,page*size);
+        Object[] rowArgs=q.isEmpty()?new Object[]{id,status,size,page*size}:new Object[]{id,status,stored.schoolOrgId(),stored.termId(),pattern,pattern,pattern,size,page*size};
+        var rows=jdbc.query("SELECT mr.data_json FROM match_results mr WHERE mr.run_id=? AND mr.overall_status=?"+search+" ORDER BY CASE WHEN mr.overall_status='MATCH' THEN mr.fit_score ELSE NULL END DESC,mr.student_user_id ASC LIMIT ? OFFSET ?",(r,n)->JSON.readValue(r.getString(1),MatchResult.class),rowArgs);
         audit.workflow(actor(auth),"MATCH_DETAILS_VIEWED",id,stored.schoolOrgId(),Map.of("schoolOrgId",stored.schoolOrgId(),"termId",stored.termId(),"page",page,"size",size));
         return new Details(stored.run(),new Page<>(rows,page,size,count,(int)((count+size-1)/size)));
     }

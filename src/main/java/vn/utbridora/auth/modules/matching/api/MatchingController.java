@@ -27,7 +27,7 @@ public class MatchingController {
             throw failure;
         }
     }
-    @GetMapping("/runs/{id}/details") public MatchingService.Details details(Authentication auth,@PathVariable String id,@RequestParam String overallStatus,@RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="25") int size) {return service.details(auth,id,overallStatus,page,size);}
+    @GetMapping("/runs/{id}/details") public MatchingService.Details details(Authentication auth,@PathVariable String id,@RequestParam String overallStatus,@RequestParam(defaultValue="") String q,@RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="25") int size) {return service.details(auth,id,overallStatus,q,page,size);}
     @GetMapping("/runs/{id}/summary") public MatchingService.Evaluated summary(Authentication auth,@PathVariable String id) {
         return new MatchingService.Evaluated("ENTERPRISE",null,service.protectedRelease(auth,id));
     }

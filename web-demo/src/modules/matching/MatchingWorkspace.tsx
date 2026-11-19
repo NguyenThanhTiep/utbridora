@@ -111,12 +111,12 @@ export function MatchingWorkspace({ organizationId, grants }: { organizationId: 
     if (!run || !current) return;
     const controller = new AbortController();
     setDetails(null); setError(''); setSelectedStudents([]);
-    const query = new URLSearchParams({ overallStatus: status, page: String(page), size: '25' });
+    const query = new URLSearchParams({ overallStatus: status, page: String(page), size: '25', ...(candidateQuery.trim() ? { q: candidateQuery.trim() } : {}) });
     void api<Details>(`/matching/runs/${run.evaluation.summary.run.matchRunId}/details?${query}`, { signal: controller.signal })
       .then(value => { if (!controller.signal.aborted) setDetails(value); })
       .catch(failure => { if (!controller.signal.aborted) setError(explain(failure, 'Không tải được trang kết quả.')); });
     return () => controller.abort();
-  }, [run, current, status, page]);
+  }, [run, current, status, page, candidateQuery]);
 
   useEffect(() => {
     if (!run || !current || !details) return;
@@ -195,16 +195,7 @@ export function MatchingWorkspace({ organizationId, grants }: { organizationId: 
   const toggleStudent = (studentId: string) => setSelectedStudents(previous => previous.includes(studentId)
     ? previous.filter(id => id !== studentId) : [...previous, studentId]);
   const counts = run?.evaluation.summary;
-  const visibleResults = useMemo(() => {
-    const query = candidateQuery.trim().toLocaleLowerCase('vi');
-    return (details?.results.content || []).filter(result => {
-      if (!query) return true;
-      const profile = profiles[result.studentUserId];
-      const name = typeof profile?.data.displayName === 'string' ? profile.data.displayName : '';
-      const code = typeof profile?.data.studentCode === 'string' ? profile.data.studentCode : '';
-      return `${name} ${code}`.toLocaleLowerCase('vi').includes(query);
-    });
-  }, [candidateQuery, details, profiles]);
+  const visibleResults = details?.results.content || [];
   const activeCandidate = visibleResults.find(result => result.studentUserId === activeCandidateId) || visibleResults[0] || null;
 
   return <section className="panel matching-workspace" aria-busy={busy}>
@@ -233,8 +224,8 @@ export function MatchingWorkspace({ organizationId, grants }: { organizationId: 
         <div className="matching-count-tile not-match"><span>Không phù hợp</span><strong>{counts.notMatched}</strong><small>Không đạt điều kiện bắt buộc</small></div>
       </div>
       <div className="matching-filter-bar">
-        <label htmlFor="matching-candidate-search">Tìm trong trang hiện tại · MSSV / tên</label>
-        <input id="matching-candidate-search" type="search" value={candidateQuery} onChange={event => setCandidateQuery(event.target.value)} placeholder="Nhập MSSV hoặc tên sinh viên" />
+        <label htmlFor="matching-candidate-search">Tìm trong toàn bộ kết quả · MSSV / tên</label>
+        <input id="matching-candidate-search" type="search" value={candidateQuery} onChange={event => { setCandidateQuery(event.target.value); setPage(0); setActiveCandidateId(''); setSelectedStudents([]); }} placeholder="Nhập MSSV hoặc tên sinh viên" />
       </div>
       <div className="matching-tabs" role="group" aria-label="Nhóm kết quả Matching">
         {(['MATCH', 'MISSING_DATA', 'NOT_MATCH'] as const).map((key) => <button key={key} type="button" aria-pressed={status === key}
@@ -248,7 +239,7 @@ export function MatchingWorkspace({ organizationId, grants }: { organizationId: 
         </button>}
       </div>
       {canNominate && status === 'MATCH' && capacity && <p className="matching-capacity">Còn <strong>{capacity.openForNomination}</strong> / {capacity.quantity} vị trí · Đã xếp {capacity.placedCount} · Đang giữ chỗ {capacity.activeReservations}</p>}
-      {details ? details.results.content.length === 0 || visibleResults.length === 0 ? <EmptyState title={details.results.content.length ? 'Không tìm thấy trong trang này' : 'Không có sinh viên trong nhóm này'} description={details.results.content.length ? 'Tìm kiếm chỉ áp dụng cho trang đang xem. Hãy chuyển trang để tìm các sinh viên khác.' : 'Hãy xem nhóm kết quả khác hoặc kiểm tra tiêu chí của nhu cầu.'} />
+      {details ? details.results.content.length === 0 ? <EmptyState title={candidateQuery.trim() ? 'Kh\u00f4ng t\u00ecm th\u1ea5y sinh vi\u00ean' : 'Kh\u00f4ng c\u00f3 sinh vi\u00ean trong nh\u00f3m n\u00e0y'} description={candidateQuery.trim() ? 'Kh\u00f4ng c\u00f3 sinh vi\u00ean kh\u1edbp v\u1edbi MSSV ho\u1eb7c t\u00ean trong to\u00e0n b\u1ed9 nh\u00f3m k\u1ebft qu\u1ea3 n\u00e0y.' : 'H\u00e3y xem nh\u00f3m k\u1ebft qu\u1ea3 kh\u00e1c ho\u1eb7c ki\u1ec3m tra ti\u00eau ch\u00ed c\u1ee7a nhu c\u1ea7u.'} />
         : <>
           <div className="matching-table-wrap"><table className="matching-table"><thead><tr><th scope="col">Ứng viên</th><th scope="col">Ngành / Kỳ</th><th scope="col">Kết quả</th><th scope="col">Điểm phù hợp</th>{canNominate && status === 'MATCH' && <th scope="col">Chọn</th>}</tr></thead>
             <tbody>{visibleResults.map(result => <CandidateRow key={result.studentUserId} result={result} profile={profiles[result.studentUserId]}

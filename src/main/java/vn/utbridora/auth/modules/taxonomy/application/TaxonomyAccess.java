@@ -16,11 +16,7 @@ public class TaxonomyAccess {
     }
     public void requireEditor(AppPrincipal actor) {
         requireReader(actor);
-        // A current global administrator has system-wide authority and does not
-        // need a TAX editor assignment. Organization users still require an
-        // active, time-bounded editor assignment.
-        if (jdbc.queryForList("SELECT m.id FROM memberships m WHERE m.user_id=? AND m.role='ADMIN' AND m.organization_id IS NULL AND m.active=true", String.class, actor.userId()).size() > 0) return;
-        if(jdbc.queryForList("SELECT a.id FROM taxonomy_editor_assignments a WHERE a.user_id=? AND a.revoked_at IS NULL AND a.valid_from<=UTC_TIMESTAMP(6) AND UTC_TIMESTAMP(6)<a.valid_until AND EXISTS (SELECT 1 FROM memberships m LEFT JOIN organizations o ON o.id=m.organization_id WHERE m.user_id=a.user_id AND m.active=true AND ((m.role='SCHOOL_STAFF' AND o.type='UNIVERSITY' AND o.status='VERIFIED') OR (m.role='ENTERPRISE' AND o.type='ENTERPRISE' AND o.status='VERIFIED')))"+lockSuffix(),String.class,actor.userId()).isEmpty()) throw denied();
+        if(jdbc.queryForList("SELECT a.id FROM taxonomy_editor_assignments a WHERE a.user_id=? AND a.revoked_at IS NULL AND a.valid_from<=UTC_TIMESTAMP(6) AND UTC_TIMESTAMP(6)<a.valid_until AND EXISTS (SELECT 1 FROM memberships m LEFT JOIN organizations o ON o.id=m.organization_id WHERE m.user_id=a.user_id AND m.active=true AND ((m.role='ADMIN' AND m.organization_id IS NULL) OR (m.role='SCHOOL_STAFF' AND o.type='UNIVERSITY' AND o.status='VERIFIED') OR (m.role='ENTERPRISE' AND o.type='ENTERPRISE' AND o.status='VERIFIED')))"+lockSuffix(),String.class,actor.userId()).isEmpty()) throw denied();
     }
     private void requireCurrent(AppPrincipal actor) {
         if(actor==null || jdbc.queryForList("SELECT id FROM users WHERE id=? AND status='ACTIVE' AND security_version=?"+lockSuffix(),String.class,actor.userId(),actor.securityVersion()).isEmpty())

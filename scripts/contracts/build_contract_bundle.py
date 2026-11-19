@@ -434,7 +434,8 @@ def build(check=False):
             if not (OUTPUT/filename).exists() or (OUTPUT/filename).read_text(encoding='utf-8')!=rendered:
                 raise SystemExit('Bundle drift: '+filename+'; run build_contract_bundle.py and review the diff.')
         else:
-            (OUTPUT/filename).write_text(rendered,encoding='utf-8',newline='\n')
+            with (OUTPUT/filename).open('w',encoding='utf-8',newline='\n') as output:
+                output.write(rendered)
     print(f'Compiled {len(compiler.raw)} model definitions including port wrappers, {len(schema["$defs"])} schemas, '
           f'{len(examples(text))} examples, {len(permissions)} permissions, {len(audit)} audit actions.')
 
