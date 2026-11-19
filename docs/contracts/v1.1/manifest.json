@@ -5193,7 +5193,7 @@
     "src/main/java/vn/utbridora/auth/modules/internship/integration/PlacementLifecycleConsumer.java": "773a01f3344eab6efc9312eb31cb8e13307b3f5f0392866c73ad6dceb3df8a61",
     "src/main/java/vn/utbridora/auth/modules/matching/api/MatchingController.java": "cdfa179fc5e394a17750c153b9ffad8b496af36db3e2d0f5267cef7657b38ffa",
     "src/main/java/vn/utbridora/auth/modules/matching/application/CompletenessService.java": "233b04b8448df7324aa85934ce89bbd31c81e920212f58b974fbf9002f645bc8",
-    "src/main/java/vn/utbridora/auth/modules/matching/application/MatchingService.java": "80eec8856f2ff66a96adff64177566867f81937fccfd825ccfa69f460ab460d5",
+    "src/main/java/vn/utbridora/auth/modules/matching/application/MatchingService.java": "0a36322dbc7bf33941ccfcc7b37b83d7d21f70ae95042eee0ea4202583617680",
     "src/main/java/vn/utbridora/auth/modules/matching/domain/CompletenessPolicy.java": "d2b90b06b3b5bdfbf1eff6b4f81a04aea41478b9f2e0439c81c3c080b4a99c18",
     "src/main/java/vn/utbridora/auth/modules/matching/domain/ProtectedAggregatePolicy.java": "9571313c21aa1acad8c63145516726bb15f07e2e992f24e7113728697ff57263",
     "src/main/java/vn/utbridora/auth/modules/matching/domain/StrictClassifier.java": "34298f8819b9c2c0fd58b435c8486e3a89216780ee60d51543ffa1f55c6a5d24",

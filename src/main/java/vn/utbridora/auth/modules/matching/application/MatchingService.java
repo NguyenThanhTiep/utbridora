@@ -126,6 +126,9 @@ public class MatchingService {
             .orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
         audit.privacyReleaseBlocked(actor(auth),scope[0],scope[1],scope[2],scope[3]);
     }
+    @Transactional public Details details(Authentication auth,String id,String status,int page,int size) {
+        return details(auth,id,status,"",page,size);
+    }
     @Transactional public Details details(Authentication auth,String id,String status,String query,int page,int size) {
         if(jdbc.queryForObject("SELECT COUNT(*) FROM memberships m JOIN users u ON u.id=m.user_id JOIN organizations o ON o.id=m.organization_id JOIN role_permissions p ON p.role=m.role WHERE m.user_id=? AND m.role='SCHOOL_STAFF' AND m.active=true AND u.status='ACTIVE' AND u.security_version=? AND o.status='VERIFIED' AND p.permission_code='matching:school:detail_read'",Integer.class,actor(auth),((vn.utbridora.auth.security.AppPrincipal)auth.getPrincipal()).securityVersion())==0) throw failure(403,"ACCESS_DENIED");
         page(page,size);if(!Set.of("MATCH","NOT_MATCH","MISSING_DATA").contains(status)) throw failure(400,"SCHEMA_VALIDATION");
