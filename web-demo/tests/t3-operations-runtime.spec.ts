@@ -2,12 +2,14 @@ import { expect, test, type Page } from '@playwright/test';
 
 // Real MySQL, quarantine scanner, owner APIs and Chromium. No route interception.
 test.skip(!process.env.T3OPS_E2E, 'Requires the isolated T3 operations backend harness');
+test.use({ actionTimeout: 20000 });
 const env = (name: string) => process.env['T3OPS_' + name]!;
 async function login(page: Page, email: string) {
   await page.goto('/');await page.getByLabel('Email', { exact: true }).fill(email);
   await page.getByLabel('Mật khẩu', { exact: true }).fill(env('PASSWORD'));
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Quản lý thực tập', exact: true })).toBeVisible();
+  console.log('T3 runtime: authenticated role navigation available');
 }
 async function openCase(page: Page) {
   await page.getByLabel('Mã Case được cấp', { exact: true }).fill(env('CASE'));
@@ -23,6 +25,7 @@ test('HR imports 40 placements into four groups; school coordinates, evaluates q
   await page.getByLabel('Tên đợt', { exact: true }).fill('Synthetic T3 runtime UI');
   await page.getByRole('button', { name: 'Tạo đợt trong kỳ đã chọn', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Tiếp nhận Placement từ danh sách', exact: true })).toBeVisible();
+  console.log('T3 runtime: cohort created');
   const csv = 'placementId\n' + env('PLACEMENTS').split(',').join('\n') + '\ninvalid-id\n';
   await page.getByLabel('Tệp danh sách Placement', { exact: true }).setInputFiles({ name: 'synthetic-placements.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
   await page.getByRole('button', { name: 'Xem trước danh sách tiếp nhận', exact: true }).click();
@@ -40,12 +43,14 @@ test('HR imports 40 placements into four groups; school coordinates, evaluates q
   await expect(page.getByText('Nhóm 4: 10 hồ sơ', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Xác nhận tạo 4 nhóm', exact: true }).click();
   await expect(page.getByText('4 nhóm trong phạm vi đã chọn', { exact: true })).toBeVisible();
+  console.log('T3 runtime: scanned intake and grouping committed');
   await page.getByRole('button', { name: 'Quản lý thực tập', exact: true }).click();
   await page.getByLabel('Phân công quản lý thực tập', { exact: true }).selectOption(env('ASSIGNMENT'));await openCase(page);
   await page.getByLabel('Doanh nghiệp quan tâm tuyển dụng', { exact: true }).check();
   await page.getByLabel('Ghi chú quan tâm tuyển dụng', { exact: true }).fill('Synthetic retained hiring interest');
   await page.getByRole('button', { name: 'Lưu quan tâm tuyển dụng', exact: true }).click();
   await expect(page.getByText('Đã lưu ý định tuyển dụng.', { exact: true })).toBeVisible();
+  console.log('T3 runtime: hiring interest saved');
   const schoolContext = await browser.newContext({ baseURL: 'http://127.0.0.1:' + (process.env.E2E_PORT || '5178') });
   const school = await schoolContext.newPage();
   try {
@@ -70,6 +75,7 @@ test('HR imports 40 placements into four groups; school coordinates, evaluates q
     await school.getByLabel('Mã lý do đóng Case', { exact: true }).fill('EARLY_TERMINATION');
     await school.getByRole('button', { name: 'Xác nhận đóng Case', exact: true }).click();
     await expect(school.getByText('Trạng thái: TERMINATED', { exact: false })).toBeVisible();
+    console.log('T3 runtime: school quality, coordination and closure committed');
     await page.bringToFront();await page.getByRole('button', { name: 'Tải lại hồ sơ vận hành', exact: true }).click();
     await expect(page.getByText('Case đã đóng; nội dung này chỉ được xem.', { exact: true })).toBeVisible();
     await expect(page.getByText('Synthetic retained hiring interest', { exact: true })).toBeVisible();
