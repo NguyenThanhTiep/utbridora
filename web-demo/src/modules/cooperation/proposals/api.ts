@@ -13,6 +13,7 @@ export function workflowError(error: unknown): string {
     CONSENT_FIELDS_NOT_ALLOWED: 'Thông tin đã chọn không còn thuộc phạm vi được phép chia sẻ.',
     MATCH_RUN_STALE: 'Tiêu chí hoặc hồ sơ đã thay đổi. Hãy tìm lại sinh viên phù hợp trước khi đề xuất.',
     CRITERIA_STALE: 'Tiêu chí tuyển vừa thay đổi. Tải lại nội dung đề nghị rồi tìm sinh viên lại.',
+    CATALOG_CHANGED: 'Danh mục kỹ năng đã thay đổi. Hãy tải lại nhu cầu để dùng phiên bản hiện tại rồi thử lại.',
     CAPACITY_EXCEEDED: 'Không còn đủ chỉ tiêu. Tải lại tiến trình để kiểm tra số chỗ còn lại.',
     PROPOSAL_ALREADY_EXISTS: 'Sinh viên đã có trong đề xuất của đề nghị này.',
     PROPOSAL_BATCH_EXISTS: 'Đề xuất đã được tạo ở phiên khác. Tìm lại kết quả để bổ sung đúng danh sách hiện có.',
@@ -32,6 +33,8 @@ export function workflowError(error: unknown): string {
     RESERVATION_EXPIRED: 'Thời gian giữ chỗ đã hết. Không thể thay đổi đề xuất này.',
     ACCESS_DENIED: 'Bạn không còn quyền truy cập hoặc hồ sơ đã ngừng được chia sẻ.',
     RESOURCE_NOT_FOUND: 'Nội dung không còn tồn tại hoặc không thuộc phạm vi của bạn.',
+    PRIVACY_RELEASE_UNAVAILABLE: 'Thống kê được bảo vệ hiện chưa sẵn sàng. Bộ phận vận hành cần bật phát hành và thiết lập batch dữ liệu đã đóng băng cho trường, kỳ này.',
+    PRIVACY_RELEASE_LOCKED: 'Batch này đã phát hành thống kê được bảo vệ. Không thể tạo thống kê khác trong cùng phạm vi; liên hệ bộ phận vận hành nếu cần mở batch mới.',
     INVALID_PERIOD: 'Thời điểm đóng phải sau thời điểm công bố.',
     SCHEMA_VALIDATION: 'Thông tin chưa hợp lệ. Kiểm tra lý do và các trường bắt buộc.',
   };

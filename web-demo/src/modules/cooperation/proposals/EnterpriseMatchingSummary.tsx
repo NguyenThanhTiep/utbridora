@@ -18,27 +18,26 @@ export function EnterpriseMatchingSummary({ org, demand }: { org: string; demand
       setRelease(null);setError('Chưa nhận được bản thống kê được bảo vệ hợp lệ.');return;
     }
     setRelease(r);setError('');
-  }, () => {setRelease(null);setError('Chưa truy cập được thống kê đối chiếu. Kiểm tra quyền hoặc chờ dịch vụ thống kê sẵn sàng.');}, {guardNavigation: false});
-  const requiredSkills = demand.data.required.skills.map(s => s.skillCode).filter(Boolean).join(' · ') || 'Chưa cấu hình';
-  const preferredSkills = demand.data.preferred.map(s => s.skillCode).filter(Boolean).join(' · ') || 'Không có';
+  }, () => {setRelease(null);setError('');}, {guardNavigation: false});
   return <section className="proposal-workspace p30-agg-section" aria-label="Thống kê đối chiếu tổng hợp">
-    <div className="p30-info-banner">
-      <strong>Protected aggregate · kết quả đã phát hành</strong>
-      <p>Không có PII hoặc khả năng mở danh sách sinh viên từ thống kê.</p>
+    <div className="p30-info-banner" role="note">
+      <span className="p30-info-icon" aria-hidden="true">i</span>
+      <div><strong>Thống kê được bảo vệ</strong>
+        <p>Chỉ hiển thị băng số lượng do máy chủ phát hành. Không có danh tính sinh viên hoặc dữ liệu chi tiết.</p></div>
     </div>
-    <h3>Thống kê đối chiếu tổng hợp</h3>
-    <p>Kết quả được công bố theo khoảng số lượng; không hiển thị danh tính sinh viên.</p>
+    <h3>Thống kê bảo vệ dành cho doanh nghiệp</h3>
+    <p>Kết quả dùng ngưỡng bảo vệ tối thiểu k = 5; số lượng dưới ngưỡng được ẩn.</p>
     <Notice message={error || command.message} tone="error" />
     <div className="p30-agg-grid">
       <div className="p30-agg-main-card" aria-busy={command.busy}>
-        <h4>Kết quả tổng hợp được bảo vệ</h4>
+        <h4>Băng ứng viên đủ điều kiện</h4>
         <div className="p30-agg-band-value" aria-label={release ? `Khoảng kết quả: ${bands[release.eligibleBand]}` : 'Chưa có kết quả'}>
           {release ? release.eligibleBand : '—'}
         </div>
-        {release && <p role="status">Số ứng viên phù hợp: <strong>{bands[release.eligibleBand]}</strong></p>}
+        {release && <p className="p30-agg-band-label" role="status">{bands[release.eligibleBand]}</p>}
         <p role="status" aria-live="polite" aria-atomic="true">{command.busy ? 'Đang tải thống kê được bảo vệ…' : ''}</p>
-        <p className="p30-agg-caption">Khoảng số lượng phù hợp với toàn bộ kỹ năng REQUIRED.</p>
-        <p className="p30-agg-caption">Một lần phát hành theo doanh nghiệp – trường – kỳ.</p>
+        <p className="p30-agg-caption">Băng được tính khi ứng viên đáp ứng toàn bộ kỹ năng bắt buộc.</p>
+        <p className="p30-agg-caption">Mỗi doanh nghiệp, trường, kỳ và batch chỉ có một bản phát hành.</p>
         <div className="button-row">
           <button className="t5-btn-teal" disabled={command.blocked} aria-busy={command.busy} onClick={() => {
             setRelease(null);setError('');void command.submit('/matching/evaluate', 'POST', {
@@ -51,18 +50,12 @@ export function EnterpriseMatchingSummary({ org, demand }: { org: string; demand
         </div>
       </div>
       <div className="p30-agg-privacy-card">
-        <h4>Quyền riêng tư</h4>
+        <h4>Phạm vi bảo vệ</h4>
         <span className="p30-k-badge">k = 5</span>
-        <p className="p30-agg-caption">Không có danh sách sinh viên, tổng, tỷ lệ hay breakdown kỹ năng.</p>
+        <p className="p30-agg-caption">Băng: SUPPRESSED, 5–9, 10–19 hoặc 20+.</p>
+        <p className="p30-agg-caption">Không có số đếm chính xác, tỷ lệ, phân tích theo kỹ năng, danh sách hay thông tin nhận diện.</p>
+        <p className="p30-agg-caption">Thay nhu cầu hoặc tiêu chí không mở khóa batch đã phát hành. Batch do vận hành quản lý.</p>
       </div>
-    </div>
-    <div className="p30-agg-demand-card">
-      <h4>Nhu cầu đang áp dụng</h4>
-      <dl className="p30-kv-list">
-        <div><dt>Vị trí</dt><dd>{demand.data.title}</dd></div>
-        <div><dt>Kỹ năng REQUIRED</dt><dd>{requiredSkills} — phải đạt tất cả</dd></div>
-        <div><dt>Kỹ năng PREFERRED</dt><dd>{preferredSkills} — chỉ dùng xếp hạng</dd></div>
-      </dl>
     </div>
   </section>;
 }

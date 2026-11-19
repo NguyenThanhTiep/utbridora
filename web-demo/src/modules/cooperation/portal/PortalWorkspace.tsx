@@ -75,7 +75,7 @@ function ScopedPortal({ org, side, page, navigate, viewerId, organizationPicker,
     </header>
     {page === 'overview' && <PortalDashboard side={side} demands={data.demands} cooperations={data.cooperations} verifications={data.verifications} navigate={navigate} notifications={notifications} />}
     {page === 'demands' && !school && <ScopedDemands key={'d:' + revision} organizationId={org} />}
-    {page === 'statistics' && !school && <ProtectedStatistics org={org} demands={data.demands} navigate={navigate} />}
+    {page === 'statistics' && !school && <ProtectedStatistics org={org} demands={data.demands} />}
     {page === 'matching' && school && <MatchingWorkspace organizationId={org} grants={grants} />}
     {page === 'notifications' && <NotificationCenter store={notifications} open={openNotification} refresh={refresh} />}
     {page === 'verifications' && <VerificationFlows key={'v:' + revision + (focus?.key || '')} org={org} school={school} focusId={focus?.target.recordId} />}
