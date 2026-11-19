@@ -49,7 +49,7 @@ test('T3 UI contract fixture: HR can view an existing group with empty member li
   await page.goto(fixtureUrl); await choose(page);
   await expect(page.getByText('0 hồ sơ thực tập · 0 mentor', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Xem nhóm N-01' }).click();
-  await expect(page.locator('.internship-facts dd')).toHaveText(['0', '0']);
+  await expect(page.locator('.internship-group-detail .internship-facts dd')).toHaveText(['0', '0']);
 });
 
 test('T3 UI fixture: foreign group response fails closed without rendering names or counts', async ({ page }) => {
@@ -190,6 +190,95 @@ test('T3 shell UI mock: enterprise loads current assignments; logout removes it'
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Không gian thực tập', exact: true })).toHaveCount(0);
+});
+
+test('DEV05 HR creates cohort, intakes Placement and confirms a versioned grouping plan', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-11-19T10:00:00Z') });
+  await page.route('**/api/v1/auth/me', route => route.fulfill({ json: me }));
+  await page.route('**/api/v1/auth/me/permissions', route => route.fulfill({ json: grants }));
+  await page.route('**/api/v1/auth/csrf', route => route.fulfill({ json: { headerName: 'X-CSRF-TOKEN', token: 'fixture-csrf' } }));
+  await page.route('**/api/v1/t3/context-assignments/me', route => route.fulfill({ json: [hr] }));
+  let created = false;
+  const requests: { path: string; body: Record<string, unknown>; context: string | undefined; key: string | undefined }[] = [];
+  await page.route('**/api/v1/t3/cohorts**', route => {
+    const request = route.request(), path = new URL(request.url()).pathname;
+    if (request.method() === 'GET' && path === '/api/v1/t3/cohorts') {
+      return route.fulfill({ json: { content: created ? [cohort] : [], page: 0, size: 100, totalElements: created ? 1 : 0, totalPages: created ? 1 : 0 } });
+    }
+    if (request.method() === 'GET' && path.endsWith('/groups')) {
+      return route.fulfill({ json: { content: [], page: 0, size: 100, totalElements: 0, totalPages: 0 } });
+    }
+    const body = request.postDataJSON() as Record<string, unknown>;
+    requests.push({ path, body, context: request.headers()['x-context-assignment-id'], key: request.headers()['idempotency-key'] });
+    if (path === '/api/v1/t3/cohorts') { created = true; return route.fulfill({ status: 201, json: cohort }); }
+    if (path.endsWith('/members:batch')) return route.fulfill({ json: { cohortId: ids.cohort, version: 2,
+      items: [{ placementId: ids.other, caseId: ids.case, outcome: 'ADDED', reasonCode: 'NONE' }] } });
+    if (body.mode === 'PREVIEW') return route.fulfill({ json: { planId: ids.other, cohortVersion: 2,
+      expiresAt: '2026-11-19T10:15:00Z', groups: [{ ordinal: 1, caseIds: [ids.case] }] } });
+    return route.fulfill({ json: [group] });
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Không gian thực tập', exact: true }).click();
+  await page.getByRole('button', { name: 'Đợt thực tập', exact: true }).click();
+  await page.getByLabel('Phân công đang làm việc').selectOption(ids.hr);
+  await page.getByLabel('Mã đợt').fill('TEST-T3');
+  await page.getByLabel('Tên đợt').fill('Đợt thử DEV05');
+  await page.getByRole('button', { name: 'Tạo đợt', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Nhận Placement từ T5 vào ' + cohort.name })).toBeVisible();
+  await page.getByLabel('Placement ID').fill(ids.other);
+  await page.getByRole('button', { name: 'Đối chiếu và nhận hồ sơ' }).click();
+  await expect(page.getByText(ids.other + ': Đã nhận')).toBeVisible();
+  await page.getByRole('button', { name: 'Nhóm thực tập', exact: true }).click();
+  await page.getByRole('button', { name: 'Xem trước nhóm' }).click();
+  await expect(page.getByText('1 nhóm dự kiến', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Xác nhận chia nhóm' }).click();
+  await expect.poll(() => requests.length).toBe(4);
+  expect(requests.map(item => item.path)).toEqual([
+    '/api/v1/t3/cohorts', '/api/v1/t3/cohorts/' + ids.cohort + '/members:batch',
+    '/api/v1/t3/cohorts/' + ids.cohort + '/groups:auto', '/api/v1/t3/cohorts/' + ids.cohort + '/groups:auto'
+  ]);
+  expect(requests.map(item => item.body.expectedCohortVersion)).toEqual([undefined, undefined, 2, 2]);
+  expect(requests[1].body).toMatchObject({ expectedVersion: cohort.version, placementIds: [ids.other], previewId: null, fileHash: null });
+  expect(requests.every(item => item.context === ids.hr && !!item.key)).toBe(true);
+});
+
+test('DEV05 HR adds and moves a Case using current Case and group versions', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-11-19T10:00:00Z') });
+  await page.route('**/api/v1/auth/me', route => route.fulfill({ json: me }));
+  await page.route('**/api/v1/auth/me/permissions', route => route.fulfill({ json: grants }));
+  await page.route('**/api/v1/auth/csrf', route => route.fulfill({ json: { headerName: 'X-CSRF-TOKEN', token: 'fixture-csrf' } }));
+  await page.route('**/api/v1/t3/context-assignments/me', route => route.fulfill({ json: [hr] }));
+  await page.route('**/api/v1/t3/cohorts?*', route => route.fulfill({ json: { content: [cohort], page: 0, size: 100, totalElements: 1, totalPages: 1 } }));
+  const second = { ...group, groupId: ids.other, code: 'N-02', caseIds: [], version: 3 };
+  await page.route('**/api/v1/t3/cohorts/*/groups?*', route => route.fulfill({ json: {
+    content: [group, second], page: 0, size: 100, totalElements: 2, totalPages: 1
+  } }));
+  await page.route('**/api/v1/t3/cases/*', route => route.fulfill({ json: {
+    caseId: route.request().url().split('/').pop(), placementId: ids.cohort,
+    schoolOrgId: ids.school, enterpriseOrgId: ids.enterprise, termId: ids.term, state: 'IN_PROGRESS', version: 7
+  } }));
+  const writes: Record<string, unknown>[] = [];
+  await page.route('**/api/v1/t3/groups/*/members*', route => {
+    writes.push(route.request().postDataJSON() as Record<string, unknown>);
+    return route.fulfill({ status: 201, json: { toGroupId: ids.group, toGroupVersion: 4 } });
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Không gian thực tập', exact: true }).click();
+  await page.getByRole('button', { name: 'Nhóm thực tập', exact: true }).click();
+  await page.getByLabel('Phân công đang làm việc').selectOption(ids.hr);
+  await page.getByLabel('Đợt thực tập', { exact: true }).selectOption(ids.cohort);
+  await page.getByRole('button', { name: 'Xem nhóm ' + group.code }).click();
+  await page.getByLabel('Case ID chưa có nhóm').fill(ids.other);
+  await page.getByRole('button', { name: 'Thêm vào nhóm' }).click();
+  await expect.poll(() => writes.length).toBe(1);
+  expect(writes[0]).toMatchObject({ caseId: ids.other, expectedCaseVersion: 7, expectedGroupVersion: group.version });
+  await page.getByLabel('Hồ sơ trong nhóm').selectOption(ids.case);
+  await page.getByLabel('Nhóm đích').selectOption(ids.other);
+  await page.getByLabel('Mã lý do').fill('GROUP_REBALANCE');
+  await page.getByRole('button', { name: 'Chuyển hồ sơ' }).click();
+  await expect.poll(() => writes.length).toBe(2);
+  expect(writes[1]).toMatchObject({ caseId: ids.case, toGroupId: ids.other, expectedCaseVersion: 7,
+    expectedFromGroupVersion: group.version, expectedToGroupVersion: second.version, reasonCode: 'GROUP_REBALANCE' });
 });
 
 test('T3 shell UI mock: global ADMIN has no implicit internship menu', async ({ page }) => {

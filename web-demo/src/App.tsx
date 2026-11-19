@@ -3,6 +3,7 @@ import { api, send, login, logout, whoAmI, ApiError, type Me, type Grant } from 
 import { Brand, EmptyState, Field, Icon, Notice, useAction, roleNames, permissionNames } from './components';
 import { UserManagement, OrganizationManagement, AuditViewer } from './management';
 import { InternshipWorkspace } from './modules/internship/pages/InternshipWorkspace';
+import type { HrSection } from './modules/internship/pages/InternshipWorkspace';
 import { CaseEntry } from './modules/internship/pages/CaseEntry';
 import { EvaluationsPage } from './modules/internship/pages/EvaluationsPage';
 import { canDiscoverWorkspace } from './modules/internship/access';
@@ -47,6 +48,12 @@ const screens = [
   // DEV08 cho phép quản trị viên toàn cục mở màn hình để kiểm thử; giao diện lập trình vẫn tự kiểm tra quyền ở máy chủ.
   { id: 'taxonomy', title: 'Danh mục kỹ năng', description: 'Quản lý cây kỹ năng chuẩn, tên gọi khác và tra cứu mã.', icon: 'layers', permission: 'taxonomy:skills:read' }
 ];
+const internshipSections: { id: HrSection; label: string; icon: string }[] = [
+  { id: 'overview', label: 'Tổng quan HR', icon: 'grid' },
+  { id: 'cohorts', label: 'Đợt thực tập', icon: 'calendar' },
+  { id: 'groups', label: 'Nhóm thực tập', icon: 'users' },
+  { id: 'mentors', label: 'Người hướng dẫn', icon: 'user' }
+];
 function initials(name: string) {
   const words = name.trim().split(/\s+/);
   return (words.length > 1 ? words[0][0] + words[words.length - 1][0] : words[0]?.slice(0, 2) || 'UB').toUpperCase();
@@ -74,6 +81,9 @@ export default function App() {
   const [sessionMessage, setSessionMessage] = useState('');
   const [context, setContext] = useState('0');
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [internshipMenuOpen, setInternshipMenuOpen] = useState(false);
+  const [internshipSection, setInternshipSection] = useState<HrSection>('overview');
+  const [internshipKind, setInternshipKind] = useState<'HR' | 'MENTOR' | null>(null);
   const generation = useRef(0);
   const heading = useRef<HTMLHeadingElement>(null);
   const sidebar = useRef<HTMLElement>(null);
@@ -92,7 +102,10 @@ export default function App() {
   const portalScreen = screen === 'demands' || screen === 'school';
   const portalSide = screen === 'demands' ? 'enterprise' : screen === 'school' ? 'school' : rolePortalSide;
   const portalEntry = portalSide === 'enterprise' ? 'demands' : 'school';
-  const screenTitle = portalSide && portalScreen ? portalPageTitle(portalSide, portalPage) : current.title;
+  const visibleInternshipSections = internshipKind === 'MENTOR'
+    ? [{ id: 'overview' as const, label: 'Nhóm được giao', icon: 'users' }] : internshipSections;
+  const screenTitle = portalSide && portalScreen ? portalPageTitle(portalSide, portalPage)
+    : screen === 'internship' ? visibleInternshipSections.find(item => item.id === internshipSection)?.label || current.title : current.title;
 
   useEffect(() => {
     const authTitles: Record<string, string> = { login: 'Đăng nhập', forgot: 'Quên mật khẩu', reset: 'Đặt lại mật khẩu', activate: 'Kích hoạt tài khoản' };
@@ -177,13 +190,14 @@ export default function App() {
     if (!canLeaveDemand()) return;
     await logout(); generation.current += 1;
     setMe(null); setGrants([]); setContext('0'); setMobileOpen(false);setCaseId('');
+    setInternshipKind(null); setInternshipMenuOpen(false); setInternshipSection('overview');
     setAuthScreen('login'); setSessionMessage(''); history.replaceState(null, '', '/');
   };
   const signedIn = async (user: Me) => {
     const effective = await api<Grant[]>('/auth/me/permissions');
     generation.current += 1;
     const side = defaultPortalSide(effective);
-    setGrants(effective); setMe(user);
+    setGrants(effective); setMe(user); setInternshipKind(null); setInternshipSection('overview');
     setScreen(caseId ? 'internship-case' : side === 'enterprise' ? 'demands' : side === 'school' ? 'school' : 'account');
     setPortalPage('overview'); setContext('0'); setSessionMessage('');
   };
@@ -219,8 +233,23 @@ export default function App() {
       <nav aria-label="Điều hướng chính">
         {portalSide && <PortalNavigation side={portalSide} page={portalScreen ? portalPage : undefined} navigate={navigatePortal} />}
         <p className="nav-group-label">{portalSide ? 'TÀI KHOẢN & TIỆN ÍCH' : 'KHÔNG GIAN CỦA BẠN'}</p>
-        {menus.filter(item => ['account', 'mentor-invitations', 'internship', 'evaluations', 'demands', 'school', 'taxonomy'].includes(item.id) && (!portalSide || item.id !== portalEntry)).map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
-          aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
+        {menus.filter(item => ['account', 'mentor-invitations', 'internship', 'evaluations', 'demands', 'school', 'taxonomy'].includes(item.id) && (!portalSide || item.id !== portalEntry)).map(item =>
+          item.id === 'internship' ? <div key={item.id}>
+            <button className={'nav internship-parent' + (screen === item.id ? ' active' : '')}
+              aria-expanded={internshipMenuOpen} aria-controls="internship-submenu"
+              onClick={() => { setInternshipMenuOpen(value => !value); navigate('internship'); }}>
+              <Icon name={item.icon} /><span>{item.title}</span><Icon name="chevron-down" size={15} />
+            </button>
+            {internshipMenuOpen && <div id="internship-submenu" className="internship-submenu">
+              {visibleInternshipSections.map(section => <button key={section.id}
+                className={'nav internship-subnav' + (screen === 'internship' && internshipSection === section.id ? ' active' : '')}
+                aria-current={screen === 'internship' && internshipSection === section.id ? 'page' : undefined}
+                onClick={() => { setInternshipSection(section.id); navigate('internship'); }}>
+                <Icon name={section.icon} size={16} /><span>{section.label}</span>
+              </button>)}
+            </div>}
+          </div> : <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
+            aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
         {menus.some(item => item.group === 'student') && <p className="nav-group-label student-nav-group">SINH VIÊN</p>}
         {menus.filter(item => item.group === 'student').map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
           aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
@@ -245,7 +274,7 @@ export default function App() {
       </header>
       <main className="content" id="main-content">
         <div className="page-header"><div><p className="section-kicker">{screen === 'account' || screen === 'mentor-invitations' ? 'KHÔNG GIAN CÁ NHÂN' : screen === 'demands' || screen === 'school' ? current.title : screen === 'internship' || screen === 'evaluations' ? 'QUẢN LÝ THỰC TẬP' : current.group === 'student' ? 'KHÔNG GIAN SINH VIÊN' : 'QUẢN TRỊ NỀN TẢNG'}</p>
-          <h1 ref={heading} tabIndex={-1}>{current.title}</h1><p className="page-description">{current.description}</p></div>
+          <h1 ref={heading} tabIndex={-1}>{screenTitle}</h1><p className="page-description">{current.description}</p></div>
           <span className="workspace-label"><span className="live-dot" />UT.Bridora</span></div>
         <Notice message={action.message} tone={action.error ? 'error' : 'info'} />
         {screen === 'account' && me.memberships.some(m => m.role === 'ENTERPRISE') && !grants.some(canAuthorDemands)
@@ -257,7 +286,11 @@ export default function App() {
           : screen === 'delegations' ? <SchoolDelegations key={me.userId} grants={grants} />
           : screen === 'internship-case' ? <CaseEntry key={me.userId + caseId} caseId={caseId} me={me} grants={grants} />
           : screen === 'evaluations' ? <EvaluationsPage key={me.userId} me={me} grants={grants} />
-          : screen === 'internship' ? <InternshipWorkspace key={me.userId} me={me} grants={grants} />
+          : screen === 'internship' ? <InternshipWorkspace key={me.userId} me={me} grants={grants}
+              section={internshipSection} onKindChange={kind => {
+                setInternshipKind(kind);
+                if (kind === 'MENTOR') setInternshipSection('overview');
+              }} />
           : screen === 'student-overview' ? <StudentOverviewPage me={me} schools={schools} openProfile={() => navigate('student-profile')} />
           : screen === 'student-profile' ? <MyProfilePage me={me} schools={schools} />
           : screen === 'student-capability' ? <CapabilityPage key={me.userId} me={me} schools={schools} />

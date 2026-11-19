@@ -1,4 +1,37 @@
 .internship-workspace .section-heading { flex-wrap: wrap; }
+.internship-workspace { max-width: 1280px; margin-inline: auto; }
+.internship-workspace > .panel { padding: 22px 28px; }
+.internship-scope-details { padding: 8px 0 0; color: var(--muted); }
+.internship-scope-details summary { cursor: pointer; width: fit-content; font-size: var(--text-sm); font-weight: 600; }
+.hr-workspace { display: grid; gap: 20px; min-width: 0; }
+.hr-workspace-context { display: grid; gap: 14px; }
+.hr-workspace-context .section-heading { margin-bottom: 0; }
+.hr-workspace-context .internship-context { max-width: 640px; }
+.hr-workspace > .panel, .hr-overview, .internship-groups > .panel { border: 1px solid var(--line); box-shadow: 0 10px 24px rgba(11, 42, 58, .035); }
+.hr-workspace > form.panel, .hr-workspace > .stack > .panel { padding: 28px 32px; }
+.hr-overview { display: grid; gap: 20px; padding: 26px 30px; border-radius: var(--radius); background: #fff; }
+.hr-overview h3 { margin: 3px 0 6px; font-size: 22px; color: var(--ink); }
+.hr-overview .muted { margin: 0; }
+.hr-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 14px; }
+.hr-kpi-card { display: grid; gap: 6px; min-height: 105px; padding: 18px 20px; border: 1px solid #cce8de; border-left: 4px solid var(--brand); border-radius: 12px; background: #eaf8f2; }
+.hr-kpi-card span { color: #466b66; font-size: var(--text-sm); }
+.hr-kpi-card strong { color: var(--brand-dark); font-size: 31px; line-height: 1; }
+.hr-kpi-card small { color: var(--muted); }
+.hr-overview-metrics .internship-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 14px; }
+.hr-overview-metrics .internship-facts > div { padding: 18px 20px; border: 1px solid #d8e6f1; border-left: 4px solid #3987bd; border-radius: 12px; background: #eef6fc; }
+.hr-overview-metrics .internship-facts > div:nth-child(2) { border-color: #dcd2f1; border-left-color: #8556bc; background: #f5effc; }
+.hr-overview-metrics .internship-facts > div:nth-child(3) { border-color: #f0d9bd; border-left-color: #c77722; background: #fff5e7; }
+.hr-cohort-directory .section-heading { align-items: center; }
+.hr-cohort-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 12px; }
+.hr-cohort-choice { display: grid; gap: 6px; width: 100%; min-height: 112px; padding: 17px 18px; text-align: left; background: #fff; border: 1px solid var(--line); border-radius: 12px; color: var(--ink); }
+.hr-cohort-choice:hover, .hr-cohort-choice.selected { border-color: var(--brand); background: #f0faf7; }
+.hr-cohort-choice strong { font-size: var(--text-md); }
+.hr-cohort-choice span { color: var(--muted); font-size: var(--text-sm); }
+.hr-cohort-choice small { color: var(--brand-dark); font-weight: 700; }
+.hr-step-hint { margin: 0; padding: 20px 24px; border: 1px dashed var(--line); border-radius: var(--radius); background: #fff; color: var(--muted); }
+.hr-workspace .stack > form.panel, .hr-workspace .stack > section.panel { margin: 0; }
+.hr-workspace textarea { width: 100%; min-height: 108px; box-sizing: border-box; }
+.hr-workspace .internship-facts code { font-size: var(--text-sm); overflow-wrap: anywhere; }
 .internship-context { display: grid; gap: 10px; min-width: 0; }
 .internship-context label { font-weight: 600; color: var(--ink); }
 .internship-context select { width: 100%; min-width: 0; max-width: 100%; text-overflow: ellipsis; }
@@ -22,6 +55,8 @@
 @media (max-width: 600px) {
   .internship-workspace .panel { padding: 18px; }
   .internship-workspace .section-heading > button { width: 100%; }
+  .hr-overview { padding: 20px; }
+  .hr-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 .t3-workflow { min-width: 0; overflow-wrap: anywhere; }
 .t3-workflow fieldset { min-width: 0; display: grid; gap: 12px; }
