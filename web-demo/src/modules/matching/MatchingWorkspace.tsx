@@ -217,7 +217,7 @@ export function MatchingWorkspace({ organizationId, grants }: { organizationId: 
         : <EmptyState icon="search" title="Chưa có nhu cầu phù hợp để ghép" description="Cần có hợp tác đã được duyệt và nhu cầu còn hiệu lực trong phạm vi trường." />
       : <>
         <div className="matching-controls">
-          <label>Nhu cầu đã duyệt<select value={selectedId} onChange={event => { setSelectedId(event.target.value); setRun(null); setDetails(null); setProfiles({}); setCapacity(null); setSelectedStudents([]); setError(''); setNotice(''); }} disabled={busy}>
+          <label>Nhu cầu đã duyệt<select value={selectedId} onChange={event => { setSelectedId(event.target.value); setRun(null); setDetails(null); setProfiles({}); setCapacity(null); setSelectedStudents([]); setCandidateQuery(''); setActiveCandidateId(''); setError(''); setNotice(''); }} disabled={busy}>
             {scopes.map(item => <option key={item.cooperation.cooperationId} value={item.cooperation.cooperationId}>{item.demand.data.title} · {item.demand.data.quantity} vị trí</option>)}
           </select></label>
         </div>
@@ -233,12 +233,12 @@ export function MatchingWorkspace({ organizationId, grants }: { organizationId: 
         <div className="matching-count-tile not-match"><span>Không phù hợp</span><strong>{counts.notMatched}</strong><small>Không đạt điều kiện bắt buộc</small></div>
       </div>
       <div className="matching-filter-bar">
-        <label htmlFor="matching-candidate-search">Tìm MSSV / tên</label>
+        <label htmlFor="matching-candidate-search">Tìm trong trang hiện tại · MSSV / tên</label>
         <input id="matching-candidate-search" type="search" value={candidateQuery} onChange={event => setCandidateQuery(event.target.value)} placeholder="Nhập MSSV hoặc tên sinh viên" />
       </div>
       <div className="matching-tabs" role="group" aria-label="Nhóm kết quả Matching">
         {(['MATCH', 'MISSING_DATA', 'NOT_MATCH'] as const).map((key) => <button key={key} type="button" aria-pressed={status === key}
-          className={`${status === key ? 'selected ' : ''}${key.toLowerCase()}`} onClick={() => { setStatus(key); setPage(0); setActiveCandidateId(''); setSelectedStudents([]); }}>
+          className={`${status === key ? 'selected ' : ''}${key.toLowerCase()}`} onClick={() => { setStatus(key); setPage(0); setCandidateQuery(''); setActiveCandidateId(''); setSelectedStudents([]); }}>
           {outcomeLabels[key]} <span>{key === 'MATCH' ? counts.matched : key === 'MISSING_DATA' ? counts.missingData : counts.notMatched}</span>
         </button>)}
       </div>
@@ -248,7 +248,7 @@ export function MatchingWorkspace({ organizationId, grants }: { organizationId: 
         </button>}
       </div>
       {canNominate && status === 'MATCH' && capacity && <p className="matching-capacity">Còn <strong>{capacity.openForNomination}</strong> / {capacity.quantity} vị trí · Đã xếp {capacity.placedCount} · Đang giữ chỗ {capacity.activeReservations}</p>}
-      {details ? details.results.content.length === 0 || visibleResults.length === 0 ? <EmptyState title={details.results.content.length ? 'Không tìm thấy sinh viên' : 'Không có sinh viên trong nhóm này'} description={details.results.content.length ? 'Thử từ khóa MSSV hoặc tên khác.' : 'Hãy xem nhóm kết quả khác hoặc kiểm tra tiêu chí của nhu cầu.'} />
+      {details ? details.results.content.length === 0 || visibleResults.length === 0 ? <EmptyState title={details.results.content.length ? 'Không tìm thấy trong trang này' : 'Không có sinh viên trong nhóm này'} description={details.results.content.length ? 'Tìm kiếm chỉ áp dụng cho trang đang xem. Hãy chuyển trang để tìm các sinh viên khác.' : 'Hãy xem nhóm kết quả khác hoặc kiểm tra tiêu chí của nhu cầu.'} />
         : <>
           <div className="matching-table-wrap"><table className="matching-table"><thead><tr><th scope="col">Ứng viên</th><th scope="col">Ngành / Kỳ</th><th scope="col">Kết quả</th><th scope="col">Điểm phù hợp</th>{canNominate && status === 'MATCH' && <th scope="col">Chọn</th>}</tr></thead>
             <tbody>{visibleResults.map(result => <CandidateRow key={result.studentUserId} result={result} profile={profiles[result.studentUserId]}
