@@ -8,8 +8,8 @@ export type SaveAttempt = {
   body: string;
 };
 
-export function listDemands(organizationId: string, page: number, signal: AbortSignal) {
-  return api<DemandPage>(`/enterprise/demands?page=${page}&size=25`, {
+export function listDemands(organizationId: string, page: number, signal: AbortSignal, includeDeleted = false) {
+  return api<DemandPage>(`/enterprise/demands?page=${page}&size=25${includeDeleted ? '&includeDeleted=true' : ''}`, {
     signal,
     headers: { 'X-Organization-Id': organizationId }
   });

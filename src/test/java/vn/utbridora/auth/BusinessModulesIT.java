@@ -271,5 +271,13 @@ class BusinessModulesIT {
         var result=b.write("POST","/skills/resolve","{\"values\":[\" JAVA   Core \",\"Spring Boot\"]}",null);
         assertEquals(200,result.statusCode(),result.body());assertEquals(List.of("RESOLVED","UNKNOWN"),JsonPath.read(result.body(),"$.items[*].status"));
         assertFalse(result.body().contains("skillId"));
+        var search=b.send("GET","/api/v1/taxonomy/skills?q="+java.net.URLEncoder.encode("  JAVA   Core ",java.nio.charset.StandardCharsets.UTF_8)+"&page=0&size=1",null,null,false);
+        assertEquals(200,search.statusCode());
+        assertEquals(List.of("JAVA"),JsonPath.read(search.body(),"$.skills.content[*].skillCode"));
+        assertEquals(1,((Number)JsonPath.read(search.body(),"$.skills.totalElements")).intValue());
+        var unknown=b.send("GET","/api/v1/taxonomy/skills?q=Spring%20Boot",null,null,false);
+        assertEquals(0,((Number)JsonPath.read(unknown.body(),"$.skills.totalElements")).intValue());
+        assertEquals(200,b.write("PATCH","/skills/JAVA","{\"expectedVersion\":2,\"name\":\"Java\",\"categoryCode\":\"PROGRAMMING\",\"parentSkillCode\":null,\"status\":\"DEPRECATED\"}",UUID.randomUUID().toString()).statusCode());
+        assertEquals(0,((Number)JsonPath.read(b.send("GET","/api/v1/taxonomy/skills?q=Java%20Core",null,null,false).body(),"$.skills.totalElements")).intValue());
     }
 }

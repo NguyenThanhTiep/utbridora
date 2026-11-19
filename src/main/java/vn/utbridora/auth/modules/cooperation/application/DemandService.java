@@ -57,6 +57,7 @@ public class DemandService implements DemandCriteriaPort {
         Instant now=Instant.now();
         StoredDemand old=find(demandId,org);
         if(!old.state().equals("DRAFT") || old.deletedAt()!=null) throw new DemandFailure(409,"DEMAND_LOCKED","Nhu cầu hiện không cho phép chỉnh sửa.");
+        if(!repository.lifecycleUnlocked(demandId)) throw new DemandFailure(409,"DEMAND_LOCKED","Nhu cầu đang có hợp tác hoặc tiếp nhận hiệu lực.");
         if(old.version()!=expected) throw new DemandFailure(409,"VERSION_CONFLICT","Dữ liệu đã thay đổi, vui lòng tải lại.");
         if(!old.data().schoolOrgId().equals(input.schoolOrgId()) || !old.data().termId().equals(input.termId()))
             throw new DemandFailure(422,"INVALID_CRITERIA","Không được đổi trường hoặc kỳ của nhu cầu đã tạo.");
@@ -68,6 +69,29 @@ public class DemandService implements DemandCriteriaPort {
         if(repository.update(demand,expected)!=1) throw new DemandFailure(409,"VERSION_CONFLICT","Dữ liệu đã thay đổi, vui lòng tải lại.");
         repository.addRevision(demand,snapshot(demand),actor,"UPDATE"); audit(actor,demand,"DEMAND_UPDATE");
         return demand.dto();
+        },DemandDto::demandId);
+    }
+    @Transactional
+    public DemandDto lifecycle(Authentication authentication,String organization,String id,String key,DemandLifecycle request,boolean restore) {
+        String org=DemandValidator.uuid(organization,"X-Organization-Id"), demandId=DemandValidator.uuid(id,"demandId");
+        String commandKey=DemandValidator.uuid(key,"Idempotency-Key"), actor=authorize(authentication,org);
+        long expected=DemandValidator.version(request.expectedVersion());
+        if(request.reasonCode()==null || !request.reasonCode().matches("[A-Z0-9_]{3,64}")) throw new DemandFailure(400,"SCHEMA_VALIDATION","Cần mã lý do hợp lệ.");
+        String operation=restore?"RESTORE":"REOPEN";
+        return operations.execute(new OperationLedger.Command(actor,org,"DEMAND_"+operation,commandKey,java.util.Map.of("demandId",demandId,"request",request),200),DemandDto.class,()->{
+            var old=find(demandId,org);
+            if(old.version()!=expected || expected==DemandValidator.MAX_VERSION) throw new DemandFailure(409,"VERSION_CONFLICT","Dữ liệu đã thay đổi, vui lòng tải lại.");
+            if(restore ? old.deletedAt()==null : old.deletedAt()!=null || !old.state().equals("READY"))
+                throw new DemandFailure(409,"DEMAND_LOCKED","Nhu cầu không ở trạng thái cho phép thao tác.");
+            if(!java.util.Set.of("DRAFT","READY").contains(old.state()) || !repository.lifecycleUnlocked(demandId))
+                throw new DemandFailure(409,"DEMAND_LOCKED","Nhu cầu đang có hợp tác hoặc tiếp nhận hiệu lực.");
+            references.validate(org,old.data());
+            repository.reopen(old);
+            var updated=find(demandId,org);
+            // Existing immutable revision vocabulary remains CREATE/UPDATE; audit records the exact lifecycle operation.
+            repository.addRevision(updated,snapshot(updated),actor,"UPDATE");
+            audit.demandChanged(actor,demandId,org,operation,updated.version(),updated.criteriaVersion());
+            return updated.dto();
         },DemandDto::demandId);
     }
     @Transactional

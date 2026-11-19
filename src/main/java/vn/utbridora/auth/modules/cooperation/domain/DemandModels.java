@@ -16,6 +16,7 @@ public final class DemandModels {
             RequiredCriteria required, List<SkillCriterion> preferred,
             String academicCatalogVersion, String taxonomyVersion) {}
     public record UpdateDemand(Long expectedVersion, DemandInput data) {}
+    public record DemandLifecycle(Long expectedVersion, String reasonCode) {}
     public record DemandDto(String demandId, String enterpriseOrgId, String state, long version,
             long criteriaVersion, String validationState, DemandInput data,
             String cooperationId, Instant softDeletedAt) {}

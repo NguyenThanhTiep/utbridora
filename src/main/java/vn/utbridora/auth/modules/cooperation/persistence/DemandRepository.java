@@ -45,6 +45,15 @@ public class DemandRepository {
         jdbc.update("INSERT INTO demand_revisions(demand_id,version,criteria_version,criteria_hash,data_json,snapshot_json,actor_id,operation,created_at) VALUES(?,?,?,?,?,?,?,?,?)",
                 d.id(),d.version(),d.criteriaVersion(),d.criteriaHash(),DemandJson.write(d.data()),DemandJson.write(snapshot),actor,operation,Timestamp.from(d.updatedAt()));
     }
+    /** Caller holds the demand row, the common fence for lifecycle, submit and nomination. */
+    public boolean lifecycleUnlocked(String id) {
+        if (!jdbc.queryForList("SELECT id FROM cooperations WHERE demand_id=? AND state NOT IN ('DRAFT','REJECTED') FOR UPDATE",String.class,id).isEmpty()) return false;
+        if (!jdbc.queryForList("SELECT p.id FROM placements p JOIN cooperations c ON c.id=p.cooperation_id WHERE c.demand_id=? AND p.state<>'CANCELLED' FOR UPDATE",String.class,id).isEmpty()) return false;
+        return jdbc.queryForList("SELECT i.id FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id JOIN cooperations c ON c.id=b.cooperation_id WHERE c.demand_id=? AND i.state NOT IN ('DECLINED','EXPIRED','REVOKED') FOR UPDATE",String.class,id).isEmpty();
+    }
+    public void reopen(StoredDemand d) {
+        jdbc.update("UPDATE demands SET state='DRAFT',version=version+1,soft_deleted_at=NULL,updated_at=UTC_TIMESTAMP(6) WHERE id=? AND version=?",d.id(),d.version());
+    }
     public DemandCriteriaSnapshot currentSnapshot(StoredDemand demand) {
         String data=jdbc.queryForObject("SELECT r.snapshot_json FROM demand_revisions r JOIN demands d ON d.id=r.demand_id WHERE r.demand_id=? AND r.version=? AND d.enterprise_org_id=?",
                 String.class,demand.id(),demand.version(),demand.enterpriseOrgId());

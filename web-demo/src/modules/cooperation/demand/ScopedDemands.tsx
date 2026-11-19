@@ -16,10 +16,25 @@ export function ScopedDemands({ organizationId, onLoaded }: { organizationId: st
   const [listError, setListError] = useState(''), [success, setSuccess] = useState('');
   const [editor, setEditor] = useState<{ record: Demand | null; key: number } | null>(null);
   const [saving, setSaving] = useState(false), [unconfirmed, setUnconfirmed] = useState(false);
+  const [includeDeleted, setIncludeDeleted] = useState(false);
   const nextEditor = useRef(0);
   const loadedRef = useRef(onLoaded);
   loadedRef.current = onLoaded;
   const submitKeys = useRef(new Map<string, string>());
+  const lifecycle = async (record: Demand, operation: 'reopen' | 'restore') => {
+    if (!canLeaveDemand() || !window.confirm(operation === 'restore' ? 'Khôi phục nhu cầu này về bản nháp?' : 'Mở lại nhu cầu để chỉnh sửa? Khi gửi hợp tác phải xác nhận phiên bản mới.')) return;
+    const ref = operation + ':' + record.demandId + ':' + record.version;
+    if (!submitKeys.current.has(ref)) submitKeys.current.set(ref, newIdempotencyKey());
+    setSaving(true); setListError(''); setSuccess('');
+    try {
+      await api('/enterprise/demands/' + record.demandId + '/' + operation, { method: 'PATCH',
+        headers: { 'X-Organization-Id': organizationId, 'Idempotency-Key': submitKeys.current.get(ref)! },
+        body: JSON.stringify({ expectedVersion: record.version, reasonCode: operation === 'restore' ? 'ENTERPRISE_RESTORED' : 'ENTERPRISE_REOPENED' }) });
+      submitKeys.current.delete(ref); setEditor(null); setRefresh(n => n + 1);
+      setSuccess(operation === 'restore' ? 'Đã khôi phục nhu cầu.' : 'Đã mở lại bản nháp.');
+      window.dispatchEvent(new Event('cooperation-data-updated'));
+    } catch (error) { setListError(failureMessage(error)); } finally { setSaving(false); }
+  };
   const submitCooperation = async (record: Demand) => {
     const ref = record.demandId + ':' + record.version;
     if (!submitKeys.current.has(ref)) submitKeys.current.set(ref, newIdempotencyKey()); setSaving(true); setListError('');
@@ -30,7 +45,7 @@ export function ScopedDemands({ organizationId, onLoaded }: { organizationId: st
     let active = true;
     const controller = new AbortController();
     setLoading(true); setListError(''); setPage(null);
-    void listDemands(organizationId, pageIndex, controller.signal).then(result => {
+    void listDemands(organizationId, pageIndex, controller.signal, includeDeleted).then(result => {
       if (active) {
         setPage(result);
         loadedRef.current?.(result.content);
@@ -39,7 +54,7 @@ export function ScopedDemands({ organizationId, onLoaded }: { organizationId: st
       if (active) setListError(failureMessage(error));
     }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; controller.abort(); };
-  }, [organizationId, pageIndex, refresh]);
+  }, [organizationId, pageIndex, refresh, includeDeleted]);
 
   const open = (record: Demand | null) => {
     if (!canLeaveDemand()) return;
@@ -59,6 +74,7 @@ export function ScopedDemands({ organizationId, onLoaded }: { organizationId: st
       </div>
       <Notice message={success} tone="success" />
       <Notice message={listError} tone="error" />
+      <label><input type="checkbox" checked={includeDeleted} disabled={blocked} onChange={e => { if(canLeaveDemand()) {setIncludeDeleted(e.target.checked);setPageIndex(0);} }} />Hiển thị cả nhu cầu đã xóa</label>
       {loading ? <LoadingState /> : page && page.content.length === 0 ? <EmptyState icon="briefcase" title="Chưa có nhu cầu"
         description="Tạo bản nháp đầu tiên cho doanh nghiệp này." /> : page && <>
         <div className="proposal-table portal-demands-table">
@@ -71,6 +87,8 @@ export function ScopedDemands({ organizationId, onLoaded }: { organizationId: st
               <td>{record.data.required.dateRange.startDate} – {record.data.required.dateRange.endDate}</td>
               <td>{record.data.quantity} vị trí</td>
               <td><div className="button-row">
+                {record.softDeletedAt ? <button className="secondary" disabled={blocked} onClick={() => void lifecycle(record, 'restore')}>Khôi phục nhu cầu<span className="cooperation-sr-only"> {record.data.title}</span></button>
+                  : record.state === 'READY' && <button className="secondary" disabled={blocked} onClick={() => void lifecycle(record, 'reopen')}>Mở lại bản nháp<span className="cooperation-sr-only"> {record.data.title}</span></button>}
                 <button className="secondary" disabled={blocked || record.state !== 'DRAFT' || !!record.softDeletedAt}
                   onClick={() => open(record)}>Sửa bản nháp<span className="cooperation-sr-only"> {record.data.title}</span></button>
                 {!record.cooperationId && record.state === 'DRAFT' && <button disabled={blocked}
