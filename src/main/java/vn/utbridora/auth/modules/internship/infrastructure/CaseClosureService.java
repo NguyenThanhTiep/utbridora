@@ -17,7 +17,7 @@ import vn.utbridora.auth.operations.OperationLedger;
 import static vn.utbridora.auth.operations.WorkflowValues.*;
 
 @Service
-@Transactional
+@Transactional(isolation=org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
 public class CaseClosureService implements InternshipCaseReadPort {
     private final JdbcTemplate jdbc;private final CaseRuntime cases;private final OperationsAccess access;private final PlacementReadPort source;
     private final SchoolDelegationAccess delegates;private final OperationLedger ledger;private final AuditService audit;private final Clock clock;

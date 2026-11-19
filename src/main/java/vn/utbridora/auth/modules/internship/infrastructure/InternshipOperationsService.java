@@ -13,7 +13,7 @@ import static vn.utbridora.auth.operations.WorkflowValues.*;
 import static vn.utbridora.auth.modules.internship.api.InternshipOperationsDtos.*;
 
 @Service
-@Transactional
+@Transactional(isolation=org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
 public class InternshipOperationsService {
     private final JdbcTemplate jdbc;private final OperationsAccess access;private final CaseRuntime cases;
     private final OperationLedger ledger;private final AuditService audit;private final PlacementReadPort source;private final WorkspaceAuthority authority;
@@ -115,7 +115,7 @@ public class InternshipOperationsService {
         var before=issue(id);var c=access.readCase(auth,before.caseId());access.coordinationWriter(auth,c);
         return ledger.execute(command(auth,c.schoolOrgId().toString(),"T3_ISSUE_UPDATE",key,Map.of("id",id,"input",input),200),CoordinationIssue.class,()->{
             holdActive(c);access.coordinationWriter(auth,c);
-            jdbc.queryForObject("SELECT version FROM internship_coordination_issues WHERE id=? FOR UPDATE",Long.class,id.toString());var current=issue(id);
+            var current=issue(id,true);
             if(current.version()!=input.expectedVersion()) throw failure(409,"VERSION_CONFLICT");
             if(current.state()==IssueState.RESOLVED || current.state()==IssueState.OPEN && input.state()!=IssueState.IN_PROGRESS || current.state()==IssueState.IN_PROGRESS && input.state()!=IssueState.RESOLVED) throw failure(409,"STATE_CONFLICT");
             jdbc.update("UPDATE internship_coordination_issues SET state=?,version=version+1,updated_at=? WHERE id=?",input.state().name(),utc(Instant.now()),id.toString());
@@ -126,8 +126,9 @@ public class InternshipOperationsService {
         page(page,size);access.readCase(auth,caseId);
         var rows=jdbc.queryForList("SELECT id FROM internship_coordination_issues WHERE case_id=? AND (? IS NULL OR state=?) ORDER BY created_at DESC,id",String.class,caseId.toString(),state==null?null:state.name(),state==null?null:state.name()).stream().map(UUID::fromString).map(this::issue).toList();return pageOf(rows,page,size);
     }
-    private CoordinationIssue issue(UUID id) {
-        return jdbc.query("SELECT * FROM internship_coordination_issues WHERE id=?",(r,n)->new CoordinationIssue(id,UUID.fromString(r.getString("case_id")),IssueCategory.valueOf(r.getString("category")),r.getString("description"),IssueState.valueOf(r.getString("state")),UUID.fromString(r.getString("owner_user_id")),r.getLong("version"),instant(r,"created_at"),instant(r,"updated_at")),id.toString()).stream().findFirst().orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
+    private CoordinationIssue issue(UUID id) {return issue(id,false);}
+    private CoordinationIssue issue(UUID id,boolean lock) {
+        return jdbc.query("SELECT * FROM internship_coordination_issues WHERE id=?"+(lock?" FOR UPDATE":""),(r,n)->new CoordinationIssue(id,UUID.fromString(r.getString("case_id")),IssueCategory.valueOf(r.getString("category")),r.getString("description"),IssueState.valueOf(r.getString("state")),UUID.fromString(r.getString("owner_user_id")),r.getLong("version"),instant(r,"created_at"),instant(r,"updated_at")),id.toString()).stream().findFirst().orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
     }
     private void issueHistory(Authentication auth,UUID id,long version,String state,CaseRuntime.CaseRef c,String operation) {
         jdbc.update("INSERT INTO internship_coordination_issue_history(issue_id,version,state,actor_id,created_at) VALUES(?,?,?,?,?)",id.toString(),version,state,actor(auth),utc(Instant.now()));
@@ -142,7 +143,7 @@ public class InternshipOperationsService {
         var c=cases.read(id);access.hrCase(auth,c,"t3:hiring_interest:manage");
         return ledger.execute(command(auth,c.enterpriseOrgId().toString(),"T3_HIRING_INTEREST",key,Map.of("caseId",id,"input",input),200),HiringInterestDto.class,()->{
             if(c.version()!=input.expectedCaseVersion()) throw failure(409,"VERSION_CONFLICT");holdActive(c);access.hrCase(auth,c,"t3:hiring_interest:manage");
-            var old=readInterest(id);if(old.version()!=input.expectedVersion()) throw failure(409,"VERSION_CONFLICT");if(old.version()>0)version(old.version());
+            var old=readInterest(id,true);if(old.version()!=input.expectedVersion()) throw failure(409,"VERSION_CONFLICT");if(old.version()>0)version(old.version());
             Instant now=Instant.now();long version=old.version()+1;
             jdbc.update("INSERT INTO internship_hiring_interests(case_id,interested,note,version,updated_at,updated_by) VALUES(?,?,?,?,?,?) ON DUPLICATE KEY UPDATE interested=VALUES(interested),note=VALUES(note),version=VALUES(version),updated_at=VALUES(updated_at),updated_by=VALUES(updated_by)",id.toString(),input.interested(),input.note(),version,utc(now),actor(auth));
             jdbc.update("INSERT INTO internship_hiring_interest_history(case_id,version,interested,note,actor_id,created_at) VALUES(?,?,?,?,?,?)",id.toString(),version,input.interested(),input.note(),actor(auth),utc(now));
@@ -150,7 +151,8 @@ public class InternshipOperationsService {
             return new HiringInterestDto(id,input.interested(),input.note(),version,now);
         },r->r.caseId().toString());
     }
-    private HiringInterestDto readInterest(UUID id) {return jdbc.query("SELECT * FROM internship_hiring_interests WHERE case_id=?",(r,n)->new HiringInterestDto(id,r.getBoolean("interested"),r.getString("note"),r.getLong("version"),instant(r,"updated_at")),id.toString()).stream().findFirst().orElse(new HiringInterestDto(id,false,null,0,null));}
+    private HiringInterestDto readInterest(UUID id) {return readInterest(id,false);}
+    private HiringInterestDto readInterest(UUID id,boolean lock) {return jdbc.query("SELECT * FROM internship_hiring_interests WHERE case_id=?"+(lock?" FOR UPDATE":""),(r,n)->new HiringInterestDto(id,r.getBoolean("interested"),r.getString("note"),r.getLong("version"),instant(r,"updated_at")),id.toString()).stream().findFirst().orElse(new HiringInterestDto(id,false,null,0,null));}
     private void holdActive(CaseRuntime.CaseRef c) {
         var p=source.readCurrentForGuard(c.placementId().toString()).orElseThrow(()->failure(503,"DEPENDENCY_UNAVAILABLE"));
         var held=cases.holdForReport(c.caseId(),c.version());
