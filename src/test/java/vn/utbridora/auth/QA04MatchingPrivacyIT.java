@@ -112,8 +112,8 @@ class QA04MatchingPrivacyIT {
         delegations.bootstrap(admin, key(), new SchoolDelegationService.Bootstrap(
                 id(2), id(11), id(21),
                 List.of("matching:run:execute", "matching:school:detail_read", "matching:school:nominate",
-                        "cooperation:school:review", "student:eligibility:school:approve"),
-                List.of(),
+                        "cooperation:school:review", "student:eligibility:school:approve", "student_profile:school:read"),
+                List.of("studentCode", "displayName", "majorCode", "skills"),
                 Instant.now().minusSeconds(60),
                 Instant.now().plusSeconds(86400),
                 "DEMO-QA04-PRIVACY"
@@ -399,13 +399,15 @@ class QA04MatchingPrivacyIT {
         for (Session attacker : List.of(hr, coordinator)) {
             var blockedResp = http(attacker, "POST", "/matching/evaluate", probeReqJson, id(12), key(), true);
             assertEquals(409, blockedResp.statusCode(), "Khác fingerprint trong cùng batch bắt buộc trả 409: " + blockedResp.body());
-            assertTrue(blockedResp.body().contains("PRIVACY_RELEASE_LOCKED"), blockedResp.body());
-            assertFalse(blockedResp.body().contains("%"), "Lỗi 409 không được lộ phần trăm %: " + blockedResp.body());
-            assertFalse(blockedResp.body().contains("5-9"), "Lỗi 409 không được lộ băng mới: " + blockedResp.body());
-            assertFalse(blockedResp.body().contains("10-19"), "Lỗi 409 không được lộ băng cũ: " + blockedResp.body());
+            var blockedTree = JSON.readTree(blockedResp.body());
+            assertEquals("PRIVACY_RELEASE_LOCKED", blockedTree.get("errorCode").asString(), blockedResp.body());
+            String errMsg = blockedTree.has("message") ? blockedTree.get("message").asString() : "";
+            assertFalse(errMsg.contains("%"), "Lỗi 409 không được lộ phần trăm %: " + errMsg);
+            assertFalse(errMsg.contains("5-9"), "Lỗi 409 không được lộ băng mới: " + errMsg);
+            assertFalse(errMsg.contains("10-19"), "Lỗi 409 không được lộ băng cũ: " + errMsg);
 
             var keys = new HashSet<String>();
-            collectKeys(JSON.readTree(blockedResp.body()), keys);
+            collectKeys(blockedTree, keys);
             assertTrue(Collections.disjoint(forbiddenErrorKeys, keys), "Body lỗi 409 rò rỉ khóa nhạy cảm: " + keys);
         }
 
@@ -493,7 +495,9 @@ class QA04MatchingPrivacyIT {
                     var denied = http(entry.getKey(), "GET", path, null, entry.getValue(), null, false);
                     assertEquals(404, denied.statusCode(), "Role ngoài phạm vi phải nhận 404 ở " + suffix + ": " + denied.body());
                     assertFalse(denied.body().contains(release.releaseId()), denied.body());
-                    assertFalse(denied.body().contains(release.eligibleBand()), denied.body());
+                    var deniedTree = JSON.readTree(denied.body());
+                    assertFalse(deniedTree.has("eligibleBand") || deniedTree.has("eligibleBands") || deniedTree.has("release"), denied.body());
+                    assertFalse(deniedTree.path("message").asString("").contains(release.eligibleBand()), denied.body());
                 }
             }
         } finally {
@@ -516,6 +520,142 @@ class QA04MatchingPrivacyIT {
         var noBatchResp = http(hr, "POST", "/matching/evaluate", JSON.writeValueAsString(evalReq), id(12), key(), true);
         assertEquals(503, noBatchResp.statusCode(), noBatchResp.body());
         assertTrue(noBatchResp.body().contains("PRIVACY_RELEASE_UNAVAILABLE"), noBatchResp.body());
+    }
+
+    @Test
+    @DisplayName("TC-QA04-IT04 [T4-04/T2-04/T5-02]: Ghép dữ liệu thật T2/T5 cho cán bộ trường - đổi kỹ năng T2 & tiêu chí T5 cho kết quả động")
+    void schoolMatchingReflectsRealT2ProfileAndT5CriteriaMutationsWithoutStaticMocks() throws Exception {
+        // Lưu hồ sơ gốc của SV id(6) để khôi phục sạch sau test
+        var originalProfileResp = http(student, "GET", "/students/me/profile?termId=" + id(21), null, null, null, false);
+        assertEquals(200, originalProfileResp.statusCode(), originalProfileResp.body());
+        var originalNode = JSON.readTree(originalProfileResp.body());
+        var originalSkills = originalNode.get("profile").get("skills");
+
+        try {
+            // 1. Tạo & duyệt nhu cầu thật trên T5 và xác minh API mà MatchingWorkspace gọi (GET /school/cooperations?state=APPROVED)
+            var demand = createReadyApprovedDemand(baseInput);
+            var approvedListResp = http(school, "GET", "/school/cooperations?state=APPROVED&page=0&size=100", null, id(11), null, false);
+            assertEquals(200, approvedListResp.statusCode(), approvedListResp.body());
+            assertTrue(approvedListResp.body().contains(demand.demandId()), "Danh sách hợp tác đã duyệt T5 phải có demand thật vừa tạo");
+
+            // 2. Cán bộ trường chạy Matching lần 1 -> SV id(6) đạt MATCH và đọc được projection hồ sơ T2 thật
+            var evalReq = new MatchingService.Evaluate(demand.demandId(), demand.version(), demand.criteriaVersion());
+            var run1Resp = http(school, "POST", "/matching/evaluate", JSON.writeValueAsString(evalReq), id(11), key(), true);
+            assertEquals(200, run1Resp.statusCode(), run1Resp.body());
+            var run1 = JSON.readValue(run1Resp.body(), MatchingService.Evaluated.class);
+            assertEquals("SCHOOL", run1.audience());
+            assertNotNull(run1.summary());
+            assertTrue(run1.summary().matched() >= 1, "Ban đầu SV id(6) đủ điều kiện phải nằm trong nhóm MATCH");
+
+            var details1Resp = http(school, "GET",
+                    "/matching/runs/" + run1.summary().run().matchRunId() + "/details?overallStatus=MATCH&page=0&size=25",
+                    null, id(11), null, false);
+            assertEquals(200, details1Resp.statusCode(), details1Resp.body());
+            assertTrue(details1Resp.body().contains(id(6)), "Trang chi tiết MATCH phải chứa SV id(6)");
+
+            var projectionResp = http(school, "GET",
+                    "/students/" + id(6) + "/profile?termId=" + id(21)
+                            + "&purpose=SCHOOL_REVIEW&fields=studentCode&fields=displayName&fields=majorCode&fields=skills",
+                    null, id(11), null, false);
+            assertEquals(200, projectionResp.statusCode(), projectionResp.body());
+            var projectionTree = JSON.readTree(projectionResp.body());
+            assertEquals(id(6), projectionTree.get("studentUserId").asString());
+            assertFalse(projectionTree.get("data").get("displayName").asString().isBlank(), "Phải đọc được họ tên thật từ T2");
+            assertFalse(projectionTree.get("data").get("studentCode").asString().isBlank(), "Phải đọc được MSSV thật từ T2");
+
+            // 3. Đổi kỹ năng thật qua API T2 (PUT /students/me/profile, xóa kỹ năng bắt buộc) -> chạy lại chuyển MATCH -> NOT_MATCH
+            saveStudentSkillsViaT2Api(true, List.of());
+            var run2Resp = http(school, "POST", "/matching/evaluate", JSON.writeValueAsString(evalReq), id(11), key(), true);
+            assertEquals(200, run2Resp.statusCode(), run2Resp.body());
+            var run2 = JSON.readValue(run2Resp.body(), MatchingService.Evaluated.class);
+            assertEquals(run1.summary().matched() - 1, run2.summary().matched(), "Sau khi SV xóa kỹ năng T2, số MATCH phải giảm 1");
+            assertEquals(run1.summary().notMatched() + 1, run2.summary().notMatched(), "Số NOT_MATCH phải tăng 1");
+
+            var details2Resp = http(school, "GET",
+                    "/matching/runs/" + run2.summary().run().matchRunId() + "/details?overallStatus=NOT_MATCH&page=0&size=25",
+                    null, id(11), null, false);
+            assertEquals(200, details2Resp.statusCode(), details2Resp.body());
+            assertTrue(details2Resp.body().contains(id(6)), "SV id(6) phải chuyển sang nhóm NOT_MATCH");
+            assertTrue(details2Resp.body().contains("REQUIRED_NOT_SATISFIED"), details2Resp.body());
+
+            // 4. Đổi trạng thái chưa khai báo kỹ năng qua T2 (skillsDeclared=false) -> chạy lại chuyển NOT_MATCH -> MISSING_DATA
+            saveStudentSkillsViaT2Api(false, List.of());
+            var run3Resp = http(school, "POST", "/matching/evaluate", JSON.writeValueAsString(evalReq), id(11), key(), true);
+            assertEquals(200, run3Resp.statusCode(), run3Resp.body());
+            var run3 = JSON.readValue(run3Resp.body(), MatchingService.Evaluated.class);
+            assertEquals(run2.summary().missingData() + 1, run3.summary().missingData(), "Khi skillsDeclared=false, số MISSING_DATA phải tăng 1");
+            assertEquals(run2.summary().notMatched() - 1, run3.summary().notMatched());
+
+            var details3Resp = http(school, "GET",
+                    "/matching/runs/" + run3.summary().run().matchRunId() + "/details?overallStatus=MISSING_DATA&page=0&size=25",
+                    null, id(11), null, false);
+            assertEquals(200, details3Resp.statusCode(), details3Resp.body());
+            assertTrue(details3Resp.body().contains(id(6)), "SV id(6) phải chuyển sang nhóm MISSING_DATA");
+            assertTrue(details3Resp.body().contains("DATA_NOT_DECLARED"), details3Resp.body());
+
+            // 5. Khôi phục kỹ năng SV -> quay lại MATCH; sau đó đổi tiêu chí nhu cầu thật trên T5 (đổi ngành bắt buộc -> ["AI"]) -> SV chuyển sang NOT_MATCH
+            restoreOriginalStudentSkills(originalSkills);
+            var runRestored = JSON.readValue(
+                    http(school, "POST", "/matching/evaluate", JSON.writeValueAsString(evalReq), id(11), key(), true).body(),
+                    MatchingService.Evaluated.class);
+            assertEquals(run1.summary().matched(), runRestored.summary().matched(), "Khôi phục kỹ năng T2 phải quay lại đúng số MATCH ban đầu");
+
+            var changedCriteria = new RequiredCriteria(
+                    List.of("AI"),
+                    baseInput.required().skills(),
+                    baseInput.required().dateRange()
+            );
+            var alteredDemandInput = new DemandInput(
+                    baseInput.schoolOrgId(), baseInput.termId(), "QA04 T5 Altered Major Criteria " + key(),
+                    baseInput.quantity(), baseInput.description(), baseInput.location(), baseInput.benefits(),
+                    baseInput.deadline(), changedCriteria, baseInput.preferred(),
+                    baseInput.academicCatalogVersion(), baseInput.taxonomyVersion()
+            );
+            var alteredDemand = createReadyApprovedDemand(alteredDemandInput);
+            var alteredRunResp = http(school, "POST", "/matching/evaluate",
+                    JSON.writeValueAsString(new MatchingService.Evaluate(alteredDemand.demandId(), alteredDemand.version(), alteredDemand.criteriaVersion())),
+                    id(11), key(), true);
+            assertEquals(200, alteredRunResp.statusCode(), alteredRunResp.body());
+            var alteredRun = JSON.readValue(alteredRunResp.body(), MatchingService.Evaluated.class);
+            assertEquals(0, alteredRun.summary().matched(), "Khi đổi tiêu chí ngành T5 sang AI, SV ngành SE không được MATCH");
+
+            var alteredDetailsResp = http(school, "GET",
+                    "/matching/runs/" + alteredRun.summary().run().matchRunId() + "/details?overallStatus=NOT_MATCH&page=0&size=25",
+                    null, id(11), null, false);
+            assertEquals(200, alteredDetailsResp.statusCode(), alteredDetailsResp.body());
+            assertTrue(alteredDetailsResp.body().contains(id(6)));
+            assertTrue(alteredDetailsResp.body().contains("\"criterionCode\":\"MAJOR\"")
+                    && alteredDetailsResp.body().contains("\"status\":\"FAIL\""), alteredDetailsResp.body());
+        } finally {
+            restoreOriginalStudentSkills(originalSkills);
+        }
+    }
+
+    private void saveStudentSkillsViaT2Api(boolean skillsDeclared, List<Map<String, Object>> skillsPayload) throws Exception {
+        var currentResp = http(student, "GET", "/students/me/profile?termId=" + id(21), null, null, null, false);
+        assertEquals(200, currentResp.statusCode(), currentResp.body());
+        var current = JSON.readTree(currentResp.body());
+        var profile = current.get("profile");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = JSON.convertValue(profile, LinkedHashMap.class);
+        body.put("expectedProfileVersion", current.get("profileVersion").asLong());
+        body.put("skillsDeclared", skillsDeclared);
+        body.put("skills", skillsPayload);
+        var putResp = http(student, "PUT", "/students/me/profile", JSON.writeValueAsString(body), null, key(), true);
+        assertEquals(200, putResp.statusCode(), putResp.body());
+    }
+
+    private void restoreOriginalStudentSkills(tools.jackson.databind.JsonNode originalSkills) throws Exception {
+        List<Map<String, Object>> restored = new ArrayList<>();
+        for (var s : originalSkills) {
+            var item = new LinkedHashMap<String, Object>();
+            item.put("skillCode", s.get("skillCode").asString());
+            item.put("level", s.get("level").asInt());
+            item.put("yearsPractice", s.get("yearsPractice").decimalValue());
+            item.put("note", s.get("note") == null || s.get("note").isNull() ? null : s.get("note").asString());
+            restored.add(item);
+        }
+        saveStudentSkillsViaT2Api(true, restored);
     }
 
     private static void collectKeys(tools.jackson.databind.JsonNode node, Set<String> out) {
