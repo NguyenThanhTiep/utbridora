@@ -109,7 +109,12 @@ class StudentImportIT {
         var active=imports.listRows(staff,p.job().importJobId(),0,25,null,null,null).content().getFirst();assertEquals("ACTIVE",active.activationState());assertNotNull(active.userId());
         assertEquals(1,count("student_profiles","user_id",active.userId()));assertEquals(1,count("student_term_eligibilities","user_id",active.userId()));
         assertFalse(jdbc.queryForObject("SELECT school_approved FROM student_term_eligibilities WHERE user_id=?",Boolean.class,active.userId()));
-        assertTrue(events.dispatchOne());assertEquals(1,count("student_activation_inbox","aggregate_id",active.userId()));
+        assertEquals(1,count("student_activation_outbox","aggregate_id",active.userId()));
+        // Dispatch is global: other test identities can have earlier UUID-sorted events.
+        // Keep their deliveries intact and require this exact identity to reach its inbox.
+        for(int i=0;i<20 && count("student_activation_inbox","aggregate_id",active.userId())==0;i++) assertTrue(events.dispatchOne());
+        assertEquals(1,count("student_activation_inbox","aggregate_id",active.userId()));
+        assertEquals("ACKED",jdbc.queryForObject("SELECT state FROM student_activation_outbox WHERE aggregate_id=?",String.class,active.userId()));
         // Synthetic existing data precondition: import must preserve owner edits and prior approval.
         jdbc.update("UPDATE student_profiles SET phone='0901234567',profile_version=profile_version+1 WHERE user_id=?",active.userId());
         jdbc.update("UPDATE student_term_eligibilities SET school_approved=true,approved_by=?,approved_at=UTC_TIMESTAMP(6),reason_code='SYNTHETIC_IMPORT_PRECONDITION',version=version+1 WHERE user_id=?",staffId,active.userId());
