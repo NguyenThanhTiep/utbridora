@@ -8,6 +8,20 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.testcontainers.containers.MySQLContainer;
 
 class MigrationUpgradeIT {
+    @Test void onboardingBackfillPreservesTokenHistoryAndQuarantinesAmbiguousPendingIdentities() throws Exception {
+        try(var mysql=new MySQLContainer<>("mysql:8.4")) {
+            mysql.start();Flyway.configure().dataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword()).target("40").load().migrate();
+            var ds=new org.springframework.jdbc.datasource.DriverManagerDataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword());var jdbc=new org.springframework.jdbc.core.JdbcTemplate(ds);
+            for(int i=0;i<4;i++) jdbc.update("INSERT INTO one_time_tokens(id,token_hash,purpose,email,invite_role,expires_at,consumed_at,created_at) VALUES(?,?,'INVITATION',?,'ADMIN',DATE_ADD(UTC_TIMESTAMP(6),INTERVAL 1 HOUR),?,UTC_TIMESTAMP(6))",UUID.randomUUID().toString(),String.format("%064d",i+1),i<2?"ambiguous@example.test":i==2?"single@example.test":"consumed@example.test",i==3?java.sql.Timestamp.from(java.time.Instant.now()):null);
+            var before=jdbc.queryForList("SELECT id,token_hash,purpose,user_id,email,invite_role,organization_id,expires_at,consumed_at,created_at FROM one_time_tokens ORDER BY id");
+            var flyway=Flyway.configure().dataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword()).load();assertEquals(2,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
+            assertEquals(before,jdbc.queryForList("SELECT id,token_hash,purpose,user_id,email,invite_role,organization_id,expires_at,consumed_at,created_at FROM one_time_tokens ORDER BY id"));
+            assertEquals("REVIEW_REQUIRED",jdbc.queryForObject("SELECT claim_state FROM invitation_claims WHERE email_canonical='ambiguous@example.test'",String.class));
+            assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM one_time_tokens WHERE email='ambiguous@example.test' AND claim_id IS NOT NULL",Integer.class));
+            assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM one_time_tokens WHERE email='single@example.test' AND claim_id IS NOT NULL AND generation=1 AND issued_at=created_at",Integer.class));
+            assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM invitation_claims WHERE email_canonical='consumed@example.test'",Integer.class));
+        }
+    }
     @Test void privateFileUpgradePreservesLegacyMetadataBindingsAndScanState() throws Exception {
         try(var mysql=new MySQLContainer<>("mysql:8.4").withPassword(UUID.randomUUID().toString())) {
             mysql.start();

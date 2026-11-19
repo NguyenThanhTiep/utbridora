@@ -73,7 +73,7 @@ CREATE TABLE student_import_jobs (
  state VARCHAR(24) NOT NULL,
  version BIGINT NOT NULL DEFAULT 1,
  file_hash CHAR(64) NOT NULL,
- staging_file_id VARCHAR(36) NOT NULL,
+ staging_file_id VARCHAR(36) NULL,
  catalog_version VARCHAR(64) NOT NULL,
  term_version BIGINT NOT NULL,
  preview_expires_at DATETIME(6) NOT NULL,
@@ -93,6 +93,7 @@ CREATE TABLE student_import_jobs (
  FOREIGN KEY(staging_file_id) REFERENCES files(id),
  CHECK(state IN ('VALIDATING','PREVIEW_READY','EXPIRED','PROCESSING','COMPLETED','COMPLETED_WITH_ERRORS','FAILED')),
  CHECK(total_rows BETWEEN 0 AND 5000 AND selected_rows BETWEEN 0 AND total_rows),
+ CHECK(staging_file_id IS NOT NULL OR (state IN ('VALIDATING','FAILED') AND selected_rows=0)),
  CHECK(version BETWEEN 1 AND 9007199254740991),
  INDEX ix_import_scope(school_org_id,state,created_at,id),
  INDEX ix_import_lease(state,lease_until)

@@ -116,8 +116,10 @@ public class AuthController {
             tokens.acceptInvitationV11(tree.get("token").asString(),tree.has("displayName")?tree.get("displayName").asString():null,tree.get("newPassword").asString(),key);
         } else {
             if(contract!=null && !contract.equals("1.0")) throw vn.utbridora.auth.operations.WorkflowValues.failure(400,"SCHEMA_VALIDATION");
-            var body=vn.utbridora.auth.operations.WorkflowValues.body(raw,AcceptInvitation.class);
-            if(body.token().isBlank() || body.token().length()>128 || body.displayName().isBlank() || body.displayName().length()>150 || body.password().isBlank() || body.password().length()>1000) throw vn.utbridora.auth.operations.WorkflowValues.failure(400,"SCHEMA_VALIDATION");
+            AcceptInvitation body;
+            try {body=vn.utbridora.auth.operations.WorkflowValues.body(raw,AcceptInvitation.class);}
+            catch(vn.utbridora.auth.operations.OperationFailure invalid) {throw new IllegalArgumentException("Please check request fields");}
+            if(body.token().isBlank() || body.token().length()>128 || body.displayName().isBlank() || body.displayName().length()>150 || body.password().isBlank() || body.password().length()>1000) throw new IllegalArgumentException("Please check request fields");
             tokens.acceptInvitation(body.token(),body.displayName(),body.password());
         }
         return new Message("Account activated; please sign in");

@@ -144,9 +144,12 @@ class StudentImportIT {
         imports.resume(staff,p.job().importJobId(),UUID.randomUUID().toString(),new ResumeImport(failed.jobVersion()));
         var next=processor.claim(UUID.randomUUID().toString());assertNotNull(next);jdbc.update("UPDATE school_delegations SET active=false,version=version+1 WHERE id=?",delegation);
         assertFalse(processor.process(next));assertEquals("AUTHORITY_REVOKED",jdbc.queryForObject("SELECT last_error_code FROM student_import_jobs WHERE id=?",String.class,p.job().importJobId()));
-        jdbc.update("UPDATE school_delegations SET active=true,version=version+1 WHERE id=?",delegation);
-        failed=imports.get(staff,p.job().importJobId());imports.resume(staff,p.job().importJobId(),UUID.randomUUID().toString(),new ResumeImport(failed.jobVersion()));finish(p.job().importJobId());
-        assertEquals(1000,imports.get(staff,p.job().importJobId()).successRows());assertEquals(1000,count("student_rosters","school_org_id",school));
+        var replacement=user("Synthetic recovery staff");var membership=new Membership();membership.userId=replacement.id;membership.organizationId=school;membership.role=Role.SCHOOL_STAFF;memberships.saveAndFlush(membership);
+        String replacementGrant=UUID.randomUUID().toString(),grantor=jdbc.queryForObject("SELECT granted_by FROM school_delegations WHERE id=?",String.class,delegation);
+        jdbc.update("INSERT INTO school_delegations(id,user_id,school_org_id,term_id,granted_by,decision_ref,profile_read_fields_json,valid_from,valid_until,active,version) VALUES(?,?,?,?,?,'SYNTHETIC_RECOVERY_AUTHORITY',JSON_ARRAY(),DATE_SUB(UTC_TIMESTAMP(6),INTERVAL 1 DAY),DATE_ADD(UTC_TIMESTAMP(6),INTERVAL 365 DAY),true,1)",replacementGrant,replacement.id,school,term,grantor);
+        jdbc.update("INSERT INTO school_delegation_permissions(assignment_id,permission_code) VALUES(?,'schoolRosterImport:manage')",replacementGrant);
+        var recovery=core.currentSubject(replacement.id).orElseThrow();failed=imports.get(recovery,p.job().importJobId());imports.resume(recovery,p.job().importJobId(),UUID.randomUUID().toString(),new ResumeImport(failed.jobVersion()));finish(p.job().importJobId());
+        assertEquals(1000,imports.get(recovery,p.job().importJobId()).successRows());assertEquals(replacement.id,jdbc.queryForObject("SELECT initiated_by FROM student_import_jobs WHERE id=?",String.class,p.job().importJobId()));assertEquals(1000,count("student_rosters","school_org_id",school));
         assertEquals(1000,jdbc.queryForObject("SELECT COUNT(*) FROM student_import_effects WHERE school_org_id=?",Integer.class,school));
     }
     @Test void fiveThousandRowsWithTwoHundredInvalidCompleteWithExactly4800Successes() {
@@ -170,6 +173,64 @@ class StudentImportIT {
         assertCode("RESOURCE_NOT_FOUND",()->imports.get(core.currentSubject(otherUser.id).orElseThrow(),p.job().importJobId()));
         assertEquals(400,http(client,"POST","/auth/invitations/accept","{invalid",csrf,UUID.randomUUID().toString(),true).statusCode());
         assertEquals(422,http(client,"POST","/auth/invitations/accept",JSON.writeValueAsString(Map.of("token","unknown","newPassword",password)),csrf,UUID.randomUUID().toString(),true).statusCode());
+    }
+    @Test void twoResendsAndTwoAcceptsHaveOneWinningGenerationAndOneIdentity() throws Exception {
+        var p=preview(csv("RACE"));confirm(p);finish(p.job().importJobId());
+        var row=imports.listRows(staff,p.job().importJobId(),0,25,null,null,null).content().getFirst();now.set(now.get().plusSeconds(300));
+        var pool=Executors.newFixedThreadPool(2);try {
+            var start=new CountDownLatch(1);var results=new ArrayList<Future<String>>();
+            for(int i=0;i<2;i++) results.add(pool.submit(()->{start.await();try {resend.resend(staff,p.job().importJobId(),row.rowId(),UUID.randomUUID().toString(),new ResendActivation(row.rowVersion(),row.invitationVersion()));return "ACCEPTED";}catch(OperationFailure failure) {return failure.code;}}));
+            start.countDown();var actual=new ArrayList<String>();for(var result:results)actual.add(result.get(30,TimeUnit.SECONDS));Collections.sort(actual);assertEquals(List.of("ACCEPTED","STATE_CONFLICT"),actual);
+            var mail=mails.claim(UUID.randomUUID().toString());assertNotNull(mail);String raw=cipher.decrypt(mail.payload(),mail.claimId(),mail.generation(),mail.id());
+            mails.complete(mail,"SMTP_PERMANENT",true); // Explicit transport fault fixture; real SMTP is proved separately.
+            var activate=new CountDownLatch(1);results.clear();
+            for(int i=0;i<2;i++) results.add(pool.submit(()->{activate.await();try {accounts.acceptInvitationV11(raw,"Synthetic race student",password,UUID.randomUUID().toString());return "ACTIVATED";}catch(OperationFailure failure) {return failure.code;}}));
+            activate.countDown();actual.clear();for(var result:results)actual.add(result.get(30,TimeUnit.SECONDS));Collections.sort(actual);assertEquals(List.of("ACTIVATED","TOKEN_ALREADY_USED"),actual);
+            assertEquals(1,count("users","email",address("RACE")));assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM student_profiles p JOIN users u ON u.id=p.user_id WHERE u.email=?",Integer.class,address("RACE")));
+        } finally {pool.shutdownNow();}
+    }
+    @Test void mailRetryKeepsMessageAndLinkAndPurgesTransportAfterFourthFailure() {
+        var p=preview(csv("RETRY"));confirm(p);finish(p.job().importJobId());String id=null,message=null;int[] backoff={5,30,120};
+        for(int attempt=1;attempt<=4;attempt++) {
+            var mail=mails.claim(UUID.randomUUID().toString());assertNotNull(mail);if(id==null) {id=mail.id();message=mail.messageId();}
+            assertEquals(id,mail.id());assertEquals(message,mail.messageId());assertEquals(attempt,mail.attempt());
+            mails.complete(mail,"SMTP_TEMPORARY",false);mails.complete(mail,"SMTP_TEMPORARY",false);
+            assertEquals(attempt,jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE resource_id=? AND action='ACTIVATION_EMAIL_FAILED'",Integer.class,id));
+            if(attempt<4) {assertNull(mails.claim(UUID.randomUUID().toString()));now.set(now.get().plusSeconds(backoff[attempt-1]));}
+        }
+        assertEquals("FAILED",jdbc.queryForObject("SELECT state FROM activation_mail_outbox WHERE id=?",String.class,id));assertNull(jdbc.queryForObject("SELECT encrypted_payload FROM activation_mail_outbox WHERE id=?",byte[].class,id));
+        assertEquals("COMPLETED",imports.get(staff,p.job().importJobId()).jobState());
+    }
+    @Test void scannerInfrastructureFailureCheckpointCannotBeResumedOrSelected() {
+        imports.failedPreview(staff,term,"a".repeat(64),"SCANNER_UNAVAILABLE");String id=jdbc.queryForObject("SELECT id FROM student_import_jobs WHERE school_org_id=?",String.class,school);
+        var failed=imports.get(staff,id);assertEquals("FAILED",failed.jobState());assertEquals(0,failed.totalRows());assertEquals(0,failed.selectedRows());
+        assertCode("STATE_CONFLICT",()->imports.resume(staff,id,UUID.randomUUID().toString(),new ResumeImport(failed.jobVersion())));
+        assertEquals(0,count("student_rosters","school_org_id",school));
+    }
+    @Test @org.junit.jupiter.api.condition.EnabledIfSystemProperty(named="frontend.e2e",matches="true")
+    void browserUsesRealPreviewConfirmResendAndActivationApis() throws Exception {
+        boolean windows=System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win");
+        var builder=windows?new ProcessBuilder("cmd.exe","/c","npx.cmd playwright test tests/student-import-runtime.spec.ts"):new ProcessBuilder("npx","playwright","test","tests/student-import-runtime.spec.ts");
+        builder.directory(new java.io.File("web-demo"));var env=builder.environment();env.put("API_PROXY_TARGET","http://localhost:"+port);env.put("E2E_PORT","5178");
+        env.put("E2E_REPORT_FILE","../target/student-import-runtime-browser.xml");env.put("IMPORT_E2E","true");env.put("IMPORT_STAFF_EMAIL",users.findById(staffId).orElseThrow().email);
+        env.put("IMPORT_PASSWORD",password);env.put("IMPORT_TERM",term);env.put("IMPORT_TERM_CODE",termCode);env.put("IMPORT_STUDENT_EMAIL",address("000UI"));env.put("IMPORT_BROWSER_URL","http://127.0.0.1:5178");env.put("IMPORT_MAILPIT","http://"+MAIL.getHost()+":"+MAIL.getMappedPort(8025));
+        builder.redirectErrorStream(true).redirectOutput(new java.io.File("target/student-import-runtime-e2e.log"));var process=builder.start();long deadline=System.nanoTime()+Duration.ofSeconds(180).toNanos();boolean advanced=false;
+        try {
+            while(process.isAlive() && System.nanoTime()<deadline) {
+                if(jdbc.queryForObject("SELECT COUNT(*) FROM student_import_jobs WHERE school_org_id=? AND state='PROCESSING'",Integer.class,school)>0) {
+                    var lease=processor.claim(UUID.randomUUID().toString());if(lease!=null) while(processor.process(lease)) { }
+                }
+                if(!advanced && jdbc.queryForObject("SELECT COUNT(*) FROM student_import_jobs WHERE school_org_id=? AND state='COMPLETED'",Integer.class,school)>0) {now.set(now.get().plusSeconds(300));advanced=true;}
+                if(jdbc.queryForObject("SELECT COUNT(*) FROM invitation_claims WHERE school_org_id=? AND generation=2 AND claim_state='PENDING'",Integer.class,school)>0) {
+                    var mail=mails.claim(UUID.randomUUID().toString());if(mail!=null) {String raw=cipher.decrypt(mail.payload(),mail.claimId(),mail.generation(),mail.id());email.activation(mail.email(),raw,mail.messageId());mails.complete(mail,null,false);}
+                }
+                Thread.sleep(100);
+            }
+            if(process.isAlive()) {process.destroyForcibly();fail("Import browser timed out; see isolated runtime log");}
+            assertEquals(0,process.exitValue(),"See target/student-import-runtime-e2e.log");
+            assertEquals(1,count("student_rosters","school_org_id",school));assertEquals(1,count("users","email",address("000UI")));
+            assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM student_profiles p JOIN student_rosters r ON r.user_id=p.user_id WHERE r.school_org_id=?",Integer.class,school));
+        } finally {if(process.isAlive()) process.destroyForcibly();}
     }
     int count(String table,String column,String value) {return jdbc.queryForObject("SELECT COUNT(*) FROM "+table+" WHERE "+column+"=?",Integer.class,value);}
     OperationFailure assertCode(String code,Runnable action) {var failure=assertThrows(OperationFailure.class,action::run);assertEquals(code,failure.code);return failure;}

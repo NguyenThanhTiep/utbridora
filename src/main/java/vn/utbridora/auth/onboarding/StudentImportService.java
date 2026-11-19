@@ -26,34 +26,41 @@ import static vn.utbridora.auth.onboarding.StudentImportContracts.*;
 public class StudentImportService {
     static final String PERMISSION="schoolRosterImport:manage";
     static final Set<String> TERMINAL=Set.of("PROVISIONED","ALREADY_LINKED","NEEDS_REVIEW","PERMANENT_FAILED");
-    final JdbcTemplate jdbc;final SchoolDelegationAccess access;final AuthorizationPolicy permissions;
-    final TermReferencePort terms;final AcademicCatalogService catalogs;final StudentRosterProvisionPort rosters;
-    final InvitationClaims claims;final OperationLedger ledger;final AuditService audit;final Clock clock;final FileStorage storage;
+    private final JdbcTemplate jdbc;private final SchoolDelegationAccess access;private final AuthorizationPolicy permissions;
+    private final TermReferencePort terms;private final AcademicCatalogService catalogs;private final StudentRosterProvisionPort rosters;
+    private final InvitationClaims claims;private final OperationLedger ledger;private final AuditService audit;private final Clock clock;private final FileStorage storage;
     record Job(String id,String school,String term,String actor,String initiatedBy,Long security,String assignment,Long authority,
         String state,long version,String hash,String catalog,long termVersion,Instant expires,int total,int selected,
         String owner,long epoch,Instant lease,Instant started,Instant finished) {}
-    public StudentImportService(JdbcTemplate jdbc,SchoolDelegationAccess access,AuthorizationPolicy permissions,
-        TermReferencePort terms,AcademicCatalogService catalogs,StudentRosterProvisionPort rosters,InvitationClaims claims,
-        OperationLedger ledger,AuditService audit,@Qualifier("onboardingClock") Clock clock,FileStorage storage) {
-        this.jdbc=jdbc;this.access=access;this.permissions=permissions;this.terms=terms;this.catalogs=catalogs;this.rosters=rosters;
-        this.claims=claims;this.ledger=ledger;this.audit=audit;this.clock=clock;this.storage=storage;
+    public StudentImportService(StudentImportRuntime runtime) {
+        this.jdbc=runtime.jdbc();this.access=runtime.access();this.permissions=runtime.permissions();this.terms=runtime.terms();this.catalogs=runtime.catalogs();this.rosters=runtime.rosters();
+        this.claims=runtime.claims();this.ledger=runtime.ledger();this.audit=runtime.audit();this.clock=runtime.clock();this.storage=runtime.storage();
     }
     public void authorizePreview(Authentication auth,String termId) {scope(auth,termId);}
+    /** Non-selectable attempt checkpoint after a pre-response infrastructure failure. No student effect. */
+    @Transactional(propagation=Propagation.REQUIRES_NEW)
+    public void failedPreview(Authentication auth,String termId,String fileHash,String code) {
+        var term=scope(auth,termId);
+        if(!Set.of("SCANNER_UNAVAILABLE","FILE_STORAGE_UNAVAILABLE").contains(code) || !fileHash.matches("[a-f0-9]{64}")) throw new IllegalArgumentException();
+        var catalog=catalogs.forProfile(term.schoolOrgId(),term.termId());String id=UUID.randomUUID().toString();Instant now=clock.instant();
+        jdbc.update("INSERT INTO student_import_jobs(id,school_org_id,term_id,actor_id,state,file_hash,catalog_version,term_version,preview_expires_at,total_rows,last_error_code,created_at,finished_at) VALUES(?,?,?,?,'FAILED',?,?,?,?,0,?,?,?)",id,term.schoolOrgId(),term.termId(),actor(auth),fileHash,catalog.version(),term.version(),utc(now),code,utc(now),utc(now));
+        audit.workflowFailure(actor(auth),"STUDENT_IMPORT_FAILED",id,term.schoolOrgId(),Map.of("jobVersion",1,"errorClass",code,"checkpointVersion",1));
+    }
     private TermReferencePort.TermReference scope(Authentication auth,String termId) {
         actor(auth);var term=terms.findById(uuid(termId)).orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
         access.require(auth,term.schoolOrgId(),term.termId(),PERMISSION);
         if(term.status()!=TermReferencePort.Status.ACTIVE) throw failure(422,"REFERENCE_DATA_CHANGED");return term;
     }
-    Job job(String id,boolean locked) {
+    @Transactional(propagation=Propagation.MANDATORY) public Job job(String id,boolean locked) {
         return jdbc.query("SELECT * FROM student_import_jobs WHERE id=?"+(locked?" FOR UPDATE":""),(r,n)->new Job(r.getString("id"),r.getString("school_org_id"),r.getString("term_id"),r.getString("actor_id"),r.getString("initiated_by"),(Long)r.getObject("initiated_security_version"),r.getString("authority_assignment_id"),(Long)r.getObject("authority_version"),r.getString("state"),r.getLong("version"),r.getString("file_hash"),r.getString("catalog_version"),r.getLong("term_version"),instant(r,"preview_expires_at"),r.getInt("total_rows"),r.getInt("selected_rows"),r.getString("lease_owner"),r.getLong("lease_epoch"),instant(r,"lease_until"),instant(r,"started_at"),instant(r,"finished_at")),uuid(id)).stream().findFirst().orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
     }
-    Job authorized(Authentication auth,String id) {
+    @Transactional(propagation=Propagation.MANDATORY) public Job authorized(Authentication auth,String id) {
         actor(auth);var candidate=job(id,false);
         try {access.require(auth,candidate.school(),candidate.term(),PERMISSION);}
         catch(OperationFailure denied) {if(denied.status==403) throw failure(404,"RESOURCE_NOT_FOUND");throw denied;}
         return job(id,true);
     }
-    StudentRosterProvisionPort.EnsureRoster ensure(Job job,ImportSourceData data,String operation) {
+    @Transactional(propagation=Propagation.MANDATORY) public StudentRosterProvisionPort.EnsureRoster ensure(Job job,ImportSourceData data,String operation) {
         return new StudentRosterProvisionPort.EnsureRoster(job.school(),data.studentCode(),job.term(),data.majorCode(),data.email(),data.fullName(),data.cohortCode(),data.classCode(),job.catalog(),operation);
     }
     public ImportPreviewDto preview(Authentication auth,String termId,String key,RosterImportQuarantine.ScannedRosterFile file) {
@@ -137,7 +144,7 @@ public class StudentImportService {
             return new OperationLedger.HttpResult(202,new ImportAccepted(id,j.version()+1,"PROCESSING",j.selected()));
         },r->id);
     }
-    ImportJobDto finalizeJob(Job j) {
+    @Transactional(propagation=Propagation.MANDATORY) public ImportJobDto finalizeJob(Job j) {
         var dto=project(j);
         if(j.selected()==0 || dto.processedRows()!=j.selected()) throw new IllegalStateException("Unfinished import cannot finalize");
         return ledger.finalizeStudentImport(j.id(),j.initiatedBy(),ImportJobDto.class,()->{
@@ -152,7 +159,7 @@ public class StudentImportService {
         if(validation!=null && !Set.of("VALID","INVALID","NEEDS_REVIEW").contains(validation) || state!=null && !Set.of("NOT_SELECTED","QUEUED","PROCESSING","PROVISIONED","ALREADY_LINKED","NEEDS_REVIEW","PERMANENT_FAILED","TRANSIENT_FAILED").contains(state) || mail!=null && !Set.of("NOT_REQUIRED","NOT_READY","QUEUED","SENDING","RETRY_WAIT","SENT","FAILED","SUPERSEDED","CANCELLED").contains(mail)) throw failure(400,"INVALID_REQUEST");
         return rows(j,page,size,validation,state,mail);
     }
-    ImportJobDto project(Job j) {
+    @Transactional(propagation=Propagation.MANDATORY) public ImportJobDto project(Job j) {
         var counts=jdbc.queryForList("SELECT validation_state,row_state,selected,COUNT(*) n FROM student_import_rows WHERE job_id=? GROUP BY validation_state,row_state,selected",j.id());
         var validation=new HashMap<String,Integer>();var states=new HashMap<String,Integer>();
         for(var c:counts) {int n=((Number)c.get("n")).intValue();validation.merge(c.get("validation_state").toString(),n,Integer::sum);if(Boolean.TRUE.equals(c.get("selected")) || c.get("selected") instanceof Number b && b.intValue()==1) states.merge(c.get("row_state").toString(),n,Integer::sum);}
