@@ -44,6 +44,8 @@ test('preview preserves identifiers and confirms only selected valid row IDs wit
   await expect(page.getByRole('heading', { name: 'Đang xử lý', exact: true })).toBeVisible();
   expect(requests.find(request => request.path.endsWith('/confirm'))?.body).toEqual({ expectedJobVersion: 1, fileHash: initial.fileHash, selectedRowIds: [rowId] });
   expect(requests.every(request => /^[0-9a-f-]{36}$/.test(request.key || ''))).toBeTruthy();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
 });
 test('a completed job with failed mail can resend without confirming or provisioning again', async ({ page }) => {
   const requests = await fixture(page, true);await page.getByLabel('Mã đợt nhập cần theo dõi').fill(jobId);await page.getByRole('button', { name: 'Theo dõi đợt nhập', exact: true }).click();
@@ -58,4 +60,13 @@ test('term change and session expiry clear staged PII and commands', async ({ pa
   await page.getByLabel('Kỳ nhập danh sách', { exact: true }).selectOption(term);await preview(page);
   await page.evaluate(() => window.dispatchEvent(new Event('session-expired')));await expect(page.locator('td').filter({ hasText: 'synthetic@example.test' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Kiểm tra và xem trước', exact: true })).toHaveCount(0);
+});
+test('file header errors identify the missing column without creating a selectable preview', async ({ page }) => {
+  await fixture(page);
+  await page.route('**/api/v1/school/student-imports/preview', route => route.fulfill({ status: 422, json: {
+    errorCode: 'FILE_STRUCTURE_INVALID', error: 'FILE_STRUCTURE_INVALID', message: 'Tệp thiếu cột bắt buộc.', requestId: jobId,
+    fieldErrors: [{ field: 'columns.studentCode', code: 'REQUIRED_COLUMN_MISSING', message: 'Thiếu cột bắt buộc studentCode.' }], retryAfterSeconds: null,
+  } }));
+  await preview(page);await expect(page.getByText(/Thiếu cột bắt buộc studentCode\./)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Chờ xác nhận', exact: true })).toHaveCount(0);await expect(page.getByLabel('Chọn dòng 2')).toHaveCount(0);
 });

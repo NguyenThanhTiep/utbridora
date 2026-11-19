@@ -101,7 +101,7 @@ function ImportSession({ org, term }: { org: string; term: string }) {
     try { await action(); }
     catch (reason) { if (!lifetime.current?.signal.aborted) {
       const local = reason instanceof Error && !(reason instanceof ApiError) ? reason.message : workflowError(reason);
-      setError(local + (reason instanceof ApiError && reason.retryAfterSeconds !== null ? ' Có thể thử lại sau ' + reason.retryAfterSeconds + ' giây.' : ''));
+      setError(local + (reason instanceof ApiError ? ' ' + reason.fieldErrors.map(field => field.message).join(' ') : '') + (reason instanceof ApiError && reason.retryAfterSeconds !== null ? ' Có thể thử lại sau ' + reason.retryAfterSeconds + ' giây.' : ''));
       if (reason instanceof ApiError && reason.status === 409) setRevision(old => old + 1);
       if (reason instanceof ApiError && [401, 403, 404].includes(reason.status)) { setJob(null); setRows(null); setSelected(new Set()); }
     } }

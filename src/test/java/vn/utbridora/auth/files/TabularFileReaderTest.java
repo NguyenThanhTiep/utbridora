@@ -31,6 +31,8 @@ class TabularFileReaderTest {
         assertTrue(caseOnly.stream().allMatch(r->r.validationState().equals("VALID")));
     }
     @Test void foreignSchoolAndUnknownOrForbiddenColumnsFailTheWholeFile() {
+        var missing=assertThrows(OperationFailure.class,()->ImportRowValidator.validate(csv("email,fullName,majorCode,termCode\na@x.test,First Name,IT,T1"),"school","T1",Set.of("IT")));
+        assertEquals(422,missing.status);assertEquals("FILE_STRUCTURE_INVALID",missing.code);assertEquals("columns.studentCode",((Map<?,?>)missing.fieldErrors.getFirst()).get("field"));
         assertEquals(403,assertThrows(OperationFailure.class,()->ImportRowValidator.validate(csv(HEADER+",schoolOrgId\n1,a@x.test,First Name,IT,T1,other"),"school","T1",Set.of("IT"))).status);
         for(String column:List.of("schoolApproved","unknown")) assertEquals("FILE_STRUCTURE_INVALID",assertThrows(OperationFailure.class,()->ImportRowValidator.validate(csv(HEADER+","+column+"\n1,a@x.test,First Name,IT,T1,true"),"school","T1",Set.of("IT"))).code);
     }

@@ -124,6 +124,14 @@ public class AuthController {
         }
         return new Message("Account activated; please sign in");
     }
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public org.springframework.http.ResponseEntity<?> malformedBody(jakarta.servlet.http.HttpServletRequest request) {
+        if(request.getRequestURI().endsWith("/auth/invitations/accept") && "1.1".equals(request.getHeader("X-UTB-Contract-Version"))) {
+            String id=request.getAttribute("bridora.request_id") instanceof String value?value:java.util.UUID.randomUUID().toString();
+            return org.springframework.http.ResponseEntity.badRequest().body(new vn.utbridora.auth.operations.OperationErrors.Error("SCHEMA_VALIDATION","SCHEMA_VALIDATION","Vui lòng kiểm tra các trường yêu cầu.",id,java.util.List.of(),null));
+        }
+        return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("error","INVALID_REQUEST","message","Please check request fields"));
+    }
     private AppPrincipal principal(Authentication auth) {
         if(auth==null || !(auth.getPrincipal() instanceof AppPrincipal p)) throw new IllegalStateException("Authentication required");
         return p;

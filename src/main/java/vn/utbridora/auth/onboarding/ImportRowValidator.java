@@ -13,7 +13,12 @@ public final class ImportRowValidator {
     public record Validated(int rowNo,ImportSourceData sourceData,String validationState,List<String> errorCodes) {}
     private ImportRowValidator() {}
     public static List<Validated> validate(Table table,String school,String term,Set<String> majors) {
-        if(!table.headers().containsAll(REQUIRED) || !COLUMNS.containsAll(table.headers())) throw failure(422,"FILE_STRUCTURE_INVALID");
+        if(!table.headers().containsAll(REQUIRED)) {
+            var fields=List.of("studentCode","email","fullName","majorCode","termCode").stream().filter(name->!table.headers().contains(name))
+                .map(name->Map.of("field","columns."+name,"code","REQUIRED_COLUMN_MISSING","message","Thiếu cột bắt buộc "+name+".")).toList();
+            throw new vn.utbridora.auth.operations.OperationFailure(422,"FILE_STRUCTURE_INVALID","Tệp thiếu cột bắt buộc.",null,fields);
+        }
+        if(!COLUMNS.containsAll(table.headers())) throw new vn.utbridora.auth.operations.OperationFailure(422,"FILE_STRUCTURE_INVALID","Tệp có cột không được phép.",null,List.of(Map.of("field",table.headers().contains("schoolApproved")?"columns.schoolApproved":"columns","code",table.headers().contains("schoolApproved")?"FORBIDDEN_COLUMN":"UNKNOWN_COLUMN","message","Chỉ dùng các cột được hỗ trợ trong mẫu nhập.")));
         var rows=new ArrayList<Validated>();var codes=new HashMap<String,Integer>();var emails=new HashMap<String,Integer>();
         for(var row:table.rows()) {
             var errors=new LinkedHashSet<String>();var cells=new HashMap<String,Cell>();

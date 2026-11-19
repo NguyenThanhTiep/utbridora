@@ -104,11 +104,22 @@ class StudentImportIT {
         var mail=mails.claim(UUID.randomUUID().toString());assertNotNull(mail);String raw=cipher.decrypt(mail.payload(),mail.claimId(),mail.generation(),mail.id());
         email.activation(mail.email(),raw,mail.messageId());mails.complete(mail,null,false);assertMailbox(address("000Ab"),raw,mail.messageId());
         String acceptKey=UUID.randomUUID().toString();assertEquals(accounts.acceptInvitationV11(raw,null,password,acceptKey),accounts.acceptInvitationV11(raw,null,password,acceptKey));
+        assertCode("IDEMPOTENCY_KEY_REUSED",()->accounts.acceptInvitationV11(raw,null,password+"x",acceptKey));
         assertCode("TOKEN_ALREADY_USED",()->accounts.acceptInvitationV11(raw,null,password,UUID.randomUUID().toString()));
         var active=imports.listRows(staff,p.job().importJobId(),0,25,null,null,null).content().getFirst();assertEquals("ACTIVE",active.activationState());assertNotNull(active.userId());
         assertEquals(1,count("student_profiles","user_id",active.userId()));assertEquals(1,count("student_term_eligibilities","user_id",active.userId()));
         assertFalse(jdbc.queryForObject("SELECT school_approved FROM student_term_eligibilities WHERE user_id=?",Boolean.class,active.userId()));
         assertTrue(events.dispatchOne());assertEquals(1,count("student_activation_inbox","aggregate_id",active.userId()));
+        // Synthetic existing data precondition: import must preserve owner edits and prior approval.
+        jdbc.update("UPDATE student_profiles SET phone='0901234567',profile_version=profile_version+1 WHERE user_id=?",active.userId());
+        jdbc.update("UPDATE student_term_eligibilities SET school_approved=true,approved_by=?,approved_at=UTC_TIMESTAMP(6),reason_code='SYNTHETIC_IMPORT_PRECONDITION',version=version+1 WHERE user_id=?",staffId,active.userId());
+        var beforeProfile=jdbc.queryForMap("SELECT * FROM student_profiles WHERE user_id=?",active.userId());var beforeEligibility=jdbc.queryForMap("SELECT * FROM student_term_eligibilities WHERE user_id=?",active.userId());String beforePassword=users.findById(active.userId()).orElseThrow().passwordHash;
+        var linked=preview(content);confirm(linked);finish(linked.job().importJobId());
+        assertEquals("ALREADY_LINKED",imports.listRows(staff,linked.job().importJobId(),0,25,null,null,null).content().getFirst().rowState());
+        assertTrue(beforeProfile.equals(jdbc.queryForMap("SELECT * FROM student_profiles WHERE user_id=?",active.userId())),"Existing profile must remain unchanged");
+        assertTrue(beforeEligibility.equals(jdbc.queryForMap("SELECT * FROM student_term_eligibilities WHERE user_id=?",active.userId())),"Existing approval must remain unchanged");
+        assertTrue(beforePassword.equals(users.findById(active.userId()).orElseThrow().passwordHash),"Import must never reset an active account password");
+        assertEquals(1,jdbc.queryForObject("SELECT generation FROM invitation_claims WHERE id=?",Integer.class,mail.claimId()));
         assertCode("ACCOUNT_ALREADY_ACTIVE",()->resend.resend(staff,p.job().importJobId(),row.rowId(),UUID.randomUUID().toString(),new ResendActivation(1L,1L)));
         assertEquals("COMPLETED",imports.get(staff,p.job().importJobId()).jobState());
     }
@@ -133,6 +144,10 @@ class StudentImportIT {
         var p=preview(csv("expire"));now.set(now.get().plusSeconds(1800));assertCode("PREVIEW_EXPIRED",()->confirm(p));
         now.set(Instant.now());var stale=preview(csv("stale"));jdbc.update("UPDATE academic_catalogs SET catalog_version='v2' WHERE term_id=?",term);assertCode("PREVIEW_STALE",()->confirm(stale));
         assertEquals(0,count("student_rosters","school_org_id",school));assertEquals(0,count("invitation_claims","school_org_id",school));
+        var unlinked=user("Synthetic unlinked student");jdbc.update("UPDATE users SET email=? WHERE id=?",address("unlinked"),unlinked.id);
+        var member=new Membership();member.userId=unlinked.id;member.organizationId=school;member.role=Role.STUDENT;memberships.saveAndFlush(member);
+        var review=preview(csv("unlinked"));assertEquals(1,review.job().previewNeedsReviewRows());assertNull(review.rows().content().getFirst().userId());
+        assertEquals(List.of("IDENTITY_CONFLICT"),review.rows().content().getFirst().errorCodes());assertEquals(0,count("student_rosters","school_org_id",school));
     }
     @Test void selectedThousandRowsRecoverOnlyUnfinishedAndAuthorityMustBeCurrent() {
         var text=new StringBuilder("studentCode,email,fullName,majorCode,termCode\n");for(int i=0;i<1000;i++) text.append(line("REC"+i));var p=preview(text.toString());
@@ -168,11 +183,17 @@ class StudentImportIT {
         var confirm=new ConfirmImport(1L,p.job().fileHash(),List.of(p.rows().content().getFirst().rowId()));
         assertEquals(403,http(client,"POST",path+"/confirm",JSON.writeValueAsString(confirm),null,UUID.randomUUID().toString()).statusCode());
         assertEquals(400,http(client,"POST",path+"/confirm","{\"expectedJobVersion\":1}",csrf,UUID.randomUUID().toString()).statusCode());
+        var empty=http(client,"POST",path+"/confirm","",csrf,UUID.randomUUID().toString());assertEquals(400,empty.statusCode());assertEquals("SCHEMA_VALIDATION",JSON.readTree(empty.body()).get("errorCode").asString());
+        var missingKey=http(client,"POST",path+"/confirm",JSON.writeValueAsString(confirm),csrf,null);assertEquals(400,missingKey.statusCode());assertEquals("SCHEMA_VALIDATION",JSON.readTree(missingKey.body()).get("errorCode").asString());
         assertEquals(404,http(client,"GET","/school/student-imports/"+UUID.randomUUID(),null,null,null).statusCode());
         var otherUser=user("Unassigned school staff");var m=new Membership();m.userId=otherUser.id;m.organizationId=school;m.role=Role.SCHOOL_STAFF;memberships.saveAndFlush(m);
         assertCode("RESOURCE_NOT_FOUND",()->imports.get(core.currentSubject(otherUser.id).orElseThrow(),p.job().importJobId()));
         assertEquals(400,http(client,"POST","/auth/invitations/accept","{invalid",csrf,UUID.randomUUID().toString(),true).statusCode());
         assertEquals(422,http(client,"POST","/auth/invitations/accept",JSON.writeValueAsString(Map.of("token","unknown","newPassword",password)),csrf,UUID.randomUUID().toString(),true).statusCode());
+        assertEquals(202,http(client,"POST",path+"/confirm",JSON.writeValueAsString(confirm),csrf,UUID.randomUUID().toString()).statusCode());finish(p.job().importJobId());
+        var row=imports.listRows(staff,p.job().importJobId(),0,25,null,null,null).content().getFirst();
+        var limited=http(client,"POST",path+"/rows/"+row.rowId()+"/resend",JSON.writeValueAsString(new ResendActivation(row.rowVersion(),row.invitationVersion())),csrf,UUID.randomUUID().toString());
+        assertEquals(429,limited.statusCode());assertEquals("300",limited.headers().firstValue("Retry-After").orElseThrow());assertEquals(300,JSON.readTree(limited.body()).get("retryAfterSeconds").asInt());
     }
     @Test void twoResendsAndTwoAcceptsHaveOneWinningGenerationAndOneIdentity() throws Exception {
         var p=preview(csv("RACE"));confirm(p);finish(p.job().importJobId());

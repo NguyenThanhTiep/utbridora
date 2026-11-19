@@ -66,7 +66,7 @@ public class AccountTokenService {
         var candidate=tokens.findByTokenHashAndPurpose(TokenCodec.hash(raw),Purpose.INVITATION)
             .orElseThrow(()->vn.utbridora.auth.operations.WorkflowValues.failure(422,"TOKEN_INVALID"));
         var claim=invitationClaims.lockEmail(candidate.email);
-        var payload=new java.util.LinkedHashMap<String,Object>();payload.put("tokenDigest",candidate.tokenHash);payload.put("passwordDigest",TokenCodec.hash(password));payload.put("displayName",displayName);
+        var payload=java.util.Map.of("tokenDigest",candidate.tokenHash,"requestProof",TokenCodec.activationRequestProof(raw,password,displayName));
         return operations.acceptInvitation(claim.id(),key,payload,ActivationResult.class,()->{
             invitationClaims.requireCurrentToken(candidate.tokenHash);
             if(displayName==null && !claim.context().equals("ROSTER")) throw new vn.utbridora.auth.operations.OperationFailure(422,"BUSINESS_VALIDATION","Vui lòng nhập tên hiển thị.",null,java.util.List.of(java.util.Map.of("field","displayName","code","REQUIRED","message","Vui lòng nhập tên hiển thị.")));

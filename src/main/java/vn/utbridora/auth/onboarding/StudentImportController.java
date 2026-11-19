@@ -38,6 +38,15 @@ public class StudentImportController {
         String id=request.getAttribute("bridora.request_id") instanceof String value?value:java.util.UUID.randomUUID().toString();
         return ResponseEntity.status(413).body(new vn.utbridora.auth.operations.OperationErrors.Error("FILE_TOO_LARGE","FILE_TOO_LARGE","Tệp vượt quá giới hạn cho phép.",id,java.util.List.of(),null));
     }
+    @ExceptionHandler({org.springframework.http.converter.HttpMessageNotReadableException.class,
+        org.springframework.web.bind.MissingRequestHeaderException.class,org.springframework.web.bind.MissingServletRequestParameterException.class,
+        org.springframework.web.multipart.support.MissingServletRequestPartException.class,
+        org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class,org.springframework.web.multipart.MultipartException.class})
+    public ResponseEntity<vn.utbridora.auth.operations.OperationErrors.Error> schema(Exception error,jakarta.servlet.http.HttpServletRequest request) {
+        String code=error instanceof org.springframework.web.method.annotation.MethodArgumentTypeMismatchException mismatch && java.util.Set.of("page","size").contains(mismatch.getName())?"INVALID_PAGINATION":"SCHEMA_VALIDATION";
+        String id=request.getAttribute("bridora.request_id") instanceof String value?value:java.util.UUID.randomUUID().toString();
+        return ResponseEntity.badRequest().body(new vn.utbridora.auth.operations.OperationErrors.Error(code,code,"Vui lòng kiểm tra các trường yêu cầu.",id,java.util.List.of(),null));
+    }
     @GetMapping("/{id}") public ImportJobDto get(Authentication auth,@PathVariable String id) {return imports.get(auth,id);}
     @GetMapping("/{id}/rows") public Page<ImportRowDto> rows(Authentication auth,@PathVariable String id,
         @RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="25") int size,
