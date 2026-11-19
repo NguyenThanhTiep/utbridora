@@ -7,7 +7,9 @@ test.beforeEach(()=>test.skip(!cfg,'Requires private T312EvaluationBrowserIT ser
 async function actor(browser:Browser,role:string) {
   const context=await browser.newContext(),page=await context.newPage();await page.goto('/');
   await page.getByLabel('Email',{exact:true}).fill(cfg![role+'Email']);await page.getByLabel('Mật khẩu',{exact:true}).fill(cfg!.password);
-  await page.getByRole('button',{name:'Đăng nhập',exact:true}).click();await page.getByRole('button',{name:'Đánh giá thực tập',exact:true}).click();
+  await page.getByRole('button',{name:'Đăng nhập',exact:true}).click();
+  if (['school','mentor','hr'].includes(role)) await page.getByRole('button',{name:'Không gian thực tập',exact:true}).click();
+  await page.getByRole('button',{name:'Đánh giá thực tập',exact:true}).click();
   if(role==='mentor'||role==='hr')await page.getByRole('combobox',{name:'Phân công đánh giá',exact:true}).selectOption(cfg![role+'Context']);
   if(role==='mentor')await page.getByRole('combobox',{name:'Hồ sơ trong nhóm',exact:true}).selectOption(cfg!.caseId);
   if(role==='student'||role==='outsider')await selectCase(page);
@@ -26,6 +28,17 @@ async function policy(page:Page,title:string,enabled:boolean) {
   await panel.getByRole('button',{name:'Lưu quyền xem điểm'}).click();expect((await saved).ok()).toBe(true);
   await expect(panel.getByRole('button',{name:'Lưu quyền xem điểm'})).toBeDisabled();
   await expect(panel.getByText('Trạng thái đã lưu: '+(enabled?'Bật':'Tắt'),{exact:false})).toBeVisible();
+  if (title.startsWith('Quyền xem điểm')) {
+    const status = panel.getByText('Trạng thái đã lưu:', {exact:false});
+    const savedVersion = await status.innerText();
+    const read = page.waitForResponse(r => r.request().method() === 'GET' && r.url().includes('/grade-visibility'));
+    await panel.getByRole('button',{name:'Tải lại chính sách'}).click();
+    expect((await read).ok()).toBe(true);
+    await expect(status).toHaveText(savedVersion);
+    const conditions = panel.getByRole('region',{name:'Ba điều kiện hiển thị điểm'});
+    await expect(conditions.getByText(enabled ? 'Bật' : 'Tắt',{exact:true})).toBeVisible();
+    await expect(conditions.getByText('Chưa xác nhận',{exact:true})).toHaveCount(2);
+  }
 }
 async function schoolRow(page:Page,state:string) {
   await page.getByRole('button',{name:'Tải danh sách đánh giá',exact:true}).click();
@@ -48,6 +61,14 @@ test('T3-12 real four-role rubric submit, triple gate, revision, publication and
     await expect(mentor.page.getByText('Điểm dự kiến: 76.00',{exact:true})).toBeVisible();await mentor.page.getByRole('button',{name:'Tạo bản nháp đánh giá',exact:true}).click();
     await expect(mentor.page.getByRole('heading',{name:'Điểm tổng: 76.00 / 100',exact:true})).toBeVisible();
     await policy(hr.page,'Quyền xem điểm doanh nghiệp/kỳ',true);await policy(school.page,'Chính sách nhà trường',true);await result(student.page);
+    const hrPanel = hr.page.getByRole('region',{name:'Quyền xem điểm doanh nghiệp/kỳ'});
+    await hrPanel.screenshot({path:'../target/dev06-hr-visibility-desktop.png'});
+    await hr.page.setViewportSize({width:375,height:812});
+    await expect(hrPanel.getByRole('checkbox')).toBeVisible();
+    expect(await hrPanel.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+    await hr.page.evaluate(() => window.scrollTo(0, 0));
+    await hr.page.screenshot({path:'../target/dev06-hr-visibility-mobile.png',fullPage:true,animations:'disabled'});
+    await hr.page.setViewportSize({width:1280,height:720});
     await mentor.page.getByRole('button',{name:'Nộp đánh giá',exact:true}).click();await expect(mentor.page.getByText(/Trạng thái: SUBMITTED/)).toBeVisible();await result(student.page);
     await publish(school.page);await result(student.page,'76.00');
     await student.page.reload();await student.page.getByRole('button',{name:'Đánh giá thực tập',exact:true}).click();await selectCase(student.page);await result(student.page,'76.00');

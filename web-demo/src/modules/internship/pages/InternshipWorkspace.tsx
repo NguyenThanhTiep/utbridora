@@ -9,6 +9,7 @@ import { TaskBoard } from './TaskBoard';
 import { MentorInvitationForm } from './MentorInvitations';
 import { HrCohortManagement, HrCreateCohort } from './HrCohortActions';
 import { HrGroupManagement } from './HrGroupManagement';
+import { HrCaseTracker } from './HrCaseTracker';
 
 type ReadState<T> = { status: 'loading' } | { status: 'ready'; value: T } | { status: 'error'; error: unknown };
 
@@ -29,7 +30,7 @@ function Failure({ error, retry }: { error: unknown; retry: () => void }) {
 }
 
 type CaseTarget = { caseId: string; schoolOrgId: string; enterpriseOrgId: string; termId: string; contextAssignmentId?: string };
-export type HrSection = 'overview' | 'cohorts' | 'groups' | 'mentors';
+export type HrSection = 'overview' | 'cohorts' | 'groups' | 'mentors' | 'cases';
 export function InternshipWorkspace({ me, grants, gateway = liveWorkspaceGateway, initialCase, section, onKindChange }: {
   me: Me; grants: Grant[]; gateway?: WorkspaceGateway; initialCase?: CaseTarget; section?: HrSection;
   onKindChange?: (kind: 'HR' | 'MENTOR' | null) => void;
@@ -133,7 +134,7 @@ function AssignmentWorkspace({ assignment, gateway, reset, initialCaseId, sectio
   return <div className="hr-workspace">
     <section className="panel hr-workspace-context">
     <div className="section-heading"><div><p className="section-kicker">{assignment.kind === 'HR' ? 'KHÔNG GIAN HR' : 'KHÔNG GIAN MENTOR'}</p>
-      <h2>{section === 'overview' ? 'Tổng quan thực tập' : section === 'cohorts' ? 'Quản lý đợt thực tập'
+      <h2>{section === 'cases' ? 'Chọn đợt để theo dõi hồ sơ' : section === 'overview' ? 'Tổng quan thực tập' : section === 'cohorts' ? 'Quản lý đợt thực tập'
         : section === 'groups' ? 'Phân nhóm thực tập' : section === 'mentors' ? 'Quản lý người hướng dẫn'
         : 'Đợt và nhóm thực tập'}</h2></div>
       <span className="internship-role"><Icon name="briefcase" size={16} />{assignment.kind === 'HR' ? 'HR' : 'Mentor'}</span></div>
@@ -206,6 +207,11 @@ function GroupWorkspace({ assignment, cohort, gateway, reset, initialCaseId, sec
     return () => controller.abort();
   }, [assignment, cohort, gateway, initialCaseId, reload]);
   const selected = state.status === 'ready' ? state.value.find(item => item.groupId === groupId) : undefined;
+  if (section === 'cases') {
+    if (state.status === 'loading') return <LoadingState label="Đang tải nhóm được phân công…" />;
+    if (state.status === 'error') return <Failure error={state.error} retry={reset} />;
+    return <HrCaseTracker assignment={assignment} groups={state.value} />;
+  }
   return <div className="internship-groups">
     {state.status === 'ready' && assignment.kind === 'HR' && (section === 'overview' || section === 'all') && <section className="panel stack hr-overview-metrics">
       <h3>Tổng quan đợt {cohort.code}</h3>
