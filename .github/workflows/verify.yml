@@ -79,7 +79,14 @@ jobs:
         with: {node-version: '24', cache: npm, cache-dependency-path: web-demo/package-lock.json}
       - run: npm ci
         working-directory: web-demo
-      - run: npx playwright install --with-deps chromium
+      - name: Install Chromium and system dependencies
+        run: |
+          # Ubuntu mirrors occasionally return HTTP 503. Retry setup, never skip browser tests.
+          for attempt in 1 2 3; do
+            if npx playwright install --with-deps chromium; then exit 0; fi
+            if [ "$attempt" -lt 3 ]; then sleep 10; fi
+          done
+          exit 1
         working-directory: web-demo
       # Compile tests without running Surefire again. Each runner keeps IT forks sequential.
       - run: >-
