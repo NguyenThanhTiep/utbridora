@@ -47,6 +47,7 @@ class PrivateFileServiceIT {
     @Autowired JdbcTemplate jdbc;@Autowired AuthorizationPolicy core;@Autowired FileService files;@Autowired FileResourceAuthorizer authorizer;
     @Autowired vn.utbridora.auth.modules.internship.infrastructure.WorkspaceRuntime workspace;
     @Autowired vn.utbridora.auth.modules.internship.infrastructure.WorkspaceTaskActions taskActions;
+    @Autowired org.springframework.transaction.PlatformTransactionManager qa01TxManager;
     @AfterEach void context() {SecurityContextHolder.clearContext();org.springframework.web.context.request.RequestContextHolder.resetRequestAttributes();}
     @AfterAll static void cleanup() throws IOException {
         // Only direct children of this JVM-created test directory; never a shared storage root.
@@ -602,6 +603,113 @@ class PrivateFileServiceIT {
             "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED'", Integer.class));
         assertEquals(beforeLedgers + 1, jdbc.queryForObject(
             "SELECT COUNT(*) FROM operation_records WHERE operation_code='FILE_UPLOAD'", Integer.class));
+    }
+
+    @Test void qa01T106ForeignEnterpriseHrCannotUploadOtherEnterpriseVerification() throws Exception {
+        // QA01 T1-06-TC32: two independently VERIFIED enterprises; B may upload in B,
+        // but must not upload evidence into A's verification record.
+        // All data changes are isolated to this Testcontainers database.
+        String enterpriseA = id(12);
+        String verificationA = jdbc.queryForObject(
+            "SELECT id FROM enterprise_verifications WHERE enterprise_org_id=?",
+            String.class, enterpriseA);
+        String previousState = jdbc.queryForObject(
+            "SELECT state FROM enterprise_verifications WHERE id=?",
+            String.class, verificationA);
+        assertEquals(1, jdbc.queryForObject(
+            "SELECT COUNT(*) FROM organizations WHERE id=? AND type='ENTERPRISE' AND status='VERIFIED'",
+            Integer.class, enterpriseA), "A must be a verified enterprise");
+
+        // Reuse an existing synthetic account as HR B; retain its original membership.
+        record MembershipSnapshot(String id, String orgId, String role, boolean active) {}
+        MembershipSnapshot original = jdbc.query(
+            "SELECT id,organization_id,role,active FROM memberships " +
+            "WHERE user_id=? AND active=true ORDER BY id LIMIT 1",
+            (rs, i) -> new MembershipSnapshot(
+                rs.getString(1), rs.getString(2), rs.getString(3), rs.getBoolean(4)),
+            id(5)).stream().findFirst().orElseThrow(
+                () -> new AssertionError("Missing synthetic HR B account fixture"));
+
+        String enterpriseB = UUID.randomUUID().toString();
+        assertEquals(1, jdbc.update(
+            "INSERT INTO organizations (id,name,type,status,created_at) " +
+            "VALUES (?,?,'ENTERPRISE','VERIFIED',UTC_TIMESTAMP(6))",
+            enterpriseB, "QA01 TC32 synthetic enterprise " + enterpriseB));
+        try {
+            assertNotEquals(enterpriseA, enterpriseB);
+            assertEquals(1, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM organizations WHERE id=? AND type='ENTERPRISE' AND status='VERIFIED'",
+                Integer.class, enterpriseB), "B must be a separate verified enterprise");
+
+            jdbc.update("UPDATE enterprise_verifications SET state='DRAFT' WHERE id=?", verificationA);
+            try {
+                // Positive control: the actual HR of A is able to upload to A.
+                Session hrA = login("hr");
+                var allowed = post(hrA, key(), "ENTERPRISE_VERIFICATION", verificationA,
+                    "VERIFICATION", "own-verification.pdf", "application/pdf", PDF, true, "");
+                assertEquals(202, allowed.statusCode(), body(allowed));
+                String allowedFileId = json(allowed).get("fileId").asString();
+                long objectsBefore = objects();
+                int filesBefore = jdbc.queryForObject("SELECT COUNT(*) FROM files", Integer.class);
+                int bindingsBefore = jdbc.queryForObject("SELECT COUNT(*) FROM file_bindings", Integer.class);
+                int successAuditBefore = jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED'", Integer.class);
+
+                // Give account B a live ENTERPRISE membership in B, not in A.
+                assertEquals(1, jdbc.update(
+                    "UPDATE memberships SET organization_id=?,role='ENTERPRISE',active=true WHERE id=?",
+                    enterpriseB, original.id()));
+                try {
+                    var authB = as(5);
+                    assertEquals(1, jdbc.queryForObject(
+                        "SELECT COUNT(*) FROM memberships m JOIN role_permissions p ON p.role=m.role " +
+                        "WHERE m.user_id=? AND m.active=true AND m.organization_id=? " +
+                        "AND m.role='ENTERPRISE' AND p.permission_code='file:upload'",
+                        Integer.class, id(5), enterpriseB),
+                        "HR B must have an active B membership and file:upload permission");
+                    var qa01Tx = new org.springframework.transaction.support.TransactionTemplate(qa01TxManager);
+                    assertEquals(Boolean.TRUE, qa01Tx.execute(status ->
+                        core.holdOrganization(authB, enterpriseB,
+                            vn.utbridora.auth.user.Role.ENTERPRISE, "enterprise_verification:enterprise:manage")),
+                        "HR B must have current enterprise-management rights in B");
+                    assertEquals(Boolean.FALSE, qa01Tx.execute(status ->
+                        core.holdOrganization(authB, enterpriseA,
+                            vn.utbridora.auth.user.Role.ENTERPRISE, "enterprise_verification:enterprise:manage")),
+                        "HR B must not have current enterprise-management rights in A");
+
+                    Session hrB = login("mentor"); // Synthetic user now acts as HR of B.
+                    String deniedKey = key();
+                    var denied = post(hrB, deniedKey, "ENTERPRISE_VERIFICATION", verificationA,
+                        "VERIFICATION", "cross-org-verification.pdf", "application/pdf", PDF, true, "");
+                    assertError(denied, 404, "RESOURCE_NOT_FOUND");
+                    privateHeaders(denied);
+                    assertFalse(body(denied).contains(enterpriseA), "No other tenant identifier leak");
+                    assertFalse(body(denied).contains(ROOT.toString()), "No private storage path leak");
+                    assertEquals(objectsBefore, objects(), "Denied upload must not store an object");
+                    assertEquals(filesBefore, jdbc.queryForObject(
+                        "SELECT COUNT(*) FROM files", Integer.class), "No extra file metadata");
+                    assertEquals(bindingsBefore, jdbc.queryForObject(
+                        "SELECT COUNT(*) FROM file_bindings", Integer.class), "No extra file binding");
+                    assertEquals(successAuditBefore, jdbc.queryForObject(
+                        "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED'", Integer.class),
+                        "Denied upload must not emit FILE_UPLOADED success audit");
+                    assertEquals(0, jdbc.queryForObject(
+                        "SELECT COUNT(*) FROM operation_records " +
+                        "WHERE operation_code='FILE_UPLOAD' AND idempotency_key=?",
+                        Integer.class, deniedKey), "Denied upload must not create operation record");
+                    assertEquals(200, get(hrA, allowedFileId, "metadata", null).statusCode(),
+                        "A's legitimate file must remain accessible to A");
+                } finally {
+                    jdbc.update("UPDATE memberships SET organization_id=?,role=?,active=? WHERE id=?",
+                        original.orgId(), original.role(), original.active(), original.id());
+                }
+            } finally {
+                jdbc.update("UPDATE enterprise_verifications SET state=? WHERE id=?",
+                    previousState, verificationA);
+            }
+        } finally {
+            jdbc.update("DELETE FROM organizations WHERE id=?", enterpriseB);
+        }
     }
 
     @Test void realMultipartOwnerMetadataPendingAndForeignScope() throws Exception {
