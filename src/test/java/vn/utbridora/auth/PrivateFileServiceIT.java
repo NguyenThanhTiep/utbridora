@@ -546,6 +546,64 @@ class PrivateFileServiceIT {
         assertEquals(beforeLedgers + 1, jdbc.queryForObject("SELECT COUNT(*) FROM operation_records WHERE operation_code='FILE_UPLOAD'", Integer.class));
     }
 
+    // QA01 T1-06-TC11: boundary validation for an active student Task assignment.
+    // The reverse-proxy >21 MiB response is separately covered by FileProxyIT.
+    @Test void qa01T106TaskPdfExactTwentyMiBAcceptedAndOverLimitRejected() throws Exception {
+        final int limit = 20 * 1024 * 1024;
+        var mentor = as(5);
+        var request = new org.springframework.mock.web.MockHttpServletRequest();
+        request.addHeader("X-Context-Assignment-Id", workspace.assignments(mentor).stream()
+            .filter(a -> a.kind().equals("MENTOR")).findFirst().orElseThrow().id());
+        org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(
+            new org.springframework.web.context.request.ServletRequestAttributes(request));
+
+        String group = jdbc.queryForObject("SELECT id FROM internship_groups LIMIT 1", String.class);
+        String caseId = jdbc.queryForObject("SELECT id FROM internship_cases LIMIT 1", String.class);
+        var task = workspace.createTask(mentor, key(),
+            new vn.utbridora.auth.modules.internship.api.TaskDtos.CreateTask(
+                UUID.fromString(group), "QA01 T1-06 TC11 20 MiB boundary",
+                "Synthetic task for upload boundary; not real placement evidence",
+                Instant.now().plusSeconds(3600),
+                vn.utbridora.auth.modules.internship.api.TaskDtos.TaskPriority.NORMAL,
+                List.of(UUID.fromString(caseId)), true));
+        String assignment = task.assignments().getFirst().assignmentId().toString();
+        var resource = new ResourceRef(ResourceType.TASK_ASSIGNMENT, assignment);
+        var intern = as(7);
+        taskActions.start(intern, assignment, key(),
+            new vn.utbridora.auth.modules.internship.infrastructure.WorkspaceTaskActions.StartAssignment(1L, "IN_PROGRESS"));
+
+        long beforeObjects = objects();
+        int beforeFiles = jdbc.queryForObject("SELECT COUNT(*) FROM files", Integer.class);
+        int beforeAudits = jdbc.queryForObject(
+            "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED'", Integer.class);
+        int beforeLedgers = jdbc.queryForObject(
+            "SELECT COUNT(*) FROM operation_records WHERE operation_code='FILE_UPLOAD'", Integer.class);
+
+        byte[] exactPdf = Arrays.copyOf(PDF, limit);
+        var accepted = files.upload(intern, key(), resource, FilePurpose.SUBMISSION, part(exactPdf));
+        assertEquals(limit, accepted.sizeBytes());
+        assertEquals(FilePurpose.SUBMISSION, accepted.purpose());
+        assertEquals(resource, accepted.resource());
+        assertEquals(FileMetadata.ScanStatus.PENDING, accepted.scanStatus());
+        assertEquals(beforeObjects + 1, objects());
+        assertEquals(beforeFiles + 1, jdbc.queryForObject("SELECT COUNT(*) FROM files", Integer.class));
+        assertEquals(beforeAudits + 1, jdbc.queryForObject(
+            "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED'", Integer.class));
+        assertEquals(beforeLedgers + 1, jdbc.queryForObject(
+            "SELECT COUNT(*) FROM operation_records WHERE operation_code='FILE_UPLOAD'", Integer.class));
+
+        byte[] overPdf = Arrays.copyOf(PDF, limit + 1);
+        var denied = assertThrows(OperationFailure.class,
+            () -> files.upload(intern, key(), resource, FilePurpose.SUBMISSION, part(overPdf)));
+        assertEquals(413, denied.status);
+        assertEquals(beforeObjects + 1, objects(), "Oversized upload must not create storage object");
+        assertEquals(beforeFiles + 1, jdbc.queryForObject("SELECT COUNT(*) FROM files", Integer.class));
+        assertEquals(beforeAudits + 1, jdbc.queryForObject(
+            "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED'", Integer.class));
+        assertEquals(beforeLedgers + 1, jdbc.queryForObject(
+            "SELECT COUNT(*) FROM operation_records WHERE operation_code='FILE_UPLOAD'", Integer.class));
+    }
+
     @Test void realMultipartOwnerMetadataPendingAndForeignScope() throws Exception {
         Session student=login("student"),other=login("intern"),admin=login("admin"),hr=login("hr");
         String command=key();var created=post(student,command,"STUDENT_PROFILE",id(6),"CV","../../cv.pdf","application/pdf",PDF,true,"");assertEquals(202,created.statusCode(),body(created));
