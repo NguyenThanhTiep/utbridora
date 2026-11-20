@@ -25,6 +25,8 @@ class Package9LoadFixtureIT {
             assertEquals(5000,Package9OperationsIT.count(mysql,schema,"student_profiles"));assertEquals(50000,Package9OperationsIT.count(mysql,schema,"student_profile_skills"));assertEquals(101,Package9OperationsIT.count(mysql,schema,"organizations"));
             // Rerun refuses existing records and must not reset any identity/password/profile.
             var before=Files.readString(seed);
+            int repeat=outcome(env,"scripts/ops/load_fixture.py","--config",path.toString(),"--confirm-scope",cfg.get("scopeId").toString(),"--start-date",LocalDate.now().plusDays(14).toString(),"--end-date",LocalDate.now().plusDays(90).toString(),"--output",root.resolve("seed-repeat.json").toString());
+            assertNotEquals(0,repeat);assertEquals(5000,Package9OperationsIT.count(mysql,schema,"student_profiles"));assertFalse(Files.exists(root.resolve("seed-repeat.json")));
             try(var context=new SpringApplicationBuilder(UtBridoraApplication.class).run(
                 "--server.port=0","--spring.datasource.url="+mysql.getJdbcUrl(),"--spring.datasource.username="+mysql.getUsername(),"--spring.datasource.password="+mysql.getPassword(),
                 "--app.bootstrap.admin.email=","--app.bootstrap.admin.password=","--app.demo.local.enabled=false","--app.t5.placement-delivery.enabled=false","--app.files.scan.enabled=false")){
@@ -42,8 +44,11 @@ class Package9LoadFixtureIT {
         } finally {try(var paths=Files.walk(root)){for(var p:paths.sorted(Comparator.reverseOrder()).toList())Files.deleteIfExists(p);}}
     }
     static void run(Map<String,String> env,String...args)throws Exception{
+        assertEquals(0,outcome(env,args),"Fixture operation should succeed");
+    }
+    static int outcome(Map<String,String> env,String...args)throws Exception{
         var command=new ArrayList<>(List.of(System.getenv().getOrDefault("PYTHON","python3")));command.addAll(List.of(args));
         var b=new ProcessBuilder(command).redirectErrorStream(true);b.environment().putAll(env);var p=b.start();String log=new String(p.getInputStream().readAllBytes(),StandardCharsets.UTF_8);
-        assertEquals(0,p.waitFor(),log);
+        int code=p.waitFor();if(code!=0)System.out.println(log);return code;
     }
 }

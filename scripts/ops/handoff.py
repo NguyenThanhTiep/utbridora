@@ -17,6 +17,11 @@ import uuid
 MARKER = '.utbridora-demo-scope.json'
 SCHEMA = re.compile(r'utbridora_pkg9_[a-f0-9]{16,32}\Z')
 UTC = dt.timezone.utc
+# Reviewed nullable back-references from V24/V42. Clear only these references inside
+# the retirement transaction; forward owner records remain FK-checked until deleted.
+CYCLE_BREAKS = {('demands', 'cooperations', 'cooperation_id'),
+                ('invitation_claims', 'one_time_tokens', 'current_token_id'),
+                ('invitation_claims', 'mentor_invitation_refs', 'invitation_ref_id')}
 
 
 def digest(data):
@@ -184,22 +189,26 @@ def plan(c, now):
 def deletion_order(conn):
     remaining = set(tables(conn)) - {'users', 'organizations', 'audit_logs', 'flyway_schema_history'}
     with conn.cursor() as cur:
+        cur.execute('SELECT DATABASE()')
+        schema_name = cur.fetchone()[0]
         cur.execute('SELECT COUNT(*) FROM information_schema.KEY_COLUMN_USAGE WHERE REFERENCED_TABLE_SCHEMA=DATABASE() AND TABLE_SCHEMA<>DATABASE()')
         if cur.fetchone()[0]:
             raise ValueError('Another schema references this scope; refuse retirement')
         cur.execute('SELECT TABLE_NAME,REFERENCED_TABLE_NAME,COLUMN_NAME,REFERENCED_TABLE_SCHEMA '
                     'FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA=DATABASE() AND REFERENCED_TABLE_NAME IS NOT NULL')
         refs = cur.fetchall()
-        if any(schema != conn.db.decode() for _, _, _, schema in refs):
+        if any(schema != schema_name for _, _, _, schema in refs):
             raise ValueError('Cross-schema foreign key; refuse retirement')
+    breaks = [(t, col) for t, parent, col, _ in refs if (t, parent, col) in CYCLE_BREAKS]
+    graph_refs = [(t, parent, col, schema) for t, parent, col, schema in refs if (t, parent, col) not in CYCLE_BREAKS]
     order = []
     while remaining:
-        children = {parent for child, parent, _, _ in refs if child in remaining and parent in remaining and child != parent}
+        children = {parent for child, parent, _, _ in graph_refs if child in remaining and parent in remaining and child != parent}
         ready = sorted(remaining - children)
         if not ready:
             raise ValueError('Foreign-key cycle requires a separately reviewed retirement adapter')
         order.extend(ready); remaining.difference_update(ready)
-    return order, [(t, col) for t, parent, col, _ in refs if t == parent and t in order]
+    return order, breaks + [(t, col) for t, parent, col, _ in graph_refs if t == parent and t in order]
 
 
 def retire(c, p, now):
@@ -288,6 +297,7 @@ def backup(c, dump, output):
             target = out / 'files' / name
             target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
             shutil.copyfile(Path(source) / name, target); os.chmod(target, 0o600)
+        conn.commit()  # Re-read current rows instead of the earlier repeatable-read snapshot.
         if database_inventory(conn) != before or inventory(safe_root(source)) != original:
             raise ValueError('Writers changed snapshot; discard incomplete bundle after investigation')
         report = {'version': 1, 'scopeId': c['scopeId'], 'schema': c['schema'], 'database': before,
@@ -326,6 +336,9 @@ def restore_files(c, bundle):
                 entry = manifest['files'].get(key)
                 if entry != {'bytes': size, 'sha256': sha}:
                     raise ValueError('Metadata/blob mismatch')
+        conn.commit()  # End the prior consistent-read snapshot before checking for concurrent writes.
+        if database_inventory(conn) != manifest['database']:
+            raise ValueError('Restored DB changed while attaching storage')
         return {'status': 'PASS', 'databaseTables': len(manifest['database']), 'privateFiles': len(manifest['files']),
                 'dumpSha256': manifest['dumpSha256'], 'limits': ['Synthetic/offline restore; no RPO/RTO certification',
                   'Run application authorization and real scanner checks before reopening service; scan state is not manufactured here']}

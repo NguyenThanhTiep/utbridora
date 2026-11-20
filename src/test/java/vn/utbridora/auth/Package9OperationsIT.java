@@ -35,6 +35,16 @@ class Package9OperationsIT {
                 s.execute("INSERT INTO organizations(id,name,type,status,created_at) VALUES('"+org+"','Synthetic school','SCHOOL','ACTIVE','2026-01-01')");
                 s.execute("INSERT INTO memberships(id,user_id,organization_id,role,created_at) VALUES('"+uid()+"','"+user+"','"+org+"','STUDENT','2026-01-01')");
                 s.execute("INSERT INTO audit_logs(id,actor_id,action,resource_type,resource_id,result,created_at) VALUES('"+audit+"','"+user+"','FIXTURE','synthetic','"+file+"','SUCCESS','2026-01-01')");
+                // Nonempty cyclic FK prerequisites, not evidence of a business workflow.
+                String term=uid(),demand=uid(),cooperation=uid(),claim=uid(),token=uid(),mentor=uid();
+                s.execute("INSERT INTO terms(id,school_org_id,term_code,start_date,end_date,status,version,created_at,updated_at) VALUES('"+term+"','"+org+"','SYNTHETIC-RETIRE','2026-01-01','2026-06-01','ACTIVE',1,'2026-01-01','2026-01-01')");
+                s.execute("INSERT INTO demands(id,enterprise_org_id,school_org_id,term_id,state,validation_state,version,criteria_version,criteria_hash,data_json,created_at,updated_at) VALUES('"+demand+"','"+org+"','"+org+"','"+term+"','DRAFT','INVALID',1,1,'"+"a".repeat(64)+"','{}','2026-01-01','2026-01-01')");
+                s.execute("INSERT INTO cooperations(id,demand_id,school_org_id,enterprise_org_id,term_id,state,created_at) VALUES('"+cooperation+"','"+demand+"','"+org+"','"+org+"','"+term+"','DRAFT','2026-01-01')");
+                s.execute("UPDATE demands SET cooperation_id='"+cooperation+"' WHERE id='"+demand+"'");
+                s.execute("INSERT INTO invitation_claims(id,email_canonical,context_kind,claim_state,generation,created_at,updated_at) VALUES('"+claim+"','mentor@synthetic.invalid','MENTOR','PENDING',1,'2026-01-01','2026-01-01')");
+                s.execute("INSERT INTO one_time_tokens(id,token_hash,purpose,user_id,email,expires_at,created_at,issued_at,claim_id,generation) VALUES('"+token+"','"+"b".repeat(64)+"','INVITATION','"+user+"','mentor@synthetic.invalid','2026-01-03','2026-01-01','2026-01-01','"+claim+"',1)");
+                s.execute("INSERT INTO mentor_invitation_refs(id,email,user_id,token_id,hr_user_id,state,scope_json,assignment_ids,expires_at) VALUES('"+mentor+"','mentor@synthetic.invalid','"+user+"','"+token+"','"+user+"','ACCOUNT_PENDING','{}','[]','2026-01-03')");
+                s.execute("UPDATE invitation_claims SET current_token_id='"+token+"',invitation_ref_id='"+mentor+"' WHERE id='"+claim+"'");
             }
             var cfg=config(root.resolve("source"),source,scope,server,mysql);
             Path storage=Path.of(((Map<?,?>)((List<?>)cfg.get("resources")).getFirst()).get("path").toString());
@@ -83,9 +93,19 @@ class Package9OperationsIT {
             Path outside=root.resolve("outside.keep");Files.writeString(outside,"unrelated data");
             Path plan=root.resolve("day31-plan.json"),receipt=root.resolve("day31-result.json");
             run(mysql,true,cfgPath,plan,"plan-retention","--now","2026-02-01T00:00:00Z");
-            run(mysql,true,cfgPath,receipt,"apply-retention","--plan",plan.toString(),"--now","2026-02-01T00:00:00Z","--confirm-scope",scope);
+            // Two real processes compete for the same maintenance scope. At least one applies;
+            // the other either refuses the lock or reads the committed idempotent receipt.
+            Path secondReceipt=root.resolve("day31-competing-result.json");
+            try(var pool=java.util.concurrent.Executors.newFixedThreadPool(2)){
+                var futures=pool.invokeAll(List.<java.util.concurrent.Callable<Integer>>of(
+                    ()->outcome(mysql,cfgPath,receipt,"apply-retention","--plan",plan.toString(),"--now","2026-02-01T00:00:00Z","--confirm-scope",scope),
+                    ()->outcome(mysql,cfgPath,secondReceipt,"apply-retention","--plan",plan.toString(),"--now","2026-02-01T00:00:00Z","--confirm-scope",scope)));
+                assertTrue(futures.stream().anyMatch(f->{try{return f.get()==0;}catch(Exception e){throw new RuntimeException(e);}}),"At least one concurrent retirement must commit");
+            }
+            if(!Files.exists(receipt))Files.copy(secondReceipt,receipt);
             run(mysql,true,cfgPath,root.resolve("replay-result.json"),"apply-retention","--plan",plan.toString(),"--now","2026-02-01T00:00:00Z","--confirm-scope",scope);
             assertEquals(0,count(mysql,source,"files"));assertEquals(0,count(mysql,source,"file_bindings"));assertEquals(0,count(mysql,source,"memberships"));
+            for(String table:List.of("demands","cooperations","one_time_tokens","invitation_claims","mentor_invitation_refs"))assertEquals(0,count(mysql,source,table));
             assertEquals(2,count(mysql,source,"audit_logs"));assertFalse(Files.exists(storage.resolve(key)));assertFalse(Files.exists(dump));assertFalse(Files.exists(export));assertTrue(Files.exists(outside));
             assertEquals(1,count(mysql,clone,"files"));assertArrayEquals(pdf,Files.readAllBytes(cloneStorage.resolve(key)));
             try(var c=connection(mysql,source);var s=c.createStatement();var r=s.executeQuery("SELECT email,password_hash,status FROM users WHERE id='"+user+"'")){
@@ -99,7 +119,7 @@ class Package9OperationsIT {
             Files.createDirectories(Path.of("target/package9"));
             var evidence=new LinkedHashMap<String,Object>();evidence.put("status","PASS");evidence.put("commit",System.getenv().getOrDefault("GITHUB_SHA","LOCAL_UNVERIFIED"));
             evidence.put("restore",JSON.readTree(Files.readString(restored)));evidence.put("day31",JSON.readTree(Files.readString(receipt)));
-            evidence.put("gates",List.of("real ClamD scan","real SQL dump/restore","private bytes/hash/open","Flyway validate/no-op","day31 bindings/PII/registered-copies removed","audit retained until90d","day91 audit expiry","hold","stale plan","replay","tampered blob","nonempty restore","unrelated clone preserved"));
+            evidence.put("gates",List.of("real ClamD scan","real SQL dump/restore","private bytes/hash/open","Flyway validate/no-op","day31 bindings/PII/registered-copies removed","audit retained until90d","day91 audit expiry","hold","stale plan","concurrent apply","replay","tampered blob","nonempty restore","unrelated clone preserved"));
             evidence.put("limits",List.of("Ephemeral synthetic rehearsal; no staging restore/RPO/RTO certification","Retirement requires a separate exclusive offline scope; mixed shared schema is refused"));
             write(Path.of("target/package9/operations-verification.json"),evidence);
         } finally {
@@ -119,10 +139,14 @@ class Package9OperationsIT {
     }
     static void write(Path path,Object data) throws Exception {Files.writeString(path,JSON.writerWithDefaultPrettyPrinter().writeValueAsString(data));}
     static void run(MySQLContainer<?> mysql,boolean success,Path cfg,Path output,String...args) throws Exception {
+        int code=outcome(mysql,cfg,output,args);
+        if(success)assertEquals(0,code,"Operational command must succeed");else assertNotEquals(0,code,"Operation should have refused");
+    }
+    static int outcome(MySQLContainer<?> mysql,Path cfg,Path output,String...args) throws Exception {
         var command=new ArrayList<>(List.of(System.getenv().getOrDefault("PYTHON","python3"),"scripts/ops/handoff.py","--config",cfg.toString(),"--output",output.toString()));command.addAll(List.of(args));
         var builder=new ProcessBuilder(command).redirectErrorStream(true);builder.environment().put("UTB_OPS_DB_PASSWORD",mysql.getPassword());
         var process=builder.start();String log=new String(process.getInputStream().readAllBytes(),StandardCharsets.UTF_8);int code=process.waitFor();
-        if(success)assertEquals(0,code,log);else assertNotEquals(0,code,"Operation should have refused");
+        if(code!=0)System.out.println(log);return code;
     }
     static long count(MySQLContainer<?> mysql,String schema,String table) throws Exception {try(var c=connection(mysql,schema);var s=c.createStatement();var r=s.executeQuery("SELECT COUNT(*) FROM `"+table+"`")){assertTrue(r.next());return r.getLong(1);}}
     static String url(MySQLContainer<?> mysql,String schema){return mysql.getJdbcUrl().replace("/"+mysql.getDatabaseName(),"/"+schema);}
