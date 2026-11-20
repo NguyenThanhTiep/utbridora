@@ -14,11 +14,11 @@ Mở Docker Desktop ở chế độ **Linux containers**, chạy tại thư mụ
 .\run-local.cmd start
 ```
 
-Script tự tạo `.env.local` với mật khẩu ngẫu nhiên và chạy toàn bộ hệ thống; không cần cài riêng Java/Maven/Node. Với database mới, script bật seed local một lần để có tài khoản Student/HR/Mentor và dữ liệu mẫu. Database/cấu hình cũ được giữ nguyên. Có thể nhấp đúp `run-local.cmd`.
+Script tự tạo `.env.local` với mật khẩu ngẫu nhiên và chạy toàn bộ hệ thống; không cần cài riêng Java/Maven/Node. Database mới tự nạp **bộ demo 406 tài khoản, 3 trường, 6 doanh nghiệp và chu kỳ thực tập đầy đủ có điểm**. Database/cấu hình cũ được giữ nguyên khi `start`. Có thể nhấp đúp `run-local.cmd`.
 
-Xem **[hướng dẫn demo cho dev: tài khoản, hồ sơ, nhu cầu và HR/Mentor](docs/guides/LOCAL_DEMO.md)**. Mật khẩu sáu tài khoản nghiệp vụ mới ở `DEMO_PASSWORD` trong `.env.local`; mật khẩu Admin dùng `BOOTSTRAP_ADMIN_PASSWORD` riêng.
+Xem **[hướng dẫn bộ demo đầy đủ cho dev](docs/guides/PORTABLE_DEMO.md)** và **[danh sách từng tài khoản](docs/demo/full-cycle-accounts.csv)**. 406 tài khoản demo, kể cả `admin@demo.utbridora.test`, dùng `DEMO_PASSWORD` trong `.env.local` của máy dev. Admin bootstrap `admin@example.test` dùng `BOOTSTRAP_ADMIN_PASSWORD` riêng; cấu hình mặc định có407 tài khoản/2 ADMIN.
 
-Máy đã có database/cấu hình cũ: `start` giữ nguyên dữ liệu. Muốn bổ sung demo, chạy `.\run-local.cmd seed-demo` rồi `.\run-local.cmd start`; lệnh tạo backup trước khi nhập, giữ mật khẩu/tài khoản cũ và từ chối dữ liệu trùng. Mật khẩu demo mới nằm trong `.env.local-demo` nếu cấu hình cũ chưa có `DEMO_PASSWORD`.
+Máy đã có database/cấu hình cũ: `start` giữ nguyên dữ liệu. Muốn **thay toàn bộ dữ liệu dev bằng bộ này**, chạy `.\run-local.cmd reset-demo`; lệnh build, tạo backup SQL/SHA-256 rồi tạo lại schema local và tự nạp demo. Không xóa volume/config. Lệnh `seed-demo` cũ vẫn dành cho bộ nhỏ cũ, không dùng để nạp bộ đầy đủ.
 
 | Nội dung | Thông tin mặc định |
 |---|---|
