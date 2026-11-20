@@ -45,6 +45,21 @@ class Package9OperationsIT {
                 s.execute("INSERT INTO one_time_tokens(id,token_hash,purpose,user_id,email,expires_at,created_at,issued_at,claim_id,generation) VALUES('"+token+"','"+"b".repeat(64)+"','INVITATION','"+user+"','mentor@synthetic.invalid','2026-01-03','2026-01-01','2026-01-01','"+claim+"',1)");
                 s.execute("INSERT INTO mentor_invitation_refs(id,email,user_id,token_id,hr_user_id,state,scope_json,assignment_ids,expires_at) VALUES('"+mentor+"','mentor@synthetic.invalid','"+user+"','"+token+"','"+user+"','ACCOUNT_PENDING','{}','[]','2026-01-03')");
                 s.execute("UPDATE invitation_claims SET current_token_id='"+token+"',invitation_ref_id='"+mentor+"' WHERE id='"+claim+"'");
+                String kase=uid(),cohort=uid(),group=uid(),task=uid(),assignment=uid(),submission=uid(),template=uid(),evaluation=uid(),delegation=uid(),coordinator=uid(),hr=uid();
+                s.execute("INSERT INTO internship_cases VALUES('"+kase+"','"+uid()+"','"+user+"','"+org+"','"+org+"','"+term+"','IN_PROGRESS',1,1)");
+                s.execute("INSERT INTO internship_cohorts VALUES('"+cohort+"','"+org+"','"+org+"','"+term+"','RETIRE','Synthetic retirement',1)");
+                s.execute("INSERT INTO internship_groups VALUES('"+group+"','"+cohort+"','G1',1)");
+                s.execute("INSERT INTO internship_tasks VALUES('"+task+"','"+group+"','Synthetic','Synthetic','2026-06-01','NORMAL',false,1)");
+                s.execute("INSERT INTO internship_task_assignments(id,task_id,case_id,student_user_id,state,version) VALUES('"+assignment+"','"+task+"','"+kase+"','"+user+"','SUBMITTED',1)");
+                s.execute("INSERT INTO internship_submissions(id,assignment_id,version_no,submitted_at,late_flag) VALUES('"+submission+"','"+assignment+"',1,'2026-01-01',false)");
+                s.execute("UPDATE internship_task_assignments SET current_submission_id='"+submission+"' WHERE id='"+assignment+"'");
+                s.execute("INSERT INTO internship_rubric_templates VALUES('"+template+"',1,'"+org+"','"+term+"','{}')");
+                s.execute("INSERT INTO internship_evaluations(id,case_id) VALUES('"+evaluation+"','"+kase+"')");
+                s.execute("INSERT INTO internship_evaluation_versions VALUES('"+evaluation+"',1,1,'PUBLISHED','"+template+"',1,'{}',80,'"+user+"','2026-01-01')");
+                s.execute("UPDATE internship_evaluations SET current_version=1,published_version=1 WHERE id='"+evaluation+"'");
+                s.execute("INSERT INTO school_delegations(id,user_id,school_org_id,term_id,granted_by,decision_ref,profile_read_fields_json,valid_from,valid_until,active) VALUES('"+delegation+"','"+user+"','"+org+"','"+term+"','"+user+"','SYNTHETIC','[]','2026-01-01','2026-06-01',true)");
+                s.execute("INSERT INTO internship_context_assignments(id,kind,user_id,enterprise_org_id,school_org_id,term_id,school_delegation_id,granted_by,decision_ref,valid_from,valid_until) VALUES('"+coordinator+"','COORDINATOR','"+user+"','"+org+"','"+org+"','"+term+"','"+delegation+"','"+user+"','SYNTHETIC','2026-01-01','2026-06-01')");
+                s.execute("INSERT INTO internship_context_assignments(id,kind,user_id,enterprise_org_id,school_org_id,term_id,parent_assignment_id,granted_by,decision_ref,valid_from,valid_until) VALUES('"+hr+"','HR','"+user+"','"+org+"','"+org+"','"+term+"','"+coordinator+"','"+user+"','SYNTHETIC','2026-01-01','2026-06-01')");
             }
             var cfg=config(root.resolve("source"),source,scope,server,mysql);
             Path storage=Path.of(((Map<?,?>)((List<?>)cfg.get("resources")).getFirst()).get("path").toString());
@@ -105,7 +120,7 @@ class Package9OperationsIT {
             if(!Files.exists(receipt))Files.copy(secondReceipt,receipt);
             run(mysql,true,cfgPath,root.resolve("replay-result.json"),"apply-retention","--plan",plan.toString(),"--now","2026-02-01T00:00:00Z","--confirm-scope",scope);
             assertEquals(0,count(mysql,source,"files"));assertEquals(0,count(mysql,source,"file_bindings"));assertEquals(0,count(mysql,source,"memberships"));
-            for(String table:List.of("demands","cooperations","one_time_tokens","invitation_claims","mentor_invitation_refs"))assertEquals(0,count(mysql,source,table));
+            for(String table:List.of("demands","cooperations","one_time_tokens","invitation_claims","mentor_invitation_refs","internship_context_assignments","internship_submissions","internship_task_assignments","internship_evaluations","internship_evaluation_versions"))assertEquals(0,count(mysql,source,table));
             assertEquals(2,count(mysql,source,"audit_logs"));assertFalse(Files.exists(storage.resolve(key)));assertFalse(Files.exists(dump));assertFalse(Files.exists(export));assertTrue(Files.exists(outside));
             assertEquals(1,count(mysql,clone,"files"));assertArrayEquals(pdf,Files.readAllBytes(cloneStorage.resolve(key)));
             try(var c=connection(mysql,source);var s=c.createStatement();var r=s.executeQuery("SELECT email,password_hash,status FROM users WHERE id='"+user+"'")){

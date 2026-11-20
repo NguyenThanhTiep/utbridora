@@ -21,7 +21,10 @@ UTC = dt.timezone.utc
 # the retirement transaction; forward owner records remain FK-checked until deleted.
 CYCLE_BREAKS = {('demands', 'cooperations', 'cooperation_id'),
                 ('invitation_claims', 'one_time_tokens', 'current_token_id'),
-                ('invitation_claims', 'mentor_invitation_refs', 'invitation_ref_id')}
+                ('invitation_claims', 'mentor_invitation_refs', 'invitation_ref_id'),
+                ('internship_task_assignments', 'internship_submissions', 'current_submission_id'),
+                ('internship_evaluations', 'internship_evaluation_versions', 'current_version'),
+                ('internship_evaluations', 'internship_evaluation_versions', 'published_version')}
 
 
 def digest(data):
@@ -194,21 +197,53 @@ def deletion_order(conn):
         cur.execute('SELECT COUNT(*) FROM information_schema.KEY_COLUMN_USAGE WHERE REFERENCED_TABLE_SCHEMA=DATABASE() AND TABLE_SCHEMA<>DATABASE()')
         if cur.fetchone()[0]:
             raise ValueError('Another schema references this scope; refuse retirement')
-        cur.execute('SELECT TABLE_NAME,REFERENCED_TABLE_NAME,COLUMN_NAME,REFERENCED_TABLE_SCHEMA '
+        cur.execute('SELECT TABLE_NAME,REFERENCED_TABLE_NAME,COLUMN_NAME,REFERENCED_TABLE_SCHEMA,CONSTRAINT_NAME,REFERENCED_COLUMN_NAME '
                     'FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA=DATABASE() AND REFERENCED_TABLE_NAME IS NOT NULL')
-        refs = cur.fetchall()
-        if any(schema != schema_name for _, _, _, schema in refs):
+        rows = cur.fetchall()
+        if any(schema != schema_name for _, _, _, schema, _, _ in rows):
             raise ValueError('Cross-schema foreign key; refuse retirement')
-    breaks = [(t, col) for t, parent, col, _ in refs if (t, parent, col) in CYCLE_BREAKS]
-    graph_refs = [(t, parent, col, schema) for t, parent, col, schema in refs if (t, parent, col) not in CYCLE_BREAKS]
+    # Group complete constraints: clearing one nullable component breaks the entire
+    # composite FK, including its non-null owner-id component. Never NULL a PK.
+    constraints = {}
+    for t, parent, col, schema, name, referenced in rows:
+        constraints.setdefault((t,parent,name),[]).append((col,referenced))
+    breaks=[];graph_refs=[];self_refs={}
+    for (t,parent,name),columns in constraints.items():
+        reviewed=[col for col,_ in columns if (t,parent,col) in CYCLE_BREAKS]
+        if reviewed:
+            breaks.extend((t,col) for col in reviewed)
+        elif t==parent and t in remaining:
+            self_refs.setdefault(t,[]).append(columns)
+        else:
+            graph_refs.append((t,parent))
     order = []
     while remaining:
-        children = {parent for child, parent, _, _ in graph_refs if child in remaining and parent in remaining and child != parent}
+        children = {parent for child, parent in graph_refs if child in remaining and parent in remaining and child != parent}
         ready = sorted(remaining - children)
         if not ready:
-            raise ValueError('Foreign-key cycle requires a separately reviewed retirement adapter')
+            raise ValueError('Unreviewed FK cycle: ' + ','.join(sorted(remaining)))
         order.extend(ready); remaining.difference_update(ready)
-    return order, breaks + [(t, col) for t, parent, col, _ in graph_refs if t == parent and t in order]
+    return order, sorted(set(breaks)), self_refs
+
+
+def delete_tree(cur, table, constraints):
+    # Assignment CHECK constraints require HR/Mentor.parent_assignment_id. Delete
+    # leaves before parents instead of nulling that required business relationship.
+    cur.execute("SELECT COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=%s AND CONSTRAINT_NAME='PRIMARY' ORDER BY ORDINAL_POSITION LIMIT 1",(table,))
+    primary=cur.fetchone()
+    if not primary:raise ValueError('Self-referential table requires a primary key')
+    query='DELETE target FROM '+ident(table)+' target '
+    conditions=[]
+    for index,columns in enumerate(constraints):
+        alias='child'+str(index)
+        query+='LEFT JOIN '+ident(table)+' '+alias+' ON '+' AND '.join(alias+'.'+ident(col)+'=target.'+ident(ref) for col,ref in columns)+' '
+        conditions.append(alias+'.'+ident(primary[0])+' IS NULL')
+    query+='WHERE '+' AND '.join(conditions)
+    while True:
+        cur.execute(query)
+        if cur.rowcount==0:break
+    cur.execute('SELECT COUNT(*) FROM '+ident(table))
+    if cur.fetchone()[0]:raise ValueError('Self-reference cycle requires separate review; transaction rolled back')
 
 
 def retire(c, p, now):
@@ -235,14 +270,15 @@ def retire(c, p, now):
                 else:
                     if database_inventory(conn) != p['database'] or resources(c) != p['resources']:
                         raise ValueError('Data/resources changed after preview; create a new plan')
-                    order, self_refs = deletion_order(conn)
-                    for table, col in self_refs:
+                    order, breaks, self_refs = deletion_order(conn)
+                    for table, col in breaks:
                         cur.execute('SELECT IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=%s AND COLUMN_NAME=%s', (table, col))
                         if cur.fetchone()[0] != 'YES':
                             raise ValueError('Non-null self FK requires reviewed adapter')
                         cur.execute('UPDATE ' + ident(table) + ' SET ' + ident(col) + '=NULL')
                     for table in order:
-                        cur.execute('DELETE FROM ' + ident(table))
+                        if table in self_refs:delete_tree(cur,table,self_refs[table])
+                        else:cur.execute('DELETE FROM ' + ident(table))
                     # Keep UUIDs referenced by immutable audit; destroy identity/credentials and revoke sessions.
                     cur.execute("UPDATE users SET email=CONCAT('retired-',id,'@invalid'),display_name='Retired synthetic identity',password_hash='!RETIRED_NO_LOGIN!',status='DEACTIVATED',security_version=security_version+1,failed_attempts=0,locked_until=NULL")
                     cur.execute("UPDATE organizations SET name=CONCAT('Retired ',id),status='INACTIVE'")
