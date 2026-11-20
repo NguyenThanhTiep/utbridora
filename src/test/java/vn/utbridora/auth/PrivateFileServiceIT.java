@@ -512,6 +512,40 @@ class PrivateFileServiceIT {
         }
     }
 
+    // QA01 T1-06-TC10: exact 10 MiB profile upload is allowed; 10 MiB + 1 byte is rejected.
+    @Test void qa01T106ExactTenMiBProfileUploadAcceptedAndOverLimitRejected() throws Exception {
+        final int limit = 10 * 1024 * 1024;
+        Session student = login("student");
+        long beforeObjects = objects();
+        int beforeFiles = jdbc.queryForObject("SELECT COUNT(*) FROM files", Integer.class);
+        int beforeAudits = jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED'", Integer.class);
+        int beforeLedgers = jdbc.queryForObject("SELECT COUNT(*) FROM operation_records WHERE operation_code='FILE_UPLOAD'", Integer.class);
+
+        byte[] exactLimit = Arrays.copyOf(PDF, limit);
+        HttpResponse<byte[]> accepted = post(student, key(), "STUDENT_PROFILE", id(6), "CV",
+            "boundary.pdf", "application/pdf", exactLimit, true, "");
+        assertEquals(202, accepted.statusCode(), body(accepted));
+        JsonNode dto = json(accepted);
+        assertEquals(limit, dto.get("sizeBytes").asInt());
+        assertEquals("PENDING", dto.get("scanStatus").asString());
+        String fileId = dto.get("fileId").asString();
+        assertEquals(200, get(student, fileId, "metadata", null).statusCode());
+        assertEquals(409, get(student, fileId, "content", null).statusCode());
+        assertEquals(beforeObjects + 1, objects());
+        assertEquals(beforeFiles + 1, jdbc.queryForObject("SELECT COUNT(*) FROM files", Integer.class));
+        assertEquals(beforeAudits + 1, jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED'", Integer.class));
+        assertEquals(beforeLedgers + 1, jdbc.queryForObject("SELECT COUNT(*) FROM operation_records WHERE operation_code='FILE_UPLOAD'", Integer.class));
+
+        byte[] overLimit = Arrays.copyOf(PDF, limit + 1);
+        HttpResponse<byte[]> rejected = post(student, key(), "STUDENT_PROFILE", id(6), "CV",
+            "over-boundary.pdf", "application/pdf", overLimit, true, "");
+        assertError(rejected, 413, "FILE_TOO_LARGE");
+        assertEquals(beforeObjects + 1, objects(), "Rejected upload must not create a storage object");
+        assertEquals(beforeFiles + 1, jdbc.queryForObject("SELECT COUNT(*) FROM files", Integer.class));
+        assertEquals(beforeAudits + 1, jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE action='FILE_UPLOADED'", Integer.class));
+        assertEquals(beforeLedgers + 1, jdbc.queryForObject("SELECT COUNT(*) FROM operation_records WHERE operation_code='FILE_UPLOAD'", Integer.class));
+    }
+
     @Test void realMultipartOwnerMetadataPendingAndForeignScope() throws Exception {
         Session student=login("student"),other=login("intern"),admin=login("admin"),hr=login("hr");
         String command=key();var created=post(student,command,"STUDENT_PROFILE",id(6),"CV","../../cv.pdf","application/pdf",PDF,true,"");assertEquals(202,created.statusCode(),body(created));
