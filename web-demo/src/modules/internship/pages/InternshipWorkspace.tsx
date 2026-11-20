@@ -231,7 +231,7 @@ function GroupWorkspace({ assignment, cohort, gateway, reset, initialCaseId, sec
         {gateway === liveWorkspaceGateway && assignment.kind === 'HR' && section !== 'mentors' &&
           <HrGroupManagement key={selected.groupId} assignment={assignment} group={selected}
             groups={state.value} changed={() => setReload(value => value + 1)} />}
-        {gateway === liveWorkspaceGateway && section === 'all' && <TaskBoard assignment={assignment} group={selected} />}
+        {gateway === liveWorkspaceGateway && (section === 'all' || section === 'groups') && <TaskBoard initialView={assignment.kind === 'MENTOR' ? 'overview' : 'board'} assignment={assignment} group={selected} />}
         {gateway === liveWorkspaceGateway && assignment.kind === 'HR' && (section === 'mentors' || section === 'all') &&
           <MentorInvitationForm key={selected.groupId} assignment={assignment} group={selected} groups={state.value} />}
       </div>

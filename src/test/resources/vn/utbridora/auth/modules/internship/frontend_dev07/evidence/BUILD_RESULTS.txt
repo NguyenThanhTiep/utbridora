@@ -1,0 +1,76 @@
+
+> utbridora-auth-web-demo@0.1.0 build
+> tsc -b && npm run typecheck:tests && vite build
+
+
+> utbridora-auth-web-demo@0.1.0 typecheck:tests
+> tsc -p tests/tsconfig.json
+
+vite v7.3.7 building client environment for production...
+transforming...
+✓ 153 modules transformed.
+npm.cmd : [plugin vite:reporter] 
+At line:3 char:1
++ npm.cmd run build *> ../target/t3-uiux-build.log
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([plugin vite:reporter] :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(!) C:/Users/timmy/utbridora/web-demo/src/api.ts is dynamically imported by 
+C:/Users/timmy/utbridora/web-demo/src/modules/cooperation/api.ts, 
+C:/Users/timmy/utbridora/web-demo/src/modules/cooperation/api.ts but also statically imported by 
+C:/Users/timmy/utbridora/web-demo/src/App.tsx, C:/Users/timmy/utbridora/web-demo/src/management.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/cooperation/WorkflowViews.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/cooperation/api.ts, 
+C:/Users/timmy/utbridora/web-demo/src/modules/cooperation/demand/DemandEditor.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/cooperation/demand/DemandReferenceFields.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/cooperation/demand/ScopedDemands.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/cooperation/demand/errors.ts, 
+C:/Users/timmy/utbridora/web-demo/src/modules/cooperation/demand/skillCatalog.ts, 
+C:/Users/timmy/utbridora/web-demo/src/modules/cooperation/portal/ApprovedCooperations.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/cooperation/portal/data.ts, 
+C:/Users/timmy/utbridora/web-demo/src/modules/cooperation/portal/usePortalOrganizations.ts, 
+C:/Users/timmy/utbridora/web-demo/src/modules/cooperation/proposals/PlacementOverview.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/cooperation/proposals/PlacementWorkspace.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/cooperation/proposals/SchoolPlacementFollowUp.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/cooperation/proposals/SharedFileDownload.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/cooperation/proposals/api.ts, 
+C:/Users/timmy/utbridora/web-demo/src/modules/cooperation/proposals/sharedFiles.ts, 
+C:/Users/timmy/utbridora/web-demo/src/modules/cooperation/proposals/useWorkflowCommand.ts, 
+C:/Users/timmy/utbridora/web-demo/src/modules/cooperation/workflow/useFocusedWorkflow.ts, 
+C:/Users/timmy/utbridora/web-demo/src/modules/delegations/SchoolDelegations.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/internship/api.ts, 
+C:/Users/timmy/utbridora/web-demo/src/modules/internship/cases.ts, 
+C:/Users/timmy/utbridora/web-demo/src/modules/internship/evaluation.ts, 
+C:/Users/timmy/utbridora/web-demo/src/modules/internship/pages/HrCohortActions.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/internship/pages/HrGroupManagement.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/internship/pages/InternshipWorkspace.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/internship/pages/MentorInvitations.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/internship/pages/ReportEvidence.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/internship/pages/SubmissionWorkspace.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/internship/workflow-api.ts, 
+C:/Users/timmy/utbridora/web-demo/src/modules/matching/MatchingWorkspace.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/student/api.ts, 
+C:/Users/timmy/utbridora/web-demo/src/modules/student/components/EvaluationResults.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/student/components/SkillsEditor.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/student/files.ts, 
+C:/Users/timmy/utbridora/web-demo/src/modules/student/pages/CapabilityPage.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/student/pages/InvitationConsentPage.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/student/pages/MyProfilePage.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/student/pages/PreferencesPage.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/student/pages/StudentOverviewPage.tsx, 
+C:/Users/timmy/utbridora/web-demo/src/modules/student/preferences.ts, 
+C:/Users/timmy/utbridora/web-demo/src/modules/taxonomy.tsx, dynamic import will not move module into another chunk.
+
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.68 kB │ gzip:   0.42 kB
+dist/assets/index-Bk9BZ1vS.css  150.64 kB │ gzip:  28.11 kB
+dist/assets/index-r78cT3Vf.js   694.11 kB │ gzip: 190.68 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: 
+https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 1.59s

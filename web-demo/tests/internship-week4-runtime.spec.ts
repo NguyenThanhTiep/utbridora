@@ -34,6 +34,10 @@ async function schoolRow(page:Page,state:string) {
 async function publish(page:Page) {await schoolRow(page,'SUBMITTED');await page.getByLabel('Căn cứ quyết định').fill('T312-SCHOOL-DECISION');await page.getByRole('button',{name:'Công bố điểm',exact:true}).click();await expect(page.getByRole('button',{name:/Hồ sơ .*PUBLISHED · Version/})).toBeVisible();}
 async function revision(page:Page) {await schoolRow(page,'PUBLISHED');await page.getByLabel('Căn cứ quyết định').fill('T312-REVISION');await page.getByLabel('Mã lý do tạo revision').fill('CORRECTION');await page.getByRole('button',{name:'Tạo revision đánh giá',exact:true}).click();await expect(page.getByRole('button',{name:/Hồ sơ .*DRAFT · Version/})).toBeVisible();}
 async function result(page:Page,total?:string) {
+  // Let the initial Case read finish before refreshing; otherwise refresh can abort
+  // the response captured by the waiter immediately after a page reload.
+  await expect(page.getByRole('region',{name:'Kết quả của sinh viên',exact:true})).toBeVisible();
+  await expect(page.getByText('Đang kiểm tra quyền xem kết quả…',{exact:true})).toHaveCount(0);
   const response=page.waitForResponse(r=>r.url().includes('/t3/me/results?'));await page.getByRole('button',{name:'Tải lại kết quả',exact:true}).click();const r=await response,body=await r.json();
   if(total){expect(body.visibility).toBe('VISIBLE');expect(body.evaluation.state).toBe('PUBLISHED');await expect(page.getByRole('heading',{name:'Điểm tổng: '+total+' / 100',exact:true})).toBeVisible();}
   else {expect(body).toEqual({caseId:cfg!.caseId,visibility:'HIDDEN',evaluation:null,reasonCode:'NOT_AVAILABLE'});expect(await r.text()).not.toContain('total100');await expect(page.getByText('Kết quả chưa được phép hiển thị.',{exact:true})).toBeVisible();await expect(page.getByRole('region',{name:'Nội dung đánh giá'})).toHaveCount(0);}
@@ -47,6 +51,15 @@ test('T3-12 real four-role rubric submit, triple gate, revision, publication and
     await mentor.page.getByLabel('Nhận xét Quality',{exact:true}).fill('Private mentor feedback');
     await expect(mentor.page.getByText('Điểm dự kiến: 76.00',{exact:true})).toBeVisible();await mentor.page.getByRole('button',{name:'Tạo bản nháp đánh giá',exact:true}).click();
     await expect(mentor.page.getByRole('heading',{name:'Điểm tổng: 76.00 / 100',exact:true})).toBeVisible();
+    for(const width of [1440,768,375]) {
+      await mentor.page.setViewportSize({width,height:960});
+      expect(await mentor.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+      await mentor.page.evaluate(async()=>{document.documentElement.style.scrollBehavior='auto';window.scrollTo(0,0);await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));});
+      if(width===1440)expect((await mentor.page.locator('#main-navigation').boundingBox())!.y).toBe(0);
+      if(width===1440)await mentor.page.getByRole('region',{name:'Nội dung đánh giá',exact:true}).scrollIntoViewIfNeeded();
+      await mentor.page.screenshot({path:`../target/t3-uiux-rubric-${width}.png`,fullPage:width!==1440,animations:'disabled'});
+    }
+    await mentor.page.setViewportSize({width:1440,height:960});
     await policy(hr.page,'Quyền xem điểm doanh nghiệp/kỳ',true);await policy(school.page,'Chính sách nhà trường',true);await result(student.page);
     await mentor.page.getByRole('button',{name:'Nộp đánh giá',exact:true}).click();await expect(mentor.page.getByText(/Trạng thái: SUBMITTED/)).toBeVisible();await result(student.page);
     await publish(school.page);await result(student.page,'76.00');

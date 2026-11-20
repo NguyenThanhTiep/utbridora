@@ -18,8 +18,10 @@ async function board(page: Page, role: 'student' | 'mentor' | 'hr' | 'outsider')
   else {
     await page.getByRole('button', { name: 'Không gian thực tập', exact: true }).click();
     await page.getByLabel('Phân công đang làm việc').selectOption(cfg![role === 'mentor' ? 'mentorContext' : 'hrContext']);
+    if(role==='hr')await page.getByRole('button',{name:'Nhóm thực tập',exact:true}).click();
     await page.getByLabel('Đợt thực tập', { exact: true }).selectOption(cfg!.cohortId);
     await page.getByRole('button', { name: 'Xem nhóm G1', exact: true }).click();
+    await page.getByRole('button',{name:'Bảng Kanban',exact:true}).click();
   }
 }
 async function detail(page: Page) {
@@ -29,7 +31,7 @@ async function detail(page: Page) {
 // Sinh viên mở báo cáo tuần ở S08 "Báo cáo & đánh giá" (T2-10); Mentor mở trong bảng việc của nhóm.
 async function reports(page: Page, role: 'student' | 'mentor') {
   if (role === 'student') await page.getByRole('button', { name: 'Báo cáo & đánh giá', exact: true }).click();
-  else await page.getByRole('button', { name: 'Mở báo cáo tuần', exact: true }).click();
+  else {await page.getByRole('button',{name:'Báo cáo tuần',exact:true}).click();await page.getByRole('button', { name: 'Mở báo cáo tuần', exact: true }).click();}
   await page.getByRole('combobox', { name: 'Hồ sơ cho báo cáo', exact: true }).selectOption(cfg!.caseId);
 }
 async function createReport(page: Page, week: string, work: string) {
@@ -42,10 +44,46 @@ async function createReport(page: Page, week: string, work: string) {
   await expect(editor.getByRole('textbox', { name: 'Việc đã làm', exact: true })).toHaveValue(work); return editor;
 }
 
+test('DEV07 real backend: create task resets form and Case-filtered board survives reload',async({browser})=>{
+  const mentor=await actor(browser,'mentor');
+  try {
+    await mentor.page.getByRole('button',{name:'Giao nhiệm vụ mới',exact:true}).click();
+    await mentor.page.getByLabel('Tiêu đề',{exact:true}).fill('DEV07 created via UI');
+    await mentor.page.getByLabel('Mô tả',{exact:true}).fill('Synthetic isolated UI creation');
+    await mentor.page.getByLabel('Hạn hoàn thành',{exact:true}).fill(new Date(Date.now()+86400000).toISOString().slice(0,16));
+    await mentor.page.getByRole('checkbox').check();
+    const saved=mentor.page.waitForResponse(r=>r.url().endsWith('/t3/tasks')&&r.request().method()==='POST');
+    await mentor.page.getByRole('button',{name:'Giao nhiệm vụ',exact:true}).click();
+    expect((await saved).ok()).toBe(true);
+    await expect(mentor.page.getByLabel('Tiêu đề',{exact:true})).toHaveValue('');
+    await mentor.page.reload();await board(mentor.page,'mentor');
+    await mentor.page.getByRole('combobox',{name:'Hồ sơ được giao',exact:true}).selectOption(cfg!.caseId);
+    await expect(mentor.page.locator('article').getByRole('button',{name:'DEV07 created via UI',exact:true})).toBeVisible();
+    await mentor.page.getByRole('button',{name:'Lịch công việc',exact:true}).click();
+    const calendar=mentor.page.waitForResponse(r=>r.url().includes('/t3/calendar?')&&new URL(r.url()).searchParams.get('caseId')===cfg!.caseId);
+    await mentor.page.getByRole('combobox',{name:'Hồ sơ trên lịch',exact:true}).selectOption(cfg!.caseId);
+    expect((await calendar).ok()).toBe(true);
+  } finally {await mentor.context.close();}
+});
+
 test('T3-09 real backend: student URL v1, Mentor revision, URL v2, ACCEPT, comments and reload', async ({ browser }) => {
   test.setTimeout(90_000);
   const student = await actor(browser, 'student'), mentor = await actor(browser, 'mentor');
   try {
+    for(const width of [1440,768,375]) {
+      await mentor.page.setViewportSize({width,height:960});
+      await expect(mentor.page.locator('article').getByRole('button',{name:'Synthetic T309',exact:true})).toBeVisible();
+      expect(await mentor.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+      const menu=mentor.page.getByRole('button',{name:'Mở menu điều hướng',exact:true});
+      if(await menu.isVisible()) {
+        await menu.click();await expect(menu).toHaveAttribute('aria-expanded','true');
+        await mentor.page.keyboard.press('Escape');await expect(menu).toBeFocused();await expect(menu).toHaveAttribute('aria-expanded','false');
+      }
+      await mentor.page.evaluate(async()=>{document.documentElement.style.scrollBehavior='auto';window.scrollTo(0,0);await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));});
+      if(width===1440)expect((await mentor.page.locator('#main-navigation').boundingBox())!.y).toBe(0);
+      await mentor.page.screenshot({path:`../target/t3-uiux-shell-${width}.png`,fullPage:width!==1440,animations:'disabled'});
+    }
+    await mentor.page.setViewportSize({width:1440,height:960});
     await detail(student.page); await student.page.getByLabel('Đường dẫn bài nộp HTTPS').fill('https://example.test/t309/v1');
     await student.page.getByLabel('Ghi chú bài nộp').fill('Immutable browser v1'); await student.page.getByRole('button', { name: 'Gửi bài nộp', exact: true }).click();
     await expect(student.page.getByRole('link', { name: 'Mở URL bản v1' })).toBeVisible();
