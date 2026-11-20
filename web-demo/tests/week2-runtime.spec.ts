@@ -51,13 +51,16 @@ test('week 2 skills, cooperation, consent and tasks use real authenticated APIs'
   await mentor.page.getByLabel('Phân công đang làm việc', { exact: true }).selectOption({ index: 1 });
   await mentor.page.getByLabel('Đợt thực tập', { exact: true }).selectOption({ index: 1 });
   await mentor.page.getByRole('button', { name: /Xem nhóm/ }).first().click();
+  await mentor.page.getByRole('button', { name: 'Giao nhiệm vụ mới', exact: true }).click();
   await mentor.page.getByLabel('Tiêu đề', { exact: true }).fill('W2 browser task');
   await mentor.page.getByLabel('Mô tả', { exact: true }).fill('Assigned through the real Mentor API');
   const due = new Date(Date.now() + 86400000); due.setMinutes(due.getMinutes() - due.getTimezoneOffset());
   await mentor.page.getByLabel('Hạn hoàn thành', { exact: true }).fill(due.toISOString().slice(0, 16));
   await mentor.page.getByRole('group', { name: 'Hồ sơ được giao', exact: true }).getByRole('checkbox').first().check();
   await mentor.page.getByRole('button', { name: 'Giao nhiệm vụ', exact: true }).click();
+  await mentor.page.getByRole('button', { name: 'Bảng Kanban', exact: true }).click();
   await expect(mentor.page.getByRole('button', { name: 'W2 browser task', exact: true }).first()).toBeVisible();
+  await mentor.page.getByRole('button', { name: 'Lịch công việc', exact: true }).click();
   await expect(mentor.page.getByRole('grid', { name: 'Lịch hạn công việc' }).getByRole('button', { name: 'W2 browser task', exact: true })).toBeVisible();
   await mentor.page.screenshot({ path: '../target/week2-browser-mentor.png', fullPage: true }); await mentor.context.close();
 
