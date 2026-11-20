@@ -1,0 +1,163 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites id="" name="" tests="76" failures="0" skipped="0" errors="0" time="71.912841">
+<testsuite name="internship-uiux-dev07.spec.ts" timestamp="2026-11-20T15:32:20.092Z" hostname="" tests="5" failures="0" skipped="0" time="8.851" errors="0">
+<testcase name="DEV07 workbench responsive 1440" classname="internship-uiux-dev07.spec.ts" time="6.312">
+</testcase>
+<testcase name="DEV07 workbench responsive 768" classname="internship-uiux-dev07.spec.ts" time="0.603">
+</testcase>
+<testcase name="DEV07 workbench responsive 375" classname="internship-uiux-dev07.spec.ts" time="0.583">
+</testcase>
+<testcase name="DEV07 navigation keeps draft and 409 refresh keeps create form" classname="internship-uiux-dev07.spec.ts" time="0.733">
+</testcase>
+<testcase name="DEV07 Case filter reaches API and search exposes honest empty state" classname="internship-uiux-dev07.spec.ts" time="0.62">
+</testcase>
+</testsuite>
+<testsuite name="internship-week3.ui.spec.ts" timestamp="2026-11-20T15:32:20.092Z" hostname="" tests="27" failures="0" skipped="0" time="27.715" errors="0">
+<testcase name="T3-09 URL submit uses CSRF/version/key and reload reads saved fixture history" classname="internship-week3.ui.spec.ts" time="2.539">
+</testcase>
+<testcase name="T3-09 409 preserves URL/note and explicit refresh uses latest version with a new key" classname="internship-week3.ui.spec.ts" time="0.992">
+</testcase>
+<testcase name="T3-09 lost response retries identical payload/key and blocks edits while uncertain" classname="internship-week3.ui.spec.ts" time="0.907">
+</testcase>
+<testcase name="T3-09 Mentor requests revision with selected context; student starts and submits v2, v1 stays intact" classname="internship-week3.ui.spec.ts" time="1.815">
+</testcase>
+<testcase name="T3-09 HR can read but has no submission, review or comment mutation controls" classname="internship-week3.ui.spec.ts" time="0.613">
+</testcase>
+<testcase name="T3-09 comments append through API and unsafe submission URLs never become links" classname="internship-week3.ui.spec.ts" time="2.572">
+</testcase>
+<testcase name="T3-09 denied mutation clears private data and drafts; session revocation closes workspace" classname="internship-week3.ui.spec.ts" time="1.618">
+</testcase>
+<testcase name="T3-09 delayed response from previous context cannot restore its artifacts" classname="internship-week3.ui.spec.ts" time="0.609">
+</testcase>
+<testcase name="T3-09 missing report backend is visible as unavailable, not successful empty history" classname="internship-week3.ui.spec.ts" time="0.518">
+</testcase>
+<testcase name="T3-09 create draft, save, submit, revise and read old server revision" classname="internship-week3.ui.spec.ts" time="3.259">
+</testcase>
+<testcase name="T3-09 report 409 preserves edits and file refs, refresh updates expectedVersion" classname="internship-week3.ui.spec.ts" time="1.092">
+</testcase>
+<testcase name="T3-09 Mentor report review is scoped; HR has read-only reports" classname="internship-week3.ui.spec.ts" time="1.219">
+</testcase>
+<testcase name="T3-09 mobile URL form stays within viewport and can submit" classname="internship-week3.ui.spec.ts" time="0.479">
+</testcase>
+<testcase name="T3-09 history reads every page and permits review only for current submission" classname="internship-week3.ui.spec.ts" time="0.403">
+</testcase>
+<testcase name="T3-09 report response for another case closes scope without exposing content" classname="internship-week3.ui.spec.ts" time="0.467">
+</testcase>
+<testcase name="T3-09 student without tasks verifies a case through scoped API before opening reports" classname="internship-week3.ui.spec.ts" time="0.46">
+</testcase>
+<testcase name="T3-09 report review is read from API after reload and stays bound to its historical revision" classname="internship-week3.ui.spec.ts" time="0.808">
+</testcase>
+<testcase name="T3-09 multipart upload retries same file/binding/key; draft saves PENDING refs" classname="internship-week3.ui.spec.ts" time="0.755">
+</testcase>
+<testcase name="T3-09 clean evidence downloads through authenticated transport and can be removed from draft" classname="internship-week3.ui.spec.ts" time="1.125">
+</testcase>
+<testcase name="T3-09 persisted submission feedback survives reload; 204 on v2 never inherits v1; GET carries context only" classname="internship-week3.ui.spec.ts" time="1.834">
+</testcase>
+<testcase name="T3-09 review rejects mismatched submissionId" classname="internship-week3.ui.spec.ts" time="0.457">
+</testcase>
+<testcase name="T3-09 review rejects mismatched reviewedVersionNo" classname="internship-week3.ui.spec.ts" time="0.406">
+</testcase>
+<testcase name="T3-09 review 401 clears previously displayed private feedback" classname="internship-week3.ui.spec.ts" time="0.571">
+</testcase>
+<testcase name="T3-09 review 404 clears previously displayed private feedback" classname="internship-week3.ui.spec.ts" time="0.525">
+</testcase>
+<testcase name="T3-09 late review response cannot restore feedback after changing version" classname="internship-week3.ui.spec.ts" time="0.558">
+</testcase>
+<testcase name="T3-09 late review response cannot restore feedback after changing context" classname="internship-week3.ui.spec.ts" time="0.588">
+</testcase>
+<testcase name="T3-09 unavailable review is an error with retry, not an unreviewed submission" classname="internship-week3.ui.spec.ts" time="0.526">
+</testcase>
+</testsuite>
+<testsuite name="internship-week4.ui.spec.ts" timestamp="2026-11-20T15:32:20.092Z" hostname="" tests="22" failures="0" skipped="0" time="15.636" errors="0">
+<testcase name="T3-12 204 rubric requires explicit scores and sends numeric DTO, context, CSRF and key" classname="internship-week4.ui.spec.ts" time="0.639">
+</testcase>
+<testcase name="T3-12 conflict preserves draft and explicit refresh uses latest version" classname="internship-week4.ui.spec.ts" time="0.886">
+</testcase>
+<testcase name="T3-12 uncertain mutation retries identical payload/key and locks edits" classname="internship-week4.ui.spec.ts" time="0.814">
+</testcase>
+<testcase name="T3-12 immutable historical version is read only and wrong version closes view" classname="internship-week4.ui.spec.ts" time="0.391">
+</testcase>
+<testcase name="T3-12 missing CASE=false policy can be explicitly created with expectedVersion zero" classname="internship-week4.ui.spec.ts" time="0.365">
+</testcase>
+<testcase name="T3-12 School publish requires decision and preserves expectedVersion" classname="internship-week4.ui.spec.ts" time="1.382">
+</testcase>
+<testcase name="T3-12 student reload HIDDEN removes all cached scores and uses only results API" classname="internship-week4.ui.spec.ts" time="0.359">
+</testcase>
+<testcase name="T3-12 student rejects accidental draft payload and removes visible data on 404" classname="internship-week4.ui.spec.ts" time="0.44">
+</testcase>
+<testcase name="T3-12 changing case clears old result immediately and rejects mismatched response" classname="internship-week4.ui.spec.ts" time="0.317">
+</testcase>
+<testcase name="T3-12 rubric editor fits 320px and keyboard input validates before save" classname="internship-week4.ui.spec.ts" time="0.331">
+</testcase>
+<testcase name="T3-12 group-scoped HR has only CASE policy and revoked session closes it" classname="internship-week4.ui.spec.ts" time="0.457">
+</testcase>
+<testcase name="T3-12 Mentor context expiry unmounts private draft without another request" classname="internship-week4.ui.spec.ts" time="0.518">
+</testcase>
+<testcase name="DEV06 School conflict reload preserves decision and reason, then uses current version" classname="internship-week4.ui.spec.ts" time="0.682">
+</testcase>
+<testcase name="DEV06 School revision shows DRAFT and preserves previously published student result" classname="internship-week4.ui.spec.ts" time="1.425">
+</testcase>
+<testcase name="DEV06 policy conflict keeps unsaved choice across reload, persists after browser reload" classname="internship-week4.ui.spec.ts" time="0.752">
+</testcase>
+<testcase name="DEV06 School filter uses scoped list, empty state and removes old decision" classname="internship-week4.ui.spec.ts" time="1.438">
+</testcase>
+<testcase name="DEV06 School revoked access clears private score and draft on refresh" classname="internship-week4.ui.spec.ts" time="1.323">
+</testcase>
+<testcase name="DEV06 School uncertain publish locks selection and retries same key/body" classname="internship-week4.ui.spec.ts" time="1.357">
+</testcase>
+<testcase name="DEV06 School desktop and mobile layout has no horizontal overflow" classname="internship-week4.ui.spec.ts" time="0.596">
+</testcase>
+<testcase name="DEV06 School changing term clears policy draft and selected decision" classname="internship-week4.ui.spec.ts" time="0.566">
+</testcase>
+<testcase name="DEV06 School expired session during term lookup closes the scope" classname="internship-week4.ui.spec.ts" time="0.236">
+</testcase>
+<testcase name="DEV06 School without T5 term permission can use a delegated term checked by grade APIs" classname="internship-week4.ui.spec.ts" time="0.362">
+</testcase>
+</testsuite>
+<testsuite name="internship.ui.spec.ts" timestamp="2026-11-20T15:32:20.092Z" hostname="" tests="22" failures="0" skipped="0" time="12.645" errors="0">
+<testcase name="T3 UI fixture: HR selects assignment, cohort and group; navigation returns to list" classname="internship.ui.spec.ts" time="0.474">
+</testcase>
+<testcase name="T3 UI fixture: Mentor only opens the assigned group" classname="internship.ui.spec.ts" time="0.449">
+</testcase>
+<testcase name="T3 UI contract fixture: repeated mentor IDs count people once in cards and details" classname="internship.ui.spec.ts" time="0.432">
+</testcase>
+<testcase name="T3 UI contract fixture: HR can view an existing group with empty member lists" classname="internship.ui.spec.ts" time="0.406">
+</testcase>
+<testcase name="T3 UI fixture: foreign group response fails closed without rendering names or counts" classname="internship.ui.spec.ts" time="0.372">
+</testcase>
+<testcase name="T3 UI fixture: foreign school cohort is never rendered" classname="internship.ui.spec.ts" time="0.325">
+</testcase>
+<testcase name="T3 UI fixture: no valid assignment does not request cohorts or groups" classname="internship.ui.spec.ts" time="0.325">
+</testcase>
+<testcase name="T3 UI fixture: empty cohorts and groups are distinguished" classname="internship.ui.spec.ts" time="0.473">
+</testcase>
+<testcase name="T3 UI fixture: loading, safe error and retry" classname="internship.ui.spec.ts" time="0.327">
+</testcase>
+<testcase name="T3 UI fixture: forbidden group read clears data and offers assignment refresh" classname="internship.ui.spec.ts" time="0.467">
+</testcase>
+<testcase name="T3 UI fixture: changing assignment discards delayed responses from the previous scope" classname="internship.ui.spec.ts" time="0.414">
+</testcase>
+<testcase name="T3 UI fixture: exact assignment expiry removes already open group" classname="internship.ui.spec.ts" time="0.349">
+</testcase>
+<testcase name="T3 UI fixture: assignment refresh clears an open group after revocation" classname="internship.ui.spec.ts" time="0.461">
+</testcase>
+<testcase name="T3 UI fixture: changing cohort discards old groups including delayed responses" classname="internship.ui.spec.ts" time="0.37">
+</testcase>
+<testcase name="T3 UI fixture: responsive group view and keyboard navigation" classname="internship.ui.spec.ts" time="0.515">
+</testcase>
+<testcase name="T3 shell UI mock: enterprise loads current assignments; logout removes it" classname="internship.ui.spec.ts" time="0.9">
+</testcase>
+<testcase name="DEV05 HR creates cohort, intakes Placement and confirms a versioned grouping plan" classname="internship.ui.spec.ts" time="1.113">
+</testcase>
+<testcase name="DEV05 HR adds and moves a Case using current Case and group versions" classname="internship.ui.spec.ts" time="1.238">
+</testcase>
+<testcase name="T3 shell UI mock: global ADMIN has no implicit internship menu" classname="internship.ui.spec.ts" time="0.544">
+</testcase>
+<testcase name="DEV06 School can open internship Case lookup and denied lookup clears prior details" classname="internship.ui.spec.ts" time="0.892">
+</testcase>
+<testcase name="DEV06 HR tracks grouped Case with assignment context and clears details after revocation" classname="internship.ui.spec.ts" time="0.99">
+</testcase>
+<testcase name="T3 shell UI mock: session expiry leaves workspace and requires login" classname="internship.ui.spec.ts" time="0.809">
+</testcase>
+</testsuite>
+</testsuites>

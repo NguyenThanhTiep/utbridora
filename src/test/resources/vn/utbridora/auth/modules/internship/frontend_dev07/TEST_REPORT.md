@@ -1,5 +1,10 @@
 # DEV07 — báo cáo self-test frontend T3
 
+Đây là bằng chứng bản DEV07 trước merge. Sau commit `1243e34`, remote đã cập nhật
+đến `608e21e`; xem [kiểm tra bản ghép](MERGE_VALIDATION.md). Hash source trong
+manifest cũ chỉ áp dụng bản trước merge. Hai log TXT được chuẩn hóa xuống dòng
+và cập nhật hash tương ứng; nội dung kết quả test được giữ nguyên.
+
 Ngày chạy UI/unit/build: 19/11/2026; hoàn tất runtime và bàn giao: 20/11/2026,
 múi giờ Asia/Bangkok. Base `96de49e`, branch
 `feature/t3-frontend-uiux`; thay đổi DEV07 chưa commit/push. SHA-256 source được

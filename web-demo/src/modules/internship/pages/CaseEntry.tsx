@@ -3,8 +3,7 @@ import { type Me, type Grant } from '../../../api';
 import { Notice } from '../../../components';
 import { InternshipWorkspace } from './InternshipWorkspace';
 import { readCase, type CaseRef } from '../cases';
-
-const states: Record<string, string> = { WAITING_START: 'Chờ bắt đầu', IN_PROGRESS: 'Đang thực tập', COMPLETED: 'Đã hoàn thành', CANCELLED: 'Đã hủy', TERMINATED: 'Đã dừng' };
+import { CaseStatus } from './CaseStatus';
 
 /** Deep link remains a T3 read: the Placement link itself confers no case/task authority. */
 export function CaseEntry({ caseId, me, grants }: { caseId: string; me: Me; grants: Grant[] }) {
@@ -21,8 +20,7 @@ export function CaseEntry({ caseId, me, grants }: { caseId: string; me: Me; gran
   return <div className="stack"><section className="panel"><h2>Hồ sơ thực tập</h2><Notice message={error} tone="error" />
     <button className="secondary" onClick={() => setRevision(n => n + 1)}>Tải lại hồ sơ thực tập</button>
     {!value && !error && <p role="status">Đang kiểm tra quyền truy cập hồ sơ…</p>}
-    {value?.caseId === caseId && <><p>Mã hồ sơ: {value.caseId}</p><p>Trạng thái: {states[value.state] || value.state}</p>
-      {value.state === 'WAITING_START' && <p>Chưa được giao hoặc nộp nhiệm vụ trước khi tiếp nhận thực tập được kích hoạt.</p>}</>}
+    {value?.caseId === caseId && <CaseStatus value={value} />}
     </section>{value?.caseId === caseId && me.memberships.some(m => m.role === 'ENTERPRISE')
       && <InternshipWorkspace me={me} grants={grants} initialCase={value} />}</div>;
 }

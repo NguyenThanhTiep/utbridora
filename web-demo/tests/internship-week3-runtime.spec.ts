@@ -18,7 +18,7 @@ async function board(page: Page, role: 'student' | 'mentor' | 'hr' | 'outsider')
   else {
     await page.getByRole('button', { name: 'Không gian thực tập', exact: true }).click();
     await page.getByLabel('Phân công đang làm việc').selectOption(cfg![role === 'mentor' ? 'mentorContext' : 'hrContext']);
-    if(role==='hr')await page.getByRole('button',{name:'Nhóm thực tập',exact:true}).click();
+    await page.getByRole('button', { name: role === 'mentor' ? 'Nhóm được giao' : 'Nhóm thực tập', exact: true }).click();
     await page.getByLabel('Đợt thực tập', { exact: true }).selectOption(cfg!.cohortId);
     await page.getByRole('button', { name: 'Xem nhóm G1', exact: true }).click();
     await page.getByRole('button',{name:'Bảng Kanban',exact:true}).click();

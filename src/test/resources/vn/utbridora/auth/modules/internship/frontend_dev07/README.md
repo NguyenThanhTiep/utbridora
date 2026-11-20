@@ -1,7 +1,8 @@
 # DEV07 — T3 frontend UI/UX, 19/11/2026
 
 Owner: Lại Thái Thuận. Branch: feature/t3-frontend-uiux. Base nhận: 96de49e (DEV05).
-Thay đổi chưa commit/push. QA03/Lead/CI và staging là xác nhận riêng.
+DEV07 đã commit `1243e34`. Ngày 20/11 nhận thêm remote `608e21e` (gồm DEV06
+`314900a`); bản ghép đang chờ người dùng commit/push. QA03/Lead/CI và staging là xác nhận riêng.
 
 ## Nguồn và phạm vi
 
@@ -66,8 +67,8 @@ viết lại backend, migration, permission hoặc sửa fixture để bỏ qua 
 
 ## Còn cần phối hợp
 
-Chưa nhận SHA bàn giao riêng DEV06 UI mới; bản này tích hợp với School/HR policy
-đã có trên base, không tuyên bố đã review phần DEV06 chưa nhận. T2 owner review
+Đã nhận và ghép UI DEV06 `314900a` cùng các sửa điều hướng đến `608e21e`.
+Chi tiết kiểm tra bản ghép nằm trong [MERGE_VALIDATION.md](MERGE_VALIDATION.md). T2 owner review
 Student result; QA03 nghiệm thu bốn vai trò. Scanner T1: file PENDING phải đợi CLEAN;
 không fake scanner. KPI toàn kỳ/tên sinh viên mở rộng phụ thuộc dữ liệu có quyền,
 không thay bằng dữ liệu minh họa. Không thêm Case closure/coordination thuộc DEV06.

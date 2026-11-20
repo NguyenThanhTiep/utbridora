@@ -41,7 +41,7 @@ Ngày: 19/11/2026. T3-UI-03/04 và Mentor/Student của T3-UI-05.
 
 ## Phối hợp trước nghiệm thu
 
-- DEV06 gửi SHA UI School/HR policy/Case mới để review và tích hợp lần cuối nếu khác base 96de49e.
+- Đã nhận UI DEV06 `314900a` và sửa điều hướng đến `608e21e`; xem MERGE_VALIDATION.md cho bản tích hợp.
 - T2 owner review phần kết quả trong portal Student. DEV05 review thay đổi nhỏ tại InternshipWorkspace.
 - T1 scanner và QA chạy chu trình upload → CLEAN thật. Bộ runtime hiện kiểm PENDING bị chặn;
   không giả lập scanner thành CLEAN trong DB. Các case CLEAN fixture không chứng minh scanner đã chạy.

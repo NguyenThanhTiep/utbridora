@@ -253,6 +253,11 @@ test('DEV05 HR adds and moves a Case using current Case and group versions', asy
   await page.route('**/api/v1/t3/cohorts/*/groups?*', route => route.fulfill({ json: {
     content: [group, second], page: 0, size: 100, totalElements: 2, totalPages: 1
   } }));
+  // Opening a group also mounts its read-only task board; these unrelated reads
+  // must not expire this mocked UI session before the group command is checked.
+  const emptyBoardPage = { content: [], page: 0, totalPages: 1, totalElements: 0 };
+  await page.route('**/api/v1/t3/tasks?*', route => route.fulfill({ json: emptyBoardPage }));
+  await page.route('**/api/v1/t3/calendar?*', route => route.fulfill({ json: emptyBoardPage }));
   await page.route('**/api/v1/t3/cases/*', route => route.fulfill({ json: {
     caseId: route.request().url().split('/').pop(), placementId: ids.cohort,
     schoolOrgId: ids.school, enterpriseOrgId: ids.enterprise, termId: ids.term, state: 'IN_PROGRESS', version: 7
@@ -286,6 +291,70 @@ test('T3 shell UI mock: global ADMIN has no implicit internship menu', async ({ 
   await page.route('**/api/v1/auth/me/permissions', route => route.fulfill({ json: [{ role: 'ADMIN', organizationId: null, permissions: ['t3:workspace:read'] }] }));
   await page.goto('/'); await expect(page.getByRole('heading', { name: 'Tài khoản của tôi', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Không gian thực tập', exact: true })).toHaveCount(0);
+});
+
+test('DEV06 School can open internship Case lookup and denied lookup clears prior details', async ({ page }) => {
+  const memberships = [{ role: 'SCHOOL_STAFF', organizationId: ids.school }];
+  await page.route('**/api/v1/auth/me', route => route.fulfill({ json: { ...me, memberships } }));
+  await page.route('**/api/v1/auth/me/permissions', route => route.fulfill({ json: [
+    { ...memberships[0], permissions: ['t3:workspace:read', 't3:grades:publish'] }
+  ] }));
+  // The school portal starts background reads before navigation reaches T3.
+  // Keep this UI fixture authenticated without masking the Case lookup response.
+  const emptyPage = { content: [], page: 0, totalPages: 1, totalElements: 0 };
+  await page.route('**/api/v1/cooperation/organizations', route => route.fulfill({ json: [] }));
+  await page.route('**/api/v1/school/cooperations?*', route => route.fulfill({ json: emptyPage }));
+  await page.route('**/api/v1/school/verifications?*', route => route.fulfill({ json: emptyPage }));
+  await page.route('**/api/v1/terms?*', route => route.fulfill({ json: emptyPage }));
+  await page.route('**/api/v1/t3/cases/*', route => route.request().url().endsWith(ids.case)
+    ? route.fulfill({ json: { caseId: ids.case, schoolOrgId: ids.school, termId: ids.term,
+      placementId: ids.cohort, enterpriseOrgId: ids.enterprise, state: 'IN_PROGRESS', version: 2 } })
+    : route.fulfill({ status: 404, json: { errorCode: 'RESOURCE_NOT_FOUND' } }));
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Không gian thực tập', exact: true }).click();
+  const submenu = page.locator('#internship-submenu');
+  await expect(submenu.getByRole('button', { name: 'Đánh giá thực tập', exact: true })).toBeVisible();
+  await submenu.getByRole('button', { name: 'Theo dõi hồ sơ thực tập', exact: true }).click();
+  const field = page.getByLabel('Mã hồ sơ thực tập');
+  await field.fill(ids.case);
+  await page.getByRole('button', { name: 'Tra cứu hồ sơ', exact: true }).click();
+  await expect(page.getByText('Trạng thái: Đang thực tập')).toBeVisible();
+  await field.fill(ids.other);
+  await expect(page.getByText('Mã hồ sơ: ' + ids.case)).toHaveCount(0);
+  await page.getByRole('button', { name: 'Tra cứu hồ sơ', exact: true }).click();
+  await expect(page.getByText('Không tìm thấy hồ sơ trong phạm vi trường và kỳ bạn được ủy quyền.')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Thông tin hồ sơ' })).toHaveCount(0);
+});
+
+test('DEV06 HR tracks grouped Case with assignment context and clears details after revocation', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-11-19T10:00:00Z') });
+  await page.route('**/api/v1/auth/me', route => route.fulfill({ json: me }));
+  await page.route('**/api/v1/auth/me/permissions', route => route.fulfill({ json: grants }));
+  await page.route('**/api/v1/t3/context-assignments/me', route => route.fulfill({ json: [hr] }));
+  const pageOf = (content: (typeof cohort | typeof group)[]) => ({ content, page: 0, totalPages: 1, totalElements: content.length });
+  await page.route('**/api/v1/t3/cohorts?*', route => route.fulfill({ json: pageOf([cohort]) }));
+  await page.route('**/api/v1/t3/cohorts/*/groups?*', route => route.fulfill({ json: pageOf([group]) }));
+  let permitted = true;
+  const contexts: (string | undefined)[] = [];
+  await page.route('**/api/v1/t3/cases/' + ids.case, route => {
+    contexts.push(route.request().headers()['x-context-assignment-id']);
+    return permitted ? route.fulfill({ json: { caseId: ids.case, schoolOrgId: ids.school, termId: ids.term,
+      placementId: ids.cohort, enterpriseOrgId: ids.enterprise, state: 'WAITING_START', version: 2 } })
+      : route.fulfill({ status: 404, json: { errorCode: 'RESOURCE_NOT_FOUND' } });
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Không gian thực tập', exact: true }).click();
+  await page.getByRole('button', { name: 'Theo dõi Case', exact: true }).click();
+  await page.getByLabel('Đợt thực tập', { exact: true }).selectOption(ids.cohort);
+  await page.getByLabel('Hồ sơ theo dõi').selectOption(ids.case);
+  await expect(page.getByText('Trạng thái: Chờ bắt đầu')).toBeVisible();
+  permitted = false;
+  await page.getByRole('button', { name: 'Tải lại trạng thái', exact: true }).click();
+  await expect(page.getByText('Bạn không còn quyền xem hồ sơ này. Hãy kiểm tra lại phân công.')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Chi tiết Case' })).toHaveCount(0);
+  expect(contexts.length).toBeGreaterThanOrEqual(2);
+  expect([...new Set(contexts)]).toEqual([ids.hr]);
 });
 
 test('T3 shell UI mock: session expiry leaves workspace and requires login', async ({ page }) => {
