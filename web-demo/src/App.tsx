@@ -318,7 +318,7 @@ export default function App() {
               section={internshipSection} onKindChange={kind => {
                 setInternshipKind(kind);
                 if (kind === 'MENTOR') setInternshipSection('overview');
-              }} />
+              }} onSectionChange={next => { setInternshipSection(next); setInternshipMenuOpen(true); }} />
           : screen === 'student-overview' ? <StudentOverviewPage me={me} schools={schools} openProfile={() => navigate('student-profile')} />
           : screen === 'student-profile' ? <MyProfilePage me={me} schools={schools} />
           : screen === 'student-capability' ? <CapabilityPage key={me.userId} me={me} schools={schools} />

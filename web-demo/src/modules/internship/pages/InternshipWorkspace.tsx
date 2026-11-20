@@ -31,9 +31,10 @@ function Failure({ error, retry }: { error: unknown; retry: () => void }) {
 
 type CaseTarget = { caseId: string; schoolOrgId: string; enterpriseOrgId: string; termId: string; contextAssignmentId?: string };
 export type HrSection = 'overview' | 'cohorts' | 'groups' | 'mentors' | 'cases';
-export function InternshipWorkspace({ me, grants, gateway = liveWorkspaceGateway, initialCase, section, onKindChange }: {
+export function InternshipWorkspace({ me, grants, gateway = liveWorkspaceGateway, initialCase, section, onKindChange, onSectionChange }: {
   me: Me; grants: Grant[]; gateway?: WorkspaceGateway; initialCase?: CaseTarget; section?: HrSection;
   onKindChange?: (kind: 'HR' | 'MENTOR' | null) => void;
+  onSectionChange?: (section: HrSection) => void;
 }) {
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<ReadState<ContextAssignment[]>>({ status: 'loading' });
@@ -84,8 +85,8 @@ export function InternshipWorkspace({ me, grants, gateway = liveWorkspaceGateway
           <select id="internship-assignment" value={selected?.id || ''} onChange={event => setSelectedId(event.target.value)}>
             <option value="">Chọn phân công…</option>
             {assignments.map(item => <option key={item.id} value={item.id}>
-              {item.kind === 'HR' ? 'HR' : 'Mentor'} · DN {item.scope.enterpriseOrgId} · Trường {item.scope.schoolOrgId} · Kỳ {item.scope.termId}
-              {item.scope.groupId ? ' · Nhóm ' + item.scope.groupId : ''}
+              {item.kind === 'HR' ? 'HR' : 'Mentor'} · DN {item.scope.enterpriseOrgId ? '…' + item.scope.enterpriseOrgId.slice(-8) : 'chưa xác định'} · Trường …{item.scope.schoolOrgId.slice(-8)} · Kỳ …{item.scope.termId.slice(-8)}
+              {item.scope.groupId ? ' · Nhóm …' + item.scope.groupId.slice(-8) : ''}
             </option>)}
           </select>
           {selected && <details className="internship-scope-details"><summary>Xem phạm vi phân công</summary>
@@ -99,14 +100,14 @@ export function InternshipWorkspace({ me, grants, gateway = liveWorkspaceGateway
         </div>}
     </section>
     {selected && <AssignmentWorkspace key={selected.id + ':' + selected.version + ':' + attempt}
-      assignment={selected} gateway={gateway} reset={refresh} initialCaseId={initialCase?.caseId}
+      assignment={selected} gateway={gateway} reset={refresh} initialCaseId={initialCase?.caseId} onSectionChange={onSectionChange}
       section={selected.kind === 'HR' ? section || 'all' : 'all'} />}
   </div>;
 }
 
-function AssignmentWorkspace({ assignment, gateway, reset, initialCaseId, section }: {
+function AssignmentWorkspace({ assignment, gateway, reset, initialCaseId, section, onSectionChange }: {
   assignment: WorkspaceAssignment; gateway: WorkspaceGateway; reset: () => void; initialCaseId?: string;
-  section: HrSection | 'all';
+  section: HrSection | 'all'; onSectionChange?: (section: HrSection) => void;
 }) {
   const [state, setState] = useState<ReadState<Cohort[]>>({ status: 'loading' });
   const [cohortId, setCohortId] = useState('');
@@ -166,6 +167,14 @@ function AssignmentWorkspace({ assignment, gateway, reset, initialCaseId, sectio
         <p className="muted">Chọn đợt thực tập để xem số nhóm, hồ sơ đã xếp nhóm và Mentor từ dữ liệu hiện hành.</p></div>
       <div className="hr-kpi-grid"><div className="hr-kpi-card"><span>Đợt thực tập</span>
         <strong>{state.value.length}</strong><small>Trong phạm vi HR</small></div></div>
+      {onSectionChange && <nav className="hr-overview-actions" aria-label="Đi tới công việc thực tập">
+        <p className="section-kicker">TIẾP TỤC CÔNG VIỆC</p>
+        <div className="button-row">
+          <button type="button" className="secondary" onClick={() => onSectionChange('cohorts')}><Icon name="calendar" size={16} />Quản lý đợt thực tập</button>
+          <button type="button" className="secondary" onClick={() => onSectionChange('groups')}><Icon name="users" size={16} />Xem nhóm thực tập</button>
+          <button type="button" className="secondary" onClick={() => onSectionChange('mentors')}><Icon name="briefcase" size={16} />Người hướng dẫn</button>
+        </div>
+      </nav>}
     </section>}
     {gateway === liveWorkspaceGateway && assignment.kind === 'HR' && (section === 'all'
       || section === 'cohorts' && (createOpen || state.status === 'ready' && state.value.length === 0)) &&

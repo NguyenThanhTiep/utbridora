@@ -12,6 +12,10 @@
 .hr-overview { display: grid; gap: 20px; padding: 26px 30px; border-radius: var(--radius); background: #fff; }
 .hr-overview h3 { margin: 3px 0 6px; font-size: 22px; color: var(--ink); }
 .hr-overview .muted { margin: 0; }
+.hr-overview-actions { display: grid; gap: 12px; padding-top: 18px; border-top: 1px solid var(--line); }
+.hr-overview-actions .section-kicker { margin: 0; }
+.hr-overview-actions .button-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.hr-overview-actions .button-row button { min-height: 42px; }
 .hr-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 14px; }
 .hr-kpi-card { display: grid; gap: 6px; min-height: 105px; padding: 18px 20px; border: 1px solid #cce8de; border-left: 4px solid var(--brand); border-radius: 12px; background: #eaf8f2; }
 .hr-kpi-card span { color: #466b66; font-size: var(--text-sm); }
@@ -57,6 +61,7 @@
   .internship-workspace .section-heading > button { width: 100%; }
   .hr-overview { padding: 20px; }
   .hr-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hr-overview-actions .button-row button { width: 100%; justify-content: flex-start; }
 }
 .t3-workflow { min-width: 0; overflow-wrap: anywhere; }
 .t3-workflow fieldset { min-width: 0; display: grid; gap: 12px; }
