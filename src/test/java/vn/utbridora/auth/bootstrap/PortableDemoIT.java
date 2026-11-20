@@ -23,7 +23,8 @@ import vn.utbridora.auth.modules.internship.application.GradeService;
     "app.t5.placement-delivery.enabled=false","spring.flyway.clean-disabled=false"})
 @ActiveProfiles("local")
 class PortableDemoIT {
-    static final MySQLContainer<?> MYSQL=new MySQLContainer<>("mysql:8.4").withDatabaseName("utbridora");
+    static final MySQLContainer<?> MYSQL=new MySQLContainer<>("mysql:8.4").withDatabaseName("utbridora")
+        .withCommand("--log-bin-trust-function-creators=1");
     static {MYSQL.start();}
     @DynamicPropertySource static void db(DynamicPropertyRegistry r){
         r.add("spring.datasource.url",MYSQL::getJdbcUrl);r.add("spring.datasource.username",MYSQL::getUsername);r.add("spring.datasource.password",MYSQL::getPassword);
