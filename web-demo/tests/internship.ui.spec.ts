@@ -253,6 +253,11 @@ test('DEV05 HR adds and moves a Case using current Case and group versions', asy
   await page.route('**/api/v1/t3/cohorts/*/groups?*', route => route.fulfill({ json: {
     content: [group, second], page: 0, size: 100, totalElements: 2, totalPages: 1
   } }));
+  // Opening a group also mounts its read-only task board; these unrelated reads
+  // must not expire this mocked UI session before the group command is checked.
+  const emptyBoardPage = { content: [], page: 0, totalPages: 1, totalElements: 0 };
+  await page.route('**/api/v1/t3/tasks?*', route => route.fulfill({ json: emptyBoardPage }));
+  await page.route('**/api/v1/t3/calendar?*', route => route.fulfill({ json: emptyBoardPage }));
   await page.route('**/api/v1/t3/cases/*', route => route.fulfill({ json: {
     caseId: route.request().url().split('/').pop(), placementId: ids.cohort,
     schoolOrgId: ids.school, enterpriseOrgId: ids.enterprise, termId: ids.term, state: 'IN_PROGRESS', version: 7
