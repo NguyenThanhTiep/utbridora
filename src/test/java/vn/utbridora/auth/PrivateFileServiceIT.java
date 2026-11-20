@@ -712,6 +712,71 @@ class PrivateFileServiceIT {
         }
     }
 
+    // QA01 T1-06-TC33: FileReadPort must reject forged IDs/bindings and unavailable content.
+    // CLEAN below is an explicit test fixture, not evidence of a real antivirus scan.
+    @Test void qa01T106ReadPortRejectsForgedIdsBindingsAndPendingFiles() {
+        var owner = ActorContext.fromAuthenticatedWorkflow(as(6), null);
+        FileReadPort readPort = files;
+
+        var clean = upload();
+        syntheticClean(clean.fileId());
+        var pending = upload();
+
+        int originalFiles = jdbc.queryForObject(
+            "SELECT COUNT(*) FROM files WHERE id IN (?,?)", Integer.class,
+            clean.fileId(), pending.fileId());
+        int originalBindings = jdbc.queryForObject(
+            "SELECT COUNT(*) FROM file_bindings WHERE file_id IN (?,?)", Integer.class,
+            clean.fileId(), pending.fileId());
+        int originalDownloadAudits = jdbc.queryForObject(
+            "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_DOWNLOADED' AND resource_id IN (?,?)",
+            Integer.class, clean.fileId(), pending.fileId());
+
+        // Positive control: the real owner may resolve an existing CLEAN and correctly bound file.
+        assertEquals(clean.fileId(), readPort.requireCleanBound(
+            clean.fileId(), PROFILE, FilePurpose.CV, owner).fileId());
+
+        var randomId = key();
+        var notFound = assertThrows(OperationFailure.class, () ->
+            readPort.requireCleanBound(randomId, PROFILE, FilePurpose.CV, owner));
+        assertEquals(404, notFound.status);
+        assertEquals("RESOURCE_NOT_FOUND", notFound.code);
+
+        var wrongResource = new ResourceRef(ResourceType.STUDENT_PROFILE, id(99999));
+        var badResource = assertThrows(OperationFailure.class, () ->
+            readPort.requireCleanBound(clean.fileId(), wrongResource, FilePurpose.CV, owner));
+        assertEquals(422, badResource.status);
+        assertEquals("FILE_BINDING_INVALID", badResource.code);
+
+        var badPurpose = assertThrows(OperationFailure.class, () ->
+            readPort.requireCleanBound(clean.fileId(), PROFILE, FilePurpose.EVIDENCE, owner));
+        assertEquals(422, badPurpose.status);
+        assertEquals("FILE_BINDING_INVALID", badPurpose.code);
+
+        var notClean = assertThrows(OperationFailure.class, () ->
+            readPort.requireCleanBound(pending.fileId(), PROFILE, FilePurpose.CV, owner));
+        assertEquals(409, notClean.status);
+        assertEquals("FILE_NOT_CLEAN", notClean.code);
+
+        // A valid user from a different scope must not reuse the owner's clean file.
+        var outsider = ActorContext.fromAuthenticatedWorkflow(as(7), null);
+        var denied = assertThrows(OperationFailure.class, () ->
+            readPort.requireCleanBound(clean.fileId(), PROFILE, FilePurpose.CV, outsider));
+        assertEquals(404, denied.status);
+        assertEquals("RESOURCE_NOT_FOUND", denied.code);
+
+        // Read-port denial must not create objects/bindings or successful download audit entries.
+        assertEquals(originalFiles, jdbc.queryForObject(
+            "SELECT COUNT(*) FROM files WHERE id IN (?,?)", Integer.class,
+            clean.fileId(), pending.fileId()));
+        assertEquals(originalBindings, jdbc.queryForObject(
+            "SELECT COUNT(*) FROM file_bindings WHERE file_id IN (?,?)", Integer.class,
+            clean.fileId(), pending.fileId()));
+        assertEquals(originalDownloadAudits, jdbc.queryForObject(
+            "SELECT COUNT(*) FROM audit_logs WHERE action='FILE_DOWNLOADED' AND resource_id IN (?,?)",
+            Integer.class, clean.fileId(), pending.fileId()));
+    }
+
     @Test void realMultipartOwnerMetadataPendingAndForeignScope() throws Exception {
         Session student=login("student"),other=login("intern"),admin=login("admin"),hr=login("hr");
         String command=key();var created=post(student,command,"STUDENT_PROFILE",id(6),"CV","../../cv.pdf","application/pdf",PDF,true,"");assertEquals(202,created.statusCode(),body(created));
