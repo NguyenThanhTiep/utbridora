@@ -53,7 +53,7 @@ test('week 2 skills, cooperation, consent and tasks use real authenticated APIs'
   await school.page.getByRole('button', { name: 'Lưu kết quả xét duyệt', exact: true }).click();
   const approved = await decision;expect(approved.ok()).toBe(true);expect((await approved.json()).state).toBe('APPROVED');
   await expect(cooperationRow.locator('.school-coop-state')).toContainText('Đã duyệt');
-  await expect(summary.getByRole('heading', { name: 'W2 browser cooperation', exact: true })).toBeVisible();
+  await expect(cooperationRow.getByRole('heading', { name: 'W2 browser cooperation', exact: true })).toBeVisible();
   await school.page.reload();
   await openWorkspacePage(school.page, 'Duyệt hợp tác');
   await expect(cooperationRow.locator('.school-coop-state')).toContainText('Đã duyệt');
