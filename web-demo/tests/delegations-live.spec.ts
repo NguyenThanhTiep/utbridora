@@ -43,10 +43,16 @@ test('admin bootstrap, school subdelegation and revocation use real APIs and cur
   await reviewer.page.reload(); await signIn(reviewer.page, 'delegate@example.test');
   const visible = await reviewer.page.request.get('/api/v1/school/cooperations', { headers: schoolHeaders });
   expect(visible.status(), await visible.text()).toBe(200);
+  const first = (await visible.json()).content[0];
+  const firstDetail = await reviewer.page.request.get('/api/v1/school/cooperations/' + first.cooperationId, { headers: schoolHeaders });
+  expect(firstDetail.status()).toBe(200);
+  const demandTitle = (await firstDetail.json()).demand.data.title;
   await reviewer.page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Duyệt hợp tác', exact: true }).click();
-  await expect(reviewer.page.getByRole('heading', { name: 'Đề nghị 1 · Đã gửi', exact: true })).toBeVisible();
+  await expect(reviewer.page.getByRole('heading', { name: demandTitle, exact: true })).toBeVisible();
+  await expect(reviewer.page.locator('.school-coop-state')).toContainText('Đã gửi');
   await reviewer.page.reload(); await reviewer.page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Duyệt hợp tác', exact: true }).click();
-  await expect(reviewer.page.getByRole('heading', { name: 'Đề nghị 1 · Đã gửi', exact: true })).toBeVisible();
+  await expect(reviewer.page.getByRole('heading', { name: demandTitle, exact: true })).toBeVisible();
+  await expect(reviewer.page.locator('.school-coop-state')).toContainText('Đã gửi');
   await admin.page.getByRole('button', { name: 'Thu hồi phân công', exact: true }).click();
   await expect(admin.page.getByText('Đã thu hồi phân công và các phiên bị ảnh hưởng.', { exact: true })).toBeVisible();
   await expect(admin.page.getByRole('region', { name: 'Chi tiết phân công' })).toContainText('Đã thu hồi');

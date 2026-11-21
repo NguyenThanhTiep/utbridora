@@ -37,3 +37,110 @@
   .matching-candidate-top { align-items: flex-start; }
   .matching-score { white-space: normal; text-align: right; }
 }
+
+.portal-workspace.is-school .matching-workspace { --brand-dark: #087b68; --surface-subtle: #f8fafc; }
+.portal-workspace.is-school .matching-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: end; gap: 12px; padding: 12px 14px; margin: 0; border: 1px solid #e6edf4; border-radius: 12px; background: #f8fafc; }
+.portal-workspace.is-school .matching-controls label { margin-top: 0; font-size: 12px; font-weight: 700; color: #52687a; }
+.portal-workspace.is-school .matching-controls :is(select, button) { min-height: 42px; }
+.portal-workspace.is-school :is(.matching-controls, .matching-run-right) button:not(.secondary) { background: #0b927c; border-color: #0b927c; color: #fff; font-weight: 600; border-radius: 10px; }
+.portal-workspace.is-school :is(.matching-controls, .matching-run-right) button:not(.secondary):hover:not(:disabled) { background: #087b68; border-color: #087b68; }
+.portal-workspace.is-school .matching-demand-summary { gap: 8px 10px; margin-bottom: 4px; padding: 10px 14px; border: 1px solid #e6edf4; border-radius: 10px; background: #f8fafc; }
+.portal-workspace.is-school .matching-demand-summary[hidden] { display: none; }
+.portal-workspace.is-school .matching-demand-summary > span { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid #e3eaf2; border-radius: 7px; background: #fff; font-size: 12px; color: #476072; }
+.portal-workspace.is-school .matching-run-meta { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 16px; margin: 0; padding: 12px 16px; border: 1px solid #e6edf4; border-radius: 12px; background: #f8fafc; }
+.portal-workspace.is-school .matching-run-meta h3 { font-size: 15px; font-weight: 700; }
+.portal-workspace.is-school .matching-quota-hint { margin: 4px 0 0; font-size: 12.5px; color: #087b68; font-weight: 600; }
+.portal-workspace.is-school .matching-run-right { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; }
+.portal-workspace.is-school .matching-run-right p { margin: 0; font-size: 12px; }
+.portal-workspace.is-school .matching-handoff-banner {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px;
+  padding: 10px 14px; border: 1px solid #cdece4; border-radius: 12px; background: #f2faf7;
+  color: #087b68; font-size: 13px; font-weight: 600;
+}
+.portal-workspace.is-school .matching-eligibility-tag {
+  display: inline-flex; width: fit-content; margin-top: 5px; padding: 2px 8px;
+  border-radius: 7px; font-size: 11px; font-weight: 650;
+}
+.portal-workspace.is-school .matching-eligibility-tag.is-existing {
+  border: 1px solid #cce0f7; background: #eef6ff; color: #1d5a9e;
+}
+.portal-workspace.is-school .matching-eligibility-tag.is-pending {
+  border: 1px solid #f1dfbf; background: #fff4e1; color: #9c5a0c;
+}
+.portal-workspace.is-school .table-scroll.matching-table-wrap { padding: 0; border: 1px solid #e6edf4; border-radius: 12px; background: #fff; }
+.portal-workspace.is-school .matching-counts { gap: 14px; margin: 0; }
+.portal-workspace.is-school .matching-counts > button {
+  --stat-accent: #087b68;
+  --stat-bg: #e7f6f0;
+  --stat-icon-bg: #c5eee1;
+  --stat-border: #cdece4;
+  --stat-hover-border: #8ad6bf;
+  --stat-hover-top: #c7efe0;
+  --stat-hover-bottom: #dcf5ec;
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; align-items: stretch; justify-content: space-between; gap: 10px;
+  width: 100%; padding: 16px 18px 14px; text-align: left;
+  border: 1px solid var(--stat-border); border-top: 3px solid var(--stat-accent); border-radius: 14px;
+  background: var(--stat-bg); color: #142f40;
+  box-shadow: 0 4px 12px rgba(20, 47, 64, 0.04);
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.24s ease, border-color 0.24s ease;
+}
+.portal-workspace.is-school .matching-counts > button > * { position: relative; z-index: 1; }
+.portal-workspace.is-school .matching-counts > button::before {
+  content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: linear-gradient(180deg, var(--stat-hover-top) 0%, var(--stat-hover-bottom) 100%);
+  transform: scaleY(0); transform-origin: top center; opacity: 0;
+  transition: transform 0.36s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.24s ease;
+}
+.portal-workspace.is-school .matching-counts > button:hover:not(:disabled) {
+  border-color: var(--stat-hover-border); border-top-color: var(--stat-accent); box-shadow: 0 10px 22px rgba(20, 47, 64, 0.08);
+}
+.portal-workspace.is-school .matching-counts > button:hover:not(:disabled)::before { transform: scaleY(1); opacity: 1; }
+.portal-workspace.is-school .matching-counts > button:nth-child(2) {
+  --stat-accent: #a45d0d; --stat-bg: #fff4e1; --stat-icon-bg: #ffe4b5; --stat-border: #f1dfbf;
+  --stat-hover-border: #e5bb78; --stat-hover-top: #fde3b4; --stat-hover-bottom: #ffefd2;
+}
+.portal-workspace.is-school .matching-counts > button:nth-child(3) {
+  --stat-accent: #c23b4e; --stat-bg: #fdecee; --stat-icon-bg: #fadadd; --stat-border: #f7cfd5;
+  --stat-hover-border: #eaa3ae; --stat-hover-top: #fbd6db; --stat-hover-bottom: #fde6e9;
+}
+.portal-workspace.is-school .matching-counts > button.selected {
+  box-shadow: 0 0 0 2px #0b927c40, 0 8px 18px rgba(20, 47, 64, 0.06);
+  border-color: #0b927c; border-top-color: var(--stat-accent);
+}
+.portal-workspace.is-school .matching-counts .kpi-card-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%;
+}
+.matching-count-meta { font-size: 13px; font-weight: 650; color: #142f40; }
+.portal-workspace.is-school .matching-counts .school-stat-icon-tile {
+  display: grid; place-items: center; flex: 0 0 38px; width: 38px; height: 38px;
+  border-radius: 10px; background: var(--stat-icon-bg); color: var(--stat-accent);
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.24s ease;
+}
+.portal-workspace.is-school .matching-counts > button:hover:not(:disabled) .school-stat-icon-tile {
+  transform: scale(1.06); box-shadow: 0 4px 12px rgba(20, 47, 64, 0.08);
+}
+.portal-workspace.is-school .matching-counts .kpi-card-bottom {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px; width: 100%;
+}
+.portal-workspace.is-school .matching-counts strong { color: var(--stat-accent); font-size: 32px; line-height: 1.1; font-weight: 800; font-variant-numeric: tabular-nums; }
+.portal-workspace.is-school .matching-counts .kpi-card-hint { font-size: 12px; color: var(--stat-accent); font-weight: 600; white-space: nowrap; }
+.matching-tabs { margin-bottom: 4px; }
+.matching-candidate-cell { display: flex; align-items: center; gap: 10px; }
+.matching-candidate-ident strong { display: block; font-size: 14px; font-weight: 650; color: #142f40; }
+.matching-candidate-ident small { margin-top: 2px; }
+.matching-table-wrap td { vertical-align: middle; }
+.portal-workspace.is-school .matching-select input { accent-color: #0b927c; margin-top: 0; }
+.portal-workspace.is-school .matching-score { display: inline-flex; padding: 4px 11px; border: 1px solid #cdece4; border-radius: 7px; background: #e7f6f0; color: #087b68; font-size: 12px; font-weight: 650; }
+.portal-workspace.is-school .matching-skills { margin-top: 0; font-size: 13px; color: #476072; }
+.matching-criteria-inline { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.matching-criteria-inline li { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid #e3eaf2; border-radius: 8px; background: #f8fafc; font-size: 12px; color: #476072; }
+.portal-workspace.is-school .matching-criterion-status { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+.portal-workspace.is-school .matching-criterion-status.pass { background: #e7f6f0; color: #087b68; }
+.portal-workspace.is-school .matching-criterion-status.fail { background: #fdecee; color: #c23b4e; }
+.portal-workspace.is-school .matching-criterion-status.unknown { background: #fff4e1; color: #9c5a0c; }
+@media (max-width: 650px) {
+  .portal-workspace.is-school .matching-controls { grid-template-columns: 1fr; gap: 12px; padding: 14px; }
+  .portal-workspace.is-school .matching-pagination > span { flex: 1 1 100%; }
+  .portal-workspace.is-school .matching-candidate { padding: 14px; }
+}

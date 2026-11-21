@@ -187,15 +187,28 @@ class Week2WorkflowIT {
         assertTrue(csv.contains("eligibleBand"));assertFalse(csv.contains("rawCount"));assertFalse(csv.contains("total"));
     }
     private static void context(String id) {var request=new org.springframework.mock.web.MockHttpServletRequest();request.addHeader("X-Context-Assignment-Id",id);org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(new org.springframework.web.context.request.ServletRequestAttributes(request));}
-    private void cooperationEdges(vn.utbridora.auth.modules.cooperation.domain.DemandModels.DemandInput input) {
+    private void cooperationEdges(vn.utbridora.auth.modules.cooperation.domain.DemandModels.DemandInput input) throws Exception {
+        long visibleBefore=cooperations.list(as(2),id(11),true,null,null,0,100).totalElements();
         var draft=demands.create(as(4),id(12),key(),input);
-        var submitted=cooperations.submitWithCooperation(as(4),id(12),key(),new CooperationService.Submit(draft.demandId(),1L));String id=submitted.cooperation().cooperationId();
+        var cooperationDraft=cooperations.create(as(4),id(12),key(),new CooperationService.Submit(draft.demandId(),1L));
+        assertDraftHiddenFromSchool(cooperationDraft.cooperationId());
+        assertEquals(visibleBefore,cooperations.list(as(2),id(11),true,null,null,0,100).totalElements(),"Private drafts must not contribute to school pagination totals");
+        var submitted=cooperations.submit(as(4),id(12),cooperationDraft.cooperationId(),key(),new CooperationService.Resubmit(cooperationDraft.version(),draft.version()));String id=submitted.cooperationId();
+        assertTrue(cooperations.list(as(2),id(11),true,null,"SUBMITTED",0,100).content().stream().anyMatch(c->c.cooperationId().equals(id)));
+        assertEquals("SUBMITTED",cooperations.reviewDetail(as(2),id(11),id,true).cooperation().state());
         var changes=cooperations.decide(as(2),id(11),id,key(),new CooperationService.Decision(2L,"REQUEST_INFO","MISSING_INFORMATION","DEMO-REVISE",List.of("description")));
         assertEquals("NEEDS_CHANGES",changes.state());assertEquals("DRAFT",jdbc.queryForObject("SELECT state FROM demands WHERE id=?",String.class,draft.demandId()));
-        var changed=demands.update(as(4),id(12),draft.demandId(),key(),new vn.utbridora.auth.modules.cooperation.domain.DemandModels.UpdateDemand(3L,input));
+        var edit=new vn.utbridora.auth.modules.cooperation.domain.DemandModels.DemandInput(input.schoolOrgId(),input.termId(),"Private revised demand",input.quantity(),input.description(),input.location(),input.benefits(),input.deadline(),input.required(),input.preferred(),input.academicCatalogVersion(),input.taxonomyVersion());
+        var changed=demands.update(as(4),id(12),draft.demandId(),key(),new vn.utbridora.auth.modules.cooperation.domain.DemandModels.UpdateDemand(3L,edit));
+        assertEquals(edit.title(),cooperations.reviewDetail(as(4),id(12),id,false).demand().data().title());
+        var submittedSnapshot=cooperations.reviewDetail(as(2),id(11),id,true).demand();
+        assertEquals(input.title(),submittedSnapshot.data().title(),"School sees only the last submitted content while changes are being drafted");
+        assertEquals(2,submittedSnapshot.version());
         var resubmitted=cooperations.submit(as(4),id(12),id,key(),new CooperationService.Resubmit(changes.version(),changed.version()));assertEquals(2,resubmitted.submissionNo());
+        assertEquals(edit.title(),cooperations.reviewDetail(as(2),id(11),id,true).demand().data().title());
         var rejected=cooperations.decide(as(2),id(11),id,key(),new CooperationService.Decision(resubmitted.version(),"REJECT","SCHOOL_REJECTED","DEMO-REJECT",List.of()));
         var reopened=cooperations.reopen(as(4),id(12),id,key(),new CooperationService.Reopen(rejected.version(),"ENTERPRISE_REOPENED"));assertEquals("DRAFT",reopened.state());
+        assertDraftHiddenFromSchool(id);
         long version=jdbc.queryForObject("SELECT version FROM demands WHERE id=?",Long.class,draft.demandId());
         var third=cooperations.submit(as(4),id(12),id,key(),new CooperationService.Resubmit(reopened.version(),version));assertEquals(3,third.submissionNo());
         cooperations.decide(as(2),id(11),id,key(),new CooperationService.Decision(third.version(),"APPROVE",null,"DEMO-FINAL-APPROVE",List.of()));
@@ -209,6 +222,21 @@ class Week2WorkflowIT {
         } finally {jdbc.execute("ALTER TABLE audit_logs DROP CHECK week2_audit_failure");}
         assertEquals("DRAFT",jdbc.queryForObject("SELECT state FROM demands WHERE id=?",String.class,rollbackDraft.demandId()));assertNull(jdbc.queryForObject("SELECT cooperation_id FROM demands WHERE id=?",String.class,rollbackDraft.demandId()));
         assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM cooperations WHERE demand_id=?",Integer.class,rollbackDraft.demandId()));assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM operation_records WHERE idempotency_key=?",Integer.class,operation));
+    }
+    private void assertDraftHiddenFromSchool(String cooperationId) throws Exception {
+        var reviewer=as(2);
+        assertFalse(cooperations.list(reviewer,id(11),true,null,null,0,100).content().stream().anyMatch(c->c.cooperationId().equals(cooperationId)));
+        var drafts=cooperations.list(reviewer,id(11),true,id(21),"DRAFT",0,25);
+        assertTrue(drafts.content().isEmpty());assertEquals(0,drafts.totalElements());assertEquals(0,drafts.totalPages());
+        assertEquals(404,assertThrows(OperationFailure.class,()->cooperations.reviewDetail(reviewer,id(11),cooperationId,true)).status);
+        assertEquals(404,assertThrows(OperationFailure.class,()->cooperations.history(reviewer,id(11),cooperationId,0,25)).status);
+        var school=login("school@example.test","Synthetic-week2-test-password-123");
+        for(String suffix:List.of("","/submission-history","/publication"))
+            assertEquals(404,http(school,"GET","/school/cooperations/"+cooperationId+suffix,null,false,id(11)));
+        assertTrue(cooperations.list(as(4),id(12),false,null,"DRAFT",0,100).content().stream().anyMatch(c->c.cooperationId().equals(cooperationId)));
+        assertEquals("DRAFT",cooperations.reviewDetail(as(4),id(12),cooperationId,false).cooperation().state());
+        var enterprise=login("hr@example.test","Synthetic-week2-test-password-123");
+        assertEquals(200,http(enterprise,"GET","/enterprise/cooperations/"+cooperationId,null,false,id(12)));
     }
     private void consentEdges(String invitation,String oldShare) throws Exception {
         long lineage=jdbc.queryForObject("SELECT version FROM student_consent_lineages WHERE student_user_id=? AND recipient_org_id=?",Long.class,id(6),id(12));

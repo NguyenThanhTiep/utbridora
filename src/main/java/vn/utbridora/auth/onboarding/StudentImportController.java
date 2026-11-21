@@ -47,6 +47,8 @@ public class StudentImportController {
         String id=request.getAttribute("bridora.request_id") instanceof String value?value:java.util.UUID.randomUUID().toString();
         return ResponseEntity.badRequest().body(new vn.utbridora.auth.operations.OperationErrors.Error(code,code,"Vui lòng kiểm tra các trường yêu cầu.",id,java.util.List.of(),null));
     }
+    @GetMapping public Page<ImportJobDto> list(Authentication auth,@RequestParam String termId,@RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="10") int size) {return imports.listJobs(auth,termId,page,size);}
+    @GetMapping("/majors") public java.util.List<vn.utbridora.auth.modules.student.application.AcademicCatalogService.Item> majors(Authentication auth,@RequestParam String termId) {return imports.listActiveMajors(auth,termId);}
     @GetMapping("/{id}") public ImportJobDto get(Authentication auth,@PathVariable String id) {return imports.get(auth,id);}
     @GetMapping("/{id}/rows") public Page<ImportRowDto> rows(Authentication auth,@PathVariable String id,
         @RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="25") int size,

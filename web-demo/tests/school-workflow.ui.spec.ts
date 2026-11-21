@@ -109,7 +109,14 @@ test('Placement UI separates create, approve, activate, handoff and cancel; ente
     placements = [{...placements[0], state: action === 'approve' ? 'APPROVED' : action === 'activate' ? 'ACTIVE' : 'CANCELLED', version: placements[0].version + 1}];
     return r.fulfill({json: placements[0]});
   });
-  await page.goto(url);await page.getByLabel('Ứng viên đã được doanh nghiệp đồng ý').selectOption('proposal-a');await page.getByLabel('Thời điểm có hiệu lực').fill('2026-11-11T10:00');
+  await page.goto(url);await page.getByLabel('Ứng viên đã được doanh nghiệp đồng ý').selectOption('proposal-a');
+  const start=page.getByLabel('Ngày bắt đầu', {exact: true}), end=page.getByLabel('Ngày kết thúc', {exact: true});
+  await expect(start).toHaveValue('2026-11-24');await expect(end).toHaveValue('2027-02-24');
+  await expect(start).toHaveJSProperty('readOnly',true);await expect(end).toHaveJSProperty('readOnly',true);
+  await expect(page.getByText('Ngày bắt đầu và kết thúc được lấy theo nhu cầu doanh nghiệp đã được duyệt.',{exact:true})).toBeVisible();
+  await start.evaluate(node => { (node as HTMLInputElement).value='2026-12-01'; });
+  await end.evaluate(node => { (node as HTMLInputElement).value='2027-01-01'; });
+  await page.getByLabel('Thời điểm có hiệu lực').fill('2026-11-11T10:00');
   await page.getByRole('button', {name: 'Tạo hồ sơ chờ phê duyệt', exact: true}).click();await expect(page.getByText('Tiếp nhận 1 · Chờ trường phê duyệt')).toBeVisible();expect(commands).toEqual(['create']);
   await page.getByRole('button', {name: 'Phê duyệt tiếp nhận', exact: true}).click();await page.getByLabel('Căn cứ thao tác tiếp nhận').fill('QD-APPROVE');await page.getByRole('button', {name: 'Xác nhận phê duyệt', exact: true}).click();
   await expect(page.getByRole('button', {name: 'Kích hoạt thực tập', exact: true})).toBeDisabled();expect(commands).toEqual(['create', 'approve']);

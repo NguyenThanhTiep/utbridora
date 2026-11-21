@@ -42,10 +42,12 @@ test('week 2 skills, cooperation, consent and tasks use real authenticated APIs'
   await school.page.screenshot({ path: '../target/week2-browser-cooperation.png', fullPage: true });
   await school.page.getByLabel('Căn cứ quyết định', { exact: true }).fill('DEMO-BROWSER-W2');
   await school.page.getByRole('button', { name: 'Lưu kết quả xét duyệt', exact: true }).click();
-  await expect(school.page.getByRole('heading', { name: 'Đề nghị 1 · Đã duyệt', exact: true })).toBeVisible();
+  await expect(school.page.locator('.school-coop-state')).toContainText('Đã duyệt');
+  await expect(school.page.getByRole('heading', { name: 'W2 browser cooperation', exact: true })).toBeVisible();
   await school.page.reload();
   await school.page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Duyệt hợp tác', exact: true }).click();
-  await expect(school.page.getByRole('heading', { name: 'Đề nghị 1 · Đã duyệt', exact: true })).toBeVisible(); await school.context.close();
+  await expect(school.page.locator('.school-coop-state')).toContainText('Đã duyệt');
+  await expect(school.page.getByRole('heading', { name: 'W2 browser cooperation', exact: true })).toBeVisible(); await school.context.close();
 
   const mentor = await actor(browser, 'mentor@example.test');
   await mentor.page.getByRole('button', { name: 'Không gian thực tập', exact: true }).click();

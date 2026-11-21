@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ApiError, type Grant, type Me } from '../../../api';
+import { useOrganizationNames } from '../../useOrganizationNames';
 import type { ContextAssignment } from '../types';
 import { workflowError, workflowPages, workflowRead } from '../workflow-api';
 import type { OperationsScope, Summary } from '../operations-types';
@@ -18,10 +19,10 @@ export function OperationsPage({me,grants}:{me:Me;grants:Grant[]}) {
   const [mode,setMode]=useState<'school'|'enterprise'>(schools.length?'school':'enterprise'),[closed,setClosed]=useState(false),[generation,setGeneration]=useState(0);
   useEffect(()=>{const clear=()=>setClosed(true);window.addEventListener('session-expired',clear);return ()=>window.removeEventListener('session-expired',clear);},[]);
   if(!schools.length && !enterprise)return <section className="panel"><p>Chưa có vai trò phù hợp để quản lý thực tập.</p></section>;
-  return <div className="stack t3-operations"><section className="panel stack"><h1>Quản lý và tổng kết thực tập</h1>
-    <p>Theo dõi tiến độ, yêu cầu phối hợp và tổng kết trong phạm vi đã được phân công.</p>
+  return <div className="stack t3-operations"><section className="panel stack"><div className="section-heading"><div><h2>Quản lý và tổng kết thực tập</h2>
+    <p className="section-description">Theo dõi tiến độ, yêu cầu phối hợp và tổng kết trong phạm vi đã được phân công.</p></div>
+    <button className="secondary" onClick={()=>{setClosed(false);setGeneration(n=>n+1);}}>Xác nhận lại quyền quản lý</button></div>
     {schools.length>0 && enterprise && <label>Vai trò quản lý thực tập<select value={mode} onChange={e=>{setMode(e.target.value as typeof mode);setClosed(false);setGeneration(n=>n+1);}}><option value="school">Nhà trường</option><option value="enterprise">HR / Mentor</option></select></label>}
-    <button className="secondary" onClick={()=>{setClosed(false);setGeneration(n=>n+1);}}>Xác nhận lại quyền quản lý</button>
   </section>{closed?<section className="panel"><p role="alert">Quyền truy cập đã thay đổi. Dữ liệu vận hành đã được đóng; hãy xác nhận lại quyền.</p></section>
     :<div key={me.userId+':'+mode+':'+generation}>{mode==='school'?<SchoolOperations userId={me.userId} grants={schools} denied={()=>setClosed(true)}/>
       :<EnterpriseOperations me={me} grants={grants} denied={()=>setClosed(true)}/>}</div>}
@@ -29,8 +30,9 @@ export function OperationsPage({me,grants}:{me:Me;grants:Grant[]}) {
 }
 
 function SchoolOperations({userId,grants,denied}:{userId:string;grants:Grant[];denied:()=>void}) {
+  const orgNames=useOrganizationNames(grants.length>0);
   const [school,setSchool]=useState(grants[0]?.organizationId || '');const grant=grants.find(g=>g.organizationId===school);
-  return <div className="stack"><section className="panel"><label>Trường quản lý thực tập<select value={school} onChange={e=>setSchool(e.target.value)}>{grants.map(g=><option key={g.organizationId} value={g.organizationId!}>Trường …{g.organizationId!.slice(-6)}</option>)}</select></label></section>
+  return <div className="stack"><section className="panel"><label>Trường quản lý thực tập<select value={school} onChange={e=>setSchool(e.target.value)}>{grants.map(g=><option key={g.organizationId} value={g.organizationId!}>{orgNames[g.organizationId!] || ('Trường …'+g.organizationId!.slice(-6))}</option>)}</select></label></section>
     {grant && <SchoolTerm key={school} userId={userId} school={school} grant={grant} denied={denied}/>}</div>;
 }
 function SchoolTerm({school,userId,grant,denied}:{school:string;userId:string;grant:Grant;denied:()=>void}) {
@@ -43,6 +45,7 @@ function SchoolTerm({school,userId,grant,denied}:{school:string;userId:string;gr
     {term && <ScopeOperations key={school+':'+term} scope={scope} denied={denied}/>}</div>;
 }
 function EnterpriseOperations({me,grants,denied}:{me:Me;grants:Grant[];denied:()=>void}) {
+  const orgNames=useOrganizationNames(true);
   const [items,setItems]=useState<ContextAssignment[]>([]),[selected,setSelected]=useState(''),[error,setError]=useState(''),[now,setNow]=useState(Date.now());
   useEffect(()=>{const c=new AbortController();void workflowRead<ContextAssignment[]>('/t3/context-assignments/me',undefined,c.signal).then(v=>{if(!c.signal.aborted)setItems(v);})
     .catch(e=>{if(!c.signal.aborted){if(lost(e))denied();else setError(workflowError(e));}});return ()=>c.abort();},[me.userId]);
@@ -52,7 +55,7 @@ function EnterpriseOperations({me,grants,denied}:{me:Me;grants:Grant[];denied:()
     && grants.some(g=>g.role==='ENTERPRISE' && g.organizationId===a.scope.enterpriseOrgId && g.permissions.includes('t3:workspace:read')));
   const assignment=usable.find(a=>a.id===selected),grant=grants.find(g=>g.role==='ENTERPRISE' && g.organizationId===assignment?.scope.enterpriseOrgId);
   const scope=useMemo<OperationsScope|null>(()=>assignment && grant?{schoolId:assignment.scope.schoolOrgId!,enterpriseId:assignment.scope.enterpriseOrgId!,termId:assignment.scope.termId!,contextId:assignment.id,mode:assignment.kind==='HR'?'hr':'mentor',permissions:grant.permissions,userId:me.userId}:null,[assignment,grant,me.userId]);
-  return <div className="stack"><section className="panel"><label>Phân công quản lý thực tập<select value={assignment?.id || ''} onChange={e=>setSelected(e.target.value)}><option value="">Chọn phân công…</option>{usable.map(a=><option key={a.id} value={a.id}>{a.kind} · Trường …{a.scope.schoolOrgId?.slice(-6)} · Kỳ …{a.scope.termId?.slice(-6)}</option>)}</select></label>{error && <p role="alert">{error}</p>}{!error && usable.length===0 && <p>Chưa có phân công HR/Mentor còn hiệu lực.</p>}</section>
+  return <div className="stack"><section className="panel"><label>Phân công quản lý thực tập<select value={assignment?.id || ''} onChange={e=>setSelected(e.target.value)}><option value="">Chọn phân công…</option>{usable.map(a=><option key={a.id} value={a.id}>{a.kind} · {(a.scope.schoolOrgId && orgNames[a.scope.schoolOrgId]) || ('Trường …'+a.scope.schoolOrgId?.slice(-6))} · Kỳ …{a.scope.termId?.slice(-6)}</option>)}</select></label>{error && <p role="alert">{error}</p>}{!error && usable.length===0 && <p>Chưa có phân công HR/Mentor còn hiệu lực.</p>}</section>
     {scope && <ScopeOperations key={assignment!.id+':'+assignment!.version} scope={scope} denied={denied}/>}</div>;
 }
 
@@ -61,7 +64,7 @@ function ScopeOperations({scope,denied}:{scope:OperationsScope;denied:()=>void})
   return <div className="stack"><Dashboard scope={scope} denied={denied}/>{scope.mode!=='school' && <OperationsCalendar scope={scope} denied={denied}/>}
     {scope.mode==='school' && scope.permissions.includes('t3:enterprise_quality:school:write') && <EnterpriseQualityForm scope={scope} denied={denied}/>}
     <CaseOperations scope={scope}/>
-    {scope.mode==='school' && <section className="panel stack"><h2>Đánh giá sinh viên trong kỳ</h2><button className="secondary" onClick={()=>{setShowEvaluations(v=>!v);setEvaluationDenied(false);}}>Xem danh sách đánh giá thực tập</button>
+    {scope.mode==='school' && <section className="panel stack"><h2>Đánh giá sinh viên trong kỳ</h2><div className="button-row"><button className="secondary" onClick={()=>{setShowEvaluations(v=>!v);setEvaluationDenied(false);}}>Xem danh sách đánh giá thực tập</button></div>
       {evaluationDenied && <p role="alert">Chưa có quyền xem điểm trong phạm vi này. Các chức năng vận hành khác vẫn theo quyền riêng.</p>}
       {showEvaluations && <SchoolEvaluations schoolId={scope.schoolId} termId={scope.termId} denied={()=>{setShowEvaluations(false);setEvaluationDenied(true);}}
         canPublish={scope.permissions.includes('t3:grades:publish')} canPolicy={scope.permissions.includes('t3:result_policy:manage')}/>}</section>}

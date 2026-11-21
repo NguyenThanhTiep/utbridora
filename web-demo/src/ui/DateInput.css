@@ -1,0 +1,184 @@
+.vn-date-control {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin-top: 7px;
+}
+
+.input-control > .vn-date-control {
+  margin-top: 0;
+}
+
+.vn-date-control > input.vn-date-input {
+  margin-top: 0 !important;
+  width: 100%;
+  min-width: 0;
+  padding-right: 36px;
+  position: relative;
+  z-index: 1;
+}
+
+.vn-date-display {
+  position: absolute;
+  inset: 0 36px 0 13px;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  z-index: 2;
+  font-family: inherit;
+  font-size: var(--text-base, 1rem);
+  font-weight: 400;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink, #0f172a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.student-page .vn-date-control {
+  margin-top: 6px;
+}
+
+.student-page .input-control > .vn-date-control {
+  margin-top: 0;
+}
+
+.student-page .vn-date-display {
+  inset: 0 36px 0 12px;
+  font-size: var(--text-sm, 0.875rem);
+}
+
+/* Preserve T2's floating-label single frame inside .student-page without touching T2 stylesheets. */
+#root .student-page label:has(> .vn-date-control) {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 9px 12px 10px;
+  background: var(--student-subtle, #fbfdfe);
+  border: 1px solid #dbe4ea;
+  border-radius: 9px;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+#root .student-page label:has(> .vn-date-control):focus-within {
+  border-color: var(--student-accent, #0b927c);
+  box-shadow: 0 0 0 3px var(--brand-light, #e7f6f0);
+}
+
+#root .student-page label:has(> .vn-date-control [aria-invalid="true"]) {
+  border-color: #a5364c;
+}
+
+#root .student-page label:has(> .vn-date-control :disabled) {
+  background: #f4f7f9;
+}
+
+#root .student-page .student-reports fieldset > label:has(> .vn-date-control) {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 8px;
+  --mask: var(--icon-calendar);
+}
+
+#root .student-page .student-reports fieldset > label:has(> .vn-date-control)::before {
+  content: "";
+  grid-row: 1;
+  width: 15px;
+  height: 15px;
+  color: var(--brand, #097b69);
+  background: currentColor;
+  -webkit-mask: var(--mask) center / contain no-repeat;
+  mask: var(--mask) center / contain no-repeat;
+}
+
+#root .student-page .student-reports fieldset > label:has(> .vn-date-control) > .vn-date-control {
+  grid-column: 1 / -1;
+}
+
+#root .student-page :is(.field .input-control, label) > .vn-date-control {
+  margin-top: 0;
+}
+
+#root .workspace .student-page :is(.field .input-control, label) > .vn-date-control > input.vn-date-input {
+  width: 100%;
+  min-height: 24px;
+  min-block-size: 24px;
+  height: auto;
+  margin: 0;
+  padding: 0 28px 0 0;
+  color: var(--ink, #142f40);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 400;
+  line-height: 22px;
+  background-color: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  outline: 0;
+}
+
+#root .student-page :is(.field .input-control, label) > .vn-date-control > .vn-date-display {
+  inset: 0 28px 0 0;
+}
+
+@media (max-width: 700px) {
+  .student-page .vn-date-display {
+    font-size: var(--text-base, 1rem);
+  }
+  #root .workspace .student-page :is(.field .input-control, label) > .vn-date-control > input.vn-date-input {
+    font-size: var(--text-base, 1rem);
+    min-height: 24px;
+    min-block-size: 24px;
+  }
+}
+
+.vn-date-display.is-placeholder {
+  color: #94a3b8;
+}
+
+.vn-date-control.is-disabled .vn-date-display {
+  color: #94a3b8;
+  opacity: 0.78;
+}
+
+input.vn-date-input::-webkit-datetime-edit,
+input.vn-date-input::-webkit-datetime-edit-fields-wrapper,
+input.vn-date-input::-webkit-datetime-edit-text,
+input.vn-date-input::-webkit-datetime-edit-month-field,
+input.vn-date-input::-webkit-datetime-edit-day-field,
+input.vn-date-input::-webkit-datetime-edit-year-field,
+input.vn-date-input::-webkit-datetime-edit-hour-field,
+input.vn-date-input::-webkit-datetime-edit-minute-field,
+input.vn-date-input::-webkit-datetime-edit-second-field,
+input.vn-date-input::-webkit-datetime-edit-ampm-field,
+input.vn-date-input::-webkit-datetime-edit-month-field:focus,
+input.vn-date-input::-webkit-datetime-edit-day-field:focus,
+input.vn-date-input::-webkit-datetime-edit-year-field:focus,
+input.vn-date-input::-webkit-datetime-edit-hour-field:focus,
+input.vn-date-input::-webkit-datetime-edit-minute-field:focus,
+input.vn-date-input::-webkit-datetime-edit-second-field:focus,
+input.vn-date-input::-webkit-datetime-edit-ampm-field:focus {
+  color: transparent !important;
+  background: transparent !important;
+}
+
+input.vn-date-input::-webkit-calendar-picker-indicator {
+  position: relative;
+  z-index: 3;
+  cursor: pointer;
+  opacity: 0.82;
+}
+
+input.vn-date-input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+@supports (-moz-appearance: none) {
+  .vn-date-display {
+    display: none;
+  }
+}

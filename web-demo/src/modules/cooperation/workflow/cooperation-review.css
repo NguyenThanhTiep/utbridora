@@ -1,0 +1,93 @@
+#root .school-cooperation-table { min-width: 0; margin-top: 0; padding: 0; border: 1px solid #e6edf4; border-radius: 12px; background: #fff; overflow-x: auto; }
+#root .school-cooperation-table table { width: 100%; border-collapse: collapse; border-spacing: 0; text-align: left; }
+#root .school-cooperation-table thead th { padding: 11px 16px; border: 0; border-bottom: 1px solid #e6edf4; border-radius: 0; background: #f8fafc; color: #475569; font-size: 12px; font-weight: 600; white-space: nowrap; text-transform: none; letter-spacing: 0; }
+#root .school-cooperation-table thead th:last-child { text-align: right; }
+#root .school-cooperation-table tbody td { padding: 13px 16px; border: 0; border-bottom: 1px solid #f1f5f9; border-radius: 0; background: transparent; color: #142f40; font-size: 14px; vertical-align: middle; }
+#root .school-cooperation-table tbody tr:last-child td { border-bottom: 0; }
+#root .school-cooperation-table tbody tr:hover td { background: #f8fbfa; }
+#root .school-cooperation-table tbody td:last-child { text-align: right; }
+#root .school-cooperation-table tr.is-selected td { border-bottom-color: #cdece4; background: #edf9f5; }
+#root .school-cooperation-table tr.is-selected td:first-child { box-shadow: inset 3px 0 #0b927c; }
+#root .school-coop-person { display: flex; align-items: center; gap: 12px; min-width: 0; }
+#root .school-coop-person > div { min-width: 0; }
+#root .school-coop-document { display: grid; place-items: center; flex: 0 0 36px; width: 36px; height: 36px; border: 0; border-radius: 10px; background: #eaf1fe; color: #2563eb; }
+#root .school-cooperation-table .workflow-table-title { max-width: 420px; margin: 0 0 3px; font-size: 14px; line-height: 1.45; font-weight: 600; overflow-wrap: anywhere; }
+#root .school-coop-person small { display: block; color: #64788a; font-size: 12.5px; }
+#root .school-coop-term > span:last-child { font-weight: 500; overflow-wrap: anywhere; }
+#root .school-coop-cell-label { display: none; }
+#root .school-cooperation-table button.school-coop-open { min-height: 36px; padding: 7px 12px; gap: 6px; border-color: #e3eaf2; color: #425c6e; background: #fff; font-size: 13px; font-weight: 600; white-space: nowrap; }
+#root .school-cooperation-table button.school-coop-open:hover:not(:disabled) { border-color: #a5d6c9; color: #087b68; background: #f4fbf8; }
+#root .school-cooperation-table .is-selected button.school-coop-open { border-color: #a5d6c9; color: #087b68; background: #fff; }
+#root .school-cooperation-table .school-coop-empty { padding: 28px 16px; text-align: center; color: #64788a; }
+#root .school-coop-empty > .icon { color: #91aaa3; }
+#root .school-coop-empty p { margin: 8px 0 0; }
+
+.portal-workspace.is-school .workflow-detail-drawer.school-cooperation-detail { margin-top: 16px; padding: 18px; border: 1px solid #dbe9e3; border-radius: 14px; background: #fff; box-shadow: 0 4px 20px #142f4005; }
+#root .school-coop-summary { --review-accent: #087b68; --review-bg: #f1faf6; --review-line: #cdeadd; min-width: 0; font-size: 16px; line-height: 1.7; }
+#root .school-coop-summary.review-submitted, #root .school-coop-summary.review-needs_changes { --review-accent: #9c6416; --review-bg: #fffbf1; --review-line: #f1dfb9; }
+#root .school-coop-summary.review-rejected { --review-accent: #b34151; --review-bg: #fff6f7; --review-line: #f1d3d8; }
+#root .school-coop-summary-header { display: flex; align-items: center; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid #edf2f5; }
+#root .school-coop-summary-icon { display: grid; place-items: center; flex: 0 0 40px; height: 40px; border: 1px solid #cee9de; border-radius: 10px; background: #eaf7f1; color: #087b68; }
+#root .school-coop-summary-heading { flex: 1; min-width: 0; }
+#root .school-coop-summary .school-coop-eyebrow { margin: 0 0 3px; color: #526978; font-size: 12px; font-weight: 600; letter-spacing: .25px; text-transform: uppercase; }
+#root .school-coop-summary-heading h3 { margin: 0; color: #142f40; font-size: 20px; font-weight: 650; line-height: 1.4; overflow-wrap: anywhere; }
+#root .school-coop-summary .school-coop-summary-context { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 0; color: #526978; font-size: 13px; line-height: 1.5; }
+#root .school-coop-summary-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+#root .school-coop-summary button.school-coop-close { min-height: 40px; padding: 6px 10px; color: #526978; font-size: 15px; }
+#root .school-coop-summary .status-pill { font-size: 14px; }
+#root .school-coop-summary .school-coop-status-note { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0; color: var(--review-accent); font-size: 15px; line-height: 1.5; }
+#root .school-coop-status-note > .icon { flex-shrink: 0; margin-top: 2px; }
+#root .school-coop-description h4, #root .school-coop-fact h4, #root .school-coop-feedback h4 { margin: 0; color: #314d5e; font-size: 16px; font-weight: 600; line-height: 1.6; }
+#root .school-coop-description { margin-block: 14px; }
+#root .school-coop-description p { margin: 6px 0 0; color: #142f40; font-size: 17px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+#root .school-coop-description p.is-clamped { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 6; overflow: hidden; }
+#root .school-coop-summary button.school-coop-expand { display: inline-flex; min-height: 44px; max-width: 100%; margin-top: 12px; padding: 8px 12px; border-color: #cde4db; color: #087b68; background: #fff; font-size: 15px; white-space: normal; }
+#root .school-coop-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+#root .school-coop-facts.has-wide-criteria { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+#root .school-coop-skill-card.is-wide { grid-column: 1 / -1; }
+#root .school-coop-fact { position: relative; min-width: 0; padding: 12px 14px; border: 1px solid #e6edf1; border-radius: 10px; background: #fbfcfd; }
+#root .school-coop-fact h4 { padding-right: 24px; }
+#root .school-coop-fact-icon { position: absolute; top: 15px; right: 14px; color: #829c95; }
+#root .school-coop-fact p { margin: 8px 0 0; color: #142f40; font-size: 16px; line-height: 1.5; overflow-wrap: anywhere; }
+#root .school-coop-fact .school-coop-quantity { margin-top: 8px; color: #142f40; font-weight: 600; }
+#root .school-coop-skill-count { display: block; margin-top: 4px; color: #526978; font-size: 14px; }
+#root .school-coop-skill-tags { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; margin: 8px 0 0; padding: 0; list-style: none; }
+#root .school-coop-skill-tags > li { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 5px; min-width: 0; max-width: 100%; margin: 0; padding: 4px 8px; border: 1px solid #d4e9e1; border-radius: 7px; background: #eef8f3; color: #087b68; font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
+#root .school-coop-skill-code { min-width: 0; overflow-wrap: anywhere; }
+#root .school-coop-skill-tags small { color: #425d6c; font-size: 13px; font-weight: 400; }
+#root .school-coop-skill-tags p { margin: 0; }
+#root .school-coop-fact .school-coop-period { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; color: #142f40; font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+#root .school-coop-period > span { color: #8da39d; }
+#root .school-coop-feedback { margin-top: 12px; padding: 12px 14px; border: 1px solid var(--review-line); border-radius: 10px; background: var(--review-bg); }
+#root .school-coop-feedback-heading { display: flex; align-items: center; gap: 8px; color: var(--review-accent); }
+#root .school-coop-feedback-heading h4 { color: inherit; font-size: 16px; font-weight: 600; }
+#root .school-coop-feedback dl { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr); gap: 12px; margin: 8px 0 0; }
+#root .school-coop-feedback dl > div { min-width: 0; }
+#root .school-coop-feedback dt { color: #526978; font-size: 13px; }
+#root .school-coop-feedback dd { margin: 3px 0 0; color: #142f40; font-size: 15px; font-weight: 500; line-height: 1.5; overflow-wrap: anywhere; }
+@media (max-width: 1100px) {
+  #root .school-coop-summary-header { flex-wrap: wrap; }
+  #root .school-coop-summary-actions { flex: 1 1 100%; justify-content: space-between; }
+  #root .school-coop-facts, #root .school-coop-facts.has-wide-criteria { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  #root .school-cooperation-table { padding: 0; border: 0; background: transparent; }
+  #root .school-cooperation-table table { display: block; }
+  #root .school-cooperation-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  #root .school-cooperation-table tbody { display: grid; gap: 12px; }
+  #root .school-cooperation-table tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px 12px; padding: 16px; border: 1px solid #e3eaf2; border-radius: 12px; background: #fff; }
+  #root .school-cooperation-table tbody tr.is-selected { border-color: #9dd6c2; background: #f1faf6; box-shadow: inset 3px 0 #0b927c; }
+  #root .school-cooperation-table tbody tr > td, #root .school-cooperation-table tbody tr > td:first-child, #root .school-cooperation-table tbody tr > td:last-child { display: block; min-width: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; text-align: left; }
+  #root .school-cooperation-table .school-coop-identity, #root .school-cooperation-table .school-coop-empty { grid-column: 1 / -1; }
+  #root .school-coop-cell-label { display: block; margin-bottom: 5px; color: #64788a; font-size: 13px; }
+  #root .school-cooperation-table .school-coop-term { grid-column: 1 / -1; }
+  #root .school-cooperation-table .school-coop-action { justify-self: end; }
+  #root .school-cooperation-table .school-coop-state { align-self: center; }
+  #root .school-cooperation-table button.school-coop-open { min-height: 44px; font-size: 14px; }
+  #root .school-coop-summary button.school-coop-close { min-height: 44px; }
+  .portal-workspace.is-school .workflow-detail-drawer.school-cooperation-detail { padding: 16px; }
+  #root .school-coop-summary-icon { flex-basis: 40px; height: 40px; border-radius: 10px; }
+  #root .school-coop-summary-heading h3 { font-size: 20px; }
+  #root .school-coop-summary-header { gap: 12px; }
+  #root .school-coop-feedback dl { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+}

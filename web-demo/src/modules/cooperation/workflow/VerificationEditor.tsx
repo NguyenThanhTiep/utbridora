@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { Icon, Notice } from '../../../components';
-import { FeaturePending } from '../ui/FeaturePending';
 import { readAll } from '../portal/data';
 import { workflowError } from '../proposals/api';
 import { canLeaveDemand } from '../navigation';
@@ -16,6 +15,12 @@ export function VerificationEditor({ org, existing, busy, onCancel, save }: {
     contactName: '', contactEmail: '', contactPhone: '', evidenceFileIds: [],
   });
   const original = useRef(JSON.stringify(data));
+  const heading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    heading.current?.focus({ preventScroll: true });
+    heading.current?.closest('form')?.scrollIntoView({ block: 'start',
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }, []);
   const [schools, setSchools] = useState<{ schoolOrgId: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true), [error, setError] = useState('');
   useEffect(() => {
@@ -43,8 +48,8 @@ export function VerificationEditor({ org, existing, busy, onCancel, save }: {
     { key: 'contactEmail', label: 'Email liên hệ', max: 254 },
     { key: 'contactPhone', label: 'Điện thoại liên hệ', max: 20 },
   ] as const;
-  return <form className="workflow-review-form" onSubmit={event => { event.preventDefault();void save(data); }}>
-    <h3>{existing ? 'Bổ sung thông tin xác minh' : 'Tạo hồ sơ xác minh'}</h3>
+  return <form className="workflow-review-form enterprise-verification-editor" onSubmit={event => { event.preventDefault();void save(data); }}>
+    <h3 ref={heading} tabIndex={-1}>{existing ? 'Bổ sung thông tin xác minh' : 'Tạo hồ sơ xác minh'}</h3>
     <VerificationJourney state={existing?.state} />
     <Notice tone="error" message={error} />
     <fieldset disabled={busy}>
@@ -52,7 +57,7 @@ export function VerificationEditor({ org, existing, busy, onCancel, save }: {
         onChange={event => setData(old => ({ ...old, schoolOrgId: event.target.value }))}>
         <option value="">{loading ? 'Đang tải trường…' : 'Chọn trường'}</option>
         {data.schoolOrgId && !schools.some(school => school.schoolOrgId === data.schoolOrgId)
-          && <option value={data.schoolOrgId}>Trường trong hồ sơ · {data.schoolOrgId}</option>}
+          && <option value={data.schoolOrgId}>Trường trong hồ sơ</option>}
         {schools.map(school => <option key={school.schoolOrgId} value={school.schoolOrgId}>{school.name}</option>)}
       </select></label>
       <div className="cooperation-form-grid">{fields.map(field => <label key={field.key}>{field.label}
@@ -61,12 +66,10 @@ export function VerificationEditor({ org, existing, busy, onCancel, save }: {
           value={data[field.key]} onChange={event => setData(old => ({ ...old, [field.key]: event.target.value }))} />
       </label>)}</div>
       <section className="portal-evidence"><div className="portal-evidence-heading"><Icon name="layers" /><h4>Tài liệu minh chứng</h4></div>
-        {data.evidenceFileIds.length > 0 && <ul>{data.evidenceFileIds.map((file, index) => <li key={file}>Tài liệu đã liên kết {index + 1} <code>{file.slice(-8)}</code></li>)}</ul>}
-        <div className="portal-upload-placeholder"><Icon name="plus" size={24} /><span>Giấy phép kinh doanh và tài liệu liên quan</span>
-          <button type="button" className="secondary" disabled>Chọn tài liệu</button></div>
-        <FeaturePending>Tải tài liệu chưa sẵn sàng. Bạn có thể lưu nháp và bổ sung minh chứng trước khi gửi xét duyệt.</FeaturePending>
+        {data.evidenceFileIds.length > 0 && <ul>{data.evidenceFileIds.map((file, index) => <li key={file}>Tài liệu đã liên kết {index + 1}</li>)}</ul>}
+        <p className="verification-evidence-note"><Icon name="info" size={17} /><span>Chức năng tải tài liệu chưa sẵn sàng trong form này. Bạn có thể lưu nháp; hồ sơ cần có minh chứng hợp lệ trước khi gửi xét duyệt.</span></p>
       </section>
-      <div className="button-row"><button>Lưu hồ sơ xác minh</button>
+      <div className="button-row"><button className="t5-btn-teal">Lưu hồ sơ xác minh</button>
         <button type="button" className="secondary" onClick={() => { if (canLeaveDemand()) onCancel(); }}>Hủy</button></div>
     </fieldset>
   </form>;

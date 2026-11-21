@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ApiError, type Grant, type Me } from '../../../api';
 import { EmptyState, Icon, LoadingState, Notice } from '../../../components';
+import { useOrganizationNames } from '../../useOrganizationNames';
 import { cohortInScope, groupInScope, usableAssignments } from '../access';
 import { liveWorkspaceGateway, WorkspacePendingError, WorkspaceScopeError } from '../api';
 import type { Cohort, ContextAssignment, InternshipGroup, WorkspaceAssignment, WorkspaceGateway } from '../types';
@@ -59,8 +60,10 @@ export function InternshipWorkspace({ me, grants, gateway = liveWorkspaceGateway
     return () => window.clearTimeout(timer);
   }, [state, now]);
   const assignments = state.status === 'ready' ? usableAssignments(state.value, me, grants, now) : [];
+  const orgNames = useOrganizationNames(assignments.length > 0);
   const selected = assignments.find(item => item.id === selectedId);
   const refresh = () => { setSelectedId(''); setState({ status: 'loading' }); setAttempt(value => value + 1); };
+  const labelFor = (id: string | null | undefined, fallbackPrefix: string) => id ? (orgNames[id] || `${fallbackPrefix} ${id.slice(-6)}`) : '';
 
   return <div className="internship-workspace stack">
     <section className="panel">
@@ -77,15 +80,15 @@ export function InternshipWorkspace({ me, grants, gateway = liveWorkspaceGateway
           <select id="internship-assignment" value={selected?.id || ''} onChange={event => setSelectedId(event.target.value)}>
             <option value="">Chọn phân công…</option>
             {assignments.map(item => <option key={item.id} value={item.id}>
-              {item.kind === 'HR' ? 'HR' : 'Mentor'} · DN {item.scope.enterpriseOrgId} · Trường {item.scope.schoolOrgId} · Kỳ {item.scope.termId}
-              {item.scope.groupId ? ' · Nhóm ' + item.scope.groupId : ''}
+              {item.kind === 'HR' ? 'HR' : 'Mentor'} · {labelFor(item.scope.enterpriseOrgId, 'DN …')} · {labelFor(item.scope.schoolOrgId, 'Trường …')} · Kỳ …{item.scope.termId.slice(-6)}
+              {item.scope.groupId ? ' · Nhóm …' + item.scope.groupId.slice(-6) : ''}
             </option>)}
           </select>
           {selected && <dl className="internship-scope" aria-label="Phạm vi phân công đã chọn">
-            <div><dt>Mã doanh nghiệp</dt><dd>{selected.scope.enterpriseOrgId}</dd></div>
-            <div><dt>Mã trường</dt><dd>{selected.scope.schoolOrgId}</dd></div>
-            <div><dt>Mã kỳ thực tập</dt><dd>{selected.scope.termId}</dd></div>
-            {selected.scope.groupId && <div><dt>Mã nhóm được giao</dt><dd>{selected.scope.groupId}</dd></div>}
+            <div><dt>Doanh nghiệp</dt><dd title={selected.scope.enterpriseOrgId || undefined}>{labelFor(selected.scope.enterpriseOrgId, 'Mã ')}</dd></div>
+            <div><dt>Nhà trường</dt><dd title={selected.scope.schoolOrgId}>{labelFor(selected.scope.schoolOrgId, 'Mã ')}</dd></div>
+            <div><dt>Mã kỳ thực tập</dt><dd title={selected.scope.termId}><code>{selected.scope.termId}</code></dd></div>
+            {selected.scope.groupId && <div><dt>Mã nhóm được giao</dt><dd title={selected.scope.groupId}><code>{selected.scope.groupId}</code></dd></div>}
           </dl>}
           {!selected && <p className="muted">Chưa chọn phạm vi. Dữ liệu nhóm sẽ xuất hiện sau khi bạn chọn phân công.</p>}
         </div>}

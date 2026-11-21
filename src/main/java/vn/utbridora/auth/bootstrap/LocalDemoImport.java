@@ -10,6 +10,7 @@ public final class LocalDemoImport {
         var app=new SpringApplication(UtBridoraApplication.class);
         app.setAdditionalProfiles("local");
         try(var context=app.run("--app.demo.portable.enabled=false","--app.demo.local.enabled=true","--app.demo.local.append-existing=true",
+                "--app.demo.local.privacy-release-enabled=true",
                 "--server.address=127.0.0.1","--server.port=0","--app.t5.placement-delivery.enabled=false",
                 "--logging.level.org.springframework.jdbc=WARN","--logging.level.org.hibernate.SQL=WARN")) {
             System.out.println("Local demo ready. Existing accounts/passwords were preserved; completed imports are not replayed.");

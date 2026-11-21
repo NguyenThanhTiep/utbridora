@@ -32,7 +32,7 @@
   color: var(--t5-text-primary);
 }
 
-.cooperation-workspace :is(.status-pill, .cooperation-state, .t5-badge) { border: 1px solid var(--t5-border); border-radius: 999px; font-size: 12px; line-height: 16px; font-weight: 500; }
+.cooperation-workspace :is(.status-pill, .cooperation-state, .t5-badge) { border: 1px solid var(--t5-border); border-radius: 7px; font-size: 12px; line-height: 16px; font-weight: 500; }
 .cooperation-workspace :is(.t5-badge-success, .pill-approved, .pill-active, .pill-completed, .pill-placed, .pill-published, .state-ready, .state-approved, .state-active, .state-completed, .state-placed, .state-published, .state-enterprise_accepted, .progress-full) { background: var(--t5-success-bg); color: var(--t5-success-text); border-color: var(--t5-success-border); }
 .cooperation-workspace :is(.t5-badge-warning, .pill-draft, .pill-submitted, .pill-pending_approval, .pill-needs_changes, .pill-shared, .state-draft, .state-submitted, .state-pending_approval, .state-needs_changes, .state-shared, .state-reserved, .state-invited, .state-accepted, .progress-short) { background: var(--t5-warning-bg); color: var(--t5-warning-text); border-color: var(--t5-warning-border); }
 .cooperation-workspace :is(.t5-badge-danger, .pill-rejected, .pill-cancelled, .pill-failed, .pill-declined, .state-rejected, .state-cancelled, .state-failed, .state-declined, .state-revoked, .state-expired, .progress-rejected) { background: var(--t5-danger-bg); color: var(--t5-danger-text); border-color: var(--t5-danger-border); }
@@ -71,7 +71,7 @@
 .cooperation-demand-title { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
 .cooperation-demand-title h3 { min-width: 0; color: var(--t5-text-primary); }
 .cooperation-state {
-  border-radius: 20px;
+  border-radius: 7px;
   background: #E5F6ED;
   color: #0B927C;
   padding: 4px 12px;
@@ -410,7 +410,7 @@
   align-items: center;
   gap: 8px;
   padding: 6px 12px;
-  border-radius: 999px;
+  border-radius: 8px;
   background: #0F5132;
   color: #FFFFFF;
   font-size: 13px;
@@ -425,7 +425,7 @@
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
-  border-radius: 999px;
+  border-radius: 6px;
   background: #C93B3B;
   color: #FFFFFF;
   font-size: 11px;
@@ -436,7 +436,7 @@
   align-items: center;
   gap: 8px;
   padding: 4px 10px 4px 5px;
-  border-radius: 999px;
+  border-radius: 8px;
   background: #F3F6FB;
   border: 1px solid #DCE6F0;
   font-size: 13px;
@@ -446,7 +446,7 @@
 .p30-role-circle {
   width: 26px;
   height: 26px;
-  border-radius: 50%;
+  border-radius: 7px;
   background: #0F5132;
   color: #FFFFFF;
   display: inline-flex;
@@ -570,7 +570,7 @@
 .p30-info-icon {
   width: 22px;
   height: 22px;
-  border-radius: 50%;
+  border-radius: 7px;
   background: #2563EB;
   color: #FFFFFF;
   display: inline-flex;
@@ -606,11 +606,50 @@
   color: #0B927C;
   margin: 6px 0;
 }
+.portal-workspace.is-enterprise .p30-agg-band-value.is-suppressed,
+.p30-agg-band-value.is-suppressed { color: #7750B9; }
+.p30-agg-hint { margin: 4px 0 10px; font-size: 13px; color: #5B7083; }
+.p30-band-scale {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+}
+.p30-band-step {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #E3EAF2;
+  background: #FFFFFF;
+  color: #64788A;
+  font-size: 12px;
+}
+.p30-band-step strong { font-size: 14px; color: #142F40; }
+.p30-band-step.is-active {
+  border-color: #0B927C;
+  background: #E7F6F0;
+  color: #087B68;
+}
+.p30-band-step.is-active strong { color: #087B68; }
+.p30-band-step.is-suppressed.is-active {
+  border-color: #C7B2EA;
+  background: #F0EAFA;
+  color: #6B43AE;
+}
+.p30-band-step.is-suppressed.is-active strong { color: #6B43AE; }
+.p30-csv-link { display: inline-flex; align-items: center; text-decoration: none; }
+@media (max-width: 650px) {
+  .p30-band-scale { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 .p30-k-badge {
   display: inline-flex;
   align-items: center;
   padding: 2px 10px;
-  border-radius: 999px;
+  border-radius: 7px;
   background: #EDE9FE;
   border: 1px solid #DDD6FE;
   color: #5B21B6;

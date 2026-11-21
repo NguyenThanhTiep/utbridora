@@ -5,11 +5,12 @@ import { PortalWorkspace } from './portal/PortalWorkspace';
 import type { PortalPage } from './portal/navigation';
 import './styles.css';
 
-export function SchoolWorkspace({ grants, page, onNavigate, viewerId = 'session' }: {
+export function SchoolWorkspace({ grants, page, onNavigate, viewerId = 'session', user }: {
   grants: Grant[]; page?: PortalPage; onNavigate?: (page: PortalPage) => void; viewerId?: string;
+  user?: { displayName: string; email?: string };
 }) {
   const [localPage, setLocalPage] = useState<PortalPage>('cooperations');
   const organizations = [...new Set(grants.filter(grant => grant.role === 'SCHOOL_STAFF' && grant.organizationId).map(grant => grant.organizationId!))];
   const navigate = (next: PortalPage) => { if (onNavigate) onNavigate(next); else if (canLeaveDemand()) setLocalPage(next); };
-  return <PortalWorkspace organizations={organizations} side="school" page={page || localPage} navigate={navigate} viewerId={viewerId} grants={grants} />;
+  return <PortalWorkspace organizations={organizations} side="school" page={page || localPage} navigate={navigate} viewerId={viewerId} grants={grants} user={user} />;
 }

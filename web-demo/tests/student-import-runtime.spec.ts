@@ -6,6 +6,12 @@ test('school imports one valid row, resends mail, and student activates the same
   test.setTimeout(120000);
   await page.goto('/');await page.getByLabel('Email', { exact: true }).fill(process.env.IMPORT_STAFF_EMAIL!);
   await page.getByLabel('Mật khẩu', { exact: true }).fill(process.env.IMPORT_PASSWORD!);await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
+  await page.getByRole('heading', { name: 'Tổng quan Nhà trường', exact: true }).waitFor({ state: 'visible' });
+  const menu = page.getByRole('button', { name: 'Mở menu điều hướng', exact: true });
+  if (await menu.isVisible()) await menu.click();
+  const navigation = page.getByRole('navigation', { name: 'Điều hướng chính' });
+  await navigation.getByRole('button', { name: 'Sinh viên', exact: true }).click();
+  await navigation.getByRole('button', { name: 'Danh sách & kích hoạt', exact: true }).click();
   const panel = page.getByRole('region', { name: 'Nhập danh sách & Kích hoạt sinh viên', exact: true });await expect(panel).toBeVisible();
   await panel.getByLabel('Kỳ nhập danh sách', { exact: true }).selectOption(process.env.IMPORT_TERM!);
   const csv = 'studentCode,email,fullName,majorCode,termCode\n000UI,' + process.env.IMPORT_STUDENT_EMAIL + ',Synthetic UI Student,IT,' + process.env.IMPORT_TERM_CODE + '\n,bad,Invalid Name,IT,WRONG\n';

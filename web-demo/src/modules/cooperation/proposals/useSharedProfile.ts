@@ -3,7 +3,7 @@ import type { EnterpriseProposal, SharedProfile } from './types';
 import { scopedRead, workflowError } from './api';
 
 /** Keep commands mounted during revalidation; only the sensitive projection is discarded. */
-export function useSharedProfile(org: string, item: EnterpriseProposal) {
+export function useSharedProfile(org: string, item: EnterpriseProposal, enabled = true) {
   const scope = `${org}:${item.proposalItemId}:${item.shareId}:${item.version}`;
   const [attempt, setAttempt] = useState(0), [hidden, setHidden] = useState(document.hidden);
   const [value, setValue] = useState<{ scope: string; profile: SharedProfile } | null>(null), [error, setError] = useState('');
@@ -16,13 +16,13 @@ export function useSharedProfile(org: string, item: EnterpriseProposal) {
     window.addEventListener('blur', clear);
     window.addEventListener('focus', refresh);
     document.addEventListener('visibilitychange', refresh);
-    const timer = window.setInterval(() => { if (!document.hidden) refresh(); }, 30000);
+    const timer = enabled ? window.setInterval(() => { if (!document.hidden) refresh(); }, 30000) : null;
     return () => { window.removeEventListener('blur', clear);window.removeEventListener('focus', refresh);
-      document.removeEventListener('visibilitychange', refresh);window.clearInterval(timer); };
-  }, [scope]);
+      document.removeEventListener('visibilitychange', refresh);if (timer !== null) window.clearInterval(timer); };
+  }, [scope, enabled]);
   useEffect(() => {
     const c = new AbortController();setValue(null);setError('');
-    if (hidden) return () => c.abort();
+    if (hidden || !enabled) return () => c.abort();
     void scopedRead<SharedProfile>(org, `/enterprise/proposals/${item.proposalItemId}/profile`, c.signal).then(profile => {
       if (c.signal.aborted) return;
       if (!Number.isFinite(Date.parse(profile.validUntil)) || Date.parse(profile.validUntil) <= Date.now()) {
@@ -31,7 +31,7 @@ export function useSharedProfile(org: string, item: EnterpriseProposal) {
       setValue({scope, profile});
     }).catch(reason => { if (!c.signal.aborted) {setValue(null);setError(workflowError(reason));} });
     return () => c.abort();
-  }, [org, item.proposalItemId, scope, attempt, hidden]);
+  }, [org, item.proposalItemId, scope, attempt, hidden, enabled]);
   useEffect(() => {
     if (!value || value.scope !== scope) return;
     const expire = () => {setValue(null);setError('Quyền xem hồ sơ đã hết hạn.');};
@@ -41,6 +41,6 @@ export function useSharedProfile(org: string, item: EnterpriseProposal) {
     const timer = window.setTimeout(expire, Math.min(remaining, 2_147_483_647));
     return () => window.clearTimeout(timer);
   }, [value, scope]);
-  return {profile: !hidden && value?.scope === scope && Date.parse(value.profile.validUntil) > Date.now() ? value.profile : null,
-    error, clear: () => setValue(null)};
+  return {profile: enabled && !hidden && value?.scope === scope && Date.parse(value.profile.validUntil) > Date.now() ? value.profile : null,
+    error: enabled ? error : '', clear: () => setValue(null)};
 }

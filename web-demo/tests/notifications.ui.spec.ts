@@ -116,7 +116,7 @@ test('a candidate notification opens the exact revalidated shared profile withou
   const f = await session(page); await expect(bellCount(page)).toHaveText('5'); expect(f.profiles).toEqual([]);
   await openCenter(page);
   await page.getByRole('button', { name: 'Mở hồ sơ Nhà trường đã chia sẻ hồ sơ ứng viên đủ điều kiện', exact: true }).click();
-  await expect(page.locator('.proposal-profile').getByText('Chuyên ngành: IT-API', { exact: true })).toBeVisible();
+  await expect(page.locator('.proposal-profile').getByText('IT-API', { exact: true })).toBeVisible();
   expect(new Set(f.profiles)).toEqual(new Set(['/enterprise/proposals/proposal-1/profile']));
   await expect(page.getByText('HIDDEN-EMAIL@example.test', { exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Xem tất cả ứng viên', exact: true })).toBeVisible();
@@ -140,16 +140,22 @@ test('school receives new verification, cooperation and enterprise acceptance; p
 });
 
 test('empty database has no fabricated badge or notifications and handles unavailable browser storage', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 740 });
   await page.addInitScript(() => { Storage.prototype.getItem = () => { throw new Error('Storage disabled'); };
     Storage.prototype.setItem = () => { throw new Error('Storage disabled'); }; });
   const f = fixtures(); f.empty = true; await session(page, false, f); await openCenter(page);
   await expect(page.getByRole('heading', { name: 'Chưa có thông báo nào.', exact: true })).toBeVisible();
   await expect(bellCount(page)).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Đánh dấu tất cả đã đọc', exact: true })).toBeDisabled();
+  expect(await page.locator('.notification-table').evaluate(node => node.scrollWidth <= node.clientWidth)).toBeTruthy();
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
   f.empty = false; await page.getByRole('button', { name: 'Tải lại dữ liệu', exact: true }).click();
   await expect(bellCount(page)).toHaveText('5');
   await page.getByRole('button', { name: 'Đánh dấu tất cả đã đọc', exact: true }).click();
   await expect(bellCount(page)).toHaveCount(0);
+  await page.getByRole('tab', { name: 'Chưa đọc', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Không có thông báo phù hợp', exact: true })).toBeVisible();
+  expect(await page.locator('.notification-table').evaluate(node => node.scrollWidth <= node.clientWidth)).toBeTruthy();
 });
 
 test('topbar scope labels come from owner APIs and scope filters do not invent records', async ({ page }) => {
@@ -193,4 +199,50 @@ test('an unavailable proposal source never shows a complete unread count or enab
   await openCenter(page);
   await expect(page.getByRole('button', { name: 'Đánh dấu tất cả đã đọc', exact: true })).toBeDisabled();
   await expect(page.getByRole('heading', { name: 'Chưa có thông báo nào.', exact: true })).toHaveCount(0);
+});
+
+test('notification search and category reset together without losing the selected read tab', async ({ page }) => {
+  await session(page); await openCenter(page);
+  const panel = page.locator('.notification-center');
+  await panel.getByRole('tab', { name: 'Chưa đọc', exact: true }).click();
+  await panel.getByLabel('Tìm thông báo', { exact: true }).fill('bị từ chối');
+  await expect(panel.locator('tbody tr.notification-unread')).toHaveCount(1);
+  await expect(panel.locator('.notification-kind')).toHaveText('Đề nghị hợp tác BM-02 bị từ chối');
+  await panel.getByLabel('Loại thông báo', { exact: true }).selectOption('verification');
+  await expect(panel.getByRole('heading', { name: 'Không có thông báo phù hợp', exact: true })).toBeVisible();
+  await panel.getByRole('button', { name: 'Xóa bộ lọc', exact: true }).click();
+  await expect(panel.getByLabel('Tìm thông báo', { exact: true })).toHaveValue('');
+  await expect(panel.getByLabel('Loại thông báo', { exact: true })).toHaveValue('');
+  await expect(panel.getByRole('tab', { name: 'Chưa đọc', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(panel.locator('tbody tr.notification-unread')).toHaveCount(5);
+});
+
+for (const schoolSide of [false, true]) for (const width of [1440, 390, 320]) test(`notification inbox stays readable for ${schoolSide ? 'school' : 'enterprise'} at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 900 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const f = fixtures();
+  f.verification.data.registeredName = 'Công ty Công nghệ và Giải pháp chuyển đổi số Quốc tế';
+  f.demand.data.title = 'Thực tập phát triển nền tảng quản lý dữ liệu và kết nối doanh nghiệp';
+  if (schoolSide) { f.verification.state = 'SUBMITTED'; f.candidate.state = 'ENTERPRISE_ACCEPTED'; }
+  await session(page, schoolSide, f); await openCenter(page);
+  const panel = page.locator('.notification-center');
+  await expect(panel.locator('tbody tr')).toHaveCount(schoolSide ? 3 : 5);
+  await expect(panel.getByRole('button', { name: 'Đánh dấu tất cả đã đọc', exact: true })).toBeEnabled();
+  await expect(panel.locator('time').first()).toHaveAttribute('datetime', schoolSide ? f.cooperation.submittedAt : f.verification.decidedAt);
+  await expect(panel.locator('.notification-time-unknown').first()).toHaveText('Chưa ghi nhận');
+  await expect(panel.getByText(/Hôm nay|Hôm qua|HIDDEN-EMAIL/)).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+  expect(await panel.locator('.notification-table').evaluate(node => node.scrollWidth <= node.clientWidth)).toBeTruthy();
+  if (width < 700) {
+    const row = panel.locator('tbody tr').first();
+    await expect(row).toHaveCSS('display', 'grid');
+    const card = (await row.boundingBox())!, title = (await row.locator('.notification-kind').boundingBox())!;
+    expect(title.width).toBeGreaterThan(card.width - 95);
+    for (const action of ['Mở hồ sơ ', 'Đánh dấu đã đọc '])
+      expect((await row.getByRole('button', { name: new RegExp('^' + action) }).boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  }
+  await page.screenshot({ path: `../target/notifications-redesign-${schoolSide ? 'school' : 'enterprise'}-${width}.png`, fullPage: true, animations: 'disabled' });
+  const read = panel.locator('tbody tr').first().getByRole('button', { name: /^Đánh dấu đã đọc / });
+  await read.click();
+  await expect(panel.locator('tbody tr.notification-read')).toHaveCount(1);
 });

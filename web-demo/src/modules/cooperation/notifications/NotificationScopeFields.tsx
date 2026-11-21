@@ -5,7 +5,8 @@ import type { PortalSide } from '../portal/navigation';
 import { workflowError } from '../proposals/api';
 
 type School = { schoolOrgId: string; name: string };
-type Term = { termId: string; termCode: string };
+type Term = { termId: string; termCode: string; status?: string };
+const termStatusSuffix = (status?: string) => (status === 'CLOSED' ? ' (Đã đóng)' : status === 'DRAFT' ? ' (Nháp)' : '');
 export function NotificationScopeFields({ org, side, schoolOrgId, termId, change }: {
   org: string; side: PortalSide; schoolOrgId: string; termId: string; change: (school: string, term: string) => void;
 }) {
@@ -33,7 +34,7 @@ export function NotificationScopeFields({ org, side, schoolOrgId, termId, change
     </select></div>}
     <div><label htmlFor={id + '-term'}>Kỳ theo dõi</label><select id={id + '-term'} value={termId} disabled={!schoolOrgId}
       onChange={event => change(schoolOrgId, event.target.value)}><option value="">Tất cả kỳ</option>
-      {terms.map(term => <option key={term.termId} value={term.termId}>{term.termCode}</option>)}
+      {terms.map(term => <option key={term.termId} value={term.termId}>{term.termCode}{termStatusSuffix(term.status)}</option>)}
     </select></div></div></div>
     {error && <div className="portal-context-error"><Notice message={error} tone="error" /></div>}
   </>;

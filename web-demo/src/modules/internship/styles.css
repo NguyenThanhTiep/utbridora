@@ -1,27 +1,741 @@
-.internship-workspace .section-heading { flex-wrap: wrap; }
-.internship-context { display: grid; gap: 10px; min-width: 0; }
-.internship-context label { font-weight: 600; color: var(--ink); }
-.internship-context select { width: 100%; min-width: 0; max-width: 100%; text-overflow: ellipsis; }
-.internship-scope { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 14px; margin: 4px 0; }
-.internship-scope div { min-width: 0; }
-.internship-scope dt { font-size: var(--text-sm); color: var(--muted); }
-.internship-scope dd { margin: 3px 0 0; font-size: var(--text-xs); overflow-wrap: anywhere; }
-.internship-role { display: inline-flex; gap: 8px; align-items: center; padding: 7px 13px; border-radius: 20px; color: var(--brand-dark); background: var(--brand-light); font-weight: 600; }
-.internship-groups { margin-top: 24px; }
-.internship-group-count { margin-bottom: 16px; color: var(--muted); }
-.internship-group-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 16px; }
-.internship-group-card { min-width: 0; display: grid; justify-items: start; gap: 12px; padding: 22px; border: 1px solid var(--line); border-radius: var(--radius); }
-.internship-group-card p { color: var(--muted); font-size: var(--text-sm); }
-.internship-group-icon { display: inline-flex; padding: 12px; background: var(--brand-light); color: var(--brand); border-radius: 12px; }
-.internship-group-detail { display: grid; gap: 14px; }
-.internship-group-detail > button { justify-self: start; }
-.internship-facts { display: flex; flex-wrap: wrap; gap: 24px; margin: 0; }
-.internship-facts dt { color: var(--muted); font-size: var(--text-sm); }
-.internship-facts dd { margin: 4px 0 0; font-size: 24px; font-weight: 700; color: var(--ink); }
-.internship-feedback code { overflow-wrap: anywhere; }
+/* HR & Mentor Workspace — Figma Design System + Unified Motion */
+
+.internship-workspace {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.internship-workspace .panel,
+.t3-evaluations .panel,
+.mentor-invitations .panel {
+  position: relative;
+  min-width: 0;
+  margin-block: 0;
+  padding: 20px 22px;
+  border: 1px solid #e3eaf2;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(20, 47, 64, 0.03);
+  transition: border-color 0.2s ease, box-shadow 0.22s ease, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* White top control bar / role banner matching Figma 1424-17091 / 1432-17091 */
+.internship-workspace .panel-head,
+.internship-workspace-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #edf2f6;
+  margin-bottom: 14px;
+}
+
+.internship-workspace .section-kicker,
+.t3-evaluations .section-kicker,
+.mentor-invitations .section-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  padding: 4px 10px;
+  border-radius: 7px;
+  background: #e7f6f0;
+  color: #087b68;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.internship-workspace :is(h2, h3, h4),
+.t3-evaluations :is(h2, h3, h4),
+.mentor-invitations :is(h2, h3, h4) {
+  color: #142f40;
+  letter-spacing: -0.015em;
+  word-break: normal;
+  line-height: 1.35;
+}
+
+.internship-workspace label,
+.t3-evaluations label,
+.mentor-invitations label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: #425c6e;
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.internship-workspace :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea),
+.t3-evaluations :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea),
+.mentor-invitations :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea) {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #e3eaf2;
+  border-radius: 10px;
+  background: #fff;
+  color: #142f40;
+  font-size: 13px;
+  box-sizing: border-box;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.internship-workspace textarea,
+.t3-evaluations textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+.internship-workspace :is(input, select, textarea):focus-visible,
+.t3-evaluations :is(input, select, textarea):focus-visible,
+.mentor-invitations :is(input, select, textarea):focus-visible {
+  outline: 2px solid #0b927c;
+  outline-offset: 2px;
+  border-color: #0b927c;
+  box-shadow: 0 0 0 3px rgba(11, 146, 124, 0.14);
+}
+
+/* Primary emerald & secondary outline buttons matching School/Enterprise portals */
+.internship-workspace button:not([class]),
+.t3-evaluations button:not([class]),
+.mentor-invitations button:not([class]) {
+  min-height: 40px;
+  padding: 9px 16px;
+  border: 1px solid #0b927c;
+  border-radius: 10px;
+  background: #0b927c;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background-color 0.16s ease, border-color 0.16s ease, transform 0.14s ease, box-shadow 0.18s ease;
+}
+
+.internship-workspace button:not([class]):hover:not(:disabled),
+.t3-evaluations button:not([class]):hover:not(:disabled),
+.mentor-invitations button:not([class]):hover:not(:disabled) {
+  background: #087b68;
+  border-color: #087b68;
+  box-shadow: 0 4px 12px rgba(11, 146, 124, 0.22);
+}
+
+.internship-workspace button.secondary,
+.t3-evaluations button.secondary,
+.mentor-invitations button.secondary {
+  min-height: 40px;
+  padding: 9px 14px;
+  border: 1px solid #cde4db;
+  border-radius: 10px;
+  background: #fff;
+  color: #087b68;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background-color 0.16s ease, color 0.16s ease;
+}
+
+.internship-workspace button.secondary:hover:not(:disabled),
+.t3-evaluations button.secondary:hover:not(:disabled),
+.mentor-invitations button.secondary:hover:not(:disabled) {
+  border-color: #0b927c;
+  background: #f2faf7;
+  color: #087b68;
+}
+
+/* Metadata Scope Definition List */
+.internship-scope {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 14px;
+  border: 1px solid #e3eaf2;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.internship-scope > div {
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: #fff;
+  border: 1px solid #edf2f6;
+}
+
+.internship-scope dt {
+  color: #64788a;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.internship-scope dd {
+  margin: 4px 0 0;
+  color: #142f40;
+  font-size: 12.5px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+/* KPI Fact Strip aligned to Portal Stat Tokens (Mint / Blue / Violet / Warm) */
+.internship-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.internship-facts > div {
+  position: relative;
+  min-width: 0;
+  padding: 15px 17px;
+  border: 1px solid #cdece4;
+  border-top: 4px solid #087b68;
+  border-radius: 12px;
+  background: #e7f6f0;
+  transition: transform 0.16s ease, box-shadow 0.2s ease, border-color 0.18s ease;
+}
+
+.internship-facts > div:nth-child(2) {
+  border-color: #c3dbf6;
+  border-top-color: #2868b0;
+  background: #e8f2ff;
+}
+
+.internship-facts > div:nth-child(3) {
+  border-color: #dbcef2;
+  border-top-color: #7750b9;
+  background: #f0eafa;
+}
+
+.internship-facts > div:nth-child(4) {
+  border-color: #f1dfbf;
+  border-top-color: #9c5a0c;
+  background: #fff4e1;
+}
+
+.internship-facts dt {
+  color: #64788a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.internship-facts dd {
+  margin: 6px 0 0;
+  color: #087b68;
+  font-size: 26px;
+  line-height: 1.1;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.internship-facts > div:nth-child(2) dd { color: #2868b0; }
+.internship-facts > div:nth-child(3) dd { color: #7750b9; }
+.internship-facts > div:nth-child(4) dd { color: #9c5a0c; }
+
+/* Interactive Group Cards */
+.internship-group-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.internship-group-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 18px 20px;
+  border: 1px solid #e3eaf2;
+  border-top: 3px solid #0b927c;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 3px 12px rgba(20, 47, 64, 0.03);
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.18s ease, box-shadow 0.2s ease;
+}
+
+.internship-group-card:hover {
+  transform: translateY(-2px);
+  border-color: #93d6c4;
+  box-shadow: 0 10px 24px rgba(11, 146, 124, 0.1);
+}
+
+.internship-group-card h3 {
+  margin: 0;
+  font-size: 16.5px;
+  font-weight: 750;
+  color: #142f40;
+}
+
+.internship-group-card p {
+  margin: 4px 0 0;
+  color: #64788a;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.internship-group-card button {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+/* TaskBoard Filters, Kanban Board, Details, Create Form & Calendar */
+.t3-filter-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  align-items: end;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid #e3eaf2;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.t3-kanban-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.t3-kanban-col {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #e3eaf2;
+  border-top-width: 3px;
+  border-top-color: #64788a;
+}
+
+.t3-kanban-col.is-new { border-top-color: #64788a; }
+.t3-kanban-col.is-in_progress { border-top-color: #2868b0; background: #f5f9ff; }
+.t3-kanban-col.is-submitted { border-top-color: #0b927c; background: #f2faf7; }
+.t3-kanban-col.is-revision_required { border-top-color: #9c5a0c; background: #fffaf0; }
+.t3-kanban-col.is-completed { border-top-color: #087b68; background: #f2faf7; }
+
+.t3-kanban-col-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e3eaf2;
+}
+
+.t3-kanban-col-head h4 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 750;
+  color: #142f40;
+}
+
+.t3-col-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #e3eaf2;
+  color: #425c6e;
+  font-size: 11.5px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.t3-task-card {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid #e3eaf2;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(20, 47, 64, 0.03);
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.18s ease;
+}
+
+.t3-task-card:hover {
+  transform: translateY(-2px);
+  border-color: #93d6c4;
+  box-shadow: 0 8px 18px rgba(11, 146, 124, 0.1);
+}
+
+.t3-task-card .text-button {
+  justify-self: start;
+  padding: 0;
+  text-align: left;
+  color: #142f40;
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.t3-task-card .text-button:hover {
+  color: #0b927c;
+}
+
+.t3-task-card p {
+  margin: 0;
+  color: #64788a;
+  font-size: 12px;
+}
+
+.t3-pagination-row {
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.t3-pagination-row > span {
+  color: #64788a;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.t3-task-detail {
+  display: grid;
+  gap: 14px;
+  border-color: #cdece4;
+}
+
+.t3-task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 13px;
+  color: #64788a;
+}
+
+.t3-priority-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.t3-priority-pill.is-high { background: #fdecee; border-color: #f7cfd5; color: #c23b4e; }
+.t3-priority-pill.is-normal { background: #e8f2ff; border-color: #c3dbf6; color: #2868b0; }
+.t3-priority-pill.is-low { background: #f1f5f9; border-color: #e3eaf2; color: #64788a; }
+
+.t3-assignment-links {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.t3-assignment-links li {
+  padding: 10px 14px;
+  border: 1px solid #e3eaf2;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+/* Create Task Figma Form (1432-17369) */
+.t3-create-task {
+  border-color: #cdece4;
+  background: linear-gradient(180deg, #fafcfd 0%, #ffffff 100%);
+}
+
+.t3-create-task > h3 {
+  margin: 0 0 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #edf2f6;
+  font-size: 16px;
+}
+
+.t3-form-fieldset {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+.t3-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.t3-form-span-full {
+  grid-column: 1 / -1;
+}
+
+.t3-cases-fieldset {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid #e3eaf2;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.t3-cases-fieldset legend {
+  padding: 0 6px;
+  color: #087b68;
+  font-size: 12.5px;
+  font-weight: 750;
+}
+
+.t3-cases-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.t3-case-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid #e3eaf2;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.t3-case-checkbox:has(input:checked) {
+  border-color: #0b927c;
+  background: #e7f6f0;
+  color: #087b68;
+}
+
+.t3-form-actions {
+  justify-content: flex-end;
+}
+
+/* Calendar Grid */
+.t3-calendar-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.t3-calendar-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.t3-calendar-toolbar h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.t3-calendar-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  padding-bottom: 4px;
+}
+
+.t3-calendar-grid {
+  display: grid;
+  min-width: 560px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.t3-calendar-grid > strong[role="columnheader"] {
+  padding: 8px 6px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #64788a;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.t3-calendar-cell {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-height: 76px;
+  padding: 9px 10px;
+  border: 1px solid #e3eaf2;
+  border-radius: 10px;
+  background: #fafcfd;
+}
+
+.t3-calendar-cell.has-events {
+  border-color: #cdece4;
+  background: #f2faf7;
+}
+
+.t3-calendar-cell > strong {
+  color: #142f40;
+  font-size: 12.5px;
+  font-weight: 750;
+}
+
+.t3-calendar-cell .text-button {
+  justify-self: stretch;
+  padding: 4px 7px;
+  border-radius: 6px;
+  background: #e7f6f0;
+  color: #087b68;
+  font-size: 11.5px;
+  font-weight: 650;
+  text-align: left;
+  line-height: 1.3;
+}
+
+.t3-calendar-cell .text-button:hover {
+  background: #d3f1e5;
+}
+
+/* Evaluations & Rubric Sheet (Figma 1433-17212 & 1433-17305) */
+.t3-evaluations {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.t3-evaluations fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 16px 18px;
+  border: 1px solid #e3eaf2;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.t3-evaluations fieldset > legend {
+  padding: 0 8px;
+  color: #087b68;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.t3-evaluations :is(article, section[aria-label]) {
+  min-width: 0;
+}
+
+.t3-evaluations article {
+  padding: 16px;
+  border: 1px solid #e3eaf2;
+  border-radius: 12px;
+  background: #fafcfd;
+}
+
+.t3-evaluations [role="status"],
+.t3-evaluations p:has(> strong),
+.t3-evaluations h3:has(+ dl) {
+  border-radius: 10px;
+}
+
+.t3-evaluations h3,
+.t3-evaluations h2 {
+  margin: 0;
+}
+
+.t3-evaluations form p {
+  line-height: 1.5;
+}
+
+/* Mentor Invitations */
+.mentor-invitations {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.mentor-invitations ul {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mentor-invitations li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid #e3eaf2;
+  border-left: 4px solid #0b927c;
+  border-radius: 12px;
+  background: #fafcfd;
+}
+
+/* Spotlight Radial Glow for Interactive Cards */
+.workspace-t5 :is(.panel, .internship-group-card, .t3-task-card, .stat-card, .account-membership, .t3-report-row-btn)[data-portal-glow]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(280px circle at var(--portal-glow-x, -999px) var(--portal-glow-y, -999px), rgba(11, 146, 124, 0.11), transparent 72%);
+  opacity: 0.9;
+  transition: opacity 0.2s ease;
+}
+
+/* Responsive guarantees (1280px, 900px, 390px, 320px) */
+@media (max-width: 720px) {
+  .t3-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 @media (max-width: 600px) {
-  .internship-workspace .panel { padding: 18px; }
-  .internship-workspace .section-heading > button { width: 100%; }
+  .internship-workspace .panel,
+  .t3-evaluations .panel,
+  .mentor-invitations .panel {
+    padding: 15px;
+    border-radius: 14px;
+  }
+
+  .t3-filter-bar,
+  .t3-kanban-grid,
+  .internship-facts,
+  .internship-scope,
+  .internship-group-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .internship-workspace :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea),
+  .t3-evaluations :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea),
+  .mentor-invitations :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .internship-workspace *,
+  .t3-evaluations *,
+  .mentor-invitations * {
+    transition: none !important;
+    transform: none !important;
+  }
 }
 .t3-workflow { min-width: 0; overflow-wrap: anywhere; }
 /* Khối con của "Bài nộp và trao đổi" (bài nộp · lịch sử · trao đổi) giữ khoảng cách như .stack. */
@@ -36,13 +750,289 @@
 .t3-evaluations textarea { min-height: 90px; }
 .t3-evaluations input[type="checkbox"] { width: 20px; height: 20px; min-height: 0; margin-right: 8px; vertical-align: middle; }
 @media (max-width: 600px) { .t3-evaluations .panel { padding: 14px; } }
-.t3-operation-card{border:1px solid var(--border,#dbe5ea);border-radius:12px;padding:1rem;min-width:0}
-.t3-operation-card summary{cursor:pointer;font-weight:650;margin-bottom:1rem}
-.t3-operation-card fieldset{border:0;padding:0;margin:0;display:grid;gap:.85rem;min-width:0}
-.t3-table-scroll{max-width:100%;overflow-x:auto}.t3-table-scroll table{width:100%;min-width:620px;border-collapse:collapse}
-.t3-table-scroll th,.t3-table-scroll td{text-align:left;padding:.7rem;border-bottom:1px solid #dbe5ea;overflow-wrap:anywhere}
-.t3-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin:0}.t3-kpis>div{background:#eef8f7;border-radius:10px;padding:1rem}.t3-kpis dd{font-size:1.8rem;font-weight:700;margin:.4rem 0 0}
-.t3-progress-row{display:grid;grid-template-columns:minmax(130px,1fr) 2fr;gap:1rem;align-items:center}.t3-progress-row progress{width:100%;accent-color:#07838d}
-.t3-inline-form{display:flex;gap:.8rem;flex-wrap:wrap;align-items:end}.t3-inline-form label{flex:1;min-width:180px}
-.t3-calendar{padding:0;list-style:none}.t3-calendar li{display:flex;justify-content:space-between;gap:1rem;padding:.8rem 0;border-bottom:1px solid #dbe5ea}.t3-issue{border-bottom:1px solid #dbe5ea;padding-bottom:1rem}.t3-case-operations code{overflow-wrap:anywhere}
-@media(max-width:600px){.t3-calendar li{flex-direction:column}.t3-progress-row{grid-template-columns:1fr;gap:.2rem}.t3-inline-form label{min-width:100%}.t3-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* T3 Operations, Evaluations & Cohort Forms — UT.Bridora Tokens */
+.t3-operations .section-heading {
+  margin-bottom: 0;
+}
+.t3-operation-card {
+  background: #fbfdfe;
+  border: 1px solid #e3eaf2;
+  border-radius: 14px;
+  padding: 18px 20px;
+  min-width: 0;
+}
+.t3-operation-card summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #142f40;
+  margin: 0;
+}
+.t3-operation-card[open] summary {
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #edf2f6;
+}
+:is(.t3-operations, .t3-evaluations, .t3-cohort-management) label {
+  margin: 0;
+  color: #314d5e;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+:is(.t3-operations, .t3-evaluations, .t3-cohort-management) label:has(> input[type="checkbox"]),
+:is(.t3-operations, .t3-evaluations, .t3-cohort-management) label:has(> input[type="radio"]) {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  width: auto;
+  justify-self: start;
+  margin: 2px 0;
+  color: #142f40;
+  font-size: 14px;
+  font-weight: 550;
+  cursor: pointer;
+}
+:is(.t3-operations, .t3-evaluations, .t3-cohort-management) input:is([type="checkbox"], [type="radio"]) {
+  display: inline-block;
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  min-height: 18px;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+  accent-color: #0b927c;
+  cursor: pointer;
+}
+:is(.t3-operations, .t3-evaluations, .t3-cohort-management) textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 92px;
+  margin-top: 7px;
+  padding: 10px 13px;
+  border: 1px solid #dbe4ea;
+  border-radius: 9px;
+  background: #fbfdfe;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.55;
+  resize: vertical;
+  transition: border-color .15s, box-shadow .15s;
+}
+:is(.t3-operations, .t3-evaluations, .t3-cohort-management) textarea:focus {
+  outline: 0;
+  border-color: #0b927c;
+  box-shadow: 0 0 0 3px #e7f6f0;
+}
+:is(.t3-operations, .t3-evaluations, .t3-cohort-management) form:not(.t3-inline-form) {
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+  min-width: 0;
+}
+:is(.t3-operations, .t3-evaluations, .t3-cohort-management) form:not(.t3-inline-form) > label {
+  width: 100%;
+  justify-self: stretch;
+}
+.t3-operation-card fieldset,
+:is(.t3-operations, .t3-evaluations, .t3-cohort-management) fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  justify-self: stretch;
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+  min-width: 0;
+}
+:is(.t3-operations, .t3-evaluations, .t3-cohort-management) fieldset > label,
+:is(.t3-operations, .t3-evaluations, .t3-cohort-management) fieldset > .panel {
+  width: 100%;
+  justify-self: stretch;
+}
+:is(.t3-operations, .t3-evaluations, .t3-cohort-management) fieldset > legend {
+  padding: 0;
+  margin-bottom: 12px;
+  color: #142f40;
+  font-size: 14.5px;
+  font-weight: 700;
+}
+:is(.t3-operations, .t3-evaluations, .t3-cohort-management) fieldset > p {
+  color: #5b7083;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+.t3-evaluations > .panel fieldset {
+  padding: 16px 18px;
+  border: 1px solid #e3eaf2;
+  border-radius: 14px;
+  background: #fff;
+}
+.t3-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.t3-table-scroll table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+}
+.t3-table-scroll th,
+.t3-table-scroll td {
+  text-align: left;
+  padding: .7rem;
+  border-bottom: 1px solid #e3eaf2;
+  overflow-wrap: anywhere;
+}
+.t3-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+.t3-kpis > div {
+  display: grid;
+  gap: 6px;
+  background: linear-gradient(180deg, #f4fbf8 0%, #eaf6f1 100%);
+  border: 1px solid #d5ece3;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.t3-kpis dt {
+  color: #4f6677;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.t3-kpis dd {
+  color: #087b68;
+  font-size: 26px;
+  line-height: 1.15;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.t3-progress-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 190px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 3px 0;
+}
+.t3-progress-row > span {
+  color: #314d5e;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.t3-progress-row progress {
+  width: 100%;
+  height: 10px;
+  border: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  appearance: none;
+  accent-color: #0b927c;
+  background: #eaf0f4;
+}
+.t3-progress-row progress::-webkit-progress-bar {
+  background: #eaf0f4;
+  border-radius: 999px;
+}
+.t3-progress-row progress::-webkit-progress-value {
+  background: linear-gradient(90deg, #0b927c 0%, #16a890 100%);
+  border-radius: 999px;
+}
+.t3-progress-row progress::-moz-progress-bar {
+  background: linear-gradient(90deg, #0b927c 0%, #16a890 100%);
+  border-radius: 999px;
+}
+.t3-inline-form {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.t3-inline-form label {
+  flex: 1 1 200px;
+  min-width: 180px;
+}
+.t3-calendar {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.t3-calendar li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid #e3eaf2;
+  border-radius: 12px;
+  background: #fbfdfe;
+}
+.t3-calendar li > span {
+  color: #5b7083;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.t3-case-summary {
+  display: grid;
+  gap: 8px;
+  padding: 16px 18px;
+  border: 1px solid #d5ece3;
+  border-radius: 12px;
+  background: #f4fbf8;
+}
+.t3-case-summary p {
+  font-size: 13.5px;
+  color: #314d5e;
+}
+.t3-issue {
+  display: grid;
+  gap: 8px;
+  padding: 15px 18px;
+  border: 1px solid #e3eaf2;
+  border-radius: 12px;
+  background: #fff;
+}
+.t3-issue h4 {
+  color: #087b68;
+  font-size: 13.5px;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+}
+.t3-case-operations code {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .t3-calendar li {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .t3-calendar li > span {
+    white-space: normal;
+  }
+  .t3-progress-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .t3-inline-form label {
+    min-width: 100%;
+  }
+  .t3-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  :is(.t3-operations, .t3-evaluations, .t3-cohort-management) fieldset > button,
+  :is(.t3-operations, .t3-evaluations, .t3-cohort-management) form:not(.t3-inline-form) > button {
+    width: 100%;
+  }
+}

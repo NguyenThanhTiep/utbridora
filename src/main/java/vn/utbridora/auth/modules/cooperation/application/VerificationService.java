@@ -106,16 +106,19 @@ public class VerificationService implements OrganizationSchoolVerificationPort {
         String filter=schoolFilter==null?null:uuid(schoolFilter);
         if(schoolSide && filter!=null && !org.equals(filter)) throw missing();
         Specification<EnterpriseVerification> scope=(r,q,b)->b.equal(r.get(schoolSide?"schoolOrgId":"enterpriseOrgId"),org);
+        if(schoolSide) scope=scope.and((r,q,b)->b.notEqual(r.get("state"),VerificationState.DRAFT));
         if(filter!=null) scope=scope.and((r,q,b)->b.equal(r.get("schoolOrgId"),filter));
         if(state!=null) scope=scope.and((r,q,b)->b.equal(r.get("state"),state));
-        var result=records.findAll(scope,PageRequest.of(page,size,Sort.by(Sort.Direction.DESC,"createdAt").and(Sort.by("id"))));
-        return new Page<>(result.stream().map(this::view).toList(),page,size,result.getTotalElements(),result.getTotalPages());
+        var sort=Sort.by(schoolSide?Sort.Direction.ASC:Sort.Direction.DESC,"createdAt").and(Sort.by("id"));
+        var result=records.findAll(scope,PageRequest.of(page,size,sort));
+        return new Page<>(result.stream().map(row->schoolSide?schoolView(row):view(row)).toList(),page,size,result.getTotalElements(),result.getTotalPages());
     }
     @Transactional(readOnly=true) public VerificationView detail(Authentication auth,String organization,String id,boolean schoolSide) {
         String org=uuid(organization);
         if(schoolSide) {actor(auth,false);delegations.require(auth,org,null,"enterprise_verification:school:review");}
         else enterprise(auth,org,false);
-        return view(find(uuid(id),org,schoolSide,false));
+        var row=find(uuid(id),org,schoolSide,false);
+        return schoolSide?schoolView(row):view(row);
     }
     @Override @Transactional(readOnly=true) public ReadResult get(ReadContext context,String enterpriseOrgId,String schoolOrgId) {
         if(context==null || context.purpose==null || context.termId==null) return new DomainError("ACCESS_DENIED");
@@ -139,6 +142,16 @@ public class VerificationService implements OrganizationSchoolVerificationPort {
     }
     private VerificationView view(EnterpriseVerification row) {return new VerificationView(row.id,row.enterpriseOrgId,row.schoolOrgId,row.state,row.submissionNo,row.version,row.previousVerificationId,
         new VerificationInput(row.schoolOrgId,row.previousVerificationId,row.registrationCode,row.registeredName,row.address,row.contactName,row.contactEmail,row.contactPhone,evidence(row)),row.submittedAt,row.reviewedAt,row.decisionRef,missingFields(row));}
+    private VerificationView schoolView(EnterpriseVerification row) {
+        if(row.state==VerificationState.DRAFT) throw missing();
+        var current=view(row);
+        if(row.state!=VerificationState.NEEDS_CHANGES) return current;
+        // Keep unsent enterprise edits private while the school retains its review and submitted content.
+        var submitted=history.findFirstByVerificationIdAndSubmissionNoAndToStateOrderByChangedAtDescIdDesc(row.id,row.submissionNo,"SUBMITTED")
+            .map(entry->JSON.readValue(entry.snapshotJson,VerificationView.class)).orElseThrow(VerificationService::missing);
+        return new VerificationView(current.verificationId(),current.enterpriseOrgId(),current.schoolOrgId(),current.state(),current.submissionNo(),current.version(),
+            current.previousVerificationId(),submitted.data(),current.submittedAt(),current.decidedAt(),current.decisionRef(),current.missingFields());
+    }
     private static List<String> list(String value) {return JSON.readValue(value,JSON.getTypeFactory().constructCollectionType(List.class,String.class));}
     private static List<String> evidence(EnterpriseVerification row) {return list(row.evidenceFileIdsJson);}
     private static List<String> missingFields(EnterpriseVerification row) {return list(row.missingFields);}
@@ -146,7 +159,8 @@ public class VerificationService implements OrganizationSchoolVerificationPort {
         if(data.evidenceFileIds().size()!=new HashSet<>(data.evidenceFileIds()).size()) throw failure(422,"VERIFICATION_DATA_INVALID");
         row.registrationCode=data.registrationCode();row.registeredName=data.registeredName();row.address=data.address();row.contactName=data.contactName();row.contactEmail=data.contactEmail();row.contactPhone=data.contactPhone();row.evidenceFileIdsJson=JSON.writeValueAsString(data.evidenceFileIds());
     }
-    private EnterpriseVerification find(String id,String org,boolean school,boolean locked) {return (locked?records.findByIdForUpdate(id):records.findById(id)).filter(row->org.equals(school?row.schoolOrgId:row.enterpriseOrgId)).orElseThrow(VerificationService::missing);}
+    private EnterpriseVerification find(String id,String org,boolean school,boolean locked) {return (locked?records.findByIdForUpdate(id):records.findById(id))
+        .filter(row->org.equals(school?row.schoolOrgId:row.enterpriseOrgId) && (!school || row.state!=VerificationState.DRAFT)).orElseThrow(VerificationService::missing);}
     private static void editable(EnterpriseVerification row) {if(row.state!=VerificationState.DRAFT && row.state!=VerificationState.NEEDS_CHANGES) throw failure(409,"STATE_CONFLICT");}
     private static void version(EnterpriseVerification row,long expected) {if(row.version!=expected || row.version>=9_007_199_254_740_991L) throw failure(409,"VERSION_CONFLICT");}
     private void requireSchool(String id) {if(organizations.findById(id).filter(o->o.type==Organization.Type.UNIVERSITY && o.status==Organization.Status.VERIFIED).isEmpty()) throw failure(422,"VERIFICATION_DATA_INVALID");}

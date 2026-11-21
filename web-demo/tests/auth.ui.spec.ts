@@ -192,6 +192,32 @@ test('connection illustration animates without shifting the hub and respects red
   await expect(page.getByRole('button', { name: 'Đăng nhập', exact: true })).toBeEnabled();
 });
 
+test('headline cycles without controls or layout shifts and respects reduced motion', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.clock.install();
+  await anonymous(page);
+  const lines = page.locator('.auth-rotating-copy .auth-title-line');
+  const heading = page.locator('.auth-story h1');
+  await expect(lines.first()).toHaveText('Kết nối tiềm năng');
+  const bounds = await heading.boundingBox();
+  await page.clock.runFor(3400);
+  await expect(lines.first()).toHaveText('Học từ trải nghiệm');
+  expect(await heading.boundingBox()).toEqual(bounds);
+  await expect(page.locator('.auth-rotating-message button')).toHaveCount(0);
+  await page.clock.runFor(3400);
+  await expect(lines.first()).toHaveText('Kết nối nhà trường');
+  await page.clock.runFor(3400);
+  await expect(lines.first()).toHaveText('Khám phá cơ hội');
+  await page.clock.runFor(3400);
+  await expect(lines.first()).toHaveText('Kết nối tiềm năng');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(page.locator('.auth-rotating-message')).toHaveAttribute('data-rotating', 'false');
+  await page.clock.runFor(15000);
+  await expect(lines.first()).toHaveText('Kết nối tiềm năng');
+  await expect(page.getByLabel('Email', { exact: true })).toBeEnabled();
+});
+
 test('login keeps its API payload, disables controls while pending and prevents duplicate submission', async ({ page }) => {
   await anonymous(page);
   let release!: () => void;
@@ -326,6 +352,25 @@ test('a successful login restores its account and session expiry returns to the 
   await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible();
   await expect(page.getByRole('status')).toHaveText(sessionExpired);
   await expect(page.getByRole('status')).toHaveCSS('background-color', 'rgb(255, 242, 219)');
+});
+
+for (const width of [320, 390]) test(`phone access form keeps touch targets and remains usable with a short viewport at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 520 });
+  await anonymous(page);
+  for (const label of ['Email', 'Mật khẩu']) await expect(page.getByLabel(label, { exact: true })).toHaveCSS('font-size', '16px');
+  const toggle = page.getByRole('button', { name: 'Hiện mật khẩu', exact: true });
+  const bounds = (await toggle.boundingBox())!;
+  expect(bounds.width).toBeGreaterThanOrEqual(44); expect(bounds.height).toBeGreaterThanOrEqual(44);
+  const submit = page.getByRole('button', { name: 'Đăng nhập', exact: true });
+  await submit.scrollIntoViewIfNeeded();
+  expect((await submit.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await page.getByRole('button', { name: 'Cần hỗ trợ?', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Hỗ trợ truy cập', exact: true });
+  await expect(dialog).toBeVisible();
+  const popup = (await dialog.boundingBox())!;
+  expect(popup.x).toBeGreaterThanOrEqual(0); expect(popup.x + popup.width).toBeLessThanOrEqual(width); expect(popup.height).toBeLessThanOrEqual(488);
+  await page.keyboard.press('Escape');
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
 });
 
 test('all four access screens fit desktop, tablet and small phones without horizontal scrolling', async ({ page }) => {

@@ -61,7 +61,7 @@ export function MentorEvaluation({ caseId, termId, contextId, denied }: Scope & 
   const done=()=>{setDirty(false);setVersion('');setRefresh(n=>n+1);};
   const change=(index:number,patch:Partial<ScoreDraft>)=>{setDirty(true);setScores(old=>old.map((s,i)=>i===index?{...s,...patch}:s));};
   return <section className="stack" aria-label="Mentor chấm rubric"><h2>Chấm đánh giá thực tập</h2>
-    <button type="button" className="secondary" disabled={command.busy || command.pending} onClick={()=>setRefresh(n=>n+1)}>Tải lại đánh giá</button>
+    <div className="button-row"><button type="button" className="secondary" disabled={command.busy || command.pending} onClick={()=>setRefresh(n=>n+1)}>Tải lại đánh giá</button></div>
     {loading && <p role="status">Đang tải đánh giá…</p>}{error && <p role="alert">{error}</p>}<CommandFeedback command={command}/>
     {!loading && !error && <>
       {!value && <label>Rubric áp dụng<select value={templateKey} disabled={blocked} onChange={e=>{
@@ -129,7 +129,7 @@ export function VisibilityEditor({path,contextId,validate,denied,title}: {
     }).catch(e=>{if(!c.signal.aborted){if(gradeAccessLost(e))denied();else setError(workflowError(e));}});return ()=>c.abort();
   },[path,contextId,refresh]);
   return <section className="panel stack" aria-label={title}><h3>{title}</h3>
-    <button className="secondary" disabled={command.busy || command.pending} onClick={()=>setRefresh(n=>n+1)}>Tải lại chính sách</button>
+    <div className="button-row"><button className="secondary" disabled={command.busy || command.pending} onClick={()=>setRefresh(n=>n+1)}>Tải lại chính sách</button></div>
     {error && <p role="alert">{error}</p>}{!policy && !error && <p role="status">Đang xác nhận quyền và chính sách…</p>}
     {policy && <form onSubmit={e=>{e.preventDefault();command.run<VisibilityPolicy>(path,{expectedVersion:policy.version,enabled},p=>{
       if(!validate(p)){denied();return;}setRefresh(n=>n+1);
@@ -152,8 +152,8 @@ export function StudentEvaluation({caseId,denied}:Scope) {
   useEffect(()=>{const refresh=()=>{setValue(null);setLoading(true);setRefresh(n=>n+1);};
     window.addEventListener('focus',refresh);return ()=>window.removeEventListener('focus',refresh);
   },[]);
-  return <section className="stack" aria-label="Kết quả của sinh viên"><h2>Kết quả thực tập của tôi</h2>
-    <button className="secondary" onClick={()=>{setValue(null);setLoading(true);setRefresh(n=>n+1);}}>Tải lại kết quả</button>
+  return <section className="stack t3-student-eval" aria-label="Kết quả của sinh viên"><h2>Kết quả thực tập của tôi</h2>
+    <div className="button-row"><button className="secondary" onClick={()=>{setValue(null);setLoading(true);setRefresh(n=>n+1);}}>Tải lại kết quả</button></div>
     {loading?<p role="status">Đang kiểm tra quyền xem kết quả…</p>:error?<p role="alert">{error}</p>
       :value?<EvaluationView value={value} denied={denied}/>:<p>Kết quả chưa được phép hiển thị.</p>}
   </section>;
@@ -172,19 +172,19 @@ export function SchoolEvaluations({schoolId,termId,denied,canPublish,canPolicy}:
   const value=rows.find(v=>v.evaluationId===selected);
   return <div className="stack">{canPolicy && <VisibilityEditor title="Chính sách nhà trường" path={'/t3/schools/'+schoolId+'/terms/'+termId+'/result-visibility'}
     validate={p=>p.schoolOrgId===schoolId && p.termId===termId} denied={denied}/>}
-    {canPublish && <section className="panel stack"><h2>Công bố đánh giá</h2>
+    {canPublish && <section className="panel stack t3-school-evaluations"><h2>Công bố đánh giá</h2>
       <label>Lọc trạng thái đánh giá<select value={state} onChange={e=>setState(e.target.value)}><option value="">Tất cả</option>{['DRAFT','SUBMITTED','PUBLISHED'].map(s=><option key={s}>{s}</option>)}</select></label>
-      <button className="secondary" onClick={()=>setRefresh(n=>n+1)}>Tải danh sách đánh giá</button>
+      <div className="button-row"><button className="secondary" onClick={()=>setRefresh(n=>n+1)}>Tải danh sách đánh giá</button></div>
       {loading && <p role="status">Đang tải danh sách…</p>}{error && <p role="alert">{error}</p>}
       {!loading && !error && rows.length===0 && <p>Chưa có đánh giá trong phạm vi này.</p>}
-      {rows.map(v=><button className="secondary" key={v.evaluationId} onClick={()=>setSelected(v.evaluationId)}>Hồ sơ …{v.caseId.slice(-6)} · {v.state} · Version {v.version}</button>)}
+      {rows.length > 0 && <div className="t3-report-list">{rows.map(v=><button className={'secondary t3-report-row-btn' + (selected === v.evaluationId ? ' is-selected' : '')} key={v.evaluationId} onClick={()=>setSelected(v.evaluationId)}>Hồ sơ …{v.caseId.slice(-6)} · {v.state} · Version {v.version}</button>)}</div>}
       {value && <SchoolDecision key={value.evaluationId+':'+value.version+':'+refresh} value={value} denied={denied} done={()=>setRefresh(n=>n+1)}/>}
     </section>}
   </div>;
 }
 function SchoolDecision({value,denied,done}:{value:Evaluation;denied:()=>void;done:()=>void}) {
   const [decision,setDecision]=useState(''),[reason,setReason]=useState('');const command=useWorkflowCommand(undefined,denied,gradeAccessLost);
-  return <section className="stack" aria-label="Quyết định công bố"><EvaluationView value={value} denied={denied}/>
+  return <section className="stack t3-decision-card" aria-label="Quyết định công bố"><EvaluationView value={value} denied={denied}/>
     {['SUBMITTED','PUBLISHED'].includes(value.state) && <fieldset disabled={command.busy || command.pending}>
       <label>Căn cứ quyết định<input value={decision} onChange={e=>setDecision(e.target.value)}/></label>
       {value.state==='SUBMITTED' && <button disabled={!textWithin(decision,1,120)} onClick={()=>command.run('/t3/evaluations/'+value.evaluationId+'/publish',{expectedVersion:value.version,decisionRef:decision.trim()},done)}>Công bố điểm</button>}

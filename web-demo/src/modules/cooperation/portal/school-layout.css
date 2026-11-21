@@ -1,0 +1,1442 @@
+/* School Portal Figma Layout — keeps existing sidebar background, color palette, and motion effects untouched */
+
+/* Grouped School Sidebar Navigation (Collapsible Accordion + Sub-cards) */
+.workspace-t5 .portal-navigation.is-school.is-grouped {
+  display: grid;
+  gap: 6px;
+}
+.workspace-t5 .portal-navigation.is-school .school-nav-group {
+  display: grid;
+  gap: 0;
+}
+.workspace-t5 .portal-navigation.is-school .school-nav-group-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: calc(100% - 4px);
+  transition:
+    background-color 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.2s ease,
+    box-shadow 0.22s ease,
+    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.workspace-t5 .portal-navigation.is-school .school-nav-group-toggle > span {
+  flex: 1;
+  text-align: left;
+}
+.workspace-t5 .portal-navigation.is-school .school-nav-chevron {
+  margin-left: auto;
+  flex-shrink: 0;
+  opacity: 0.82;
+  transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease;
+}
+.workspace-t5 .portal-navigation.is-school .school-nav-chevron.is-open {
+  transform: rotate(180deg);
+  opacity: 1;
+}
+.workspace-t5 .portal-navigation.is-school .school-nav-group-toggle.is-group-active {
+  background: #0b927c;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 6px 16px #0b927c45, inset 0 0 0 1px #82f0d673;
+}
+.workspace-t5 .portal-navigation.is-school .school-nav-group-toggle.is-group-active:hover {
+  background: #0ca38b;
+  color: #fff;
+  transform: translateX(2px);
+  box-shadow: 0 8px 20px #0b927c55, inset 0 0 0 1px #8cf2db80;
+}
+.workspace-t5 .portal-navigation.is-school .school-nav-group-toggle.is-group-active .icon {
+  color: #fff;
+}
+.workspace-t5 .portal-navigation.is-school .school-nav-collapse-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    grid-template-rows 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease,
+    margin-top 0.22s ease,
+    visibility 0.26s;
+}
+.workspace-t5 .portal-navigation.is-school .school-nav-collapse-wrap.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  margin-top: 2px;
+  visibility: visible;
+  pointer-events: auto;
+}
+.workspace-t5 .portal-navigation.is-school .school-nav-sublist {
+  display: grid;
+  gap: 6px;
+  min-height: 0;
+  margin-inline: -5px;
+  padding: 0 5px;
+  overflow: hidden;
+  transition: padding 0.22s ease;
+}
+.workspace-t5 .portal-navigation.is-school .school-nav-collapse-wrap.is-open .school-nav-sublist {
+  padding: 4px 5px 5px;
+}
+.workspace-t5 .portal-navigation.is-school .school-nav-subitem {
+  width: calc(100% - 4px);
+  min-height: 40px;
+  margin: 0;
+  padding: 9px 14px 9px 26px;
+  border: 1px solid #284f5c;
+  border-radius: 9px;
+  background: #1b3d48;
+  color: #d7eaed;
+  font-size: 13.5px;
+  font-weight: 500;
+  text-align: left;
+  transition:
+    background-color 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.2s ease,
+    color 0.18s ease,
+    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.2s ease;
+}
+.workspace-t5 .portal-navigation.is-school .school-nav-subitem:hover:not(.active) {
+  border-color: #3d7586;
+  background: #224b58;
+  color: #fff;
+  transform: translateX(3px);
+}
+.workspace-t5 .portal-navigation.is-school .school-nav-subitem.active {
+  border: 1px solid #2da692;
+  background: #126c5f;
+  color: #fff;
+  font-weight: 650;
+  box-shadow: inset 0 0 0 1px #7ef0d630, 0 3px 10px #09262c38;
+}
+.workspace-t5 .sidebar .portal-navigation.is-school .school-nav-subitem::before,
+.workspace-t5 .sidebar .portal-navigation.is-school .school-nav-subitem.active::before {
+  content: '';
+  left: 11px;
+  top: calc(50% - 9px);
+  width: 3px;
+  height: 18px;
+  border-radius: 3px;
+  background: #8cf2db;
+}
+.workspace-t5 .portal-navigation.is-school .school-nav-empty {
+  width: calc(100% - 4px);
+  margin: 0;
+  padding: 9px 14px 9px 22px;
+  border: 1px dashed #2b5463;
+  border-radius: 9px;
+  background: #14323c;
+  color: #8bb0b8;
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.portal-workspace.is-school {
+  gap: 16px;
+}
+.portal-workspace.is-school > .portal-page-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 20px;
+  min-width: 0;
+}
+
+/* Top context bar: aligned 48px controls */
+.portal-context-bar.is-school :is(
+  .portal-context-select select,
+  .notification-scope select,
+  .portal-context-actions .portal-notification-shortcut,
+  .portal-role,
+  .portal-organization-icon
+) {
+  min-height: 48px;
+  height: 48px;
+}
+
+/* Overview Header & Dashboard Cards (415-17085.png) */
+.portal-workspace.is-school .portal-page-header.is-overview {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.portal-workspace.is-school .portal-page-header.is-overview .button-row {
+  margin: 0;
+}
+.portal-workspace.is-school .portal-page-header.is-overview .portal-breadcrumb {
+  margin: 0;
+  color: #087b68;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.portal-workspace.is-school .portal-welcome {
+  position: relative;
+  padding: 20px 24px;
+  border: 1px solid #d5ebe4;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 96% 14%, rgba(11, 146, 124, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 78% 100%, rgba(37, 99, 235, 0.05) 0%, transparent 42%),
+    linear-gradient(125deg, #ffffff 0%, #f5fbf9 70%, #eef8f5 100%);
+  box-shadow: 0 2px 10px rgba(15, 36, 50, 0.03);
+}
+.portal-workspace.is-school .portal-welcome .section-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  padding: 3px 10px;
+  border-radius: 7px;
+  background: #e3f5ef;
+  color: #087b68;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.portal-workspace.is-school .portal-welcome h2 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: #0f2432;
+}
+.portal-workspace.is-school .portal-welcome p:not(.section-kicker) {
+  margin: 5px 0 0;
+  color: #5b7083;
+  font-size: 13.5px;
+}
+.portal-workspace.is-school .portal-welcome-icon {
+  flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
+  border: 1px solid #cce9df;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #0b8770;
+  box-shadow: 0 4px 14px rgba(11, 135, 112, 0.08);
+}
+
+/* Overview 4 KPI Cards */
+.portal-workspace.is-school .portal-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.portal-workspace.is-school .portal-kpi-card {
+  gap: 10px;
+  min-height: 118px;
+  padding: 16px 18px;
+  border-radius: 12px;
+}
+.portal-workspace.is-school .portal-kpi-card strong {
+  font-size: 28px;
+  line-height: 1;
+}
+
+/* Overview Section Headers, Tasks & Quick Shortcuts */
+.portal-workspace.is-school .school-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.portal-workspace.is-school .school-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.portal-workspace.is-school .school-section-title h2,
+.portal-workspace.is-school .school-section-title h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #0f2432;
+}
+.portal-workspace.is-school .school-section-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+.portal-workspace.is-school .school-section-icon.is-tasks {
+  background: #fef3c7;
+  color: #b45309;
+}
+.portal-workspace.is-school .school-section-icon.is-shortcuts,
+.portal-workspace.is-school .school-section-icon.is-verifications {
+  background: #e5f6f0;
+  color: #0b8770;
+}
+.portal-workspace.is-school .school-section-icon.is-cooperations {
+  background: #eaf1fe;
+  color: #2563eb;
+}
+.portal-workspace.is-school .school-section-icon.is-placements {
+  background: #efeafd;
+  color: #6d28d9;
+}
+.portal-workspace.is-school .school-task-counter {
+  padding: 3px 10px;
+  border: 1px solid #fde68a;
+  border-radius: 7px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 12px;
+  font-weight: 650;
+}
+.portal-workspace.is-school .portal-dashboard-tasks .proposal-table {
+  padding: 0;
+  border: 1px solid #e6edf4;
+  border-radius: 12px;
+  background: #ffffff;
+}
+.portal-workspace.is-school .portal-dashboard-tasks .proposal-table table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+.portal-workspace.is-school .portal-dashboard-tasks .proposal-table thead th {
+  padding: 11px 16px;
+  border-bottom: 1px solid #e6edf4;
+  border-radius: 0;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+}
+.portal-workspace.is-school .portal-dashboard-tasks .proposal-table tbody > tr > :is(th, td) {
+  padding: 13px 16px;
+  border: 0;
+  border-bottom: 1px solid #f1f5f9;
+  border-radius: 0;
+  background: transparent;
+}
+.portal-workspace.is-school .portal-dashboard-tasks .proposal-table tbody > tr:last-child > :is(th, td) {
+  border-bottom: 0;
+}
+.portal-workspace.is-school .portal-dashboard-tasks .proposal-table tbody > tr:hover > :is(th, td) {
+  background: #f8fbfa;
+}
+.portal-workspace.is-school .portal-dashboard-tasks .proposal-table :is(th, td):last-child {
+  text-align: center;
+}
+.portal-workspace.is-school .school-task-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.portal-workspace.is-school .school-task-type-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+.portal-workspace.is-school .school-task-type-icon.is-verifications {
+  background: #fef3c7;
+  color: #b45309;
+}
+.portal-workspace.is-school .school-task-type-icon.is-cooperations {
+  background: #eaf1fe;
+  color: #2563eb;
+}
+.portal-workspace.is-school .school-task-item-text {
+  min-width: 0;
+}
+.portal-workspace.is-school .school-task-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.portal-workspace.is-school .portal-overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+.portal-workspace.is-school .portal-overview-card {
+  padding: 18px 20px;
+  border: 1px solid #e3eaf2;
+  border-radius: 14px;
+  background: #fff;
+}
+.portal-workspace.is-school .school-shortcut-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.portal-workspace.is-school .portal-shortcuts {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+.portal-workspace.is-school button.secondary.school-shortcut {
+  align-items: center;
+  min-height: 70px;
+  padding: 13px 15px;
+  border: 1px solid #e2e8f0;
+  border-left: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(15, 36, 50, 0.025);
+  transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.portal-workspace.is-school button.secondary.school-shortcut.is-tone-teal .school-shortcut-icon {
+  border-color: #cdece4;
+  background: #e5f6f0;
+  color: #0b8770;
+}
+.portal-workspace.is-school button.secondary.school-shortcut.is-tone-blue .school-shortcut-icon {
+  border-color: #d0e1fc;
+  background: #eaf1fe;
+  color: #2563eb;
+}
+.portal-workspace.is-school button.secondary.school-shortcut.is-tone-violet .school-shortcut-icon {
+  border-color: #ddd2fb;
+  background: #efeafd;
+  color: #6d28d9;
+}
+.portal-workspace.is-school button.secondary.school-shortcut:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  box-shadow: 0 6px 16px rgba(15, 36, 50, 0.055);
+}
+.portal-workspace.is-school button.secondary.school-shortcut.is-tone-teal:hover {
+  border-color: #9fd8c9;
+  background: #f4fbf8;
+}
+.portal-workspace.is-school button.secondary.school-shortcut.is-tone-blue:hover {
+  border-color: #a9c6fb;
+  background: #f5f8ff;
+}
+.portal-workspace.is-school button.secondary.school-shortcut.is-tone-violet:hover {
+  border-color: #c5b3fa;
+  background: #f8f5ff;
+}
+.portal-workspace.is-school .school-roster-panel {
+  gap: 14px;
+  padding: 20px 22px;
+  border: 1px solid #e3eaf2;
+  border-radius: 14px;
+  background: #fff;
+}
+.portal-workspace.is-school .school-roster-panel .t5-process-steps {
+  margin: 0;
+}
+.portal-workspace.is-school .school-roster-help {
+  padding: 14px 16px;
+  border: 1px solid #e3eaf2;
+  border-radius: 12px;
+  background: #fbfdfe;
+}
+.portal-workspace.is-school .school-roster-help > summary {
+  cursor: pointer;
+  color: #087b68;
+  font-size: 13px;
+  font-weight: 700;
+}
+.portal-workspace.is-school .school-roster-help[open] > summary {
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #edf2f6;
+}
+
+/* Unified Subpage Modular Canvas matching Overview Cards & Hero Banner */
+.portal-workspace.is-school .portal-subpage-sheet {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 18px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.portal-workspace.is-school .portal-subpage-sheet > .portal-page-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 24px;
+  border: 1px solid #d5ebe4;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 96% 14%, rgba(11, 146, 124, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 78% 100%, rgba(37, 99, 235, 0.05) 0%, transparent 42%),
+    linear-gradient(125deg, #ffffff 0%, #f5fbf9 70%, #eef8f5 100%);
+  box-shadow: 0 2px 10px rgba(15, 36, 50, 0.03);
+}
+.portal-workspace.is-school .portal-subpage-sheet > .portal-page-header .portal-breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  padding: 3px 10px;
+  border-radius: 7px;
+  background: #e3f5ef;
+  color: #087b68;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.portal-workspace.is-school .portal-subpage-sheet > .portal-page-header h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 750;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: #0f2432;
+}
+.portal-workspace.is-school .portal-subpage-sheet > .portal-page-header .portal-page-subtitle {
+  margin: 5px 0 0;
+  color: #5b7083;
+  font-size: 13.5px;
+}
+
+/* Child containers inside the modular subpage stage */
+.portal-workspace.is-school .portal-subpage-sheet > :is(
+  .workflow-surface,
+  .matching-workspace
+) {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.portal-workspace.is-school .school-section-card,
+.portal-workspace.is-school .portal-subpage-sheet > :is(
+  .placement-overview,
+  .portal-notification-center,
+  .school-proposals-page,
+  .school-roster-panel,
+  .portal-detail
+) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 16px;
+  min-width: 0;
+  padding: 20px 22px;
+  border: 1px solid #e3eaf2;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 2px 10px rgba(15, 36, 50, 0.03);
+}
+.portal-workspace.is-school .portal-subpage-sheet > .portal-record-picker {
+  padding: 16px 20px;
+  border: 1px solid #d5ebe4;
+  border-left: 4px solid #0b927c;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 2px 10px rgba(15, 36, 50, 0.03);
+}
+#root .portal-workspace.is-school :is(.workflow-surface, .matching-workspace) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 18px;
+  min-width: 0;
+}
+#root .portal-workspace.is-school .workflow-surface > * {
+  min-width: 0;
+  margin-block: 0;
+}
+#root .portal-workspace.is-school .workflow-surface > .workflow-section-header {
+  align-items: center;
+  gap: 12px;
+}
+#root .portal-workspace.is-school .workflow-surface > .workflow-section-header :is(h3, .button-row) {
+  margin: 0;
+}
+.portal-workspace.is-school .portal-subpage-sheet > .portal-notification-center .panel-head {
+  display: none;
+}
+
+/* Subpage 3 Pastel KPI Summary Cards (415-16789, 415-16937, 415-17385, 415-17528, 415-17670) */
+.portal-workspace.is-school :is(.school-summary-strip, .matching-counts) {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.portal-workspace.is-school .school-summary-strip .kpi-card {
+  display: grid;
+  gap: 10px;
+  min-height: 86px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  text-align: left;
+  box-shadow: none;
+}
+.portal-workspace.is-school .school-summary-strip .kpi-card-label {
+  font-size: 12px;
+  font-weight: 700;
+}
+.portal-workspace.is-school .school-summary-strip .kpi-card-bottom {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.portal-workspace.is-school .school-summary-strip .kpi-card-value {
+  font-size: 26px;
+  line-height: 1;
+}
+.portal-workspace.is-school .school-summary-strip .kpi-card-hint {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+/* Matching Workspace KPI Cards & Underline Tabs (415-17385.png) */
+.portal-workspace.is-school .matching-workspace {
+  display: grid;
+  gap: 16px;
+}
+.portal-workspace.is-school .matching-counts button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 86px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  text-align: left;
+}
+.portal-workspace.is-school .matching-counts button strong {
+  font-size: 26px;
+  line-height: 1;
+}
+.portal-workspace.is-school .matching-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid #e3eaf2;
+  border-radius: 0;
+  background: transparent;
+}
+.portal-workspace.is-school .matching-tabs button {
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 8px 8px 0 0;
+  background: transparent;
+  color: #5b7083;
+  font-size: 13px;
+  font-weight: 700;
+}
+.portal-workspace.is-school .matching-tabs button:is(.active, [aria-selected="true"]) {
+  border-bottom-color: #0b927c;
+  background: #e7f6f0;
+  color: #087b68;
+}
+.portal-workspace.is-school .matching-filter-bar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid #e3eaf2;
+  border-radius: 12px;
+  background: #f8fbfd;
+}
+
+/* Toolbar & Filter Strips */
+.portal-workspace.is-school .workflow-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid #e3eaf2;
+  border-radius: 12px;
+  background: #f8fbfd;
+}
+.portal-workspace.is-school .workflow-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  flex: 1;
+}
+.portal-workspace.is-school .workflow-filter-bar > label {
+  min-width: 210px;
+  margin: 0;
+  font-size: 12px;
+}
+
+/* Figma Floating Card-Row Tables without Right-Edge Clipping (415-16789, 415-16937, 415-17385, 415-17528, 415-18203) */
+.portal-workspace.is-school .table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  padding: 2px 1px;
+  border: 0;
+  background: transparent;
+}
+.portal-workspace.is-school table {
+  width: 100%;
+  min-width: 0;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+}
+.portal-workspace.is-school thead th {
+  padding: 6px 12px;
+  border: 0;
+  background: transparent;
+  color: #64788a;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.portal-workspace.is-school tbody :is(td, th) {
+  padding: 13px 12px;
+  border-top: 1px solid #e3eaf2;
+  border-bottom: 1px solid #e3eaf2;
+  background: #fff;
+  color: #142f40;
+  font-size: 13px;
+  line-height: 1.45;
+  vertical-align: middle;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+.portal-workspace.is-school tbody tr > :first-child {
+  border-left: 1px solid #e3eaf2;
+  border-radius: 10px 0 0 10px;
+}
+.portal-workspace.is-school tbody tr > :last-child {
+  border-right: 1px solid #e3eaf2;
+  border-radius: 0 10px 10px 0;
+}
+.portal-workspace.is-school tbody tr > :only-child {
+  border-radius: 10px;
+}
+.portal-workspace.is-school tbody tr:hover > :is(td, th) {
+  border-color: #b7e4d6;
+  background: #f7fcf9;
+}
+.portal-workspace.is-school table :is(.status-pill, .t5-badge, button, code) {
+  white-space: nowrap;
+}
+
+/* Sub-panels inside Proposals, Placements, and Matching (415-17528, 415-17670) */
+.portal-workspace.is-school .school-proposals-page,
+.portal-workspace.is-school .placement-overview {
+  display: grid;
+  gap: 18px;
+}
+.portal-workspace.is-school :is(.school-proposals-page, .placement-overview, .matching-workspace) .panel {
+  padding: 18px 20px;
+  border: 1px solid #e3eaf2;
+  border-radius: 14px;
+  background: #fcfdfe;
+  box-shadow: none;
+}
+.portal-workspace.is-school .approved-coop-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.portal-workspace.is-school .approved-coop-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.portal-workspace.is-school .approved-coop-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid #cce9df;
+  border-radius: 8px;
+  background: #eefaf5;
+  color: #087b68;
+  font-size: 12px;
+  font-weight: 600;
+}
+.portal-workspace.is-school .approved-coop-chip.muted {
+  border-color: #dce6f0;
+  background: #f5f8fb;
+  color: #52687a;
+}
+
+/* Fix Placement Item Card Green-Fill Bug (t5-ui-school-followup.png) */
+.portal-workspace.is-school .placement-card-list {
+  display: grid;
+  gap: 16px;
+}
+.portal-workspace.is-school .placement-item-card {
+  display: grid;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 1px solid #e3eaf2;
+  border-left: 4px solid #0b927c;
+  border-radius: 14px;
+  background: #fff !important;
+  color: #142f40 !important;
+  box-shadow: 0 2px 10px #142f4005;
+}
+.portal-workspace.is-school .placement-item-card.state-pending_approval {
+  border-left-color: #b76e00;
+}
+.portal-workspace.is-school .placement-item-card:is(.state-cancelled, .state-rejected) {
+  border-left-color: #c23b4e;
+}
+.portal-workspace.is-school .placement-item-card .placement-section {
+  padding: 14px 16px;
+  border: 1px solid #e8eef4;
+  border-radius: 12px;
+  background: #f9fbfd;
+  color: #142f40;
+}
+
+/* Workflow Drawers / Action Cards inside Cooperations & Verifications */
+.portal-workspace.is-school :is(.workflow-drawer, .workflow-create-panel) {
+  padding: 18px 20px;
+  border: 1px solid #cce9df;
+  border-left: 4px solid #0b927c;
+  border-radius: 14px;
+  background: #f9fdfb;
+}
+
+/* Figma 415-16789: School Enterprise Verification (Xác minh doanh nghiệp / BM-03) */
+.portal-workspace.is-school .school-header-cta {
+  min-width: 136px;
+  min-height: 42px;
+  padding: 10px 20px;
+  border-radius: 10px !important;
+  font-size: 13px;
+  font-weight: 700;
+}
+.portal-workspace.is-school .school-verification-surface {
+  display: grid;
+  gap: 16px;
+}
+.portal-workspace.is-school .school-verification-filter-bar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.85fr) minmax(170px, 1.15fr) minmax(190px, 1.35fr) auto;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #e6edf4;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+.portal-workspace.is-school .school-vfilter-field {
+  margin: 0;
+  min-width: 0;
+}
+.portal-workspace.is-school .school-vfilter-field :is(input, select) {
+  width: 100%;
+  min-height: 42px;
+  height: 42px;
+  margin: 0;
+  padding: 8px 14px;
+  border: 1px solid #e3eaf2;
+  border-radius: 10px;
+  background: #fff;
+  color: #142f40;
+  font-size: 13px;
+}
+.portal-workspace.is-school .school-vfilter-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.portal-workspace.is-school .school-vfilter-submit {
+  min-width: 108px;
+  min-height: 42px;
+  height: 42px;
+  padding: 8px 20px;
+  border-radius: 10px !important;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Unified Table Surface matching Overview Tasks Table */
+.portal-workspace.is-school .school-verification-table,
+.portal-workspace.is-school .placement-overview .proposal-table,
+.portal-workspace.is-school .table-scroll.matching-table-wrap {
+  margin: 0;
+  padding: 0;
+  border: 1px solid #e6edf4;
+  border-radius: 12px;
+  background: #ffffff;
+  overflow-x: auto;
+}
+.portal-workspace.is-school :is(.school-verification-table, .placement-overview .proposal-table, .matching-table-wrap) table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+.portal-workspace.is-school :is(.school-verification-table, .placement-overview .proposal-table, .matching-table-wrap) thead th {
+  padding: 11px 16px;
+  border: 0;
+  border-bottom: 1px solid #e6edf4;
+  border-radius: 0;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.portal-workspace.is-school :is(.school-verification-table, .placement-overview .proposal-table, .matching-table-wrap) tbody > tr > :is(th, td) {
+  padding: 13px 16px;
+  border: 0;
+  border-bottom: 1px solid #f1f5f9;
+  border-radius: 0;
+  background: transparent;
+}
+.portal-workspace.is-school :is(.school-verification-table, .placement-overview .proposal-table, .matching-table-wrap) tbody > tr:last-child > :is(th, td) {
+  border-bottom: 0;
+}
+.portal-workspace.is-school :is(.school-verification-table, .placement-overview .proposal-table, .matching-table-wrap) tbody > tr:hover > :is(th, td) {
+  background: #f8fbfa;
+}
+.portal-workspace.is-school :is(.school-verification-table, .placement-overview .proposal-table) tbody > tr.table-row-selected > :is(th, td) {
+  background: #edf9f5;
+  border-bottom-color: #cdece4;
+}
+.portal-workspace.is-school :is(.school-verification-table, .placement-overview .proposal-table) tbody > tr.table-row-selected > :first-child {
+  box-shadow: inset 3px 0 #0b927c;
+}
+.portal-workspace.is-school .placement-overview .proposal-table caption {
+  display: none;
+}
+.portal-workspace.is-school .school-verification-table tbody tr {
+  cursor: pointer;
+}
+.portal-workspace.is-school .school-verification-table :is(th, td):last-child {
+  text-align: left;
+}
+.portal-workspace.is-school .bm03-company-name {
+  color: #142f40;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.portal-workspace.is-school .bm03-code-text,
+.portal-workspace.is-school .bm03-date-text {
+  color: #425c6e;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* BM-03 Verification Bottom Detail Sheet */
+.portal-workspace.is-school .bm03-status-cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.portal-workspace.is-school .bm03-row-caret {
+  color: #94a3b8;
+  transform: rotate(-90deg);
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), color 0.16s ease;
+  flex-shrink: 0;
+}
+.portal-workspace.is-school .school-verification-table tbody tr:hover .bm03-row-caret,
+.portal-workspace.is-school .school-verification-table tbody tr.table-row-selected .bm03-row-caret {
+  color: #0b927c;
+}
+.portal-workspace.is-school .bm03-row-caret.is-open {
+  transform: rotate(0deg);
+}
+.portal-workspace.is-school .bm03-select-hint {
+  margin: -4px 4px 0;
+  color: #64748b;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.portal-workspace.is-school .bm03-detail-card {
+  margin: 0;
+  padding: 0;
+  border: 1px solid #dfe7ef;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+  animation: bm03-expand-in 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.portal-workspace.is-school .bm03-detail-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 18px;
+  padding: 18px 24px 16px;
+  border-bottom: 1px solid #edf2f7;
+  background: #ffffff;
+}
+.portal-workspace.is-school .bm03-header-text {
+  min-width: 0;
+  flex: 1;
+}
+.portal-workspace.is-school .bm03-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+.portal-workspace.is-school .bm03-detail-header h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.portal-workspace.is-school .bm03-meta-line {
+  margin: 5px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.portal-workspace.is-school .bm03-close-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 5px 11px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #475569;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.portal-workspace.is-school .bm03-close-btn:hover:not(:disabled) {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+}
+.portal-workspace.is-school .bm03-detail-body {
+  display: grid;
+  gap: 18px;
+  padding: 18px 24px 22px;
+}
+.portal-workspace.is-school .bm03-missing-callout {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 14px;
+  border: 1px solid #f7cfd5;
+  border-radius: 9px;
+  background: #fff5f6;
+  color: #b42336;
+  font-size: 13px;
+}
+.portal-workspace.is-school .bm03-expanded-section {
+  display: grid;
+  gap: 18px;
+}
+@keyframes bm03-expand-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.portal-workspace.is-school .bm03-section-label {
+  margin: 0 0 8px;
+  color: #475569;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.portal-workspace.is-school .bm03-dl-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 28px;
+  margin: 0;
+  border-top: 1px solid #f1f5f9;
+}
+.portal-workspace.is-school .bm03-dl-row {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 11px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.portal-workspace.is-school .bm03-dl-row.is-full {
+  grid-column: 1 / -1;
+}
+.portal-workspace.is-school .bm03-dl-row dt {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 500;
+}
+.portal-workspace.is-school .bm03-dl-row dd {
+  margin: 0;
+  color: #0f172a;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  overflow-wrap: break-word;
+}
+.portal-workspace.is-school .bm03-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+}
+.portal-workspace.is-school .bm03-code-plain {
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: #f1f5f9;
+  color: #0f172a;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.portal-workspace.is-school .bm03-inline-link {
+  color: #0d7a68;
+  text-decoration: none;
+}
+.portal-workspace.is-school .bm03-inline-link:hover {
+  text-decoration: underline;
+}
+.portal-workspace.is-school .bm03-lower-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 28px;
+  padding-top: 2px;
+}
+.portal-workspace.is-school .bm03-subblock {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-width: 0;
+}
+.portal-workspace.is-school .bm03-file-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.portal-workspace.is-school .bm03-file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 500;
+}
+.portal-workspace.is-school .bm03-file-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: #0f172a;
+}
+.portal-workspace.is-school .bm03-file-name svg {
+  flex-shrink: 0;
+}
+.portal-workspace.is-school .bm03-file-id {
+  flex-shrink: 0;
+  white-space: nowrap;
+  color: #64748b;
+  font-size: 12px;
+}
+.portal-workspace.is-school .bm03-empty-note {
+  margin: 0;
+  padding: 9px 12px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 13px;
+}
+.portal-workspace.is-school .bm03-decision-card {
+  display: grid;
+  gap: 6px;
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+.portal-workspace.is-school .bm03-decision-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  font-size: 13px;
+}
+.portal-workspace.is-school .bm03-decision-label {
+  color: #64748b;
+}
+.portal-workspace.is-school .bm03-decision-value {
+  color: #0f172a;
+  font-weight: 600;
+}
+.portal-workspace.is-school .bm03-decision-muted {
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Progressive Inline Decision Input (only when Yêu cầu bổ sung / Từ chối is clicked) */
+.portal-workspace.is-school .bm03-inline-decision-box {
+  display: grid;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+.portal-workspace.is-school .bm03-ref-label {
+  display: block;
+  margin: 0;
+  color: #0f172a;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.portal-workspace.is-school .bm03-ref-label input {
+  width: 100%;
+  min-height: 38px;
+  height: 38px;
+  margin-top: 6px;
+  padding: 7px 12px;
+  font-size: 13px;
+}
+.portal-workspace.is-school .bm03-missing-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.portal-workspace.is-school .bm03-missing-title {
+  color: #0f172a;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.portal-workspace.is-school .bm03-missing-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.portal-workspace.is-school .bm03-missing-chip {
+  min-height: 30px;
+  padding: 4px 11px;
+  border: 1px solid #dce6f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #4b6375;
+  font-size: 12px;
+  font-weight: 600;
+}
+.portal-workspace.is-school .bm03-missing-chip.is-selected {
+  border-color: #f1c687;
+  background: #fff4e1;
+  color: #9c5a0c;
+}
+
+/* Action Footer */
+.portal-workspace.is-school .bm03-action-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  padding-top: 14px;
+  border-top: 1px solid #edf2f7;
+}
+.portal-workspace.is-school .bm03-action-note {
+  margin: 0;
+  color: #64748b;
+  font-size: 12.5px;
+}
+.portal-workspace.is-school .bm03-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-left: auto;
+}
+.portal-workspace.is-school .bm03-action-buttons button {
+  min-width: 130px;
+  min-height: 38px;
+  padding: 8px 16px;
+  border-radius: 9px !important;
+  font-size: 13px;
+  font-weight: 600;
+}
+.portal-workspace.is-school .bm03-btn-request.is-confirming {
+  border-color: #f1c687 !important;
+  background: #fff4e1 !important;
+  color: #9c5a0c !important;
+}
+.portal-workspace.is-school .bm03-btn-reject:hover:not(:disabled),
+.portal-workspace.is-school .bm03-btn-reject.is-confirming {
+  border-color: #f7cfd5 !important;
+  background: #fdecee !important;
+  color: #c23b4e !important;
+}
+
+@media (max-width: 1180px) {
+  .portal-context-bar.is-school,
+  .portal-workspace.is-school .portal-kpi-grid,
+  .portal-workspace.is-school .school-verification-filter-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .portal-workspace.is-school .school-shortcut-list,
+  .portal-workspace.is-school .matching-filter-bar,
+  .portal-workspace.is-school .bm03-dl-grid,
+  .portal-workspace.is-school .bm03-lower-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 820px) {
+  .portal-workspace.is-school :is(.school-summary-strip, .matching-counts) {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-t5 .portal-navigation.is-school .school-nav-collapse-wrap,
+  .workspace-t5 .portal-navigation.is-school .school-nav-sublist,
+  .workspace-t5 .portal-navigation.is-school .school-nav-subitem::before,
+  .workspace-t5 .portal-navigation.is-school .bm03-detail-card,
+  .workspace-t5 .portal-navigation.is-school .bm03-row-caret,
+  .portal-workspace.is-school .bm03-detail-card,
+  .portal-workspace.is-school .bm03-row-caret,
+  .portal-workspace.is-school .school-summary-strip > button.kpi-card,
+  .portal-workspace.is-school .school-summary-strip > button.kpi-card::before,
+  .portal-workspace.is-school .matching-counts > button,
+  .portal-workspace.is-school .matching-counts > button::before,
+  .portal-workspace.is-school .school-stat-icon-tile {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .portal-workspace.is-school > .portal-page-stage,
+  .portal-workspace.is-school .portal-subpage-sheet {
+    gap: 16px;
+  }
+  .portal-context-bar.is-school,
+  .portal-workspace.is-school .portal-kpi-grid,
+  .portal-workspace.is-school .school-verification-filter-bar {
+    grid-template-columns: 1fr;
+  }
+  .portal-workspace.is-school .portal-subpage-sheet {
+    padding: 0;
+  }
+  .portal-workspace.is-school .school-section-card,
+  .portal-workspace.is-school .portal-subpage-sheet > :is(
+    .placement-overview,
+    .portal-notification-center,
+    .school-proposals-page,
+    .school-roster-panel,
+    .portal-detail
+  ) {
+    padding: 16px;
+  }
+  .portal-workspace.is-school .bm03-detail-header,
+  .portal-workspace.is-school .bm03-detail-body {
+    padding: 16px;
+  }
+  .portal-workspace.is-school .bm03-action-buttons {
+    width: 100%;
+    margin-left: 0;
+  }
+  .portal-workspace.is-school .bm03-action-buttons button {
+    flex: 1 1 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .portal-workspace.is-school .portal-dashboard-tasks .proposal-table {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    overflow: visible;
+  }
+  #root .workspace .portal-workspace.is-school .portal-dashboard-tasks .proposal-table > table,
+  .portal-workspace.is-school .portal-dashboard-tasks .proposal-table table,
+  .portal-workspace.is-school .portal-dashboard-tasks .proposal-table tbody {
+    display: grid;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+  }
+  .portal-workspace.is-school .portal-dashboard-tasks .proposal-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px 12px;
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid #e3eaf2;
+    border-radius: 12px;
+    background: #ffffff;
+  }
+  .portal-workspace.is-school .portal-dashboard-tasks .proposal-table tbody > tr > :is(th, td) {
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+  .portal-workspace.is-school .portal-dashboard-tasks .proposal-table tbody > tr > :first-child {
+    grid-column: 1 / -1;
+  }
+  .portal-workspace.is-school .portal-dashboard-tasks .proposal-table tbody > tr > :last-child {
+    text-align: right;
+  }
+}
+
+.portal-workspace.is-school .school-roster-panel.is-embedded .t5-section-heading {
+  display: none;
+}

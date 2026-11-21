@@ -1,5 +1,5 @@
 .portal-pending { display: flex; align-items: flex-start; gap: 12px; padding: 16px; margin-bottom: 24px; background: var(--t5-bg-neutral); border: 1px solid var(--t5-border); border-radius: 12px; }
-.portal-pending > span { flex-shrink: 0; padding: 4px 8px; color: var(--t5-warning-text); background: var(--t5-warning-bg); border: 1px solid var(--t5-warning-border); border-radius: 999px; font-size: 12px; line-height: 16px; font-weight: 500; }
+.portal-pending > span { flex-shrink: 0; padding: 4px 8px; color: var(--t5-warning-text); background: var(--t5-warning-bg); border: 1px solid var(--t5-warning-border); border-radius: 7px; font-size: 12px; line-height: 16px; font-weight: 500; }
 .portal-pending > p { margin: 2px 0 0; color: #64788a; font-size: 13px; line-height: 1.6; }
 .portal-tabbed-view { min-width: 0; }
 .portal-tabs { display: flex; gap: 12px; overflow-x: auto; border-bottom: 1px solid #e3eaf2; margin-bottom: 22px; }
@@ -47,7 +47,7 @@
 .t5-section-heading p, .t5-detail-card > p, .t5-rule-note p { margin: 8px 0; color: var(--muted); font-size: 14px; line-height: 20px; }
 .t5-process-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; list-style: none; padding: 0; margin: 16px 0 24px; }
 .t5-process-steps li { display: flex; gap: 8px; align-items: center; padding: 12px; border-radius: 8px; background: var(--t5-bg-neutral); border: 1px solid var(--line); font-size: 14px; }
-.t5-process-steps li > span { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 24px; height: 24px; border-radius: 999px; background: var(--t5-surface); color: var(--brand-dark); font-size: 12px; }
+.t5-process-steps li > span { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 24px; height: 24px; border-radius: 7px; background: var(--t5-surface); color: var(--brand-dark); font-size: 12px; }
 .t5-process-steps li[aria-current="step"] { border-color: var(--brand); background: var(--t5-brand-mint); color: var(--brand-dark); }
 .t5-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 24px; }
 .t5-detail-card { min-width: 0; padding: 24px; color: var(--ink); background: var(--t5-surface); border: 1px solid var(--line); border-radius: 12px; }
@@ -59,10 +59,69 @@
 .t5-detail-card .portal-key-values > div { grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .t5-detail-card .portal-key-values dd { color: var(--muted); }
 .school-roster-panel fieldset { min-width: 0; padding: 0; margin: 16px 0 0; border: 0; }
-.school-roster-panel { min-width: 0; }
+.school-roster-panel { min-width: 0; display: grid; gap: 18px; }
 .school-roster-panel code { overflow-wrap: anywhere; }
-.school-roster-panel input, .school-roster-panel select { max-width: 100%; }
+.school-roster-panel input:not([type="checkbox"]):not([type="radio"]), .school-roster-panel select { max-width: 100%; }
 .school-roster-panel .proposal-table { overflow-x: auto; max-width: 100%; }
+.roster-header-row { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.roster-header-row .t5-section-heading { margin-bottom: 0; border-bottom: 0 !important; padding-bottom: 0 !important; flex: 1 1 320px; }
+.roster-header-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.roster-spec-chip { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 8px; border: 1px solid #e3eaf2; background: #f4f7fa; color: #476072; font-size: 12px; font-weight: 600; }
+.roster-guide-grid .t5-detail-card { display: grid; gap: 12px; align-content: start; }
+.roster-term-field { display: grid; gap: 6px; margin-top: 4px; }
+.roster-term-field label, .roster-track-form label, .roster-upload-dropzone label { margin: 0; font-size: 13px; font-weight: 600; color: #314d5e; }
+.roster-term-field select { margin-top: 0; }
+.roster-session { margin-top: 4px; gap: 18px; }
+.roster-majors-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 16px; border: 1px solid #d5ece3; border-radius: 12px; background: #f4fbf8; }
+.roster-majors-label { color: #087b68; font-size: 13px; font-weight: 700; }
+.roster-major-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.roster-major-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; background: #fff; border: 1px solid #cdece4; font-size: 12.5px; color: #142f40; }
+.roster-major-chip code { color: #087b68; font-weight: 700; }
+.roster-upload-actions { margin-top: 14px; }
+.roster-file-meta { margin-top: 10px; font-size: 13px; color: #087b68; }
+.roster-file-meta.is-oversize { color: #b4233a; font-weight: 600; }
+.roster-track-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; margin-bottom: 14px; }
+.roster-track-form > div { flex: 1 1 200px; min-width: 0; display: grid; gap: 6px; }
+.roster-track-form input { margin-top: 0; }
+.roster-recent-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.roster-recent-item { width: 100%; min-height: 0; padding: 10px 12px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; border-radius: 10px; border: 1px solid #e3eaf2; background: #fafcfd; color: var(--ink); font-size: 13px; font-weight: 500; text-align: left; }
+.roster-recent-item:hover:not(:disabled) { border-color: #0b927c; background: #f2faf7; }
+.roster-recent-item.is-active { border-color: #0b927c; background: #e7f6f0; }
+.roster-recent-item > div { display: inline-flex; align-items: center; gap: 8px; }
+.roster-recent-empty { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.roster-job-shell, .roster-existing-card { display: grid; gap: 16px; }
+.roster-job-header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.roster-job-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.roster-job-title-row h3 { margin: 0; font-size: 18px; }
+.roster-job-meta { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+.roster-kpi-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.roster-kpi { display: grid; gap: 4px; padding: 12px 14px; border-radius: 12px; border: 1px solid #e3eaf2; background: #f8fafc; }
+.roster-kpi span { font-size: 12px; font-weight: 600; color: #5b7083; }
+.roster-kpi strong { font-size: 22px; line-height: 1.2; font-variant-numeric: tabular-nums; color: #142f40; }
+.roster-kpi.tone-mint { background: #f2faf7; border-color: #cdece4; }
+.roster-kpi.tone-mint strong { color: #087b68; }
+.roster-kpi.tone-danger { background: #fff5f6; border-color: #f6d5da; }
+.roster-kpi.tone-danger strong { color: #a5364c; }
+.roster-kpi.tone-warning { background: #fffaf0; border-color: #f2dfb6; }
+.roster-kpi.tone-warning strong { color: #966614; }
+.roster-kpi.tone-teal { background: #eaf6f1; border-color: #bfe4d8; }
+.roster-kpi.tone-teal strong { color: #086859; }
+.roster-progress-wrap { display: grid; gap: 6px; }
+.roster-progress-label { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: #314d5e; }
+.roster-progress-wrap progress { width: 100%; height: 10px; border: 0; border-radius: 999px; overflow: hidden; background: #eaf0f4; accent-color: #0b927c; }
+.roster-progress-wrap progress::-webkit-progress-bar { background: #eaf0f4; border-radius: 999px; }
+.roster-progress-wrap progress::-webkit-progress-value { background: linear-gradient(90deg, #0b927c, #16a890); border-radius: 999px; }
+.roster-progress-wrap progress::-moz-progress-bar { background: linear-gradient(90deg, #0b927c, #16a890); border-radius: 999px; }
+.roster-job-notes { display: grid; gap: 4px; padding: 12px 14px; border-radius: 10px; border: 1px solid #e8eef5; background: #f8fafc; font-size: 13px; color: #475b6b; }
+.roster-selection-bar { padding: 12px 14px; border-radius: 12px; background: #f4fbf8; border: 1px solid #d5ece3; align-items: center; }
+.roster-filter-toolbar { margin-bottom: 0; }
+.roster-table table { width: 100%; border-collapse: collapse; }
+.roster-check-cell { width: 44px; text-align: center; }
+.roster-table input[type="checkbox"] { display: inline-block; width: 18px; min-width: 18px; height: 18px; min-height: 18px; margin: 0; padding: 0; accent-color: #0b927c; cursor: pointer; }
+.roster-row-error { margin-top: 6px; font-size: 12px; color: #b4233a; font-weight: 550; }
+.roster-pagination { align-items: center; justify-content: space-between; }
+@media (max-width: 960px) { .roster-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .roster-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .portal-handoff a { color: var(--brand-dark); }
 .t5-roster-columns { margin: 16px 0; display: grid; gap: 12px; }
 .t5-roster-columns > div { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
@@ -87,4 +146,54 @@
   .portal-list-toolbar { display: grid; grid-template-columns: minmax(0, 1fr); }
   .portal-list-toolbar > div { min-width: 0; }
   .portal-handoff-details { padding: 14px; }
+}
+
+/* Shared school workflow surfaces, including screens outside the Figma set. */
+.portal-workspace.is-school .portal-tabs { gap: 6px; padding: 0; margin-bottom: 18px; border: 0; border-bottom: 1px solid #e3eaf2; border-radius: 0; background: transparent; }
+.portal-workspace.is-school .portal-tabs > button { min-height: 40px; padding: 9px 14px; border-radius: 8px 8px 0 0; border: 0; border-bottom: 2px solid transparent; color: #64788a; background: transparent; font-weight: 500; }
+.portal-workspace.is-school .portal-tabs > button:hover { color: #087b68; background: #f3faf7; }
+.portal-workspace.is-school .portal-tabs > button[aria-selected="true"] { color: #087b68; background: #e7f6f0; border-bottom-color: #0b927c; font-weight: 650; }
+.portal-workspace.is-school .portal-list-toolbar { display: flex; align-items: end; gap: 12px; padding: 12px 14px; border: 1px solid #e3eaf2; border-radius: 12px; background: #f8fafc; }
+.portal-workspace.is-school .portal-list-toolbar :is(input, select, button) { min-height: 40px; }
+.portal-workspace.is-school .portal-list-toolbar > div { flex: 1 1 160px; min-width: 0; }
+.portal-workspace.is-school .portal-list-toolbar > button { flex: 0 1 auto; }
+.portal-workspace.is-school .t5-section-heading { align-items: flex-start; gap: 14px; padding: 2px 0 18px 16px; margin-bottom: 18px; border-left: 4px solid #0b927c; border-bottom: 1px solid #edf2f6; }
+.portal-workspace.is-school .t5-section-heading > div { min-width: 0; }
+.portal-workspace.is-school .t5-section-heading .portal-eyebrow { margin: 0 0 4px; color: #087b68; font-size: 11px; font-weight: 700; letter-spacing: .6px; }
+.portal-workspace.is-school .portal-card-icon { flex: 0 0 42px; border: 1px solid #cdece4; margin: 0; }
+.portal-workspace.is-school .t5-detail-grid { align-items: stretch; gap: 20px; }
+.portal-workspace.is-school .t5-detail-card { padding: 20px; border-color: #e3eaf2; border-radius: 14px; background: #fff; }
+.portal-workspace.is-school .school-roster-panel .t5-detail-card { display: flex; flex-direction: column; }
+.portal-workspace.is-school .roster-upload-dropzone { margin-top: auto; padding: 14px 16px; border: 1.5px dashed #cbd5e1; border-radius: 12px; background: #f8fafc; }
+.portal-workspace.is-school .roster-upload-dropzone > p { margin: 0 0 12px; }
+.portal-workspace.is-school .school-roster-panel fieldset { margin-top: 0; padding-top: 12px; border-top: 1px solid #e3eaf2; }
+.portal-workspace.is-school .t5-detail-card:focus-within { border-color: #cdece4; }
+.portal-workspace.is-school .t5-card-heading { align-items: center; gap: 10px; }
+.portal-workspace.is-school :is(.t5-rule-note, .portal-handoff-details, .portal-upload-placeholder) { border: 1px solid #e3eaf2; border-radius: 12px; background: #f8fafc; }
+.portal-workspace.is-school .t5-rule-note { border-color: #cdece4; border-left: 3px solid #0b927c; background: #f4fbf8; margin-top: auto; margin-bottom: 0; }
+.portal-workspace.is-school .portal-pending { border-color: #e3eaf2; background: #f8fafc; border-radius: 12px; }
+.portal-workspace.is-school .t5-process-steps { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding-bottom: 0; border-bottom: 1px solid #e3eaf2; margin-block: 16px 20px; }
+.portal-workspace.is-school .t5-process-steps li { align-items: center; min-width: 0; padding: 10px 12px; border: 0; border-bottom: 2px solid transparent; border-radius: 8px 8px 0 0; background: transparent; color: #64788a; font-size: 13px; font-weight: 500; line-height: 1.5; }
+.portal-workspace.is-school .t5-process-steps li[aria-current="step"] { border-bottom-color: #0b927c; background: #e7f6f0; color: #087b68; font-weight: 650; }
+.portal-workspace.is-school .t5-process-steps li > span { background: #eef3f7; color: #476072; font-weight: 700; }
+.portal-workspace.is-school .t5-process-steps li[aria-current="step"] > span { background: #0b927c; color: #fff; }
+.portal-workspace.is-school .t5-roster-columns { gap: 0; border: 1px solid #e8eef5; border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+.portal-workspace.is-school .t5-roster-columns > div { padding: 10px 14px; background: #fff; border-bottom: 1px solid #edf2f6; }
+.portal-workspace.is-school .t5-roster-columns > div:nth-child(odd) { background: #fafcfd; }
+.portal-workspace.is-school .t5-roster-columns > div:last-child { border-bottom: 0; }
+.portal-workspace.is-school .t5-roster-columns code { color: #087b68; font-size: 12px; font-weight: 600; }
+.portal-workspace.is-school .t5-status-legend { gap: 8px; margin-bottom: 16px; }
+.portal-workspace.is-school .t5-status-legend li { padding: 10px 12px; border: 1px solid #e8eef5; border-radius: 10px; background: #fafcfd; }
+.portal-workspace.is-school .t5-status-legend li:last-child { border-bottom: 1px solid #e8eef5; }
+.portal-workspace.is-school .t5-status-legend .t5-badge { min-width: 122px; justify-content: center; }
+.portal-workspace.is-school .portal-key-values { display: grid; gap: 10px; }
+.portal-workspace.is-school .portal-key-values > div { min-width: 0; padding: 12px 14px; border: 1px solid #e3eaf2; border-radius: 10px; background: #f8fafc; }
+@media (min-width: 1180px) { .portal-workspace.is-school .portal-list-toolbar { flex-wrap: nowrap; } }
+@media (max-width: 1179px) { .portal-workspace.is-school .t5-process-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) {
+  .portal-workspace.is-school .t5-detail-card { padding: 16px; }
+  .portal-workspace.is-school .portal-list-toolbar { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 14px; }
+  .portal-workspace.is-school .portal-list-toolbar > button { width: 100%; }
+  .portal-workspace.is-school .t5-process-steps { grid-template-columns: minmax(0, 1fr); }
+  .portal-workspace.is-school .portal-tabs > button { padding-inline: 10px; }
 }

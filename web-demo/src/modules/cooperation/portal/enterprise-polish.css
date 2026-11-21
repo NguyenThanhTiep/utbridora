@@ -1,0 +1,53 @@
+/* Final enterprise presentation pass; scoped so school/admin layouts keep their own styles. */
+#root .portal-workspace.is-enterprise .enterprise-verifications-workspace { gap: 20px; }
+#root .enterprise-verifications-workspace .workflow-kpi-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 0; }
+#root .enterprise-verifications-workspace button.kpi-card { display: grid; gap: 12px; min-width: 0; padding: 18px; border: 1px solid #dce7f2; border-top: 3px solid #5c96d5; border-radius: 12px; background: #f4f8fe; text-align: left; box-shadow: none; }
+#root .enterprise-verifications-workspace button.kpi-warning { border-color: #f1e2c5; border-top-color: #d99b35; background: #fffbf3; }
+#root .enterprise-verifications-workspace button.kpi-approved { border-color: #cfe9df; border-top-color: #0b927c; background: #f0faf5; }
+#root .enterprise-verifications-workspace button.kpi-card.is-active { outline: 2px solid #0b927c; outline-offset: 2px; }
+#root .enterprise-verifications-workspace .kpi-card-label { color: #314d5e; font-size: 15px; font-weight: 600; }
+#root .enterprise-verifications-workspace .kpi-card-bottom { display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+#root .enterprise-verifications-workspace .kpi-card-value { color: #2869b3; font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; }
+#root .enterprise-verifications-workspace .kpi-warning .kpi-card-value { color: #a56814; }
+#root .enterprise-verifications-workspace .kpi-approved .kpi-card-value { color: #087b68; }
+#root .enterprise-verifications-workspace .kpi-card-hint { color: #64788a; font-size: 12px; font-weight: 400; white-space: normal; }
+#root .enterprise-verifications-workspace .workflow-section-header { align-items: center; gap: 14px; }
+#root .enterprise-verifications-workspace .workflow-subtoolbar-title { margin: 0; font-size: 18px; }
+#root .enterprise-verifications-workspace .placement-filter-bar { padding: 16px; border-radius: 12px; }
+#root .enterprise-verifications-workspace .placement-filter-bar label { display: grid; gap: 7px; min-width: 0; font-size: 14px; }
+#root .enterprise-verifications-workspace .placement-filter-bar :is(input, select) { width: 100%; margin: 0; background: #fff; }
+#root .enterprise-verifications-workspace .enterprise-verification-editor { padding: 22px; border: 1px solid #cde4db; border-radius: 14px; background: #fbfdfc; scroll-margin-top: 110px; }
+#root .enterprise-verification-editor > h3 { margin: 0 0 16px; font-size: 20px; }
+#root .enterprise-verification-editor > fieldset { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; min-width: 0; }
+#root .enterprise-verification-editor > fieldset > label { display: grid; gap: 8px; min-width: 0; color: #425d6e; font-size: 14px; }
+#root .enterprise-verification-editor .cooperation-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+#root .enterprise-verification-editor .cooperation-form-grid label { display: grid; gap: 8px; min-width: 0; color: #425d6e; font-size: 14px; }
+#root .enterprise-verification-editor :is(select, input) { width: 100%; margin: 0; min-width: 0; background: #fff; }
+#root .enterprise-verification-editor .portal-evidence { margin: 0; padding: 18px; border: 1px solid #e3eaf2; border-radius: 11px; background: #fff; }
+#root .enterprise-verification-editor .portal-evidence-heading { gap: 8px; margin-bottom: 10px; }
+#root .enterprise-verification-editor .portal-evidence-heading h4 { margin: 0; font-size: 16px; }
+#root .verification-evidence-note { display: flex; align-items: flex-start; gap: 8px; margin: 0; color: #64788a; font-size: 14px; line-height: 1.75; }
+#root .verification-evidence-note > .icon { flex-shrink: 0; margin-top: 3px; }
+#root .enterprise-verification-editor fieldset > .button-row { justify-content: flex-end; margin: 0; padding-top: 18px; border-top: 1px solid #e3eaf2; }
+#root .portal-workspace.is-enterprise .verification-contact { display: grid; gap: 5px; overflow-wrap: anywhere; }
+#root .portal-workspace.is-enterprise .verification-contact a { width: fit-content; max-width: 100%; color: #087b68; font-size: 15px; overflow-wrap: anywhere; }
+#root .portal-workspace.is-enterprise .portal-handoff a.button { display: inline-flex; align-items: center; gap: 7px; min-height: 42px; padding: 9px 14px; border: 1px solid #cde4db; border-radius: 10px; background: #fff; color: #087b68; font-size: 14px; font-weight: 600; text-decoration: none; }
+@media (min-width: 901px) and (max-width: 1179px) {
+  #root .enterprise-verifications-workspace .enterprise-verification-editor { scroll-margin-top: 200px; }
+}
+@media (max-width: 900px) {
+  #root .enterprise-verifications-workspace .enterprise-verification-editor { scroll-margin-top: 90px; }
+}
+@media (max-width: 700px) {
+  #root .enterprise-verifications-workspace .workflow-kpi-grid { gap: 8px; }
+  #root .enterprise-verifications-workspace button.kpi-card { gap: 10px; padding: 12px 10px; border-radius: 10px; }
+  #root .enterprise-verifications-workspace .kpi-card-label { font-size: 13px; }
+  #root .enterprise-verifications-workspace .kpi-card-value { font-size: 25px; }
+  #root .enterprise-verifications-workspace .workflow-section-header > .button-row { width: 100%; }
+  #root .enterprise-verifications-workspace .workflow-section-header > .button-row > button { flex: 1; }
+  #root .enterprise-verifications-workspace .enterprise-verification-editor { padding: 16px; }
+  #root .enterprise-verification-editor .cooperation-form-grid { grid-template-columns: minmax(0, 1fr); }
+  #root .enterprise-verification-editor .portal-evidence { padding: 14px; }
+  #root .enterprise-verification-editor fieldset > .button-row > button { flex: 1 1 100%; }
+  #root .portal-workspace.is-enterprise .portal-handoff a.button { min-height: 44px; }
+}

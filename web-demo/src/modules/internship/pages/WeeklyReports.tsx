@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
+import { DateInput } from '../../../ui/DateInput';
 import { accessLost, workflowError, workflowPages, workflowRead } from '../workflow-api';
 import { mondayDate, textWithin, uuidPattern, validVersion, type InternshipTask, type WeeklyReport, type ReportReview, type ReportFile } from '../workflow';
 import { CommandFeedback, useWorkflowCommand } from '../useWorkflowCommand';
 import { ReportEvidence } from './ReportEvidence';
-import { useReveal } from '../../../useReveal';
 
 export function WeeklyReports({ contextId, caseIds, student, mentor, denied }: {
   contextId?: string; caseIds?: string[]; student: boolean; mentor: boolean; denied: () => void;
@@ -47,8 +47,6 @@ function ReportList({ caseId, contextId, student, mentor, denied }: {
 }) {
   const [items, setItems] = useState<WeeklyReport[]>([]), [message, setMessage] = useState(''), [loading, setLoading] = useState(true);
   const [refresh, setRefresh] = useState(0), [selected, setSelected] = useState(''), [week, setWeek] = useState('');
-  // Chọn báo cáo trong danh sách hoặc vừa tạo bản nháp thì cuộn tới khối chi tiết báo cáo.
-  const reveal = useReveal();
   const [completedWork, setCompletedWork] = useState(''), [difficulties, setDifficulties] = useState(''), [nextPlan, setNextPlan] = useState('');
   const command = useWorkflowCommand(contextId, denied);
   useEffect(() => {
@@ -62,21 +60,21 @@ function ReportList({ caseId, contextId, student, mentor, denied }: {
     return () => c.abort();
   }, [caseId, contextId, refresh]);
   const valid = mondayDate(week) && reportTextValid(completedWork, difficulties, nextPlan);
-  return <div className="stack"><button className="secondary" disabled={loading || command.busy} onClick={() => setRefresh(n => n + 1)}>Tải danh sách báo cáo</button>
+  return <div className="stack"><div className="button-row"><button className="secondary" disabled={loading || command.busy} onClick={() => setRefresh(n => n + 1)}>Tải danh sách báo cáo</button></div>
     {loading && <p role="status">Đang tải báo cáo…</p>}{message && <p role="alert">{message}</p>}
     {!loading && !message && items.length === 0 && <p>Chưa có báo cáo cho hồ sơ này.</p>}
-    {items.map(item => <button className="secondary" key={item.reportId} onClick={() => { setSelected(item.reportId); reveal.request(); }}>
-      Tuần {item.weekStart} · Bản {item.revisionNo} · {item.state}</button>)}
+    {items.length > 0 && <div className="t3-report-list">{items.map(item => <button className={'secondary t3-report-row-btn' + (selected === item.reportId ? ' is-selected' : '')} key={item.reportId} onClick={() => setSelected(item.reportId)}>
+      Tuần {item.weekStart} · Bản {item.revisionNo} · {item.state}</button>)}</div>}
     {selected && <ReportEditor key={selected} reportId={selected} caseId={caseId} contextId={contextId} student={student} mentor={mentor}
-      denied={denied} changed={() => setRefresh(n => n + 1)} revealRef={reveal.ref} />}
+      denied={denied} changed={() => setRefresh(n => n + 1)} />}
     {student && <form onSubmit={event => { event.preventDefault(); if (!valid) return;
       command.run<WeeklyReport>('/t3/reports', { caseId, weekStart: week, completedWork: completedWork.trim(),
         difficulties: difficulties.trim(), nextPlan: nextPlan.trim(), evidenceFileIds: [] }, value => {
         if (value.caseId !== caseId) { denied(); return; }
-        setSelected(value.reportId); reveal.request(); setRefresh(n => n + 1); setCompletedWork(''); setDifficulties(''); setNextPlan('');
+        setSelected(value.reportId); setRefresh(n => n + 1); setCompletedWork(''); setDifficulties(''); setNextPlan('');
       });
     }}><fieldset disabled={command.busy || command.pending}><legend>Tạo báo cáo tuần</legend>
-      <label>Thứ Hai bắt đầu tuần<input type="date" required value={week} onChange={event => setWeek(event.target.value)} /></label>
+      <label>Thứ Hai bắt đầu tuần<DateInput type="date" required value={week} onChange={event => setWeek(event.target.value)} /></label>
       {week && !mondayDate(week) && <p role="alert">Chọn ngày thứ Hai. Tuần phải giao với thời gian thực tập.</p>}
       <ReportFields completedWork={completedWork} difficulties={difficulties} nextPlan={nextPlan}
         completed={setCompletedWork} difficulty={setDifficulties} plan={setNextPlan} />
@@ -85,9 +83,8 @@ function ReportList({ caseId, contextId, student, mentor, denied }: {
   </div>;
 }
 
-function ReportEditor({ reportId, caseId, contextId, student, mentor, denied, changed, revealRef }: {
+function ReportEditor({ reportId, caseId, contextId, student, mentor, denied, changed }: {
   reportId: string; caseId: string; contextId?: string; student: boolean; mentor: boolean; denied: () => void; changed: () => void;
-  revealRef?: (element: HTMLElement | null) => void;
 }) {
   const [current, setCurrent] = useState<WeeklyReport | null>(null), [view, setView] = useState<WeeklyReport | null>(null);
   const [revision, setRevision] = useState(''), [refresh, setRefresh] = useState(0), [message, setMessage] = useState(''), [loading, setLoading] = useState(true);
@@ -124,7 +121,7 @@ function ReportEditor({ reportId, caseId, contextId, student, mentor, denied, ch
   const isCurrent = !!view && !!current && !revision && view.revisionNo === current.revisionNo;
   const uploadValid = !!upload && upload.size > 0 && upload.size <= 10 * 1024 * 1024
     && ['application/pdf', 'image/png', 'image/jpeg'].includes(upload.type);
-  return <section className="panel stack" aria-label="Chi tiết báo cáo" ref={revealRef}>
+  return <section className="panel stack" aria-label="Chi tiết báo cáo">
     <h4>Chi tiết báo cáo tuần</h4>
     <button className="secondary" disabled={command.busy} onClick={() => setRefresh(n => n + 1)}>Tải phiên bản báo cáo hiện tại</button>
     <label>Phiên bản báo cáo<select disabled={command.busy || command.pending} value={revision} onChange={event => setRevision(event.target.value)}>

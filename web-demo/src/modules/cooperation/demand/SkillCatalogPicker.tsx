@@ -1,5 +1,5 @@
 import { useEffect, useId, useState } from 'react';
-import { LoadingState, Notice } from '../../../components';
+import { Icon, LoadingState, Notice } from '../../../components';
 import { failureMessage } from './errors';
 import { readSkillCatalog, type CatalogSkill, type SkillCatalog } from './skillCatalog';
 
@@ -27,9 +27,9 @@ export function SkillCatalogPicker({ selected, onPick, onVersion }: {
     }, 250);
     return () => { active = false; window.clearTimeout(timer); controller.abort(); };
   }, [open, query, page, refresh]);
-  return <div className="cooperation-catalog">
+  return <div className={'cooperation-catalog' + (open ? ' is-open' : '')}>
     <button type="button" className="secondary" aria-expanded={open} onClick={() => setOpen(value => !value)}>
-      {open ? 'Đóng tra cứu kỹ năng' : 'Tra cứu kỹ năng'}
+      <Icon name="search" size={16} />{open ? 'Đóng tra cứu kỹ năng' : 'Tra cứu kỹ năng'}
     </button>
     {open && <>
       <label htmlFor={searchId}>Tìm kỹ năng theo tên hoặc mã</label>

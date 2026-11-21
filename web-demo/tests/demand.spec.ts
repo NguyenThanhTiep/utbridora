@@ -55,6 +55,95 @@ async function fill(page: Page, selectTaxonomy = true) {
 }
 const empty = { content: [], page: 0, size: 25, totalElements: 0, totalPages: 0 };
 
+test('reopen follows the linked cooperation state and unavailable or foreign cooperation data stays locked', async ({ page }) => {
+  await session(page); page.on('dialog', dialog => dialog.accept());
+  const cases = [
+    { id: 'unlinked', state: null, editable: true },
+    { id: 'submitted', state: 'SUBMITTED', editable: false },
+    { id: 'approved', state: 'APPROVED', editable: false },
+    { id: 'rejected', state: 'REJECTED', editable: true },
+    { id: 'changes', state: 'NEEDS_CHANGES', editable: false },
+    { id: 'unknown', state: 'UNKNOWN', editable: false },
+    { id: 'foreign', state: 'REJECTED', editable: false },
+  ];
+  const records = cases.map(item => ({ demandId: item.id, enterpriseOrgId: org, state: item.state === 'NEEDS_CHANGES' ? 'DRAFT' : 'READY', version: 3,
+    criteriaVersion: 1, validationState: 'VALID', cooperationId: item.state ? 'coop-' + item.id : null, softDeletedAt: null,
+    data: { schoolOrgId: school, termId: term, title: 'Nhu cầu ' + item.id, quantity: 1, description: 'Nội dung đã lưu',
+      location: null, benefits: null, deadline: '2027-01-01T00:00:00Z', required: { majorCodes: [], skills: [],
+        dateRange: { startDate: '2027-02-01', endDate: '2027-05-01' } }, preferred: [], academicCatalogVersion: 'v1', taxonomyVersion: 'v1' } }));
+  const cooperations = cases.filter(item => item.state && item.state !== 'UNKNOWN').map(item => ({
+    cooperationId: 'coop-' + item.id, demandId: item.id, enterpriseOrgId: item.id === 'foreign' ? school : org,
+    schoolOrgId: school, termId: term, state: item.state, version: 1, submissionNo: 1,
+  }));
+  const commands: string[] = [];
+  await page.route('**/api/v1/enterprise/cooperations?**', route => route.fulfill({ json: { ...empty, content: cooperations, totalElements: cooperations.length, totalPages: 1 } }));
+  await page.route('**/api/v1/enterprise/demands**', route => {
+    if (route.request().method() === 'PATCH') {
+      expect(route.request().postDataJSON()).toEqual({ expectedVersion: 3, reasonCode: 'ENTERPRISE_REOPENED' });
+      expect(route.request().headers()['x-organization-id']).toBe(org);
+      expect(route.request().headers()['idempotency-key']).toBeTruthy();
+      const id = new URL(route.request().url()).pathname.split('/').at(-2)!;
+      commands.push(id);
+      const record = records.find(item => item.demandId === id)!;
+      record.state = 'DRAFT'; record.version++;
+      return route.fulfill({ json: record });
+    }
+    return route.fulfill({ json: { ...empty, content: records, totalElements: records.length, totalPages: 1 } });
+  });
+  await open(page);
+  for (const item of cases) {
+    const row = page.getByRole('row').filter({ has: page.getByRole('heading', { name: 'Nhu cầu ' + item.id, exact: true }) });
+    await expect(row.getByRole('button', { name: /^Mở lại bản nháp/ })).toHaveCount(item.editable ? 1 : 0);
+    await expect(row.getByRole('button', { name: /^Xóa nhu cầu/ })).toHaveCount(item.editable ? 1 : 0);
+  }
+  await expect(page.getByRole('button', { name: 'Sửa bản nháp Nhu cầu changes', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Mở lại bản nháp Nhu cầu rejected', exact: true }).click();
+  await page.getByRole('dialog', { name: 'Mở lại nhu cầu?', exact: true }).getByRole('button', { name: 'Mở lại để chỉnh sửa', exact: true }).click();
+  await expect(page.getByText('Đã mở lại bản nháp.', { exact: true })).toBeVisible();
+  expect(commands).toEqual(['rejected']);
+  await page.route('**/api/v1/enterprise/cooperations?**', route => route.fulfill({ status: 503, json: { errorCode: 'DEPENDENCY_UNAVAILABLE' } }));
+  await page.getByRole('button', { name: 'Tải lại', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Sửa bản nháp Nhu cầu rejected', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Mở lại bản nháp Nhu cầu unlinked', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Xóa nhu cầu Nhu cầu unlinked', exact: true })).toBeVisible();
+});
+
+for (const width of [1440, 390, 320]) test(`demand row opens details with click and keyboard without swallowing action buttons at ${width}px`, async ({ page }) => {
+  await session(page);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const record = { demandId: 'clickable-demand', enterpriseOrgId: org, state: 'DRAFT', version: 1, criteriaVersion: 1,
+    validationState: 'VALID', cooperationId: null, softDeletedAt: null,
+    data: { schoolOrgId: school, termId: term, title: 'Nhu cầu xem nhanh', quantity: 3, description: 'Nội dung xem nhanh đã lưu',
+      location: null, benefits: null, deadline: '2027-01-01T00:00:00Z', required: { majorCodes: [], skills: [],
+        dateRange: { startDate: '2027-02-01', endDate: '2027-05-01' } }, preferred: [], academicCatalogVersion: 'v1', taxonomyVersion: 'v1' } };
+  const writes: string[] = [];
+  page.on('request', request => { if (request.method() !== 'GET' && request.url().includes('/enterprise/demands')) writes.push(request.url()); });
+  await page.route('**/api/v1/enterprise/demands**', route => route.fulfill({ json: { ...empty, content: [record], totalElements: 1, totalPages: 1 } }));
+  await open(page); await page.setViewportSize({ width, height: 844 });
+  const row = page.locator('.demand-clickable-row'), detail = page.getByRole('region', { name: record.data.title, exact: true });
+  await row.locator('[data-label="Chỉ tiêu"]').click();
+  await expect(detail).toBeVisible();
+  await expect(detail.getByRole('heading', { name: record.data.title, exact: true })).toBeFocused();
+  await row.locator('[data-label="Chỉ tiêu"]').click();
+  await expect(detail).toBeVisible();
+  await detail.getByRole('button', { name: 'Đóng chi tiết nhu cầu', exact: true }).click();
+  await expect(row).toBeFocused();
+  for (const key of ['Enter', 'Space']) {
+    await row.press(key); await expect(detail).toBeVisible();
+    await detail.getByRole('button', { name: 'Đóng chi tiết nhu cầu', exact: true }).click();
+    await expect(row).toBeFocused();
+  }
+  await row.getByRole('button', { name: 'Xem chi tiết ' + record.data.title, exact: true }).click();
+  await expect(detail).toBeVisible();
+  await detail.getByRole('button', { name: 'Đóng chi tiết nhu cầu', exact: true }).click();
+  await expect(row.getByRole('button', { name: 'Xem chi tiết ' + record.data.title, exact: true })).toBeFocused();
+  await row.getByRole('button', { name: 'Sửa bản nháp ' + record.data.title, exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Sửa bản nháp nhu cầu', exact: true })).toBeVisible();
+  await expect(detail).toHaveCount(0);
+  expect(writes).toEqual([]);
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+});
+
 test('ready and deleted demands use versioned lifecycle commands and reload the current list', async ({ page }) => {
   await session(page); page.on('dialog', dialog => dialog.accept());
   const record = { demandId: '44444444-4444-4444-8444-444444444444', enterpriseOrgId: org, state: 'READY',
@@ -68,23 +157,39 @@ test('ready and deleted demands use versioned lifecycle commands and reload the 
     if (request.method() === 'PATCH') {
       expect(request.headers()['idempotency-key']).toBeTruthy();
       expect(request.postDataJSON().expectedVersion).toBe(record.version);
-      commands.push(new URL(request.url()).pathname.split('/').pop()!);
-      record.version++; record.state = 'DRAFT'; record.softDeletedAt = null;
+      const op = new URL(request.url()).pathname.split('/').pop()!;
+      commands.push(op);
+      record.version++;
+      if (op === 'soft-delete') {
+        expect(request.postDataJSON().reasonCode).toBe('ENTERPRISE_DELETED');
+        record.softDeletedAt = '2026-11-19T00:00:00Z';
+      } else {
+        record.state = 'DRAFT';
+        record.softDeletedAt = null;
+      }
       return route.fulfill({ json: record });
     }
-    return route.fulfill({ json: { ...empty, content: [{ ...record }], totalElements: 1, totalPages: 1 } });
+    const includeDeleted = new URL(request.url()).searchParams.get('includeDeleted') === 'true';
+    const items = !record.softDeletedAt || includeDeleted ? [{ ...record }] : [];
+    return route.fulfill({ json: { ...empty, content: items, totalElements: items.length, totalPages: items.length ? 1 : 0 } });
   });
   await open(page);
   await page.getByRole('button', { name: /Mở lại bản nháp/ }).click();
   // Hộp xác nhận của giao diện (confirm.tsx); hộp chặn rời bản nhập chưa lưu vẫn là window.confirm nên giữ page.on('dialog').
   await page.getByRole('dialog', { name: 'Mở lại nhu cầu?', exact: true }).getByRole('button', { name: 'Mở lại để chỉnh sửa', exact: true }).click();
   await expect(page.getByText('Đã mở lại bản nháp.', { exact: true })).toBeVisible();
-  record.softDeletedAt = '2026-11-19T00:00:00Z';
+  await page.getByRole('button', { name: /Xóa nhu cầu/ }).click();
+  await page.getByRole('dialog', { name: 'Xóa nhu cầu?', exact: true }).getByRole('button', { name: 'Xóa nhu cầu', exact: true }).click();
+  await expect(page.getByText('Đã xóa nhu cầu.', { exact: true })).toBeVisible();
+  await expect(page.locator('.operation-toast strong').last()).toHaveText('Xóa thành công');
+  await expect(page.getByText('Chưa có nhu cầu', { exact: true })).toBeVisible();
   await page.getByLabel('Hiển thị cả nhu cầu đã xóa').check();
+  await expect(page.locator('.demand-status')).toHaveText('Đã xóa');
   await page.getByRole('button', { name: /Khôi phục nhu cầu/ }).click();
   await page.getByRole('dialog', { name: 'Khôi phục nhu cầu?', exact: true }).getByRole('button', { name: 'Khôi phục nhu cầu', exact: true }).click();
   await expect(page.getByText('Đã khôi phục nhu cầu.', { exact: true })).toBeVisible();
-  expect(commands).toEqual(['reopen', 'restore']);
+  await expect(page.locator('.demand-status')).toHaveText('Bản nháp');
+  expect(commands).toEqual(['reopen', 'soft-delete', 'restore']);
 });
 
 test('demand references are choices and changing school clears the previous term and academic version', async ({ page }) => {
@@ -263,11 +368,14 @@ test('create then edit preserves scope and sends expected version', async ({ pag
   await open(page); await fill(page);
   await page.getByRole('button', { name: 'Lưu bản nháp', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Java internship', exact: true })).toBeVisible();
+  await expect(page.locator('.operation-toast strong')).toHaveText('Tạo thành công');
+  await page.locator('.operation-toast-close').click();
   await page.getByRole('button', { name: /Sửa/ }).click();
   await expect(page.getByLabel('Trường nhận nhu cầu', { exact: true })).toBeDisabled();
   await page.getByLabel('Tên nhu cầu').fill('Updated internship');
   await page.getByRole('button', { name: 'Lưu bản nháp', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Updated internship', exact: true })).toBeVisible();
+  await expect(page.locator('.operation-toast strong')).toHaveText('Lưu thành công');
 });
 
 test('uncertain save retries the same key and payload', async ({ page }) => {
@@ -282,6 +390,8 @@ test('uncertain save retries the same key and payload', async ({ page }) => {
   await expect(page.getByLabel('Tên nhu cầu')).toBeDisabled();
   await page.getByRole('button', { name: 'Thử lưu lại', exact: true }).click();
   await expect.poll(() => attempts.length).toBe(2);
+  await expect(page.locator('.operation-toast')).toHaveCount(1);
+  await expect(page.locator('.operation-toast strong')).toHaveText('Chưa xác nhận được kết quả');
   expect(attempts[1]).toEqual(attempts[0]);
   await page.getByRole('button', { name: 'Tài khoản của tôi', exact: true }).click();
   await expect(page.getByLabel('Tên nhu cầu')).toHaveValue('Java internship');
@@ -326,6 +436,7 @@ test('school workspace loads API-backed panels and has no approval action for an
   await page.route('**/api/v1/auth/me/permissions', route => route.fulfill({ json: [{ role: 'SCHOOL_STAFF', organizationId: school, permissions: [] }] }));
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Tổng quan Nhà trường', exact: true })).toBeVisible();
+  await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Doanh nghiệp đối tác', exact: true }).click();
   await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Xác minh doanh nghiệp', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Xác minh doanh nghiệp', exact: true })).toBeVisible();
   await expect(page.getByText('Chưa có hồ sơ xác minh trong phạm vi này.', { exact: true })).toBeVisible();

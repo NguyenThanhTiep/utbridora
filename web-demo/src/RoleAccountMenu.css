@@ -1,0 +1,438 @@
+.role-menu-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+button.portal-role.role-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  min-height: 48px;
+  margin: 0;
+  padding: 6px 12px 6px 8px;
+  border: 1px solid #e3eaf2;
+  border-radius: 10px;
+  background: #fff;
+  color: #142f40;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(20, 47, 64, 0.04);
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.2s ease;
+}
+
+button.portal-role.role-menu-trigger.is-topbar {
+  height: 42px;
+  min-height: 42px;
+  padding: 4px 12px 4px 5px;
+}
+
+button.portal-role.role-menu-trigger:hover:not(:disabled),
+button.portal-role.role-menu-trigger.is-open {
+  border-color: #93d6c4;
+  background: #f3faf7;
+  color: #087b68;
+  box-shadow: 0 4px 14px rgba(11, 146, 124, 0.12);
+}
+
+button.portal-role.role-menu-trigger > span:first-child {
+  display: grid;
+  place-items: center;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #0b927c;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+button.portal-role.role-menu-trigger.is-topbar > span:first-child {
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  font-size: 11px;
+}
+
+.role-menu-label,
+button.portal-role.role-menu-trigger > .role-menu-label {
+  display: inline-block;
+  width: auto;
+  height: auto;
+  max-width: 165px;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.role-menu-caret {
+  color: #64788a;
+  flex-shrink: 0;
+  transition: transform var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out), color var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out);
+}
+
+button.portal-role.role-menu-trigger.is-open .role-menu-caret {
+  transform: rotate(180deg);
+  color: #087b68;
+}
+
+/* Floating stacked overlay drawer ("sidebar chồng") */
+.role-menu-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 120;
+  width: min(320px, calc(100vw - 24px));
+  border: 1px solid #d5e5e8;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow:
+    0 18px 42px rgba(16, 47, 61, 0.2),
+    0 4px 12px rgba(16, 47, 61, 0.08);
+  overflow: hidden;
+  transform-origin: top right;
+  animation: ui-overlay-in var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out);
+}
+
+/* Dark teal identity header matching the sidebar palette */
+.role-menu-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background:
+    radial-gradient(circle at 105% -10%, rgba(26, 155, 141, 0.28) 0 84px, transparent 85px),
+    linear-gradient(105deg, #102f3d 0%, #0c4c4f 94%);
+  color: #fff;
+}
+
+.role-menu-header-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #0b927c;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: inset 0 0 0 1px rgba(130, 240, 214, 0.5);
+}
+
+.role-menu-header-meta {
+  min-width: 0;
+  flex: 1;
+}
+
+.role-menu-header-kicker {
+  display: block;
+  margin: 0 0 2px;
+  color: #8cefd7;
+  font-size: 10.5px;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.role-menu-header-meta strong {
+  display: block;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.role-menu-header-meta small {
+  display: block;
+  margin-top: 2px;
+  color: #c2dae0;
+  font-size: 11.5px;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.role-menu-list {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  background: #fff;
+}
+
+.role-menu-divider {
+  height: 1px;
+  margin: 4px 4px;
+  background: #edf2f6;
+}
+
+button.role-menu-item,
+.portal-workspace.has-portal-motion button.role-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  margin: 0;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #274454;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: left;
+  box-shadow: none;
+  transition: background-color var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out), color var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out), transform var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out);
+}
+
+button.role-menu-item .icon {
+  color: #5b7283;
+  flex-shrink: 0;
+  transition: color var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out);
+}
+
+button.role-menu-item:hover:not(:disabled),
+.portal-workspace.has-portal-motion button.role-menu-item:hover:not(:disabled) {
+  background: #eef8f5;
+  color: #087b68;
+  transform: translateX(2px);
+  box-shadow: none;
+}
+
+button.role-menu-item:hover:not(:disabled) .icon {
+  color: #0b927c;
+}
+
+button.role-menu-item.is-danger,
+.portal-workspace.has-portal-motion button.role-menu-item.is-danger {
+  color: #c23b4e;
+}
+
+button.role-menu-item.is-danger .icon {
+  color: #c23b4e;
+}
+
+button.role-menu-item.is-danger:hover:not(:disabled),
+.portal-workspace.has-portal-motion button.role-menu-item.is-danger:hover:not(:disabled) {
+  background: #fdecee;
+  color: #a9283b;
+}
+
+button.role-menu-item.is-danger:hover:not(:disabled) .icon {
+  color: #a9283b;
+}
+
+/* Global sticky topbar styling synchronized across portal, utility, admin & personal pages */
+.workspace > .workspace-main > .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px);
+}
+
+.topbar.is-portal-topbar .portal-topbar-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.topbar.is-portal-topbar .portal-topbar-identity .portal-organization-icon {
+  flex: 0 0 42px;
+  height: 42px;
+  border-radius: 10px;
+}
+
+.topbar.is-portal-topbar .portal-topbar-identity small {
+  display: block;
+  margin: 0 0 2px;
+  color: #087b68;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar.is-portal-topbar .portal-topbar-identity strong {
+  display: block;
+  color: #142f40;
+  font-size: 15px;
+  font-weight: 750;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar.is-portal-topbar .portal-topbar-back {
+  min-height: 42px;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid #e3eaf2;
+  border-radius: 10px;
+  background: #fff;
+  color: #425c6e;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.topbar.is-portal-topbar .portal-topbar-back:hover:not(:disabled) {
+  border-color: #93d6c4;
+  background: #f3faf7;
+  color: #087b68;
+}
+
+.workspace-t5:not(.workspace-t5-portal) .content {
+  padding-top: 16px;
+}
+
+.workspace-t5:not(.workspace-t5-portal) .page-header {
+  margin-bottom: 18px;
+  padding: 18px 22px;
+  border: 1px solid #e3eaf2;
+  border-left: 4px solid #0b927c;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 4px 20px #142f4006;
+}
+
+.workspace-t5:not(.workspace-t5-portal) .page-header .section-kicker {
+  margin: 0 0 4px;
+  color: #087b68;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.workspace-t5:not(.workspace-t5-portal) .page-header h1 {
+  font-size: 22px;
+  color: #142f40;
+}
+
+.workspace-t5:not(.workspace-t5-portal) .page-header .page-description {
+  margin-top: 4px;
+  color: #5b7083;
+  font-size: 13px;
+}
+
+@media (min-width: 901px) {
+  .portal-workspace .portal-context-bar {
+    position: sticky;
+    top: 12px;
+    z-index: 25;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 6px 20px rgba(20, 47, 64, 0.08);
+  }
+
+  .workspace.workspace-t5:not(.workspace-t5-portal) > .workspace-main > .topbar {
+    position: sticky;
+    top: 12px;
+    z-index: 25;
+    height: auto;
+    min-height: 70px;
+    margin: 12px 24px 0;
+    padding: 11px 18px;
+    border: 1px solid #e3eaf2;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 6px 20px rgba(20, 47, 64, 0.08);
+  }
+
+  .workspace.workspace-admin > .workspace-main > .topbar {
+    position: sticky;
+    top: 12px;
+    z-index: 25;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 6px 20px rgba(20, 47, 64, 0.07);
+  }
+
+  .workspace:not(.workspace-t5):not(.workspace-admin) > .workspace-main > .topbar {
+    position: sticky;
+    top: 12px;
+    z-index: 25;
+    height: auto;
+    min-height: 68px;
+    margin: 14px 34px 0;
+    padding: 10px 18px;
+    border: 1px solid #e5ebef;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 6px 20px rgba(20, 48, 64, 0.07);
+  }
+}
+
+@media (max-width: 720px) {
+  .workspace > .workspace-main > .topbar {
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  .topbar.is-portal-topbar .portal-topbar-identity .portal-organization-icon,
+  .topbar.is-portal-topbar .portal-topbar-identity small {
+    display: none;
+  }
+
+  .topbar.is-portal-topbar .portal-topbar-back {
+    min-height: 38px;
+    height: 38px;
+    padding: 0 10px;
+  }
+
+  .topbar.is-portal-topbar .portal-topbar-back span {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar .role-menu-label {
+    display: none;
+  }
+
+  .topbar button.portal-role.role-menu-trigger.is-topbar {
+    padding: 4px 8px 4px 5px;
+    gap: 4px;
+  }
+
+  .workspace-admin .topbar .profile-shortcut > span:not(.avatar) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .role-menu-popover,
+  button.role-menu-item,
+  button.role-menu-trigger,
+  .role-menu-caret {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -76,7 +76,7 @@ public class SecurityConfig {
                .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/demand-references/schools","/api/v1/enterprise/demand-references/terms","/api/v1/enterprise/demand-references/academic-catalog").authenticated()
                .requestMatchers(HttpMethod.POST,"/api/v1/enterprise/demands").authenticated()
                .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/demands/{id}").authenticated()
-               .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/demands/*/reopen","/api/v1/enterprise/demands/*/restore").authenticated()
+               .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/demands/*/reopen","/api/v1/enterprise/demands/*/soft-delete","/api/v1/enterprise/demands/*/restore").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/verifications","/api/v1/enterprise/verifications/*","/api/v1/school/verifications","/api/v1/school/verifications/*").authenticated()
                .requestMatchers(HttpMethod.POST,"/api/v1/enterprise/verifications").authenticated()
                .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/verifications/*","/api/v1/enterprise/verifications/*/submit","/api/v1/school/verifications/*/decision").authenticated()
@@ -107,7 +107,7 @@ public class SecurityConfig {
                    "/api/v1/enterprise/*/placements","/api/v1/enterprise/*/placements/summary","/api/v1/enterprise/*/placements/*/internship-link").authenticated()
                .requestMatchers(HttpMethod.PATCH,"/api/v1/t3/assignments/*/status","/api/v1/t3/reports/*").authenticated()
                .requestMatchers(HttpMethod.POST,"/api/v1/school/student-imports/preview","/api/v1/school/student-imports/*/confirm","/api/v1/school/student-imports/*/resume","/api/v1/school/student-imports/*/rows/*/resend").authenticated()
-               .requestMatchers(HttpMethod.GET,"/api/v1/school/student-imports/*","/api/v1/school/student-imports/*/rows").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/school/student-imports","/api/v1/school/student-imports/*","/api/v1/school/student-imports/*/rows","/api/v1/school/student-rosters").authenticated()
                .anyRequest().denyAll())
            .exceptionHandling(ex->ex
                .authenticationEntryPoint((req,res,error)->{

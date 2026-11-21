@@ -188,7 +188,7 @@ public class PlacementService {
         scope.require(auth, schoolOrgId, coop.termId(), "placement:school:write");
 
         reCheckVerification(coop.enterpriseOrgId(),schoolOrgId);
-        checkDates(coop.termId(),startDate,endDate,effectiveAt);
+        checkDates(coop.termId(),coop.demandId(),coop.enterpriseOrgId(),startDate,endDate,effectiveAt);
         checkCurrentCandidate(auth,item,coop);
 
         // No duplicate placement per proposal item
@@ -291,7 +291,7 @@ public class PlacementService {
         if(jdbc.queryForObject("SELECT COUNT(*) FROM placements WHERE student_user_id=? AND term_id=? AND state IN ('APPROVED','ACTIVE')",Integer.class,p.studentUserId(),p.termId())>0)
             throw failure(409,"ACTIVE_PLACEMENT_EXISTS");
         checkCurrentCandidate(auth,item,coop);
-        checkDates(p.termId(),p.startDate(),p.endDate(),p.effectiveAt());
+        checkDates(p.termId(),p.demandId(),p.enterpriseOrgId(),p.startDate(),p.endDate(),p.effectiveAt());
         reCheckQuota(p.cooperationId(),p.demandId());
         reCheckInvitationAccepted(item);
         if (!consentSummary.read(item, coop).shareIsActive())
@@ -371,7 +371,7 @@ public class PlacementService {
         String termState=jdbc.queryForObject("SELECT status FROM terms WHERE id=? AND school_org_id=?",String.class,p.termId(),p.schoolOrgId());
         if(!"ACTIVE".equals(termState)) throw failure(422,"TERM_INVALID");
         reCheckVerification(p.enterpriseOrgId(),p.schoolOrgId());
-        checkDates(p.termId(),p.startDate(),p.endDate(),p.effectiveAt());
+        checkDates(p.termId(),p.demandId(),p.enterpriseOrgId(),p.startDate(),p.endDate(),p.effectiveAt());
         int changed=jdbc.update("UPDATE placements SET state='ACTIVE',version=version+1 WHERE id=? AND state='APPROVED' AND version=?",p.placementId(),p.version());
         if(changed!=1) throw failure(409,"VERSION_CONFLICT");
         writeHistory(p.placementId(),"APPROVED","ACTIVE",actorId,"EFFECTIVE_AT",null,UUID.randomUUID().toString());
@@ -837,13 +837,18 @@ public class PlacementService {
         if(ids.size()!=1) throw failure(404,"RESOURCE_NOT_FOUND");
         jdbc.queryForObject("SELECT id FROM demands WHERE id=? FOR UPDATE",String.class,ids.getFirst());
     }
-    private void checkDates(String term,LocalDate start,LocalDate end,Instant effective) {
+    private void checkDates(String term,String demandId,String enterpriseOrgId,LocalDate start,LocalDate end,Instant effective) {
         // Non-locking read: term dates are immutable once set; no need to hold a lock
         // that could conflict with concurrent term-status checks in capacityOf.
         var dates=jdbc.query("SELECT start_date,end_date FROM terms WHERE id=?",(r,n)->new LocalDate[]{r.getDate(1).toLocalDate(),r.getDate(2).toLocalDate()},term).getFirst();
         var zone=ZoneId.of("Asia/Ho_Chi_Minh");
         if(start.isBefore(dates[0]) || end.isAfter(dates[1]) || effective.isBefore(dates[0].atStartOfDay(zone).toInstant())
             || !effective.isBefore(dates[1].plusDays(1).atStartOfDay(zone).toInstant())) throw failure(422,"PLACEMENT_GATE_FAILED");
+        // The caller already holds the demand lock; recheck the authoritative range on every transition.
+        var demand=demands.findLocked(demandId,enterpriseOrgId).orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
+        if(demand.deletedAt()!=null) throw failure(404,"RESOURCE_NOT_FOUND");
+        var expected=demand.data().required().dateRange();
+        if(!start.equals(expected.startDate()) || !end.equals(expected.endDate())) throw failure(422,"INVALID_DATE_RANGE");
     }
     private void checkCurrentCandidate(Authentication auth,ProposalService.Item item,CooperationService.CooperationDto coop) {
         var d=demands.findLocked(coop.demandId(),coop.enterpriseOrgId()).orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));

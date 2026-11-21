@@ -1257,6 +1257,46 @@ class EnterpriseProposalIT {
         assertEquals("TERMINATED",jdbc.queryForObject("SELECT state FROM internship_cases WHERE placement_id=?",String.class,p.placementId()));
     }
 
+    @Test void placementDatesMustMatchApprovedDemandOnCreateApproveAndActivation() throws Exception {
+        enterpriseAccepted();var item=proposals.item(f.proposalId());var range=input.required().dateRange();
+        Instant effective=Instant.now().plusSeconds(3600).truncatedTo(java.time.temporal.ChronoUnit.MICROS);
+        var mismatches=List.of(new DateRange(range.startDate().plusDays(1),range.endDate()),
+            new DateRange(range.startDate(),range.endDate().minusDays(1)),
+            new DateRange(range.startDate().plusDays(1),range.endDate().minusDays(1)));
+        for(var dates:mismatches) {
+            String operation=key();
+            var request=new PlacementService.CreatePlacement(item.proposalItemId(),item.version(),eligibilityVersion(),effective.toString(),dates.startDate().toString(),dates.endDate().toString());
+            failure(422,"INVALID_DATE_RANGE",()->placements.create(as(2),id(11),operation,request));
+            assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM placements WHERE proposal_item_id=?",Integer.class,item.proposalItemId()));
+            assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM operation_records WHERE idempotency_key=?",Integer.class,operation));
+            assertEquals("ENTERPRISE_ACCEPTED",proposals.item(item.proposalItemId()).state());
+        }
+        var invalid=new PlacementService.CreatePlacement(item.proposalItemId(),item.version(),eligibilityVersion(),effective.toString(),range.startDate().plusDays(1).toString(),range.endDate().toString());
+        var rejected=http(school,"POST","/school/placements",JSON.writeValueAsString(invalid),id(11),key(),true);
+        assertEquals(422,rejected.statusCode(),rejected.body());assertTrue(rejected.body().contains("INVALID_DATE_RANGE"));
+        var pending=pending(effective);
+        assertEquals(range.startDate(),pending.startDate());assertEquals(range.endDate(),pending.endDate());
+        // Simulate an older mismatched record only in this test's disposable database.
+        jdbc.update("UPDATE placements SET start_date=? WHERE id=?",java.sql.Date.valueOf(range.startDate().plusDays(1)),pending.placementId());
+        var approval=new PlacementService.PlacementCommand(pending.version(),"DEMO-DATES","SCHOOL_APPROVED");
+        failure(422,"INVALID_DATE_RANGE",()->placements.approve(as(2),pending.placementId(),key(),approval));
+        assertEquals("PENDING_APPROVAL",currentPlacement(pending.placementId()).state());
+        assertEquals(pending.version(),currentPlacement(pending.placementId()).version());
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM placement_outbox WHERE placement_id=?",Integer.class,pending.placementId()));
+        jdbc.update("UPDATE placements SET start_date=? WHERE id=?",java.sql.Date.valueOf(range.startDate()),pending.placementId());
+        var approved=placements.approve(as(2),pending.placementId(),key(),approval);
+        jdbc.update("UPDATE placements SET end_date=? WHERE id=?",java.sql.Date.valueOf(range.endDate().minusDays(1)),pending.placementId());
+        org.mockito.Mockito.when(placementClock.instant()).thenReturn(effective.plusSeconds(1));
+        var activation=new PlacementService.PlacementCommand(approved.version(),"DEMO-DATES-ACTIVE","SCHOOL_APPROVED");
+        failure(422,"INVALID_DATE_RANGE",()->placements.activate(as(2),approved.placementId(),key(),activation));
+        failure(422,"INVALID_DATE_RANGE",()->placements.activateDue(approved.placementId(),approved.version()));
+        assertEquals("APPROVED",currentPlacement(approved.placementId()).state());
+        assertEquals(approved.version(),currentPlacement(approved.placementId()).version());
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM placement_outbox WHERE placement_id=? AND event_type='PlacementActivated'",Integer.class,approved.placementId()));
+        jdbc.update("UPDATE placements SET end_date=? WHERE id=?",java.sql.Date.valueOf(range.endDate()),pending.placementId());
+        assertEquals("ACTIVE",placements.activate(as(2),approved.placementId(),key(),activation).state());
+    }
+
     @Test void placementWireRejectsUnknownCoercedMissingAndInvalidDatesWithoutEffect() throws Exception {
         String path="/school/placements";
         for(String invalid:List.of("{}","{\"proposalItemId\":\""+f.proposalId()+"\",\"expectedProposalVersion\":\"1\",\"expectedEligibilityVersion\":1,\"effectiveAt\":\"2026-11-13T00:00:00Z\",\"startDate\":\"2026-11-13\",\"endDate\":\"2026-11-14\"}","{\"actorId\":\""+id(2)+"\"}")) {

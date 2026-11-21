@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { Grant, Me } from '../../../api';
+import { useOrganizationNames } from '../../useOrganizationNames';
 import type { ContextAssignment } from '../types';
 import { workflowError, workflowPages, workflowRead } from '../workflow-api';
 import { gradeAccessLost } from '../evaluation';
@@ -70,7 +71,7 @@ function EnterpriseEvaluations({me,grants,denied}:{me:Me;grants:Grant[];denied:(
     && grants.some(g=>g.role==='ENTERPRISE' && g.organizationId===a.scope.enterpriseOrgId && g.permissions.includes(a.kind==='MENTOR'?'internship:enterprise:evaluate':'t3:grade_visibility:manage')));
   const assignment=usable.find(a=>a.id===selected);
   return <div className="stack"><section className="panel stack"><h2>Phân công đánh giá</h2>
-    <button className="secondary" onClick={()=>setRefresh(n=>n+1)}>Tải lại phân công đánh giá</button>
+    <div className="button-row"><button type="button" className="secondary" onClick={()=>setRefresh(n=>n+1)}>Tải lại phân công đánh giá</button></div>
     {loading?<p role="status">Đang xác nhận phân công…</p>:error?<p role="alert">{error}</p>:<label>Phân công đánh giá<select value={assignment?.id || ''} onChange={e=>setSelected(e.target.value)}>
       <option value="">Chọn phân công…</option>{usable.map(a=><option key={a.id} value={a.id}>{a.kind} · Kỳ …{a.scope.termId.slice(-6)} · {a.scope.caseId?'Hồ sơ …'+a.scope.caseId.slice(-6):a.scope.groupId?'Nhóm …'+a.scope.groupId.slice(-6):'Toàn doanh nghiệp'}</option>)}</select></label>}
     {!loading && !error && usable.length===0 && <p>Chưa có phân công Mentor/HR phù hợp còn hiệu lực.</p>}
@@ -92,11 +93,15 @@ function HrVisibility({assignment,denied}:{assignment:ContextAssignment;denied:(
 }
 function SchoolScope({grants,denied}:{grants:Grant[];denied:()=>void}) {
   const schools=grants.filter(g=>g.role==='SCHOOL_STAFF' && !!g.organizationId && (g.permissions.includes('t3:grades:publish') || g.permissions.includes('t3:result_policy:manage')));
+  const orgNames=useOrganizationNames(schools.length>0);
   const [school,setSchool]=useState(schools[0]?.organizationId || '');
   const current=schools.find(g=>g.organizationId===school);
-  return <div className="stack"><section className="panel"><label>Trường quản lý đánh giá<select value={school} onChange={e=>setSchool(e.target.value)}>
-    {schools.map(g=><option key={g.organizationId} value={g.organizationId!}>Trường …{g.organizationId!.slice(-6)}</option>)}</select></label>
-    {schools.length===0 && <p>Chưa có quyền công bố hoặc quản lý chính sách kết quả.</p>}</section>
+  return <div className="stack"><section className="panel stack">
+    {schools.length>0
+      ? <label>Trường quản lý đánh giá<select value={school} onChange={e=>setSchool(e.target.value)}>
+        {schools.map(g=><option key={g.organizationId} value={g.organizationId!}>{orgNames[g.organizationId!] || ('Trường …'+g.organizationId!.slice(-6))}</option>)}</select></label>
+      : <p className="empty-inline">Chưa có quyền công bố hoặc quản lý chính sách kết quả.</p>}
+  </section>
     {current && <SchoolTerm key={school} schoolId={school} grant={current} denied={denied}/>}
   </div>;
 }

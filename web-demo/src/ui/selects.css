@@ -1,0 +1,211 @@
+/* Shared single-choice controls. Keep native labels, validation and keyboard behavior. */
+#root select:not([multiple]):is(:not([size]), [size="1"]) {
+  box-sizing: border-box;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  min-block-size: 40px;
+  padding-inline: 13px 36px;
+  border: 1px solid #dce6ed;
+  border-radius: 10px;
+  background-color: #fff;
+  color: #142f40;
+  font-family: inherit;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  color-scheme: light;
+  transition: border-color var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out), box-shadow var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out), background-color var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out);
+}
+
+#root select:not([multiple]):is(:not([size]), [size="1"]):not(:disabled):hover {
+  border-color: #80beaf;
+  background-color: #fbfefd;
+}
+
+#root select:not([multiple]):is(:not([size]), [size="1"]):is(:focus, :open) {
+  outline: none;
+  border-color: #0b927c;
+  box-shadow: 0 0 0 3px #0b927c12;
+}
+
+#root select:not([multiple]):is(:not([size]), [size="1"])[aria-invalid="true"] {
+  border-color: #d32f2f;
+  box-shadow: 0 0 0 3px #d32f2f12;
+}
+
+#root select:not([multiple]):is(:not([size]), [size="1"]):disabled {
+  border-color: #e3eaf2;
+  background-color: #f3f6f9;
+  color: #8899a6;
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+/* Preserve T2's floating-label single frame inside .student-page while keeping the shared dropdown picker. */
+#root .student-page :is(.field, label) > select:not([multiple]):is(:not([size]), [size="1"]),
+#root .student-page :is(.field, label) > select:not([multiple]):is(:not([size]), [size="1"]):not(:disabled):hover,
+#root .student-page :is(.field, label) > select:not([multiple]):is(:not([size]), [size="1"]):is(:focus, :open),
+#root .student-page :is(.field, label) > select:not([multiple]):is(:not([size]), [size="1"])[aria-invalid="true"] {
+  min-block-size: 24px;
+  min-height: 24px;
+  margin: 0;
+  padding-inline: 0 24px;
+  padding-block: 0;
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  background-position: right 0 center;
+  box-shadow: none;
+  color: var(--ink, #142f40);
+}
+
+#root .student-page :is(.field, label) > select:not([multiple]):is(:not([size]), [size="1"]):disabled {
+  min-block-size: 24px;
+  min-height: 24px;
+  margin: 0;
+  padding-inline: 0 24px;
+  padding-block: 0;
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  box-shadow: none;
+  color: #6c7f8c;
+}
+
+/* Browsers without customizable pickers retain their accessible native dropdown. */
+@supports (appearance: base-select) and selector(::picker(select)) {
+  #root select:not([multiple]):is(:not([size]), [size="1"]),
+  #root select:not([multiple]):is(:not([size]), [size="1"])::picker(select) {
+    appearance: base-select;
+  }
+
+  #root select:not([multiple]):is(:not([size]), [size="1"]) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-inline: 13px;
+    background-image: none;
+    white-space: nowrap;
+    overflow: clip;
+  }
+
+  #root .student-page :is(.field, label) > select:not([multiple]):is(:not([size]), [size="1"]) {
+    padding-inline: 0;
+  }
+
+  #root select:not([multiple]):is(:not([size]), [size="1"])::picker-icon {
+    content: "";
+    flex: 0 0 7px;
+    inline-size: 7px;
+    block-size: 7px;
+    margin: -3px 3px 0 auto;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    color: #64788a;
+    rotate: 45deg;
+    transition: rotate var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out), color var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out);
+  }
+
+  #root select:not([multiple]):is(:not([size]), [size="1"]):open::picker-icon {
+    color: #0b927c;
+    rotate: 225deg;
+  }
+
+  #root select:not([multiple]):is(:not([size]), [size="1"])::picker(select) {
+    box-sizing: border-box;
+    inline-size: anchor-size(self-inline);
+    min-inline-size: 0;
+    max-inline-size: calc(100dvw - 24px);
+    max-block-size: min(320px, 45dvh);
+    margin-block: 6px;
+    padding: 6px;
+    overflow: auto;
+    overscroll-behavior: contain;
+    border: 1px solid #dce6ed;
+    border-radius: 13px;
+    background: #fff;
+    color: #142f40;
+    box-shadow: 0 12px 32px #142f401c, 0 2px 6px #142f400a;
+    font: inherit;
+    scrollbar-width: thin;
+    scrollbar-color: #c1d9d2 transparent;
+    opacity: 1;
+    transition: opacity var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out);
+  }
+
+  #root select:not([multiple]):is(:not([size]), [size="1"]) option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-block-size: 40px;
+    padding: 9px 11px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #142f40;
+    font: inherit;
+    line-height: 1.45;
+    text-align: start;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+  }
+
+  #root select:not([multiple]):is(:not([size]), [size="1"]) option + option {
+    margin-block-start: 3px;
+  }
+
+  #root select:not([multiple]):is(:not([size]), [size="1"]) option:not(:disabled):is(:hover, :focus-visible) {
+    outline: none;
+    background: #f0f7f4;
+  }
+
+  #root select:not([multiple]):is(:not([size]), [size="1"]) option:checked {
+    background: #e7f6f0;
+    color: #087b68;
+    font-weight: 600;
+  }
+
+  #root select:not([multiple]):is(:not([size]), [size="1"]) option::checkmark {
+    order: 1;
+    margin-inline-start: auto;
+    color: #0b927c;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  #root select:not([multiple]):is(:not([size]), [size="1"]) option:disabled {
+    background: transparent;
+    color: #8899a6;
+    cursor: not-allowed;
+  }
+
+  #root select:not([multiple]):is(:not([size]), [size="1"]) optgroup {
+    padding: 6px 0;
+    color: #64788a;
+    font: inherit;
+  }
+
+  @starting-style {
+    #root select:not([multiple]):is(:not([size]), [size="1"])::picker(select) { opacity: 0; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root select:not([multiple]):is(:not([size]), [size="1"]),
+  #root select:not([multiple]):is(:not([size]), [size="1"])::picker-icon,
+  #root select:not([multiple]):is(:not([size]), [size="1"])::picker(select) { transition: none; }
+}
+
+@media (forced-colors: active) {
+  #root select:not([multiple]):is(:not([size]), [size="1"]),
+  #root select:not([multiple]):is(:not([size]), [size="1"])::picker(select) {
+    border-color: ButtonText;
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+  }
+  #root select:not([multiple]):is(:not([size]), [size="1"]):focus-visible { outline: 2px solid Highlight; }
+}

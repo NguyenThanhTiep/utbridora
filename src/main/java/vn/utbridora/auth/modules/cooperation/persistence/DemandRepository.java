@@ -56,8 +56,13 @@ public class DemandRepository {
         if (!jdbc.queryForList("SELECT p.id FROM placements p JOIN cooperations c ON c.id=p.cooperation_id WHERE c.demand_id=? AND p.state<>'CANCELLED' FOR UPDATE",String.class,id).isEmpty()) return false;
         return jdbc.queryForList("SELECT i.id FROM proposal_items i JOIN proposal_batches b ON b.id=i.batch_id JOIN cooperations c ON c.id=b.cooperation_id WHERE c.demand_id=? AND i.state NOT IN ('DECLINED','EXPIRED','REVOKED') FOR UPDATE",String.class,id).isEmpty();
     }
-    public void reopen(StoredDemand d) {
-        jdbc.update("UPDATE demands SET state='DRAFT',version=version+1,soft_deleted_at=NULL,updated_at=UTC_TIMESTAMP(6) WHERE id=? AND version=?",d.id(),d.version());
+    public int applyLifecycle(StoredDemand d,boolean softDelete) {
+        if (softDelete) {
+            return jdbc.update("UPDATE demands SET soft_deleted_at=UTC_TIMESTAMP(6),version=version+1,updated_at=UTC_TIMESTAMP(6) WHERE id=? AND enterprise_org_id=? AND version=? AND soft_deleted_at IS NULL",
+                    d.id(),d.enterpriseOrgId(),d.version());
+        }
+        return jdbc.update("UPDATE demands SET state='DRAFT',version=version+1,soft_deleted_at=NULL,updated_at=UTC_TIMESTAMP(6) WHERE id=? AND enterprise_org_id=? AND version=?",
+                d.id(),d.enterpriseOrgId(),d.version());
     }
     public DemandCriteriaSnapshot currentSnapshot(StoredDemand demand) {
         String data=jdbc.queryForObject("SELECT r.snapshot_json FROM demand_revisions r JOIN demands d ON d.id=r.demand_id WHERE r.demand_id=? AND r.version=? AND d.enterprise_org_id=?",

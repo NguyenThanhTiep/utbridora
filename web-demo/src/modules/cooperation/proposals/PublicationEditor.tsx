@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Notice } from '../../../components';
+import { DateInput } from '../../../ui/DateInput';
 import { scopedRead, workflowError } from './api';
 import type { Publication } from './types';
 import { useWorkflowCommand } from './useWorkflowCommand';
@@ -24,8 +25,8 @@ export function PublicationEditor({ org, cooperationId }: { org: string; coopera
   }, [org, path, revision]);
   return <section className="proposal-publication"><h4>Công bố cơ hội cho sinh viên</h4>
     <div className="t5-rule-note" role="note"><strong>Phạm vi công bố</strong>
-      <p>Toàn bộ sinh viên đủ điều kiện trong cùng trường và kỳ của hợp tác; máy chủ kiểm tra quyền truy cập khi sinh viên xem cơ hội.</p>
-      <p>Theo khóa / ngành: chưa có cấu hình giới hạn riêng trong API công bố hiện tại. Ngành tuyển dụng vẫn theo tiêu chí của nhu cầu đã duyệt.</p></div>
+      <p>Dành cho sinh viên đủ điều kiện trong cùng trường và kỳ thực tập.</p>
+      <p>Ngành tuyển dụng áp dụng theo tiêu chí của nhu cầu đã duyệt.</p></div>
     <Notice message={error || command.message} tone="error" /><p role="status">{notice}</p>
     {!value && !error && <p>Đang tải thời gian công bố…</p>}
     {error && <button className="secondary" onClick={() => setRevision(n => n + 1)}>Tải lại thời gian công bố</button>}
@@ -34,10 +35,10 @@ export function PublicationEditor({ org, cooperationId }: { org: string; coopera
       if (!start || !end || Date.parse(start) >= Date.parse(end)) { setError('Thời điểm đóng phải sau thời điểm công bố.'); return; }
       setError(''); void command.submit(path, 'PUT', { expectedVersion: value.version, publishedAt: new Date(start).toISOString(), closedAt: new Date(end).toISOString() });
     }}><fieldset disabled={command.blocked}><div className="cooperation-form-grid">
-      <label>Thời điểm công bố<input type="datetime-local" required value={start} onChange={e => setStart(e.target.value)} /></label>
-      <label>Thời điểm đóng<input type="datetime-local" required value={end} onChange={e => setEnd(e.target.value)} /></label>
+      <label>Thời điểm công bố<DateInput type="datetime-local" required value={start} onChange={e => setStart(e.target.value)} /></label>
+      <label>Thời điểm đóng<DateInput type="datetime-local" required value={end} onChange={e => setEnd(e.target.value)} /></label>
     </div><p>Giờ trên thiết bị của bạn. Sinh viên cùng trường, cùng kỳ xem được cơ hội trong khoảng thời gian này.</p>
-      <button>Lưu thời gian công bố</button></fieldset></form>}
+      <div className="button-row"><button>Lưu thời gian công bố</button></div></fieldset></form>}
     {command.retryable && <button disabled={command.busy} onClick={() => void command.retry()}>Thử lại lần công bố đã gửi</button>}
   </section>;
 }

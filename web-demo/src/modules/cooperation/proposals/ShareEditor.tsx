@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Notice } from '../../../components';
+import { DateInput } from '../../../ui/DateInput';
 import type { SchoolProposal } from './types';
 import { useWorkflowCommand } from './useWorkflowCommand';
 import { workflowError } from './api';
@@ -52,7 +53,7 @@ export function ShareEditor({ org, item, changed, pendingChanged, locked }: {
       <p>Sinh viên đã đồng ý các mục dưới đây. Nhà trường chọn phạm vi chia sẻ cho doanh nghiệp.</p>
       {item.shareableFields.map(field => <label key={field}><input type="checkbox" checked={selected.includes(field)}
         onChange={event => setSelected(event.target.checked ? [...selected, field] : selected.filter(value => value !== field))} />{profileFieldLabels[field] || field}</label>)}
-      <label>Hiệu lực chia sẻ đến<input required type="datetime-local" step="1" max={localDate(limit)} value={expiresAt} onChange={event => setExpiresAt(event.target.value)} /></label>
+      <label>Hiệu lực chia sẻ đến<DateInput required type="datetime-local" step="1" max={localDate(limit)} value={expiresAt} onChange={event => setExpiresAt(event.target.value)} /></label>
       <div className="button-row"><button disabled={!selected.length}>Xác nhận cấp chia sẻ</button><button type="button" className="secondary" onClick={() => setOpen(false)}>Hủy cấp chia sẻ</button></div>
     </fieldset></form>}
     {command.retryable && <button disabled={command.busy} onClick={() => void command.retry()}>Thử lại lần cấp chia sẻ đã gửi</button>}

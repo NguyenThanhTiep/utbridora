@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { EmptyState, Notice } from '../../../components';
+import { EmptyState, Icon, Notice } from '../../../components';
 import type { ContractPage } from '../../student/types';
 import { canLeaveDemand } from '../navigation';
 import { scopedRead, workflowError } from './api';
@@ -39,17 +39,18 @@ export function EnterpriseBatches({ org, cooperationId, openCandidates }: { org:
     return () => controller.abort();
   }, [org, cooperationId, page, revision]);
   return <section className="portal-batches" aria-label="Lô đề xuất được chia sẻ">
-    <div className="placement-header-bar"><h3>Lô đề xuất</h3><button type="button" className="secondary" disabled={loading}
-      onClick={() => {if (canLeaveDemand()) setRevision(value => value + 1);}}>Tải lại lô đề xuất</button></div>
-    <p>Chỉ hiển thị lô có hồ sơ đang được nhà trường chia sẻ hợp lệ cho doanh nghiệp của bạn.</p>
+    <div className="placement-header-bar candidate-batches-toolbar"><div className="workflow-section-heading"><h3>Lô đề xuất</h3>
+      {result && result.totalElements > 0 && <span className="workflow-count-pill">{result.totalElements} lô</span>}</div><button type="button" className="secondary" disabled={loading}
+      onClick={() => {if (canLeaveDemand()) setRevision(value => value + 1);}}><Icon name="refresh" size={16} />Tải lại lô đề xuất</button></div>
+    <p className="candidate-batches-hint">Chỉ hiển thị lô có hồ sơ đang được nhà trường chia sẻ hợp lệ cho doanh nghiệp của bạn.</p>
     <Notice tone="error" message={error} />{loading && <p role="status">Đang tải lô đề xuất…</p>}
     {result && (result.totalElements === 0 ? <EmptyState icon="users" title="Chưa có dữ liệu lô đề xuất"
       description="Lô sẽ xuất hiện khi nhà trường chia sẻ ít nhất một hồ sơ hợp lệ cho hợp tác này." />
-      : <div className="proposal-table"><table><caption>Lô đề xuất của hợp tác đang xem</caption>
+      : <div className="proposal-table candidate-batches-table"><table><caption>Lô đề xuất của hợp tác đang xem</caption>
         <thead><tr><th>Lô đề xuất</th><th>Hồ sơ được phép xem</th><th>Thao tác</th></tr></thead>
-        <tbody>{result.content.map((batch, index) => <tr key={batch.batchId}><th scope="row">Lô đề xuất {page * 10 + index + 1}
-          <small className="proposal-batch-reference">{batch.batchId}</small></th><td><strong>{batch.visibleProposalCount}</strong> hồ sơ được chia sẻ</td>
-          <td><button type="button" className="secondary" disabled={loading} onClick={() => {if (canLeaveDemand()) openCandidates();}}>Xem ứng viên trong lô</button></td></tr>)}</tbody>
+        <tbody>{result.content.map((batch, index) => <tr key={batch.batchId}><th scope="row" data-label="Lô đề xuất"><div className="candidate-batch-name"><span className="candidate-batch-icon" aria-hidden="true"><Icon name="users" size={20} /></span><div>Lô đề xuất {page * 10 + index + 1}
+          <small className="proposal-batch-reference" title={batch.batchId}>{batch.batchId}</small></div></div></th><td data-label="Hồ sơ được phép xem"><strong className="candidate-batch-count">{batch.visibleProposalCount}</strong> hồ sơ được chia sẻ</td>
+          <td data-label="Thao tác"><button type="button" className="secondary" disabled={loading} onClick={() => {if (canLeaveDemand()) openCandidates();}}>Xem ứng viên trong lô<Icon name="arrow-right" size={16} /></button></td></tr>)}</tbody>
       </table></div>)}
     {result && result.totalPages > 1 && <div className="button-row"><button type="button" className="secondary" disabled={loading || page === 0}
       onClick={() => {if (canLeaveDemand()) setPage(value => value - 1);}}>Trang lô trước</button><span>Trang lô {page + 1}/{result.totalPages}</span>

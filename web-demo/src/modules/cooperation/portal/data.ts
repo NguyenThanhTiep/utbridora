@@ -21,8 +21,8 @@ export async function readAll<T>(org: string, path: string, signal: AbortSignal)
   }
 }
 
-export function usePortalData(org: string, side: PortalSide) {
-  const key = side + ':' + org;
+export function usePortalData(org: string, side: PortalSide, termId = '') {
+  const key = side + ':' + org + ':' + termId;
   const [revision, setRevision] = useState(0);
   const [data, setData] = useState<Data>({ key: '', demands: empty(), cooperations: empty(), verifications: empty() });
   const reload = useCallback(() => setRevision(value => value + 1), []);
@@ -39,17 +39,18 @@ export function usePortalData(org: string, side: PortalSide) {
     const controller = new AbortController();
     // Background refresh must not unmount a form with an uncertain command still awaiting retry.
     setData(previous => previous.key === key ? previous : { key, demands: empty(side === 'enterprise'), cooperations: empty(), verifications: empty() });
-    function load(name: 'demands' | 'cooperations' | 'verifications', path: string) {
-      void readAll(org, path, controller.signal).then(items => {
-        if (!controller.signal.aborted) setData(old => ({ ...old, [name]: { items, loading: false, error: '' } }));
+    function load<T>(name: 'demands' | 'cooperations' | 'verifications', path: string, matches?: (item: T) => boolean) {
+      void readAll<T>(org, path, controller.signal).then(items => {
+        if (!controller.signal.aborted) setData(old => ({ ...old, [name]: { items: matches ? items.filter(matches) : items, loading: false, error: '' } }));
       }).catch(error => {
         if (!controller.signal.aborted) setData(old => ({ ...old, [name]: { items: [], loading: false, error: workflowError(error) } }));
       });
     }
     if (side === 'enterprise') load('demands', '/enterprise/demands');
-    load('cooperations', `/${side}/cooperations`);
+    load<CooperationRecord>('cooperations', `/${side}/cooperations${termId ? '?' + new URLSearchParams({ termId }) : ''}`,
+      row => !termId || row.termId === termId);
     load('verifications', `/${side}/verifications`);
     return () => controller.abort();
-  }, [key, org, side, revision]);
-  return { ...(data.key === key ? data : { key, demands: empty<Demand>(), cooperations: empty<CooperationRecord>(), verifications: empty<VerificationRecord>() }), reload };
+  }, [key, org, side, termId, revision]);
+  return { ...(data.key === key ? data : { key, demands: empty<Demand>(), cooperations: empty<CooperationRecord>(), verifications: empty<VerificationRecord>() }), reload, revision };
 }

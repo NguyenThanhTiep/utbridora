@@ -117,14 +117,40 @@ class DemandIT {
         assertEquals(403,browser.send("PATCH",route,body,org,false).statusCode());
         assertEquals(400,browser.send("PATCH",route,Map.of("expectedVersion",3),org,true).statusCode());
     }
-    @Test void activeCooperationLocksReopenRestoreAndDraftEdits() throws Exception {
+    @Test void softDeleteHidesFromDefaultListLocksEditsAuditsAndRestoresWithSameId() throws Exception {
+        var d=create(); String deleteRoute=path+"/"+d.demandId()+"/soft-delete";
+        browser.key=UUID.randomUUID().toString();
+        assertEquals(403,browser.send("PATCH",deleteRoute,Map.of("expectedVersion",1,"reasonCode","ENTERPRISE_DELETED"),other,true).statusCode());
+        assertEquals(403,browser.send("PATCH",deleteRoute,Map.of("expectedVersion",1,"reasonCode","ENTERPRISE_DELETED"),org,false).statusCode());
+        assertEquals(409,browser.send("PATCH",deleteRoute,Map.of("expectedVersion",0,"reasonCode","ENTERPRISE_DELETED"),org,true).statusCode());
+        var deleteBody=Map.of("expectedVersion",1,"reasonCode","ENTERPRISE_DELETED");
+        var deleted=browser.send("PATCH",deleteRoute,deleteBody,org,true);
+        assertEquals(200,deleted.statusCode(),deleted.body());
+        assertEquals(deleted.body(),browser.send("PATCH",deleteRoute,deleteBody,org,true).body());
+        var dto=DemandJson.read(deleted.body(),DemandDto.class);
+        assertEquals(d.demandId(),dto.demandId()); assertEquals(2,dto.version()); assertNotNull(dto.softDeletedAt());
+        assertFalse(browser.send("GET",path,null,org,false).body().contains(d.demandId()));
+        assertTrue(browser.send("GET",path+"?includeDeleted=true",null,org,false).body().contains(d.demandId()));
+        browser.key=UUID.randomUUID().toString();
+        assertEquals(409,browser.send("PATCH",deleteRoute,Map.of("expectedVersion",2,"reasonCode","ENTERPRISE_DELETED"),org,true).statusCode());
+        assertEquals(409,browser.send("PATCH",path+"/"+d.demandId(),new UpdateDemand(2L,input),org,true).statusCode());
+        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE resource_id=? AND reason_code='DEMAND_SOFT_DELETE'",Integer.class,d.demandId()));
+        var restored=browser.send("PATCH",path+"/"+d.demandId()+"/restore",Map.of("expectedVersion",2,"reasonCode","ENTERPRISE_RESTORED"),org,true);
+        assertEquals(200,restored.statusCode(),restored.body());
+        var restoredDto=DemandJson.read(restored.body(),DemandDto.class);
+        assertEquals(d.demandId(),restoredDto.demandId()); assertEquals(3,restoredDto.version()); assertNull(restoredDto.softDeletedAt());
+        assertTrue(browser.send("GET",path,null,org,false).body().contains(d.demandId()));
+    }
+    @Test void activeCooperationLocksReopenSoftDeleteRestoreAndDraftEdits() throws Exception {
         var d=create();String coop=UUID.randomUUID().toString();
         jdbc.update("INSERT INTO cooperations(id,demand_id,school_org_id,enterprise_org_id,term_id,state,created_at) VALUES(?,?,?,?,?,'SUBMITTED',UTC_TIMESTAMP(6))",coop,d.demandId(),school,org,input.termId());
         jdbc.update("UPDATE demands SET state='READY',cooperation_id=? WHERE id=?",coop,d.demandId());
         var payload=Map.of("expectedVersion",1,"reasonCode","ENTERPRISE_REOPENED");
         assertEquals(409,browser.send("PATCH",path+"/"+d.demandId()+"/reopen",payload,org,true).statusCode());
+        assertEquals(409,browser.send("PATCH",path+"/"+d.demandId()+"/soft-delete",Map.of("expectedVersion",1,"reasonCode","ENTERPRISE_DELETED"),org,true).statusCode());
         jdbc.update("UPDATE demands SET state='DRAFT' WHERE id=?",d.demandId());
         assertEquals(409,browser.send("PATCH",path+"/"+d.demandId(),new UpdateDemand(1L,input),org,true).statusCode());
+        assertEquals(409,browser.send("PATCH",path+"/"+d.demandId()+"/soft-delete",Map.of("expectedVersion",1,"reasonCode","ENTERPRISE_DELETED"),org,true).statusCode());
         jdbc.update("UPDATE demands SET soft_deleted_at=UTC_TIMESTAMP(6) WHERE id=?",d.demandId());
         assertEquals(409,browser.send("PATCH",path+"/"+d.demandId()+"/restore",payload,org,true).statusCode());
         assertEquals(1,jdbc.queryForObject("SELECT version FROM demands WHERE id=?",Integer.class,d.demandId()));

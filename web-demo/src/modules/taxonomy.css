@@ -1,8 +1,31 @@
 /* DEV08 đã tạo kiểu hiển thị cho cây danh mục kỹ năng và biểu mẫu quản lý. */
 .taxonomy-module { display: grid; gap: 20px; min-width: 0; }
+.taxonomy-tabs { display: flex; gap: 8px; padding: 6px; background: #fff; border: 1px solid #e3eaf2; border-radius: 12px; flex-wrap: wrap; }
+.taxonomy-tabs button { background: transparent; color: #64788a; border-radius: 8px; }
+.taxonomy-tabs button[aria-selected="true"] { background: #e7f6f0; color: #087b68; }
+.taxonomy-module [hidden] { display: none; }
+.taxonomy-tree-panel > label { margin-bottom: 18px; }
+.taxonomy-alias-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+.taxonomy-alias-layout > * { min-width: 0; }
+.taxonomy-alias-layout .table-wrap { max-width: 100%; overflow-x: auto; }
+.taxonomy-alias-layout .data-table { min-width: 420px; table-layout: fixed; }
+.taxonomy-alias-layout .data-table :is(th, td) { padding: 12px 10px; overflow-wrap: anywhere; }
+.taxonomy-node span, .taxonomy-version strong { overflow-wrap: anywhere; }
+.taxonomy-tree ul { padding-left: 12px; margin-left: 5px; }
+.taxonomy-tree-panel { grid-column: 1; grid-row: 1; }
+.taxonomy-editor { grid-column: 2; grid-row: 1; }
+.taxonomy-editor > .secondary { margin-top: 16px; }
+.taxonomy-module .taxonomy-node.selected { background: #e7f6f0; border-color: #cdece4; color: #0b927c; }
+@media (max-width: 900px) {
+  .taxonomy-alias-layout { grid-template-columns: minmax(0, 1fr); }
+  .taxonomy-layout > .taxonomy-tree-panel, .taxonomy-layout > .taxonomy-side, .taxonomy-layout > .taxonomy-editor { grid-column: auto; grid-row: auto; }
+  .taxonomy-layout > .taxonomy-tree-panel { order: 0; }
+  .taxonomy-layout > .taxonomy-editor { order: 1; }
+  .taxonomy-layout > .taxonomy-side { order: 2; }
+}
 .taxonomy-summary { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .taxonomy-summary h1, .taxonomy-heading h2 { margin: 0; }
-.taxonomy-version { display: grid; gap: 4px; min-width: 150px; padding: 13px 16px; border: 1px solid #dcebea; border-radius: 12px; background: #f3faf9; }
+.taxonomy-version { display: grid; gap: 4px; min-width: 150px; padding: 13px 16px; border: 1px solid #cdece4; border-radius: 12px; background: #f4fbf8; }
 .taxonomy-version span { color: var(--muted); font-size: var(--text-xs); }
 .taxonomy-version strong { color: var(--brand-dark); font-family: "Cascadia Code", Consolas, monospace; }
 .taxonomy-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, .82fr); align-items: start; gap: 20px; }
@@ -10,29 +33,66 @@
 .taxonomy-side { display: grid; gap: 20px; }
 .taxonomy-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .taxonomy-tree { list-style: none; padding: 0; margin: 0; }
-.taxonomy-tree ul { list-style: none; padding: 0 0 0 22px; margin: 4px 0 4px 11px; border-left: 1px solid #dce7ea; }
+.taxonomy-tree ul { list-style: none; padding: 0 0 0 22px; margin: 4px 0 4px 11px; border-left: 1px solid #e3eaf2; }
 .taxonomy-tree li { min-width: 0; }
 .taxonomy-tree details > summary { list-style: none; cursor: pointer; }
 .taxonomy-tree details > summary::-webkit-details-marker { display: none; }
 .taxonomy-node { width: 100%; min-height: 52px; justify-content: flex-start; padding: 8px 11px; text-align: left; color: var(--ink); background: transparent; border: 1px solid transparent; }
-.taxonomy-node:hover, .taxonomy-node.selected { background: #eff8f7; border-color: #d4eae7; color: var(--brand-dark); }
+.taxonomy-node:hover, .taxonomy-node.selected { background: #e7f6f0; border-color: #cdece4; color: var(--brand-dark); }
 .taxonomy-node > span { display: grid; min-width: 0; text-align: left; }
 .taxonomy-node small { font-size: var(--text-xs); color: var(--muted); font-weight: 450; }
 .skill-node { min-height: 46px; }
 .taxonomy-empty { margin: 14px 0 0; color: var(--muted); font-size: var(--text-sm); }
-.taxonomy-success { padding: 12px 15px; border: 1px solid #b8e1d7; border-radius: 10px; background: #effaf6; color: #14634e; }
+.taxonomy-success { padding: 12px 15px; border: 1px solid #cdece4; border-radius: 10px; background: #e7f6f0; color: #087b68; }
 .taxonomy-module form { display: grid; gap: 13px; margin-top: 12px; }
 .taxonomy-module form label { margin: 0; }
 .taxonomy-module form button { justify-self: start; margin-top: 2px; }
 .taxonomy-module textarea { display: block; width: 100%; min-height: 90px; padding: 11px 13px; margin-top: 7px; border: 1px solid #dbe4ea; border-radius: 8px; resize: vertical; font: inherit; }
-.taxonomy-module textarea:focus { outline: 0; border-color: #209c9c; box-shadow: 0 0 0 3px #e3f4f1; }
+.taxonomy-module textarea:focus { outline: 0; border-color: #0b927c; box-shadow: 0 0 0 3px #e7f6f0; }
 .taxonomy-aliases { padding-top: 18px; margin-top: 22px; border-top: 1px solid var(--line); }
 .taxonomy-aliases h3 { margin-bottom: 8px; }
 .taxonomy-aliases ul { list-style: none; padding: 0; margin: 0; }
-.taxonomy-aliases li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid #edf1f3; }
+.taxonomy-aliases li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid #e3eaf2; }
 .taxonomy-resolver .section-description { margin-bottom: 12px; }
 .taxonomy-results { display: grid; gap: 8px; margin-top: 17px; }
-.taxonomy-results > div { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 9px; background: #fbfdfd; }
+.taxonomy-results > div { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 9px; background: #f8fafc; }
 .taxonomy-results strong { color: var(--brand-dark); text-align: right; }
 @media (max-width: 900px) { .taxonomy-layout { grid-template-columns: 1fr; } }
 @media (max-width: 600px) { .taxonomy-summary { align-items: flex-start; flex-direction: column; } .taxonomy-version { width: 100%; } .taxonomy-heading { align-items: flex-start; } .taxonomy-results > div { align-items: flex-start; flex-direction: column; } .taxonomy-results strong { text-align: left; } }
+
+.taxonomy-module { gap: 16px; }
+.taxonomy-summary h2 { font-size: 22px; margin: 0; }
+.taxonomy-summary .taxonomy-version { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 8px 12px; border-radius: 9px; background: #fff; }
+.taxonomy-summary .taxonomy-version strong { max-width: 220px; font-size: 12px; }
+.taxonomy-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+.taxonomy-layout > .panel { padding: 22px; }
+.taxonomy-tree { max-height: 380px; overflow-y: auto; scrollbar-width: thin; padding-right: 4px; }
+.taxonomy-module .taxonomy-node { min-height: 42px; padding: 7px 8px; font-size: 13px; }
+.taxonomy-node small { font-size: 10px; }
+.skill-node > .icon { display: none; }
+.skill-node::before { content: ''; width: 7px; height: 7px; flex-shrink: 0; border-radius: 50%; background: #8298a8; }
+.skill-node.selected::before { background: #0b927c; }
+.taxonomy-tree-actions { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 16px; margin-top: 18px; border-top: 1px solid #e3eaf2; }
+.taxonomy-tree-actions > button { min-height: 34px; padding: 8px 10px; color: #087b68; border-color: #a5d6c9; background: #f4fbf8; font-size: 12px; }
+.taxonomy-tree-actions > button:hover:not(:disabled) { background: #e7f6f0; border-color: #0b927c; }
+.taxonomy-detail-copy { border-top: 1px solid #e3eaf2; padding-top: 18px; margin-bottom: 18px; overflow-wrap: anywhere; }
+.taxonomy-detail-copy .section-kicker { font-size: 10px; color: #64788a; }
+.taxonomy-detail-copy h3 { margin: 8px 0; font-size: 22px; }
+.taxonomy-detail-copy p { margin: 10px 0; color: #64788a; font-size: 13px; }
+.taxonomy-detail-copy p strong { color: #142f40; font-weight: 500; }
+.taxonomy-editor .taxonomy-heading h2 { font-size: 18px; }
+.taxonomy-editor form { padding-top: 16px; margin-top: 18px; border-top: 1px solid #e3eaf2; }
+.taxonomy-editor .status-badge { border-radius: 7px; flex-shrink: 0; }
+.taxonomy-editor .status-badge.deprecated { color: #9c5a0c; background: #fef4e6; border-color: #f5dfb8; }
+.taxonomy-alias-layout { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+.taxonomy-alias-layout > .panel > label { max-width: 440px; }
+.taxonomy-aliases { margin-top: 16px; padding-top: 16px; }
+.taxonomy-aliases form { max-width: 520px; }
+.taxonomy-resolver form { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+@media (max-width: 900px) { .taxonomy-layout { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 600px) {
+  .taxonomy-layout > .panel { padding: 16px; }
+  .taxonomy-resolver form { grid-template-columns: minmax(0, 1fr); }
+  .taxonomy-editor .taxonomy-heading { flex-wrap: wrap; }
+  .taxonomy-summary .taxonomy-version { align-items: flex-start; flex-wrap: wrap; }
+}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState, type InputHTMLAttributes, type ReactNode } from 'react';
 import type { Page } from './api';
+import { DateInput } from './ui/DateInput';
 
 export function Icon({ name, size = 20, className = '' }: { name: string; size?: number; className?: string }) {
   const paths: Record<string, ReactNode> = {
@@ -37,6 +38,10 @@ export function Icon({ name, size = 20, className = '' }: { name: string; size?:
     graduation: <><path d="m2 9 10-6 10 6-10 6L2 9ZM6 12v5c3 3 9 3 12 0v-5M22 9v7" /></>,
     briefcase: <><rect x="3" y="7" width="18" height="14" rx="2" /><path d="M8 7V4h8v3M3 12a25 25 0 0 0 18 0M10 13h4" /></>,
     layers: <><path d="m12 3 10 5-10 5L2 8l10-5ZM2 12l10 5 10-5M2 16l10 5 10-5" /></>,
+    file: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z" /><path d="M14 2v6h6M8 13h8M8 17h5" /></>,
+    edit: <><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" /></>,
+    trash: <><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6" /></>,
+    download: <path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />,
   };
   return <svg className={'icon ' + className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">{paths[name] || paths.grid}</svg>;
 }
@@ -48,7 +53,7 @@ export function Brand({ inverse = false }: { inverse?: boolean }) {
       <path d="M11 25V15m18 10V15M11 19c6.2 0 6.2 6 9 6s2.8-6 9-6M11 29h18" stroke="white" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
       <circle cx="20" cy="12" r="2" fill="white" />
     </svg>
-    <span className="brand-wordmark">UT<span className="brand-dot">.</span>Bridora<span className="brand-caption">KẾT NỐI ĐỂ PHÁT TRIỂN</span></span>
+    <span className="brand-wordmark"><span className="brand-name">UT<span className="brand-dot">.</span>Bridora</span><span className="brand-caption">KẾT NỐI ĐỂ PHÁT TRIỂN</span></span>
   </span>;
 }
 
@@ -71,10 +76,15 @@ export function Field({ label, value, onChange, type = 'text', required = true, 
     <label htmlFor={id}>{label}</label>
     <div className={'input-control' + (icon ? ' with-icon' : '') + (password ? ' with-toggle' : '')}>
       {icon && <Icon name={icon} size={18} className="input-leading-icon" />}
-      <input id={id} value={value} onChange={event => onChange(event.target.value)}
-        type={password && visible ? 'text' : type} required={required}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={[hint ? id + '-hint' : '', error ? id + '-error' : ''].filter(Boolean).join(' ') || undefined} {...props} />
+      {type === 'date' || type === 'datetime-local'
+        ? <DateInput id={id} value={value} onChange={event => onChange(event.target.value)}
+            type={type === 'datetime-local' ? 'datetime-local' : 'date'} required={required}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={[hint ? id + '-hint' : '', error ? id + '-error' : ''].filter(Boolean).join(' ') || undefined} {...props} />
+        : <input id={id} value={value} onChange={event => onChange(event.target.value)}
+            type={password && visible ? 'text' : type} required={required}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={[hint ? id + '-hint' : '', error ? id + '-error' : ''].filter(Boolean).join(' ') || undefined} {...props} />}
       {password && <button className="password-toggle" type="button" disabled={props.disabled} aria-label={visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'} aria-pressed={visible}
         onClick={() => { setLocalVisible(!visible); onPasswordVisibilityChange?.(!visible); }}><Icon name={visible ? 'eye-off' : 'eye'} size={19} /></button>}
     </div>

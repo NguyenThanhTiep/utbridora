@@ -14,6 +14,34 @@ async function setup(page: Page) {
   await page.route('**/api/v1/auth/csrf', route => route.fulfill({ json: { headerName: 'X-CSRF-TOKEN', token: 'fixture-token' } }));
 }
 
+test('school placement table selects one detail and sends the selected record version', async ({ page }) => {
+  await setup(page);
+  let second = { ...placement, placementId: 'placement-b', proposalItemId: 'proposal-b', version: 7 };
+  await page.route('**/api/v1/school/placements**', route => {
+    if (new URL(route.request().url()).pathname.endsWith('/summary')) return route.fulfill({ json: { demandId: 'demand-1', cooperationId: 'coop-1', target: 3, placed: 0, pending: 2, remaining: 3 } });
+    return route.fulfill({ json: pageOf([placement, second]) });
+  });
+  let submitted = false;
+  await page.route('**/api/v1/placements/placement-b/approve', route => {
+    expect(route.request().postDataJSON()).toMatchObject({ expectedVersion: 7, decisionRef: 'QD-SECOND', reasonCode: 'SCHOOL_APPROVED' });
+    submitted = true;second = { ...second, state: 'APPROVED', version: 8 };
+    return route.fulfill({ json: second });
+  });
+  await page.goto(fixture + '?school-placement');
+  await expect(page.getByText('Tiếp nhận 1 · Chờ trường phê duyệt', { exact: true })).toBeVisible();
+  const chooseSecond = page.getByRole('button', { name: 'Xem hồ sơ tiếp nhận 2', exact: true });
+  await chooseSecond.focus();await page.keyboard.press('Enter');
+  await expect(chooseSecond).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByText('Tiếp nhận 1 · Chờ trường phê duyệt', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Tiếp nhận 2 · Chờ trường phê duyệt', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Phê duyệt tiếp nhận', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Xem hồ sơ tiếp nhận 1', exact: true })).toBeDisabled();
+  await page.getByLabel('Căn cứ thao tác tiếp nhận').fill('QD-SECOND');
+  await page.getByRole('button', { name: 'Xác nhận phê duyệt', exact: true }).click();
+  await expect(page.getByText('Tiếp nhận 2 · Đã duyệt, chờ bắt đầu', { exact: true })).toBeVisible();
+  expect(submitted).toBe(true);
+});
+
 for (const school of [true, false]) for (const status of [
   { target: 3, placed: 3, pending: 0, remaining: 0, code: 'FULL', label: 'Đủ chỉ tiêu' },
   { target: 3, placed: 1, pending: 1, remaining: 2, code: 'WAITING', label: 'Đang chờ tiếp nhận' },
@@ -153,7 +181,7 @@ for (const school of [true, false]) test(`${school ? 'school' : 'enterprise'} ov
   });
   await page.goto(fixture + '?progress=' + side);
   const counters = page.getByLabel('Chỉ tiêu của toàn bộ kết quả lọc');
-  const commonLabels = ['Chỉ tiêu đã duyệt', 'Đã tiếp nhận', 'Chờ tạo Placement', 'Còn thiếu'];
+  const commonLabels = ['Chỉ tiêu đã duyệt', 'Đã tiếp nhận', 'Chờ tiếp nhận', 'Còn thiếu'];
   if (school) {
     await expect(counters.locator('li')).toHaveCount(10);
     await expect(counters.getByText('Còn có thể đề cử', { exact: true })).toBeVisible();

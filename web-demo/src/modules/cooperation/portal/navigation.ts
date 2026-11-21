@@ -1,8 +1,9 @@
-export type PortalPage = 'matching' | 'overview' | 'verifications' | 'demands' | 'statistics' | 'cooperations' | 'proposals' | 'placements' | 'notifications';
+export type PortalPage = 'matching' | 'overview' | 'students' | 'verifications' | 'demands' | 'statistics' | 'cooperations' | 'proposals' | 'placements' | 'notifications';
 export type PortalSide = 'school' | 'enterprise';
 
 const pages: { id: PortalPage; title: string; icon: string; schoolTitle?: string; enterpriseOnly?: boolean; schoolOnly?: boolean }[] = [
   { id: 'overview', title: 'Tổng quan', icon: 'grid' },
+  { id: 'students', title: 'Danh sách & kích hoạt', icon: 'users', schoolOnly: true },
   { id: 'verifications', title: 'Xác minh theo trường', schoolTitle: 'Xác minh doanh nghiệp', icon: 'shield' },
   { id: 'demands', title: 'Nhu cầu thực tập', icon: 'briefcase', enterpriseOnly: true },
   { id: 'statistics', title: 'Thống kê bảo mật', icon: 'activity', enterpriseOnly: true },
