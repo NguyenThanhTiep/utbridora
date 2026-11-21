@@ -27,6 +27,11 @@ async function navigate(page: Page, title: string) {
   await page.getByRole('button', { name: title, exact: true }).click();
   await expect(page.getByRole('heading', { name: title, exact: true }).first()).toBeVisible();
 }
+// Hộp xác nhận của giao diện (src/confirm.tsx) thay cho window.confirm: bấm nút theo tên trong đúng hộp có tiêu đề đó.
+async function confirmDialog(page: Page, title: string, button: string) {
+  await page.getByRole('dialog', { name: title, exact: true }).getByRole('button', { name: button, exact: true }).click();
+  await expect(page.getByRole('dialog', { name: title, exact: true })).toHaveCount(0);
+}
 async function expectNoPageOverflow(page: Page) {
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
 }
@@ -167,8 +172,8 @@ test('UX UI mock: 409 giữ bản nháp và cho tải lại dữ liệu mới nh
   await expect(phone).toHaveValue('0901234567');
   await expect(save).toBeDisabled();
   latest = profileView(4, '0911111111');
-  page.once('dialog', dialog => dialog.accept());
   await page.getByRole('button', { name: 'Tải lại dữ liệu mới nhất', exact: true }).click();
+  await confirmDialog(page, 'Tải lại dữ liệu mới nhất?', 'Tải lại và bỏ thay đổi');
   await expect(phone).toHaveValue('0911111111');
   await expect(page.getByText('Hồ sơ đã thay đổi ở nơi khác', { exact: false })).toHaveCount(0);
   await phone.fill('0922222222');
@@ -382,12 +387,12 @@ test('UX UI mock: từ chối cần xác nhận; 409 INVITATION_EXPIRED báo rõ
   await signIn(page, fixture('E2E_STUDENT_EMAIL'));
   await navigate(page, 'Lời mời & nguyện vọng');
   const panel = invitationPanel(page, 'Thực tập Java thử nghiệm');
-  page.once('dialog', dialog => void dialog.dismiss());
   await panel.getByRole('button', { name: 'Từ chối', exact: true }).click();
+  await confirmDialog(page, 'Từ chối lời mời?', 'Quay lại');
   expect(bodies).toEqual([]);
   const before = listCalls;
-  page.once('dialog', dialog => void dialog.accept());
   await panel.getByRole('button', { name: 'Từ chối', exact: true }).click();
+  await confirmDialog(page, 'Từ chối lời mời?', 'Từ chối lời mời');
   await expect(page.getByText('Lời mời đã hết hạn phản hồi.', { exact: true })).toBeVisible();
   await expect.poll(() => listCalls).toBeGreaterThan(before);
   expect(bodies).toEqual([{ decision: 'DECLINE', expectedVersion: 1, reasonCode: 'STUDENT_DECLINED', reasonText: null }]);
@@ -528,8 +533,8 @@ test('UX UI mock: nguyện vọng hiện trạng thái và lịch sử, chỉ r�
   await submitted.getByRole('button', { name: 'Xem chi tiết', exact: true }).click();
   await expect(submitted.getByText('Lần 1: Đã rút', { exact: false })).toBeVisible();
   const before = listCalls;
-  page.once('dialog', dialog => void dialog.accept());
   await submitted.getByRole('button', { name: 'Rút nguyện vọng', exact: true }).click();
+  await confirmDialog(page, 'Rút nguyện vọng?', 'Rút nguyện vọng');
   await expect(page.getByText('Nguyện vọng đã được nhà trường xét nên không thể rút. Muốn đổi ý, hãy gửi nguyện vọng mới.', { exact: true })).toBeVisible();
   await expect.poll(() => listCalls).toBeGreaterThan(before);
   expect(bodies).toEqual([{ action: 'WITHDRAW', preferenceId: '00000000-0000-4000-8000-000000000092', expectedVersion: 3, reasonCode: 'STUDENT_WITHDREW' }]);

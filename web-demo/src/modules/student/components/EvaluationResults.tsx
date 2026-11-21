@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { ApiError } from '../../../api';
 import { EmptyState, Icon, LoadingState } from '../../../components';
 import { accessLost, workflowError, workflowRead } from '../../internship/workflow-api';
@@ -6,12 +6,16 @@ import { uuidPattern } from '../../internship/workflow';
 import { getMyResult } from '../api';
 import { useMyCaseIds } from '../internship';
 import { dateTime } from '../preferences';
-import { StudentNote } from './StudentUI';
+import { StudentIcon, StudentNote } from './StudentUI';
 import type { EvaluationDto, StudentResultDto } from '../types';
 import '../styles.css';
 
 // Chỉ định dạng số server trả để hiển thị; không tính lại điểm ở trình duyệt (CP-WS4: total100 do T3 tính).
 const decimal = (value: number) => value.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// Độ đầy vòng tổng điểm / thanh điểm chỉ là tỉ lệ hình vẽ của số server trả (total100 trên 100, điểm trên thang 5); không hiện thành số mới.
+const share = (value: number, max: number) => Math.min(100, Math.max(0, value / max * 100));
+// Màu nhận diện từng tiêu chí theo thứ tự (chỉ để trình bày): chấm ở tên, đoạn trong thanh cơ cấu trọng số, viền nhận xét.
+const tones = ['#0b927c', '#2969a9', '#7c5cc4', '#c27a12', '#c2416b', '#0f7f99'];
 // Thiếu bất kỳ tín hiệu công bố nào thì xử lý như HIDDEN, kể cả khi server lỡ gửi kèm evaluation.
 function publishedOf(result: StudentResultDto, caseId: string): EvaluationDto | null {
   const evaluation = result.evaluation;
@@ -85,7 +89,7 @@ export function EvaluationResults({ userId }: { userId: string }) {
           {!caseId ? <p className="muted">Chọn hồ sơ thực tập để xem kết quả.</p>
             : error ? <p className="student-error-note" role="alert">{error}</p>
             : !result ? <LoadingState label="Đang tải kết quả…" />
-            : !evaluation ? <><EmptyState icon="lock" title="Chưa có kết quả được công bố" /><ResultConditions /></>
+            : !evaluation ? <div className="student-result-locked"><EmptyState icon="lock" title="Chưa có kết quả được công bố" /><ResultConditions /></div>
             : <PublishedEvaluation evaluation={evaluation} />}
         </div>
       </>}
@@ -93,25 +97,43 @@ export function EvaluationResults({ userId }: { userId: string }) {
 }
 
 // Điều kiện tĩnh theo MVP-BR-17 (Figma 477:12579 vẽ dạng ô đánh dấu). Trình duyệt không biết điều kiện nào còn thiếu
-// nên chỉ liệt kê, không hiện như trạng thái.
-const conditions = ['Nhà trường đã công bố kết quả.', 'Nhà trường cho phép sinh viên xem điểm.', 'HR doanh nghiệp đã bật hiển thị điểm.'];
+// nên chỉ liệt kê kèm biểu tượng, không hiện như trạng thái và không đánh số (vùng chưa công bố không có chữ số).
+const conditions = [{ icon: 'university', text: 'Nhà trường đã công bố kết quả.' }, { icon: 'shield', text: 'Nhà trường cho phép sinh viên xem điểm.' },
+  { icon: 'building', text: 'HR doanh nghiệp đã bật hiển thị điểm.' }];
 function ResultConditions() {
   return <div className="student-conditions"><p>Chưa đủ điều kiện hiển thị điểm. Không hiển thị bảng tiêu chí hoặc điểm khi thiếu bất kỳ điều kiện nào:</p>
-    <ul>{conditions.map(item => <li key={item}>{item}</li>)}</ul>
+    <ul>{conditions.map(item => <li key={item.text}><span aria-hidden="true"><Icon name={item.icon} size={18} /></span>{item.text}</li>)}</ul>
     <StudentNote>Điểm chỉ xuất hiện khi đủ cả ba điều kiện công bố và cho phép xem.</StudentNote></div>;
 }
 
+// "Bảng điểm chứng nhận": thẻ đầu có vòng tổng điểm, nhãn đã công bố, chip ngày công bố / bản đánh giá / số tiêu chí và thanh cơ cấu
+// trọng số (trang trí, lặp lại dữ liệu bảng nên ẩn với trình đọc màn hình); bảng tiêu chí giữ dạng bảng (hàng, tiêu đề hàng) như trước.
 function PublishedEvaluation({ evaluation }: { evaluation: EvaluationDto }) {
   const criteria = new Map(evaluation.template.criteria.map(item => [item.criterionCode, item]));
-  return <div>
-    <p className="student-result-total"><span>Tổng điểm (thang 100)</span><strong>{decimal(evaluation.total100)}</strong></p>
-    <p className="student-list-meta">Công bố lúc {dateTime(evaluation.publishedAt!)} · Bản đánh giá số {evaluation.revisionNo}</p>
-    <div className="student-table-wrap"><table className="student-result-table"><caption>Điểm theo tiêu chí</caption>
+  const rows = evaluation.scores.map((score, index) => ({ score, criterion: criteria.get(score.criterionCode), tone: tones[index % tones.length] }));
+  const weighted = rows.filter(row => row.criterion && row.criterion.weight > 0);
+  return <div className="student-result">
+    <div className="student-result-hero" style={{ '--value': share(evaluation.total100, 100) } as CSSProperties}>
+      <p className="student-result-kicker"><Icon name="check" size={14} />Kết quả đã công bố</p>
+      <p className="student-result-total"><span>Tổng điểm (thang 100)</span><strong>{decimal(evaluation.total100)}</strong><small aria-hidden="true">/ 100</small></p>
+      <ul className="student-result-chips" aria-label="Thông tin công bố">
+        <li><Icon name="calendar" size={15} />Công bố lúc {dateTime(evaluation.publishedAt!)}</li>
+        <li><Icon name="layers" size={15} />Bản đánh giá số {evaluation.revisionNo}</li>
+        <li><StudentIcon name="chart" size={15} />{rows.length} tiêu chí</li>
+      </ul>
+      {weighted.length > 0 && <div className="student-result-weights" aria-hidden="true"><p>Cơ cấu trọng số</p>
+        <div className="student-weight-bar">{weighted.map(row => <span key={row.score.criterionCode} style={{ '--w': row.criterion!.weight, '--tone': row.tone } as CSSProperties} />)}</div>
+        <ul className="student-weight-legend">{weighted.map(row => <li key={row.score.criterionCode} style={{ '--tone': row.tone } as CSSProperties}>
+          {row.criterion!.label}<b>{decimal(row.criterion!.weight)}%</b></li>)}</ul></div>}
+      <span className="student-result-seal" aria-hidden="true"><StudentIcon name="award" size={28} /></span>
+    </div>
+    <div className="student-table-wrap"><table className="student-result-table"><caption><StudentIcon name="chart" size={17} />Điểm theo tiêu chí</caption>
       <thead><tr><th scope="col">Tiêu chí</th><th scope="col">Trọng số</th><th scope="col">Điểm (thang 5)</th><th scope="col">Nhận xét</th></tr></thead>
-      <tbody>{evaluation.scores.map(score => {
-        const criterion = criteria.get(score.criterionCode);
-        return <tr key={score.criterionCode}><th scope="row">{criterion?.label ?? score.criterionCode}</th>
-          <td>{criterion ? decimal(criterion.weight) + '%' : '—'}</td><td>{decimal(score.score)}</td><td className="student-pre-line">{score.comment || '—'}</td></tr>;
-      })}</tbody></table></div>
+      <tbody>{rows.map(({ score, criterion, tone }) => <tr key={score.criterionCode} style={{ '--tone': tone } as CSSProperties}>
+        <th scope="row"><span className="student-result-dot" aria-hidden="true" />{criterion?.label ?? score.criterionCode}</th>
+        <td>{criterion ? <span className="student-result-weight">{decimal(criterion.weight)}%</span> : '—'}</td>
+        <td><span className="student-result-score"><b>{decimal(score.score)}</b><small aria-hidden="true">/5</small></span>
+          <span className="student-score-bar" aria-hidden="true" style={{ '--value': share(score.score, 5) } as CSSProperties}><span /></span></td>
+        <td className="student-pre-line">{score.comment ? <span className="student-result-comment">{score.comment}</span> : '—'}</td></tr>)}</tbody></table></div>
   </div>;
 }

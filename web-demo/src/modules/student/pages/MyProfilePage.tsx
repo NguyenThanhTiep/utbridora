@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { ApiError, type Grant, type Me } from '../../../api';
 import { EmptyState, Field, Icon, LoadingState, Notice, useAction } from '../../../components';
+import { askConfirm } from '../../../confirm';
 import { getMyProfile, listMajors, listTerms, newIdempotencyKey, saveMyProfile, toProfileInput, type AcademicCatalogItem } from '../api';
 import { AvailabilityEditor } from '../components/AvailabilityEditor';
 import { SkillsEditor } from '../components/SkillsEditor';
@@ -33,8 +34,6 @@ function validate(draft: Draft): DraftErrors {
   return errors;
 }
 const hasErrors = (errors: DraftErrors) => Boolean(errors.phone) || Object.keys(errors.periods).length > 0;
-const initials = (name: string) => { const words = name.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
-  return ((words[0]?.[0] ?? '') + (words.length > 1 ? words[words.length - 1][0] : '')).toUpperCase() || '?'; };
 const day = (value: string) => value.split('-').reverse().join('/');
 // Tạo lần đầu dùng version 0; PUT vẫn kiểm quan hệ student–school–term ở server.
 const emptyInput = (termId: string): ProfileInput => ({
@@ -114,8 +113,9 @@ export function MyProfilePage({ me, schools }: { me: Me; schools: Grant[] }) {
   const phoneError = errors.phone || (rejectedFields.some(field => PHONE_FIELDS.includes(field)) ? 'Số điện thoại chưa được hệ thống chấp nhận.' : '');
   const availabilityError = rejectedFields.some(field => AVAILABILITY_FIELDS.includes(field)) ? 'Thời gian có thể tham gia chưa được hệ thống chấp nhận.' : '';
   const otherRejected = rejectedFields.some(field => !PHONE_FIELDS.includes(field) && !AVAILABILITY_FIELDS.includes(field));
-  const reload = () => {
-    if ((dirty || conflict) && !window.confirm('Thay đổi chưa lưu sẽ được thay bằng dữ liệu mới nhất. Tiếp tục?')) return;
+  const reload = async () => {
+    if ((dirty || conflict) && !await askConfirm({ title: 'Tải lại dữ liệu mới nhất?', message: 'Thay đổi chưa lưu sẽ được thay bằng dữ liệu mới nhất. Tiếp tục?',
+      confirmLabel: 'Tải lại và bỏ thay đổi', tone: 'danger' })) return;
     setProfileAttempt(previous => previous + 1);
   };
   const createProfile = () => {
@@ -233,14 +233,13 @@ export function MyProfilePage({ me, schools }: { me: Me; schools: Grant[] }) {
     </form>;
 
   // Frame 477:11203 gộp thành thẻ hồ sơ đầu trang: tài khoản đăng nhập + chip học kỳ/ngành/số điện thoại đã lưu, vòng độ hoàn thiện
-  // và chip tiêu chí; bên dưới mỗi khối form là một thẻ riêng. Chưa có API ảnh đại diện nên avatar hiện chữ viết tắt.
+  // và chip tiêu chí; bên dưới mỗi khối form là một thẻ riêng. Không có ô ảnh đại diện (lead chốt bỏ 21/11; SRS S02 không có).
   const ready = Boolean(terms?.length && termId && view && draft);
   const shown = ready ? view : null;
   const major = shown?.profile.majorCode ? majors?.find(item => item.code === shown.profile.majorCode)?.name ?? shown.profile.majorCode : null;
   return <div className="student-page">
     <section className="panel student-profile-hero" aria-label="Hồ sơ sinh viên">
       <div className="student-profile-hero-top">
-        <span className="student-avatar" aria-hidden="true">{initials(me.displayName)}</span>
         <div className="student-profile-hero-text">
           <p className="student-home-kicker">HỒ SƠ SINH VIÊN</p>
           <h2>{me.displayName}</h2>

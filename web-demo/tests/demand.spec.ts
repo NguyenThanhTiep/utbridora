@@ -76,10 +76,13 @@ test('ready and deleted demands use versioned lifecycle commands and reload the 
   });
   await open(page);
   await page.getByRole('button', { name: /Mở lại bản nháp/ }).click();
+  // Hộp xác nhận của giao diện (confirm.tsx); hộp chặn rời bản nhập chưa lưu vẫn là window.confirm nên giữ page.on('dialog').
+  await page.getByRole('dialog', { name: 'Mở lại nhu cầu?', exact: true }).getByRole('button', { name: 'Mở lại để chỉnh sửa', exact: true }).click();
   await expect(page.getByText('Đã mở lại bản nháp.', { exact: true })).toBeVisible();
   record.softDeletedAt = '2026-11-19T00:00:00Z';
   await page.getByLabel('Hiển thị cả nhu cầu đã xóa').check();
   await page.getByRole('button', { name: /Khôi phục nhu cầu/ }).click();
+  await page.getByRole('dialog', { name: 'Khôi phục nhu cầu?', exact: true }).getByRole('button', { name: 'Khôi phục nhu cầu', exact: true }).click();
   await expect(page.getByText('Đã khôi phục nhu cầu.', { exact: true })).toBeVisible();
   expect(commands).toEqual(['reopen', 'restore']);
 });

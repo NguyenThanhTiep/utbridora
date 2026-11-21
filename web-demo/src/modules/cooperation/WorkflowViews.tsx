@@ -16,6 +16,7 @@ import { SchoolProposals } from './proposals/SchoolProposals';
 import { PlacementWorkspace } from './proposals/PlacementWorkspace';
 import { canLeaveDemand } from './navigation';
 import { useFocusedWorkflow } from './workflow/useFocusedWorkflow';
+import { useReveal } from '../../useReveal';
 export type { CooperationRecord, VerificationInput, VerificationRecord } from './workflow/types';
 
 export function CooperationFlows({ org, school, demands = [], onLoaded, includeProgress = true, focusId }: { org: string; school: boolean; demands?: Demand[]; onLoaded?: (items: Cooperation[]) => void; includeProgress?: boolean; focusId?: string }) {
@@ -29,6 +30,8 @@ export function CooperationFlows({ org, school, demands = [], onLoaded, includeP
   const side = school ? 'school' : 'enterprise', changed = () => { setDetail(null); setComposing(false); setRefresh(n => n + 1); };
   const action = useCommand(org, changed);
   const focusedRef = useRef<HTMLElement>(null);
+  // Bấm "Xem nội dung đề nghị" thì cuộn tới khung chi tiết nằm dưới danh sách (khung hiện sau khi đọc xong đề nghị).
+  const reveal = useReveal();
   useFocusedWorkflow<Detail>(org, '/' + side + '/cooperations', focusId, refresh, value => {
     if (value.cooperation.cooperationId !== focusId) throw new Error('Unexpected cooperation');
     setDetail(value);
@@ -107,8 +110,8 @@ export function CooperationFlows({ org, school, demands = [], onLoaded, includeP
         <th scope="row">Đề nghị {seq}<small>Lần gửi {c.submissionNo}</small></th>
         <td>{demands.find(demand => demand.demandId === c.demandId)?.data.title || 'Nhu cầu đã gửi'}</td>
         <td><span className={'status-pill pill-' + c.state.toLowerCase()}>{states[c.state] || c.state}</span></td>
-        <td><button className="secondary" disabled={action.busy} onClick={() => void api<Detail>('/enterprise/cooperations/' + c.cooperationId,
-          { headers: { 'X-Organization-Id': org } }).then(setDetail).catch(() => setError('Không đọc được đề nghị.'))}>Xem nội dung đề nghị {seq}</button></td>
+        <td><button className="secondary" disabled={action.busy} onClick={() => { reveal.request(); void api<Detail>('/enterprise/cooperations/' + c.cooperationId,
+          { headers: { 'X-Organization-Id': org } }).then(setDetail).catch(() => setError('Không đọc được đề nghị.')); }}>Xem nội dung đề nghị {seq}</button></td>
       </tr>)}</tbody></table></div> : <div className="workflow-card-list">
       {indexedItems.map(({ item: c, seq }) => {
         const isSelected = detail?.cooperation.cooperationId === c.cooperationId;
@@ -127,7 +130,7 @@ export function CooperationFlows({ org, school, demands = [], onLoaded, includeP
             </div>
           </div>
           <div className="button-row">
-            <button className="secondary" onClick={() => void api<Detail>('/' + side + '/cooperations/' + c.cooperationId, { headers: { 'X-Organization-Id': org } }).then(setDetail).catch(() => setError('Không đọc được đề nghị.'))}>
+            <button className="secondary" onClick={() => { reveal.request(); void api<Detail>('/' + side + '/cooperations/' + c.cooperationId, { headers: { 'X-Organization-Id': org } }).then(setDetail).catch(() => setError('Không đọc được đề nghị.')); }}>
               Xem nội dung đề nghị {seq}
             </button>
           </div>
@@ -141,7 +144,7 @@ export function CooperationFlows({ org, school, demands = [], onLoaded, includeP
       <button className="secondary" disabled={page + 1 >= total} onClick={() => setPage(n => n + 1)}>Sau</button>
     </div>}
 
-    {detail && <article className="workflow-detail-drawer" ref={focusedRef} tabIndex={-1}>
+    {detail && <article className="workflow-detail-drawer" ref={element => { focusedRef.current = element; reveal.ref(element); }} tabIndex={-1}>
       <div className="workflow-card-top">
         <div>
           <h3>{detail.demand.data.title}</h3>

@@ -24,6 +24,8 @@
   .internship-workspace .section-heading > button { width: 100%; }
 }
 .t3-workflow { min-width: 0; overflow-wrap: anywhere; }
+/* Khối con của "Bài nộp và trao đổi" (bài nộp · lịch sử · trao đổi) giữ khoảng cách như .stack. */
+.t3-workflow-block { display: grid; gap: 12px; min-width: 0; }
 .t3-workflow fieldset { min-width: 0; display: grid; gap: 12px; }
 .t3-workflow textarea { min-height: 96px; width: 100%; box-sizing: border-box; }
 .t3-workflow input, .t3-workflow select { max-width: 100%; }

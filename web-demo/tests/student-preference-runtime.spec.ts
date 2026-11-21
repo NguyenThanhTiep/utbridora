@@ -13,8 +13,8 @@ test('student sees and withdraws a real preference through the T2 API', async ({
   await page.getByRole('tab', { name: 'Nguyện vọng', exact: true }).click();
   const item = page.locator('li.student-list-item').filter({ hasText: 'Lời nhắn: W3 browser preference' });
   await expect(item.getByText('Đã gửi, chờ nhà trường xét', { exact: true })).toBeVisible();
-  page.once('dialog', dialog => void dialog.accept());
   await item.getByRole('button', { name: 'Rút nguyện vọng', exact: true }).click();
+  await page.getByRole('dialog', { name: 'Rút nguyện vọng?', exact: true }).getByRole('button', { name: 'Rút nguyện vọng', exact: true }).click();
   await expect(page.getByText('Đã rút nguyện vọng.', { exact: true })).toBeVisible();
   await expect(item.getByText('Đã rút', { exact: true })).toBeVisible();
   await page.reload();

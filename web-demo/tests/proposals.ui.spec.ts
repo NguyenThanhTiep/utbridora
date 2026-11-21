@@ -356,11 +356,15 @@ test('student withdraw confirmation cancels the opportunity, while consent revok
   });
   await page.goto(fixture + '?student');
   await expect(page.getByText(/Để chỉ thu hồi quyền xem thông tin cá nhân/)).toBeVisible();
-  page.once('dialog', dialog => { expect(dialog.message()).toContain('không thể hoàn tác'); expect(dialog.message()).toContain('HỦY BỎ'); void dialog.dismiss(); });
-  await page.getByRole('button', { name: 'Rút nhận lời', exact: true }).click();expect(withdrawals).toBe(0);
+  // Hộp xác nhận của giao diện (confirm.tsx) thay cho window.confirm: kiểm nội dung cảnh báo, Quay lại không gửi lệnh.
+  const withdrawDialog = page.getByRole('dialog', { name: 'Rút nhận lời?', exact: true });
+  await page.getByRole('button', { name: 'Rút nhận lời', exact: true }).click();
+  await expect(withdrawDialog).toContainText('không thể hoàn tác'); await expect(withdrawDialog).toContainText('HỦY BỎ');
+  await withdrawDialog.getByRole('button', { name: 'Quay lại', exact: true }).click();
+  await expect(withdrawDialog).toHaveCount(0);expect(withdrawals).toBe(0);
   await page.getByRole('button', { name: 'Thu hồi quyền chia sẻ', exact: true }).click();
   await expect.poll(() => revocations).toBe(1);expect(withdrawals).toBe(0);
-  page.once('dialog', dialog => void dialog.accept());
   await page.getByRole('button', { name: 'Rút nhận lời', exact: true }).click();
+  await withdrawDialog.getByRole('button', { name: 'Rút nhận lời', exact: true }).click();
   await expect.poll(() => withdrawals).toBe(1);
 });

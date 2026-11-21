@@ -45,13 +45,15 @@ test('school selects eligible candidates, nominates once, adds to the same batch
   await page.getByLabel('Kết quả đối chiếu').selectOption('MISSING_DATA');await expect(page.getByRole('checkbox', { name: 'Chọn SV003' })).toBeDisabled();
   await page.getByLabel('Kết quả đối chiếu').selectOption('NOT_MATCH');await expect(page.getByRole('checkbox', { name: 'Chọn SV003' })).toBeDisabled();
   await page.getByLabel('Kết quả đối chiếu').selectOption('MATCH');await page.getByRole('checkbox', { name: 'Chọn SV001' }).check();
-  page.once('dialog', d => void d.dismiss());await page.getByRole('button', { name: 'Tạo đề xuất cho sinh viên đã chọn' }).click();expect(requests).toHaveLength(0);
-  page.once('dialog', d => void d.accept());await page.getByRole('button', { name: 'Tạo đề xuất cho sinh viên đã chọn' }).click();
+  // Hộp xác nhận của giao diện (confirm.tsx) thay cho window.confirm.
+  const answer = (title: string, label: string) => page.getByRole('dialog', { name: title, exact: true }).getByRole('button', { name: label, exact: true }).click();
+  await page.getByRole('button', { name: 'Tạo đề xuất cho sinh viên đã chọn' }).click();await answer('Tạo đề xuất sinh viên?', 'Quay lại');expect(requests).toHaveLength(0);
+  await page.getByRole('button', { name: 'Tạo đề xuất cho sinh viên đã chọn' }).click();await answer('Tạo đề xuất sinh viên?', 'Tạo đề xuất');
   await expect(page.getByRole('button', { name: 'Gửi lời mời thực tập', exact: true })).toBeVisible();expect(requests[0].studentUserIds).toEqual(['student-a']);
-  page.once('dialog', d => void d.accept());await page.getByRole('button', { name: 'Gửi lời mời thực tập', exact: true }).click();
+  await page.getByRole('button', { name: 'Gửi lời mời thực tập', exact: true }).click();await answer('Gửi lời mời thực tập?', 'Gửi lời mời');
   await expect(page.getByText('Đang chờ sinh viên', { exact: true })).toBeVisible();await expect(page.getByRole('button', { name: 'Nhận lời mời', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Tìm sinh viên phù hợp', exact: true }).click();await expect(page.getByRole('checkbox', { name: 'Chọn SV001' })).toBeDisabled();
-  await page.getByRole('checkbox', { name: 'Chọn SV002' }).check();page.once('dialog', d => void d.accept());await page.getByRole('button', { name: 'Tạo đề xuất cho sinh viên đã chọn' }).click();
+  await page.getByRole('checkbox', { name: 'Chọn SV002' }).check();await page.getByRole('button', { name: 'Tạo đề xuất cho sinh viên đã chọn' }).click();await answer('Tạo đề xuất sinh viên?', 'Tạo đề xuất');
   await expect.poll(() => requests.length).toBe(2);expect(requests[1].expectedBatchVersion).toBe(1);
 });
 test('T2 eligibility confirmation is explicit and candidate selection respects remaining slots', async ({ page }) => {

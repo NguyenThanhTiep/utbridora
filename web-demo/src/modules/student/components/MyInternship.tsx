@@ -17,15 +17,18 @@ type Loaded = { cases: CaseRef[]; invitations: InternshipInvitation[]; terms: Te
 
 // Tiến độ học kỳ của hồ sơ (BC21 startDate/endDate) tính theo ngày trên máy: % đã qua, tuần thứ mấy, còn bao nhiêu ngày.
 // Chỉ là phép tính hiển thị từ ngày kỳ do API trả, không phải dữ liệu tiến độ thực tập của T3.
-function TermProgress({ term }: { term: TermReference }) {
-  const { status, percent, week, weeks, daysLeft, daysUntil } = termProgress(term.startDate, term.endDate);
-  const text = status === 'before' ? 'Chưa bắt đầu · còn ' + daysUntil + ' ngày' : status === 'after' ? 'Kỳ đã kết thúc'
+// Hồ sơ T3 đã COMPLETED thì thanh đầy kèm "Đã hoàn thành thực tập" thay cho tiến độ học kỳ (kỳ có thể còn chạy tiếp).
+function TermProgress({ term, completed }: { term: TermReference; completed: boolean }) {
+  const progress = termProgress(term.startDate, term.endDate), { status, week, weeks, daysLeft, daysUntil } = progress;
+  const percent = completed ? 100 : progress.percent;
+  const text = completed ? 'Đã hoàn thành thực tập' : status === 'before' ? 'Chưa bắt đầu · còn ' + daysUntil + ' ngày' : status === 'after' ? 'Kỳ đã kết thúc'
     : 'Tuần ' + week + '/' + weeks + ' · còn ' + daysLeft + ' ngày';
-  return <div className="student-term-progress">
-    <div className="student-term-progress-head"><span>Tiến độ kỳ {term.termCode}</span><b>{text}</b></div>
-    <div className="student-term-bar" role="progressbar" aria-label={'Tiến độ kỳ ' + term.termCode} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}
+  const label = (completed ? 'Tiến độ thực tập kỳ ' : 'Tiến độ kỳ ') + term.termCode;
+  return <div className={'student-term-progress' + (completed ? ' is-done' : '')}>
+    <div className="student-term-progress-head"><span>{label}</span><b>{text}</b></div>
+    <div className="student-term-bar" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}
       aria-valuetext={percent + '%, ' + text} style={{ '--value': percent + '%' } as CSSProperties}><span /></div>
-    <div className="student-term-progress-ends"><span>{date(term.startDate)}</span><span>{percent}% đã qua</span><span>{date(term.endDate)}</span></div>
+    <div className="student-term-progress-ends"><span>{date(term.startDate)}</span><span>{completed ? '100% hoàn thành' : percent + '% đã qua'}</span><span>{date(term.endDate)}</span></div>
   </div>;
 }
 
@@ -80,7 +83,7 @@ export function MyInternship({ userId, children }: { userId: string; children?: 
                   <Icon name="arrow-right" size={16} /><span><small>Kết thúc</small> <b>{date(term.endDate)}</b></span></span></p></div>}
             </div>
             <div className="student-ticket-foot">
-              {term && <TermProgress term={term} />}
+              {term && <TermProgress term={term} completed={item.state === 'COMPLETED'} />}
               <div className="student-internship-chips">
                 <span className="student-internship-count tone-blue" title="Nhiệm vụ đang ở trạng thái Đang làm"><StudentIcon name="pencil" size={14} /><b>{pad(count(item.caseId, 'IN_PROGRESS'))}</b> đang làm</span>
                 <span className="student-internship-count tone-amber" title="Bài nộp đang chờ nhận xét"><Icon name="clock" size={14} /><b>{pad(count(item.caseId, 'SUBMITTED'))}</b> chờ mentor phản hồi</span>

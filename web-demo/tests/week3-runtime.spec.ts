@@ -25,9 +25,9 @@ test('week 3 school, student and enterprise use real share, decision, Placement 
   const hr = await actor(browser, 'hr@example.test');
   try {
     await openCooperation(school.page, true);
-    school.page.once('dialog', d => void d.accept());
     const issued = school.page.waitForResponse(r => r.url().endsWith(`/school/proposals/${proposal}/invite`) && r.request().method() === 'POST');
     await school.page.getByRole('button', {name: 'Gửi lời mời thực tập', exact: true}).click();
+    await school.page.getByRole('dialog', {name: 'Gửi lời mời thực tập?', exact: true}).getByRole('button', {name: 'Gửi lời mời', exact: true}).click();
     const invitationResponse = await issued;expect(invitationResponse.status()).toBe(202);const invitation = await invitationResponse.json();
     await openCooperation(hr.page, false);await expect(hr.page.getByText('Chưa có hồ sơ được chia sẻ hợp lệ.', {exact: true})).toBeVisible();
     await hr.page.getByRole('tab', {name: 'Lô đề xuất', exact: true}).click();

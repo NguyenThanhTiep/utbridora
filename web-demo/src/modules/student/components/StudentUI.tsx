@@ -59,7 +59,8 @@ export function termProgress(startDate: string, endDate: string) {
   const now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const start = dayOf(startDate), end = dayOf(endDate), total = Math.max(1, Math.round((end - start) / DAY)), elapsed = Math.round((today - start) / DAY);
   return { status: elapsed < 0 ? 'before' as const : today > end ? 'after' as const : 'during' as const,
-    percent: Math.min(100, Math.max(0, Math.round(elapsed / total * 100))), week: Math.floor(elapsed / 7) + 1, weeks: Math.ceil(total / 7),
+    // Ngày cuối kỳ khi tổng số ngày chia hết cho 7 không được ra "Tuần 35/34".
+    percent: Math.min(100, Math.max(0, Math.round(elapsed / total * 100))), week: Math.min(Math.ceil(total / 7), Math.floor(elapsed / 7) + 1), weeks: Math.ceil(total / 7),
     daysLeft: Math.round((end - today) / DAY), daysUntil: -elapsed };
 }
 

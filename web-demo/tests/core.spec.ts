@@ -70,16 +70,20 @@ test('Khóa, mở tài khoản và quản lý membership trên giao diện', asy
   await signIn(page, env('E2E_ADMIN_EMAIL')); await page.getByRole('button', { name: 'Tài khoản & phân quyền' }).click();
   await page.getByLabel('Tìm tên hoặc email').fill(env('E2E_ENTERPRISE_EMAIL'));
   await page.getByRole('button', { name: 'Chi tiết', exact: true }).click();
-  page.on('dialog', dialog => dialog.accept());
+  // Hộp xác nhận của giao diện (confirm.tsx) thay cho window.confirm.
+  const confirm = (title: string, label: string) => page.getByRole('dialog', { name: title, exact: true }).getByRole('button', { name: label, exact: true }).click();
   await page.getByRole('button', { name: 'Khóa tài khoản', exact: true }).click();
+  await confirm('Đổi trạng thái tài khoản?', 'Đổi trạng thái');
   await expect(page.getByRole('button', { name: 'Mở khóa', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Mở khóa', exact: true }).click();
+  await confirm('Đổi trạng thái tài khoản?', 'Đổi trạng thái');
   await expect(page.getByRole('button', { name: 'Khóa tài khoản', exact: true })).toBeVisible();
   await page.getByRole('combobox', { name: 'Vai trò mới', exact: true }).selectOption('ENTERPRISE');
   await page.getByRole('combobox', { name: 'Tổ chức', exact: true }).selectOption(env('E2E_ORG_B_ID'));
   await page.getByRole('button', { name: 'Cấp vai trò', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Thu hồi', exact: true })).toHaveCount(2);
   await page.getByRole('button', { name: 'Thu hồi', exact: true }).last().click();
+  await confirm('Thu hồi vai trò?', 'Thu hồi vai trò');
   await expect(page.getByRole('button', { name: 'Thu hồi', exact: true })).toHaveCount(1);
 });
 test('Phiên bị thu hồi đưa người dùng về đăng nhập khi gọi API', async ({ page, browser }) => {

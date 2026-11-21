@@ -92,8 +92,10 @@ export function OpportunitiesPage({ schools, openPreferences }: { schools: Grant
             return <li className={'student-list-item student-job-card' + (open ? '' : ' is-closed')} key={opportunity.opportunityId}>
               <div className="student-job-head">
                 <span className="student-offer-logo" aria-hidden="true">{orgInitials(opportunity.enterpriseName)}</span>
-                <div className="student-job-title"><h3>{opportunity.title}</h3><p className="student-company">{opportunity.enterpriseName}</p></div>
-                <span className={'student-status student-job-state ' + (open ? 'tone-success' : 'tone-neutral')}>{open ? 'Đang nhận nguyện vọng' : 'Đã hết hạn nhận nguyện vọng'}</span>
+                {/* Nhãn trạng thái nằm sát ngay sau tên cơ hội (cùng hàng, hết chỗ thì xuống dòng dưới tên). */}
+                <div className="student-job-title"><div className="student-job-name"><h3>{opportunity.title}</h3>
+                  <span className={'student-status student-job-state ' + (open ? 'tone-success' : 'tone-neutral')}>{open ? 'Đang nhận nguyện vọng' : 'Đã hết hạn nhận nguyện vọng'}</span></div>
+                  <p className="student-company">{opportunity.enterpriseName}</p></div>
               </div>
               <ul className="student-job-facts">
                 <li><Icon name="graduation" size={15} />{majorNames(opportunity.majorCodes, majors)}</li>

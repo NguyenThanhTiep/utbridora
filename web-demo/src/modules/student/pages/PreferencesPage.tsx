@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ApiError } from '../../../api';
 import { EmptyState, Icon, LoadingState, Notice } from '../../../components';
+import { askConfirm } from '../../../confirm';
 import { getOpportunity, listMyPreferences, newIdempotencyKey, sendPreference } from '../api';
 import { StudentToast, orgInitials } from '../components/StudentUI';
 import { dateTime, groupPreferences, isStale, preferenceError, preferenceLabels, type PreferenceGroup } from '../preferences';
@@ -37,7 +38,7 @@ export function PreferencesPage() {
   }, [preferences]);
 
   const withdraw = async (preference: PreferenceView) => {
-    if (!window.confirm('Rút nguyện vọng này? Khi cơ hội còn hạn, bạn vẫn có thể gửi nguyện vọng mới.')) return;
+    if (!await askConfirm({ title: 'Rút nguyện vọng?', message: 'Rút nguyện vọng này? Khi cơ hội còn hạn, bạn vẫn có thể gửi nguyện vọng mới.', confirmLabel: 'Rút nguyện vọng', tone: 'danger' })) return;
     const body: WithdrawPreference = { action: 'WITHDRAW', preferenceId: preference.preferenceId, expectedVersion: preference.version, reasonCode: 'STUDENT_WITHDREW' };
     const ref = JSON.stringify(body);
     if (!pending.current.has(ref)) pending.current.set(ref, newIdempotencyKey());

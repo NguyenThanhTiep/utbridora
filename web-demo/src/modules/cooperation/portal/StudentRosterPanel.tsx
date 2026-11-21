@@ -1,6 +1,7 @@
 ﻿import { useEffect, useId, useRef, useState } from 'react';
 import { api, ApiError } from '../../../api';
 import { Notice } from '../../../components';
+import { askConfirm } from '../../../confirm';
 import { readAll } from './data';
 import { workflowError } from '../proposals/api';
 
@@ -143,8 +144,9 @@ function ImportSession({ org, term }: { org: string; term: string }) {
           }
           if (!lifetime.current?.signal.aborted) setSelected(ids);
         }); }}>Chọn tất cả dòng hợp lệ</button><button className="secondary" onClick={() => setSelected(new Set())} disabled={busy}>Bỏ chọn</button>
-          <button disabled={busy || !selected.size} onClick={() => {
-            if (!window.confirm('Xác nhận nhập ' + selected.size + ' dòng? Tài khoản mới chỉ được kích hoạt khi sinh viên chấp nhận lời mời.')) return;
+          <button disabled={busy || !selected.size} onClick={async () => {
+            if (!await askConfirm({ title: 'Nhập danh sách sinh viên?', message: 'Xác nhận nhập ' + selected.size + ' dòng? Tài khoản mới chỉ được kích hoạt khi sinh viên chấp nhận lời mời.',
+              confirmLabel: 'Nhập ' + selected.size + ' dòng' })) return;
             void run(async () => { await command(base + '/' + job.importJobId + '/confirm', { expectedJobVersion: job.jobVersion, fileHash: job.fileHash, selectedRowIds: [...selected].sort() }); setSelected(new Set()); setRevision(old => old + 1); });
           }}>Xác nhận nhập {selected.size} dòng</button></div>}
         {job.jobState === 'FAILED' && <button disabled={busy || !job.selectedRows} onClick={() => { void run(async () => {

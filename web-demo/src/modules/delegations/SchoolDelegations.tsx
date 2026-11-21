@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api, ApiError, type Grant } from '../../api';
 import { EmptyState, LoadingState, Notice, permissionNames } from '../../components';
 import { newIdempotencyKey } from '../student/api';
+import { useReveal } from '../../useReveal';
 import './styles.css';
 
 type Page<T> = { content: T[]; page: number; totalElements: number; totalPages: number };
@@ -76,6 +77,8 @@ function ScopeEditor({ mode, scope }: { mode: string; scope: Scope }) {
   const candidates = useRead<Page<Candidate>>(base + '/candidates' + query + '&page=' + candidatePage + '&search=' + encodeURIComponent(search), revision);
   const listing = useRead<Page<Detail>>(base + query + '&page=' + page, revision);
   const [selected, setSelected] = useState(''), [detailRevision, setDetailRevision] = useState(0);
+  // Bấm "Xem phân công" hoặc vừa cấp phân công thì cuộn tới khối chi tiết nằm dưới danh sách.
+  const reveal = useReveal();
   const [authorityId, setAuthorityId] = useState(''), [userId, setUserId] = useState(''), [permissions, setPermissions] = useState<string[]>([]), [fields, setFields] = useState<string[]>([]);
   const [from, setFrom] = useState(() => localDate(new Date())), [until, setUntil] = useState(() => localDate(new Date(Date.now() + 7 * 86400000))), [reference, setReference] = useState('');
   const [busy, setBusy] = useState(false), [message, setMessage] = useState(''), [error, setError] = useState('');
@@ -98,7 +101,7 @@ function ScopeEditor({ mode, scope }: { mode: string; scope: Scope }) {
     setBusy(true);
     try {
       const d = await api<Delegation>(mode === 'admin' ? '/admin/school-delegations' : '/school/terms/' + scope.termId + '/delegations', { method: 'POST', headers: { 'Idempotency-Key': pending.current.key }, body: payload });
-      if (live.current) { pending.current = null; setSelected(d.id); setDetailRevision(n => n + 1); setRevision(n => n + 1); setPermissions([]); setFields([]); setMessage('Đã cấp phân công. Cán bộ nhận quyền cần đăng nhập lại.'); }
+      if (live.current) { pending.current = null; setSelected(d.id); reveal.request(); setDetailRevision(n => n + 1); setRevision(n => n + 1); setPermissions([]); setFields([]); setMessage('Đã cấp phân công. Cán bộ nhận quyền cần đăng nhập lại.'); }
     } catch (reason) { if (live.current) setError(failure(reason)); } finally { if (live.current) setBusy(false); }
   };
   return <>
@@ -118,17 +121,17 @@ function ScopeEditor({ mode, scope }: { mode: string; scope: Scope }) {
     </section>
     <section className="panel"><div className="section-heading"><h2>Danh sách phân công</h2><button type="button" className="secondary" disabled={busy} onClick={() => { setRevision(n => n + 1); setDetailRevision(n => n + 1); }}>Tải lại phân công</button></div>
       <Notice message={listing.error} tone="error" />
-      {listing.loading ? <LoadingState /> : listing.data?.content.length === 0 ? <p>Chưa có phân công trong kỳ này.</p> : <div className="table-wrap"><table className="data-table"><thead><tr><th>Cán bộ</th><th>Căn cứ</th><th>Hiệu lực</th><th>Thao tác</th></tr></thead><tbody>{listing.data?.content.map(d => <tr key={d.delegation.id}><td>{d.displayName}<br /><small>{d.email}</small></td><td>{d.delegation.decisionRef}</td><td>{state(d)}<br /><small>{stamp(d.delegation.validFrom)} – {stamp(d.delegation.validUntil)}</small></td><td><button type="button" className="secondary" aria-label={'Xem phân công ' + d.delegation.decisionRef} onClick={() => { setSelected(d.delegation.id); setDetailRevision(n => n + 1); }}>Xem phân công</button></td></tr>)}</tbody></table></div>}
+      {listing.loading ? <LoadingState /> : listing.data?.content.length === 0 ? <p>Chưa có phân công trong kỳ này.</p> : <div className="table-wrap"><table className="data-table"><thead><tr><th>Cán bộ</th><th>Căn cứ</th><th>Hiệu lực</th><th>Thao tác</th></tr></thead><tbody>{listing.data?.content.map(d => <tr key={d.delegation.id}><td>{d.displayName}<br /><small>{d.email}</small></td><td>{d.delegation.decisionRef}</td><td>{state(d)}<br /><small>{stamp(d.delegation.validFrom)} – {stamp(d.delegation.validUntil)}</small></td><td><button type="button" className="secondary" aria-label={'Xem phân công ' + d.delegation.decisionRef} onClick={() => { setSelected(d.delegation.id); setDetailRevision(n => n + 1); reveal.request(); }}>Xem phân công</button></td></tr>)}</tbody></table></div>}
       <Pager data={listing.data} busy={listing.loading || busy} change={setPage} />
     </section>
-    {selected && <DelegationDetail key={selected} path={base + '/' + selected} revision={detailRevision} changed={() => { setRevision(n => n + 1); setDetailRevision(n => n + 1); }} close={() => setSelected('')} />}
+    {selected && <DelegationDetail key={selected} path={base + '/' + selected} revision={detailRevision} changed={() => { setRevision(n => n + 1); setDetailRevision(n => n + 1); }} close={() => setSelected('')} revealRef={reveal.ref} />}
   </>;
 }
 function state(d: Detail) {
   return !d.delegation.active ? 'Đã thu hồi' : d.effectivePermissionCodes.length === d.delegation.permissionCodes.length ? 'Đang có hiệu lực'
     : d.effectivePermissionCodes.length ? 'Hiệu lực một phần' : 'Chưa có hoặc đã mất hiệu lực';
 }
-function DelegationDetail({ path, revision, changed, close }: { path: string; revision: number; changed: () => void; close: () => void }) {
+function DelegationDetail({ path, revision, changed, close, revealRef }: { path: string; revision: number; changed: () => void; close: () => void; revealRef?: (element: HTMLElement | null) => void }) {
   const detail = useRead<Detail>(path, revision), [reason, setReason] = useState('ASSIGNMENT_ENDED'), [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('');
   const pending = useRef<{ payload: string; key: string } | null>(null);
   const d = detail.data;
@@ -139,7 +142,7 @@ function DelegationDetail({ path, revision, changed, close }: { path: string; re
     try { await api('/school/delegations/' + d.delegation.id, { method: 'DELETE', headers: { 'Idempotency-Key': pending.current.key }, body: payload }); pending.current = null; setMessage('Đã thu hồi phân công và các phiên bị ảnh hưởng.'); changed(); }
     catch (problem) { setError(failure(problem)); } finally { setBusy(false); }
   };
-  return <section className="panel" aria-label="Chi tiết phân công"><div className="section-heading"><h2>Chi tiết phân công</h2><button type="button" className="secondary" disabled={busy} onClick={close}>Đóng chi tiết</button></div>
+  return <section className="panel" aria-label="Chi tiết phân công" ref={revealRef}><div className="section-heading"><h2>Chi tiết phân công</h2><button type="button" className="secondary" disabled={busy} onClick={close}>Đóng chi tiết</button></div>
     <Notice message={detail.error || error} tone="error" /><Notice message={message} tone="success" />
     {detail.loading ? <LoadingState /> : d && <><h3>{d.displayName}</h3><p>{d.email} · {state(d)}</p><dl className="delegation-meta"><dt>Căn cứ</dt><dd>{d.delegation.decisionRef}</dd><dt>Người cấp</dt><dd>{d.grantorName}</dd><dt>Thời hạn</dt><dd>{stamp(d.delegation.validFrom)} – {stamp(d.delegation.validUntil)}</dd><dt>Phiên bản</dt><dd>{d.delegation.version}</dd><dt>Phân công</dt><dd>{d.parentId ? 'Được ủy quyền từ phân công ' + d.parentId : 'Phân công gốc'}</dd></dl>
       <h3>Quyền được cấp</h3><ul>{d.delegation.permissionCodes.map(p => <li key={p}>{permissionNames[p] || p}{!d.effectivePermissionCodes.includes(p) && ' · Chưa có hoặc đã mất hiệu lực'}</li>)}</ul>

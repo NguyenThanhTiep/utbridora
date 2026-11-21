@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, send, type Audit, type History, type Me, type Organization, type Page, type User } from './api';
+import { askConfirm } from './confirm';
 import {
   EmptyState, Field, Icon, LoadingState, Notice, Pagination, roleNames, StatusBadge, statusNames, useAction
 } from './components';
@@ -121,7 +122,8 @@ function AccountDetail({ user, currentId, permissions, refresh, close }: {
     PENDING_ACTIVATION: ['SUSPENDED', 'DEACTIVATED'], DEACTIVATED: []
   };
   const changeStatus = (next: string) => void action.run(async () => {
-    if (!window.confirm('Xác nhận thay đổi trạng thái tài khoản ' + user.email + '?')) return;
+    if (!await askConfirm({ title: 'Đổi trạng thái tài khoản?', message: 'Xác nhận thay đổi trạng thái tài khoản ' + user.email + '?', confirmLabel: 'Đổi trạng thái',
+      tone: next === 'ACTIVE' ? 'primary' : 'danger' })) return;
     await send('/admin/users/' + user.userId + '/status', 'PATCH', { status: next, reasonCode: reason });
     refresh();
     await loadHistory();
@@ -163,7 +165,7 @@ function AccountDetail({ user, currentId, permissions, refresh, close }: {
         <div className="membership-list">{user.memberships.map((member, index) => <div className="membership" key={member.role + ':' + (member.organizationId || '') + ':' + index}>
           <div><b>{roleNames[member.role]}</b><small className="subtle-code">{member.organizationId || 'Toàn hệ thống'}</small></div>
           <button className="secondary" type="button" disabled={action.busy || currentId === user.userId && member.role === 'ADMIN'} onClick={() => void action.run(async () => {
-            if (!window.confirm('Thu hồi vai trò này và các phiên cũ?')) return;
+            if (!await askConfirm({ title: 'Thu hồi vai trò?', message: 'Thu hồi vai trò này và các phiên cũ?', confirmLabel: 'Thu hồi vai trò', tone: 'danger' })) return;
             await send('/admin/memberships', 'DELETE', { userId: user.userId, ...member });
             refresh();
             action.setMessage('Đã thu hồi vai trò.');

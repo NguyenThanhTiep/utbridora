@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Notice } from '../../../components';
+import { useReveal } from '../../../useReveal';
 import type { WorkspaceAssignment, InternshipGroup, WorkspacePage } from '../types';
 import type { InternshipTask as Task } from '../workflow';
 import { accessLost, workflowError, workflowRead } from '../workflow-api';
@@ -29,6 +30,8 @@ function TaskBoardContent({ assignment, group, student = false, showReports = tr
   const [artifactAssignment, setArtifactAssignment] = useState(''), [reports, setReports] = useState(false), [calendarTask, setCalendarTask] = useState('');
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const mutation = useWorkflowCommand(assignment?.id, denied), busy = mutation.busy || mutation.pending;
+  // Bấm nhiệm vụ ở bảng việc hoặc lịch thì cuộn tới khối chi tiết (lịch nằm dưới chi tiết, bảng việc nằm trên).
+  const reveal = useReveal();
   useEffect(() => {
     const c = new AbortController(); setMessage(''); setTasks([]);
     const params = new URLSearchParams({ page: String(page), size: '25' });
@@ -65,11 +68,11 @@ function TaskBoardContent({ assignment, group, student = false, showReports = tr
       <button className="secondary" disabled={busy} onClick={() => setRefresh(n => n + 1)}>Tải lại bảng việc</button></div>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(170px,1fr))', gap: 12 }}>{states.map(s => <section className="panel" key={s}><h4>{names[s]}</h4>
       {tasks.flatMap(t => t.assignments.filter(a => a.state === s && (!state || state === s) && (!person || person === a.caseId)).map(a => <article key={a.assignmentId}>
-        <button type="button" className="text-button" onClick={() => { setSelected(t.taskId); setArtifactAssignment(a.assignmentId); setCalendarTask(''); }}>{t.title}</button><p>Hạn: {new Date(t.dueAt).toLocaleString('vi-VN')}</p>
+        <button type="button" className="text-button" onClick={() => { setSelected(t.taskId); setArtifactAssignment(a.assignmentId); setCalendarTask(''); reveal.request(); }}>{t.title}</button><p>Hạn: {new Date(t.dueAt).toLocaleString('vi-VN')}</p>
         {student && ['NEW', 'REVISION_REQUIRED'].includes(a.state) && <button disabled={busy} onClick={() => void command('/t3/assignments/' + a.assignmentId + '/status', 'PATCH', { expectedVersion: a.version, state: 'IN_PROGRESS' })}>Bắt đầu làm</button>}
       </article>))}</section>)}</div>
     <div className="button-row"><button className="secondary" disabled={page === 0} onClick={() => setPage(n => n - 1)}>Trước</button><span>Trang {page + 1}/{Math.max(1, total)}</span><button className="secondary" disabled={page + 1 >= total} onClick={() => setPage(n => n + 1)}>Sau</button></div>
-    {detail && <section className="panel"><h3>{detail.title}</h3><p>{detail.description}</p><p>Ưu tiên: {{ LOW: 'Thấp', NORMAL: 'Bình thường', HIGH: 'Cao' }[detail.priority]} · Hạn: {new Date(detail.dueAt).toLocaleString('vi-VN')}</p><ul>{detail.assignments.map(a => <li key={a.assignmentId}>
+    {detail && <section className="panel" ref={reveal.ref}><h3>{detail.title}</h3><p>{detail.description}</p><p>Ưu tiên: {{ LOW: 'Thấp', NORMAL: 'Bình thường', HIGH: 'Cao' }[detail.priority]} · Hạn: {new Date(detail.dueAt).toLocaleString('vi-VN')}</p><ul>{detail.assignments.map(a => <li key={a.assignmentId}>
       <button className="text-button" onClick={() => setArtifactAssignment(a.assignmentId)}>Hồ sơ …{a.caseId.slice(-6)}: {names[a.state]} · Bài nộp và trao đổi</button></li>)}</ul>
       {detail.assignments.filter(a => a.assignmentId === artifactAssignment).map(a => <SubmissionWorkspace key={a.assignmentId} taskId={detail.taskId} assignment={a}
         contextId={assignment?.id} student={student} mentor={assignment?.kind === 'MENTOR'} denied={denied}
@@ -83,7 +86,7 @@ function TaskBoardContent({ assignment, group, student = false, showReports = tr
       <div style={{ overflowX: 'auto' }}><div role="grid" aria-label="Lịch hạn công việc" style={{ display: 'grid', minWidth: 560, gridTemplateColumns: 'repeat(7,minmax(0,1fr))', gap: 6 }}>
         {['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'].map(day => <strong role="columnheader" key={day}>{day}</strong>)}
         {Array.from({ length: Number.isFinite(date.getTime()) ? (date.getDay() + 6) % 7 : 0 }, (_, n) => <span aria-hidden="true" key={'blank-' + n} />)}
-        {Array.from({ length: Number.isFinite(days) ? days : 0 }, (_, n) => { const day = n + 1; return <div role="gridcell" className="panel" key={day}><strong>{day}</strong>{events.filter(e => new Date(e.dueAt).getDate() === day).map(e => <button key={e.taskId + e.assignmentId} className="text-button" onClick={() => { setSelected(''); setArtifactAssignment(e.assignmentId || ''); setCalendarTask(e.taskId); }}>{e.title}{e.state ? ': ' + names[e.state] : ''}</button>)}</div>; })}
+        {Array.from({ length: Number.isFinite(days) ? days : 0 }, (_, n) => { const day = n + 1; return <div role="gridcell" className="panel" key={day}><strong>{day}</strong>{events.filter(e => new Date(e.dueAt).getDate() === day).map(e => <button key={e.taskId + e.assignmentId} className="text-button" onClick={() => { setSelected(''); setArtifactAssignment(e.assignmentId || ''); setCalendarTask(e.taskId); reveal.request(); }}>{e.title}{e.state ? ': ' + names[e.state] : ''}</button>)}</div>; })}
       </div></div></section>
   </div>;
 }

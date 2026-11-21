@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { EmptyState, Icon, LoadingState, Notice } from '../../../components';
+import { askConfirm } from '../../../confirm';
 import { listDemands } from '../api';
 import type { Demand, DemandPage } from '../types';
 import { canLeaveDemand } from '../navigation';
@@ -22,7 +23,9 @@ export function ScopedDemands({ organizationId, onLoaded }: { organizationId: st
   loadedRef.current = onLoaded;
   const submitKeys = useRef(new Map<string, string>());
   const lifecycle = async (record: Demand, operation: 'reopen' | 'restore') => {
-    if (!canLeaveDemand() || !window.confirm(operation === 'restore' ? 'Khôi phục nhu cầu này về bản nháp?' : 'Mở lại nhu cầu để chỉnh sửa? Khi gửi hợp tác phải xác nhận phiên bản mới.')) return;
+    if (!canLeaveDemand() || !await askConfirm(operation === 'restore'
+      ? { title: 'Khôi phục nhu cầu?', message: 'Khôi phục nhu cầu này về bản nháp?', confirmLabel: 'Khôi phục nhu cầu' }
+      : { title: 'Mở lại nhu cầu?', message: 'Mở lại nhu cầu để chỉnh sửa? Khi gửi hợp tác phải xác nhận phiên bản mới.', confirmLabel: 'Mở lại để chỉnh sửa' })) return;
     const ref = operation + ':' + record.demandId + ':' + record.version;
     if (!submitKeys.current.has(ref)) submitKeys.current.set(ref, newIdempotencyKey());
     setSaving(true); setListError(''); setSuccess('');

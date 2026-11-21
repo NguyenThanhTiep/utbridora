@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { ApiError, type Grant, type Me } from '../../../api';
 import { EmptyState, Icon, LoadingState, Notice } from '../../../components';
+import { askConfirm } from '../../../confirm';
 import { httpsArtifact } from '../../internship/workflow';
 import { getMyProfile, newIdempotencyKey, saveMyProfile, toProfileInput } from '../api';
 import { StudentTabs } from '../components/StudentTabs';
@@ -246,8 +247,8 @@ function ProjectsTab({ view, evidence, files, busy, save }: { view: SelfProfileV
       <div className="student-project-cover" aria-hidden="true"><span className="student-project-monogram">{initial(item.title)}</span></div>
       <div className="student-item-actions student-card-tools">
         <button type="button" className="secondary student-icon-button" aria-label={'Sửa dự án ' + item.title} title="Sửa" disabled={busy || editing !== null} onClick={() => open(index)}><StudentIcon name="pencil" size={15} /></button>
-        <button type="button" className="secondary student-icon-button student-danger" aria-label={'Xóa dự án ' + item.title} title="Xóa" disabled={busy || editing !== null} onClick={() => {
-          if (window.confirm('Xóa dự án này khỏi hồ sơ?')) void save(input => ({ ...input, projects: input.projects.filter((_, position) => position !== index) }), 'Đã xóa dự án.');
+        <button type="button" className="secondary student-icon-button student-danger" aria-label={'Xóa dự án ' + item.title} title="Xóa" disabled={busy || editing !== null} onClick={async () => {
+          if (await askConfirm({ title: 'Xóa dự án?', message: 'Xóa dự án này khỏi hồ sơ?', confirmLabel: 'Xóa dự án', tone: 'danger' })) void save(input => ({ ...input, projects: input.projects.filter((_, position) => position !== index) }), 'Đã xóa dự án.');
         }}><StudentIcon name="trash" size={15} /></button></div>
       <div className="student-project-body">
         <h3>{item.title}</h3>
@@ -313,8 +314,8 @@ function CertificatesTab({ view, evidence, files, busy, save }: { view: SelfProf
       <div className="student-cert-medal" aria-hidden="true"><StudentIcon name="award" size={26} /></div>
       <div className="student-item-actions student-card-tools">
         <button type="button" className="secondary student-icon-button" aria-label={'Sửa chứng chỉ ' + item.title} title="Sửa" disabled={busy || editing !== null} onClick={() => open(index)}><StudentIcon name="pencil" size={15} /></button>
-        <button type="button" className="secondary student-icon-button student-danger" aria-label={'Xóa chứng chỉ ' + item.title} title="Xóa" disabled={busy || editing !== null} onClick={() => {
-          if (window.confirm('Xóa chứng chỉ này khỏi hồ sơ?')) void save(input => ({ ...input, certificates: input.certificates.filter((_, position) => position !== index) }), 'Đã xóa chứng chỉ.');
+        <button type="button" className="secondary student-icon-button student-danger" aria-label={'Xóa chứng chỉ ' + item.title} title="Xóa" disabled={busy || editing !== null} onClick={async () => {
+          if (await askConfirm({ title: 'Xóa chứng chỉ?', message: 'Xóa chứng chỉ này khỏi hồ sơ?', confirmLabel: 'Xóa chứng chỉ', tone: 'danger' })) void save(input => ({ ...input, certificates: input.certificates.filter((_, position) => position !== index) }), 'Đã xóa chứng chỉ.');
         }}><StudentIcon name="trash" size={15} /></button></div>
       <div className="student-cert-body">
         <h3>{item.title}</h3>
@@ -354,8 +355,8 @@ function CvTab({ view, candidates, files, busy, save, upload }: { view: SelfProf
         <div className="student-cv-paper" aria-hidden="true"><b>CV</b><span /><span /><span /><span /><span /></div>
         <div className="student-cv-info"><p className="student-cv-label">CV đang dùng</p>
           {current ? <><FileList ids={[current]} files={files} />
-            <div className="button-row"><button type="button" className="secondary" disabled={busy} onClick={() => {
-              if (window.confirm('Gỡ CV khỏi hồ sơ?')) void save(input => ({ ...input, cvFileId: null }), 'Đã gỡ CV khỏi hồ sơ.');
+            <div className="button-row"><button type="button" className="secondary" disabled={busy} onClick={async () => {
+              if (await askConfirm({ title: 'Gỡ CV khỏi hồ sơ?', message: 'Gỡ CV khỏi hồ sơ? CV sẽ không còn gắn với hồ sơ của bạn.', confirmLabel: 'Gỡ CV', tone: 'danger' })) void save(input => ({ ...input, cvFileId: null }), 'Đã gỡ CV khỏi hồ sơ.');
             }}>Gỡ CV khỏi hồ sơ</button></div></>
             : <p className="student-list-meta">Chưa có CV trong hồ sơ. Tải tệp CV ở khung bên cạnh, chờ quét an toàn rồi bấm "Dùng làm CV".</p>}
         </div>

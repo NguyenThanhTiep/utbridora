@@ -43,7 +43,8 @@ export function SubmissionWorkspace({ taskId, assignment, contextId, student, me
   const reload = () => setRefresh(n => n + 1), blocked = command.busy || command.pending || !currentReady || !validVersion(current.version);
   const reviewedSubmission = history.find(item => item.submissionId === selectedReview)
     || history.reduce<Submission | undefined>((latest, item) => !latest || item.versionNo > latest.versionNo ? item : latest, undefined);
-  return <section className="panel stack t3-workflow" aria-label="Bài nộp và trao đổi">
+  // Ba khối riêng (bài nộp · lịch sử · trao đổi) để giao diện tách thành từng thẻ; nội dung và thứ tự giữ nguyên.
+  return <section className="panel stack t3-workflow" aria-label="Bài nộp và trao đổi"><div className="t3-workflow-block">
     <h4>Bài nộp · hồ sơ …{current.caseId.slice(-6)}</h4>
     <p>Trạng thái: {current.state} · Phiên bản phân công: {current.version}</p>
     <button type="button" className="secondary" disabled={command.busy} onClick={reload}>Tải phiên bản hiện tại</button>
@@ -63,6 +64,7 @@ export function SubmissionWorkspace({ taskId, assignment, contextId, student, me
       {!textWithin(note, 0, 2000) && <p role="alert">Ghi chú tối đa 2.000 ký tự.</p>}
       <button disabled={!httpsArtifact(url) || !textWithin(note, 0, 2000)}>Gửi bài nộp</button>
     </fieldset></form>}
+    </div><div className="t3-workflow-block">
     <h4>Lịch sử bài nộp</h4>
     {loading ? <p role="status">Đang tải bài nộp…</p> : historyError ? <p role="alert">{historyError}</p>
       : history.length === 0 ? <p>Chưa có bài nộp.</p> : history.map(item => <article className="panel" key={item.submissionId}>
@@ -86,6 +88,7 @@ export function SubmissionWorkspace({ taskId, assignment, contextId, student, me
           <button disabled={!textWithin(reviewText, 1, 2000)}>Gửi nhận xét bài nộp</button>
         </fieldset></form>}
       </article>)}
+    </div><div className="t3-workflow-block">
     <h4>Trao đổi về nhiệm vụ</h4>
     {commentError && <p role="alert">{commentError}</p>}
     {comments.map(item => <article key={item.commentId}><p>{item.authorUserId} · {new Date(item.createdAt).toLocaleString('vi-VN')}</p><p className="t3-preserve-text">{item.text}</p></article>)}
@@ -93,7 +96,7 @@ export function SubmissionWorkspace({ taskId, assignment, contextId, student, me
       command.run('/t3/assignments/' + current.assignmentId + '/comments', { text: comment.trim() }, () => { setComment(''); reload(); });
     }}><fieldset disabled={blocked}><label>Nội dung trao đổi<textarea required value={comment} onChange={event => setComment(event.target.value)} /></label>
       <button disabled={!textWithin(comment, 1, 2000)}>Gửi trao đổi</button></fieldset></form>}
-  </section>;
+  </div></section>;
 }
 
 function SubmissionFeedback({ submission, contextId, denied }: {

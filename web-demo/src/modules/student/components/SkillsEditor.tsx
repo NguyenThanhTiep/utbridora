@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { api } from '../../../api';
 import { Icon, Notice } from '../../../components';
+import { askConfirm } from '../../../confirm';
 import { newIdempotencyKey, saveMyProfile, toProfileInput } from '../api';
 import type { CanonicalSkillInput, CustomSkillInput, SelfProfileView, ContractPage } from '../types';
 import { readSkillCatalog, type CatalogSkill } from '../../cooperation/demand/skillCatalog';
@@ -33,7 +34,8 @@ export function SkillsEditor({ view, disabled, onSaved }: { view: SelfProfileVie
   const save = async (event: FormEvent) => {
     event.preventDefault(); if (disabled || busy) return;
     const input = { ...toProfileInput(view), skillsDeclared: declared, skills: declared ? skills : [], customSkills: declared ? custom : [] };
-    if (!declared && (skills.length || custom.length) && !window.confirm('Bỏ khai báo sẽ xóa các kỹ năng trong bản lưu này. Tiếp tục?')) return;
+    if (!declared && (skills.length || custom.length) && !await askConfirm({ title: 'Bỏ khai báo kỹ năng?', message: 'Bỏ khai báo sẽ xóa các kỹ năng trong bản lưu này. Tiếp tục?',
+      confirmLabel: 'Bỏ khai báo', tone: 'danger' })) return;
     const body = JSON.stringify(input); if (pending.current?.body !== body) pending.current = { body, key: newIdempotencyKey() };
     setBusy(true); setMessage('');
     try { const saved = await saveMyProfile(input, pending.current.key); pending.current = null; onSaved(saved); }

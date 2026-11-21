@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ApiError } from '../../../api';
 import { Icon, LoadingState, Notice } from '../../../components';
+import { askConfirm } from '../../../confirm';
 import { StudentNote, orgInitials } from '../components/StudentUI';
 import { decideInvitation, getInvitation, getSharingPolicy, grantConsent, listMyConsents, listMyInvitations, newIdempotencyKey, revokeConsent, withdrawInvitation } from '../api';
 import type { ConsentGrant, InternshipInvitation, InvitationState, ProfileField, SchoolSharingPolicy } from '../types';
@@ -103,9 +104,9 @@ export function InvitationConsentPage() {
         <ul className="student-offer-steps" aria-label="Tình trạng lời mời">{steps(i, open, shared).map(step => <li key={step.label} className={'is-' + step.tone}>
           <span className="student-offer-step-icon" aria-hidden="true"><Icon name={step.icon} size={16} /></span><span><small>{step.label}</small><b>{step.value}</b></span></li>)}</ul>
         {open && <div className="button-row student-offer-actions"><button className="student-btn-wide" disabled={busy} onClick={() => decide(i, 'ACCEPT')}><Icon name="check" size={17} />Nhận lời mời</button>
-          <button className="secondary student-btn-wide" disabled={busy} onClick={() => { if (window.confirm('Từ chối lời mời này? Sau khi từ chối bạn không thể nhận lại lời mời.')) decide(i, 'DECLINE'); }}>Từ chối</button></div>}
+          <button className="secondary student-btn-wide" disabled={busy} onClick={async () => { if (await askConfirm({ title: 'Từ chối lời mời?', message: 'Từ chối lời mời này? Sau khi từ chối bạn không thể nhận lại lời mời.', confirmLabel: 'Từ chối lời mời', tone: 'danger' })) decide(i, 'DECLINE'); }}>Từ chối</button></div>}
         {i.state === 'ACCEPTED' && (i.placementId ? <p className="student-list-meta">Đã có Placement nên không thể rút nhận lời.</p>
-          : <div className="button-row student-offer-actions"><button className="secondary student-btn-wide student-danger-outline" disabled={busy} onClick={() => { if (window.confirm('CẢNH BÁO: Rút nhận lời sẽ HỦY BỎ cơ hội thực tập này và không thể hoàn tác. Bạn có chắc chắn muốn rút?')) withdraw(i); }}>Rút nhận lời</button></div>)}
+          : <div className="button-row student-offer-actions"><button className="secondary student-btn-wide student-danger-outline" disabled={busy} onClick={async () => { if (await askConfirm({ title: 'Rút nhận lời?', message: 'CẢNH BÁO: Rút nhận lời sẽ HỦY BỎ cơ hội thực tập này và không thể hoàn tác. Bạn có chắc chắn muốn rút?', confirmLabel: 'Rút nhận lời', tone: 'danger' })) withdraw(i); }}>Rút nhận lời</button></div>)}
         {(open || i.state === 'ACCEPTED') && <StudentNote>Để chỉ thu hồi quyền xem thông tin cá nhân của doanh nghiệp mà vẫn giữ vị trí thực tập, hãy chọn “Thu hồi quyền chia sẻ” bên dưới.</StudentNote>}
         <InvitationDetail key={i.invitationId + ':' + i.version} invitationId={i.invitationId} />
         {(open || i.state === 'ACCEPTED') && <ConsentForm key={i.invitationId} invitation={i} consents={consents} busy={busy} refresh={refresh} command={command} />}

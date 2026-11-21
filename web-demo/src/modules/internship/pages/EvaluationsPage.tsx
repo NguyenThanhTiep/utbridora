@@ -5,6 +5,7 @@ import { workflowError, workflowPages, workflowRead } from '../workflow-api';
 import { gradeAccessLost } from '../evaluation';
 import { uuidPattern, type InternshipTask } from '../workflow';
 import { MentorEvaluation, SchoolEvaluations, StudentEvaluation, VisibilityEditor } from './EvaluationPanels';
+import { useReveal } from '../../../useReveal';
 import '../styles.css';
 
 type Mode='ENTERPRISE'|'SCHOOL_STAFF'|'STUDENT';
@@ -32,6 +33,8 @@ function CaseChooser({children,contextId,student=false,fixedCase,mentorGroup,den
 }) {
   const [choices,setChoices]=useState<string[]>([]),[selected,setSelected]=useState(fixedCase || ''),[input,setInput]=useState('');
   const [message,setMessage]=useState('');
+  // Chọn hoặc nhập mã hồ sơ thì cuộn tới khối đánh giá của hồ sơ đó.
+  const reveal=useReveal<HTMLDivElement>();
   useEffect(()=>{if(fixedCase || !student && !mentorGroup)return;const c=new AbortController();
     const read=student?workflowPages<InternshipTask>('/t3/tasks',undefined,c.signal).then(tasks=>tasks.flatMap(t=>t.assignments.map(a=>a.caseId)))
       :workflowPages<{groupId:string;caseIds:string[]}>('/t3/mentors/me/groups',contextId,c.signal).then(groups=>groups.filter(g=>g.groupId===mentorGroup).flatMap(g=>g.caseIds));
@@ -41,14 +44,14 @@ function CaseChooser({children,contextId,student=false,fixedCase,mentorGroup,den
   },[student,mentorGroup,contextId,fixedCase]);
   return <section className="stack"><div className="panel stack"><h2>Chọn hồ sơ thực tập</h2>
     {message && <p role="alert">{message}</p>}
-    {choices.length>0 && <label>{student?'Hồ sơ từ nhiệm vụ':'Hồ sơ trong nhóm'}<select value={selected} onChange={e=>setSelected(e.target.value)}><option value="">Chọn hồ sơ…</option>
+    {choices.length>0 && <label>{student?'Hồ sơ từ nhiệm vụ':'Hồ sơ trong nhóm'}<select value={selected} onChange={e=>{setSelected(e.target.value);if(e.target.value)reveal.request();}}><option value="">Chọn hồ sơ…</option>
       {choices.map(id=><option key={id} value={id}>Hồ sơ …{id.slice(-6)}</option>)}</select></label>}
-    {fixedCase?<p>Hồ sơ được phân công: {fixedCase}</p>:<form onSubmit={e=>{e.preventDefault();if(uuidPattern.test(input))setSelected(input.toLowerCase());}}>
+    {fixedCase?<p>Hồ sơ được phân công: {fixedCase}</p>:<form onSubmit={e=>{e.preventDefault();if(uuidPattern.test(input)){setSelected(input.toLowerCase());reveal.request();}}}>
       <label>Mã hồ sơ thực tập<input value={input} required onChange={e=>{setInput(e.target.value);setSelected('');}}/></label>
       <p>Dùng mã hồ sơ được cấp. Hệ thống xác nhận quyền khi mở dữ liệu.</p>
       <button disabled={!uuidPattern.test(input)}>Mở đánh giá hồ sơ</button>
     </form>}
-  </div>{selected && <div key={selected+':'+(contextId || '')}>{children(selected)}</div>}</section>;
+  </div>{selected && <div key={selected+':'+(contextId || '')} ref={reveal.ref}>{children(selected)}</div>}</section>;
 }
 
 function EnterpriseEvaluations({me,grants,denied}:{me:Me;grants:Grant[];denied:()=>void}) {

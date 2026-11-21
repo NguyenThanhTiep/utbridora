@@ -76,8 +76,8 @@ test('school publication, student preference and matching use real T5 and T2 pro
     await student.getByRole('button', { name: 'Lời mời & nguyện vọng', exact: true }).click();
     await student.getByRole('tab', { name: 'Nguyện vọng', exact: true }).click();
     const preference = student.locator('li.student-list-item').filter({ hasText: 'Real provider week 3 browser' });
-    student.once('dialog', dialog => void dialog.accept());
     await preference.getByRole('button', { name: 'Rút nguyện vọng', exact: true }).click();
+    await student.getByRole('dialog', { name: 'Rút nguyện vọng?', exact: true }).getByRole('button', { name: 'Rút nguyện vọng', exact: true }).click();
     await expect(preference.getByText('Đã rút', { exact: true })).toBeVisible();
     await school.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Đối chiếu hồ sơ', exact: true }).click();
     const matching = school.locator('.matching-workspace');

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Notice } from '../../../components';
+import { askConfirm } from '../../../confirm';
 import type { ContractPage } from '../../student/types';
 import type { Demand } from '../types';
 import type { Capacity } from './types';
@@ -72,8 +73,9 @@ export function NominationPanel({ org, cooperationId, demand, locked, changed, p
                 onClick={() => {setApproving(row);setDecisionRef('');}}>Xác nhận điều kiện cho {row.studentCode || row.match.studentUserId}</button>}
               <small>{row.match.details.filter(d => d.type === 'REQUIRED' && d.status !== 'PASS').map(d => `${d.criterionCode}: ${d.status === 'UNKNOWN' ? 'thiếu dữ liệu' : 'chưa đạt'}`).join('; ')}</small></td></tr>)}</tbody>
         </table></div>
-        <button disabled={disabled || !selected.length || selected.length > slots} onClick={() => {
-          if (!window.confirm(`Xác nhận đề xuất ${selected.length} sinh viên: ${rows.filter(row => selected.includes(row.match.studentUserId)).map(row => row.studentCode || row.match.studentUserId).join(', ')}?`)) return;
+        <button disabled={disabled || !selected.length || selected.length > slots} onClick={async () => {
+          if (!await askConfirm({ title: 'Tạo đề xuất sinh viên?', confirmLabel: 'Tạo đề xuất',
+            message: `Xác nhận đề xuất ${selected.length} sinh viên: ${rows.filter(row => selected.includes(row.match.studentUserId)).map(row => row.studentCode || row.match.studentUserId).join(', ')}?` })) return;
           void command.submit(`/matching/runs/${context.run.matchRunId}/nominate`, 'POST', { studentUserIds: selected,
             expectedDemandVersion: context.demandVersion, expectedCriteriaVersion: context.criteriaVersion,
             expectedCooperationVersion: context.cooperationVersion, expectedBatchVersion: context.batchVersion });

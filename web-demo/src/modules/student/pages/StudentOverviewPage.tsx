@@ -230,7 +230,7 @@ export function StudentOverviewPage({ me, schools, openProfile }: { me: Me; scho
           <p className="student-opp-company">{opp.enterpriseName}{opp.location ? ` · ${opp.location}` : ''}</p>
           <p className="student-opp-meta">Thời gian thực tập: {opp.dateRange.startDate} – {opp.dateRange.endDate} · Đóng công bố: {new Date(opp.closedAt).toLocaleString('vi-VN')}</p>
           {opp.majorCodes.length > 0 && <div className="student-opp-tags">{opp.majorCodes.map(m => <span className="student-opp-tag" key={m}>Ngành: {m}</span>)}</div>}
-          <button type="button" className="secondary" onClick={() => {
+          <button type="button" className="student-opp-more" aria-expanded={selectedDetail?.opportunityId === opp.opportunityId} onClick={() => {
             if (selectedDetail?.opportunityId === opp.opportunityId) { setSelectedDetail(null); return; }
             void api<OpportunityView>(`/opportunities/${opp.opportunityId}`).then(setSelectedDetail).catch(() => setSelectedDetail(opp));
           }}>{selectedDetail?.opportunityId === opp.opportunityId ? 'Ẩn chi tiết cơ hội' : 'Xem chi tiết cơ hội'}</button>

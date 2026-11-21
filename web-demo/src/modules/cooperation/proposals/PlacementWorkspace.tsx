@@ -7,6 +7,7 @@ import type { SchoolProposal } from './types';
 import { scopedRead, workflowError } from './api';
 import { useWorkflowCommand } from './useWorkflowCommand';
 import { WorkspaceHandoff } from './WorkspaceHandoff';
+import { useReveal } from '../../../useReveal';
 
 type Placement = { placementId: string; schoolOrgId: string; enterpriseOrgId: string; cooperationId: string; proposalItemId: string;
   state: string; version: number; effectiveAt: string; startDate: string; endDate: string };
@@ -62,6 +63,8 @@ export function PlacementWorkspace({ org, school, cooperationId, demand, candida
   const [decision, setDecision] = useState<{ item: Placement; action: string } | null>(null), [reference, setReference] = useState(''), [reason, setReason] = useState('');
   const [links, setLinks] = useState<Record<string, Link>>({}), [now, setNow] = useState(Date.now());
   const [expandedPlacement, setExpandedPlacement] = useState<string | null>(null);
+  // Bấm Phê duyệt / Kích hoạt / Hủy trên một thẻ thì cuộn tới biểu mẫu thao tác nằm dưới danh sách tiếp nhận.
+  const reveal = useReveal();
   const pendingRef = useRef(pendingChanged); pendingRef.current = pendingChanged;
   const side = school ? 'school' : 'enterprise';
   const notifyProgress = () => window.setTimeout(() => window.dispatchEvent(new Event('placement-updated')), 0);
@@ -212,9 +215,9 @@ export function PlacementWorkspace({ org, school, cooperationId, demand, candida
             </div>
           </div>
           {school && <div className="button-row">
-            {item.state === 'PENDING_APPROVAL' && <button className="btn-action-approve" disabled={blocked} onClick={() => {setDecision({item, action: 'approve'});setReference('');setReason('SCHOOL_APPROVED');}}>Phê duyệt tiếp nhận</button>}
-            {item.state === 'APPROVED' && <button className="btn-action-activate" disabled={blocked || now < Date.parse(item.effectiveAt)} onClick={() => {setDecision({item, action: 'activate'});setReference('');setReason('START_REQUESTED');}}>Kích hoạt thực tập</button>}
-            {['PENDING_APPROVAL', 'APPROVED', 'ACTIVE'].includes(item.state) && <button className="secondary btn-action-cancel" disabled={blocked} onClick={() => {setDecision({item, action: 'cancel'});setReference('');setReason('');}}>Hủy tiếp nhận</button>}
+            {item.state === 'PENDING_APPROVAL' && <button className="btn-action-approve" disabled={blocked} onClick={() => {setDecision({item, action: 'approve'});setReference('');setReason('SCHOOL_APPROVED');reveal.request();}}>Phê duyệt tiếp nhận</button>}
+            {item.state === 'APPROVED' && <button className="btn-action-activate" disabled={blocked || now < Date.parse(item.effectiveAt)} onClick={() => {setDecision({item, action: 'activate'});setReference('');setReason('START_REQUESTED');reveal.request();}}>Kích hoạt thực tập</button>}
+            {['PENDING_APPROVAL', 'APPROVED', 'ACTIVE'].includes(item.state) && <button className="secondary btn-action-cancel" disabled={blocked} onClick={() => {setDecision({item, action: 'cancel'});setReference('');setReason('');reveal.request();}}>Hủy tiếp nhận</button>}
           </div>}
           {item.state === 'APPROVED' && now < Date.parse(item.effectiveAt) && <p className="placement-time-warning">Chưa đến thời điểm kích hoạt. Hồ sơ chưa cho phép giao hoặc nộp nhiệm vụ thực tập.</p>}
           {school && ['APPROVED', 'ACTIVE', 'COMPLETED'].includes(item.state) && <button className="secondary" disabled={blocked}
@@ -226,7 +229,7 @@ export function PlacementWorkspace({ org, school, cooperationId, demand, candida
       {result.totalPages > 1 && <div className="button-row"><button className="secondary" disabled={blocked || page === 0} onClick={() => setPage(n => n - 1)}>Trang tiếp nhận trước</button>
         <span>Trang {page + 1}/{result.totalPages}</span><button className="secondary" disabled={blocked || page + 1 >= result.totalPages} onClick={() => setPage(n => n + 1)}>Trang tiếp nhận sau</button></div>}
     </>}
-    {decision && <form className="placement-decision-panel" onSubmit={e => {e.preventDefault();void command.submit(`/placements/${decision.item.placementId}/${decision.action}`, 'POST', {
+    {decision && <form className="placement-decision-panel" ref={reveal.ref} onSubmit={e => {e.preventDefault();void command.submit(`/placements/${decision.item.placementId}/${decision.action}`, 'POST', {
       expectedVersion: decision.item.version, decisionRef: reference, reasonCode: reason,
     });}}><fieldset disabled={blocked}><legend>{decision.action === 'approve' ? 'Phê duyệt tiếp nhận' : decision.action === 'activate' ? 'Kích hoạt thực tập' : 'Hủy tiếp nhận'}</legend>
       <label>Căn cứ thao tác tiếp nhận<input required maxLength={120} value={reference} onChange={e => setReference(e.target.value)} /></label>

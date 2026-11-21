@@ -12,8 +12,9 @@ test('school imports one valid row, resends mail, and student activates the same
   await panel.getByLabel('Tệp danh sách sinh viên', { exact: true }).setInputFiles({ name: 'synthetic-students.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
   await panel.getByRole('button', { name: 'Kiểm tra và xem trước', exact: true }).click();
   await expect(panel.getByRole('heading', { name: 'Chờ xác nhận', exact: true })).toBeVisible();await expect(panel.getByLabel('Chọn dòng 3')).toBeDisabled();
-  await panel.getByLabel('Chọn dòng 2').check();page.once('dialog', dialog => dialog.accept());
+  await panel.getByLabel('Chọn dòng 2').check();
   await panel.getByRole('button', { name: 'Xác nhận nhập 1 dòng', exact: true }).click();
+  await page.getByRole('dialog', { name: 'Nhập danh sách sinh viên?', exact: true }).getByRole('button', { name: 'Nhập 1 dòng', exact: true }).click();
   await expect(panel.getByRole('heading', { name: 'Nhập danh sách hoàn tất', exact: true })).toBeVisible({ timeout: 45000 });
   await expect(panel.getByText('Chờ kích hoạt', { exact: true })).toBeVisible();
   await panel.getByRole('button', { name: 'Gửi lại thư kích hoạt', exact: true }).click();await expect(panel.getByText('Đã xếp hàng thư kích hoạt mới.', { exact: true })).toBeVisible();
