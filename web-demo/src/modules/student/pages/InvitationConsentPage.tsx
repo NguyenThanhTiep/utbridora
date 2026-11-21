@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ApiError } from '../../../api';
-import { LoadingState, Notice } from '../../../components';
-import { StudentNote } from '../components/StudentUI';
+import { Icon, LoadingState, Notice } from '../../../components';
+import { StudentNote, orgInitials } from '../components/StudentUI';
 import { decideInvitation, getInvitation, getSharingPolicy, grantConsent, listMyConsents, listMyInvitations, newIdempotencyKey, revokeConsent, withdrawInvitation } from '../api';
 import type { ConsentGrant, InternshipInvitation, InvitationState, ProfileField, SchoolSharingPolicy } from '../types';
 import '../styles.css';
@@ -27,6 +27,22 @@ const messageOf = (error: unknown) => !(error instanceof ApiError) ? (error inst
   : (error.errorCode && errorMessages[error.errorCode]) || error.message + (error.requestId ? ' Mã yêu cầu: ' + error.requestId + '.' : '');
 const time = (value: string) => new Date(value).toLocaleString('vi-VN');
 const consentStatus = (c: ConsentGrant) => c.revokedAt ? 'Đã thu hồi' : c.replacedByConsentId ? 'Đã được thay thế' : Date.parse(c.expiresAt) <= Date.now() ? 'Đã hết hạn' : 'Đang có hiệu lực';
+// Thời gian còn lại để phản hồi, tính theo giờ máy từ expiresAt của lời mời.
+const timeLeft = (expiresAt: string) => { const hours = Math.floor((Date.parse(expiresAt) - Date.now()) / 3_600_000);
+  return hours >= 48 ? 'Còn ' + Math.floor(hours / 24) + ' ngày' : hours >= 1 ? 'Còn ' + hours + ' giờ' : 'Còn dưới 1 giờ'; };
+type Step = { label: string; value: string; tone: 'done' | 'current' | 'idle'; icon: string };
+// Dải tình trạng của một lời mời, chỉ suy từ dữ liệu đã đọc: trạng thái lời mời (BC23), quyền chia sẻ còn hiệu lực gắn với lời mời (BC24)
+// và placementId. Ba ô là tình trạng song song, không phải thứ tự bắt buộc: chia sẻ hồ sơ là thao tác riêng, không điều kiện Placement.
+function steps(i: InternshipInvitation, open: boolean, shared: boolean): Step[] {
+  const answer: Step = open ? { label: 'Phản hồi', value: 'Chờ bạn phản hồi', tone: 'current', icon: 'clock' }
+    : i.state === 'ACCEPTED' ? { label: 'Phản hồi', value: 'Đã nhận lời', tone: 'done', icon: 'check-circle' }
+    : { label: 'Phản hồi', value: i.state === 'DECLINED' ? 'Đã từ chối' : i.state === 'WITHDRAWN' ? 'Đã rút nhận lời' : 'Đã hết hạn', tone: 'idle', icon: 'close' };
+  const active = open || i.state === 'ACCEPTED';
+  return [answer,
+    shared ? { label: 'Chia sẻ hồ sơ', value: 'Đã đồng ý chia sẻ', tone: 'done', icon: 'shield' } : { label: 'Chia sẻ hồ sơ', value: active ? 'Chưa chia sẻ' : 'Không áp dụng', tone: 'idle', icon: 'shield' },
+    i.placementId ? { label: 'Placement', value: 'Đã tạo', tone: 'done', icon: 'briefcase' }
+      : { label: 'Placement', value: i.state === 'ACCEPTED' ? 'Chờ nhà trường tạo' : 'Không áp dụng', tone: i.state === 'ACCEPTED' ? 'current' : 'idle', icon: 'briefcase' }];
+}
 type Command = (operation: string, body: unknown, send: (key: string) => Promise<unknown>) => Promise<boolean>;
 export function InvitationConsentPage() {
   const [invitations, setInvitations] = useState<InternshipInvitation[] | null>(null), [consents, setConsents] = useState<ConsentGrant[]>([]), [refresh, setRefresh] = useState(0);
@@ -58,29 +74,49 @@ export function InvitationConsentPage() {
     const body = { expectedLineageVersion: c.lineageVersion, reasonCode: 'STUDENT_REVOKED' };
     void command('revoke:' + c.consentId, body, key => revokeConsent(c.consentId, body, key));
   };
-  // Frame 477:11949 (lời mời) và 477:12029 (quyền chia sẻ): mỗi lời mời là một thẻ có badge trạng thái, nút phản hồi,
-  // khối cấp quyền riêng; các thẻ lời mời giữ thứ tự API vì kiểm thử runtime chọn theo vị trí.
+  const isOpen = (i: InternshipInvitation) => i.state === 'PENDING' && Date.now() < Date.parse(i.expiresAt);
+  const isActive = (c: ConsentGrant) => consentStatus(c) === 'Đang có hiệu lực';
+  // Frame 477:11949 (lời mời) và 477:12029 (quyền chia sẻ) dựng thành "thư mời thực tập": thanh tóm tắt + nút tải lại ở đầu;
+  // mỗi lời mời là một thẻ thư có logo chữ doanh nghiệp, viền theo trạng thái (vàng: cần phản hồi, xanh: đã nhận, xám: đã đóng),
+  // đếm ngược hạn phản hồi, dải 3 ô tình trạng, nút phản hồi, khối cấp quyền riêng. Các thẻ lời mời là section.panel con trực tiếp
+  // của .workflow-surface theo thứ tự API (kiểm thử runtime chọn theo vị trí) nên thanh tóm tắt không dùng section.panel.
   return <div className="stack workflow-surface student-invitations"><Notice message={message} tone="error" />
-    <div className="student-toolbar"><button className="secondary" disabled={busy} onClick={() => { setMessage(''); setRefresh(n => n + 1); }}>Tải lại lời mời</button></div>
+    <div className="student-invite-summary">
+      {invitations && invitations.length > 0 && <ul className="student-invite-stats" aria-label="Tóm tắt lời mời">
+        <li><Icon name="mail" size={16} /><b>{invitations.length}</b> lời mời</li>
+        <li className="tone-amber"><Icon name="clock" size={16} /><b>{invitations.filter(isOpen).length}</b> chờ phản hồi</li>
+        <li className="tone-green"><Icon name="shield" size={16} /><b>{consents.filter(isActive).length}</b> quyền chia sẻ còn hiệu lực</li></ul>}
+      <button className="secondary" disabled={busy} onClick={() => { setMessage(''); setRefresh(n => n + 1); }}><Icon name="refresh" size={16} />Tải lại lời mời</button></div>
     {invitations === null && !loadFailed && <LoadingState label="Đang tải lời mời…" />}
-    {invitations?.length === 0 && <section className="panel"><h2>Chưa có lời mời thực tập</h2></section>}
-    {invitations?.map(i => { const open = i.state === 'PENDING' && Date.now() < Date.parse(i.expiresAt);
-      return <section className="panel" key={i.invitationId}><h2>{i.title}</h2>
-        <p className="student-invite-meta">{i.enterpriseName} · <span className={'student-status ' + (open ? 'tone-warning' : stateTones[i.state])}>{stateLabels[i.state] || i.state}</span></p>
-        <p className="student-list-meta">Hạn phản hồi: {time(i.expiresAt)}</p>
+    {invitations?.length === 0 && <section className="panel student-invite-empty"><span className="student-invite-empty-icon" aria-hidden="true"><Icon name="mail" size={26} /></span>
+      <h2>Chưa có lời mời thực tập</h2><p className="student-list-meta">Khi có lời mời thực tập dành cho bạn, lời mời sẽ hiện ở đây để bạn xem và phản hồi.</p></section>}
+    {invitations?.map(i => { const open = isOpen(i), shared = consents.some(c => c.invitationId === i.invitationId && isActive(c));
+      return <section className={'panel student-offer ' + (open ? 'is-open' : i.state === 'ACCEPTED' ? 'is-accepted' : 'is-closed')} key={i.invitationId}>
+        <div className="student-offer-head">
+          <span className="student-offer-logo" aria-hidden="true">{orgInitials(i.enterpriseName)}</span>
+          <div className="student-offer-title"><h2>{i.title}</h2>
+            <p className="student-invite-meta">{i.enterpriseName} · <span className={'student-status ' + (open ? 'tone-warning' : stateTones[i.state])}>{stateLabels[i.state] || i.state}</span></p></div>
+          {open && <span className="student-offer-countdown"><Icon name="clock" size={15} />{timeLeft(i.expiresAt)}</span>}
+        </div>
+        <p className="student-invite-deadline"><Icon name="calendar" size={14} />Hạn phản hồi: {time(i.expiresAt)}</p>
         {i.state === 'PENDING' && !open && <p className="student-list-meta">Đã quá hạn phản hồi.</p>}
-        {open && <div className="button-row"><button className="student-btn-wide" disabled={busy} onClick={() => decide(i, 'ACCEPT')}>Nhận lời mời</button>
+        <ul className="student-offer-steps" aria-label="Tình trạng lời mời">{steps(i, open, shared).map(step => <li key={step.label} className={'is-' + step.tone}>
+          <span className="student-offer-step-icon" aria-hidden="true"><Icon name={step.icon} size={16} /></span><span><small>{step.label}</small><b>{step.value}</b></span></li>)}</ul>
+        {open && <div className="button-row student-offer-actions"><button className="student-btn-wide" disabled={busy} onClick={() => decide(i, 'ACCEPT')}><Icon name="check" size={17} />Nhận lời mời</button>
           <button className="secondary student-btn-wide" disabled={busy} onClick={() => { if (window.confirm('Từ chối lời mời này? Sau khi từ chối bạn không thể nhận lại lời mời.')) decide(i, 'DECLINE'); }}>Từ chối</button></div>}
         {i.state === 'ACCEPTED' && (i.placementId ? <p className="student-list-meta">Đã có Placement nên không thể rút nhận lời.</p>
-          : <div className="button-row"><button className="secondary student-btn-wide" disabled={busy} onClick={() => { if (window.confirm('CẢNH BÁO: Rút nhận lời sẽ HỦY BỎ cơ hội thực tập này và không thể hoàn tác. Bạn có chắc chắn muốn rút?')) withdraw(i); }}>Rút nhận lời</button></div>)}
-        <StudentNote>Để chỉ thu hồi quyền xem thông tin cá nhân của doanh nghiệp mà vẫn giữ vị trí thực tập, hãy chọn “Thu hồi quyền chia sẻ” bên dưới.</StudentNote>
+          : <div className="button-row student-offer-actions"><button className="secondary student-btn-wide student-danger-outline" disabled={busy} onClick={() => { if (window.confirm('CẢNH BÁO: Rút nhận lời sẽ HỦY BỎ cơ hội thực tập này và không thể hoàn tác. Bạn có chắc chắn muốn rút?')) withdraw(i); }}>Rút nhận lời</button></div>)}
+        {(open || i.state === 'ACCEPTED') && <StudentNote>Để chỉ thu hồi quyền xem thông tin cá nhân của doanh nghiệp mà vẫn giữ vị trí thực tập, hãy chọn “Thu hồi quyền chia sẻ” bên dưới.</StudentNote>}
         <InvitationDetail key={i.invitationId + ':' + i.version} invitationId={i.invitationId} />
         {(open || i.state === 'ACCEPTED') && <ConsentForm key={i.invitationId} invitation={i} consents={consents} busy={busy} refresh={refresh} command={command} />}
       </section>; })}
-    <section className="panel"><h2>Quyền chia sẻ đã cấp</h2>{consents.length === 0 && <p className="student-list-meta">Chưa cấp quyền chia sẻ.</p>}{consents.map(c => { const status = consentStatus(c);
-      return <article className="student-row student-consent" key={c.consentId}><p>{invitations?.find(i => i.invitationId === c.invitationId)?.enterpriseName ?? 'Doanh nghiệp'}: {c.fieldWhitelist.map(f => labels[f] || f).join(', ')} · hết hạn {time(c.expiresAt)}</p>
+    {/* Sổ quyền chia sẻ: mỗi quyền là thẻ có khiên, doanh nghiệp + mục chia sẻ + hạn, nhãn trạng thái, nút thu hồi (chỉ khi còn hiệu lực). */}
+    <section className="panel student-consent-ledger"><h2>Quyền chia sẻ đã cấp</h2>{consents.length === 0 && <p className="student-list-meta">Chưa cấp quyền chia sẻ.</p>}{consents.map(c => { const status = consentStatus(c);
+      return <article className={'student-row student-consent' + (status === 'Đang có hiệu lực' ? ' is-active' : '')} key={c.consentId}>
+        <span className="student-consent-icon" aria-hidden="true"><Icon name="shield" size={18} /></span>
+        <p><b>{invitations?.find(i => i.invitationId === c.invitationId)?.enterpriseName ?? 'Doanh nghiệp'}</b>: {c.fieldWhitelist.map(f => labels[f] || f).join(', ')} · hết hạn {time(c.expiresAt)}</p>
         <p className={'student-status ' + (status === 'Đang có hiệu lực' ? 'tone-success' : 'tone-neutral')}>{status}</p>
-        {status === 'Đang có hiệu lực' && <button className="secondary" disabled={busy} onClick={() => revoke(c)}>Thu hồi quyền chia sẻ</button>}</article>; })}
+        {status === 'Đang có hiệu lực' && <button className="secondary student-danger-outline" disabled={busy} onClick={() => revoke(c)}>Thu hồi quyền chia sẻ</button>}</article>; })}
       <StudentNote tone="warning">Hồ sơ không được chia sẻ nếu bạn từ chối, thu hồi quyền, quyền hết hạn hoặc chưa chọn thông tin cho phép.</StudentNote></section>
   </div>;
 }
@@ -91,7 +127,7 @@ function InvitationDetail({ invitationId }: { invitationId: string }) {
     if (detail !== null) { setDetail(null); return; }
     setDetail('loading'); void getInvitation(invitationId).then(setDetail).catch(() => setDetail('error'));
   };
-  return <div className="student-invitation-detail"><button type="button" className="text-button" aria-expanded={detail !== null} onClick={toggle}>{detail === null ? 'Xem chi tiết' : 'Ẩn chi tiết'}</button>
+  return <div className="student-invitation-detail"><button type="button" className="text-button student-detail-toggle" aria-expanded={detail !== null} onClick={toggle}>{detail === null ? 'Xem chi tiết' : 'Ẩn chi tiết'}<Icon name="chevron-down" size={15} /></button>
     {detail === 'loading' && <LoadingState label="Đang tải chi tiết…" />}
     {detail === 'error' && <p className="student-error-note">Không tải được chi tiết lời mời. Ẩn rồi mở lại để thử lại.</p>}
     {typeof detail === 'object' && detail !== null && <dl>
@@ -117,7 +153,7 @@ function ConsentForm({ invitation, consents, busy, refresh, command }: { invitat
     const body = { invitationId: invitation.invitationId, purpose: 'INTERNSHIP_SELECTION' as const, fieldWhitelist: chosen, expiresAt: expiry.current.value, policyVersion: 'demo-consent-v1', expectedSchoolPolicyVersion: policy.version, expectedLineageVersion: lineage };
     void command('consent:' + invitation.invitationId, body, key => grantConsent(body, key)).then(ok => { if (ok) { setSelected([]); expiry.current = null; } });
   } }}>
-    <h3>Quyết định chia sẻ hồ sơ riêng</h3><p className="student-list-meta">Bạn cho phép nhà trường chia sẻ các thông tin đã chọn với {invitation.enterpriseName} để đánh giá thực tập. Nhà trường sẽ cấp hoặc cập nhật chia sẻ sau khi bạn đồng ý. Nhận lời mời không tự cấp quyền xem hồ sơ cho doanh nghiệp.</p>
+    <h3><span className="student-consent-icon" aria-hidden="true"><Icon name="shield" size={18} /></span>Quyết định chia sẻ hồ sơ riêng</h3><p className="student-list-meta">Bạn cho phép nhà trường chia sẻ các thông tin đã chọn với {invitation.enterpriseName} để đánh giá thực tập. Nhà trường sẽ cấp hoặc cập nhật chia sẻ sau khi bạn đồng ý. Nhận lời mời không tự cấp quyền xem hồ sơ cho doanh nghiệp.</p>
     <fieldset className="student-consent-fields" disabled={busy || !policy}><p className="student-consent-label">Chọn những thông tin muốn chia sẻ (không mục nào được chọn sẵn)</p>
       {policy?.allowedFields.map(f => <label key={f}><input type="checkbox" checked={selected.includes(f)} onChange={e => setSelected(e.target.checked ? [...selected, f] : selected.filter(v => v !== f))} />{labels[f] || f}</label>)}
       <label className="student-consent-days">Số ngày hiệu lực<input type="number" min="1" max="30" required value={days} onChange={e => setDays(Number(e.target.value))} /></label>

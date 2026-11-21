@@ -59,6 +59,11 @@ function defaultPortalSide(grants: Grant[]): 'enterprise' | 'school' | null {
   const school = grants.some(grant => grant.role === 'SCHOOL_STAFF' && !!grant.organizationId);
   return enterprise === school ? null : enterprise ? 'enterprise' : 'school';
 }
+// Màn mở đầu sau đăng nhập: cổng doanh nghiệp/nhà trường; tài khoản sinh viên vào Tổng quan (S01); còn lại Tài khoản của tôi.
+function landingScreen(grants: Grant[]) {
+  const side = defaultPortalSide(grants);
+  return side === 'enterprise' ? 'demands' : side === 'school' ? 'school' : studentGrants(grants).length ? 'student-overview' : 'account';
+}
 
 export default function App() {
   const [me, setMe] = useState<Me | null>(null);
@@ -78,6 +83,8 @@ export default function App() {
   const heading = useRef<HTMLHeadingElement>(null);
   const sidebar = useRef<HTMLElement>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const accountMenu = useRef<HTMLDivElement>(null);
   const action = useAction();
   const permissions = new Set(grants.filter(grant => grant.role === 'ADMIN' && grant.organizationId === null).flatMap(grant => grant.permissions));
   const schools = studentGrants(grants);
@@ -93,6 +100,9 @@ export default function App() {
   const portalSide = screen === 'demands' ? 'enterprise' : screen === 'school' ? 'school' : rolePortalSide;
   const portalEntry = portalSide === 'enterprise' ? 'demands' : 'school';
   const screenTitle = portalSide && portalScreen ? portalPageTitle(portalSide, portalPage) : current.title;
+  // Tài khoản có nhóm SINH VIÊN: tên trang (h1) nằm gọn trong thanh trên cùng, không dùng khối tiêu đề lớn trong nội dung.
+  const studentShell = menus.some(item => item.group === 'student');
+  const pageKicker = screen === 'account' || screen === 'mentor-invitations' ? 'KHÔNG GIAN CÁ NHÂN' : screen === 'demands' || screen === 'school' ? current.title : screen === 'internship' || screen === 'evaluations' ? 'QUẢN LÝ THỰC TẬP' : current.group === 'student' ? 'KHÔNG GIAN SINH VIÊN' : 'QUẢN TRỊ NỀN TẢNG';
 
   useEffect(() => {
     const authTitles: Record<string, string> = { login: 'Đăng nhập', forgot: 'Quên mật khẩu', reset: 'Đặt lại mật khẩu', activate: 'Kích hoạt tài khoản' };
@@ -109,9 +119,7 @@ export default function App() {
         const effective = await api<Grant[]>('/auth/me/permissions');
         if (active && generation.current === currentGeneration) {
           setMe(user); setGrants(effective);
-          const side = defaultPortalSide(effective);
-          setScreen(location.pathname.startsWith('/workspace/cases/') ? 'internship-case'
-            : side === 'enterprise' ? 'demands' : side === 'school' ? 'school' : 'account');
+          setScreen(location.pathname.startsWith('/workspace/cases/') ? 'internship-case' : landingScreen(effective));
           setPortalPage('overview');
         }
       } catch (error) {
@@ -162,6 +170,18 @@ export default function App() {
       menuButton.current?.focus({ preventScroll: true });
     };
   }, [mobileOpen]);
+  // Menu tài khoản ở thanh trên cùng (tài khoản sinh viên): đóng khi đổi màn/người dùng, bấm ra ngoài hoặc Esc (trả focus về nút mở).
+  useEffect(() => setAccountOpen(false), [screen, me?.userId]);
+  useEffect(() => {
+    if (!accountOpen) return;
+    const pointer = (event: MouseEvent) => { if (!accountMenu.current?.contains(event.target as Node)) setAccountOpen(false); };
+    const keydown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setAccountOpen(false); accountMenu.current?.querySelector<HTMLButtonElement>('.profile-shortcut')?.focus();
+    };
+    document.addEventListener('mousedown', pointer); document.addEventListener('keydown', keydown);
+    return () => { document.removeEventListener('mousedown', pointer); document.removeEventListener('keydown', keydown); };
+  }, [accountOpen]);
 
   const navigate = (next: string) => { if (next !== screen && !canLeaveDemand()) return;
     if (next !== 'internship-case' && caseId) {setCaseId('');history.replaceState(null, '', '/');}
@@ -182,9 +202,8 @@ export default function App() {
   const signedIn = async (user: Me) => {
     const effective = await api<Grant[]>('/auth/me/permissions');
     generation.current += 1;
-    const side = defaultPortalSide(effective);
     setGrants(effective); setMe(user);
-    setScreen(caseId ? 'internship-case' : side === 'enterprise' ? 'demands' : side === 'school' ? 'school' : 'account');
+    setScreen(caseId ? 'internship-case' : landingScreen(effective));
     setPortalPage('overview'); setContext('0'); setSessionMessage('');
   };
   const navigateAuth = (next: string) => { setAuthScreen(next); action.setMessage(''); setSessionMessage(''); };
@@ -218,11 +237,11 @@ export default function App() {
         <button className="btn-icon sidebar-close" aria-label="Đóng menu điều hướng" onClick={() => setMobileOpen(false)}><Icon name="close" /></button></div>
       <nav aria-label="Điều hướng chính">
         {portalSide && <PortalNavigation side={portalSide} page={portalScreen ? portalPage : undefined} navigate={navigatePortal} />}
-        <p className="nav-group-label">{portalSide ? 'TÀI KHOẢN & TIỆN ÍCH' : 'KHÔNG GIAN CỦA BẠN'}</p>
-        {menus.filter(item => ['account', 'mentor-invitations', 'internship', 'evaluations', 'demands', 'school', 'taxonomy'].includes(item.id) && (!portalSide || item.id !== portalEntry)).map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
-          aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
         {menus.some(item => item.group === 'student') && <p className="nav-group-label student-nav-group">SINH VIÊN</p>}
         {menus.filter(item => item.group === 'student').map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
+          aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
+        <p className="nav-group-label">{portalSide ? 'TÀI KHOẢN & TIỆN ÍCH' : 'KHÔNG GIAN CỦA BẠN'}</p>
+        {menus.filter(item => ['account', 'mentor-invitations', 'internship', 'evaluations', 'demands', 'school', 'taxonomy'].includes(item.id) && (!portalSide || item.id !== portalEntry)).map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
           aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
         {menus.some(item => !['account', 'mentor-invitations', 'internship', 'evaluations', 'demands', 'school', 'taxonomy'].includes(item.id) && item.group !== 'student') && <p className="nav-group-label nav-group-admin">QUẢN TRỊ HỆ THỐNG</p>}
         {menus.filter(item => !['account', 'mentor-invitations', 'internship', 'evaluations', 'demands', 'school', 'taxonomy'].includes(item.id) && item.group !== 'student').map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
@@ -230,7 +249,8 @@ export default function App() {
       </nav>
       <div className="sidebar-bottom">
         <div className="sidebar-user"><span className="avatar">{initials(me.displayName)}</span><div><b>{me.displayName}</b><small>{me.email}</small></div></div>
-        <button className="sidebar-logout" disabled={action.busy} onClick={() => void action.run(signOut)}><Icon name="logout" size={18} />Đăng xuất</button>
+        {/* Tài khoản sinh viên đăng xuất từ menu tài khoản ở thanh trên cùng. */}
+        {!studentShell && <button className="sidebar-logout" disabled={action.busy} onClick={() => void action.run(signOut)}><Icon name="logout" size={18} />Đăng xuất</button>}
       </div>
       {!portalSide && <p className="sidebar-caption">Nhà trường · Doanh nghiệp · Sinh viên</p>}
     </aside>
@@ -239,14 +259,24 @@ export default function App() {
       <header className="topbar">
         <div className="topbar-location"><button className="btn-icon menu-toggle" ref={menuButton} aria-label="Mở menu điều hướng"
           aria-expanded={mobileOpen} aria-controls="main-navigation" onClick={() => setMobileOpen(previous => !previous)}><Icon name="menu" /></button>
-          <span className="topbar-home"><Icon name="layers" size={17} />Không gian làm việc</span><Icon name="chevron-right" size={14} /><span className="topbar-current">{screenTitle}</span></div>
+          {studentShell ? <div className="topbar-heading"><p className="topbar-kicker">{pageKicker}</p><h1 className="topbar-title" ref={heading} tabIndex={-1}>{screenTitle}</h1></div>
+            : <><span className="topbar-home"><Icon name="layers" size={17} />Không gian làm việc</span><Icon name="chevron-right" size={14} /><span className="topbar-current">{screenTitle}</span></>}</div>
         <div className="topbar-right"><span className="topbar-date"><Icon name="calendar" size={16} />{new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Bangkok' }).format(new Date())}</span>
-          <button className="profile-shortcut" aria-label="Mở tài khoản của tôi" onClick={() => navigate('account')}><span className="avatar avatar-small">{initials(me.displayName)}</span><span>{me.displayName}</span><Icon name="chevron-down" size={14} /></button></div>
+          <div className="account-menu-wrap" ref={accountMenu}>
+            <button className="profile-shortcut" aria-label={studentShell ? 'Mở menu tài khoản' : 'Mở tài khoản của tôi'} aria-expanded={studentShell ? accountOpen : undefined}
+              aria-controls={studentShell ? 'account-menu' : undefined} onClick={() => studentShell ? setAccountOpen(open => !open) : navigate('account')}>
+              <span className="avatar avatar-small">{initials(me.displayName)}</span><span>{me.displayName}</span><Icon name="chevron-down" size={14} /></button>
+            {studentShell && accountOpen && <div className="account-menu" id="account-menu">
+              <p className="account-menu-user"><b>{me.displayName}</b><small>{me.email}</small></p>
+              <button type="button" onClick={() => { setAccountOpen(false); navigate('student-overview'); }}><Icon name="graduation" size={17} />Tổng quan</button>
+              <button type="button" className="account-menu-logout" disabled={action.busy} onClick={() => { setAccountOpen(false); void action.run(signOut); }}><Icon name="logout" size={17} />Đăng xuất</button>
+            </div>}
+          </div></div>
       </header>
       <main className="content" id="main-content">
-        <div className="page-header"><div><p className="section-kicker">{screen === 'account' || screen === 'mentor-invitations' ? 'KHÔNG GIAN CÁ NHÂN' : screen === 'demands' || screen === 'school' ? current.title : screen === 'internship' || screen === 'evaluations' ? 'QUẢN LÝ THỰC TẬP' : current.group === 'student' ? 'KHÔNG GIAN SINH VIÊN' : 'QUẢN TRỊ NỀN TẢNG'}</p>
+        {!studentShell && <div className="page-header"><div><p className="section-kicker">{pageKicker}</p>
           <h1 ref={heading} tabIndex={-1}>{current.title}</h1><p className="page-description">{current.description}</p></div>
-          <span className="workspace-label"><span className="live-dot" />UT.Bridora</span></div>
+          <span className="workspace-label"><span className="live-dot" />UT.Bridora</span></div>}
         <Notice message={action.message} tone={action.error ? 'error' : 'info'} />
         {screen === 'account' && me.memberships.some(m => m.role === 'ENTERPRISE') && !grants.some(canAuthorDemands)
           && <Notice message="Tài khoản có vai trò doanh nghiệp nhưng chưa được cấp quyền quản lý nhu cầu. Nhờ quản trị viên kiểm tra trạng thái xác minh tổ chức và liên kết vai trò." />}

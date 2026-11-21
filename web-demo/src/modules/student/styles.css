@@ -1,14 +1,15 @@
 /* Module sinh viên: chỉ dùng class tiền tố .student-, không ghi đè style chung.
    Bố cục, số đo và màu theo bộ bàn giao UI/UX 10/11 (frame 477:*, file context trong 07-quality-review/source-data);
    mọi rule đổi thành phần dùng chung (panel, nút, ô nhập, bảng việc T3…) đều nằm trong .student-page nên không ảnh hưởng vai trò khác. */
-.nav-group-label.student-nav-group { margin-top: 31px; }
+/* Nhóm SINH VIÊN đứng đầu menu; nhóm đứng sau nó cách 31px như nhóm quản trị. */
+.nav-group-label.student-nav-group ~ .nav-group-label { margin-top: 31px; }
 
 /* Token Foundations 112:2318. Chữ và nền nút dùng #097b69 (cùng sắc độ #0b927c, đậm hơn): #0b927c với chữ trắng chỉ đạt
    3,88:1, dưới 4,5:1 theo NFR-06; #0b927c giữ cho viền, thanh tiến độ và vạch nhấn. Màu chữ trạng thái chọn để đạt 4,5:1. */
 .student-page {
   --brand: #097b69; --brand-dark: #086859; --brand-light: #e7f6f0; --student-accent: #0b927c;
   --ink: #142f40; --muted: #64788a; --line: #e3eaf2; --radius: 12px;
-  --student-subtle: #fbfdfe; --student-neutral: #f3f6fb; --student-shadow: 0 3px 12px rgba(16, 44, 57, .05);
+  --student-subtle: #fbfdfe; --student-neutral: #f3f6fb; --student-shadow: 0 3px 12px rgba(16, 44, 57, .05); --student-today-bg: #eaf7f1;
   display: grid; gap: 18px; min-width: 0; color: var(--ink); font-size: var(--text-sm); line-height: 20px;
 }
 /* Grid item mặc định min-width:auto; cho co lại để bảng rộng tự cuộn trong khung thay vì làm tràn trang ở 320px. */
@@ -34,11 +35,42 @@
 .workspace:has(.student-nav-group) .sidebar-user small { color: #a9c3c9; }
 .workspace:has(.student-nav-group) button.sidebar-logout { color: #c6d8dc; }
 .workspace:has(.student-nav-group) button.sidebar-logout:hover { color: #fff; background: #22484c; }
-/* Tiêu đề trang thành banner nền mint (Header 477:11170: đệm 20, bo 12, viền #d2e4e7, tiêu đề 24 semibold, mô tả 12–13). */
-.workspace:has(.student-nav-group) .page-header { margin-bottom: 18px; padding: 18px 20px; background: #e7f6f0; border: 1px solid #d2e4e7; border-radius: 12px; box-shadow: 0 3px 12px rgba(16, 44, 57, .05); }
-.workspace:has(.student-nav-group) .page-header .section-kicker { margin-bottom: 4px; color: #086859; font-size: 11px; letter-spacing: 1px; }
-.workspace:has(.student-nav-group) .page-header h1 { color: #142f40; font-size: 24px; font-weight: 600; letter-spacing: 0; line-height: 32px; }
-.workspace:has(.student-nav-group) .page-description { margin-top: 4px; color: #4f6475; font-size: 13px; line-height: 18px; }
+/* Tên trang (h1 .topbar-title do App đặt trong thanh trên cùng) thay cho khối tiêu đề lớn; trên máy tính thanh là thẻ trắng
+   bo góc tách khỏi mép như topbar cổng T5. */
+.workspace:has(.student-nav-group) .content { padding-top: 20px; }
+.workspace:has(.student-nav-group) .topbar-heading { display: grid; min-width: 0; }
+.workspace:has(.student-nav-group) .topbar-kicker { color: #086859; font-size: 11px; font-weight: 700; letter-spacing: .8px; line-height: 16px; white-space: nowrap; }
+.workspace:has(.student-nav-group) .topbar-title { min-width: 0; margin: 0; overflow: hidden; color: #142f40; font-size: 15px; font-weight: 600; letter-spacing: 0; line-height: 22px; text-overflow: ellipsis; white-space: nowrap; }
+.workspace:has(.student-nav-group) .topbar-title:focus { outline: none; }
+/* Thanh dính ở đầu màn khi cuộn (top 16 bằng khoảng cách ban đầu nên không giật); bóng thứ hai cùng màu nền phủ dải 16px phía trên
+   để nội dung cuộn qua không lộ ra giữa mép màn và thanh. Trên điện thoại thanh đã dính sẵn (style.css). */
+@media (min-width: 901px) {
+  .workspace:has(.student-nav-group) .topbar { position: sticky; top: 16px; z-index: 30; height: 64px; margin: 16px max(34px, calc((100% - 1570px) / 2 + 34px)) 0; padding: 0 16px 0 22px;
+    border: 1px solid #e3eaf2; border-radius: 14px; box-shadow: 0 3px 12px rgba(16, 44, 57, .05), 0 -17px 0 6px #f3f6fb; }
+  .workspace:has(.student-nav-group) .topbar-title { font-size: 17px; line-height: 24px; }
+  .workspace:has(.student-nav-group) button.profile-shortcut { min-height: 42px; padding: 4px 14px 4px 4px; border: 1px solid #e3eaf2; border-radius: 999px; }
+  .workspace:has(.student-nav-group) button.profile-shortcut:hover { background: #f3f8f7; border-color: #c9e6dc; }
+}
+/* Menu tài khoản (GH / Student Account Dropdown 1546:17117): thẻ trắng thả xuống dưới nút tài khoản, tên + email,
+   rồi "Tổng quan" và "Đăng xuất" (chữ đỏ #a5364c đạt 6:1); trang Tài khoản của tôi vẫn ở menu bên trái. */
+.workspace:has(.student-nav-group) .account-menu-wrap { position: relative; }
+.workspace:has(.student-nav-group) .account-menu { position: absolute; top: calc(100% + 8px); right: 0; z-index: 40; display: grid; gap: 2px; width: 248px; padding: 8px;
+  background: var(--surface); border: 1px solid #e3eaf2; border-radius: 12px; box-shadow: 0 12px 32px rgba(16, 44, 57, .14); }
+.workspace:has(.student-nav-group) .account-menu-user { display: grid; gap: 2px; margin: 0 0 6px; padding: 6px 10px 10px; border-bottom: 1px solid #e3eaf2; }
+.workspace:has(.student-nav-group) .account-menu-user > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workspace:has(.student-nav-group) .account-menu-user b { color: #142f40; font-size: var(--text-sm); }
+.workspace:has(.student-nav-group) .account-menu-user small { color: #64788a; font-size: var(--text-caption); }
+.workspace:has(.student-nav-group) .account-menu > button { justify-content: flex-start; gap: 10px; width: 100%; min-height: 40px; padding: 8px 10px;
+  color: #142f40; font-size: var(--text-sm); font-weight: 500; background: transparent; border: 0; border-radius: 8px; }
+.workspace:has(.student-nav-group) .account-menu > button:hover { background: #f3f8f7; }
+.workspace:has(.student-nav-group) .account-menu > button.account-menu-logout { color: #a5364c; }
+.workspace:has(.student-nav-group) .account-menu > button.account-menu-logout:hover { background: #fff0f0; }
+@media (min-width: 1500px) {
+  .workspace:has(.student-nav-group) .topbar { margin-left: max(42px, calc((100% - 1570px) / 2 + 42px)); margin-right: max(42px, calc((100% - 1570px) / 2 + 42px)); }
+}
+@media (min-width: 901px) and (max-width: 1200px) {
+  .workspace:has(.student-nav-group) .topbar { margin-left: 25px; margin-right: 25px; }
+}
 
 /* Card: nền trắng, bo 12, đệm 18, bóng nhẹ, không viền (frame 477:11121 "Thông báo hồ sơ"). Card lồng là khối phụ nền #fbfdfe. */
 .student-page .panel { padding: 18px; border: 0; border-radius: 12px; box-shadow: var(--student-shadow); }
@@ -75,6 +107,31 @@
 .student-field-error { margin-top: 6px; color: #a5364c; font-size: var(--text-xs); line-height: 1.6; }
 .student-error-note { margin-top: 10px; color: #a5364c; font-size: var(--text-sm); line-height: 1.7; overflow-wrap: anywhere; }
 
+/* Khung nhập "nhãn nằm trong khung" (Field 477:11864/12029/12497/12579): nhãn 12 semibold màu phụ ở trên, ô nhập trong suốt
+   bên dưới, khung nền #fbfdfe viền bo 9; viền xanh khi đang nhập, đỏ khi lỗi, xám khi bị khóa. Áp cho .field (Field dùng chung)
+   và nhãn bọc ô nhập (biểu mẫu sinh viên, khối T3 trong trang sinh viên). Ô chọn tháng của lịch giữ kiểu gọn riêng. */
+.student-page .field,
+.student-page label:has(> :is(input:not([type="checkbox"], [type="radio"], [type="file"], [type="month"]), select, textarea)) {
+  display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 9px 12px 10px;
+  background: var(--student-subtle); border: 1px solid #dbe4ea; border-radius: 9px; transition: border-color .15s, box-shadow .15s;
+}
+.student-page .field > label { margin: 0; }
+.student-page .field .input-control { margin: 0; }
+.student-page :is(.field, label) > :is(input:not([type="checkbox"], [type="radio"], [type="file"], [type="month"]), select, textarea),
+.student-page .field .input-control > input {
+  width: 100%; min-height: 24px; margin: 0; padding: 0; color: var(--ink); font-size: var(--text-sm); font-weight: 400; line-height: 22px;
+  background-color: transparent; border: 0; border-radius: 0; box-shadow: none; outline: 0;
+}
+.student-page :is(.field, label) > select { padding-right: 24px; background-position: right 0 center; }
+.student-page :is(.field, label) > textarea { min-height: 72px; resize: vertical; }
+.student-page :is(.field, label) > :is(input, select, textarea):focus, .student-page .field .input-control > input:focus { outline: 0; border: 0; box-shadow: none; }
+.student-page .field:focus-within,
+.student-page label:has(> :is(input:not([type="checkbox"], [type="radio"], [type="file"], [type="month"]), select, textarea)):focus-within {
+  border-color: var(--student-accent); box-shadow: 0 0 0 3px var(--brand-light);
+}
+.student-page .field:has([aria-invalid="true"]), .student-page label:has(> [aria-invalid="true"]) { border-color: #a5364c; }
+.student-page .field:has(:disabled), .student-page label:has(> :is(input, select, textarea):disabled) { background: #f4f7f9; }
+
 /* Badge trạng thái: đệm 4/9, bo 12, chữ 12 semibold; tông Foundations success/warning/info/brand và trung tính. */
 .student-status { display: inline-flex; align-items: center; width: fit-content; max-width: 100%; margin: 0; padding: 4px 9px; color: #475b6b; font-size: var(--text-caption); font-weight: 600; line-height: 16px; background: #f3f6fb; border-radius: 12px; }
 .student-status.tone-info, .student-status.submitted, .student-status.waiting_start { color: #2969a9; background: #e8f2ff; }
@@ -84,6 +141,18 @@
 .student-status.rejected { color: #a5364c; background: #fff0f0; }
 
 /* Ghi chú (Notice 477:12470): bo 9, đệm 12, chữ 12–13; Notice dùng chung cũng theo tông này khi ở trang sinh viên. */
+/* Thông báo thành công (Figma GH-STU-*-TOAST): thẻ nổi góc trên bên phải, ngay dưới thanh trên cùng, không che màn;
+   dấu ✓ tròn nền thương hiệu, tiêu đề đậm, nội dung xám (5,6:1), nút đóng. Trên điện thoại kéo ngang gần hết màn. */
+.student-toast-region { position: fixed; top: 96px; right: 24px; z-index: 60; display: grid; gap: 8px; width: min(380px, calc(100vw - 32px)); pointer-events: none; }
+.student-toast { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: 10px; padding: 14px 12px 14px 16px; background: var(--surface); border: 1px solid #cfe9df; border-left: 4px solid var(--student-accent); border-radius: 12px; box-shadow: 0 12px 32px rgba(16, 44, 57, .16); pointer-events: auto; animation: student-toast-in .2s ease-out; }
+.student-toast-icon { display: grid; place-items: center; width: 26px; height: 26px; color: #fff; background: var(--brand); border-radius: 50%; }
+.student-toast-title { color: var(--ink); font-size: var(--text-sm); font-weight: 700; line-height: 20px; }
+.student-toast-text { margin-top: 2px; color: #4f6475; font-size: 13px; line-height: 18px; overflow-wrap: anywhere; }
+.student-page button.student-toast-close { width: 28px; min-width: 28px; min-height: 28px; padding: 0; color: var(--muted); background: transparent; border: 0; border-radius: 8px; }
+.student-page button.student-toast-close:hover { color: var(--ink); background: var(--student-neutral); }
+@keyframes student-toast-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .student-toast { animation: none; } }
+@media (max-width: 900px) { .student-toast-region { top: 76px; right: 12px; left: 12px; width: auto; } }
 .student-note { padding: 12px 13px; color: #2969a9; background: #e8f2ff; border-radius: 9px; }
 .student-note p { font-size: var(--text-caption); line-height: 18px; overflow-wrap: anywhere; }
 .student-note.warning { color: #966614; background: #fff2db; }
@@ -95,48 +164,202 @@
 .student-page .notice-success { color: #1a7d50; background: #e5f6ed; }
 .student-page .panel .notice { margin: 12px 0; }
 
-/* Thẻ số liệu (KPI cards 477:11180): 3 cột, đệm 19, bo 14; nhãn 14 phụ, giá trị 25 semibold, liên kết 12 semibold. */
-.student-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
-/* Ô số liệu S01 dùng cùng kiểu thẻ sức chứa của T5 (proposal-capacity): nền mint chuyển nhẹ, viền mint, nhãn in hoa, số đậm màu thương hiệu. */
-.student-kpi { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; min-width: 0; padding: 16px 18px; background: linear-gradient(180deg, #f3fbfa 0%, #eaf7f5 100%); border: 1px solid #d2ebe7; border-radius: 12px; }
-.student-kpi-label { color: #3a606e; font-size: var(--text-xs); font-weight: 650; letter-spacing: .4px; line-height: 18px; text-transform: uppercase; }
-.student-kpi-value { color: var(--brand-dark); font-size: 26px; font-weight: 700; line-height: 32px; overflow-wrap: anywhere; }
-.student-kpi-hint { color: #4f6475; font-size: var(--text-caption); line-height: 16px; }
+/* Liên kết nhỏ trong thẻ số liệu ("Mở thông tin chung →"). */
 .student-page button.student-kpi-link { min-height: 0; padding: 0; color: var(--brand); font-size: var(--text-caption); font-weight: 600; background: none; }
-/* KPI trong card (477:12461): đệm 18, bo 12, nhãn 12, giá trị 18. */
-.student-kpis-inner { margin-top: 4px; }
-.student-kpis-inner .student-kpi { gap: 8px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: none; }
-.student-kpis-inner .student-kpi-label { color: var(--muted); font-size: var(--text-caption); font-weight: 400; letter-spacing: 0; line-height: 16px; text-transform: none; }
-.student-kpis-inner .student-kpi-value { color: var(--ink); font-size: 18px; font-weight: 600; line-height: 24px; }
+/* S07 "Kỳ thực tập của tôi": một thẻ ngang gọn (không lặp ô số liệu lớn của Tổng quan). Hàng đầu: nhãn mục + nút tải lại nhỏ;
+   mỗi vị trí là một dải nền mint → xanh dương nhạt gồm biểu tượng nền chuyển màu, tên + doanh nghiệp bên trái và các chip
+   (kỳ thực tập xanh dương, trạng thái có chấm màu, số việc đang làm / chờ phản hồi) bên phải, hẹp thì chip xuống dòng;
+   ghi chú điều kiện ở chân thẻ. Chữ chip đạt ≥ 4,5:1. */
+.student-page .student-internship { display: grid; gap: 14px; padding: 18px 20px; }
+.student-internship-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+.student-page .student-internship-kicker { margin: 0; color: var(--brand-dark); font-size: 12px; font-weight: 700; letter-spacing: .8px; line-height: 16px; text-transform: uppercase; }
+.student-page .student-internship-top > button { min-height: 34px; padding: 6px 12px; font-size: 13px; }
+.student-page .student-internship-card { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 16px 18px;
+  background: linear-gradient(120deg, #f0f9f5 0%, #f2f7ff 100%); border: 1px solid #d8e9e4; border-radius: 14px; }
+.student-page .student-internship-card > .student-list-meta { flex: 1 1 100%; }
+.student-internship-head { display: flex; flex: 1 1 300px; align-items: center; gap: 14px; min-width: 0; }
+.student-internship-head > div { min-width: 0; }
+.student-page .student-internship-head h3 { margin: 0; font-size: 18px; line-height: 26px; overflow-wrap: anywhere; }
+.student-internship-icon { display: grid; flex-shrink: 0; place-items: center; width: 50px; height: 50px; color: #fff; background: linear-gradient(135deg, #0b927c, #2969a9); border-radius: 14px; box-shadow: 0 8px 18px rgba(9, 123, 105, .25); }
+.student-internship-chips { display: flex; flex: 0 1 auto; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.student-page .student-internship-state { gap: 6px; padding: 5px 11px; border-radius: 999px; }
+.student-internship-state::before { content: ""; width: 7px; height: 7px; background: currentColor; border-radius: 50%; }
+/* Vé thực tập: nền xanh đậm chuyển màu (cùng họ màu thanh menu) chữ trắng (≥ 5,8:1), quầng sáng mint góc trái; phần chính bên trái,
+   cuống vé bên phải ngăn bằng đường nét đứt có hai lỗ đục tròn (màu nền thẻ) ở mép trên/dưới. Chip trạng thái trên vé dùng nền
+   trắng mờ, chấm màu theo trạng thái. Hẹp thì cuống vé xuống dưới, đường đục lỗ nằm ngang. */
+.student-ticket-item { display: grid; gap: 14px; min-width: 0; }
+.student-ticket { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; min-width: 0; color: #fff; border-radius: 16px; box-shadow: 0 14px 30px rgba(16, 44, 57, .2);
+  background: radial-gradient(circle at 8% 0%, rgba(95, 211, 187, .32), transparent 42%), linear-gradient(115deg, #0f3440 0%, #0d4a4f 55%, #0b5f58 100%); }
+.student-ticket-main { display: flex; align-items: center; gap: 18px; min-width: 0; padding: 22px 26px; }
+.student-ticket-main > div { display: grid; justify-items: start; gap: 4px; min-width: 0; }
+.student-ticket .student-internship-icon { width: 58px; height: 58px; background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .28); border-radius: 16px; box-shadow: 0 0 0 6px rgba(255, 255, 255, .05), 0 10px 24px rgba(0, 0, 0, .25); }
+.student-ticket-label { color: #9fe3d2; font-size: 11px; font-weight: 700; letter-spacing: .9px; line-height: 16px; text-transform: uppercase; }
+.student-page .student-ticket h3 { margin: 0; color: #fff; font-size: 21px; font-weight: 700; line-height: 28px; overflow-wrap: anywhere; }
+.student-ticket .student-company { color: #cfe5e1; }
+.student-page .student-ticket .student-internship-state { margin-top: 6px; color: #fff; background: rgba(255, 255, 255, .14); }
+.student-ticket .student-internship-state::before { background: #6ee2a8; box-shadow: 0 0 0 3px rgba(110, 226, 168, .25); }
+.student-ticket .student-internship-state.tone-warning::before { background: #f3c060; box-shadow: 0 0 0 3px rgba(243, 192, 96, .25); }
+.student-ticket .student-internship-state.tone-info::before { background: #8ec5ff; box-shadow: 0 0 0 3px rgba(142, 197, 255, .25); }
+.student-ticket .student-internship-state.rejected::before { background: #ff9aa8; box-shadow: 0 0 0 3px rgba(255, 154, 168, .25); }
+.student-ticket-stub { position: relative; display: grid; align-content: center; min-width: 0; padding: 22px 28px; border-left: 2px dashed rgba(255, 255, 255, .32); }
+.student-ticket-stub::before, .student-ticket-stub::after { content: ""; position: absolute; left: -12px; width: 22px; height: 22px; background: var(--surface); border-radius: 50%; }
+.student-ticket-stub::before { top: -11px; }
+.student-ticket-stub::after { bottom: -11px; }
+.student-ticket-term { display: grid; gap: 10px; margin: 0; }
+.student-ticket-code { width: fit-content; padding: 4px 10px; color: #0f3440; font-size: var(--text-caption); font-weight: 700; line-height: 16px; background: #9fe3d2; border-radius: 999px; }
+.student-ticket-dates { display: flex; align-items: center; gap: 14px; }
+.student-ticket-dates > span { display: grid; gap: 2px; }
+.student-ticket-dates small { color: #cfe5e1; font-size: 11px; font-weight: 600; letter-spacing: .4px; line-height: 14px; }
+.student-ticket-dates b { color: #fff; font-size: 17px; font-weight: 700; line-height: 22px; white-space: nowrap; }
+.student-ticket-dates > .icon { flex-shrink: 0; color: #9fe3d2; }
+/* Dưới vé: tiến độ kỳ (thanh mint → xanh dương có chấm mốc hôm nay) bên trái, 2 chip số việc bên phải. */
+.student-ticket-foot { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; padding: 0 4px; }
+.student-term-progress { display: grid; flex: 1 1 360px; gap: 8px; min-width: 0; }
+.student-term-progress-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+.student-term-progress-head > span { color: var(--muted); font-size: var(--text-caption); font-weight: 600; }
+.student-term-progress-head > b { color: var(--brand-dark); font-size: 13px; }
+.student-term-bar { position: relative; height: 10px; background: #e3eef0; border-radius: 999px; }
+.student-term-bar > span { position: relative; display: block; width: var(--value); height: 100%; background: linear-gradient(90deg, #0b927c, #2969a9); border-radius: 999px; }
+.student-term-bar > span::after { content: ""; position: absolute; top: 50%; right: -9px; width: 18px; height: 18px; background: var(--surface); border: 4px solid #2969a9; border-radius: 50%; box-shadow: 0 2px 6px rgba(16, 44, 57, .25); transform: translateY(-50%); }
+.student-term-progress-ends { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 11px; font-weight: 600; line-height: 14px; }
+.student-internship-count { --tone: var(--brand); display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; color: #33495a; font-size: var(--text-caption); font-weight: 600; line-height: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; }
+.student-internship-count.tone-blue { --tone: #2969a9; }
+.student-internship-count.tone-amber { --tone: #966614; }
+.student-internship-count > .icon { flex-shrink: 0; color: var(--tone); }
+.student-internship-count > b { color: var(--tone); font-size: 14px; font-weight: 700; }
+.student-internship-note { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 10px 12px; color: #2969a9; font-size: 13px; line-height: 18px; background: #eef5ff; border-radius: 10px; }
+.student-internship-note > .icon { flex-shrink: 0; margin-top: 1px; }
 
-/* S01 lời chào và phạm vi trường. */
-.student-welcome { display: grid; justify-items: start; gap: 8px; }
-.student-page .student-welcome > h2 { margin: 0; }
-.student-scope { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; width: 100%; margin-top: 6px; padding-top: 12px; border-top: 1px solid var(--line); }
-.student-scope-label { color: var(--muted); font-size: var(--text-caption); font-weight: 600; }
-.student-scope-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.student-scope-list code { display: inline-block; padding: 3px 7px; color: #5e7180; font-size: var(--text-caption); background: #edf2f5; border-radius: 4px; }
+/* S01 "Bảng điều khiển" (frame Trang chủ 477:12990). Không dùng ảnh nền trường của frame (GH / Campus photo watermark 1909:2145):
+   hệ thống dùng chung cho nhiều trường. Nhãn nhỏ dùng chung cho các thẻ đầu trang (S02). */
+.student-home-kicker { color: var(--brand); font-size: 11px; font-weight: 700; letter-spacing: .6px; line-height: 16px; }
+/* Hero nền xanh đậm chuyển màu với 2 quầng sáng (mint góc phải trên, xanh dương góc trái dưới) và lưới chấm mờ nhạt dần về trái;
+   chữ trắng / mint nhạt đạt ≥ 7:1. Bên trái: lời chào theo buổi + ngày, tên, mô tả, chip nhanh, nút hồ sơ nền trắng;
+   bên phải: thẻ kính mờ có vòng tiến độ học kỳ (mint trên nền trắng mờ). */
+.student-dash-hero { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 24px 36px; overflow: hidden; padding: 32px 34px; color: #fff; border-radius: 22px;
+  background: radial-gradient(circle at 88% -10%, rgba(95, 211, 187, .38), transparent 42%), radial-gradient(circle at -5% 120%, rgba(41, 105, 169, .4), transparent 45%), linear-gradient(120deg, #0f3440 0%, #0d4a4f 52%, #0b5f58 100%);
+  box-shadow: 0 20px 44px rgba(16, 44, 57, .22); }
+.student-dash-hero::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(rgba(255, 255, 255, .09) 1.2px, transparent 1.6px) 0 0 / 16px 16px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 10%, #000 70%); mask-image: linear-gradient(90deg, transparent 10%, #000 70%); }
+.student-dash-hero > * { position: relative; }
+.student-dash-hero-text { display: grid; justify-items: start; gap: 8px; min-width: 0; }
+.student-dash-kicker { display: inline-flex; align-items: center; gap: 8px; color: #9fe3d2; font-size: 12px; font-weight: 700; letter-spacing: .5px; line-height: 16px; text-transform: uppercase; }
+.student-page .student-dash-hero h2 { margin: 0; color: #fff; font-size: 32px; font-weight: 800; letter-spacing: -.3px; line-height: 40px; overflow-wrap: anywhere; }
+.student-dash-hero-text > p:not(.student-dash-kicker) { max-width: 620px; color: #cfe5e1; font-size: 15px; line-height: 23px; }
+.student-dash-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 4px; padding: 0; list-style: none; }
+.student-dash-chips > li { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 6px 12px; color: #fff; font-size: var(--text-caption); font-weight: 600; line-height: 16px; overflow-wrap: anywhere;
+  background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .2); border-radius: 999px; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.student-dash-chips > li > .icon { flex-shrink: 0; color: #9fe3d2; }
+.student-dash-chips > li.is-ok > .icon { color: #6ee2a8; }
+.student-dash-chips > li.is-warn > .icon { color: #f3c060; }
+.student-page button.student-dash-cta { min-height: 46px; margin-top: 4px; padding: 11px 22px; color: var(--brand-dark); font-size: 15px; font-weight: 700; background: #fff; border: 0; border-radius: 12px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .22); transition: transform .2s ease, box-shadow .2s ease; }
+.student-page button.student-dash-cta:hover { color: var(--brand-dark); background: #eaf7f1; transform: translateY(-2px); box-shadow: 0 14px 28px rgba(0, 0, 0, .26); }
+.student-dash-term { display: grid; justify-items: center; gap: 6px; min-width: 220px; padding: 20px 26px; text-align: center; background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 20px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.student-dash-ring { --value: 0; display: grid; place-items: center; width: 128px; height: 128px; margin-bottom: 6px; border-radius: 50%;
+  background: conic-gradient(#5fd3bb calc(var(--value) * 1%), rgba(255, 255, 255, .14) 0); box-shadow: 0 0 0 6px rgba(255, 255, 255, .05), 0 0 30px rgba(95, 211, 187, .25); }
+.student-dash-ring > span { display: grid; place-content: center; width: 102px; height: 102px; color: #fff; text-align: center; background: #0f3d45; border-radius: 50%; }
+.student-dash-ring b { font-size: 22px; font-weight: 800; line-height: 28px; }
+.student-dash-ring small { color: #9fe3d2; font-size: 11px; font-weight: 600; line-height: 14px; }
+.student-dash-ring.is-empty > span { color: #9fe3d2; }
+.student-dash-term > p { color: #fff; font-size: 15px; font-weight: 700; line-height: 22px; }
+.student-dash-term > small { color: #cfe5e1; font-size: var(--text-caption); line-height: 16px; }
+@media (prefers-reduced-motion: reduce) { .student-page button.student-dash-cta { transition: none; } .student-page button.student-dash-cta:hover { transform: none; } }
+/* "Tổng quan của bạn": thẻ trắng bo 18, ô biểu tượng 44 chuyển màu theo tông (xanh lá, xanh dương, tím, vàng) cạnh tên, số lớn 32 đậm
+   cùng tông, thanh tiến độ (thẻ hồ sơ), gợi ý; quầng sáng tông ở góc phải trên; rê chuột nổi lên, bóng tông. */
+.student-page .student-home-title { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; font-size: 18px; line-height: 26px; }
+.student-page .student-home-title::before { content: ""; width: 4px; height: 20px; background: var(--student-accent); border-radius: 2px; }
+.student-home-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.student-home-stat { --tone: #097b69; --tone-grad: linear-gradient(135deg, #0b927c, #086859); --tone-glow: rgba(11, 146, 124, .16); position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr);
+  align-items: center; align-content: start; gap: 4px 12px; min-width: 0; overflow: hidden; padding: 18px 18px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--student-shadow); }
+.student-home-stat::after { content: ""; position: absolute; top: -50px; right: -50px; width: 140px; height: 140px; pointer-events: none; background: radial-gradient(circle, var(--tone-glow), transparent 70%); }
+.student-home-stat.tone-blue, .student-home-row.tone-blue { --tone: #2969a9; --tone-bg: #eef5ff; --tone-grad: linear-gradient(135deg, #3b82c4, #2969a9); --tone-glow: rgba(41, 105, 169, .14); }
+.student-home-stat.tone-purple, .student-home-row.tone-purple { --tone: #6b4fbb; --tone-bg: #f3f0fc; --tone-grad: linear-gradient(135deg, #8064d0, #6b4fbb); --tone-glow: rgba(107, 79, 187, .14); }
+.student-home-stat.tone-amber, .student-home-row.tone-amber { --tone: #966614; --tone-bg: #fff6e6; --tone-grad: linear-gradient(135deg, #d4931f, #a8741a); --tone-glow: rgba(212, 147, 31, .16); }
+.student-home-stat-icon { display: grid; place-items: center; width: 44px; height: 44px; color: #fff; background: var(--tone-grad); border-radius: 14px; box-shadow: 0 8px 16px var(--tone-glow); }
+.student-home-stat-label { color: var(--ink); font-size: var(--text-sm); font-weight: 700; line-height: 20px; }
+.student-home-stat-value { grid-column: 1 / -1; margin-top: 10px; color: var(--tone); font-size: 34px; font-weight: 800; letter-spacing: -.5px; line-height: 40px; overflow-wrap: anywhere; }
+.student-home-stat-value.is-text { font-size: 18px; letter-spacing: 0; line-height: 26px; }
+.student-home-stat-bar { grid-column: 1 / -1; height: 6px; margin: 4px 0 2px; overflow: hidden; background: #e6eef2; border-radius: 999px; }
+.student-home-stat-bar > span { display: block; width: var(--value); height: 100%; background: var(--tone-grad); border-radius: 999px; }
+.student-home-stat-hint { grid-column: 1 / -1; color: #4f6475; font-size: var(--text-caption); line-height: 17px; }
+.student-home-stat > .student-kpi-link { grid-column: 1 / -1; justify-self: start; margin-top: 8px; }
+/* Hai cột "Việc cần thực hiện" và "Lịch cá nhân / Tuần này": đầu thẻ có ô biểu tượng mint + số việc; mỗi việc là hàng có ô biểu tượng tròn
+   theo loại (hồ sơ xanh lá, lời mời xanh dương, nhiệm vụ tím), hàng mở được nổi lên khi rê; hết việc thì hiện ô "đã xong". */
+.student-home-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: 18px; }
+.student-page .student-home-grid > .panel { display: grid; align-content: start; gap: 14px; padding: 20px; border-radius: 18px; }
+.student-home-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.student-home-head > div { flex: 1; min-width: 0; }
+.student-page .student-home-head h2 { margin: 0; }
+.student-home-head-icon { display: grid; flex-shrink: 0; place-items: center; width: 42px; height: 42px; color: var(--brand); background: var(--brand-light); border-radius: 12px; }
+.student-home-count { display: grid; flex-shrink: 0; place-items: center; min-width: 30px; height: 30px; padding: 0 9px; color: #fff; font-size: 13px; font-weight: 800; background: var(--brand); border-radius: 999px; box-shadow: 0 4px 10px rgba(9, 123, 105, .3); }
+.student-home-sub { margin: 2px 0 0; color: var(--muted); font-size: var(--text-caption); line-height: 16px; }
+.student-home-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.student-home-row { --tone: var(--brand); --tone-bg: var(--brand-light); }
+.student-home-row > div, .student-page .student-home-row > button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 10px 14px; color: var(--ink); font-size: var(--text-sm); font-weight: 600; line-height: 20px;
+  text-align: left; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 14px; transition: transform .18s ease, box-shadow .18s ease, border-color .18s; }
+.student-page .student-home-row > button { justify-content: flex-start; }
+.student-page .student-home-row > button:hover { color: var(--ink); background: var(--surface); border-color: #c9e6dc; transform: translateY(-2px); box-shadow: 0 8px 18px rgba(16, 44, 57, .08); }
+.student-home-row > button > .icon { flex-shrink: 0; margin-left: auto; color: var(--brand); }
+.student-home-row-icon { display: grid; flex-shrink: 0; place-items: center; width: 36px; height: 36px; color: var(--tone); background: var(--tone-bg); border-radius: 50%; }
+.student-home-row-date { display: grid; flex-shrink: 0; place-items: center; width: 44px; padding: 4px 0; color: var(--tone); line-height: 1.1; background: var(--tone-bg); border-radius: 10px; }
+.student-home-row-date > small { font-size: 10px; font-weight: 700; }
+.student-home-row-date > b { font-size: 17px; font-weight: 800; }
+.student-home-row-text { display: grid; flex: 1; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.student-home-row-text > strong { font-weight: 700; }
+.student-home-row-text > small { color: var(--muted); font-size: var(--text-caption); font-weight: 500; line-height: 16px; }
+.student-home-done { display: flex; align-items: center; gap: 12px; padding: 14px; background: #f2faf7; border: 1px dashed #bfe0d5; border-radius: 14px; }
+.student-home-done > span { display: grid; flex-shrink: 0; place-items: center; width: 40px; height: 40px; color: #fff; background: var(--brand); border-radius: 50%; box-shadow: 0 6px 14px rgba(9, 123, 105, .3); }
+.student-page .student-home-done > .student-card-note { margin: 0; }
+/* Dải 7 ngày của tuần: mỗi ngày là ô bo 14 (thứ viết tắt + ngày); hôm nay nền xanh đậm chuyển màu chữ trắng, đổ bóng; ngày có hạn nhiệm vụ
+   có chấm vàng dưới số (trên ô hôm nay chấm trắng). */
+.student-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin: 0; padding: 0; list-style: none; }
+.student-week > li { display: grid; justify-items: center; gap: 2px; min-width: 0; padding: 10px 2px 8px; background: #f7fbfa; border: 1px solid #e1efea; border-radius: 14px; }
+.student-week > li > small { color: var(--muted); font-size: 11px; font-weight: 700; line-height: 14px; }
+.student-week > li > b { color: var(--ink); font-size: 17px; font-weight: 800; line-height: 22px; }
+.student-week-dot { width: 6px; height: 6px; border-radius: 50%; }
+.student-week > li.has-due > .student-week-dot { background: #d4931f; box-shadow: 0 0 0 3px rgba(212, 147, 31, .18); }
+.student-week > li.is-today { background: linear-gradient(160deg, #0b927c, #086859); border-color: transparent; box-shadow: 0 8px 18px rgba(9, 123, 105, .3); }
+.student-week > li.is-today > :is(small, b) { color: #fff; }
+.student-week > li.is-today.has-due > .student-week-dot { background: #fff; box-shadow: 0 0 0 3px rgba(255, 255, 255, .25); }
+/* Rê chuột: ô ngày nổi lên kiểu khối 3D (nhích 4px, cạnh dưới dày 4px, viền sáng trên, bóng xanh), nền sáng trắng → mint, số ngày chuyển xanh;
+   ô hôm nay nổi với cạnh dưới xanh sẫm. Tắt chuyển động khi người dùng chọn giảm chuyển động. */
+.student-week > li { transition: transform .2s ease, box-shadow .2s ease, background .2s, border-color .2s; }
+.student-week > li:hover { background: linear-gradient(180deg, #ffffff, #eaf7f1); border-color: #cfe9df; transform: translateY(-4px);
+  box-shadow: inset 0 1px 0 #fff, 0 4px 0 #cfe9df, 0 12px 22px rgba(9, 123, 105, .16); }
+.student-week > li:hover > b { color: var(--brand-dark); }
+.student-week > li.is-today:hover { background: linear-gradient(160deg, #0b927c, #086859); border-color: transparent; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 4px 0 #064f45, 0 14px 26px rgba(9, 123, 105, .36); }
+.student-week > li.is-today:hover > b { color: #fff; }
+@media (prefers-reduced-motion: reduce) { .student-week > li { transition: none; } .student-week > li:hover { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .student-home-row > div, .student-page .student-home-row > button { transition: none; } .student-page .student-home-row > button:hover { transform: none; } }
 
-/* Danh sách đánh dấu (6 tiêu chí 477:11262, việc cần làm 477:11193): chữ 13, cách dòng 10. */
-.student-checklist { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; font-size: 13px; line-height: 18px; }
-.student-checklist li { display: flex; align-items: flex-start; gap: 8px; overflow-wrap: anywhere; }
-.student-checklist li > span[aria-hidden] { flex-shrink: 0; width: 14px; color: var(--muted); font-weight: 600; text-align: center; }
-.student-checklist li.passed > span[aria-hidden] { color: var(--student-accent); }
-
-/* S02 độ hoàn thiện (477:11257): tiêu đề 19, thanh tiến độ cao 13 nền mint. */
-.student-completeness { display: grid; gap: 8px; }
-.student-completeness > h2 { margin: 0; font-size: 19px; line-height: 26px; }
-.student-progress { max-width: 1000px; height: 13px; overflow: hidden; background: var(--brand-light); border-radius: 8px; }
-.student-progress > span { display: block; height: 100%; background: var(--student-accent); border-radius: 7px; }
-
-/* S02 "Thông tin sinh viên" (477:11269): cột trái 286 thông tin tài khoản, cột phải thông tin cơ bản 2 cột. */
-.student-profile-layout { display: grid; grid-template-columns: 286px minmax(0, 1fr); align-items: start; gap: 32px; }
-.student-identity-card { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; padding: 18px 15px; text-align: center; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 12px; }
-.student-avatar { display: grid; place-items: center; width: 98px; height: 98px; margin-bottom: 8px; color: var(--brand-dark); font-size: 32px; font-weight: 600; background: var(--brand-light); border: 2px solid var(--student-accent); border-radius: 50%; }
-.student-identity-card .student-group-label { margin: 0; }
-.student-identity-name { max-width: 100%; font-size: 17px; line-height: 22px; font-weight: 600; overflow-wrap: anywhere; }
-.student-identity-email { max-width: 100%; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
-.student-profile-main { min-width: 0; }
+/* S02 thẻ hồ sơ đầu trang (gộp 477:11257 độ hoàn thiện, 477:11262 tiêu chí, 477:11269 tài khoản): nền chuyển mint → xanh dương
+   nhạt như đầu thẻ Kỳ thực tập; avatar chữ viết tắt nền chuyển màu (chữ trắng 30 đậm là chữ lớn, đạt 3:1), tên 24 đậm, email,
+   chip thông tin đã lưu; bên phải ô vòng tròn độ hoàn thiện; dưới cùng là chip tiêu chí 3 cột. */
+.student-page .student-profile-hero { display: grid; gap: 18px; padding: 24px 28px; background: linear-gradient(120deg, #e7f6f0 0%, #eaf3ff 100%); border: 1px solid #d8e9e4; }
+.student-profile-hero-top { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 24px; }
+.student-avatar { display: grid; flex-shrink: 0; place-items: center; width: 88px; height: 88px; color: #fff; font-size: 30px; font-weight: 700; background: linear-gradient(135deg, #0b927c, #2969a9); border: 4px solid #fff; border-radius: 50%; box-shadow: 0 8px 20px rgba(9, 123, 105, .22); }
+.student-profile-hero-text { display: grid; flex: 1 1 320px; gap: 2px; min-width: 0; }
+.student-page .student-profile-hero h2 { margin: 2px 0 0; font-size: 24px; font-weight: 700; line-height: 32px; overflow-wrap: anywhere; }
+.student-identity-email { color: #4f6475; font-size: var(--text-sm); line-height: 20px; overflow-wrap: anywhere; }
+.student-profile-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0; padding: 0; list-style: none; }
+.student-profile-chips li { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 5px 11px; color: #33495a; font-size: var(--text-caption); font-weight: 600; line-height: 16px; background: rgba(255, 255, 255, .85); border: 1px solid #d3e6df; border-radius: 999px; }
+.student-profile-chips li > span { min-width: 0; overflow-wrap: anywhere; }
+.student-profile-chips .icon { flex-shrink: 0; color: var(--brand); }
+.student-profile-hero .student-term-select { justify-self: start; margin-top: 12px; }
+.student-ring-block { display: flex; align-items: center; gap: 14px; padding: 12px 20px 12px 12px; background: var(--surface); border: 1px solid #d3e6df; border-radius: 14px; }
+.student-ring { --value: 0; display: grid; flex-shrink: 0; place-items: center; width: 84px; height: 84px; background: conic-gradient(var(--student-accent) calc(var(--value) * 1%), #dcefe8 0); border-radius: 50%; }
+.student-ring > span { display: grid; place-content: center; width: 66px; height: 66px; text-align: center; background: var(--surface); border-radius: 50%; }
+.student-ring b { color: var(--brand-dark); font-size: 20px; font-weight: 700; line-height: 24px; }
+.student-ring small { color: var(--muted); font-size: 11px; line-height: 14px; }
+.student-ring-text { display: grid; justify-items: start; gap: 6px; }
+.student-page .student-ring-text h3 { margin: 0; font-size: var(--text-sm); line-height: 20px; }
+.student-checklist { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 16px 0 0; list-style: none; border-top: 1px solid #d3e6df; }
+.student-checklist li { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 9px 12px; color: var(--ink); font-size: 13px; font-weight: 500; line-height: 18px; background: var(--surface); border: 1px solid #d8e9e4; border-radius: 10px; overflow-wrap: anywhere; }
+.student-checklist li > span[aria-hidden] { display: grid; flex-shrink: 0; place-items: center; width: 22px; height: 22px; color: #966614; font-weight: 700; background: #fff2db; border-radius: 50%; }
+.student-checklist li.passed > span[aria-hidden] { color: #1a7d50; background: #e5f6ed; }
+.student-checklist li:not(.passed) { border-color: #f1dcb4; }
 .student-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; }
 .student-form-grid .field { margin-top: 0; }
 .student-term-panel .empty-state { min-height: 180px; }
@@ -148,25 +371,71 @@
 .student-fieldset > legend { padding: 0; color: var(--ink); font-size: 15px; font-weight: 600; line-height: 22px; }
 .student-checkbox { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
 .student-checkbox input { flex-shrink: 0; width: 18px; height: 18px; min-height: 0; margin: 0; padding: 0; accent-color: var(--brand); }
-.student-period { min-width: 0; margin: 12px 0 0; padding: 2px 14px 12px; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 9px; }
-.student-period > legend { padding: 0 6px; color: var(--muted); font-size: var(--text-xs); font-weight: 600; }
-.student-period-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
-.student-period .text-button { margin-top: 6px; }
-.student-add-period { margin-top: 12px; }
-.student-kept { margin-top: 22px; padding-top: 16px; border-top: 1px dashed var(--line); }
-.student-kept h3 { font-size: 15px; }
-.student-kept ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 20px; margin: 10px 0; padding: 0; list-style: none; color: var(--muted); font-size: 13px; }
-.student-profile-form .button-row { margin-top: 20px; }
+/* Form thông tin chung: mỗi khối (Thông tin cơ bản · Thời gian có thể tham gia · Dữ liệu giữ nguyên) là một thẻ trắng riêng,
+   tiêu đề kèm biểu tượng trong ô màu theo tông của khối (xanh dương · vàng · tím; thẻ kỹ năng xanh lá); khoảng thời gian là thẻ
+   có tên + nút xóa ở hàng đầu (giống thẻ kỹ năng); cuối form là thanh lưu: trạng thái thay đổi bên trái, "Tải lại" và "Lưu"
+   bên phải. Legend thả float để nằm trong thẻ thay vì đè lên viền. */
+.student-profile-form { display: grid; gap: 18px; }
+.student-page .student-form-block { display: grid; gap: 14px; min-width: 0; margin: 0; padding: 20px 22px; background: var(--surface); border: 0; border-radius: 12px; box-shadow: var(--student-shadow); }
+/* Tông màu theo khối form S02: chữ/biểu tượng đạt ≥ 4,5:1 trên nền trắng và nền tông. */
+.student-page .student-form-block { --tone: var(--brand); --tone-bg: var(--brand-light); }
+.student-page .student-form-block.tone-blue { --tone: #2969a9; --tone-bg: #e8f2ff; }
+.student-page .student-form-block.tone-amber { --tone: #966614; --tone-bg: #fff2db; }
+.student-page .student-form-block.tone-purple { --tone: #6b4fbb; --tone-bg: #f0ecfb; }
+.student-page :is(.student-block-title, .student-form-block > legend) { display: flex; align-items: center; gap: 10px; float: left; width: 100%; margin: 0; padding: 0; color: var(--ink); font-size: 16px; font-weight: 600; line-height: 24px; }
+.student-page .student-card-title { display: flex; align-items: center; gap: 10px; }
+.student-page :is(.student-block-title, .student-form-block > legend, .student-card-title) > .icon { box-sizing: content-box; flex-shrink: 0; padding: 7px; color: var(--tone, var(--brand)); background: var(--tone-bg, var(--brand-light)); border-radius: 9px; }
+.student-page .student-form-block > .student-checkbox { margin: 0; }
+.student-availability-status { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+.student-period { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 12px; min-width: 0; margin: 0; padding: 12px 14px 14px; background: var(--student-subtle); border: 1px solid var(--line); border-left: 3px solid var(--student-accent); border-radius: 10px; }
+.student-period > legend { float: left; grid-column: 1; grid-row: 1; margin: 0; padding: 0; color: var(--ink); font-size: var(--text-sm); font-weight: 600; line-height: 20px; }
+.student-page .student-period > .text-button { grid-column: 2; grid-row: 1; min-height: 30px; margin: 0; padding: 4px 8px; color: #a5364c; font-size: 13px; white-space: nowrap; }
+.student-page .student-period > .text-button:hover { color: #8a2c3f; background: #fff0f0; }
+.student-period > :is(.student-period-fields, .student-field-error) { grid-column: 1 / -1; }
+.student-period-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.student-period-fields .field { margin: 0; }
+.student-page .student-period-fields .field:not(:has(:disabled)) { background: var(--surface); }
+.student-page .student-add-period { justify-self: start; margin: 0; }
+/* 4 ô số liệu giữ nguyên: biểu tượng tròn trắng + tên + giá trị, mỗi ô một tông như thẻ số liệu của Tổng quan. */
+.student-kept ul { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.student-kept li { --tone: var(--brand); --tone-bg: #eef8f3; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0 10px; min-width: 0; padding: 12px 14px; background: var(--tone-bg); border: 1px solid var(--line); border-radius: 10px; }
+.student-kept li.tone-blue { --tone: #2969a9; --tone-bg: #eef5ff; }
+.student-kept li.tone-purple { --tone: #6b4fbb; --tone-bg: #f3f0fc; }
+.student-kept li.tone-amber { --tone: #966614; --tone-bg: #fff6e6; }
+.student-kept-icon { display: grid; grid-row: span 2; place-items: center; width: 36px; height: 36px; color: var(--tone); background: var(--surface); border-radius: 50%; }
+.student-kept li > span:not(.student-kept-icon) { color: #4f6475; font-size: var(--text-caption); line-height: 16px; }
+.student-kept li > b { color: var(--tone); font-size: 15px; font-weight: 700; line-height: 22px; overflow-wrap: anywhere; }
+.student-kept > .field-hint { margin: 0; }
+.student-page .student-profile-form .student-form-actions { align-items: center; justify-content: flex-end; margin: 0; padding: 14px 22px; background: var(--surface); border-radius: 12px; box-shadow: var(--student-shadow); }
+.student-save-state { display: flex; align-items: center; gap: 8px; margin: 0 auto 0 0; color: var(--muted); font-size: 13px; line-height: 18px; }
+.student-save-state::before { content: ""; width: 8px; height: 8px; background: #1a7d50; border-radius: 50%; }
+.student-save-state.dirty { color: #966614; font-weight: 600; }
+.student-save-state.dirty::before { background: #d4931f; }
 
-/* S03 kỹ năng (477:11346): mỗi kỹ năng là một hàng nền #fbfdfe, bo 8. */
+/* S03 kỹ năng (477:11346): hai nhóm cách nhau bằng đường kẻ; tiêu đề nhóm kèm số đếm; nút lưu tách riêng ở cuối. */
 .student-page .student-skills form > fieldset { margin: 0; padding: 0; background: none; border: 0; }
-.student-page .student-skills h3 { margin-top: 18px; font-size: 15px; }
-.student-page .student-skill-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); align-items: end; gap: 0 12px; margin: 12px 0 0; padding: 4px 12px 12px; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 8px; }
-.student-page .student-skill-row > legend { padding: 0 6px; color: var(--ink); font-size: 13px; font-weight: 600; }
-.student-page .student-skill-row > label { margin-top: 8px; }
-.student-page .student-skill-row > button { justify-self: start; margin-top: 8px; }
-.student-page .student-skills form > fieldset > button { margin: 12px 10px 0 0; }
-.student-page .student-skills form > fieldset > button[type="submit"] { min-width: 176px; }
+.student-skill-group { display: grid; gap: 10px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.student-skill-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+.student-page .student-skill-head h3 { margin: 0; font-size: 15px; }
+.student-skill-group > .student-card-note { margin-top: 0; }
+.student-skill-suggest { display: flex; flex-wrap: wrap; gap: 8px; }
+.student-page .student-skill-suggest > button { min-height: 32px; padding: 5px 12px; font-size: 13px; border-radius: 20px; }
+.student-page button.student-skill-add { justify-self: start; }
+/* Mỗi kỹ năng là một thẻ nền #fbfdfe viền trái nhấn: hàng đầu tên + nút xóa, rồi dòng tóm tắt như hàng
+   "React · Cấp độ 3/5 · 1.5 năm thực hành · danh mục kỹ năng" của frame 477:11348, rồi các ô sửa (ghi chú rộng gấp đôi).
+   Legend thả float để nằm trong thẻ như một ô lưới thay vì đè lên viền. */
+.student-page .student-skill-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr); align-items: start; gap: 10px 12px; min-width: 0; margin: 0; padding: 12px 14px 14px; background: var(--student-subtle); border: 1px solid var(--line); border-left: 3px solid var(--student-accent); border-radius: 10px; }
+.student-page .student-skill-row.custom { grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); border-left-color: #6b4fbb; }
+.student-page .student-skill-row > legend { float: left; grid-column: 1 / -2; align-self: center; width: auto; margin: 0; padding: 0; color: var(--ink); font-size: 15px; font-weight: 600; line-height: 22px; }
+.student-skill-source { margin-left: 6px; padding: 2px 8px; color: var(--brand-dark); font-size: var(--text-caption); font-weight: 600; background: var(--brand-light); border-radius: 10px; }
+.student-page .student-skill-row > button.student-skill-remove { grid-column: -2 / -1; justify-self: end; min-height: 30px; padding: 4px 8px; color: #a5364c; font-size: 13px; white-space: nowrap; }
+.student-page .student-skill-row > button.student-skill-remove:hover { color: #8a2c3f; background: #fff0f0; }
+.student-page .student-skill-row > .student-skill-summary { grid-column: 1 / -1; margin: -4px 0 2px; color: var(--muted); font-size: 13px; line-height: 18px; overflow-wrap: anywhere; }
+.student-page .student-skill-row > label { margin: 0; }
+.student-page .student-skill-row > label:not(:has(:disabled)) { background: var(--surface); }
+.student-page .student-skill-row.custom > .student-skill-note { grid-column: 1 / -1; }
+.student-skill-actions { display: flex; justify-content: flex-end; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.student-page .student-skill-actions > button { min-width: 176px; }
 
 /* Danh sách: mỗi mục là hàng phụ nền #fbfdfe (477:12474); .student-card-list biến mỗi mục thành card riêng (477:11931). */
 .student-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
@@ -184,40 +453,201 @@
 .student-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 11px 12px; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 8px; }
 .student-row > p:first-child { flex: 1 1 260px; min-width: 0; font-size: 13px; overflow-wrap: anywhere; }
 .student-pre-line { white-space: pre-line; }
-.student-detail { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; margin: 10px 0 0; }
+/* Thông tin chỉ đọc cũng dùng khung "nhãn trong khung" như Field của Figma (chi tiết cơ hội, chi tiết nguyện vọng). */
+.student-detail { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; margin: 10px 0 0; }
+.student-detail > div { min-width: 0; padding: 9px 12px 10px; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 9px; }
 .student-detail dt { color: var(--muted); font-size: var(--text-caption); font-weight: 600; }
-.student-detail dd { margin: 3px 0 0; font-size: var(--text-sm); overflow-wrap: anywhere; white-space: pre-line; }
+.student-detail dd { margin: 4px 0 0; font-size: var(--text-sm); overflow-wrap: anywhere; white-space: pre-line; }
 .student-detail ul { margin: 0; padding-left: 18px; }
 .student-detail-wide { grid-column: 1 / -1; }
 
-/* Tab dạng chip (477:11422, 477:12001): bo 20, chữ 13 semibold; tab đang chọn nền mint. Giữ vùng chạm 36px. */
-.student-tabs { display: flex; gap: 10px; min-width: 0; overflow-x: auto; }
-button.student-tab { flex-shrink: 0; min-height: 36px; padding: 6px 16px; color: var(--muted); font-size: 13px; font-weight: 600; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; }
-button.student-tab:hover { color: var(--brand-dark); background: var(--brand-light); }
-button.student-tab.active { color: var(--brand-dark); background: var(--brand-light); border-color: var(--student-accent); }
-button.student-tab:focus-visible { outline-offset: -3px; }
+/* Tab là các nút riêng cách nhau 10px: nền trắng viền nhạt có bóng nhẹ, biểu tượng màu thương hiệu; rê chuột thì nổi lên;
+   tab đang chọn tô màu thương hiệu chữ trắng (5,2:1) và đổ bóng xanh. Vùng chạm 42px. */
+.student-tabs { display: flex; flex-wrap: wrap; gap: 10px; min-width: 0; }
+.student-page button.student-tab { flex-shrink: 0; gap: 8px; min-height: 42px; padding: 9px 18px; color: #3d5566; font-size: var(--text-sm); font-weight: 600; background: var(--surface); border: 1px solid #dde6ee; border-radius: 12px; box-shadow: 0 1px 3px rgba(16, 44, 57, .06); transition: background .15s, color .15s, border-color .15s, box-shadow .15s, transform .15s; }
+.student-page button.student-tab .icon { color: var(--brand); }
+.student-page button.student-tab:hover { color: var(--brand-dark); background: #f6fbf9; border-color: #bfe0d5; box-shadow: 0 4px 10px rgba(16, 44, 57, .08); transform: translateY(-1px); }
+.student-page button.student-tab.active { color: #fff; background: var(--brand); border-color: var(--brand); box-shadow: 0 6px 14px rgba(9, 123, 105, .28); transform: none; }
+.student-page button.student-tab.active .icon { color: #fff; }
+.student-page button.student-tab.active:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
+.student-page button.student-tab:focus-visible { outline: 2px solid var(--student-accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .student-page button.student-tab { transition: none; } .student-page button.student-tab:hover { transform: none; } }
+@media (max-width: 520px) {
+  .student-tabs { display: grid; flex: 1 1 100%; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 8px; }
+  .student-page button.student-tab { padding: 8px 10px; }
+}
+/* S04 thanh nhỏ đầu trang: nhãn học kỳ / chọn học kỳ bên trái, 2 nút nhỏ tải lại / kiểm tra trạng thái tệp dồn phải. */
+.student-cap-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-width: 0; }
+.student-cap-toolbar > .student-status { gap: 6px; min-height: 34px; padding: 6px 12px; background: var(--surface); border: 1px solid #cfe9df; }
+.student-cap-toolbar .student-term-select { min-width: 180px; }
+.student-cap-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.student-page .student-cap-actions > button { min-height: 34px; padding: 6px 12px; font-size: 13px; }
+/* S04 "Portfolio năng lực" — một tông xanh thương hiệu cho cả màn (chỉ trạng thái quét tệp giữ màu ngữ nghĩa).
+   Thanh tab phân đoạn: 4 tab nằm liền trong một khung trắng bo 18; mỗi tab có ô biểu tượng tròn mint, tên mục, dòng phụ số lượng;
+   tab đang mở nền xanh chuyển màu đậm (chữ trắng ≥ 5,2:1) đổ bóng xanh; rê chuột nền mint nhạt. */
+.student-tabs-segmented { display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; gap: 10px; padding: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--student-shadow); }
+/* Thanh chỉ có 2 tab (Lời mời & nguyện vọng) không kéo hết chiều ngang. */
+.student-tabs-segmented:not(:has(> :nth-child(3))) { max-width: 640px; }
+.student-page .student-tabs-segmented > button.student-tab { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; justify-content: stretch; gap: 0 12px;
+  min-height: 0; padding: 10px 14px; text-align: left; background: #f7fbfa; border: 1px solid #e1efea; border-radius: 14px; box-shadow: none; }
+.student-page .student-tabs-segmented > button.student-tab > .icon { box-sizing: content-box; grid-row: span 2; width: 19px; height: 19px; padding: 10px; color: var(--brand); background: var(--brand-light); border-radius: 50%; transition: background .2s, color .2s, box-shadow .2s, transform .2s; }
+.student-tabs-segmented .student-tab-label { min-width: 0; color: var(--ink); font-size: 15px; font-weight: 700; line-height: 22px; overflow-wrap: anywhere; }
+.student-tabs-segmented .student-tab-meta { min-width: 0; color: var(--muted); font-size: var(--text-caption); font-weight: 600; line-height: 16px; overflow-wrap: anywhere; }
+.student-tabs-segmented .student-tab-label:only-of-type { grid-row: span 2; }
+.student-page .student-tabs-segmented > button.student-tab.active, .student-page .student-tabs-segmented > button.student-tab.active:hover { background: linear-gradient(135deg, #097b69, #075f52); border-color: transparent; box-shadow: 0 8px 18px rgba(9, 123, 105, .28); }
+.student-page .student-tabs-segmented > button.student-tab.active > .icon { color: #fff; background: rgba(255, 255, 255, .18); }
+.student-tabs-segmented > .student-tab.active :is(.student-tab-label, .student-tab-meta) { color: #fff; }
+/* Rê chuột (hoặc focus bằng bàn phím): tab nổi lên kiểu khối 3D — nhích 4px, cạnh dưới dày 4px, viền sáng trên, bóng xanh đổ xuống;
+   nền sáng lên trắng → mint, một vệt sáng lướt ngang; ô biểu tượng chuyển nền xanh, phóng nhẹ, có quầng sáng.
+   Tab đang mở cũng nổi khối khi rê. Tắt chuyển động khi người dùng chọn giảm chuyển động. */
+.student-page .student-tabs-segmented > button.student-tab { position: relative; overflow: hidden; }
+.student-page .student-tabs-segmented > button.student-tab::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, .6) 50%, transparent 70%); transform: translateX(-120%); transition: transform .6s ease; }
+.student-page .student-tabs-segmented > button.student-tab.active::after { background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, .22) 50%, transparent 70%); }
+.student-page .student-tabs-segmented > button.student-tab:is(:hover, :focus-visible)::after { transform: translateX(120%); }
+.student-page .student-tabs-segmented > button.student-tab:is(:hover, :focus-visible) { background: linear-gradient(180deg, #ffffff, #eaf7f1); border-color: #cfe9df; transform: translateY(-4px);
+  box-shadow: inset 0 1px 0 #fff, 0 4px 0 #cfe9df, 0 14px 24px rgba(9, 123, 105, .18); }
+.student-page .student-tabs-segmented > button.student-tab:is(:hover, :focus-visible) > .icon { color: #fff; background: var(--brand); box-shadow: 0 0 0 4px rgba(11, 146, 124, .18), 0 6px 14px rgba(9, 123, 105, .35); transform: scale(1.08); }
+.student-page .student-tabs-segmented > button.student-tab.active:is(:hover, :focus-visible) { background: linear-gradient(135deg, #097b69, #06584c); transform: translateY(-4px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 4px 0 #064f45, 0 16px 28px rgba(9, 123, 105, .38); }
+.student-page .student-tabs-segmented > button.student-tab.active:is(:hover, :focus-visible) > .icon { color: #fff; background: rgba(255, 255, 255, .24); }
+@media (prefers-reduced-motion: reduce) {
+  .student-page .student-tabs-segmented > button.student-tab:is(:hover, :focus-visible), .student-page .student-tabs-segmented > button.student-tab:is(:hover, :focus-visible) > .icon { transform: none; }
+  .student-page .student-tabs-segmented > button.student-tab::after { display: none; }
+}
+.student-page .student-cap-section { border-top: 3px solid var(--brand); }
+/* Đầu thẻ từng tab: ô biểu tượng 42 mint, nhãn nhỏ xanh, tiêu đề. */
+.student-cap-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.student-cap-title-icon { display: grid; flex-shrink: 0; place-items: center; width: 42px; height: 42px; color: var(--brand); background: var(--brand-light); border-radius: 12px; }
+.student-page .student-cap-title .section-kicker { margin-bottom: 2px; color: var(--brand); letter-spacing: .6px; }
+.student-page .student-cap-title h2 { margin: 0; }
+/* Thư viện thẻ dự án / chứng chỉ: lưới tự chia cột (thẻ rộng tối thiểu 300px), các thẻ cùng hàng cao bằng nhau;
+   rê chuột (hoặc focus bên trong) thẻ nổi lên 4px, bóng đậm hơn; ô "Thêm" cùng kích thước ở cuối lưới. */
+.student-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 16px; margin: 0; padding: 0; list-style: none; }
+.student-gallery > li { position: relative; display: flex; flex-direction: column; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 1px 3px rgba(16, 44, 57, .06); transition: transform .2s ease, box-shadow .2s ease, border-color .2s; }
+.student-gallery > li:not(.student-add-tile):is(:hover, :focus-within) { transform: translateY(-4px); border-color: #cfe9df; box-shadow: 0 16px 32px rgba(16, 44, 57, .12); }
+.student-item-actions { display: flex; flex-shrink: 0; gap: 6px; }
+.student-page .student-item-actions > button.student-icon-button { width: 32px; min-width: 32px; padding: 0; justify-content: center; }
+.student-card-tools { position: absolute; top: 12px; right: 12px; z-index: 1; }
+/* Thẻ dự án: dải bìa 92px nền xanh đậm chuyển màu có lưới chấm mờ (4 biến thể cùng họ xanh xoay vòng), chữ lồng 56px nền trắng
+   đè lên mép bìa; nút Sửa/Xóa dạng kính mờ trên bìa (rê chuột nền trắng); thân thẻ: tên, vai trò, kỹ năng, mô tả 3 dòng, chân thẻ
+   nét đứt (tên miền đường dẫn, số minh chứng) dồn xuống đáy. */
+.student-project-cover { --cover: linear-gradient(120deg, #0f3440, #0b5f58 55%, #0b927c); position: relative; flex-shrink: 0; height: 92px; border-radius: 15px 15px 0 0;
+  background: radial-gradient(rgba(255, 255, 255, .16) 1.2px, transparent 1.6px) 0 0 / 14px 14px, var(--cover); }
+.student-gallery > li:nth-child(4n + 2) .student-project-cover { --cover: linear-gradient(120deg, #0b5f58, #097b69 60%, #2a9d8f); }
+.student-gallery > li:nth-child(4n + 3) .student-project-cover { --cover: linear-gradient(120deg, #123c4a, #0d4a4f 50%, #11806f); }
+.student-gallery > li:nth-child(4n + 4) .student-project-cover { --cover: linear-gradient(120deg, #0a4d48, #0b7a6a 60%, #4fb59f); }
+.student-project-monogram { position: absolute; bottom: -26px; left: 18px; display: grid; place-items: center; width: 56px; height: 56px; color: var(--brand-dark); font-size: 24px; font-weight: 800;
+  background: linear-gradient(135deg, #f4fbf8, #ddf2ea); border: 3px solid var(--surface); border-radius: 16px; box-shadow: 0 8px 18px rgba(16, 44, 57, .18); }
+.student-page .student-project-card .student-card-tools > button.student-icon-button { color: #fff; background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .35); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.student-page .student-project-card .student-card-tools > button.student-icon-button:hover { color: var(--brand-dark); background: var(--surface); border-color: var(--surface); }
+.student-page .student-project-card .student-card-tools > button.student-icon-button.student-danger:hover { color: #a5364c; }
+.student-project-body { display: flex; flex: 1; flex-direction: column; gap: 10px; min-width: 0; padding: 38px 18px 18px; }
+.student-page .student-project-body > h3 { margin: 0; font-size: 17px; line-height: 24px; overflow-wrap: anywhere; }
+.student-project-role { display: flex; align-items: center; gap: 6px; color: #4f6475; font-size: 13px; font-weight: 600; line-height: 18px; overflow-wrap: anywhere; }
+.student-project-role > .icon { flex-shrink: 0; color: var(--brand); }
+.student-item-text { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.student-item-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: auto; padding-top: 12px; border-top: 1px dashed var(--line); }
+.student-item-count { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; color: #475b6b; font-size: var(--text-caption); font-weight: 600; line-height: 16px; background: var(--student-neutral); border-radius: 999px; }
+.student-project-body > .student-file-list, .student-cert-body > .student-file-list { margin: 0; }
+/* Thẻ chứng chỉ kiểu huy chương: cột trái 76px nền xanh đậm có lưới chấm mờ như bìa dự án, huy chương tròn viền trắng mờ;
+   thân thẻ: tên, đơn vị cấp, 2 ô ngày cấp / hết hạn nền mint, tệp minh chứng. */
+.student-gallery > li.student-cert-card { flex-direction: row; overflow: hidden; }
+.student-cert-medal { display: grid; flex-shrink: 0; place-items: start center; width: 76px; padding-top: 20px; color: #fff;
+  background: radial-gradient(rgba(255, 255, 255, .14) 1.2px, transparent 1.6px) 0 0 / 14px 14px, linear-gradient(180deg, #0b5f58, #0f3440); }
+.student-cert-medal > .icon { box-sizing: content-box; padding: 10px; background: rgba(255, 255, 255, .14); border: 2px solid rgba(255, 255, 255, .4); border-radius: 50%; box-shadow: 0 0 0 5px rgba(255, 255, 255, .06); }
+.student-cert-body { display: flex; flex: 1; flex-direction: column; gap: 6px; min-width: 0; padding: 18px; }
+.student-page .student-cert-body > h3 { margin: 0; padding-right: 76px; font-size: 17px; line-height: 24px; overflow-wrap: anywhere; }
+.student-cert-dates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 6px 0 2px; }
+.student-cert-dates > div { min-width: 0; padding: 8px 10px; background: #f6fbf9; border: 1px solid #d6ebe4; border-radius: 10px; }
+.student-cert-dates dt { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .3px; line-height: 14px; }
+.student-cert-dates dd { margin: 2px 0 0; color: var(--ink); font-size: var(--text-sm); font-weight: 700; line-height: 20px; }
+/* Ô "Thêm": khung nét đứt mint, nút tròn dấu cộng nền xanh (xoay khi rê chuột), tên thao tác + gợi ý; cao tối thiểu 220px. */
+.student-gallery > li.student-add-tile { background: transparent; border: 0; box-shadow: none; }
+.student-page .student-add-tile > button { display: grid; flex: 1; place-content: center; justify-items: center; gap: 12px; min-height: 220px; padding: 24px; color: var(--brand-dark); text-align: center;
+  background: #f6fbf9; border: 2px dashed #b9dccf; border-radius: 16px; transition: background .2s, border-color .2s; }
+.student-page .student-add-tile > button:hover { color: var(--brand-dark); background: var(--brand-light); border-color: var(--brand); }
+.student-add-tile-icon { display: grid; place-items: center; width: 52px; height: 52px; color: #fff; background: var(--brand); border-radius: 50%; box-shadow: 0 8px 18px rgba(9, 123, 105, .3); transition: transform .25s ease; }
+.student-add-tile > button:hover .student-add-tile-icon { transform: rotate(90deg) scale(1.06); }
+.student-add-tile > button > span:last-child { display: grid; gap: 4px; max-width: 260px; }
+.student-add-tile b { font-size: 15px; font-weight: 700; line-height: 22px; }
+.student-add-tile small { color: #4f6475; font-size: var(--text-caption); font-weight: 500; line-height: 17px; }
+@media (prefers-reduced-motion: reduce) {
+  .student-gallery > li { transition: none; } .student-gallery > li:not(.student-add-tile):is(:hover, :focus-within) { transform: none; }
+  .student-add-tile-icon { transition: none; } .student-add-tile > button:hover .student-add-tile-icon { transform: none; }
+}
+/* CV: thẻ "CV đang dùng" nền mint có trang giấy minh họa nghiêng (góc gấp, nhãn CV, các dòng chữ giả) cạnh khối tải CV mới;
+   chưa có CV thì trang giấy mờ đi. Minh chứng: lưới ô tệp. */
+.student-cv-layout { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: stretch; gap: 16px; }
+.student-cv-layout > .student-upload { margin-top: 0; }
+.student-cv-current { display: flex; align-items: center; gap: 22px; min-width: 0; padding: 20px; background: linear-gradient(135deg, #f2faf7, #eaf5f1); border: 1px solid #d6ebe4; border-radius: 16px; }
+.student-cv-paper { position: relative; display: grid; flex-shrink: 0; align-content: start; gap: 7px; width: 96px; height: 124px; padding: 34px 12px 12px; background: var(--surface); border-radius: 8px;
+  box-shadow: 0 12px 26px rgba(16, 44, 57, .14), 0 0 0 1px rgba(16, 44, 57, .05); transform: rotate(-3deg); }
+.student-cv-paper::before { content: ""; position: absolute; top: 0; right: 0; width: 18px; height: 18px; background: linear-gradient(225deg, #eaf5f1 50%, #d5e6e0 50%); border-bottom-left-radius: 4px; }
+.student-cv-paper > b { position: absolute; top: 10px; left: 12px; padding: 1px 6px; color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .5px; line-height: 14px; background: var(--brand); border-radius: 4px; }
+.student-cv-paper > span { height: 5px; background: #e3eef0; border-radius: 3px; }
+.student-cv-paper > span:nth-of-type(2) { width: 72%; }
+.student-cv-paper > span:nth-of-type(3) { width: 88%; }
+.student-cv-paper > span:nth-of-type(5) { width: 60%; }
+.student-cv-current.empty .student-cv-paper { opacity: .55; }
+.student-cv-info { display: grid; flex: 1; align-content: center; gap: 10px; min-width: 0; }
+.student-cv-label { color: var(--brand-dark); font-size: 11px; font-weight: 700; letter-spacing: .8px; line-height: 16px; text-transform: uppercase; }
+.student-cv-info > .student-file-list, .student-page .student-cv-info > .button-row { margin: 0; }
+.student-file-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 12px; }
+.student-file-list.student-file-grid > li { display: grid; align-content: start; gap: 10px; padding: 14px; border-radius: 14px; transition: box-shadow .15s; }
+.student-file-list.student-file-grid > li:hover { box-shadow: 0 8px 18px rgba(16, 44, 57, .08); }
+@media (max-width: 900px) { .student-cv-layout { grid-template-columns: minmax(0, 1fr); } }
+.student-page .student-item-actions > button { gap: 6px; min-height: 32px; padding: 5px 12px; font-size: 13px; border-radius: 8px; }
+.student-page .student-item-actions > button.student-danger { color: #a5364c; border-color: #f0d3da; }
+.student-page .student-item-actions > button.student-danger:hover { color: #8a2c3f; background: #fff0f0; border-color: #e7b9c4; }
+.student-item-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+.student-item-tags > span { padding: 3px 9px; color: #475b6b; font-size: var(--text-caption); font-weight: 600; line-height: 16px; background: var(--student-neutral); border-radius: 12px; overflow-wrap: anywhere; }
+.student-item-tags > span.tone-skill { color: var(--brand-dark); background: var(--brand-light); }
+.student-item-link { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-width: 0; padding: 4px 10px; color: var(--brand-dark); font-size: var(--text-caption); font-weight: 600; line-height: 16px; text-decoration: none; background: var(--brand-light); border-radius: 999px; }
+.student-item-link > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.student-item-link:hover > span { text-decoration: underline; }
+.student-item-link > .icon { flex-shrink: 0; }
+/* Nút "Xem chi tiết" lời mời: nền mint chữ màu thương hiệu (4,8:1), mũi tên xoay khi mở. */
+.student-page button.student-detail-toggle { gap: 6px; min-height: 34px; padding: 6px 12px; color: var(--brand); font-size: 13px; font-weight: 600; background: var(--brand-light); border-radius: 9px; }
+.student-page button.student-detail-toggle:hover { color: var(--brand-dark); background: #d6efe6; }
+.student-detail-toggle > .icon { transition: transform .15s; }
+.student-detail-toggle[aria-expanded="true"] > .icon { transform: rotate(180deg); }
 
-/* S04 tệp và tải lên. */
+/* S04 tệp và tải lên: mỗi tệp là hàng trắng có ô biểu tượng theo tông của tab, tên, trạng thái quét, nút tải xuống. */
 .student-file-list { display: grid; gap: 8px; margin: 10px 0 0; padding: 0; list-style: none; }
-.student-file-list > li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; min-width: 0; padding: 10px 12px; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 9px; }
+.student-file-list > li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; min-width: 0; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
 .student-file { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; }
-.student-file-name { font-size: var(--text-sm); overflow-wrap: anywhere; }
-.student-upload { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--line); }
-/* Ô chọn tệp theo "Field / Tệp PDF / ZIP" (477:12558): khung nét đứt nền #fbfdfe, nút chọn dạng Outline. */
-.student-upload input[type="file"] { display: block; width: 100%; max-width: 100%; min-height: 0; margin-top: 6px; padding: 10px 12px; color: var(--muted); font-size: 13px; background: var(--student-subtle); border: 1px dashed #c9d6e0; border-radius: 9px; }
+.student-file-icon { display: grid; flex-shrink: 0; place-items: center; width: 32px; height: 32px; color: var(--tone, var(--brand)); background: var(--tone-bg, var(--brand-light)); border-radius: 9px; }
+.student-file-name { font-size: var(--text-sm); font-weight: 500; overflow-wrap: anywhere; }
+/* Khối tải lên: khung nét đứt, ô biểu tượng tải lên bên trái; nhãn, ô chọn tệp (thả tệp vào ô này cũng được), gợi ý, nút gửi bên phải. */
+.student-upload { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 6px 14px; margin-top: 16px; padding: 18px; background: var(--student-subtle); border: 1.5px dashed #c3d3de; border-radius: 12px; }
+.student-upload > :not(.student-upload-icon) { grid-column: 2; }
+.student-upload-icon { display: grid; grid-column: 1; grid-row: 1 / span 2; place-items: center; width: 46px; height: 46px; color: var(--tone, var(--brand)); background: var(--tone-bg, var(--brand-light)); border-radius: 12px; }
+.student-upload > .field-hint { margin: 0; }
+.student-page .student-upload > button { justify-self: start; margin-top: 4px; }
+/* Ô chọn tệp theo "Field / Tệp PDF / ZIP" (477:12558): nền trắng, nút chọn dạng Outline. */
+.student-upload input[type="file"] { display: block; width: 100%; max-width: 100%; min-height: 0; margin-top: 6px; padding: 10px 12px; color: var(--muted); font-size: 13px; background: var(--surface); border: 1px solid #dbe4ea; border-radius: 9px; }
 .student-upload input[type="file"]::file-selector-button { margin-right: 12px; padding: 6px 12px; color: var(--brand); font: inherit; font-weight: 600; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
-.student-term-bar { justify-content: space-between; }
 .student-upload + * { margin-top: 20px; }
 
 /* S05 bộ lọc (477:11916) và bảng tin cơ hội ở S01. */
-.student-filter { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; align-items: end; gap: 0 12px; }
-.student-filter > button { margin-top: 16px; }
+.student-filter { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; align-items: stretch; gap: 0 12px; }
+/* Nút tìm cao bằng khung nhập (khung .field có margin-top 17px dùng chung). */
+.student-filter > button { margin-top: 17px; }
 .student-opp-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .student-opp-filters label { margin-top: 0; }
-.student-opp-list { display: grid; gap: 10px; margin-top: 12px; }
-.student-opp-card { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 14px 16px; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 8px; }
-.student-opp-card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
-.student-opp-card h3 { margin: 0; color: var(--ink); font-size: 17px; line-height: 24px; }
+/* Bảng tin cơ hội ở S01: lưới thẻ trắng bo 16 (tối thiểu 340px), đầu thẻ có logo chữ doanh nghiệp + tên vị trí + nhãn; rê chuột nổi lên. */
+.student-opp-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 14px; margin-top: 14px; }
+.student-opp-card { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; padding: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+  box-shadow: 0 2px 6px rgba(16, 44, 57, .05); transition: transform .2s ease, box-shadow .2s ease, border-color .2s; }
+.student-opp-card:is(:hover, :focus-within) { border-color: #cfe9df; transform: translateY(-4px); box-shadow: 0 16px 30px rgba(16, 44, 57, .1); }
+.student-opp-card-head { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 4px 14px; align-self: stretch; }
+.student-opp-card-head > .student-offer-logo { grid-row: span 2; width: 50px; height: 50px; font-size: 17px; }
+.student-opp-card-head > .student-opp-badge { justify-self: start; }
+.student-opp-card h3 { margin: 0; color: var(--ink); font-size: 17px; line-height: 24px; overflow-wrap: anywhere; }
+.student-page .student-opp-card > button { margin-top: auto; }
+@media (prefers-reduced-motion: reduce) { .student-opp-card { transition: none; } .student-opp-card:is(:hover, :focus-within) { transform: none; } }
+.student-home-opps .student-home-head-icon { align-self: flex-start; }
 .student-opp-badge { display: inline-block; padding: 4px 9px; color: var(--brand-dark); font-size: var(--text-caption); font-weight: 600; line-height: 16px; white-space: nowrap; background: var(--brand-light); border-radius: 12px; }
 .student-opp-company { color: var(--muted); font-size: var(--text-sm); font-weight: 600; }
 .student-opp-meta { color: var(--muted); font-size: var(--text-caption); line-height: 18px; }
@@ -226,21 +656,186 @@ button.student-tab:focus-visible { outline-offset: -3px; }
 .student-opp-detail { align-self: stretch; padding: 12px 14px; color: var(--ink); font-size: 13px; background: var(--brand-light); border-radius: 9px; }
 .student-opp-detail p + p { margin-top: 6px; }
 
-/* S06 lời mời (477:12017) và cấp quyền chia sẻ (477:12083). */
+/* S05 "Bảng tin việc làm". Hero nền sáng (khác hero xanh đậm của Tổng quan): trắng → mint → xanh dương nhạt, quầng sáng mint, lưới chấm
+   xanh mờ; chữ đậm màu mực; bên phải minh họa 3 thẻ việc làm xếp chồng nghiêng (chỉ để nhìn, lơ lửng nhẹ, ẩn trên điện thoại);
+   bên dưới là thanh tìm kiếm nổi nền trắng bo 18 (ô học kỳ khi có nhiều kỳ, vị trí / doanh nghiệp, ngành, nút tìm cao bằng ô). */
+.student-jobs-hero { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 18px 24px; overflow: hidden; padding: 28px 30px 26px;
+  color: var(--ink); border: 1px solid #dcefe8; border-radius: 22px; box-shadow: 0 10px 28px rgba(16, 44, 57, .07);
+  background: radial-gradient(circle at 82% 18%, rgba(11, 146, 124, .16), transparent 38%), radial-gradient(circle at 8% 120%, rgba(41, 105, 169, .12), transparent 45%), linear-gradient(135deg, #ffffff 0%, #f2faf7 58%, #edf5ff 100%); }
+.student-jobs-hero::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(rgba(9, 123, 105, .12) 1.2px, transparent 1.6px) 0 0 / 16px 16px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 35%, #000 85%); mask-image: linear-gradient(90deg, transparent 35%, #000 85%); }
+.student-jobs-hero > * { position: relative; }
+.student-jobs-hero-text { display: grid; justify-items: start; gap: 6px; min-width: 0; }
+.student-jobs-hero .student-dash-kicker { color: var(--brand); }
+.student-page .student-jobs-hero h2 { margin: 0; color: var(--ink); font-size: 28px; font-weight: 800; letter-spacing: -.3px; line-height: 36px; }
+.student-jobs-hero-text > p:last-child { max-width: 720px; color: #4f6475; font-size: var(--text-sm); line-height: 21px; }
+.student-jobs-art { position: relative; width: 252px; height: 120px; }
+.student-jobs-art > span { position: absolute; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 6px 10px; width: 128px; padding: 12px; background: var(--surface);
+  border: 1px solid #dcefe8; border-radius: 14px; box-shadow: 0 10px 22px rgba(16, 44, 57, .1); animation: student-float 6s ease-in-out infinite; }
+.student-jobs-art > span > .icon { box-sizing: content-box; grid-row: span 2; padding: 8px; color: #fff; background: linear-gradient(135deg, #0b927c, #086859); border-radius: 10px; }
+.student-jobs-art > span > i { height: 6px; background: #e3eef0; border-radius: 3px; }
+.student-jobs-art > span > i + i { width: 65%; }
+.student-jobs-art > span:nth-child(1) { top: 38px; left: 0; transform: rotate(-8deg); }
+.student-jobs-art > span:nth-child(2) { z-index: 1; top: 0; left: 62px; animation-delay: -2s; }
+.student-jobs-art > span:nth-child(2) > .icon { background: linear-gradient(135deg, #3b82c4, #2969a9); }
+.student-jobs-art > span:nth-child(3) { z-index: 2; top: 50px; left: 124px; transform: rotate(7deg); animation-delay: -4s; }
+.student-jobs-art > span:nth-child(3) > .icon { background: linear-gradient(135deg, #d4931f, #a8741a); }
+@keyframes student-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
+@media (prefers-reduced-motion: reduce) { .student-jobs-art > span { animation: none; } }
+.student-jobs-search { grid-column: 1 / -1; display: grid; gap: 12px; padding: 12px; background: var(--surface); border: 1px solid #dcefe8; border-radius: 18px; box-shadow: 0 12px 28px rgba(16, 44, 57, .08); }
+.student-jobs-search > .student-term-select { justify-self: start; min-width: 240px; }
+.student-page .student-jobs-search .student-filter > button { min-height: 100%; margin-top: 0; border-radius: 12px; }
+/* Thanh kết quả: số cơ hội lớn màu thương hiệu bên trái, ghi chú công bố gọn bên phải. */
+.student-jobs-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.student-jobs-count { color: #33495a; font-size: 15px; font-weight: 600; }
+.student-jobs-count > b { margin-right: 4px; color: var(--brand-dark); font-size: 22px; font-weight: 800; }
+.student-page .student-jobs-bar > .student-note { padding: 8px 12px; }
+/* Thẻ cơ hội: lưới tối thiểu 420px, thẻ trắng bo 18 có vạch chuyển màu mint → xanh dương ở mép trên; đầu thẻ logo chữ + tên + doanh nghiệp
+   + nhãn trạng thái (chấm sáng); chip ngành / thời gian / hạn còn lại (vàng); chân thẻ nét đứt với nút xem chi tiết (mũi tên trượt khi rê).
+   Rê chuột (hoặc focus bên trong) thẻ nổi lên 3D, cạnh dưới mint, bóng xanh. Hết hạn: vạch trên xám. */
+.student-page .student-job-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 16px; }
+.student-page .student-list-item.student-job-card { position: relative; display: flex; flex-direction: column; gap: 12px; overflow: hidden; padding: 22px 20px 18px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 2px 6px rgba(16, 44, 57, .05); transition: transform .2s ease, box-shadow .2s ease, border-color .2s; }
+.student-job-card::before { content: ""; position: absolute; inset: 0 0 auto; height: 4px; background: linear-gradient(90deg, #0b927c, #2969a9); }
+.student-job-card.is-closed::before { background: #cfd8e0; }
+.student-page .student-list-item.student-job-card:is(:hover, :focus-within) { border-color: #cfe9df; transform: translateY(-5px); box-shadow: 0 5px 0 #d6ebe4, 0 20px 36px rgba(9, 123, 105, .14); }
+.student-job-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px 14px; }
+.student-job-head > .student-offer-logo { width: 52px; height: 52px; font-size: 18px; }
+.student-job-title { display: grid; gap: 2px; min-width: 0; }
+.student-page .student-job-title h3 { margin: 0; font-size: 18px; font-weight: 700; line-height: 25px; overflow-wrap: anywhere; }
+.student-page .student-job-state { align-self: start; gap: 6px; padding: 5px 11px; white-space: nowrap; border-radius: 999px; }
+.student-job-state.tone-success::before { content: ""; width: 7px; height: 7px; background: currentColor; border-radius: 50%; box-shadow: 0 0 0 3px rgba(26, 125, 80, .18); }
+.student-job-facts { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.student-job-facts > li { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 6px 11px; color: #33495a; font-size: var(--text-caption); font-weight: 600; line-height: 16px;
+  overflow-wrap: anywhere; background: #f3f8f7; border: 1px solid #e1efea; border-radius: 999px; }
+.student-job-facts > li > .icon { flex-shrink: 0; color: var(--brand); }
+.student-job-facts > li.is-deadline { color: #966614; background: #fff6e6; border-color: #f1dcb4; }
+.student-job-facts > li.is-deadline > .icon { color: #966614; }
+.student-page .student-job-card > .button-row { margin: auto 0 0; padding-top: 14px; border-top: 1px dashed var(--line); }
+.student-page .student-job-card > .button-row > button > .icon { transition: transform .2s ease; }
+.student-page .student-job-card:is(:hover, :focus-within) > .button-row > button > .icon { transform: translateX(4px); }
+@media (prefers-reduced-motion: reduce) { .student-page .student-list-item.student-job-card { transition: none; } .student-page .student-list-item.student-job-card:is(:hover, :focus-within) { transform: none; } }
+/* Chi tiết cơ hội: thẻ đầu có dải bìa 120px (cùng nền hero), logo chữ 84px đè lên mép bìa, tên vị trí 26 đậm, nhãn trạng thái + hạn còn lại;
+   bên dưới 2 cột: thông tin vị trí (6 ô có biểu tượng) | thẻ đăng ký (3 bước, lời nhắn, nút gửi rộng) dính khi cuộn trên màn rộng. */
+.student-page button.student-back { font-weight: 600; }
+.student-job-hero { overflow: hidden; background: var(--surface); border-radius: 20px; box-shadow: var(--student-shadow); }
+.student-job-hero-cover { height: 120px; background: radial-gradient(rgba(255, 255, 255, .1) 1.2px, transparent 1.6px) 0 0 / 16px 16px,
+  radial-gradient(circle at 90% -20%, rgba(95, 211, 187, .4), transparent 50%), linear-gradient(120deg, #0f3440 0%, #0d4a4f 55%, #0b5f58 100%); }
+.student-job-hero-body { display: flex; align-items: flex-end; gap: 18px; min-width: 0; padding: 0 26px 22px; }
+.student-job-hero-body > .student-offer-logo { flex-shrink: 0; width: 84px; height: 84px; margin-top: -42px; font-size: 28px; border-width: 4px; border-radius: 22px; }
+.student-job-hero-text { display: grid; gap: 4px; min-width: 0; padding-top: 14px; }
+.student-page .student-job-hero-text .section-kicker { margin: 0; color: var(--brand-dark); font-size: 13px; letter-spacing: .3px; }
+.student-page .student-job-hero-text h2 { margin: 0; font-size: 26px; font-weight: 800; line-height: 34px; overflow-wrap: anywhere; }
+.student-job-hero-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 6px; }
+.student-job-hero-chips > .student-status { border-radius: 999px; }
+.student-job-deadline { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; color: #966614; font-size: var(--text-caption); font-weight: 700; line-height: 16px; background: #fff2db; border: 1px solid #f1dcb4; border-radius: 999px; }
+.student-job-layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr); align-items: start; gap: 18px; }
+.student-page .student-job-layout > .panel { border-radius: 18px; }
+.student-page .student-job-detail { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 16px 0 0; }
+.student-page .student-job-detail > div { padding: 12px 14px 14px; background: #f7fbfa; border: 1px solid #e1efea; border-radius: 14px; }
+.student-page .student-job-detail dt { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: var(--text-caption); font-weight: 700; }
+.student-job-detail dt > .icon { box-sizing: content-box; flex-shrink: 0; padding: 6px; color: var(--brand); background: var(--surface); border-radius: 9px; box-shadow: 0 1px 3px rgba(16, 44, 57, .08); }
+.student-page .student-job-detail dd { margin: 8px 0 0; color: var(--ink); font-size: 15px; font-weight: 600; line-height: 22px; }
+.student-page .student-job-apply { border-top: 4px solid var(--student-accent); }
+.student-job-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0 0 14px; padding: 0; list-style: none; }
+.student-job-steps > li { display: grid; justify-items: center; gap: 6px; padding: 10px 6px; color: #33495a; font-size: var(--text-caption); font-weight: 600; line-height: 16px; text-align: center;
+  background: #f7fbfa; border: 1px solid #e1efea; border-radius: 12px; }
+.student-job-steps > li > b { display: grid; place-items: center; width: 26px; height: 26px; color: #fff; font-size: 12px; font-weight: 800; background: var(--brand); border-radius: 50%; box-shadow: 0 4px 10px rgba(9, 123, 105, .28); }
+.student-page .student-job-apply .button-row > button { flex: 1 1 auto; }
+@media (min-width: 1051px) { .student-page .student-job-apply { position: sticky; top: 100px; } }
+@media (max-width: 1050px) { .student-job-layout { grid-template-columns: minmax(0, 1fr); } }
+
+/* S06 "Thư mời thực tập" (477:12017 lời mời, 477:12083 cấp quyền chia sẻ).
+   Đầu tab: thanh tóm tắt (số lời mời / chờ phản hồi / quyền chia sẻ còn hiệu lực) + nút tải lại. */
 .student-invitations.stack { gap: 18px; }
-.student-invitations > .panel { display: grid; gap: 10px; }
-.student-invitations > .panel > h2 { margin: 0; font-size: 18px; }
-.student-invite-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
-.student-invitation-detail dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 20px; margin: 10px 0 0; padding: 12px; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 9px; }
+.student-invite-summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.student-invite-stats { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.student-invite-stats > li { --tone: var(--brand-dark); --tone-bg: var(--brand-light); display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px 7px 8px; color: #33495a; font-size: 13px; font-weight: 600; line-height: 18px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 999px; box-shadow: 0 1px 3px rgba(16, 44, 57, .05); }
+.student-invite-stats > li.tone-amber { --tone: #966614; --tone-bg: #fff2db; }
+.student-invite-stats > li.tone-green { --tone: #1a7d50; --tone-bg: #e5f6ed; }
+.student-invite-stats > li > .icon { box-sizing: content-box; padding: 5px; color: var(--tone); background: var(--tone-bg); border-radius: 50%; }
+.student-invite-stats > li > b { color: var(--tone); font-size: 15px; font-weight: 800; }
+/* Mỗi lời mời là thẻ thư: viền trái 4px và dải nền nhạt ở đầu thẻ theo trạng thái (vàng: cần phản hồi, xanh: đã nhận, xám: đã đóng);
+   đầu thẻ có logo chữ doanh nghiệp, tên + "doanh nghiệp · trạng thái", chip đếm ngược hạn phản hồi bên phải. */
+.student-page .student-invitations > .panel { display: grid; gap: 14px; padding: 20px 22px; border-radius: 16px; box-shadow: 0 6px 18px rgba(16, 44, 57, .07); }
+.student-invitations > .panel > h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 18px; line-height: 26px; overflow-wrap: anywhere; }
+.student-invitations > .panel > h2::before { content: ''; flex-shrink: 0; width: 4px; height: 20px; background: var(--student-accent); border-radius: 2px; }
+.student-page .student-invitations > .panel.student-offer { --offer: #0b927c; --offer-bg: #eaf7f1; border-left: 4px solid var(--offer); background: linear-gradient(180deg, var(--offer-bg) 0, var(--surface) 132px); }
+.student-page .student-invitations > .panel.student-offer.is-open { --offer: #d4931f; --offer-bg: #fff6e6; }
+.student-page .student-invitations > .panel.student-offer.is-closed { --offer: #8fcfbf; --offer-bg: #f0f8f5; }
+.student-offer-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 4px 16px; }
+.student-offer-logo { display: grid; flex-shrink: 0; place-items: center; width: 56px; height: 56px; color: #fff; font-size: 19px; font-weight: 800; letter-spacing: .5px;
+  background: linear-gradient(135deg, #0b927c, #0f3440); border: 3px solid var(--surface); border-radius: 16px; box-shadow: 0 8px 18px rgba(16, 44, 57, .18); }
+.student-offer-title { display: grid; gap: 4px; min-width: 0; }
+.student-page .student-offer-title > h2 { margin: 0; font-size: 20px; font-weight: 700; line-height: 28px; overflow-wrap: anywhere; }
+.student-invite-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; color: #33495a; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.student-offer-countdown { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; color: #966614; font-size: 13px; font-weight: 700; line-height: 18px; white-space: nowrap; background: #fff2db; border: 1px solid #f1dcb4; border-radius: 999px; }
+.student-invite-deadline { display: inline-flex; align-items: center; gap: 6px; width: fit-content; max-width: 100%; margin: 0; padding: 5px 11px; color: #4f6475; font-size: var(--text-caption); font-weight: 600; line-height: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; }
+/* Dải 3 ô tình trạng (Phản hồi · Chia sẻ hồ sơ · Placement), cùng tông xanh: xong = biểu tượng nền xanh đặc; không áp dụng /
+   chưa có = biểu tượng nền mint; đang chờ = ô vàng nhạt (điểm cần chú ý duy nhất). */
+.student-offer-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.student-offer-steps > li { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 11px 12px; background: #f7fbfa; border: 1px solid #e1efea; border-radius: 12px; }
+.student-offer-steps > li > span:last-child { display: grid; gap: 1px; min-width: 0; }
+.student-offer-steps small { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .4px; line-height: 14px; text-transform: uppercase; }
+.student-offer-steps b { color: var(--ink); font-size: 13px; font-weight: 700; line-height: 18px; overflow-wrap: anywhere; }
+.student-offer-step-icon { display: grid; flex-shrink: 0; place-items: center; width: 32px; height: 32px; color: var(--brand); background: var(--brand-light); border-radius: 50%; }
+.student-offer-steps > li.is-done { background: #f2faf7; border-color: #cfe9df; }
+.student-offer-steps > li.is-done .student-offer-step-icon { color: #fff; background: var(--brand); }
+.student-offer-steps > li.is-current { background: #fffbf3; border-color: #f1dcb4; }
+.student-offer-steps > li.is-current .student-offer-step-icon { color: #966614; background: #fff2db; }
+.student-offer-steps > li.is-idle b { color: #64788a; }
+.student-page .student-offer-actions { margin: 0; }
+.student-page button.student-danger-outline { color: #a5364c; border-color: #f0d3da; }
+.student-page button.student-danger-outline:hover { color: #8a2c3f; background: #fff0f0; border-color: #e7b9c4; }
+.student-invitation-detail { display: grid; gap: 10px; justify-items: start; }
+.student-invitation-detail dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; justify-self: stretch; margin: 0; }
+.student-invitation-detail dl > div { min-width: 0; padding: 10px 12px; background: var(--surface); border: 1px solid #cfe9df; border-radius: 9px; }
 .student-invitation-detail dt { color: var(--muted); font-size: var(--text-caption); font-weight: 600; }
-.student-invitation-detail dd { margin: 3px 0 0; font-size: var(--text-sm); overflow-wrap: anywhere; }
-.student-consent-form { display: grid; gap: 8px; margin-top: 4px; padding: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
-.student-consent-form > h3 { font-size: 18px; line-height: 24px; }
-.student-page .student-consent-fields { display: grid; justify-items: start; gap: 8px; margin: 6px 0 0; padding: 0; background: none; border: 0; }
-.student-consent-label { color: var(--ink); font-size: 15px; font-weight: 600; }
-.student-page .student-consent-fields > label:has(> input[type="checkbox"]) { min-width: min(260px, 100%); margin: 0; padding: 9px 10px; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 7px; }
-.student-consent-days { width: min(320px, 100%); margin-top: 4px; }
+.student-invitation-detail dd { margin: 3px 0 0; color: var(--ink); font-size: var(--text-sm); font-weight: 600; overflow-wrap: anywhere; }
+/* Khối chia sẻ hồ sơ kiểu thẻ bảo mật: tiêu đề có ô khiên; các mục chia sẻ là chip bo tròn (chọn thì nền mint viền xanh). */
+.student-consent-form { display: grid; gap: 10px; margin-top: 2px; padding: 18px 20px; background: linear-gradient(135deg, #f4fbf8, #f1f7ff); border: 1px solid #d6ebe4; border-radius: 14px; }
+.student-consent-form > h3 { display: flex; align-items: center; gap: 10px; font-size: 16px; line-height: 24px; }
+.student-consent-icon { display: grid; flex-shrink: 0; place-items: center; width: 34px; height: 34px; color: var(--brand); background: var(--brand-light); border-radius: 10px; }
+.student-page .student-consent-fields { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 0; padding: 0; background: none; border: 0; }
+.student-page .student-consent-fields > :not(label:has(> input[type="checkbox"])) { flex: 1 1 100%; }
+.student-consent-label { color: var(--ink); font-size: 14px; font-weight: 600; }
+.student-page .student-consent-fields > label:has(> input[type="checkbox"]) { display: inline-flex; align-items: center; gap: 8px; margin: 0; padding: 8px 14px 8px 10px; font-weight: 600; background: var(--surface); border: 1.5px solid #cfe9df; border-radius: 999px; cursor: pointer; transition: background .15s, border-color .15s, box-shadow .15s; }
+.student-page .student-consent-fields > label:has(> input[type="checkbox"]):hover { border-color: var(--student-accent); box-shadow: 0 4px 10px rgba(9, 123, 105, .12); }
+.student-page .student-consent-fields > label:has(> input:checked) { color: var(--brand-dark); background: var(--brand-light); border-color: var(--brand); }
+/* Ô số ngày và nút đồng ý mỗi thứ một dòng riêng nhưng không kéo hết chiều ngang. */
+.student-page .student-consent-fields > .student-consent-days { max-width: 320px; margin-top: 6px; }
+.student-page .student-consent-fields > button { max-width: max-content; }
+/* Sổ quyền chia sẻ: mỗi quyền là thẻ có khiên; còn hiệu lực viền trái xanh, đã thu hồi / hết hạn / thay thế viền xám chữ nhạt. */
+.student-page .student-invitations .student-consent { align-items: center; gap: 10px 14px; padding: 12px 14px; background: var(--surface); border: 1px solid #e1efea; border-left: 3px solid #8fcfbf; border-radius: 12px; box-shadow: 0 1px 3px rgba(16, 44, 57, .05); }
+.student-page .student-invitations .student-consent.is-active { border-color: #cfe9df; border-left-color: var(--student-accent); }
+.student-consent > p:not(.student-status) { flex: 1 1 260px; min-width: 0; color: #4f6475; font-size: 13px; overflow-wrap: anywhere; }
+.student-consent.is-active > p:not(.student-status) { color: var(--ink); }
+.student-consent > p > b { color: var(--ink); font-weight: 700; }
+/* Nhãn trạng thái trung tính trong màn này (đã rút, đã từ chối, đã thu hồi…) cũng dùng tông mint cho đồng bộ. */
+.student-page .student-invitations .student-status.tone-neutral, .student-page .student-pref-card .student-status.withdrawn { color: var(--brand-dark); background: var(--brand-light); }
+.student-page .student-invitations .student-consent > button { min-height: 32px; padding: 5px 12px; font-size: 13px; }
 .student-consent + .student-consent { margin-top: 8px; }
+/* Chưa có lời mời: thẻ căn giữa có ô biểu tượng thư. */
+.student-page .student-invitations > .panel.student-invite-empty { justify-items: center; padding: 36px 22px; text-align: center; }
+.student-invitations > .panel.student-invite-empty > h2::before { display: none; }
+.student-invite-empty-icon { display: grid; place-items: center; width: 60px; height: 60px; color: var(--brand); background: var(--brand-light); border-radius: 50%; }
+/* Tab Nguyện vọng cùng kiểu thẻ thư: logo chữ doanh nghiệp, viền trái theo trạng thái (đã gửi xanh dương, đã xét xanh lá, đã rút xám),
+   lời nhắn dạng trích dẫn viền trái mint. */
+.student-page .student-list-item.student-pref-card { --offer: #2969a9; gap: 12px; padding: 18px 20px; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--offer); border-radius: 16px; box-shadow: 0 4px 14px rgba(16, 44, 57, .06); }
+.student-page .student-list-item.student-pref-card.is-reviewed { --offer: #1a7d50; }
+.student-page .student-list-item.student-pref-card.is-withdrawn { --offer: #8fcfbf; }
+.student-pref-head { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.student-pref-head > .student-offer-logo { width: 50px; height: 50px; font-size: 17px; }
+.student-pref-title { display: grid; gap: 2px; min-width: 0; }
+.student-page .student-pref-title h3 { margin: 0; font-size: 17px; line-height: 24px; overflow-wrap: anywhere; }
+.student-page .student-pref-card > .student-field-box { width: auto; background: #f6fbf9; border: 0; border-left: 3px solid var(--student-accent); border-radius: 10px; }
+.student-page .student-pref-card > .button-row { margin: 0; }
+@media (max-width: 900px) {
+  .student-offer-steps { grid-template-columns: minmax(0, 1fr); }
+  .student-offer-head { grid-template-columns: auto minmax(0, 1fr); }
+  .student-offer-countdown { grid-column: 1 / -1; justify-self: start; }
+}
 
 /* Khối T3 trong ngữ cảnh sinh viên (S07 477:12406/12497, S08 477:12579): chỉ đổi trình bày, không đổi cấu trúc component. */
 .student-page > .workflow-surface { padding: 18px; background: var(--surface); border: 0; border-radius: 12px; box-shadow: var(--student-shadow); }
@@ -250,45 +845,260 @@ button.student-tab:focus-visible { outline-offset: -3px; }
 .student-page .stack > button, .student-page .t3-workflow fieldset > button { justify-self: start; }
 .student-page > .workflow-surface > .button-row { margin: 0; }
 .student-page > .workflow-surface > .button-row > label { margin-top: 0; }
-/* Hàng bộ lọc: căn đáy và cho nút cao bằng ô nhập để "Tải lại bảng việc" thẳng hàng với các ô lọc. */
-.student-page > .workflow-surface > .button-row:has(> label) { align-items: flex-end; }
-.student-page > .workflow-surface > .button-row:has(> label) > button { min-height: 42px; }
+/* Hàng bộ lọc thành thanh công cụ nền xám nhạt: các ô lọc rộng đều, nút "Tải lại" căn giữa theo chiều cao ô. */
+.student-page > .workflow-surface > .button-row:has(> label) { display: grid; grid-template-columns: repeat(3, minmax(0, 240px)) auto; justify-content: start; align-items: center; gap: 12px; padding: 12px; background: var(--student-neutral); border-radius: 12px; }
+.student-page > .workflow-surface > .button-row:has(> label) > label { background: var(--surface); }
+.student-page > .workflow-surface > .button-row:has(> label) > button { min-height: 40px; }
+/* Hàng phân trang của bảng việc: căn giữa; ẩn khi chỉ có một trang (cả "Trước" và "Sau" đều bị khóa), tự hiện lại khi có từ 2 trang. */
+.student-page > .workflow-surface > .button-row:has(> span) { justify-content: center; gap: 12px; color: var(--muted); font-size: 13px; }
+.student-page > .workflow-surface > .button-row:has(> span):has(> button:first-child:disabled):has(> button:last-child:disabled) { display: none; }
 .student-page > .workflow-surface .panel { box-shadow: none; }
 .student-page > .workflow-surface > section.panel { border: 1px solid var(--line); }
-/* S07: cột trạng thái của bảng việc hiển thị thành danh sách "Nhiệm vụ được giao" (477:12472): đủ 5 nhóm, mỗi nhóm có badge
-   trạng thái, mỗi việc là một hàng; nhóm chưa có việc hiện dòng "Không có nhiệm vụ". Chỉ đổi trình bày, DOM của TaskBoard (T3) giữ nguyên. */
-.student-page .workflow-surface > div:has(> section.panel > h4) { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; gap: 12px !important; }
-.student-page .workflow-surface > div > section.panel { display: grid; gap: 8px; padding: 0; background: none; border: 0; }
-.student-page .workflow-surface > div > section.panel:not(:has(> article))::after { content: 'Không có nhiệm vụ'; padding: 10px 12px; color: var(--muted); font-size: var(--text-caption); background: var(--student-subtle); border: 1px dashed var(--line); border-radius: 8px; }
-.student-page .workflow-surface > div > section.panel > h4 { width: fit-content; padding: 4px 9px; color: #475b6b; font-size: var(--text-caption); line-height: 16px; background: #f3f6fb; border-radius: 12px; }
-.student-page .workflow-surface > div > section.panel:nth-child(1) > h4 { color: #2969a9; background: #e8f2ff; }
-.student-page .workflow-surface > div > section.panel:nth-child(2) > h4, .student-page .workflow-surface > div > section.panel:nth-child(5) > h4 { color: #1a7d50; background: #e5f6ed; }
-.student-page .workflow-surface > div > section.panel:nth-child(3) > h4, .student-page .workflow-surface > div > section.panel:nth-child(4) > h4 { color: #966614; background: #fff2db; }
-.student-page .workflow-surface > div > section.panel > article { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; padding: 11px 12px; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 8px; }
-.student-page .workflow-surface > div > section.panel > article .text-button { flex: 1 1 280px; justify-content: flex-start; min-height: 0; padding: 0; color: var(--ink); font-weight: 600; text-align: left; }
-.student-page .workflow-surface > div > section.panel > article p { color: var(--muted); font-size: var(--text-caption); }
-/* Lịch công việc theo mẫu "Lịch theo tháng": tiêu đề màu thương hiệu và ô chọn tháng cùng hàng, nền xám nhạt, ô ngày trắng bo 10,
-   cột Chủ nhật màu cam đỏ. Dữ liệu, thứ tự cột (Thứ 2 → Chủ nhật), kích thước lưới và cách chọn tháng của TaskBoard giữ nguyên.
+/* Tiêu đề "Bảng công việc" / "Lịch công việc" của TaskBoard có ô biểu tượng mint 34px phía trước (vẽ bằng CSS vì không sửa DOM T3). */
+.student-tasks-page > .workflow-surface > h3, .student-tasks-page > .workflow-surface > section.panel:has([role="grid"]) > h3 { display: flex; align-items: center; gap: 10px; }
+.student-tasks-page > .workflow-surface > h3::before, .student-tasks-page > .workflow-surface > section.panel:has([role="grid"]) > h3::before {
+  content: ""; flex-shrink: 0; width: 34px; height: 34px; background: var(--brand-light) center / 18px no-repeat; border-radius: 10px; }
+.student-tasks-page > .workflow-surface > h3::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23097b69' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='16' rx='2'/%3E%3Cpath d='M9 4v16M15 4v16M5.5 8h1.5M11 8h2M17 8h1.5M11 12h2'/%3E%3C/svg%3E"); }
+.student-tasks-page > .workflow-surface > section.panel:has([role="grid"]) > h3::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23097b69' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cpath d='M16 3v4M8 3v4M3 11h18M8 15h2m4 0h2'/%3E%3C/svg%3E"); }
+/* S07: bảng việc dạng cột theo trạng thái (kanban). Thứ tự cột theo TaskBoard: Chưa bắt đầu · Đang làm · Đã nộp · Cần sửa · Hoàn thành;
+   khung cột cùng một màu thương hiệu (không tô màu riêng từng khung cho đỡ rối); chỉ chấm trạng thái trước tên cột và vạch trái của thẻ
+   việc mang màu trạng thái (xám · xanh dương · vàng · đỏ · xanh lá). Góc phải đầu cột là số việc (đếm bằng CSS counter, cột trống ghi 0);
+   cột trống hiện "Không có nhiệm vụ" gọn. Mỗi việc là thẻ trắng, hạn có biểu tượng đồng hồ.
+   Chỉ đổi trình bày, DOM của TaskBoard (T3) giữ nguyên. */
+.student-page .workflow-surface > div:has(> section.panel > h4) { display: grid !important; grid-template-columns: repeat(5, minmax(0, 1fr)) !important; align-items: stretch; gap: 12px !important; }
+.student-page .workflow-surface > div > section.panel { --dot: #64788a; position: relative; display: grid; align-content: start; gap: 10px; min-width: 0; min-height: 132px; padding: 12px; background: var(--student-neutral); border: 0; border-top: 3px solid var(--student-accent); border-radius: 12px; counter-reset: student-tasks; }
+.student-page .workflow-surface > div > section.panel:nth-child(2) { --dot: #2969a9; }
+.student-page .workflow-surface > div > section.panel:nth-child(3) { --dot: #d4931f; }
+.student-page .workflow-surface > div > section.panel:nth-child(4) { --dot: #c2410c; }
+.student-page .workflow-surface > div > section.panel:nth-child(5) { --dot: #1a7d50; }
+.student-page .workflow-surface > div > section.panel > h4 { display: flex; align-items: center; gap: 8px; min-height: 26px; padding: 0 36px 0 2px; color: var(--ink); font-size: 13px; font-weight: 700; line-height: 18px; overflow-wrap: anywhere; }
+.student-page .workflow-surface > div > section.panel > h4::before { content: ""; flex-shrink: 0; width: 9px; height: 9px; background: var(--dot); border-radius: 50%; box-shadow: 0 0 0 3px var(--surface); }
+.student-page .workflow-surface > div > section.panel:has(> article)::after, .student-page .workflow-surface > div > section.panel:not(:has(> article)) > h4::after {
+  position: absolute; top: 12px; right: 12px; display: grid; place-items: center; min-width: 26px; height: 26px; padding: 0 8px; color: var(--brand-dark); font-size: 12px; font-weight: 700; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; }
+.student-page .workflow-surface > div > section.panel:has(> article)::after { content: counter(student-tasks); }
+.student-page .workflow-surface > div > section.panel:not(:has(> article)) > h4::after { content: "0"; color: var(--muted); }
+.student-page .workflow-surface > div > section.panel:not(:has(> article))::after { content: 'Không có nhiệm vụ'; display: grid; place-items: center; min-height: 64px; padding: 10px 12px; color: #8597a6; font-size: var(--text-caption); text-align: center; border: 1px dashed #d5dfe8; border-radius: 10px; }
+.student-page .workflow-surface > div > section.panel > article { display: grid; gap: 8px; min-width: 0; padding: 12px; background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--dot); border-radius: 10px; box-shadow: 0 1px 3px rgba(16, 44, 57, .06); counter-increment: student-tasks; transition: box-shadow .15s; }
+.student-page .workflow-surface > div > section.panel > article:hover { box-shadow: 0 8px 18px rgba(16, 44, 57, .12); }
+.student-page .workflow-surface > div > section.panel > article .text-button { justify-content: flex-start; min-height: 0; padding: 0; color: var(--ink); font-weight: 600; line-height: 20px; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+.student-page .workflow-surface > div > section.panel > article .text-button:hover { color: var(--brand); background: none; text-decoration: underline; }
+.student-page .workflow-surface > div > section.panel > article p { display: inline-flex; align-items: center; gap: 5px; width: fit-content; max-width: 100%; padding: 3px 8px; color: #4f6475; font-size: var(--text-caption); font-weight: 600; line-height: 16px; background: var(--student-neutral); border-radius: 999px; overflow-wrap: anywhere; }
+.student-page .workflow-surface > div > section.panel > article p::before { content: ""; flex-shrink: 0; width: 12px; height: 12px; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E") center / contain no-repeat; }
+.student-page .workflow-surface > div > section.panel > article > button:not(.text-button) { justify-self: start; min-height: 30px; margin-top: 4px; padding: 5px 12px; font-size: 13px; border-radius: 8px; }
+/* S07 chi tiết nhiệm vụ (TaskBoard + SubmissionWorkspace của T3, chỉ đổi trình bày): thẻ có viền trên màu thương hiệu,
+   tên to, dòng ưu tiên/hạn và trạng thái thành nhãn, hồ sơ được giao thành nút bo tròn; khối "Bài nộp và trao đổi" là khung phụ,
+   mỗi tiêu đề mục có vạch nhấn, mỗi bản nộp là thẻ trắng viền trái xanh dương, nhận xét đã lưu là ô nền xanh nhạt. */
+.student-page > .workflow-surface > section.panel:not(.t3-workflow):not(:has([role="grid"])) { display: grid; gap: 10px; padding: 18px 20px; border-top: 3px solid var(--student-accent); border-radius: 12px; box-shadow: 0 4px 14px rgba(16, 44, 57, .07); }
+.student-page > .workflow-surface > section.panel:not(.t3-workflow):not(:has([role="grid"])) > h3 { display: flex; align-items: center; gap: 8px; font-size: 18px; line-height: 26px; overflow-wrap: anywhere; }
+.student-page > .workflow-surface > section.panel:not(.t3-workflow):not(:has([role="grid"])) > h3::before { content: ''; flex-shrink: 0; width: 4px; height: 20px; background: var(--student-accent); border-radius: 2px; }
+.student-page > .workflow-surface > section.panel:not(.t3-workflow):not(:has([role="grid"])) > p { color: var(--muted); font-size: 13px; line-height: 18px; }
+.student-page > .workflow-surface > section.panel:not(.t3-workflow):not(:has([role="grid"])) > p + p,
+.student-page section.t3-workflow[aria-label="Bài nộp và trao đổi"] > h4:first-child + p { width: fit-content; max-width: 100%; padding: 5px 11px; color: var(--brand-dark); font-size: var(--text-caption); font-weight: 600; line-height: 16px; background: var(--brand-light); border-radius: 999px; }
+.student-page > .workflow-surface > section.panel:not(.t3-workflow):not(:has([role="grid"])) > ul { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.student-page > .workflow-surface > section.panel:not(.t3-workflow):not(:has([role="grid"])) > ul .text-button { min-height: 32px; padding: 5px 12px; font-size: 13px; font-weight: 600; text-align: left; white-space: normal; background: var(--brand-light); border-radius: 999px; }
+.student-page > .workflow-surface > section.panel:not(.t3-workflow):not(:has([role="grid"])) > button.secondary:last-child { justify-self: end; }
+.student-page section.t3-workflow[aria-label="Bài nộp và trao đổi"] { gap: 12px; padding: 16px; background: #f6fbf9; border: 1px solid #d6ebe4; border-radius: 12px; }
+.student-page section.t3-workflow[aria-label="Bài nộp và trao đổi"] > h4 { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 15px; line-height: 22px; }
+.student-page section.t3-workflow[aria-label="Bài nộp và trao đổi"] > h4:first-child { margin-top: 0; }
+.student-page section.t3-workflow[aria-label="Bài nộp và trao đổi"] > h4::before { content: ''; flex-shrink: 0; width: 4px; height: 16px; background: var(--student-accent); border-radius: 2px; }
+.student-page section.t3-workflow[aria-label="Bài nộp và trao đổi"] > button.secondary,
+.student-page section.t3-workflow[aria-label="Bài nộp và trao đổi"] > article.panel > button.secondary { justify-self: start; min-height: 32px; padding: 5px 12px; font-size: 13px; }
+.student-page section.t3-workflow[aria-label="Bài nộp và trao đổi"] > article.panel { gap: 6px; padding: 12px 14px; background: var(--surface); border: 1px solid #cfe9df; border-left: 3px solid var(--student-accent); border-radius: 10px; box-shadow: 0 1px 3px rgba(16, 44, 57, .05); }
+.student-page section.t3-workflow[aria-label="Bài nộp và trao đổi"] > article.panel > h5 { color: var(--brand-dark); font-size: var(--text-sm); }
+/* Trao đổi: mỗi lời trao đổi là thẻ trắng; ô nhập trao đổi nền trắng trong khung con. */
+.student-page section.t3-workflow[aria-label="Bài nộp và trao đổi"] > article:not(.panel) { background: var(--surface); border-color: #cfe9df; }
+.student-page section.t3-workflow[aria-label="Bài nộp và trao đổi"] > form > fieldset { background: var(--surface); border-color: #cfe9df; }
+.student-page section.t3-workflow[aria-label="Bài nộp và trao đổi"] > article.panel > p:not(.t3-preserve-text) { color: var(--muted); font-size: 13px; }
+.student-page section.t3-workflow[aria-label="Bài nộp và trao đổi"] > article.panel > a { width: fit-content; color: var(--brand); font-size: 13px; font-weight: 600; }
+.student-page section[aria-label="Nhận xét bài nộp đã lưu"] { display: grid; gap: 4px; padding: 10px 12px; background: #f5f9ff; border: 1px solid #d8e6f6; border-left: 3px solid #2969a9; border-radius: 8px; }
+.student-page section[aria-label="Nhận xét bài nộp đã lưu"] > h5 { font-size: 13px; }
+.student-page section[aria-label="Nhận xét bài nộp đã lưu"] > p:not(.t3-preserve-text) { color: var(--muted); font-size: 13px; }
+/* Hiệu ứng nổi khi rê chuột (hoặc focus bên trong): thẻ số liệu S01 và cột bảng việc S07 nhích lên 4px, bóng đậm hơn;
+   tắt chuyển động khi người dùng chọn giảm chuyển động. */
+.student-home-stat, .student-page .workflow-surface > div > section.panel { transition: transform .18s ease, box-shadow .18s ease; }
+.student-home-stat:is(:hover, :focus-within), .student-page .workflow-surface > div > section.panel:is(:hover, :focus-within) { transform: translateY(-4px); box-shadow: 0 10px 22px rgba(16, 44, 57, .12); }
+.student-home-stat:is(:hover, :focus-within) { border-color: transparent; box-shadow: 0 0 0 1px var(--tone-glow), 0 18px 34px var(--tone-glow), 0 4px 10px rgba(16, 44, 57, .06); }
+@media (prefers-reduced-motion: reduce) {
+  .student-home-stat, .student-page .workflow-surface > div > section.panel { transition: none; }
+  .student-home-stat:is(:hover, :focus-within), .student-page .workflow-surface > div > section.panel:is(:hover, :focus-within) { transform: none; }
+}
+@media (max-width: 1280px) { .student-page .workflow-surface > div:has(> section.panel > h4) { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }
+@media (max-width: 900px) {
+  .student-page .workflow-surface > div:has(> section.panel > h4) { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .student-page > .workflow-surface > .button-row:has(> label) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .student-page > .workflow-surface > .button-row:has(> label) > button { justify-self: start; }
+}
+@media (max-width: 560px) {
+  .student-page > .workflow-surface > .button-row:has(> label) { grid-template-columns: minmax(0, 1fr); }
+  .student-page > .workflow-surface > .button-row:has(> label) > button { justify-self: stretch; }
+  .student-page .workflow-surface > div:has(> section.panel > h4) { grid-template-columns: minmax(0, 1fr) !important; }
+  .student-page .workflow-surface > div > section.panel { min-height: 0; }
+  .student-page .workflow-surface > div > section.panel:not(:has(> article))::after { min-height: 0; }
+}
+/* Lịch công việc kiểu lịch tháng (Google Calendar): tiêu đề có ô biểu tượng và ô chọn tháng cùng hàng; lưới khung viền mảnh bo 12,
+   hàng tên thứ nền xám nhạt, mỗi ô ngày cao 96 có số ngày ở góc trên trái, Thứ 7 / Chủ nhật nền nhạt hơn, ô ngoài tháng nền xám;
+   nhiệm vụ là viên mint có vạch trái; ngày hôm nay khoanh tròn nền thương hiệu (quy tắc sinh ở InternshipTasksPage).
+   Dữ liệu, thứ tự cột (Thứ 2 → Chủ nhật), kích thước lưới và cách chọn tháng của TaskBoard giữ nguyên.
    Mỗi ô trong lưới (tiêu đề thứ, ô trống, ô ngày) chiếm đúng một cột theo thứ tự, nên :nth-child(7n) luôn là cột Chủ nhật. */
-.student-page > .workflow-surface > section.panel:has([role="grid"]) { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 12px; padding: 18px; background: var(--student-neutral); border: 0; border-radius: 16px; }
-.student-page > .workflow-surface > section.panel:has([role="grid"]) > h3 { flex: 1 1 160px; color: var(--brand); font-size: 15px; font-weight: 700; }
+.student-page > .workflow-surface > section.panel:has([role="grid"]) { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 12px; padding: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.student-page > .workflow-surface > section.panel:has([role="grid"]) > h3 { flex: 1 1 160px; color: var(--ink); font-size: 16px; font-weight: 700; }
 .student-page > .workflow-surface > section.panel:has([role="grid"]) > label { display: flex; align-items: center; gap: 8px; margin: 0; }
 .student-page > .workflow-surface > section.panel:has([role="grid"]) > label > input { width: auto; min-height: 36px; margin: 0; padding: 6px 10px; color: var(--ink); background-color: var(--surface); border-radius: 8px; }
 .student-page > .workflow-surface > section.panel:has([role="grid"]) > div { flex: 1 1 100%; }
-.student-page .workflow-surface [role="grid"] { align-items: stretch; }
-.student-page .workflow-surface [role="columnheader"] { margin-right: -6px; padding: 0 6px 12px 0; color: #475b6b; font-size: 13px; font-weight: 700; text-align: center; border-bottom: 1px solid #dfe6ee; }
-.student-page .workflow-surface [role="columnheader"]:nth-child(7) { margin-right: 0; padding-right: 0; }
-.student-page .workflow-surface [role="grid"] > :nth-child(7n) { color: #c2410c; }
-.student-page .workflow-surface [role="gridcell"].panel { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 52px; margin-top: 4px; padding: 8px 6px; background: var(--surface); border: 0; border-radius: 10px; box-shadow: 0 1px 2px rgba(16, 44, 57, .04); transition: box-shadow .15s; }
-.student-page .workflow-surface [role="gridcell"].panel > strong { color: inherit; font-size: var(--text-sm); font-weight: 500; line-height: 20px; }
-.student-page .workflow-surface [role="gridcell"].panel:hover, .student-page .workflow-surface [role="gridcell"].panel:focus-within { box-shadow: inset 0 0 0 2px var(--student-accent); }
-.student-page .workflow-surface [role="gridcell"].panel > .text-button { width: 100%; min-height: 0; padding: 2px 4px; color: var(--brand); font-size: 11px; font-weight: 600; line-height: 14px; text-align: center; white-space: normal; background: var(--brand-light); border-radius: 6px; }
+.student-page .workflow-surface [role="grid"] { align-items: stretch; gap: 0 !important; overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.student-page .workflow-surface [role="columnheader"] { padding: 10px 6px; color: #475b6b; font-size: 12px; font-weight: 700; letter-spacing: .3px; text-align: center; background: #f6f8fb; border-bottom: 1px solid var(--line); }
+.student-page .workflow-surface [role="grid"] > :is(span, div) { min-width: 0; border-right: 1px solid #edf1f5; border-bottom: 1px solid #edf1f5; }
+.student-page .workflow-surface [role="grid"] > :nth-child(7n) { color: #c2410c; border-right: 0; }
+.student-page .workflow-surface [role="grid"] > span { background: #f8fafc; }
+.student-page .workflow-surface [role="gridcell"].panel { display: flex; flex-direction: column; align-items: stretch; gap: 4px; min-height: 96px; margin: 0; padding: 6px; background: var(--surface); border-top: 0; border-left: 0; border-radius: 0; box-shadow: none; transition: background .15s; }
+.student-page .workflow-surface [role="grid"] > div[role="gridcell"]:is(:nth-child(7n), :nth-child(7n - 1)) { background: #fbfcfe; }
+.student-page .workflow-surface [role="gridcell"].panel > strong { display: grid; place-items: center; align-self: flex-start; width: 28px; height: 28px; color: inherit; font-size: 13px; font-weight: 600; line-height: 1; border-radius: 50%; }
+.student-page .workflow-surface [role="grid"] > div[role="gridcell"].panel:is(:hover, :focus-within) { background: #f3faf7; }
+.student-page .workflow-surface [role="gridcell"].panel > .text-button { justify-content: flex-start; width: 100%; min-height: 0; padding: 3px 6px; color: var(--brand-dark); font-size: 11px; font-weight: 600; line-height: 14px; text-align: left; white-space: normal; overflow-wrap: anywhere; background: var(--brand-light); border-left: 3px solid var(--brand); border-radius: 6px; }
+.student-page .workflow-surface [role="gridcell"].panel > .text-button:hover { color: #fff; background: var(--brand); }
 .student-page .panel .t3-workflow { background: var(--surface); }
 .student-page .t3-workflow > p { color: var(--muted); font-size: 13px; }
 .student-page .t3-workflow article.panel { display: grid; gap: 6px; }
+/* Trao đổi về nhiệm vụ: mỗi lời trao đổi là một hàng phụ như lịch sử bản nộp (477:12568). */
+.student-page .t3-workflow > article:not(.panel) { display: grid; gap: 4px; padding: 10px 12px; background: var(--student-subtle); border: 1px solid var(--line); border-radius: 8px; }
+.student-page .t3-workflow > article:not(.panel) > p:first-child { color: var(--muted); font-size: var(--text-caption); }
+/* Danh sách báo cáo tuần: mỗi bản là một hàng bấm được, căn trái, viền trái nhấn (nút đầu "Tải danh sách báo cáo" giữ dạng nút). */
+.student-page .t3-workflow > .stack > button.secondary:not(:first-child) { justify-self: stretch; justify-content: flex-start; min-height: 44px; padding: 10px 14px; color: var(--ink); font-weight: 600; text-align: left; background: var(--student-subtle); border-left: 3px solid var(--student-accent); border-radius: 10px; }
+.student-page .t3-workflow > .stack > button.secondary:not(:first-child):hover { background: var(--brand-light); }
+/* Khối "Chi tiết báo cáo tuần" (WeeklyReports của T3, chỉ đổi trình bày): thẻ có hàng công cụ (tải lại + chọn phiên bản),
+   các dòng thông tin (tuần/bản/trạng thái, hạn nộp, đã nộp) thành nhãn trên một hàng, minh chứng và nhận xét là khung phụ,
+   nội dung 3 mục (Việc đã làm · Khó khăn · Kế hoạch tiếp theo) thành 3 thẻ cạnh nhau. */
+.student-page .t3-workflow section.stack[aria-label="Chi tiết báo cáo"] { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px 18px 18px; background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--student-accent); border-radius: 12px; box-shadow: 0 4px 14px rgba(16, 44, 57, .07); }
+.student-page .t3-workflow section[aria-label="Chi tiết báo cáo"] > * { flex: 1 1 100%; min-width: 0; margin: 0; }
+.student-page .t3-workflow section[aria-label="Chi tiết báo cáo"] > h4 { display: flex; align-items: center; gap: 8px; font-size: 16px; line-height: 24px; }
+.student-page .t3-workflow section[aria-label="Chi tiết báo cáo"] > h4::before { content: ''; flex-shrink: 0; width: 4px; height: 18px; background: var(--student-accent); border-radius: 2px; }
+.student-page .t3-workflow section[aria-label="Chi tiết báo cáo"] > button { flex: 0 0 auto; }
+.student-page .t3-workflow section[aria-label="Chi tiết báo cáo"] > label { flex: 1 1 max(240px, calc(100% - 300px)); }
+.student-page .t3-workflow section[aria-label="Chi tiết báo cáo"] > p:not([role]) { flex: 0 1 auto; padding: 5px 11px; color: var(--brand-dark); font-size: var(--text-caption); font-weight: 600; line-height: 16px; background: var(--brand-light); border-radius: 999px; }
+.student-page .t3-workflow section[aria-label="Minh chứng báo cáo"] { gap: 8px; padding: 12px 14px; background: var(--surface); border: 1px dashed #bfe0d5; border-radius: 10px; }
+.student-page .t3-workflow section[aria-label="Minh chứng báo cáo"] > h5 { color: var(--ink); font-size: var(--text-sm); }
+.student-page .t3-workflow section[aria-label="Minh chứng báo cáo"] p { color: var(--muted); font-size: 13px; }
+.student-page .t3-workflow section[aria-label="Nhận xét báo cáo đã lưu"] { display: grid; gap: 4px; padding: 12px 14px; background: #f5f9ff; border: 1px solid #d8e6f6; border-left: 3px solid #2969a9; border-radius: 10px; }
+.student-page .t3-workflow section[aria-label="Nhận xét báo cáo đã lưu"] > p:not(.t3-preserve-text) { color: var(--muted); font-size: var(--text-caption); }
+.student-page .t3-workflow section[aria-label="Chi tiết báo cáo"] > dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto 1fr; grid-auto-flow: column; column-gap: 12px; }
+.student-page .t3-workflow section[aria-label="Chi tiết báo cáo"] > dl > dt { padding: 9px 12px; color: var(--brand-dark); font-size: var(--text-caption); font-weight: 700; letter-spacing: .3px; text-transform: uppercase; background: var(--brand-light); border: 1px solid #cfe9df; border-bottom: 0; border-radius: 10px 10px 0 0; }
+.student-page .t3-workflow section[aria-label="Chi tiết báo cáo"] > dl > dd { margin: 0; padding: 10px 12px 12px; color: var(--ink); font-size: var(--text-sm); line-height: 20px; background: var(--surface); border: 1px solid #cfe9df; border-top: 0; border-radius: 0 0 10px 10px; }
+/* Biểu mẫu trong khối chi tiết (tạo bản sửa, sửa bản nháp, thêm minh chứng) là ô nền mint nhạt để tách khỏi nội dung đã nộp. */
+.student-page .t3-workflow section[aria-label="Chi tiết báo cáo"] > form > fieldset { background: #f6fbf9; border-color: #d6ebe4; }
+.student-page .t3-workflow fieldset > p:not([role]) { color: var(--muted); font-size: var(--text-caption); }
+@media (max-width: 900px) {
+  .student-page .t3-workflow section[aria-label="Chi tiết báo cáo"] > dl { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-flow: row; }
+  .student-page .t3-workflow section[aria-label="Chi tiết báo cáo"] > dl > dd { margin-bottom: 10px; }
+}
+@media (max-width: 700px) { .student-page .t3-workflow section.stack[aria-label="Chi tiết báo cáo"] { padding: 12px; } }
+/* S08: ô "Mở hồ sơ bằng mã được cấp" (kết quả) và "Tìm hồ sơ chưa có nhiệm vụ" (báo cáo tuần) dạng mục mở rộng gọn. */
+.student-results details, .student-page .t3-workflow details { margin-bottom: 4px; padding: 10px 12px; background: var(--student-subtle); border: 1px dashed #c9d6e0; border-radius: 9px; }
+.student-results details { margin-bottom: 14px; }
+:is(.student-results, .student-page .t3-workflow) details > summary { color: var(--brand); font-size: 13px; font-weight: 600; cursor: pointer; }
+:is(.student-results, .student-page .t3-workflow) details[open] > summary { margin-bottom: 10px; }
+:is(.student-results, .student-page .t3-workflow) details form { display: grid; gap: 8px; justify-items: start; }
+:is(.student-results, .student-page .t3-workflow) details form > label { justify-self: stretch; margin: 0; }
+/* Biểu mẫu của khối T3 nằm ngoài bảng việc (báo cáo tuần ở S08): khung thẻ con thay viền mặc định của trình duyệt. */
+.student-page .t3-workflow fieldset { margin: 0; padding: 14px 16px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+/* Tiêu đề biểu mẫu nằm trong khung (legend thả float) với vạch nhấn như các tiêu đề mục khác. */
+.student-page .t3-workflow fieldset > legend { display: flex; align-items: center; gap: 8px; float: left; width: 100%; margin: 0; padding: 0; color: var(--ink); font-size: 15px; font-weight: 600; line-height: 22px; }
+.student-page .t3-workflow fieldset > legend::before { content: ''; flex-shrink: 0; width: 4px; height: 16px; background: var(--student-accent); border-radius: 2px; }
+/* "Tạo báo cáo tuần" là thẻ nổi cùng kiểu khối chi tiết: viền trên màu thương hiệu và bóng nhẹ. */
+.student-page .t3-workflow > .stack > form > fieldset { border-top: 3px solid var(--student-accent); box-shadow: 0 4px 14px rgba(16, 44, 57, .07); }
+:is(.student-results, .student-page .t3-workflow) details form > p { color: var(--muted); font-size: var(--text-caption); }
 /* Báo cáo tuần: các ô nhập xếp 2 cột như 477:12631 khi biểu mẫu có từ 3 ô trở lên. */
 .student-page .t3-workflow fieldset:has(> label ~ label ~ label) { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; }
 .student-page .t3-workflow fieldset:has(> label ~ label ~ label) > :not(label) { grid-column: 1 / -1; }
+
+/* S08 "Nhật ký tuần". Biểu tượng vẽ bằng mask (màu theo currentColor) vì không sửa DOM của WeeklyReports (T3). */
+.student-reports {
+  --icon-calendar: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cpath d='M16 3v4M8 3v4M3 11h18'/%3E%3C/svg%3E");
+  --icon-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='m8 12 3 3 5-6'/%3E%3C/svg%3E");
+  --icon-alert: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m10.3 4-8 14a2 2 0 0 0 1.7 3h16a2 2 0 0 0 1.7-3l-8-14a2 2 0 0 0-3.4 0Z'/%3E%3Cpath d='M12 9v4M12 17h.01'/%3E%3C/svg%3E");
+  --icon-target: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Ccircle cx='12' cy='12' r='5'/%3E%3Ccircle cx='12' cy='12' r='1'/%3E%3C/svg%3E");
+  --icon-clip: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21 11-8.6 8.6a5 5 0 0 1-7-7l8.6-8.6a3.3 3.3 0 0 1 4.7 4.7l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4L15.5 7'/%3E%3C/svg%3E");
+  display: grid; gap: 18px; min-width: 0;
+}
+/* (1) Thanh quy trình 4 bước: mỗi bước một tông, ô biểu tượng tròn có số thứ tự, đường nối giữa các bước; hẹp thì xếp dọc. */
+.student-report-flow { display: grid; gap: 14px; }
+.student-report-flow-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; }
+.student-page .student-report-flow-head > h2 { margin: 0; font-size: 16px; line-height: 24px; }
+.student-report-flow-head > p { color: var(--muted); font-size: var(--text-caption); line-height: 18px; }
+.student-report-flow-head b { color: var(--ink); font-weight: 700; }
+/* Mỗi bước là thẻ pastel theo tông của mã trạng thái (DRAFT xanh dương · SUBMITTED vàng · REVIEWED xanh lá · bản sửa tím):
+   nền chuyển màu từ tông nhạt sang trắng + quầng sáng góc phải trên, viền trên 3px đậm, số thứ tự "01–04" lớn mờ ở góc dưới làm
+   hình nền, biểu tượng trong vòng tròn trắng có bóng tông. Rê chuột (hoặc focus bên trong) thẻ nổi lên 3D: nhích 5px, cạnh dưới
+   dày cùng tông, bóng tông đổ xuống, biểu tượng phóng nhẹ. Chữ giữ màu đậm/xám đạt ≥ 4,5:1 trên nền pastel. */
+.student-flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 0; padding: 0; list-style: none; counter-reset: student-flow; }
+.student-flow > li { --tone: var(--brand-dark); --tone-bg: var(--brand-light); --tone-soft: #dcf3ea; --tone-line: #c6e8dc; --tone-glow: rgba(11, 146, 124, .2); --tone-edge: #a9dccb;
+  position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 12px; min-width: 0; padding: 16px 16px 18px; counter-increment: student-flow;
+  background: radial-gradient(circle at 100% 0%, var(--tone-glow), transparent 55%), linear-gradient(150deg, var(--tone-soft) 0%, #ffffff 88%);
+  border: 1px solid var(--tone-line); border-top: 3px solid var(--tone); border-radius: 14px; box-shadow: 0 2px 6px rgba(16, 44, 57, .05); transition: transform .2s ease, box-shadow .2s ease; }
+.student-flow > li.tone-blue { --tone: #2969a9; --tone-bg: #e8f2ff; --tone-soft: #e1edff; --tone-line: #cfe0f5; --tone-glow: rgba(41, 105, 169, .18); --tone-edge: #b7cfee; }
+.student-flow > li.tone-amber { --tone: #966614; --tone-bg: #fff2db; --tone-soft: #ffefd2; --tone-line: #f1dcb4; --tone-glow: rgba(212, 147, 31, .22); --tone-edge: #ebcf98; }
+.student-flow > li.tone-purple { --tone: #6b4fbb; --tone-bg: #f0ecfb; --tone-soft: #ebe4fb; --tone-line: #ddd3f5; --tone-glow: rgba(107, 79, 187, .18); --tone-edge: #cbbdf0; }
+.student-flow > li::before { content: counter(student-flow, decimal-leading-zero); position: absolute; right: 12px; bottom: 4px; color: var(--tone); font-size: 46px; font-weight: 800; line-height: 1; letter-spacing: -1px; opacity: .1; pointer-events: none; }
+.student-flow > li:is(:hover, :focus-within) { transform: translateY(-5px); box-shadow: 0 5px 0 var(--tone-edge), 0 16px 28px var(--tone-glow); }
+.student-flow > li:not(:last-child)::after { content: ""; position: absolute; top: 50%; right: -14px; width: 14px; height: 2px; background: repeating-linear-gradient(90deg, #b9cbd8 0 4px, transparent 4px 7px); }
+.student-flow-icon { position: relative; display: grid; place-items: center; width: 44px; height: 44px; color: var(--tone); background: var(--surface); border-radius: 50%; box-shadow: 0 6px 14px var(--tone-glow), 0 0 0 4px rgba(255, 255, 255, .6); transition: transform .2s ease; }
+.student-flow > li:is(:hover, :focus-within) .student-flow-icon { transform: scale(1.08); }
+.student-flow-icon > b { position: absolute; right: -4px; bottom: -4px; display: grid; place-items: center; width: 20px; height: 20px; color: #fff; font-size: 11px; font-weight: 700; background: var(--tone); border: 2px solid var(--surface); border-radius: 50%; }
+.student-flow > li > div { position: relative; display: grid; justify-items: start; gap: 5px; min-width: 0; }
+.student-page .student-flow h3 { margin: 0; font-size: 15px; line-height: 22px; }
+.student-flow-code { padding: 2px 9px; color: var(--tone); font-size: 11px; font-weight: 700; letter-spacing: .3px; line-height: 16px; background: rgba(255, 255, 255, .85); border: 1px solid var(--tone-line); border-radius: 999px; }
+.student-flow > li p { color: #4f6475; font-size: var(--text-caption); line-height: 17px; overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) { .student-flow > li, .student-flow-icon { transition: none; } .student-flow > li:is(:hover, :focus-within), .student-flow > li:is(:hover, :focus-within) .student-flow-icon { transform: none; } }
+/* (2) Khối báo cáo tuần: tiêu đề có ô biểu tượng lịch; chọn hồ sơ và "Tìm hồ sơ chưa có nhiệm vụ" cùng một hàng. */
+.student-reports > .t3-workflow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 14px 16px; }
+.student-reports > .t3-workflow > :not(label, details) { grid-column: 1 / -1; }
+.student-page .student-reports > .t3-workflow > details { align-self: center; margin: 0; }
+.student-page .student-reports > .t3-workflow > h3 { display: flex; align-items: center; gap: 10px; font-size: 17px; line-height: 24px; }
+.student-reports > .t3-workflow > h3::before { content: ""; flex-shrink: 0; width: 34px; height: 34px; border-radius: 10px;
+  background: var(--brand-light) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23097b69' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h4L19 9l-4-4L4 16v4ZM14 6l4 4'/%3E%3C/svg%3E") center / 18px no-repeat; }
+/* (3) Danh sách tuần thành lưới thẻ: ô biểu tượng lịch, chữ đậm, nổi khi rê chuột; các phần khác của danh sách chiếm cả hàng. */
+.student-reports > .t3-workflow > .stack { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.student-reports > .t3-workflow > .stack > :not(button.secondary:not(:first-child)) { grid-column: 1 / -1; }
+.student-reports > .t3-workflow > .stack > button.secondary:first-child { justify-self: start; }
+.student-page .student-reports > .t3-workflow > .stack > button.secondary:not(:first-child) { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; justify-content: stretch; gap: 12px;
+  min-height: 64px; padding: 12px 14px; color: var(--ink); font-size: 13px; font-weight: 600; line-height: 18px; text-align: left; white-space: normal; overflow-wrap: anywhere;
+  background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--student-accent); border-radius: 12px; box-shadow: 0 1px 3px rgba(16, 44, 57, .06); transition: transform .18s ease, box-shadow .18s ease, border-color .18s; }
+.student-page .student-reports > .t3-workflow > .stack > button.secondary:not(:first-child)::before { content: ""; width: 38px; height: 38px; border-radius: 10px;
+  background: var(--brand-light) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23097b69' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cpath d='M16 3v4M8 3v4M3 11h18M8 15h2m4 0h2'/%3E%3C/svg%3E") center / 20px no-repeat; }
+.student-page .student-reports > .t3-workflow > .stack > button.secondary:not(:first-child):hover { color: var(--ink); background: var(--surface); border-color: #bfe0d5; border-left-color: var(--student-accent); transform: translateY(-3px); box-shadow: 0 10px 22px rgba(16, 44, 57, .10); }
+@media (prefers-reduced-motion: reduce) { .student-page .student-reports > .t3-workflow > .stack > button.secondary:not(:first-child):hover { transform: none; } }
+/* (4) Chi tiết: 3 thẻ nội dung cùng một tông xanh thương hiệu (đầu thẻ mint), mỗi thẻ một biểu tượng riêng
+   (Việc đã làm ✓, Khó khăn ⚠, Kế hoạch ◎); khung minh chứng có biểu tượng kẹp giấy; ô tạo bản sửa nền mint viền trái xanh. */
+.student-reports section[aria-label="Chi tiết báo cáo"] > dl > :is(dt, dd) { --mask: var(--icon-check); }
+.student-reports section[aria-label="Chi tiết báo cáo"] > dl > dt:nth-of-type(2) { --mask: var(--icon-alert); }
+.student-reports section[aria-label="Chi tiết báo cáo"] > dl > dt:nth-of-type(3) { --mask: var(--icon-target); }
+.student-page .student-reports section[aria-label="Chi tiết báo cáo"] > dl > dt { display: flex; align-items: center; gap: 8px; }
+.student-reports section[aria-label="Chi tiết báo cáo"] > dl > dt::before { content: ""; flex-shrink: 0; width: 16px; height: 16px; background: currentColor; -webkit-mask: var(--mask) center / contain no-repeat; mask: var(--mask) center / contain no-repeat; }
+.student-page .student-reports section[aria-label="Chi tiết báo cáo"] > dl > dd { min-height: 64px; }
+.student-reports section[aria-label="Minh chứng báo cáo"] > h5 { display: flex; align-items: center; gap: 8px; }
+.student-reports section[aria-label="Minh chứng báo cáo"] > h5::before { content: ""; flex-shrink: 0; width: 16px; height: 16px; color: var(--brand); background: currentColor; -webkit-mask: var(--icon-clip) center / contain no-repeat; mask: var(--icon-clip) center / contain no-repeat; }
+.student-page .student-reports section[aria-label="Chi tiết báo cáo"] > form:has(> fieldset > label > input:not([type])) > fieldset { border-left: 3px solid var(--student-accent); }
+/* (5) "Tạo báo cáo tuần" kiểu trình soạn nhật ký: tiêu đề có ô biểu tượng bút mint; mỗi ô có biểu tượng xanh cạnh nhãn
+   (Thứ Hai: lịch, Việc đã làm: ✓, Khó khăn: ⚠, Kế hoạch: ◎); các ô sửa bản nháp trong chi tiết dùng cùng biểu tượng. */
+.student-page .student-reports > .t3-workflow > .stack > form > fieldset > legend { gap: 10px; }
+.student-page .student-reports > .t3-workflow > .stack > form > fieldset > legend::before { width: 30px; height: 30px; border-radius: 9px;
+  background: var(--brand-light) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23097b69' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h4L19 9l-4-4L4 16v4ZM14 6l4 4'/%3E%3C/svg%3E") center / 16px no-repeat; }
+.student-reports fieldset > label:has(> :is(textarea, input[type="date"])) { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 8px; }
+.student-reports fieldset > label:has(> :is(textarea, input[type="date"])) > :is(textarea, input) { grid-column: 1 / -1; }
+.student-reports fieldset > label:has(> :is(textarea, input[type="date"]))::before { content: ""; grid-row: 1; width: 15px; height: 15px; color: var(--brand); background: currentColor; -webkit-mask: var(--mask) center / contain no-repeat; mask: var(--mask) center / contain no-repeat; }
+.student-reports fieldset > label:has(> input[type="date"]) { --mask: var(--icon-calendar); }
+.student-reports fieldset > label:has(> textarea):nth-last-of-type(3) { --mask: var(--icon-check); }
+.student-reports fieldset > label:has(> textarea):nth-last-of-type(2) { --mask: var(--icon-alert); }
+.student-reports fieldset > label:has(> textarea):nth-last-of-type(1) { --mask: var(--icon-target); }
+.student-reports fieldset > label:has(> textarea) > textarea { min-height: 96px; }
+@media (max-width: 1100px) { .student-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); } .student-flow > li:nth-child(2)::after { display: none; } }
+@media (max-width: 700px) {
+  .student-flow { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .student-flow > li:not(:last-child)::after { display: block; top: auto; right: auto; bottom: -10px; left: 34px; width: 2px; height: 10px; background: #b9cbd8; }
+  .student-reports > .t3-workflow { grid-template-columns: minmax(0, 1fr); }
+  .student-reports > .t3-workflow > .stack { grid-template-columns: minmax(0, 1fr); }
+}
 
 /* S08 kết quả (477:12649): trạng thái chưa công bố căn trái, danh sách điều kiện và ghi chú. */
 .student-results .empty-state { align-items: flex-start; min-height: 0; padding: 0; text-align: left; }
@@ -309,24 +1119,95 @@ button.student-tab:focus-visible { outline-offset: -3px; }
 .student-result-table thead th { color: var(--muted); font-size: var(--text-xs); font-weight: 600; background: #f3f6fb; }
 .student-result-table td:nth-child(2), .student-result-table td:nth-child(3) { white-space: nowrap; }
 
-@media (max-width: 900px) {
-  .workspace:has(.student-nav-group) .sidebar-close { color: #fff; background: #24485a; }
-  .workspace:has(.student-nav-group) .page-header h1 { font-size: 22px; line-height: 28px; }
+@media (max-width: 1100px) {
+  .student-home-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .student-dash-hero { grid-template-columns: minmax(0, 1fr); }
+  .student-dash-term { justify-self: stretch; }
 }
-@media (max-width: 1050px) {
-  .student-profile-layout { grid-template-columns: 1fr; gap: 18px; }
-  .student-identity-card { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 2px 14px; text-align: left; }
-  .student-avatar { grid-row: 1 / span 3; width: 56px; height: 56px; margin: 0; font-size: 20px; }
+@media (max-width: 900px) {
+  .student-home-grid { grid-template-columns: 1fr; }
+  .workspace:has(.student-nav-group) .sidebar-close { color: #fff; background: #24485a; }
+}
+@media (max-width: 1100px) {
+  .student-kept ul, .student-checklist { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 700px) {
   .student-page { gap: 16px; }
   .student-page .panel, .student-page > .workflow-surface { padding: 16px; }
   .student-page :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select), .student-page textarea { font-size: var(--text-base); }
+  /* Chữ 16px trong ô nhập trên điện thoại để iOS không tự phóng to khi chạm. */
+  .student-page :is(.field, label) > :is(input:not([type="checkbox"], [type="radio"], [type="file"], [type="month"]), select, textarea),
+  .student-page .field .input-control > input { font-size: var(--text-base); }
   .student-term-panel .section-heading, .student-page .section-heading { flex-wrap: wrap; }
   .student-term-select { width: 100%; }
-  .student-kpis { grid-template-columns: 1fr; }
-  .student-kpi-value { font-size: 22px; }
-  .student-form-grid, .student-period-fields, .student-kept ul, .student-opp-filters, .student-invitation-detail dl, .student-filter, .student-detail { grid-template-columns: 1fr; }
+  .student-page .student-internship-card { padding: 14px; }
+  .student-ticket { grid-template-columns: minmax(0, 1fr); }
+  .student-ticket-main { gap: 14px; padding: 18px; }
+  .student-ticket .student-internship-icon { width: 48px; height: 48px; }
+  .student-page .student-ticket h3 { font-size: 18px; line-height: 24px; }
+  .student-ticket-stub { padding: 16px 18px 18px; border-top: 2px dashed rgba(255, 255, 255, .32); border-left: 0; }
+  .student-ticket-stub::before { top: -12px; left: -11px; }
+  .student-ticket-stub::after { top: -12px; right: -11px; bottom: auto; left: auto; }
+  .student-ticket-dates { gap: 10px; }
+  .student-ticket-dates b { font-size: 15px; }
+  .student-term-progress { flex-basis: 100%; }
+  .student-page .workflow-surface [role="gridcell"].panel { min-height: 72px; }
+  .student-internship-icon { width: 44px; height: 44px; }
+  .student-dash-hero { padding: 22px 18px; border-radius: 18px; }
+  .student-page .student-dash-hero h2 { font-size: 24px; line-height: 32px; }
+  .student-dash-hero-text > p:not(.student-dash-kicker) { font-size: var(--text-sm); line-height: 21px; }
+  .student-page button.student-dash-cta { width: 100%; }
+  .student-dash-term { grid-template-columns: auto minmax(0, 1fr); justify-items: start; column-gap: 16px; padding: 14px 16px; text-align: left; }
+  .student-dash-term > .student-dash-ring { grid-row: span 2; width: 92px; height: 92px; margin: 0; }
+  .student-dash-ring > span { width: 72px; height: 72px; }
+  .student-dash-ring b { font-size: 16px; line-height: 20px; }
+  .student-dash-ring small { font-size: 10px; }
+  .student-home-stats { gap: 10px; }
+  .student-home-stat { padding: 14px; }
+  .student-home-stat-value { font-size: 26px; line-height: 32px; }
+  .student-home-stat-value.is-text { font-size: 15px; line-height: 22px; }
+  .student-page .student-home-grid > .panel { padding: 16px; }
+  .student-week { gap: 4px; }
+  .student-week > li { padding: 8px 0 6px; border-radius: 12px; }
+  .student-week > li > b { font-size: 15px; }
+  .student-page .student-profile-hero { padding: 18px 16px; }
+  .student-tabs-segmented { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-flow: row; gap: 8px; padding: 6px; }
+  .student-page .student-tabs-segmented > button.student-tab { gap: 0 10px; padding: 10px; }
+  .student-page .student-tabs-segmented > button.student-tab > .icon { width: 17px; height: 17px; padding: 8px; }
+  .student-tabs-segmented .student-tab-label { font-size: var(--text-sm); }
+  .student-jobs-hero { grid-template-columns: minmax(0, 1fr); padding: 22px 16px 16px; border-radius: 18px; }
+  .student-jobs-art { display: none; }
+  .student-page .student-jobs-hero h2 { font-size: 24px; line-height: 32px; }
+  .student-jobs-search { padding: 10px; }
+  .student-jobs-search > .student-term-select { justify-self: stretch; min-width: 0; }
+  .student-job-head { grid-template-columns: auto minmax(0, 1fr); }
+  .student-page .student-job-state { grid-column: 1 / -1; justify-self: start; }
+  .student-page .student-list-item.student-job-card { padding: 20px 16px 16px; }
+  .student-page .student-job-detail { grid-template-columns: minmax(0, 1fr); }
+  .student-job-hero-body { flex-direction: column; align-items: flex-start; gap: 4px; padding: 0 16px 18px; }
+  .student-job-hero-body > .student-offer-logo { width: 72px; height: 72px; margin-top: -36px; font-size: 24px; }
+  .student-job-hero-text { padding-top: 6px; }
+  .student-page .student-job-hero-text h2 { font-size: 22px; line-height: 30px; }
+  .student-cv-current { flex-direction: column; align-items: flex-start; }
+  .student-cap-actions { margin-left: 0; }
+  .student-upload { padding: 14px; }
+  .student-profile-hero-top { gap: 14px; }
+  .student-avatar { width: 64px; height: 64px; font-size: 22px; border-width: 3px; }
+  .student-profile-hero-text { flex-basis: 180px; }
+  .student-page .student-profile-hero h2 { font-size: 20px; line-height: 28px; }
+  .student-ring-block { flex: 1 1 100%; }
+  .student-checklist { grid-template-columns: minmax(0, 1fr); }
+  .student-page .student-form-block { padding: 16px; }
+  .student-kept li { padding: 10px 12px; }
+  .student-page .student-profile-form .student-form-actions { justify-content: stretch; padding: 14px 16px; }
+  .student-page .student-profile-form .student-form-actions > :is(button, .student-save-state) { flex: 1 1 100%; }
+  .student-form-grid, .student-period-fields, .student-opp-filters, .student-invitation-detail dl, .student-filter, .student-detail { grid-template-columns: 1fr; }
   .student-page .t3-workflow fieldset:has(> label ~ label ~ label) { grid-template-columns: 1fr; }
+  .student-page .student-skill-row, .student-page .student-skill-row.custom { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); padding: 12px; }
+  .student-page .student-skill-row > .student-skill-note, .student-page .student-skill-row.custom > label:nth-of-type(-n+2) { grid-column: 1 / -1; }
+  .student-page .student-skill-actions > button { width: 100%; }
   .student-page button.student-btn-wide, .student-page .t3-workflow fieldset > button { min-width: 0; }
+}
+@media (max-width: 360px) {
+  .student-home-stats, .student-kept ul { grid-template-columns: 1fr; }
 }

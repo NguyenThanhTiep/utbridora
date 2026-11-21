@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import type { Grant } from '../../../api';
 import { EmptyState, Icon, LoadingState, Notice, Pagination } from '../../../components';
 import { getOpportunity, listMajors, listMyPreferences, listOpportunities, newIdempotencyKey, sendPreference, type AcademicCatalogItem } from '../api';
-import { StudentNote } from '../components/StudentUI';
+import { StudentIcon, StudentNote, StudentToast, orgInitials } from '../components/StudentUI';
 import { date, dateTime, groupPreferences, isStale, preferenceError, preferenceLabels, useStudentTerm } from '../preferences';
 import type { ContractPage, OpportunityView, PreferenceView, SubmitPreference } from '../types';
 import '../styles.css';
@@ -11,6 +11,9 @@ import '../styles.css';
 type Filter = { q: string; majorCode: string; page: number };
 const majorNames = (codes: string[], majors: AcademicCatalogItem[]) =>
   codes.map(code => majors.find(major => major.code === code)?.name ?? code).join(', ') || 'Không giới hạn ngành';
+// Thời gian còn lại để gửi nguyện vọng, tính theo giờ máy từ closedAt của cơ hội.
+const timeLeft = (closedAt: string) => { const hours = Math.floor((Date.parse(closedAt) - Date.now()) / 3_600_000);
+  return hours >= 48 ? 'Còn ' + Math.floor(hours / 24) + ' ngày nhận nguyện vọng' : hours >= 1 ? 'Còn ' + hours + ' giờ nhận nguyện vọng' : 'Sắp hết hạn nhận nguyện vọng'; };
 
 export function OpportunitiesPage({ schools, openPreferences }: { schools: Grant[]; openPreferences: () => void }) {
   const { terms, failed, termId, setTermId, retry } = useStudentTerm(schools);
@@ -20,7 +23,7 @@ export function OpportunitiesPage({ schools, openPreferences }: { schools: Grant
   const [result, setResult] = useState<ContractPage<OpportunityView> | null>(null);
   const [error, setError] = useState(''), [attempt, setAttempt] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
-  const searchId = useId(), majorId = useId(), termSelectId = useId();
+  const searchId = useId(), majorId = useId(), termSelectId = useId(), heroId = useId();
 
   useEffect(() => {
     if (!termId) return;
@@ -48,41 +51,57 @@ export function OpportunitiesPage({ schools, openPreferences }: { schools: Grant
     : terms.length === 0 ? <EmptyState icon="calendar" title="Chưa xác định học kỳ" description="Trường chưa có học kỳ đang mở nên chưa có cơ hội để hiển thị." />
     : !termId ? <EmptyState icon="calendar" title="Chọn học kỳ" description="Trường có nhiều học kỳ đang mở. Chọn học kỳ để xem cơ hội tương ứng." />
     : null;
-  // Frame 477:11864: thẻ "Tìm cơ hội phù hợp" có bộ lọc, ghi chú công bố, rồi mỗi cơ hội là một thẻ riêng.
+  // Frame 477:11864 dựng thành "bảng tin việc làm": hero xanh đậm có tiêu đề + thanh tìm kiếm nổi (chọn học kỳ khi có nhiều kỳ,
+  // vị trí / doanh nghiệp, ngành, nút tìm); thanh kết quả + ghi chú công bố; mỗi cơ hội là thẻ có logo chữ doanh nghiệp, nhãn trạng thái,
+  // chip ngành / thời gian / hạn còn lại, nút xem chi tiết. Thẻ là li.student-list-item theo thứ tự API (kiểm thử runtime chọn theo vị trí).
+  const filtered = !!(filter.q || filter.majorCode);
   return <div className="student-page">
-    <section className="panel">
-      <div className="section-heading"><div><p className="section-kicker">CƠ HỘI THỰC TẬP</p><h2>Cơ hội đang mở</h2>
-        <p className="section-description">Cơ hội do nhà trường công bố từ các hợp tác đã duyệt. Gửi nguyện vọng không tự tạo lời mời hay Placement.</p></div>
+    <section className="student-jobs-hero" aria-labelledby={heroId}>
+      <div className="student-jobs-hero-text"><p className="student-dash-kicker"><Icon name="briefcase" size={16} />Cơ hội thực tập</p>
+        <h2 id={heroId}>Cơ hội đang mở</h2>
+        <p>Cơ hội do nhà trường công bố từ các hợp tác đã duyệt. Gửi nguyện vọng không tự tạo lời mời hay Placement.</p></div>
+      <div className="student-jobs-art" aria-hidden="true">{(['briefcase', 'graduation', 'calendar'] as const).map(icon =>
+        <span key={icon}><Icon name={icon} size={18} /><i /><i /></span>)}</div>
+      {(terms && terms.length > 1 || !termState) && <div className="student-jobs-search">
         {terms && terms.length > 1 && <div className="field student-term-select"><label htmlFor={termSelectId}>Học kỳ</label>
           <select id={termSelectId} value={termId} onChange={event => { setTermId(event.target.value); setFilter(previous => ({ ...previous, page: 0 })); }}>
             <option value="">Chọn học kỳ</option>{terms.map(term => <option key={term.termId} value={term.termId}>{term.termCode}</option>)}
           </select></div>}
-      </div>
-      {termState ?? <form className="student-filter" onSubmit={search}>
-        <div className="field"><label htmlFor={searchId}>Vị trí hoặc doanh nghiệp</label>
-          <input id={searchId} maxLength={150} value={draft.q} placeholder="Ví dụ: Java, Doanh nghiệp A" onChange={event => setDraft({ ...draft, q: event.target.value })} /></div>
-        <div className="field"><label htmlFor={majorId}>Ngành</label>
-          <select id={majorId} value={draft.majorCode} onChange={event => setDraft({ ...draft, majorCode: event.target.value })}>
-            <option value="">Tất cả ngành</option>{majors.map(major => <option key={major.code} value={major.code}>{major.name}</option>)}
-          </select></div>
-        <button type="submit" className="student-btn-wide"><Icon name="search" size={16} />Tìm cơ hội</button>
-      </form>}
+        {!termState && <form className="student-filter" onSubmit={search}>
+          <div className="field"><label htmlFor={searchId}>Vị trí hoặc doanh nghiệp</label>
+            <input id={searchId} maxLength={150} value={draft.q} placeholder="Ví dụ: Java, Doanh nghiệp A" onChange={event => setDraft({ ...draft, q: event.target.value })} /></div>
+          <div className="field"><label htmlFor={majorId}>Ngành</label>
+            <select id={majorId} value={draft.majorCode} onChange={event => setDraft({ ...draft, majorCode: event.target.value })}>
+              <option value="">Tất cả ngành</option>{majors.map(major => <option key={major.code} value={major.code}>{major.name}</option>)}
+            </select></div>
+          <button type="submit" className="student-btn-wide"><Icon name="search" size={16} />Tìm cơ hội</button>
+        </form>}
+      </div>}
     </section>
+    {termState && <section className="panel">{termState}</section>}
     {!termState && <>
-      <StudentNote>Chỉ các cơ hội đã được phê duyệt và công bố mới hiển thị cho sinh viên.</StudentNote>
+      <div className="student-jobs-bar">
+        <p className="student-jobs-count">{result ? <><b>{result.totalElements}</b> cơ hội {filtered ? 'khớp bộ lọc' : 'đang mở trong kỳ'}</> : 'Đang tìm cơ hội…'}</p>
+        <StudentNote>Chỉ các cơ hội đã được phê duyệt và công bố mới hiển thị cho sinh viên.</StudentNote></div>
       {error ? <section className="panel"><EmptyState icon="alert" title="Chưa tải được cơ hội thực tập" description={error}>
         <button type="button" className="secondary" onClick={() => setAttempt(previous => previous + 1)}><Icon name="refresh" size={16} />Thử lại</button></EmptyState></section>
         : result === null ? <section className="panel"><LoadingState label="Đang tải cơ hội…" /></section>
         : result.content.length === 0 ? <section className="panel"><EmptyState icon="briefcase" title="Chưa có cơ hội phù hợp" description="Chỉ cơ hội đã được nhà trường công bố và còn hạn mới hiển thị." /></section>
         : <>
-          <ul className="student-list student-card-list">{result.content.map(opportunity => { const open = Date.now() < Date.parse(opportunity.closedAt);
-            return <li className="student-list-item" key={opportunity.opportunityId}>
-              <div className="student-title-row"><h3>{opportunity.title}</h3>
-                <span className={'student-status ' + (open ? 'tone-brand' : 'tone-neutral')}>{open ? 'Đang nhận nguyện vọng' : 'Đã hết hạn nhận nguyện vọng'}</span></div>
-              <p className="student-company">{opportunity.enterpriseName}</p>
-              <p className="student-list-text">{majorNames(opportunity.majorCodes, majors)} · Thực tập {date(opportunity.dateRange.startDate)} – {date(opportunity.dateRange.endDate)}</p>
+          <ul className="student-list student-job-list">{result.content.map(opportunity => { const open = Date.now() < Date.parse(opportunity.closedAt);
+            return <li className={'student-list-item student-job-card' + (open ? '' : ' is-closed')} key={opportunity.opportunityId}>
+              <div className="student-job-head">
+                <span className="student-offer-logo" aria-hidden="true">{orgInitials(opportunity.enterpriseName)}</span>
+                <div className="student-job-title"><h3>{opportunity.title}</h3><p className="student-company">{opportunity.enterpriseName}</p></div>
+                <span className={'student-status student-job-state ' + (open ? 'tone-success' : 'tone-neutral')}>{open ? 'Đang nhận nguyện vọng' : 'Đã hết hạn nhận nguyện vọng'}</span>
+              </div>
+              <ul className="student-job-facts">
+                <li><Icon name="graduation" size={15} />{majorNames(opportunity.majorCodes, majors)}</li>
+                <li><Icon name="calendar" size={15} />Thực tập {date(opportunity.dateRange.startDate)} – {date(opportunity.dateRange.endDate)}</li>
+                {open && <li className="is-deadline"><Icon name="clock" size={15} />{timeLeft(opportunity.closedAt)}</li>}
+              </ul>
               <p className="student-list-meta">Nhận nguyện vọng đến {dateTime(opportunity.closedAt)} · Yêu cầu và quyền lợi xem trong trang chi tiết</p>
-              <div className="button-row"><button type="button" className="student-btn-wide" onClick={() => setSelected(opportunity.opportunityId)}>Xem chi tiết</button></div>
+              <div className="button-row"><button type="button" className="student-btn-wide" onClick={() => setSelected(opportunity.opportunityId)}>Xem chi tiết<Icon name="arrow-right" size={16} /></button></div>
             </li>; })}</ul>
           <Pagination page={{ content: [], number: result.page, totalElements: result.totalElements, totalPages: result.totalPages }}
             change={page => setFilter(previous => ({ ...previous, page }))} busy={false} />
@@ -135,26 +154,42 @@ function OpportunityDetail({ opportunityId, majors, back, openPreferences }: {
     } finally { setBusy(false); }
   };
 
+  // Chi tiết dạng trang tuyển dụng: dải bìa xanh đậm + logo chữ doanh nghiệp, tên vị trí, nhãn trạng thái và hạn còn lại; bên dưới chia
+  // 2 cột: thông tin vị trí (mỗi mục một ô có biểu tượng) và thẻ đăng ký (3 bước, lời nhắn, nút gửi) dính khi cuộn trên màn rộng.
   return <div className="student-page">
-    <div><button type="button" className="text-button" onClick={back}><Icon name="arrow-left" size={16} />Quay lại danh sách</button></div>
-    <Notice message={notice} tone="success" />
+    <div><button type="button" className="text-button student-back" onClick={back}><Icon name="arrow-left" size={16} />Quay lại danh sách</button></div>
+    <StudentToast message={notice} onClose={() => setNotice('')} />
     {loadError ? <section className="panel"><EmptyState icon="alert" title="Chưa tải được cơ hội" description={loadError}>
       <button type="button" className="secondary" onClick={() => setAttempt(previous => previous + 1)}><Icon name="refresh" size={16} />Thử lại</button></EmptyState></section>
       : !opportunity ? <section className="panel"><LoadingState label="Đang tải cơ hội…" /></section>
       : <>
-        <section className="panel">
-          <div className="section-heading"><div><p className="section-kicker">{opportunity.enterpriseName}</p><h2>{opportunity.title}</h2></div></div>
-          <dl className="student-detail">
-            <div><dt>Ngành phù hợp</dt><dd>{majorNames(opportunity.majorCodes, majors)}</dd></div>
-            <div><dt>Thời gian thực tập</dt><dd>{date(opportunity.dateRange.startDate)} – {date(opportunity.dateRange.endDate)}</dd></div>
-            <div><dt>Địa điểm</dt><dd>{opportunity.location ?? 'Chưa cập nhật'}</dd></div>
-            <div><dt>Quyền lợi</dt><dd>{opportunity.benefits ?? 'Chưa cập nhật'}</dd></div>
-            <div><dt>Công bố lúc</dt><dd>{dateTime(opportunity.publishedAt)}</dd></div>
-            <div><dt>Nhận nguyện vọng đến</dt><dd>{dateTime(opportunity.closedAt)}</dd></div>
+        <section className="student-job-hero">
+          <div className="student-job-hero-cover" aria-hidden="true" />
+          <div className="student-job-hero-body">
+            <span className="student-offer-logo" aria-hidden="true">{orgInitials(opportunity.enterpriseName)}</span>
+            <div className="student-job-hero-text"><p className="section-kicker">{opportunity.enterpriseName}</p><h2>{opportunity.title}</h2>
+              <p className="student-job-hero-chips">
+                <span className={'student-status ' + (closed ? 'tone-neutral' : 'tone-success')}>{closed ? 'Đã hết hạn nhận nguyện vọng' : 'Đang nhận nguyện vọng'}</span>
+                {!closed && <span className="student-job-deadline"><Icon name="clock" size={14} />{timeLeft(opportunity.closedAt)}</span>}</p></div>
+          </div>
+        </section>
+        <div className="student-job-layout">
+        <section className="panel student-job-info">
+          <div className="student-home-head"><span className="student-home-head-icon" aria-hidden="true"><Icon name="briefcase" size={20} /></span><div><h2>Thông tin vị trí</h2>
+            <p className="student-home-sub">Do nhà trường công bố từ hợp tác đã duyệt</p></div></div>
+          <dl className="student-detail student-job-detail">
+            <div><dt><Icon name="graduation" size={16} />Ngành phù hợp</dt><dd>{majorNames(opportunity.majorCodes, majors)}</dd></div>
+            <div><dt><Icon name="calendar" size={16} />Thời gian thực tập</dt><dd>{date(opportunity.dateRange.startDate)} – {date(opportunity.dateRange.endDate)}</dd></div>
+            <div><dt><Icon name="building" size={16} />Địa điểm</dt><dd>{opportunity.location ?? 'Chưa cập nhật'}</dd></div>
+            <div><dt><StudentIcon name="award" size={16} />Quyền lợi</dt><dd>{opportunity.benefits ?? 'Chưa cập nhật'}</dd></div>
+            <div><dt><Icon name="check-circle" size={16} />Công bố lúc</dt><dd>{dateTime(opportunity.publishedAt)}</dd></div>
+            <div><dt><Icon name="clock" size={16} />Nhận nguyện vọng đến</dt><dd>{dateTime(opportunity.closedAt)}</dd></div>
           </dl>
         </section>
-        <section className="panel">
+        <section className="panel student-job-apply">
           <div className="section-heading"><div><p className="section-kicker">NGUYỆN VỌNG</p><h2>Đăng ký vị trí này</h2></div></div>
+          <ol className="student-job-steps" aria-label="Các bước sau khi gửi nguyện vọng">
+            <li><b>1</b>Gửi nguyện vọng</li><li><b>2</b>Nhà trường xét</li><li><b>3</b>Lời mời nếu được đề cử</li></ol>
           <Notice message={error} tone="error" />
           {preferencesFailed ? <p className="student-error-note">Chưa tải được nguyện vọng của bạn nên chưa thể gửi.{' '}
             <button type="button" className="text-button" onClick={() => setAttempt(previous => previous + 1)}>Thử lại</button></p>
@@ -173,6 +208,7 @@ function OpportunityDetail({ opportunityId, majors, back, openPreferences }: {
                 </form>}
             </>}
         </section>
+        </div>
       </>}
   </div>;
 }

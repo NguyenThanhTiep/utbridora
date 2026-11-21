@@ -13,12 +13,13 @@ const fixture = (name: string) => {
   if (!value) throw new Error('Missing test fixture: ' + name);
   return value;
 };
-async function signIn(page: Page, email: string) {
+// Tài khoản sinh viên vào thẳng Tổng quan (S01) sau đăng nhập; tài khoản khác vào Tài khoản của tôi.
+async function signIn(page: Page, email: string, landing = 'Tổng quan') {
   await page.goto('/');
   await page.getByLabel('Email', { exact: true }).fill(email);
   await page.getByLabel('Mật khẩu', { exact: true }).fill(fixture('E2E_PASSWORD'));
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Tài khoản của tôi', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: landing, exact: true })).toBeVisible();
 }
 async function navigate(page: Page, title: string) {
   const menu = page.getByRole('button', { name: 'Mở menu điều hướng', exact: true });
@@ -76,7 +77,7 @@ test('Sinh viên thấy nhóm Sinh viên, mở Tổng quan và Thông tin chung'
 });
 
 test('Quản trị viên không thấy nhóm Sinh viên', async ({ page }) => {
-  await signIn(page, fixture('E2E_ADMIN_EMAIL'));
+  await signIn(page, fixture('E2E_ADMIN_EMAIL'), 'Tài khoản của tôi');
   const nav = page.getByRole('navigation', { name: 'Điều hướng chính' });
   await expect(nav.getByRole('button', { name: 'Tài khoản & phân quyền', exact: true })).toBeVisible();
   await expect(nav.getByText('SINH VIÊN', { exact: true })).toHaveCount(0);
@@ -105,7 +106,7 @@ test('Các màn sinh viên vừa màn hình 320px và 390px', async ({ page }) =
 test('UX UI mock: không có grant STUDENT hợp lệ thì không hiện nhóm Sinh viên', async ({ page }) => {
   // Giả lập trường chưa VERIFIED: backend không trả grant STUDENT nào.
   await page.route('**/api/v1/auth/me/permissions', route => route.fulfill({ json: [] }));
-  await signIn(page, fixture('E2E_STUDENT_EMAIL'));
+  await signIn(page, fixture('E2E_STUDENT_EMAIL'), 'Tài khoản của tôi');
   const nav = page.getByRole('navigation', { name: 'Điều hướng chính' });
   await expect(nav.getByRole('button', { name: 'Tài khoản của tôi', exact: true })).toBeVisible();
   await expect(nav.getByText('SINH VIÊN', { exact: true })).toHaveCount(0);

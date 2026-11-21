@@ -8,7 +8,7 @@ test('student sees and withdraws a real preference through the T2 API', async ({
   await page.getByLabel('Email', { exact: true }).fill('student@example.test');
   await page.getByLabel('Mật khẩu', { exact: true }).fill(process.env.E2E_PASSWORD ?? '');
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Tài khoản của tôi', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Tổng quan', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Lời mời & nguyện vọng', exact: true }).click();
   await page.getByRole('tab', { name: 'Nguyện vọng', exact: true }).click();
   const item = page.locator('li.student-list-item').filter({ hasText: 'Lời nhắn: W3 browser preference' });

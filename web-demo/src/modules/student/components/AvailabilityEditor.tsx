@@ -10,8 +10,11 @@ export function AvailabilityEditor({ declared, periods, errors, groupError, disa
   const id = useId();
   const update = (index: number, key: keyof DateRange, value: string) =>
     setPeriods(periods.map((period, at) => at === index ? { ...period, [key]: value } : period));
-  return <fieldset className="student-fieldset" disabled={disabled}>
-    <legend>Thời gian có thể tham gia</legend>
+  return <fieldset className="student-fieldset student-form-block tone-amber" disabled={disabled}>
+    <legend><Icon name="calendar" size={17} />Thời gian có thể tham gia</legend>
+    {/* Frame 477:11355 "Lịch rảnh cho kỳ thực tập": nhãn trạng thái đọc từ bản đang khai trên form. */}
+    <p className="student-availability-status">Trạng thái khai báo <span className={'student-status' + (!declared ? '' : periods.length ? ' tone-success' : ' tone-warning')}>
+      {declared ? (periods.length ? 'Đã khai ' + periods.length + ' khoảng thời gian' : 'Đã khai báo, chưa có khoảng thời gian') : 'Chưa khai báo'}</span></p>
     <label className="student-checkbox"><input type="checkbox" checked={declared} onChange={event => setDeclared(event.target.checked)}
       {...(groupError ? { 'aria-invalid': true, 'aria-describedby': id + '-group' } : {})} />Tôi khai báo thời gian có thể tham gia thực tập</label>
     {groupError && <p className="student-field-error" id={id + '-group'}>{groupError}</p>}
@@ -27,7 +30,7 @@ export function AvailabilityEditor({ declared, periods, errors, groupError, disa
             <Field label="Đến ngày" type="date" value={period.endDate} min={period.startDate || undefined} onChange={value => update(index, 'endDate', value)} {...invalid} />
           </div>
           {errors[index] && <p className="student-field-error" id={errorId}>{errors[index]}</p>}
-          <button type="button" className="text-button" onClick={() => setPeriods(periods.filter((_, at) => at !== index))}><Icon name="close" size={15} />Xóa khoảng {index + 1}</button>
+          <button type="button" className="text-button" onClick={() => setPeriods(periods.filter((_, at) => at !== index))}><Icon name="close" size={15} />Xóa<span className="student-sr-only"> khoảng {index + 1}</span></button>
         </fieldset>;
       })}
       <button type="button" className="secondary student-add-period" onClick={() => setPeriods([...periods, { startDate: '', endDate: '' }])}><Icon name="plus" size={16} />Thêm khoảng thời gian</button>
