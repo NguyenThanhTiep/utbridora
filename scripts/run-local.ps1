@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('start','stop','logs','seed-demo')][string]$Action='start',
+    [ValidateSet('start','stop','logs','seed-demo','reset-demo')][string]$Action='start',
     [ValidatePattern('^[a-z0-9][a-z0-9_-]*$')][string]$ProjectName='utbridora-local',
     [ValidatePattern('^\.env\.[A-Za-z0-9][A-Za-z0-9._-]*$')][string]$EnvironmentFileName='.env.local'
 )
@@ -52,7 +52,8 @@ try {
             'LOCAL_HTTP_PORT=8088',
             'MAILPIT_HTTP_PORT=8026',
             'LOCAL_MYSQL_PORT=3307',
-            'LOCAL_DEMO_ENABLED=true',
+            'LOCAL_DEMO_ENABLED=false',
+            'LOCAL_PORTABLE_DEMO_ENABLED=true',
             "DEMO_PASSWORD=$(New-LocalSecret)",
             "DB_PASSWORD=$(New-LocalSecret)",
             "DB_ROOT_PASSWORD=$(New-LocalSecret)",
@@ -73,7 +74,7 @@ try {
         if ($_ -match '^([A-Z][A-Z0-9_]*)=(.*)$') { $settings[$matches[1]]=$matches[2] }
     }
     $requiredKeys=@('LOCAL_HTTP_PORT','MAILPIT_HTTP_PORT','DB_PASSWORD','DB_ROOT_PASSWORD','BOOTSTRAP_ADMIN_EMAIL','BOOTSTRAP_ADMIN_PASSWORD')
-    $managedKeys=$requiredKeys+@('LOCAL_MYSQL_PORT','LOCAL_DEMO_ENABLED','DEMO_PASSWORD')
+    $managedKeys=$requiredKeys+@('LOCAL_MYSQL_PORT','LOCAL_DEMO_ENABLED','LOCAL_PORTABLE_DEMO_ENABLED','DEMO_PASSWORD')
     foreach ($key in $requiredKeys) {
         if ([string]::IsNullOrWhiteSpace($settings[$key])) { throw "Thieu gia tri $key trong .env.local." }
     }
@@ -104,6 +105,36 @@ try {
         $compose=@('compose','--project-name',$projectName,'--env-file',$environmentFile,'-f',$configuration)
         Invoke-LocalDocker ($compose+@('config','--quiet'))
         switch ($Action) {
+            'reset-demo' {
+                # Explicit developer-only replacement; normal start never resets an existing database.
+                if ([string]::IsNullOrWhiteSpace($settings['DEMO_PASSWORD'])) {
+                    $settings['DEMO_PASSWORD']=New-LocalSecret
+                    [IO.File]::AppendAllText($environmentFile,("`nDEMO_PASSWORD="+$settings['DEMO_PASSWORD']+"`n"),[Text.UTF8Encoding]::new($false))
+                }
+                [Environment]::SetEnvironmentVariable('DEMO_PASSWORD',$settings['DEMO_PASSWORD'],'Process')
+                [Environment]::SetEnvironmentVariable('LOCAL_PORTABLE_DEMO_ENABLED','true','Process')
+                # Finish the build before touching running services or developer data.
+                Invoke-LocalDocker ($compose+@('build','backend','frontend'))
+                Invoke-LocalDocker ($compose+@('stop','backend','frontend'))
+                Invoke-LocalDocker ($compose+@('up','-d','--wait','mysql','mailpit'))
+                $backupDirectory=Join-Path $project '.local-demo-backups'
+                New-Item -ItemType Directory -Path $backupDirectory -Force | Out-Null
+                $backupName='before-portable-reset-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss')+'-'+[Guid]::NewGuid().ToString('N')+'.sql'
+                $backupPath=Join-Path $backupDirectory $backupName
+                Invoke-LocalDocker ($compose+@('cp',(Join-Path $PSScriptRoot 'backup-local-db.sh'),'mysql:/tmp/bridora-backup-local-db.sh'))
+                Invoke-LocalDocker ($compose+@('exec','-T','mysql','sh','/tmp/bridora-backup-local-db.sh',('/tmp/'+$backupName)))
+                Invoke-LocalDocker ($compose+@('cp',('mysql:/tmp/'+$backupName),$backupPath))
+                if ((Get-Item -LiteralPath $backupPath).Length -le 0) { throw 'Backup rong; khong reset database.' }
+                $backupHash=(Get-FileHash -Algorithm SHA256 -LiteralPath $backupPath).Hash
+                [IO.File]::WriteAllText(($backupPath+'.sha256'),($backupHash+'  '+$backupName+"`n"),[Text.UTF8Encoding]::new($false))
+                Write-Host 'Da sao luu database cu vao .local-demo-backups. Dang thay bang bo demo 406 tai khoan.'
+                Invoke-LocalDocker ($compose+@('cp',(Join-Path $PSScriptRoot 'reset-portable-demo.sh'),'mysql:/tmp/bridora-reset-portable-demo.sh'))
+                Invoke-LocalDocker ($compose+@('exec','-T','-e','UTBRIDORA_DEV_RESET=REPLACE_WITH_PORTABLE_SYNTHETIC','mysql','sh','/tmp/bridora-reset-portable-demo.sh'))
+                Invoke-LocalDocker ($compose+@('exec','-T','mysql','rm',('/tmp/'+$backupName),'/tmp/bridora-backup-local-db.sh','/tmp/bridora-reset-portable-demo.sh'))
+                Invoke-LocalDocker ($compose+@('up','-d','--wait','--wait-timeout','300'))
+                Write-Host 'Da nap bo demo chu ky day du. Mat khau 406 tai khoan demo: DEMO_PASSWORD trong .env.local.'
+                Write-Host 'Admin bootstrap rieng van dung BOOTSTRAP_ADMIN_PASSWORD. Kho file local van duoc giu nguyen.'
+            }
             'seed-demo' {
                 if ([string]::IsNullOrWhiteSpace($settings['DEMO_PASSWORD'])) {
                     $demoFile=$environmentFile+'-demo'
@@ -145,9 +176,8 @@ try {
                 Write-Host "Email thu nghiem: http://localhost:$($settings['MAILPIT_HTTP_PORT'])"
                 Write-Host "Tai khoan admin: $($settings['BOOTSTRAP_ADMIN_EMAIL'])"
                 Write-Host 'Mat khau: xem BOOTSTRAP_ADMIN_PASSWORD trong .env.local (khong in secret ra log).'
-                if ($settings['LOCAL_DEMO_ENABLED'] -eq 'true') {
-                    Write-Host 'Tai khoan nghiep vu demo: xem docs/guides/LOCAL_DEMO.md; mat khau DEMO_PASSWORD trong .env.local.'
-                }
+                Write-Host 'Bo demo day du: docs/guides/PORTABLE_DEMO.md; mat khau DEMO_PASSWORD trong .env.local.'
+                Write-Host 'Database cu duoc giu nguyen. Muon thay bang bo demo moi: run-local.cmd reset-demo (co backup).'
                 Write-Host 'Dung ung dung: run-local.cmd stop. Du lieu database van duoc giu lai.'
             }
             'stop' {

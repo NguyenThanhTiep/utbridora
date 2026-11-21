@@ -1,0 +1,419 @@
+{
+  "T3:FR-01": {
+    "actorGuard": "HR with current enterprise/cohort assignment; current T5 Placement; version and expiring proof",
+    "implementation": [
+      "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/PlacementIntakeService.java",
+      "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WorkspaceRuntime.java"
+    ],
+    "apiOrPort": [
+      "src/main/java/vn/utbridora/auth/modules/internship/api/PlacementIntakeController.java",
+      "src/main/java/vn/utbridora/auth/modules/internship/api/CohortGroupDtos.java"
+    ],
+    "schema": [
+      "src/main/resources/db/migration/base/V43__t3_operations_and_case_closure.sql"
+    ],
+    "tests": {
+      "positive": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/T3OperationsIT.java",
+          "class": "vn.utbridora.auth.T3OperationsIT",
+          "method": "scannedPlacementPreviewIsScopeBoundAndFortyCasesBecomeFourGroupsWithoutNewIdentities"
+        }
+      ],
+      "negative": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/T3OperationsIT.java",
+          "class": "vn.utbridora.auth.T3OperationsIT",
+          "method": "placementPreviewRejectsForeignExpiredSelectionsAndUsesRealMalwareScanner"
+        }
+      ],
+      "boundary": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/T3OperationsIT.java",
+          "class": "vn.utbridora.auth.T3OperationsIT",
+          "method": "groupingKeepsRemainderAndStudentResolutionDoesNotLeakAnotherSchool"
+        }
+      ]
+    },
+    "limits": [
+      "Intake/grouping race-specific test mapping still requires QA review"
+    ]
+  },
+  "T3:FR-03": {
+    "actorGuard": "HR with current enterprise/cohort assignment; current T5 Placement; version and expiring proof",
+    "implementation": [
+      "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/PlacementIntakeService.java",
+      "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/WorkspaceRuntime.java"
+    ],
+    "apiOrPort": [
+      "src/main/java/vn/utbridora/auth/modules/internship/api/PlacementIntakeController.java",
+      "src/main/java/vn/utbridora/auth/modules/internship/api/CohortGroupDtos.java"
+    ],
+    "schema": [
+      "src/main/resources/db/migration/base/V43__t3_operations_and_case_closure.sql"
+    ],
+    "tests": {
+      "positive": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/T3OperationsIT.java",
+          "class": "vn.utbridora.auth.T3OperationsIT",
+          "method": "scannedPlacementPreviewIsScopeBoundAndFortyCasesBecomeFourGroupsWithoutNewIdentities"
+        }
+      ],
+      "negative": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/T3OperationsIT.java",
+          "class": "vn.utbridora.auth.T3OperationsIT",
+          "method": "placementPreviewRejectsForeignExpiredSelectionsAndUsesRealMalwareScanner"
+        }
+      ],
+      "boundary": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/T3OperationsIT.java",
+          "class": "vn.utbridora.auth.T3OperationsIT",
+          "method": "groupingKeepsRemainderAndStudentResolutionDoesNotLeakAnotherSchool"
+        }
+      ]
+    },
+    "limits": [
+      "Intake/grouping race-specific test mapping still requires QA review"
+    ]
+  },
+  "T3:FR-23": {
+    "actorGuard": "Current school delegation or exact Case-scoped HR/Mentor; quality writes school-only; issue transition owner/version",
+    "implementation": [
+      "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/InternshipOperationsService.java",
+      "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/OperationsAccess.java"
+    ],
+    "apiOrPort": [
+      "src/main/java/vn/utbridora/auth/modules/internship/api/InternshipOperationsController.java"
+    ],
+    "schema": [
+      "src/main/resources/db/migration/base/V43__t3_operations_and_case_closure.sql"
+    ],
+    "tests": {
+      "positive": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/T3OperationsIT.java",
+          "class": "vn.utbridora.auth.T3OperationsIT",
+          "method": "dashboardQualityIssuesAndInterestRespectScopeAndPreserveStudentGrades"
+        }
+      ],
+      "negative": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/T3OperationsIT.java",
+          "class": "vn.utbridora.auth.T3OperationsIT",
+          "method": "calendarAndInterestCommandsCannotBypassOwnerSourceOrClosedWireGuards"
+        }
+      ],
+      "boundary": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/T3OperationsIT.java",
+          "class": "vn.utbridora.auth.T3OperationsIT",
+          "method": "dashboardQualityIssuesAndInterestRespectScopeAndPreserveStudentGrades"
+        }
+      ]
+    },
+    "limits": [
+      "Per-FR race coverage remains unbound; runtime functional evidence is not a load measurement"
+    ]
+  },
+  "T3:FR-25": {
+    "actorGuard": "Current school delegation or exact Case-scoped HR/Mentor; quality writes school-only; issue transition owner/version",
+    "implementation": [
+      "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/InternshipOperationsService.java",
+      "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/OperationsAccess.java"
+    ],
+    "apiOrPort": [
+      "src/main/java/vn/utbridora/auth/modules/internship/api/InternshipOperationsController.java"
+    ],
+    "schema": [
+      "src/main/resources/db/migration/base/V43__t3_operations_and_case_closure.sql"
+    ],
+    "tests": {
+      "positive": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/T3OperationsIT.java",
+          "class": "vn.utbridora.auth.T3OperationsIT",
+          "method": "dashboardQualityIssuesAndInterestRespectScopeAndPreserveStudentGrades"
+        }
+      ],
+      "negative": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/T3OperationsIT.java",
+          "class": "vn.utbridora.auth.T3OperationsIT",
+          "method": "calendarAndInterestCommandsCannotBypassOwnerSourceOrClosedWireGuards"
+        }
+      ],
+      "boundary": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/T3OperationsIT.java",
+          "class": "vn.utbridora.auth.T3OperationsIT",
+          "method": "dashboardQualityIssuesAndInterestRespectScopeAndPreserveStudentGrades"
+        }
+      ]
+    },
+    "limits": [
+      "Per-FR race coverage remains unbound; runtime functional evidence is not a load measurement"
+    ]
+  },
+  "T3:FR-26": {
+    "actorGuard": "Current school delegation or exact Case-scoped HR/Mentor; quality writes school-only; issue transition owner/version",
+    "implementation": [
+      "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/InternshipOperationsService.java",
+      "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/OperationsAccess.java"
+    ],
+    "apiOrPort": [
+      "src/main/java/vn/utbridora/auth/modules/internship/api/InternshipOperationsController.java"
+    ],
+    "schema": [
+      "src/main/resources/db/migration/base/V43__t3_operations_and_case_closure.sql"
+    ],
+    "tests": {
+      "positive": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/T3OperationsIT.java",
+          "class": "vn.utbridora.auth.T3OperationsIT",
+          "method": "dashboardQualityIssuesAndInterestRespectScopeAndPreserveStudentGrades"
+        }
+      ],
+      "negative": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/T3OperationsIT.java",
+          "class": "vn.utbridora.auth.T3OperationsIT",
+          "method": "calendarAndInterestCommandsCannotBypassOwnerSourceOrClosedWireGuards"
+        }
+      ],
+      "boundary": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/T3OperationsIT.java",
+          "class": "vn.utbridora.auth.T3OperationsIT",
+          "method": "dashboardQualityIssuesAndInterestRespectScopeAndPreserveStudentGrades"
+        }
+      ]
+    },
+    "limits": [
+      "Per-FR race coverage remains unbound; runtime functional evidence is not a load measurement"
+    ]
+  },
+  "T3:FR-27": {
+    "actorGuard": "Current school cases-close delegation; source gates; normal task/report/evaluation prerequisites; early decision; exact HR hiring intent before terminal",
+    "implementation": [
+      "src/main/java/vn/utbridora/auth/modules/internship/infrastructure/CaseClosureService.java",
+      "src/main/java/vn/utbridora/auth/modules/cooperation/application/CaseClosedHandler.java"
+    ],
+    "apiOrPort": [
+      "src/main/java/vn/utbridora/auth/modules/internship/api/CaseClosureController.java"
+    ],
+    "schema": [
+      "src/main/resources/db/migration/base/V43__t3_operations_and_case_closure.sql"
+    ],
+    "tests": {
+      "positive": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/T3OperationsIT.java",
+          "class": "vn.utbridora.auth.T3OperationsIT",
+          "method": "earlyClosureIsAtomicAndT5ConsumesProofOnceWhileTerminalWritesStayLocked"
+        }
+      ],
+      "negative": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/T3OperationsIT.java",
+          "class": "vn.utbridora.auth.T3OperationsIT",
+          "method": "revokedClosureAuthorityAndInboxFailureCannotPartiallyMutateT5AndRetriesGoToDlq"
+        }
+      ],
+      "boundary": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/T3OperationsIT.java",
+          "class": "vn.utbridora.auth.T3OperationsIT",
+          "method": "normalClosureRequiresEveryWeekCurrentEvaluationAndAllTasksThenSynchronizesCompletion"
+        }
+      ],
+      "race": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/T3OperationsIT.java",
+          "class": "vn.utbridora.auth.T3OperationsIT",
+          "method": "concurrentInterestAndCloseCommandsHaveOneWinnerAndNoDuplicateHistory"
+        }
+      ]
+    },
+    "limits": [
+      "Closure normal-path test uses an explicit completed-task prerequisite; task workflow is covered in separate suites"
+    ]
+  },
+  "T5:DEM-11": {
+    "actorGuard": "ENTERPRISE owner, current organization/membership, version, cooperation/downstream locks; immutable revision history",
+    "implementation": [
+      "src/main/java/vn/utbridora/auth/modules/cooperation/application/DemandService.java"
+    ],
+    "apiOrPort": [
+      "src/main/java/vn/utbridora/auth/modules/cooperation/api/DemandController.java"
+    ],
+    "schema": [
+      "src/main/resources/db/migration/base/V16__demand_drafts.sql"
+    ],
+    "tests": {
+      "positive": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/DemandIT.java",
+          "class": "vn.utbridora.auth.DemandIT",
+          "method": "reopensReadyAndRestoresDeletedWithImmutableCriteriaReplayAndScope"
+        }
+      ],
+      "negative": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/DemandIT.java",
+          "class": "vn.utbridora.auth.DemandIT",
+          "method": "activeCooperationLocksReopenRestoreAndDraftEdits"
+        }
+      ],
+      "boundary": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/DemandIT.java",
+          "class": "vn.utbridora.auth.DemandIT",
+          "method": "reopensReadyAndRestoresDeletedWithImmutableCriteriaReplayAndScope"
+        }
+      ],
+      "race": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/DemandIT.java",
+          "class": "vn.utbridora.auth.DemandIT",
+          "method": "concurrentUpdatesAllowOnlyOneWinner"
+        }
+      ]
+    },
+    "limits": []
+  },
+  "T5:DEM-14": {
+    "actorGuard": "ENTERPRISE owner, current organization/membership, version, cooperation/downstream locks; immutable revision history",
+    "implementation": [
+      "src/main/java/vn/utbridora/auth/modules/cooperation/application/DemandService.java"
+    ],
+    "apiOrPort": [
+      "src/main/java/vn/utbridora/auth/modules/cooperation/api/DemandController.java"
+    ],
+    "schema": [
+      "src/main/resources/db/migration/base/V16__demand_drafts.sql"
+    ],
+    "tests": {
+      "positive": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/DemandIT.java",
+          "class": "vn.utbridora.auth.DemandIT",
+          "method": "reopensReadyAndRestoresDeletedWithImmutableCriteriaReplayAndScope"
+        }
+      ],
+      "negative": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/DemandIT.java",
+          "class": "vn.utbridora.auth.DemandIT",
+          "method": "activeCooperationLocksReopenRestoreAndDraftEdits"
+        }
+      ],
+      "boundary": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/DemandIT.java",
+          "class": "vn.utbridora.auth.DemandIT",
+          "method": "reopensReadyAndRestoresDeletedWithImmutableCriteriaReplayAndScope"
+        }
+      ],
+      "race": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/DemandIT.java",
+          "class": "vn.utbridora.auth.DemandIT",
+          "method": "concurrentUpdatesAllowOnlyOneWinner"
+        }
+      ]
+    },
+    "limits": []
+  },
+  "T5:DEM-15": {
+    "actorGuard": "ENTERPRISE owner, current organization/membership, version, cooperation/downstream locks; immutable revision history",
+    "implementation": [
+      "src/main/java/vn/utbridora/auth/modules/cooperation/application/DemandService.java"
+    ],
+    "apiOrPort": [
+      "src/main/java/vn/utbridora/auth/modules/cooperation/api/DemandController.java"
+    ],
+    "schema": [
+      "src/main/resources/db/migration/base/V16__demand_drafts.sql"
+    ],
+    "tests": {
+      "positive": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/DemandIT.java",
+          "class": "vn.utbridora.auth.DemandIT",
+          "method": "reopensReadyAndRestoresDeletedWithImmutableCriteriaReplayAndScope"
+        }
+      ],
+      "negative": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/DemandIT.java",
+          "class": "vn.utbridora.auth.DemandIT",
+          "method": "activeCooperationLocksReopenRestoreAndDraftEdits"
+        }
+      ],
+      "boundary": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/DemandIT.java",
+          "class": "vn.utbridora.auth.DemandIT",
+          "method": "reopensReadyAndRestoresDeletedWithImmutableCriteriaReplayAndScope"
+        }
+      ],
+      "race": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/DemandIT.java",
+          "class": "vn.utbridora.auth.DemandIT",
+          "method": "concurrentUpdatesAllowOnlyOneWinner"
+        }
+      ]
+    },
+    "limits": []
+  },
+  "T1:R30": {
+    "actorGuard": "Offline explicitly approved exclusive synthetic schema, pinned server UUID,30d since acceptance; audit90d; hold; plan hash; no shared-schema mode",
+    "implementation": [
+      "scripts/ops/handoff.py"
+    ],
+    "apiOrPort": [
+      "scripts/ops/handoff.py"
+    ],
+    "schema": [
+      "src/main/resources/db/migration/base/V1__foundation.sql"
+    ],
+    "tests": {
+      "positive": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/Package9OperationsIT.java",
+          "class": "vn.utbridora.auth.Package9OperationsIT",
+          "method": "dumpAndPrivateFileRecoveryThenDay31And91RetirementWithHoldReplayAndStaleGuards"
+        }
+      ],
+      "negative": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/Package9OperationsIT.java",
+          "class": "vn.utbridora.auth.Package9OperationsIT",
+          "method": "dumpAndPrivateFileRecoveryThenDay31And91RetirementWithHoldReplayAndStaleGuards"
+        }
+      ],
+      "boundary": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/Package9OperationsIT.java",
+          "class": "vn.utbridora.auth.Package9OperationsIT",
+          "method": "dumpAndPrivateFileRecoveryThenDay31And91RetirementWithHoldReplayAndStaleGuards"
+        }
+      ],
+      "race": [
+        {
+          "source": "src/test/java/vn/utbridora/auth/Package9OperationsIT.java",
+          "class": "vn.utbridora.auth.Package9OperationsIT",
+          "method": "dumpAndPrivateFileRecoveryThenDay31And91RetirementWithHoldReplayAndStaleGuards"
+        }
+      ]
+    },
+    "limits": [
+      "Runtime online/mixed-schema retention is intentionally unavailable; off-host copies must be registered; production retention approval remains separate"
+    ]
+  }
+}

@@ -76,6 +76,8 @@ class CorePlatformIT {
 
     @BeforeAll void hash() { passwordHash=encoder.encode(password); }
     @BeforeEach void seed() {
+        jdbc.update("UPDATE one_time_tokens SET claim_id=NULL,generation=NULL");
+        jdbc.update("DELETE FROM invitation_claims");
         SecurityContextHolder.clearContext();
         for(String table:List.of("SPRING_SESSION_ATTRIBUTES","SPRING_SESSION","audit_logs","account_status_history",
                 "one_time_tokens","files","memberships","users","organizations")) jdbc.update("DELETE FROM "+table);

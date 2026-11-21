@@ -6,7 +6,8 @@ import type { PortalPage, PortalSide } from './portal/navigation';
 import type { NotificationStore } from './notifications/useNotifications';
 import { StudentRosterPanel } from './portal/StudentRosterPanel';
 
-export function PortalDashboard({ side, demands, cooperations, verifications, navigate, notifications }: {
+export function PortalDashboard({ side, demands, cooperations, verifications, navigate, notifications, org, viewerId }: {
+  org: string; viewerId: string;
   side: PortalSide; demands: Resource<Demand>; cooperations: Resource<CooperationRecord>;
   verifications: Resource<VerificationRecord>; navigate: (page: PortalPage) => void; notifications?: NotificationStore;
 }) {
@@ -58,6 +59,6 @@ export function PortalDashboard({ side, demands, cooperations, verifications, na
       <button className="secondary" onClick={() => navigate('proposals')}><Icon name="users" />{school ? 'Đề xuất sinh viên' : 'Xem ứng viên được đề xuất'}</button>
       <button className="secondary" onClick={() => navigate('placements')}><Icon name="graduation" />{school ? 'Theo dõi tiếp nhận thực tập' : 'Thực tập & bàn giao'}</button>
     </div></section>
-    {school && <StudentRosterPanel />}
+    {school && <StudentRosterPanel org={org} viewerId={viewerId} />}
   </>;
 }

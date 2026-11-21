@@ -186,10 +186,13 @@ def check_registries(manifest):
     enum=re.sub(r'/\*.*?\*/|//[^\n]*', '', enum, flags=re.S)
     enum_values=set(re.findall(r'\b[A-Z][A-Z_]+\b',enum))
     problems.extend(check_audit_enum(enum_values,audit))
-    if len(perms)!=51 or len({p['code'] for p in perms})!=len(perms):
+    if len(perms)!=52 or len({p['code'] for p in perms})!=len(perms) or 't3:hiring_interest:manage' not in {p['code'] for p in perms}:
         problems.append('duplicate/missing permission')
-    if len(audit)!=93 or len({a['action'] for a in audit})!=len(audit):
+    if len(audit)!=94 or len({a['action'] for a in audit})!=len(audit) or 'HIRING_INTEREST_CHANGED' not in {a['action'] for a in audit}:
         problems.append('duplicate/missing audit action')
+    approved=manifest.get('approvedExtensions',[])
+    if len(approved)!=1 or approved[0].get('rawSha256')!='3baee8e1ee66a98e232e27de894ba674efe6dfed2ec5f6ab3bff30c8ca0e9555' or hashlib.sha256((ROOT/approved[0]['source']).read_bytes()).hexdigest()!=approved[0]['rawSha256']:
+        problems.append('exact user-approved extension missing or changed')
     if any('*' in p['code'] for p in perms) or any('*' in a['action'] for a in audit):
         problems.append('wildcard registry code')
     canonical={p['code'] for p in perms}
@@ -272,6 +275,15 @@ def run(output=None):
         errors=validate_value(bundle,case['schema'],case['value'])
         matches=bool(not errors)==case['valid']
         record(case['id'],[] if matches else ['expected '+('accept' if case['valid'] else 'reject')],case['scope'])
+    # The user approved this exact separate extension, not a rewrite of the frozen pack.
+    hiring={'expectedVersion':0,'expectedCaseVersion':1,'interested':True,'note':None}
+    hiring_cases=[('create',hiring,True),('update',dict(hiring,expectedVersion=3,note='Synthetic interest'),True),
+                  ('negative-version',dict(hiring,expectedVersion=-1),False),('null-flag',dict(hiring,interested=None),False),
+                  ('coerced-version',dict(hiring,expectedVersion='0'),False),('unknown-field',dict(hiring,actorId='untrusted'),False),
+                  ('note-limit',dict(hiring,note='x'*2001),False),('missing-nullable',{k:v for k,v in hiring.items() if k!='note'},False)]
+    for label,value,expected in hiring_cases:
+        valid=not validate_value(bundle,'HiringInterestInput',value)
+        record('HIRING-INTEREST-'+label,[] if valid==expected else ['extension schema acceptance mismatch'],'user-approved-extension-schema')
     passed=sum(x['result']=='PASS' for x in results)
     report=dict(date='2026-11-05',checkedAtUtc=datetime.now(timezone.utc).isoformat(),
                 scope='DEV: schema/static/pure fixture checks; not runtime of new modules or Tester acceptance',

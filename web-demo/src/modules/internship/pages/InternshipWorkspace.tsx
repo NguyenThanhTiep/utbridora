@@ -7,6 +7,7 @@ import type { Cohort, ContextAssignment, InternshipGroup, WorkspaceAssignment, W
 import '../styles.css';
 import { TaskBoard } from './TaskBoard';
 import { MentorInvitationForm } from './MentorInvitations';
+import { CohortCreator, CohortManagement } from './CohortManagement';
 
 type ReadState<T> = { status: 'loading' } | { status: 'ready'; value: T } | { status: 'error'; error: unknown };
 
@@ -99,6 +100,8 @@ function AssignmentWorkspace({ assignment, gateway, reset, initialCaseId }: {
 }) {
   const [state, setState] = useState<ReadState<Cohort[]>>({ status: 'loading' });
   const [cohortId, setCohortId] = useState('');
+  const [revision, setRevision] = useState(0);
+  const changed = (id?: string) => {if (id) setCohortId(id);setRevision(n=>n+1);};
   useEffect(() => {
     const controller = new AbortController();
     void gateway.readCohorts(assignment, controller.signal).then(async value => {
@@ -114,11 +117,12 @@ function AssignmentWorkspace({ assignment, gateway, reset, initialCaseId }: {
       }
     }).catch(error => { if (!controller.signal.aborted) setState({ status: 'error', error }); });
     return () => controller.abort();
-  }, [assignment, gateway, initialCaseId]);
+  }, [assignment, gateway, initialCaseId, revision]);
   const cohort = state.status === 'ready' ? state.value.find(item => item.cohortId === cohortId) : undefined;
   return <section className="panel">
     <div className="section-heading"><div><p className="section-kicker">{assignment.kind === 'HR' ? 'KHÔNG GIAN HR' : 'KHÔNG GIAN MENTOR'}</p>
       <h2>Đợt và nhóm thực tập</h2></div><span className="internship-role"><Icon name="briefcase" size={16} />{assignment.kind === 'HR' ? 'HR' : 'Mentor'}</span></div>
+    {gateway === liveWorkspaceGateway && assignment.kind === 'HR' && <CohortCreator assignment={assignment} changed={changed} denied={reset}/>}
     {state.status === 'loading' ? <LoadingState label="Đang tải đợt thực tập…" />
       : state.status === 'error' ? <Failure error={state.error} retry={reset} />
       : state.value.length === 0 ? <EmptyState icon="calendar" title="Chưa có đợt thực tập" description="Chưa có đợt thực tập trong phạm vi phân công này." />
@@ -127,6 +131,7 @@ function AssignmentWorkspace({ assignment, gateway, reset, initialCaseId }: {
           <option value="">Chọn đợt thực tập…</option>
           {state.value.map(item => <option key={item.cohortId} value={item.cohortId}>{item.code} — {item.name}</option>)}
         </select></div>}
+    {cohort && gateway === liveWorkspaceGateway && assignment.kind === 'HR' && <CohortManagement key={'manage:'+cohort.cohortId+':'+cohort.version} assignment={assignment} cohort={cohort} changed={()=>changed()} denied={reset}/>}
     {cohort && <GroupWorkspace key={cohort.cohortId + ':' + cohort.version} assignment={assignment} cohort={cohort} gateway={gateway} reset={reset} initialCaseId={initialCaseId} />}
   </section>;
 }

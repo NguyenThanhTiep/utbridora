@@ -53,6 +53,14 @@ server:
         secure: ${COOKIE_SECURE:false} # true behind HTTPS in production
         same-site: lax
 app:
+  onboarding:
+    import-worker-enabled: ${STUDENT_IMPORT_WORKER_ENABLED:false}
+    activation-events-enabled: ${STUDENT_ACTIVATION_EVENTS_ENABLED:false}
+    mail:
+      worker-enabled: ${ACTIVATION_MAIL_WORKER_ENABLED:false}
+      dispatch-per-minute: ${MAIL_DISPATCH_PER_MINUTE:60}
+      key-id: ${ACTIVATION_MAIL_KEY_ID:}
+      keys: ${ACTIVATION_MAIL_KEYS:}
   files:
     # Absolute private directory; missing configuration keeps uploads unavailable.
     storage-root: ${FILE_STORAGE_ROOT:}

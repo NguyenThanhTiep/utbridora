@@ -107,6 +107,34 @@ class EnterpriseProposalIT {
         } finally {SecurityContextHolder.clearContext();}
     }
     String listPath() {return "/enterprise/cooperations/"+f.cooperation().cooperationId()+"/proposals";}
+    @Test void replacementAfterDeclineAppendsToTheSameBatchWithoutReusingAnOldStudent() {
+        // Synthetic second identity is a prerequisite. Matching, nomination, decisions and eligibility use owner services.
+        String user=key(),roster=key(),profile=key(),membership=key();
+        jdbc.update("INSERT INTO users(id,email,password_hash,display_name,status,created_at,updated_at) SELECT ?,?,password_hash,'Replacement student','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6) FROM users WHERE id=?",user,user+"@example.test",id(6));
+        jdbc.update("INSERT INTO memberships(id,user_id,organization_id,role,active,created_at) VALUES(?,?,?,'STUDENT',true,UTC_TIMESTAMP(6))",membership,user,id(11));
+        try {
+            jdbc.update("INSERT INTO student_rosters(id,school_org_id,student_code,user_id,full_name,email,major_code,term_code,created_at) SELECT ?,school_org_id,?,?,'Replacement student',?,major_code,term_code,UTC_TIMESTAMP(6) FROM student_rosters WHERE user_id=? LIMIT 1",roster,"REPL-"+user.substring(0,8),user,user+"@example.test",id(6));
+            jdbc.update("INSERT INTO student_term_eligibilities(id,student_roster_id,term_code,user_id,school_org_id,term_id,school_approved,created_at) SELECT ?,?,term_code,?,?,id,false,UTC_TIMESTAMP(6) FROM terms WHERE id=?",key(),roster,user,id(11),id(21));
+            jdbc.update("INSERT INTO student_profiles(id,user_id,skills_declared,profile_version,created_at,updated_at) SELECT ?,?,skills_declared,profile_version,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6) FROM student_profiles WHERE user_id=?",profile,user,id(6));
+            jdbc.update("INSERT INTO student_profile_terms(profile_id,term_id,school_org_id,major_code,availability_declared,created_at,updated_at) SELECT ?,term_id,school_org_id,major_code,availability_declared,created_at,updated_at FROM student_profile_terms WHERE profile_id=(SELECT id FROM student_profiles WHERE user_id=?) AND term_id=?",profile,id(6),id(21));
+            jdbc.update("INSERT INTO student_profile_term_periods SELECT ?,term_id,ordinal,start_date,end_date FROM student_profile_term_periods WHERE profile_id=(SELECT id FROM student_profiles WHERE user_id=?) AND term_id=?",profile,id(6),id(21));
+            jdbc.update("INSERT INTO student_profile_skills SELECT ?,skill_code,ordinal,level,years_practice,source,note FROM student_profile_skills WHERE profile_id=(SELECT id FROM student_profiles WHERE user_id=?)",profile,id(6));
+            eligibility.decide(as(2),key(),new StudentEligibilityService.EligibilityDecision(user,id(21),1L,true,"ELIGIBLE","REPLACEMENT-ELIGIBILITY"));
+            String batch=jdbc.queryForObject("SELECT batch_id FROM proposal_items WHERE id=?",String.class,f.proposalId());
+            var invitation=proposals.invite(as(2),f.proposalId(),key(),new ProposalService.Invite(1L,null));
+            proposals.decide(as(6),invitation.invitationId(),key(),new ProposalService.InvitationDecision("DECLINE",1L,"STUDENT_DECLINED",null));
+            var run=matching.evaluate(as(2),key(),new MatchingService.Evaluate(f.cooperation().demandId(),2L,1L));
+            var request=new ProposalService.Nominate(List.of(user),2L,1L,f.cooperation().version(),1L);String operation=key();
+            var added=proposals.nominate(as(2),run.summary().run().matchRunId(),operation,request);
+            assertEquals(batch,added.batchId());assertEquals(2,added.batchVersion());
+            assertEquals(added,proposals.nominate(as(2),run.summary().run().matchRunId(),operation,request));
+            assertEquals(2,jdbc.queryForObject("SELECT COUNT(*) FROM proposal_items WHERE batch_id=?",Integer.class,batch));
+            assertEquals("DECLINED",jdbc.queryForObject("SELECT state FROM proposal_items WHERE id=?",String.class,f.proposalId()));
+            failure(409,"VERSION_CONFLICT",()->proposals.nominate(as(2),run.summary().run().matchRunId(),key(),request));
+            failure(409,"PROPOSAL_ALREADY_EXISTS",()->proposals.nominate(as(2),run.summary().run().matchRunId(),key(),new ProposalService.Nominate(List.of(id(6)),2L,1L,f.cooperation().version(),2L)));
+            failure(409,"PROPOSAL_ALREADY_EXISTS",()->proposals.nominate(as(2),run.summary().run().matchRunId(),key(),new ProposalService.Nominate(List.of(user),2L,1L,f.cooperation().version(),2L)));
+        } finally {jdbc.update("UPDATE memberships SET active=false WHERE id=?",membership);}
+    }
     String batchPath() {return "/enterprise/cooperations/"+f.cooperation().cooperationId()+"/proposal-batches";}
     String decisionPath() {return "/enterprise/proposals/"+f.proposalId()+"/decision";}
     String profilePath() {return "/enterprise/proposals/"+f.proposalId()+"/profile";}

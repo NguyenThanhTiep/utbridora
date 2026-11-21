@@ -1,0 +1,16 @@
+{
+  "approvedSource": "docs/contracts/extensions/T3_HIRING_INTEREST_PROPOSAL.md",
+  "approvedRawSha256": "3baee8e1ee66a98e232e27de894ba674efe6dfed2ec5f6ab3bff30c8ca0e9555",
+  "approvalRecord": "docs/contracts/extensions/T3_HIRING_INTEREST_APPROVAL.md",
+  "approval": "USER_APPROVED_2026-11-19",
+  "models": [
+    "HiringInterestInput {expectedVersion:int[0..9007199254740990],expectedCaseVersion:V,interested:boolean,note:Text(0..2000)|null}",
+    "HiringInterestDto {caseId:U,interested:boolean,note:Text(0..2000)|null,version:int[0..9007199254740991],updatedAt:I|null}"
+  ],
+  "permission": {"code":"t3:hiring_interest:manage","legacy":"None","action":"Record pre-terminal hiring interest","roles":"ENTERPRISE","scope":"Current HR assignment for exact case; active source; expected versions","grantor":"HR","owner":"T3","catalogImplemented":false,"businessGuardImplemented":null},
+  "audit": {"action":"HIRING_INTEREST_CHANGED","legacy":"None","results":["SUCCESS"],"resourceType":"hiring_interest","metadata":["caseId","enterpriseOrgId","schoolOrgId","termId","version","interested"],"producer":"T3","enumImplemented":false},
+  "operations": [
+    {"method":"GET","path":"/api/v1/t3/cases/{caseId}/hiring-interest","contractSection":"FR-27 approved extension","status":"USER_APPROVED_EXTENSION","requestSchema":null,"responseSchema":"HiringInterestDto"},
+    {"method":"PUT","path":"/api/v1/t3/cases/{caseId}/hiring-interest","contractSection":"FR-27 approved extension","status":"USER_APPROVED_EXTENSION","requestSchema":"HiringInterestInput","responseSchema":"HiringInterestDto"}
+  ]
+}

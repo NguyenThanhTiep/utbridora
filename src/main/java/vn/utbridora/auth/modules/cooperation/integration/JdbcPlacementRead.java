@@ -23,6 +23,16 @@ public class JdbcPlacementRead implements PlacementReadPort {
             instant(r,"approved_at"),instant(r,"cancelled_at"),instant(r,"completed_at"),r.getString("decision_ref")),placement).stream().findFirst();
     }
     @Override @Transactional(propagation=Propagation.MANDATORY)
+    public List<PlacementView> findCurrentForStudent(String student,String school,String enterprise,String term) {
+        return jdbc.queryForList("SELECT id FROM placements WHERE student_user_id=? AND school_org_id=? AND enterprise_org_id=? AND term_id=? AND state IN ('APPROVED','ACTIVE') ORDER BY id",String.class,student,school,enterprise,term)
+            .stream().map(this::readCurrentForGuard).flatMap(Optional::stream).filter(p->Set.of("APPROVED","ACTIVE").contains(p.state())).toList();
+    }
+    @Override @Transactional(propagation=Propagation.MANDATORY)
+    public boolean hasApprovedRelationship(String school,String enterprise,String term) {
+        if(!jdbc.queryForList("SELECT id FROM cooperations WHERE school_org_id=? AND enterprise_org_id=? AND term_id=? AND state='APPROVED' ORDER BY id FOR SHARE",String.class,school,enterprise,term).isEmpty()) return true;
+        return !jdbc.queryForList("SELECT id FROM placements WHERE school_org_id=? AND enterprise_org_id=? AND term_id=? AND approved_at IS NOT NULL AND state IN ('APPROVED','ACTIVE','COMPLETED') ORDER BY id FOR SHARE",String.class,school,enterprise,term).isEmpty();
+    }
+    @Override @Transactional(propagation=Propagation.MANDATORY)
     public boolean authenticDelivery(TrustedEventContext context,PlacementLifecycleEvent event) {
         if(context==null || event==null || !context.producerModule().equals("T5")) return false;
         return jdbc.queryForList("SELECT payload_json FROM placement_outbox WHERE event_id=? AND delivery_operation_id=? AND placement_id=? AND aggregate_version=? AND event_type=?",

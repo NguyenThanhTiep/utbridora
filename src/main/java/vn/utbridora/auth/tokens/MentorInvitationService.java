@@ -13,6 +13,7 @@ import vn.utbridora.auth.user.*;
 import static vn.utbridora.auth.operations.WorkflowValues.*;
 @Service
 public class MentorInvitationService implements MentorActivationPort {
+    @org.springframework.beans.factory.annotation.Autowired private InvitationClaims invitationClaims;
     public record MentorInviteRequest(String email,String enterpriseOrgId,List<String> groupIds,String termId,String decisionRef) {}
     public record MentorInviteDto(String invitationId,long version,String state,String enterpriseOrgId,List<String> groupIds,String termId,Instant expiresAt) {}
     public record Accept(Long expectedVersion) {}
@@ -51,7 +52,7 @@ public class MentorInvitationService implements MentorActivationPort {
             Instant now=clock.instant();
             if(same) enforceReissueLimit(address,now);
             String id=same?pending.id():UUID.randomUUID().toString();
-            if(same && pending.tokenId()!=null) tokens.findById(pending.tokenId()).ifPresent(old->{old.consumedAt=now;tokens.saveAndFlush(old);});
+            if(same && pending.tokenId()!=null) tokens.findById(pending.tokenId()).ifPresent(old->{old.revokedAt=now;old.revocationReason="TOKEN_REPLACED";tokens.saveAndFlush(old);});
             String raw=TokenCodec.generate();var token=new OneTimeToken();token.purpose=OneTimeToken.Purpose.INVITATION;
             token.email=address;token.userId=user==null?null:user.id;token.inviteRole=Role.ENTERPRISE;token.organizationId=scope.enterpriseOrgId();
             token.tokenHash=TokenCodec.hash(raw);token.expiresAt=now.plusSeconds(48*3600);tokens.saveAndFlush(token);
@@ -65,6 +66,7 @@ public class MentorInvitationService implements MentorActivationPort {
                 audit.writeScoped(actor(auth),"INVITATION_CREATED","account_invitation",id,"SUCCESS",scope.enterpriseOrgId(),"MENTOR_INVITATION");
             }
             jdbc.update("UPDATE mentor_onboarding_claims SET invitation_id=?,last_issued_at=? WHERE email=?",id,utc(now),address);
+            if(invitationClaims!=null) {invitationClaims.registerNonRoster(token,"MENTOR",id,scope.schoolOrgId());tokens.flush();}
             org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization(){@Override public void afterCommit(){
                 try {email.invite(address,raw);} catch(org.springframework.mail.MailException unavailable) {
                     org.slf4j.LoggerFactory.getLogger(MentorInvitationService.class).warn("Mentor invitation mail unavailable; authorized reissue remains available");
@@ -75,6 +77,7 @@ public class MentorInvitationService implements MentorActivationPort {
     }
     @Override @Transactional(propagation=Propagation.MANDATORY)
     public void lockPendingIdentity(String address) {
+        if(invitationClaims!=null) invitationClaims.forbidPendingRosterTakeover(address);
         jdbc.update("INSERT INTO mentor_onboarding_claims(email,invitation_id,last_issued_at) VALUES(?,NULL,NULL) ON DUPLICATE KEY UPDATE email=email",address);
         jdbc.queryForList("SELECT email FROM mentor_onboarding_claims WHERE email=? FOR UPDATE",String.class,address);
     }
@@ -124,7 +127,7 @@ public class MentorInvitationService implements MentorActivationPort {
         return ledger.execute(new OperationLedger.Command(actor(auth),before.scope().enterpriseOrgId(),"MENTOR_INVITATION_REVOKE",key,Map.of("id",id,"request",request),200),MentorInviteDto.class,()->{
             var invite=read(id);if(invite.version()!=request.expectedVersion() || invite.state().equals("REVOKED")) throw failure(409,"VERSION_CONFLICT");
             if(invite.state().equals("ACCEPTED")) workspace.revokeAccepted(id,invite.scope());
-            if(invite.tokenId()!=null) tokens.findById(invite.tokenId()).ifPresent(t->t.consumedAt=clock.instant());
+            if(invite.tokenId()!=null) tokens.findById(invite.tokenId()).ifPresent(t->{t.revokedAt=clock.instant();t.revocationReason="INVITATION_REVOKED";});
             jdbc.update("UPDATE mentor_invitation_refs SET state='REVOKED',version=version+1 WHERE id=?",id);audit.writeScoped(actor(auth),"ACCOUNT_INVITATION_REVOKED","account_invitation",id,"SUCCESS",invite.scope().enterpriseOrgId(),request.reasonCode());return read(id).dto();
         },MentorInviteDto::invitationId);
     }

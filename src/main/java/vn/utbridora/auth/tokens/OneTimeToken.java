@@ -17,6 +17,11 @@ public class OneTimeToken {
     @Column(name="organization_id",length=36) public String organizationId;
     @Column(name="expires_at",nullable=false) public Instant expiresAt;
     @Column(name="consumed_at") public Instant consumedAt;
+    @Column(name="claim_id",length=36) public String claimId;
+    @Column(name="generation") public Long generation;
+    @Column(name="issued_at",nullable=false) public Instant issuedAt;
+    @Column(name="revoked_at") public Instant revokedAt;
+    @Column(name="revocation_reason",length=64) public String revocationReason;
     @Column(name="created_at",nullable=false) public Instant createdAt;
-    @PrePersist void onCreate(){ if(id==null) id=UUID.randomUUID().toString(); createdAt=Instant.now(); }
+    @PrePersist void onCreate(){ if(id==null) id=UUID.randomUUID().toString(); createdAt=Instant.now();if(issuedAt==null) issuedAt=createdAt; }
 }

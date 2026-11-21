@@ -39,6 +39,9 @@ final class FileSafetyValidator {
     }
     private record Entry(String name,long size,long crc,int method) {}
     static void archive(byte[] bytes,boolean xlsx,FilePurpose purpose) throws IOException {
+        archive(bytes,xlsx,purpose,purpose==FilePurpose.PLACEMENT_IMPORT?1001:5001);
+    }
+    static void archive(byte[] bytes,boolean xlsx,FilePurpose purpose,int maximumXmlRows) throws IOException {
         // Reject ZIP64, spanning, encryption and special files. These unsupported variants never reach CLEAN.
         int end=-1;
         for(int i=bytes.length-22;i>=Math.max(0,bytes.length-65557);i--)
@@ -86,7 +89,7 @@ final class FileSafetyValidator {
                 if(xlsx) {
                     String lower=name.toLowerCase(Locale.ROOT);
                     if(lower.contains("vbaproject") || lower.startsWith("xl/externallinks/") || lower.startsWith("xl/embeddings/")) invalid();
-                    if(xml) inspectXml(sample,name,purpose);
+                    if(xml) inspectXml(sample,name,maximumXmlRows);
                     workbook|=name.equals("xl/workbook.xml");worksheet|=name.startsWith("xl/worksheets/") && name.endsWith(".xml");
                     contentTypes|=name.equals("[Content_Types].xml");
                 }
@@ -95,7 +98,7 @@ final class FileSafetyValidator {
         } catch(IOException malformed) {invalid();}
         if(seen.size()!=entries.size() || xlsx && (!workbook || !worksheet || !contentTypes || !entries.containsKey("_rels/.rels"))) invalid();
     }
-    private static void inspectXml(byte[] bytes,String name,FilePurpose purpose) {
+    private static void inspectXml(byte[] bytes,String name,int maximumRows) {
         try {
             var factory=XMLInputFactory.newFactory();factory.setProperty(XMLInputFactory.SUPPORT_DTD,false);factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES,false);
             factory.setXMLResolver((publicId,systemId,base,namespace)->{throw new XMLStreamException("External XML disabled");});
@@ -110,7 +113,7 @@ final class FileSafetyValidator {
                         if(name.equals("xl/workbook.xml") && !xml.getLocalName().equals("workbook")) invalid();
                         if(name.startsWith("xl/worksheets/") && !xml.getLocalName().equals("worksheet")) invalid();
                     }
-                    if(name.startsWith("xl/worksheets/") && xml.getLocalName().equals("row") && ++rows>(purpose==FilePurpose.PLACEMENT_IMPORT?1001:5001)) invalid();
+                    if(name.startsWith("xl/worksheets/") && xml.getLocalName().equals("row") && ++rows>maximumRows) invalid();
                     for(int i=0;i<xml.getAttributeCount();i++) {
                         String value=xml.getAttributeValue(i);
                         if(xml.getAttributeLocalName(i).equals("TargetMode") && value.equalsIgnoreCase("External") || value.toLowerCase(Locale.ROOT).contains("macroenabled")) invalid();

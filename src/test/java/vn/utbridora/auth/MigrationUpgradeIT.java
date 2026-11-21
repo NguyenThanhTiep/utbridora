@@ -8,6 +8,20 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.testcontainers.containers.MySQLContainer;
 
 class MigrationUpgradeIT {
+    @Test void onboardingBackfillPreservesTokenHistoryAndQuarantinesAmbiguousPendingIdentities() throws Exception {
+        try(var mysql=new MySQLContainer<>("mysql:8.4")) {
+            mysql.start();Flyway.configure().dataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword()).target("40").load().migrate();
+            var ds=new org.springframework.jdbc.datasource.DriverManagerDataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword());var jdbc=new org.springframework.jdbc.core.JdbcTemplate(ds);
+            for(int i=0;i<4;i++) jdbc.update("INSERT INTO one_time_tokens(id,token_hash,purpose,email,invite_role,expires_at,consumed_at,created_at) VALUES(?,?,'INVITATION',?,'ADMIN',DATE_ADD(UTC_TIMESTAMP(6),INTERVAL 1 HOUR),?,UTC_TIMESTAMP(6))",UUID.randomUUID().toString(),String.format("%064d",i+1),i<2?"ambiguous@example.test":i==2?"single@example.test":"consumed@example.test",i==3?java.sql.Timestamp.from(java.time.Instant.now()):null);
+            var before=jdbc.queryForList("SELECT id,token_hash,purpose,user_id,email,invite_role,organization_id,expires_at,consumed_at,created_at FROM one_time_tokens ORDER BY id");
+            var flyway=Flyway.configure().dataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword()).load();assertEquals(3,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
+            assertEquals(before,jdbc.queryForList("SELECT id,token_hash,purpose,user_id,email,invite_role,organization_id,expires_at,consumed_at,created_at FROM one_time_tokens ORDER BY id"));
+            assertEquals("REVIEW_REQUIRED",jdbc.queryForObject("SELECT claim_state FROM invitation_claims WHERE email_canonical='ambiguous@example.test'",String.class));
+            assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM one_time_tokens WHERE email='ambiguous@example.test' AND claim_id IS NOT NULL",Integer.class));
+            assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM one_time_tokens WHERE email='single@example.test' AND claim_id IS NOT NULL AND generation=1 AND issued_at=created_at",Integer.class));
+            assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM invitation_claims WHERE email_canonical='consumed@example.test'",Integer.class));
+        }
+    }
     @Test void privateFileUpgradePreservesLegacyMetadataBindingsAndScanState() throws Exception {
         try(var mysql=new MySQLContainer<>("mysql:8.4").withPassword(UUID.randomUUID().toString())) {
             mysql.start();
@@ -20,7 +34,7 @@ class MigrationUpgradeIT {
                 s.executeUpdate("INSERT INTO files(id,owner_user_id,storage_key,original_name,content_type,size_bytes,sha256,classification,scan_status,created_at) VALUES (UUID(),'"+user+"','legacy-pending-key','pending.pdf','application/pdf',8,REPEAT('b',64),'PRIVATE','PENDING',UTC_TIMESTAMP(6)),(UUID(),'"+user+"','legacy-rejected-key','rejected.pdf','application/pdf',8,REPEAT('c',64),'PRIVATE','REJECTED',UTC_TIMESTAMP(6))");
             }
             var flyway=Flyway.configure().dataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword()).load();
-            assertEquals(12,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
+            assertEquals(15,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
             try(Connection c=DriverManager.getConnection(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword());Statement s=c.createStatement()) {
                 try(ResultSet r=s.executeQuery("SELECT f.owner_user_id,f.storage_key,f.scan_status,b.resource_id,b.purpose FROM files f JOIN file_bindings b ON b.file_id=f.id WHERE f.id='"+file+"'")) {
                     assertTrue(r.next());assertEquals(user,r.getString(1));assertEquals("legacy-storage-key",r.getString(2));assertEquals("CLEAN",r.getString(3));assertEquals(user,r.getString(4));assertEquals("CV",r.getString(5));assertFalse(r.next());
@@ -71,7 +85,7 @@ class MigrationUpgradeIT {
             }
             Flyway flyway=Flyway.configure().dataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword()).load();
             // V3-V7, shared ledger, T5 terms, T2 relationship and profile schemas.
-            assertEquals(37,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
+            assertEquals(40,flyway.migrate().migrationsExecuted);flyway.validate();assertEquals(0,flyway.migrate().migrationsExecuted);
             try(Connection c=DriverManager.getConnection(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword());Statement s=c.createStatement()) {
                 try(ResultSet r=s.executeQuery("SELECT email FROM users WHERE id='"+user+"'")) {assertTrue(r.next());assertEquals("upgrade@example.test",r.getString(1));}
                 assertThrows(SQLException.class,()->s.executeUpdate("INSERT INTO memberships (id,user_id,role,active,created_at) VALUES ('"+UUID.randomUUID()+"','"+user+"','ADMIN',1,UTC_TIMESTAMP(6))"));
@@ -92,7 +106,7 @@ class MigrationUpgradeIT {
                 s.executeUpdate("INSERT INTO student_profile_skills(profile_id,skill_code,ordinal,level,years_practice,source) VALUES('"+profile+"','JAVA',0,3,1.50,'SELF_DECLARED')");
             }
             var flyway=Flyway.configure().dataSource(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword()).load();
-            assertEquals(7,flyway.migrate().migrationsExecuted);flyway.validate();
+            assertEquals(10,flyway.migrate().migrationsExecuted);flyway.validate();
             try(var c=DriverManager.getConnection(mysql.getJdbcUrl(),mysql.getUsername(),mysql.getPassword());var s=c.createStatement()) {
                 try(var rows=s.executeQuery("SELECT years_practice FROM student_profile_skills WHERE profile_id='"+profile+"'")) {assertTrue(rows.next());assertEquals(0,new java.math.BigDecimal("1.50").compareTo(rows.getBigDecimal(1)));}
                 String exact="1000.12345678901234567890123456789";

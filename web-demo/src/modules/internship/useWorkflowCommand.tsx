@@ -36,6 +36,11 @@ export function useWorkflowCommand(contextId: string | undefined, denied: () => 
       const item: Pending = { attempt: { path: '/files', method: 'POST', body, key: newIdempotencyKey() }, success: success as (value: unknown) => void };
       saved.current = item; void execute(item);
     },
+    multipart: <T,>(path: string, body: FormData, success: (value: T) => void) => {
+      if (saved.current || active.current) return;
+      const item: Pending = { attempt: { path, method: 'POST', body, key: newIdempotencyKey() }, success: success as (value: unknown) => void };
+      saved.current = item; void execute(item);
+    },
     retry: () => { if (saved.current) void execute(saved.current); }
   };
 }

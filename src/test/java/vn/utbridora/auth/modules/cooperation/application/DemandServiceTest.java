@@ -28,6 +28,8 @@ class DemandServiceTest {
     vn.utbridora.auth.operations.OperationLedger operations;
     @BeforeEach void setup() {
         repository=mock(DemandRepository.class); references=mock(DemandReferencePort.class);
+        lenient().when(repository.lifecycleUnlocked(anyString())).thenReturn(true);
+        lenient().when(repository.draftEditable(anyString())).thenReturn(true);
         policy=mock(AuthorizationPolicy.class); users=mock(UserRepository.class); audit=mock(AuditService.class);
         user=new UserAccount(); user.id=UUID.randomUUID().toString(); user.status=AccountStatus.ACTIVE;
         auth=UsernamePasswordAuthenticationToken.authenticated(new AppPrincipal(user.id,"test@example.test","",0,List.of()),null,List.of());

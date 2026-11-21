@@ -1,0 +1,11 @@
+# Optional reviewed deployment override; this file does not start services by itself.
+# Provide private keys through the deployment environment, never through Git or command output.
+services:
+  backend:
+    environment:
+      STUDENT_IMPORT_WORKER_ENABLED: ${STUDENT_IMPORT_WORKER_ENABLED:-false}
+      STUDENT_ACTIVATION_EVENTS_ENABLED: ${STUDENT_ACTIVATION_EVENTS_ENABLED:-false}
+      ACTIVATION_MAIL_WORKER_ENABLED: ${ACTIVATION_MAIL_WORKER_ENABLED:-false}
+      MAIL_DISPATCH_PER_MINUTE: ${MAIL_DISPATCH_PER_MINUTE:-60}
+      ACTIVATION_MAIL_KEY_ID: ${ACTIVATION_MAIL_KEY_ID:?Supply an active activation mail key ID}
+      ACTIVATION_MAIL_KEYS: ${ACTIVATION_MAIL_KEYS:?Supply the private activation mail keyring}

@@ -107,6 +107,15 @@ public class AuditService {
     }
     /** Technical SYSTEM actor (null user); sanitized verdict is atomic with scan state. */
     @Transactional(propagation=Propagation.MANDATORY)
+    public void workflowFailure(String actor,String action,String id,String org,java.util.Map<String,Object> metadata) {
+        if(!java.util.Set.of("STUDENT_IMPORT_FAILED","ACTIVATION_EMAIL_FAILED").contains(action)) throw new IllegalArgumentException("Unsupported failure audit");
+        var spec=WorkflowAuditRegistry.ACTIONS.get(action);
+        if(!spec.fields().containsAll(metadata.keySet())) throw new IllegalArgumentException("Invalid failure audit metadata");
+        var event=store(actor,action,spec.resourceType(),id,"FAILURE",org,null);
+        event.metadataJson=new tools.jackson.databind.ObjectMapper().writeValueAsString(metadata);flushRequiredAudit();
+    }
+    /** Technical SYSTEM actor (null user); sanitized verdict is atomic with scan state. */
+    @Transactional(propagation=Propagation.MANDATORY)
     public void fileScanCompleted(String id,String org,String status,int attempt,String reason) {
         var event=store(null,"FILE_SCAN_COMPLETED","file",id,status.equals("CLEAN")?"SUCCESS":"FAILURE",org,reason);
         event.metadataJson=new tools.jackson.databind.ObjectMapper().writeValueAsString(java.util.Map.of("scanStatus",status,"attemptNo",attempt,"reasonCode",reason));

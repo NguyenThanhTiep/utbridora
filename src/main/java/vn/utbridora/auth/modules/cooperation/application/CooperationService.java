@@ -148,6 +148,7 @@ public class CooperationService {
         return ledger.execute(new OperationLedger.Command(actor(auth),org,"COOPERATION_REOPEN",key,Map.of("id",id,"request",request),200),CooperationDto.class,()->{
             var c=read(id);if(c.version()!=request.expectedVersion()) throw failure(409,"VERSION_CONFLICT");
             if(!c.state().equals("REJECTED")) throw failure(409,"STATE_CONFLICT");
+            if(!demands.lifecycleUnlocked(c.demandId())) throw failure(409,"DEMAND_LOCKED");
             ready(auth,demands.findLocked(c.demandId(),org).orElseThrow(),"DRAFT");
             jdbc.update("UPDATE cooperations SET state='DRAFT',version=version+1 WHERE id=?",id);
             var result=read(id);history(auth,result,"REOPEN",request);audit.workflow(actor(auth),"COOPERATION_DRAFT_SAVED",id,c.schoolOrgId(),Map.of("operation","REOPEN","version",result.version()));return result;
@@ -183,6 +184,11 @@ public class CooperationService {
         // Parallel list/detail readers must not take Cooperation -> delegation locks while
         // another reader holds delegation and walks the remaining Cooperation rows.
         String lock=org.springframework.transaction.support.TransactionSynchronizationManager.isCurrentTransactionReadOnly()?"":" FOR UPDATE";
+        if(!lock.isEmpty()) {
+            // Demand is the common quota/lifecycle fence. Always acquire it before Cooperation.
+            var parent=jdbc.queryForList("SELECT demand_id FROM cooperations WHERE id=?",String.class,uuid(id));
+            if(!parent.isEmpty()) jdbc.queryForList("SELECT id FROM demands WHERE id=? FOR UPDATE",String.class,parent.getFirst());
+        }
         return jdbc.query("SELECT * FROM cooperations WHERE id=?"+lock,(r,n)->new CooperationDto(r.getString("id"),r.getString("demand_id"),r.getString("school_org_id"),r.getString("enterprise_org_id"),r.getString("term_id"),r.getString("state"),r.getInt("submission_no"),r.getLong("version"),r.getTimestamp("submitted_at")==null?null:instant(r,"submitted_at"),r.getString("decision_ref")),uuid(id)).stream().findFirst().orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
     }
     private CooperationDto owned(String id,String org,boolean school) {var c=read(id);if(!org.equals(school?c.schoolOrgId():c.enterpriseOrgId())) throw failure(404,"RESOURCE_NOT_FOUND");return c;}

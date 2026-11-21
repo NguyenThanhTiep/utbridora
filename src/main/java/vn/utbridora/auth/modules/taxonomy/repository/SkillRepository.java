@@ -14,7 +14,8 @@ public interface SkillRepository extends JpaRepository<Skill,String> {
     @EntityGraph(attributePaths={"category","parentSkill"})
     @Query("select s from Skill s where (:includeDeprecated=true or s.status=:activeStatus) " +
         "and (:query is null or lower(s.skillCode) like concat('%',:query,'%') " +
-        "or s.normalizedName like concat('%',:query,'%')) order by s.createdAt desc, s.id asc")
+        "or s.normalizedName like concat('%',:query,'%') " +
+        "or exists (select a.id from SkillAlias a where a.skill=s and a.normalizedAlias=:query)) order by s.createdAt desc, s.id asc")
     Page<Skill> findCatalog(@Param("query") String query,@Param("includeDeprecated") boolean includeDeprecated,
                             @Param("activeStatus") SkillStatus activeStatus,
                             Pageable pageable);
