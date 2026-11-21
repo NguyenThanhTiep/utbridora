@@ -1,3 +1,4 @@
+import { expectSignedIn, openWorkspacePage } from './helpers/workspace';
 import { expect, test, type Page } from '@playwright/test';
 
 test('school publication, student preference and matching use real T5 and T2 providers', async ({ browser }) => {
@@ -11,8 +12,7 @@ test('school publication, student preference and matching use real T5 and T2 pro
     await page.goto('/'); await page.getByLabel('Email', { exact: true }).fill(email);
     await page.getByLabel('Mật khẩu', { exact: true }).fill(process.env.E2E_PASSWORD!);
     await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-    // Giao diện sinh viên đưa "Đăng xuất" vào menu tài khoản trên thanh trên cùng; vai trò khác giữ nút ở thanh bên.
-    await expect(page.getByRole('button', { name: 'Đăng xuất', exact: true }).or(page.getByRole('button', { name: 'Mở menu tài khoản', exact: true })).first()).toBeVisible();
+    await expectSignedIn(page);
   }
   function localTime(date: Date) { return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16); }
   let original: { profileVersion: number; profile: Record<string, unknown> } | null = null;
@@ -27,7 +27,7 @@ test('school publication, student preference and matching use real T5 and T2 pro
   }
   try {
     await login(school, 'school@example.test'); await login(student, 'student@example.test');
-    await school.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Duyệt hợp tác', exact: true }).click();
+    await openWorkspacePage(school, 'Duyệt hợp tác');
     await school.getByLabel('Nhà trường đang làm việc', { exact: true }).selectOption('00000000-0000-4000-8000-000000000011');
     const cooperationPanel = school.locator('section.panel').filter({ has: school.getByRole('heading', { name: 'Đề nghị hợp tác', exact: true }) });
     let positionInList = -1;
@@ -46,7 +46,7 @@ test('school publication, student preference and matching use real T5 and T2 pro
     await cooperationPanel.getByRole('button', { name: `Xem nội dung đề nghị ${positionInList + 1}`, exact: true }).click();
     const detailResponse = await detailLoaded;
     expect(detailResponse.ok(), await detailResponse.text()).toBeTruthy();
-    await school.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Đề xuất sinh viên', exact: true }).click();
+    await openWorkspacePage(school, 'Đề xuất sinh viên');
     await school.getByLabel('Hợp tác đang xem', { exact: true }).selectOption(coop);
     await school.getByLabel('Thời điểm công bố', { exact: true }).fill(localTime(new Date(Date.now() - 3600000)));
     await school.getByLabel('Thời điểm đóng', { exact: true }).fill(localTime(new Date(Date.now() + 86400000)));

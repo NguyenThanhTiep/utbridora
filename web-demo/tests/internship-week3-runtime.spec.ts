@@ -1,3 +1,4 @@
+import { signOutFromAccountMenu } from './helpers/workspace';
 import { test, expect, type Browser, type Page } from '@playwright/test';
 
 // Real Spring/CSRF/JDBC/MySQL and private T1 storage from T309WorkflowBrowserIT.
@@ -138,7 +139,7 @@ test('T3-09 real backend: outsider reads denied and HR cannot mutate review UI',
     const latest = (await history.json()).content[0];
     const hiddenReview = await outsider.page.request.get('/api/v1/t3/submissions/' + latest.submissionId + '/reviews'); expect(hiddenReview.status()).toBe(404);
     await expect(hr.page.getByRole('region', { name: 'Bài nộp và trao đổi' }).getByRole('button', { name: /^Gửi/ })).toHaveCount(0);
-    await hr.page.getByRole('button', { name: 'Đăng xuất', exact: true }).click(); await expect(hr.page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible();
+    await signOutFromAccountMenu(hr.page); await expect(hr.page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible();
     await expect(hr.page.getByRole('link', { name: 'Mở URL bản v1' })).toHaveCount(0);
   } finally { await outsider.context.close(); await hr.context.close(); }
 });

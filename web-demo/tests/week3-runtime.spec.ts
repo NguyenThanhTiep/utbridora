@@ -1,3 +1,4 @@
+import { expectSignedIn, openWorkspacePage } from './helpers/workspace';
 import { expect, test, type Browser, type Page } from '@playwright/test';
 
 test('week 3 school, student and enterprise use real share, decision, Placement and T3 APIs', async ({ browser }) => {
@@ -8,15 +9,13 @@ test('week 3 school, student and enterprise use real share, decision, Placement 
     const context = await browser.newContext(), page = await context.newPage();page.setDefaultTimeout(10000);await page.goto('/');
     await page.getByLabel('Email', {exact: true}).fill(email);await page.getByLabel('Mật khẩu', {exact: true}).fill(process.env.E2E_PASSWORD!);
     await page.getByRole('button', {name: 'Đăng nhập', exact: true}).click();
-    // Giao diện sinh viên đưa "Đăng xuất" vào menu tài khoản trên thanh trên cùng; vai trò khác giữ nút ở thanh bên.
-    await expect(page.getByRole('button', {name: 'Đăng xuất', exact: true}).or(page.getByRole('button', {name: 'Mở menu tài khoản', exact: true})).first()).toBeVisible();return {context, page};
+    await expectSignedIn(page);return {context, page};
   }
   async function openCooperation(page: Page, school: boolean, placements = false) {
     const org = school ? '00000000-0000-4000-8000-000000000011' : '00000000-0000-4000-8000-000000000012';
     const entry = page.getByRole('button', {name: school ? 'Hợp tác doanh nghiệp' : 'Nhu cầu thực tập', exact: true});
     if (await entry.count()) await entry.click();
-    const navigation = page.getByRole('navigation', {name: 'Điều hướng chính'});
-    await navigation.getByRole('button', {name: placements ? 'Tiếp nhận thực tập' : school ? 'Đề xuất sinh viên' : 'Ứng viên đề xuất', exact: true}).click();
+    await openWorkspacePage(page, placements ? 'Tiếp nhận thực tập' : school ? 'Đề xuất sinh viên' : 'Ứng viên đề xuất');
     await page.getByLabel(school ? 'Nhà trường đang làm việc' : 'Doanh nghiệp đang làm việc', {exact: true}).selectOption(org);
     await page.getByLabel('Hợp tác đang xem', {exact: true}).selectOption(coop);
     await expect(page.getByRole('button', {name: placements ? 'Tải lại tiếp nhận thực tập' : school ? 'Tải lại tiến trình' : 'Tải lại ứng viên', exact: true})).toBeVisible();

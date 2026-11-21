@@ -1,3 +1,4 @@
+import { expectSignedIn, openWorkspacePage } from './helpers/workspace';
 import { test, expect, type Browser } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 test('week 2 skills, cooperation, consent and tasks use real authenticated APIs', async ({ browser }) => {
@@ -7,8 +8,7 @@ test('week 2 skills, cooperation, consent and tasks use real authenticated APIs'
     const context = await browser.newContext(), page = await context.newPage(); page.setDefaultTimeout(15000); await page.goto('/');
     await page.getByLabel('Email', { exact: true }).fill(email); await page.getByLabel('Mật khẩu', { exact: true }).fill(process.env.E2E_PASSWORD!);
     await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-    // Giao diện sinh viên đưa "Đăng xuất" vào menu tài khoản trên thanh trên cùng; vai trò khác giữ nút ở thanh bên.
-    await expect(page.getByRole('button', { name: 'Đăng xuất', exact: true }).or(page.getByRole('button', { name: 'Mở menu tài khoản', exact: true })).first()).toBeVisible();
+    await expectSignedIn(page);
     return { context, page };
   };
   const student = await actor(browser, 'student@example.test');
@@ -36,7 +36,7 @@ test('week 2 skills, cooperation, consent and tasks use real authenticated APIs'
   const school = await actor(browser, 'school@example.test');
   const cooperationRead = await school.page.request.get('/api/v1/school/cooperations', { headers: { 'X-Organization-Id': '00000000-0000-4000-8000-000000000011' } });
   expect(cooperationRead.status(), await cooperationRead.text()).toBe(200);
-  await school.page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Duyệt hợp tác', exact: true }).click();
+  await openWorkspacePage(school.page, 'Duyệt hợp tác');
   await school.page.getByRole('button', { name: 'Xem nội dung đề nghị 1', exact: true }).click();
   await expect(school.page.getByRole('heading', { name: 'W2 browser cooperation', exact: true })).toBeVisible();
   await school.page.screenshot({ path: '../target/week2-browser-cooperation.png', fullPage: true });
@@ -45,7 +45,7 @@ test('week 2 skills, cooperation, consent and tasks use real authenticated APIs'
   await expect(school.page.locator('.school-coop-state')).toContainText('Đã duyệt');
   await expect(school.page.getByRole('heading', { name: 'W2 browser cooperation', exact: true })).toBeVisible();
   await school.page.reload();
-  await school.page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Duyệt hợp tác', exact: true }).click();
+  await openWorkspacePage(school.page, 'Duyệt hợp tác');
   await expect(school.page.locator('.school-coop-state')).toContainText('Đã duyệt');
   await expect(school.page.getByRole('heading', { name: 'W2 browser cooperation', exact: true })).toBeVisible(); await school.context.close();
 

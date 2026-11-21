@@ -1,3 +1,4 @@
+import { signOutFromAccountMenu } from './helpers/workspace';
 import { test, expect, type Page } from '@playwright/test';
 import { cohort, emptyGroup, grants, group, groupWithRepeatedMentors, hr, ids, me, mentor } from './fixtures/internship';
 
@@ -187,7 +188,7 @@ test('T3 shell UI mock: enterprise loads current assignments; logout removes it'
   await page.goto('/'); await page.getByRole('button', { name: 'Không gian thực tập', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Chưa có phân công phù hợp' })).toBeVisible();
   expect([...new Set(businessRequests)]).toEqual(['/api/v1/t3/context-assignments/me']);
-  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await signOutFromAccountMenu(page);
   await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Không gian thực tập', exact: true })).toHaveCount(0);
 });

@@ -1,3 +1,4 @@
+import { openWorkspacePage, signOutFromAccountMenu } from './helpers/workspace';
 import { test, expect, type Browser, type Page } from '@playwright/test';
 // No route.fulfill: Spring sessions/CSRF, T3 services and MySQL are provided by T312EvaluationBrowserIT.
 const cfg:Record<string,string>|null=process.env.E2E_T312_CONFIG?JSON.parse(process.env.E2E_T312_CONFIG):null;
@@ -7,7 +8,7 @@ test.beforeEach(()=>test.skip(!cfg,'Requires private T312EvaluationBrowserIT ser
 async function actor(browser:Browser,role:string) {
   const context=await browser.newContext(),page=await context.newPage();await page.goto('/');
   await page.getByLabel('Email',{exact:true}).fill(cfg![role+'Email']);await page.getByLabel('Mật khẩu',{exact:true}).fill(cfg!.password);
-  await page.getByRole('button',{name:'Đăng nhập',exact:true}).click();await page.getByRole('button',{name:'Đánh giá thực tập',exact:true}).click();
+  await page.getByRole('button',{name:'Đăng nhập',exact:true}).click();await openWorkspacePage(page, 'Đánh giá thực tập');
   if(role==='mentor'||role==='hr')await page.getByRole('combobox',{name:'Phân công đánh giá',exact:true}).selectOption(cfg![role+'Context']);
   if(role==='mentor')await page.getByRole('combobox',{name:'Hồ sơ trong nhóm',exact:true}).selectOption(cfg!.caseId);
   if(role==='student'||role==='outsider')await selectCase(page);
@@ -50,7 +51,7 @@ test('T3-12 real four-role rubric submit, triple gate, revision, publication and
     await policy(hr.page,'Quyền xem điểm doanh nghiệp/kỳ',true);await policy(school.page,'Chính sách nhà trường',true);await result(student.page);
     await mentor.page.getByRole('button',{name:'Nộp đánh giá',exact:true}).click();await expect(mentor.page.getByText(/Trạng thái: SUBMITTED/)).toBeVisible();await result(student.page);
     await publish(school.page);await result(student.page,'76.00');
-    await student.page.reload();await student.page.getByRole('button',{name:'Đánh giá thực tập',exact:true}).click();await selectCase(student.page);await result(student.page,'76.00');
+    await student.page.reload();await openWorkspacePage(student.page, 'Đánh giá thực tập');await selectCase(student.page);await result(student.page,'76.00');
     await student.page.screenshot({path:'../target/t3-12-student-visible.png',fullPage:true});
     await revision(school.page);await mentor.page.getByRole('button',{name:'Tải lại đánh giá',exact:true}).click();
     await mentor.page.getByLabel('Điểm Quality (0–5)',{exact:true}).fill('1');await mentor.page.getByLabel('Điểm Process (0–5)',{exact:true}).fill('1');
@@ -84,7 +85,7 @@ test('T3-12 real outsider denied and logout clears private result',async({browse
   try {
     await expect(outsider.page.getByText('Quyền truy cập đã thay đổi. Dữ liệu đánh giá đã được đóng.')).toBeVisible();
     const r=await outsider.page.request.get('/api/v1/t3/me/results?caseId='+cfg!.caseId);expect(r.status()).toBe(404);expect(await r.text()).not.toContain('total100');
-    await result(student.page,'20.00');await student.page.getByRole('button',{name:'Mở menu tài khoản',exact:true}).click();await student.page.getByRole('button',{name:'Đăng xuất',exact:true}).click();await expect(student.page.getByRole('heading',{name:'Đăng nhập',exact:true})).toBeVisible();
+    await result(student.page,'20.00');await signOutFromAccountMenu(student.page);await expect(student.page.getByRole('heading',{name:'Đăng nhập',exact:true})).toBeVisible();
     await expect(student.page.getByRole('region',{name:'Nội dung đánh giá'})).toHaveCount(0);
   } finally {await outsider.context.close();await student.context.close();}
 });

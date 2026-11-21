@@ -141,7 +141,7 @@ class DemandIT {
         assertEquals(d.demandId(),restoredDto.demandId()); assertEquals(3,restoredDto.version()); assertNull(restoredDto.softDeletedAt());
         assertTrue(browser.send("GET",path,null,org,false).body().contains(d.demandId()));
     }
-    @Test void activeCooperationLocksReopenSoftDeleteRestoreAndDraftEdits() throws Exception {
+    @Test void activeCooperationLocksReopenRestoreAndDraftEdits() throws Exception {
         var d=create();String coop=UUID.randomUUID().toString();
         jdbc.update("INSERT INTO cooperations(id,demand_id,school_org_id,enterprise_org_id,term_id,state,created_at) VALUES(?,?,?,?,?,'SUBMITTED',UTC_TIMESTAMP(6))",coop,d.demandId(),school,org,input.termId());
         jdbc.update("UPDATE demands SET state='READY',cooperation_id=? WHERE id=?",coop,d.demandId());

@@ -1,3 +1,4 @@
+import { signOutFromAccountMenu } from './helpers/workspace';
 import { test, expect, type Page } from '@playwright/test';
 const env = (name: string) => { const value = process.env[name]; if (!value) throw new Error('Missing test fixture: ' + name); return value; };
 async function signIn(page: Page, email: string, password = env('E2E_PASSWORD')) {
@@ -19,7 +20,7 @@ test('Quản trị viên đăng nhập, tra cứu tài khoản, audit và đăng
   await page.getByRole('button', { name: 'Nhật ký hệ thống', exact: true }).click();
   await page.getByLabel('Mã sự kiện').fill('LOGIN'); await page.getByRole('button', { name: 'Lọc nhật ký' }).click();
   await expect(page.getByRole('cell', { name: 'LOGIN Thành công', exact: false }).first()).toBeVisible();
-  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await signOutFromAccountMenu(page);
   await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible();
   expect((await page.request.get('/api/v1/auth/me')).status()).toBe(401);
 });
@@ -54,7 +55,7 @@ test('Đặt lại mật khẩu một lần, liên kết cũ bị từ chối', 
   // Tài khoản đặt lại mật khẩu là sinh viên: "Đăng xuất" nằm trong menu tài khoản trên thanh trên cùng.
   const account = page.getByRole('button', { name: 'Mở menu tài khoản', exact: true });
   if (await account.isVisible()) await account.click();
-  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await signOutFromAccountMenu(page);
   await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible();
   await page.goto(path); await page.getByLabel('Mật khẩu mới', { exact: true }).fill(env('E2E_NEW_PASSWORD'));
   await page.getByLabel('Xác nhận mật khẩu', { exact: true }).fill(env('E2E_NEW_PASSWORD'));
