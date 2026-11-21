@@ -219,6 +219,26 @@ class T307SubmissionRuntimeIT {
         assertEquals("IN_PROGRESS",jdbc.queryForObject("SELECT state FROM internship_cases WHERE id=?",String.class,caseId));
     }
 
+    @Test void submissionRequiresStartedCaseEvenWhenPlacementIsActive() throws Exception {
+        var owner=login(student,null);
+        jdbc.update("UPDATE internship_cases SET state='WAITING_START',version=version+1 WHERE id=?",caseId);
+        node(owner.call("POST",submissions(),input(2,"https://example.test/v1"),id(),true),409);
+        assertEquals(0,count("internship_submissions","assignment_id",assignment));
+        assertEquals("IN_PROGRESS",jdbc.queryForObject("SELECT state FROM internship_task_assignments WHERE id=?",String.class,assignment));
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM operation_records WHERE actor_id=? AND operation_code='T3_SUBMISSION_CREATE'",Long.class,student.id));
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE actor_id=? AND action='SUBMISSION_CREATED'",Long.class,student.id));
+    }
+
+    @Test void pendingApprovalPlacementCannotAcceptSubmission() throws Exception {
+        var owner=login(student,null);
+        jdbc.update("UPDATE placements SET state='PENDING_APPROVAL',version=version+1 WHERE id=?",placement);
+        node(owner.call("POST",submissions(),input(2,"https://example.test/v1"),id(),true),409);
+        assertEquals(0,count("internship_submissions","assignment_id",assignment));
+        assertEquals("IN_PROGRESS",jdbc.queryForObject("SELECT state FROM internship_cases WHERE id=?",String.class,caseId));
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM operation_records WHERE actor_id=? AND operation_code='T3_SUBMISSION_CREATE'",Long.class,student.id));
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE actor_id=? AND action='SUBMISSION_CREATED'",Long.class,student.id));
+    }
+
     @Test void explicitHandoverControlsReviewOfHistoricalTasksAndIsLostOnAnotherMove() throws Exception {
         var owner=login(student,null);var humanResources=login(hr,hrGrant);
         String submission=node(owner.call("POST",submissions(),input(2,"https://example.test/v1"),id(),true),201).get("submissionId").asString();
