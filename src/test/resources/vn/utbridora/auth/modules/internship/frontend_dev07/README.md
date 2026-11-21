@@ -1,5 +1,9 @@
 # DEV07 — T3 frontend UI/UX, 19/11/2026
 
+**Cập nhật 21/11:** đã pull `e3de97d`, build và rà soát bộ demo Docker mới.
+Xem [kết quả cuối và lưu ý bàn giao](final_review_20261121/FINAL_REVIEW.md).
+Các mốc chờ ghép/chưa chạy local bên dưới là lịch sử phiên 19–20/11.
+
 Owner: Lại Thái Thuận. Branch: feature/t3-frontend-uiux. Base nhận: 96de49e (DEV05).
 DEV07 đã commit `1243e34`. Ngày 20/11 nhận thêm remote `608e21e` (gồm DEV06
 `314900a`); bản ghép đang chờ người dùng commit/push. QA03/Lead/CI và staging là xác nhận riêng.
