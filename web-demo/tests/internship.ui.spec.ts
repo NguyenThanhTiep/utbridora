@@ -1,20 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
-import { cohort, emptyGroup, grants, group, groupWithRepeatedMentors, hr, ids, me, mentor } from './fixtures/internship';
+import { cohort, emptyGroup, grants, group, groupWithRepeatedMentors, hr, ids, me, mentor, mockContextLabels } from './fixtures/internship';
 
 // UI fixture tests only: these do not establish backend assignment authorization.
 const fixtureUrl = '/tests/fixtures/internship.html';
-async function mockContextLabels(page: Page) {
-  const pageOf = (content: unknown[]) => ({ content, page: 0, size: 100, totalElements: content.length, totalPages: 1 });
-  await page.route('**/api/v1/cooperation/organizations', route => route.fulfill({ json: [
-    { id: ids.enterprise, name: 'Enterprise fixture' }, { id: ids.school, name: 'School fixture' }
-  ] }));
-  await page.route('**/api/v1/enterprise/demand-references/schools?*', route => route.fulfill({
-    json: pageOf([{ schoolOrgId: ids.school, name: 'School fixture' }])
-  }));
-  await page.route('**/api/v1/enterprise/demand-references/terms?*', route => route.fulfill({
-    json: pageOf([{ termId: ids.term, termCode: 'TERM-FIXTURE' }])
-  }));
-}
 async function defaults(page: Page) {
   await page.clock.install({ time: new Date('2026-11-05T10:00:00Z') });
   await page.route('**/api/v1/test-only/t3/assignments', route => route.fulfill({ json: [hr, mentor] }));
