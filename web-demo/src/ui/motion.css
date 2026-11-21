@@ -126,7 +126,7 @@
     box-shadow: 0 0 0 1px #dbe8f180, 0 5px 18px #142f4012;
   }
   #root .workspace .portal-welcome[data-portal-glow] .portal-welcome-icon::after { animation: ui-welcome-halo 1.2s ease-out; }
-  #root .workspace :is(.content, .topbar) button:not(:where(.password-toggle, .nav, .taxonomy-node, .text-button, .btn-icon, .profile-shortcut, .menu-toggle, .role-menu-trigger, .role-menu-item, .admin-metric, .admin-shortcut, .portal-stat, .portal-shortcut, .kpi-card, .matching-counts > button, [role="tab"], :disabled, [aria-disabled="true"])):hover {
+  #root .workspace :is(.content, .topbar) button:not(:where(.password-toggle, .nav, .taxonomy-node, .text-button, .btn-icon, .profile-shortcut, .menu-toggle, .role-menu-trigger, .role-menu-item, .student-report-card, .admin-metric, .admin-shortcut, .portal-stat, .portal-shortcut, .kpi-card, .matching-counts > button, [role="tab"], :disabled, [aria-disabled="true"])):hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px #0b927c18;
   }
@@ -169,7 +169,7 @@
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   #root .workspace :is(.role-menu-trigger, .workspace-account-trigger):not(:disabled):hover::after { animation: action-light-sweep var(--ui-motion-sheen) var(--ui-motion-ease); }
 }
-#root .workspace button:not(:where(.password-toggle, .nav, .taxonomy-node, .text-button, .btn-icon, .profile-shortcut, .menu-toggle, .role-menu-trigger, .role-menu-item, [role="tab"], :disabled, [aria-disabled="true"])):active {
+#root .workspace button:not(:where(.password-toggle, .nav, .taxonomy-node, .text-button, .btn-icon, .profile-shortcut, .menu-toggle, .role-menu-trigger, .role-menu-item, .student-report-card, [role="tab"], :disabled, [aria-disabled="true"])):active {
   transform: translateY(1px);
   box-shadow: none;
 }
