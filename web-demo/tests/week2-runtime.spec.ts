@@ -37,17 +37,27 @@ test('week 2 skills, cooperation, consent and tasks use real authenticated APIs'
   const cooperationRead = await school.page.request.get('/api/v1/school/cooperations', { headers: { 'X-Organization-Id': '00000000-0000-4000-8000-000000000011' } });
   expect(cooperationRead.status(), await cooperationRead.text()).toBe(200);
   await openWorkspacePage(school.page, 'Duyệt hợp tác');
+  const detailRead = school.page.waitForResponse(r => r.request().method() === 'GET'
+    && /\/school\/cooperations\/[^/]+$/.test(new URL(r.url()).pathname));
   await school.page.getByRole('button', { name: 'Xem nội dung đề nghị 1', exact: true }).click();
-  await expect(school.page.getByRole('heading', { name: 'W2 browser cooperation', exact: true })).toBeVisible();
+  const detail = await detailRead;expect(detail.ok()).toBe(true);
+  const cooperationId = (await detail.json()).cooperation.cooperationId as string;
+  const cooperationRow = school.page.getByRole('table', {name: 'Danh sách đề nghị hợp tác', exact: true}).getByRole('row')
+    .filter({has: school.page.locator(`[id="school-cooperation-title-${cooperationId}"]`)});
+  const summary = school.page.locator('.school-coop-summary');
+  await expect(summary.getByRole('heading', { name: 'W2 browser cooperation', exact: true })).toBeVisible();
   await school.page.screenshot({ path: '../target/week2-browser-cooperation.png', fullPage: true });
   await school.page.getByLabel('Căn cứ quyết định', { exact: true }).fill('DEMO-BROWSER-W2');
+  const decision = school.page.waitForResponse(r => r.request().method() === 'PATCH'
+    && r.url().endsWith(`/school/cooperations/${cooperationId}/decision`));
   await school.page.getByRole('button', { name: 'Lưu kết quả xét duyệt', exact: true }).click();
-  await expect(school.page.locator('.school-coop-state')).toContainText('Đã duyệt');
-  await expect(school.page.getByRole('heading', { name: 'W2 browser cooperation', exact: true })).toBeVisible();
+  const approved = await decision;expect(approved.ok()).toBe(true);expect((await approved.json()).state).toBe('APPROVED');
+  await expect(cooperationRow.locator('.school-coop-state')).toContainText('Đã duyệt');
+  await expect(summary.getByRole('heading', { name: 'W2 browser cooperation', exact: true })).toBeVisible();
   await school.page.reload();
   await openWorkspacePage(school.page, 'Duyệt hợp tác');
-  await expect(school.page.locator('.school-coop-state')).toContainText('Đã duyệt');
-  await expect(school.page.getByRole('heading', { name: 'W2 browser cooperation', exact: true })).toBeVisible(); await school.context.close();
+  await expect(cooperationRow.locator('.school-coop-state')).toContainText('Đã duyệt');
+  await expect(cooperationRow.getByRole('heading', { name: 'W2 browser cooperation', exact: true })).toBeVisible(); await school.context.close();
 
   const mentor = await actor(browser, 'mentor@example.test');
   await mentor.page.getByRole('button', { name: 'Không gian thực tập', exact: true }).click();
@@ -57,7 +67,7 @@ test('week 2 skills, cooperation, consent and tasks use real authenticated APIs'
   await mentor.page.getByLabel('Tiêu đề', { exact: true }).fill('W2 browser task');
   await mentor.page.getByLabel('Mô tả', { exact: true }).fill('Assigned through the real Mentor API');
   const due = new Date(Date.now() + 86400000); due.setMinutes(due.getMinutes() - due.getTimezoneOffset());
-  await mentor.page.getByLabel('Hạn hoàn thành', { exact: true }).fill(due.toISOString().slice(0, 16));
+  await mentor.page.getByLabel(/^Hạn hoàn thành/).fill(due.toISOString().slice(0, 16));
   await mentor.page.getByRole('group', { name: 'Hồ sơ được giao', exact: true }).getByRole('checkbox').first().check();
   await mentor.page.getByRole('button', { name: 'Giao nhiệm vụ', exact: true }).click();
   await expect(mentor.page.getByRole('button', { name: 'W2 browser task', exact: true }).first()).toBeVisible();

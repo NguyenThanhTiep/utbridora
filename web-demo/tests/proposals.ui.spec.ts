@@ -397,8 +397,17 @@ test('case deep link opens the exact T3 resource and respects denied reads', asy
 test('HR case deep link selects a current assignment and preserves T3 denial after revocation', async ({ page }) => {
   const caseId = '00000000-0000-4000-8000-000000000099';
   const membership = {role: 'ENTERPRISE', organizationId: 'enterprise-1'};
+  const unexpected: string[] = [];
+  await page.route('**/api/v1/**', r => {
+    unexpected.push(new URL(r.request().url()).pathname);
+    return r.fulfill({status: 401, json: {errorCode: 'SESSION_EXPIRED'}});
+  });
   await page.route('**/api/v1/auth/me', r => r.fulfill({json: {userId: 'hr-1', email: 'hr@example.test', displayName: 'HR', memberships: [membership]}}));
   await page.route('**/api/v1/auth/me/permissions', r => r.fulfill({json: [{...membership, permissions: ['t3:workspace:read']}]}));
+  await page.route('**/api/v1/cooperation/organizations', r => r.fulfill({json: [
+    {id: 'school-1', name: 'Synthetic School', type: 'UNIVERSITY'},
+    {id: 'enterprise-1', name: 'Synthetic Enterprise', type: 'ENTERPRISE'},
+  ]}));
   const assignment = {kind: 'HR', userId: 'hr-1', active: true, version: 1, grantedBy: 'coordinator-1', decisionRef: 'TEST',
     validFrom: '2020-01-01T00:00:00Z', validUntil: '2099-01-01T00:00:00Z',
     scope: {schoolOrgId: 'school-1', enterpriseOrgId: 'enterprise-1', termId: 'term-1', groupId: null, caseId: null}};
@@ -421,6 +430,7 @@ test('HR case deep link selects a current assignment and preserves T3 denial aft
   denied = true;await page.getByRole('button', {name: 'Tải lại hồ sơ thực tập'}).click();
   await expect(page.getByText('Không đọc được hồ sơ thực tập. Kiểm tra phân công và quyền truy cập hiện hành.', {exact: true})).toBeVisible();
   await expect(page.getByText('Trạng thái: Đang thực tập', {exact: true})).toHaveCount(0);
+  expect(unexpected).toEqual([]);
 });
 test('school progress and capacity distinguish acceptance from placement', async ({ page }) => {
   await setup(page);
