@@ -7,7 +7,8 @@ test('week 2 skills, cooperation, consent and tasks use real authenticated APIs'
     const context = await browser.newContext(), page = await context.newPage(); page.setDefaultTimeout(15000); await page.goto('/');
     await page.getByLabel('Email', { exact: true }).fill(email); await page.getByLabel('Mật khẩu', { exact: true }).fill(process.env.E2E_PASSWORD!);
     await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Đăng xuất', exact: true })).toBeVisible();
+    // Giao diện sinh viên đưa "Đăng xuất" vào menu tài khoản trên thanh trên cùng; vai trò khác giữ nút ở thanh bên.
+    await expect(page.getByRole('button', { name: 'Đăng xuất', exact: true }).or(page.getByRole('button', { name: 'Mở menu tài khoản', exact: true })).first()).toBeVisible();
     return { context, page };
   };
   const student = await actor(browser, 'student@example.test');

@@ -84,7 +84,7 @@ test('T3-12 real outsider denied and logout clears private result',async({browse
   try {
     await expect(outsider.page.getByText('Quyền truy cập đã thay đổi. Dữ liệu đánh giá đã được đóng.')).toBeVisible();
     const r=await outsider.page.request.get('/api/v1/t3/me/results?caseId='+cfg!.caseId);expect(r.status()).toBe(404);expect(await r.text()).not.toContain('total100');
-    await result(student.page,'20.00');await student.page.getByRole('button',{name:'Đăng xuất',exact:true}).click();await expect(student.page.getByRole('heading',{name:'Đăng nhập',exact:true})).toBeVisible();
+    await result(student.page,'20.00');await student.page.getByRole('button',{name:'Mở menu tài khoản',exact:true}).click();await student.page.getByRole('button',{name:'Đăng xuất',exact:true}).click();await expect(student.page.getByRole('heading',{name:'Đăng nhập',exact:true})).toBeVisible();
     await expect(student.page.getByRole('region',{name:'Nội dung đánh giá'})).toHaveCount(0);
   } finally {await outsider.context.close();await student.context.close();}
 });

@@ -8,7 +8,8 @@ test('week 3 school, student and enterprise use real share, decision, Placement 
     const context = await browser.newContext(), page = await context.newPage();page.setDefaultTimeout(10000);await page.goto('/');
     await page.getByLabel('Email', {exact: true}).fill(email);await page.getByLabel('Mật khẩu', {exact: true}).fill(process.env.E2E_PASSWORD!);
     await page.getByRole('button', {name: 'Đăng nhập', exact: true}).click();
-    await expect(page.getByRole('button', {name: 'Đăng xuất', exact: true})).toBeVisible();return {context, page};
+    // Giao diện sinh viên đưa "Đăng xuất" vào menu tài khoản trên thanh trên cùng; vai trò khác giữ nút ở thanh bên.
+    await expect(page.getByRole('button', {name: 'Đăng xuất', exact: true}).or(page.getByRole('button', {name: 'Mở menu tài khoản', exact: true})).first()).toBeVisible();return {context, page};
   }
   async function openCooperation(page: Page, school: boolean, placements = false) {
     const org = school ? '00000000-0000-4000-8000-000000000011' : '00000000-0000-4000-8000-000000000012';

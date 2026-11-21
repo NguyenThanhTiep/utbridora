@@ -458,14 +458,16 @@ test('UX UI mock: cơ hội lọc theo kỳ và ngành, xem chi tiết, gửi ng
     return route.fulfill({ status: 201, json: preferences[0] });
   });
   await signIn(page, fixture('E2E_STUDENT_EMAIL'));
+  // Sau đăng nhập sinh viên vào Tổng quan (S01); khối cơ hội ở đó cũng gọi /opportunities (size 25). Chỉ đếm request của S05.
+  const s05Queries = () => listQueries.filter(query => query.get('size') === '20');
   await navigate(page, 'Cơ hội thực tập');
   await expect(page.getByRole('heading', { name: 'Thực tập Java thử nghiệm', exact: true })).toBeVisible();
-  expect(Object.fromEntries(listQueries[0])).toEqual({ termId: TERM_ID, page: '0', size: '20' });
+  expect(Object.fromEntries(s05Queries()[0])).toEqual({ termId: TERM_ID, page: '0', size: '20' });
   await page.getByLabel('Vị trí hoặc doanh nghiệp', { exact: true }).fill('Java');
   await page.getByLabel('Ngành', { exact: true }).selectOption('SE');
   await page.getByRole('button', { name: 'Tìm cơ hội', exact: true }).click();
-  await expect.poll(() => listQueries.length).toBe(2);
-  expect(Object.fromEntries(listQueries[1])).toEqual({ termId: TERM_ID, q: 'Java', majorCode: 'SE', page: '0', size: '20' });
+  await expect.poll(() => s05Queries().length).toBe(2);
+  expect(Object.fromEntries(s05Queries()[1])).toEqual({ termId: TERM_ID, q: 'Java', majorCode: 'SE', page: '0', size: '20' });
   await page.getByRole('button', { name: 'Xem chi tiết', exact: true }).click();
   await expect(page.getByText('Hỗ trợ chi phí đi lại', { exact: true })).toBeVisible();
   await expect(page.getByText('Kỹ thuật phần mềm', { exact: true })).toBeVisible();

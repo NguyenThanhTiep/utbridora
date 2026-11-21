@@ -51,6 +51,9 @@ test('Đặt lại mật khẩu một lần, liên kết cũ bị từ chối', 
   await page.getByRole('button', { name: 'Lưu mật khẩu mới', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible();
   await signIn(page, env('E2E_RESET_EMAIL'), env('E2E_NEW_PASSWORD'));
+  // Tài khoản đặt lại mật khẩu là sinh viên: "Đăng xuất" nằm trong menu tài khoản trên thanh trên cùng.
+  const account = page.getByRole('button', { name: 'Mở menu tài khoản', exact: true });
+  if (await account.isVisible()) await account.click();
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible();
   await page.goto(path); await page.getByLabel('Mật khẩu mới', { exact: true }).fill(env('E2E_NEW_PASSWORD'));

@@ -11,7 +11,8 @@ test('school publication, student preference and matching use real T5 and T2 pro
     await page.goto('/'); await page.getByLabel('Email', { exact: true }).fill(email);
     await page.getByLabel('Mật khẩu', { exact: true }).fill(process.env.E2E_PASSWORD!);
     await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Đăng xuất', exact: true })).toBeVisible();
+    // Giao diện sinh viên đưa "Đăng xuất" vào menu tài khoản trên thanh trên cùng; vai trò khác giữ nút ở thanh bên.
+    await expect(page.getByRole('button', { name: 'Đăng xuất', exact: true }).or(page.getByRole('button', { name: 'Mở menu tài khoản', exact: true })).first()).toBeVisible();
   }
   function localTime(date: Date) { return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16); }
   let original: { profileVersion: number; profile: Record<string, unknown> } | null = null;
