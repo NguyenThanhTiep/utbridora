@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ApiError, type Grant } from '../../../api';
 import { Notice } from '../../../components';
 import { workspacePermission } from '../access';
@@ -6,10 +6,12 @@ import type { CaseRef } from '../cases';
 import { uuidPattern, validVersion } from '../workflow';
 import { workflowRead } from '../workflow-api';
 import { CaseStatus } from './CaseStatus';
+import { ScopeOperations } from './OperationsPage';
+import type { OperationsScope } from '../operations-types';
 
 type Lookup = { caseId: string };
 
-export function SchoolCaseLookup({ grants }: { grants: Grant[] }) {
+export function SchoolCaseLookup({ grants,userId }: { grants: Grant[];userId:string }) {
   const schoolIds = [...new Set(grants.flatMap(grant =>
     grant.role === 'SCHOOL_STAFF' && grant.organizationId && grant.permissions.includes(workspacePermission)
       ? [grant.organizationId] : []))];
@@ -22,17 +24,20 @@ export function SchoolCaseLookup({ grants }: { grants: Grant[] }) {
       onChange={event => setSelectedSchool(event.target.value)}>
       {schoolIds.map(id => <option key={id} value={id}>Trường …{id.slice(-6)}</option>)}
     </select></label></section>}
-    <ScopedLookup key={schoolId} schoolId={schoolId} />
+    <ScopedLookup key={schoolId} schoolId={schoolId} userId={userId} permissions={grants.find(g=>g.role==='SCHOOL_STAFF' && g.organizationId===schoolId && g.permissions.includes(workspacePermission))!.permissions} />
   </div>;
 }
 
-function ScopedLookup({ schoolId }: { schoolId: string }) {
+function ScopedLookup({ schoolId,userId,permissions }: { schoolId: string;userId:string;permissions:string[] }) {
   const [input, setInput] = useState('');
   const [request, setRequest] = useState<Lookup | null>(null);
   const [response, setResponse] = useState<{ request: Lookup; value?: CaseRef; message?: string } | null>(null);
   const result = request && response?.request === request ? response : null;
   const caseId = input.trim().toLowerCase();
   const loading = !!request && !result;
+  const [operations,setOperations]=useState<Lookup|null>(null);
+  const termId=result?.value?.termId;
+  const scope=useMemo<OperationsScope|null>(()=>termId ? {mode:'school',schoolId,termId,userId,permissions} : null,[schoolId,termId,userId,permissions]);
 
   useEffect(() => {
     if (!request) return;
@@ -68,14 +73,16 @@ function ScopedLookup({ schoolId }: { schoolId: string }) {
     {loading && <p role="status">Đang kiểm tra quyền truy cập hồ sơ…</p>}
     {result?.message && <Notice message={result.message} tone="error" />}
     {result?.value && <section className="stack" aria-label="Thông tin hồ sơ">
-      <h2>Trạng thái hồ sơ thực tập</h2>
-      <CaseStatus value={result.value} />
-      <details><summary>Mã vị trí và phạm vi</summary>
+      {operations!==request && <><h2>Trạng thái hồ sơ thực tập</h2>
+      <CaseStatus value={result.value} /></>}
+      {scope && (operations===request ? <ScopeOperations scope={scope} caseId={result.value.caseId} denied={()=>setResponse({request:result.request,message:'Quyền truy cập hồ sơ đã thay đổi.'})}/> :
+        <button onClick={()=>setOperations(request)}>Mở quản lý hồ sơ và kỳ thực tập</button>)}
+      {operations!==request && <details><summary>Mã vị trí và phạm vi</summary>
         <p>Mã tiếp nhận thực tập <code>{result.value.placementId}</code></p>
         <p>Mã trường <code>{result.value.schoolOrgId}</code></p>
         <p>Mã kỳ <code>{result.value.termId}</code></p>
         <p>Phiên bản {result.value.version}</p>
-      </details>
+      </details>}
     </section>}
   </section>;
 }

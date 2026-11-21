@@ -328,7 +328,7 @@ export default function App() {
           : screen === 'audit' ? <AuditViewer />
           : screen === 'delegations' ? <SchoolDelegations key={me.userId} grants={grants} />
           : screen === 'internship-case' ? <CaseEntry key={me.userId + caseId} caseId={caseId} me={me} grants={grants} />
-          : screen === 'school-internship-cases' ? <SchoolCaseLookup key={me.userId} grants={grants} />
+          : screen === 'school-internship-cases' ? <SchoolCaseLookup key={me.userId} grants={grants} userId={me.userId} />
           : screen === 'evaluations' ? <EvaluationsPage key={me.userId} me={me} grants={grants} />
           : screen === 'internship' ? <InternshipWorkspace key={me.userId} me={me} grants={grants} topbarTarget={internshipTopbar}
               section={internshipSection} onKindChange={kind => {

@@ -56,11 +56,11 @@ function EnterpriseOperations({me,grants,denied}:{me:Me;grants:Grant[];denied:()
     {scope && <ScopeOperations key={assignment!.id+':'+assignment!.version} scope={scope} denied={denied}/>}</div>;
 }
 
-function ScopeOperations({scope,denied}:{scope:OperationsScope;denied:()=>void}) {
+export function ScopeOperations({scope,denied,caseId}:{scope:OperationsScope;denied:()=>void;caseId?:string}) {
   const [showEvaluations,setShowEvaluations]=useState(false),[evaluationDenied,setEvaluationDenied]=useState(false);
   return <div className="stack"><Dashboard scope={scope} denied={denied}/>{scope.mode!=='school' && <OperationsCalendar scope={scope} denied={denied}/>}
     {scope.mode==='school' && scope.permissions.includes('t3:enterprise_quality:school:write') && <EnterpriseQualityForm scope={scope} denied={denied}/>}
-    <CaseOperations scope={scope}/>
+    <CaseOperations scope={scope} initialCaseId={caseId} onDenied={caseId ? denied : undefined}/>
     {scope.mode==='school' && <section className="panel stack"><h2>Đánh giá sinh viên trong kỳ</h2><button className="secondary" onClick={()=>{setShowEvaluations(v=>!v);setEvaluationDenied(false);}}>Xem danh sách đánh giá thực tập</button>
       {evaluationDenied && <p role="alert">Chưa có quyền xem điểm trong phạm vi này. Các chức năng vận hành khác vẫn theo quyền riêng.</p>}
       {showEvaluations && <SchoolEvaluations schoolId={scope.schoolId} termId={scope.termId} denied={()=>{setShowEvaluations(false);setEvaluationDenied(true);}}

@@ -29,4 +29,6 @@ Ngày 19/11/2026 · Người bàn giao **Lê Nguyễn Nhật Duy (DEV06)** · Nh
 
 ## Các mục còn chờ backend
 
+**Cập nhật 21/11 trên nhánh tích hợp.** Dashboard theo kỳ, yêu cầu phối hợp, phản hồi doanh nghiệp và đóng Case đã có trong phần vận hành. Từ **Không gian thực tập → Theo dõi hồ sơ thực tập**, nhập mã hồ sơ rồi chọn **Mở quản lý hồ sơ và kỳ thực tập**. Màn dùng trường, kỳ và Case do máy chủ trả về; chức năng ghi phụ thuộc quyền được cấp. Khi tra một hồ sơ khác, dữ liệu của lần tra trước được đóng. Mục **Quản lý thực tập** vẫn cho chọn kỳ trực tiếp. Phần mô tả bên dưới ghi nhận trạng thái ngày 19/11.
+
 T3-UI-06 còn thiếu API cho dashboard/KPI Nhà trường, danh sách toàn bộ Case theo đợt, lịch sử trạng thái Case, đánh giá chất lượng doanh nghiệp, yêu cầu phối hợp và đóng Case thường/sớm. Riêng màn đánh giá của trường hiện đọc được revision/version hiện tại, còn lịch sử đầy đủ cần API cho vai trò School. DEV06 đã ghi route, contract và owner cần phối hợp ở mục 4 của bản rà soát. [Bản rà soát DEV06](../reviews/DEV06_FRONTEND_P0_HANDOFF_20261119.md) · [Phân công frontend T3](../plans/T3_FRONTEND_UIUX_PLAN_2026-11-19.md)

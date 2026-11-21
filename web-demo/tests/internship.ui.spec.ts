@@ -332,6 +332,26 @@ test('DEV06 School can open internship Case lookup and denied lookup clears prio
   await field.fill(ids.case);
   await page.getByRole('button', { name: 'Tra cứu hồ sơ', exact: true }).click();
   await expect(page.getByText('Trạng thái: Đang thực tập')).toBeVisible();
+  let revoked = false;
+  await page.route('**/api/v1/t3/school/dashboard?*', route => {
+    expect(new URL(route.request().url()).searchParams.get('termId')).toBe(ids.term);
+    return revoked ? route.fulfill({ status:403,json:{errorCode:'FORBIDDEN'} }) : route.fulfill({json:{
+      cohortCount:1,caseCount:1,groupCount:1,mentorCount:1,lateAssignmentCount:0,pendingReviewCount:0,
+      assignmentCounts:['NEW','IN_PROGRESS','SUBMITTED','REVISION_REQUIRED','COMPLETED'].map(state=>({state,count:0}))
+    }});
+  });
+  await page.route('**/api/v1/t3/**', route => {
+    if (/\/cases\/[^/?]+$|\/dashboard\?/.test(route.request().url())) return route.fallback();
+    return route.fulfill({json:emptyPage});
+  });
+  await page.getByRole('button',{name:'Mở quản lý hồ sơ và kỳ thực tập'}).click();
+  await expect(page.getByRole('heading',{name:'Hồ sơ …'+ids.case.slice(-6)})).toBeVisible();
+  await page.setViewportSize({width:375,height:812});
+  await expect(page.getByRole('button',{name:'Tải lại tiến độ'})).toBeVisible();
+  revoked=true;
+  await page.getByRole('button',{name:'Tải lại tiến độ'}).click();
+  await expect(page.getByText('Quyền truy cập hồ sơ đã thay đổi.')).toBeVisible();
+  await expect(page.getByRole('region',{name:'Thông tin hồ sơ'})).toHaveCount(0);
   await field.fill(ids.other);
   await expect(page.getByText('Mã hồ sơ: ' + ids.case)).toHaveCount(0);
   await page.getByRole('button', { name: 'Tra cứu hồ sơ', exact: true }).click();
