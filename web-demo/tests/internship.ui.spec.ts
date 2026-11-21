@@ -341,6 +341,7 @@ test('DEV06 School can open internship Case lookup and denied lookup clears prio
     }});
   });
   await page.route('**/api/v1/t3/**', route => {
+    if (route.request().url().endsWith('/hiring-interest')) return route.fulfill({json:{caseId:ids.case,interested:false,note:null,version:0}});
     if (/\/cases\/[^/?]+$|\/dashboard\?/.test(route.request().url())) return route.fallback();
     return route.fulfill({json:emptyPage});
   });
