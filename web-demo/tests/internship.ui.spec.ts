@@ -220,6 +220,8 @@ test('DEV05 HR creates cohort, intakes Placement and confirms a versioned groupi
   await page.goto('/');
   await page.getByRole('button', { name: 'Không gian thực tập', exact: true }).click();
   await page.getByRole('button', { name: 'Đợt thực tập', exact: true }).click();
+  await expect(page.locator('.topbar .t3-context-bar')).toBeVisible();
+  await expect(page.locator('.content .t3-context-bar')).toHaveCount(0);
   await page.getByLabel('Phân công đang làm việc').selectOption(ids.hr);
   await page.getByLabel('Mã đợt').fill('TEST-T3');
   await page.getByLabel('Tên đợt').fill('Đợt thử DEV05');
@@ -240,6 +242,14 @@ test('DEV05 HR creates cohort, intakes Placement and confirms a versioned groupi
   expect(requests.map(item => item.body.expectedCohortVersion)).toEqual([undefined, undefined, 2, 2]);
   expect(requests[1].body).toMatchObject({ expectedVersion: cohort.version, placementIds: [ids.other], previewId: null, fileHash: null });
   expect(requests.every(item => item.context === ids.hr && !!item.key)).toBe(true);
+  await page.setViewportSize({ width: 1440, height: 500 });
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(120);
+  await expect.poll(() => page.locator('.t3-topbar').evaluate(node => Math.round(node.getBoundingClientRect().top))).toBe(0);
+  await page.setViewportSize({ width: 390, height: 500 });
+  await expect(page.locator('.t3-topbar')).toHaveClass(/is-condensed/);
+  await expect.poll(() => page.locator('.t3-topbar').evaluate(node => node.getBoundingClientRect().height)).toBeLessThan(100);
+  await expect.poll(() => page.locator('.t3-topbar').evaluate(node => Math.round(node.getBoundingClientRect().top))).toBe(0);
 });
 
 test('DEV05 HR adds and moves a Case using current Case and group versions', async ({ page }) => {

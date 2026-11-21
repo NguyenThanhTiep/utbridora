@@ -86,6 +86,8 @@ export default function App() {
   const [sessionMessage, setSessionMessage] = useState('');
   const [context, setContext] = useState('0');
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [internshipTopbar, setInternshipTopbar] = useState<HTMLDivElement | null>(null);
+  const [internshipScrolled, setInternshipScrolled] = useState(false);
   const [internshipMenuOpen, setInternshipMenuOpen] = useState(false);
   const [internshipSection, setInternshipSection] = useState<HrSection>('overview');
   const [internshipKind, setInternshipKind] = useState<'HR' | 'MENTOR' | null>(null);
@@ -172,6 +174,13 @@ export default function App() {
     media.addEventListener('change', changed);
     return () => media.removeEventListener('change', changed);
   }, []);
+  useEffect(() => {
+    if (screen !== 'internship') return;
+    const update = () => setInternshipScrolled(previous => window.scrollY > 120 ? true : window.scrollY < 16 ? false : previous);
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    return () => window.removeEventListener('scroll', update);
+  }, [screen]);
   useEffect(() => {
     if (!mobileOpen) return;
     const oldOverflow = document.body.style.overflow;
@@ -295,12 +304,16 @@ export default function App() {
     </aside>
 
     <div className="workspace-main">
-      <header className="topbar">
-        <div className="topbar-location"><button className="btn-icon menu-toggle" ref={menuButton} aria-label="Mở menu điều hướng"
+      <header className={'topbar' + (screen === 'internship' ? ' t3-topbar' + (internshipScrolled ? ' is-condensed' : '') : '')}>
+        {screen === 'internship' ? <><button className="btn-icon menu-toggle t3-topbar-menu" ref={menuButton}
+          aria-label="Mở menu điều hướng" aria-expanded={mobileOpen} aria-controls="main-navigation"
+          onClick={() => setMobileOpen(previous => !previous)}><Icon name="menu" /></button>
+          <div className="t3-topbar-slot" ref={setInternshipTopbar} /></>
+        : <><div className="topbar-location"><button className="btn-icon menu-toggle" ref={menuButton} aria-label="Mở menu điều hướng"
           aria-expanded={mobileOpen} aria-controls="main-navigation" onClick={() => setMobileOpen(previous => !previous)}><Icon name="menu" /></button>
           <span className="topbar-home"><Icon name="layers" size={17} />Không gian làm việc</span><Icon name="chevron-right" size={14} /><span className="topbar-current">{screenTitle}</span></div>
         <div className="topbar-right"><span className="topbar-date"><Icon name="calendar" size={16} />{new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Bangkok' }).format(new Date())}</span>
-          <button className="profile-shortcut" aria-label="Mở tài khoản của tôi" onClick={() => navigate('account')}><span className="avatar avatar-small">{initials(me.displayName)}</span><span>{me.displayName}</span><Icon name="chevron-down" size={14} /></button></div>
+          <button className="profile-shortcut" aria-label="Mở tài khoản của tôi" onClick={() => navigate('account')}><span className="avatar avatar-small">{initials(me.displayName)}</span><span>{me.displayName}</span><Icon name="chevron-down" size={14} /></button></div></>}
       </header>
       <main className="content" id="main-content">
         <div className="page-header"><div><p className="section-kicker">{screen === 'account' || screen === 'mentor-invitations' ? 'KHÔNG GIAN CÁ NHÂN' : screen === 'demands' || screen === 'school' ? current.title : internshipActive || screen === 'internship-operations' || screen === 'evaluations' || screen === 'internship-case' ? 'QUẢN LÝ THỰC TẬP' : current.group === 'student' ? 'KHÔNG GIAN SINH VIÊN' : 'QUẢN TRỊ NỀN TẢNG'}</p>
@@ -317,7 +330,7 @@ export default function App() {
           : screen === 'internship-case' ? <CaseEntry key={me.userId + caseId} caseId={caseId} me={me} grants={grants} />
           : screen === 'school-internship-cases' ? <SchoolCaseLookup key={me.userId} grants={grants} />
           : screen === 'evaluations' ? <EvaluationsPage key={me.userId} me={me} grants={grants} />
-          : screen === 'internship' ? <InternshipWorkspace key={me.userId} me={me} grants={grants}
+          : screen === 'internship' ? <InternshipWorkspace key={me.userId} me={me} grants={grants} topbarTarget={internshipTopbar}
               section={internshipSection} onKindChange={kind => {
                 setInternshipKind(kind);
                 if (kind === 'MENTOR') setInternshipSection('overview');

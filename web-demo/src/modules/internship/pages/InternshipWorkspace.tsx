@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ApiError, type Grant, type Me } from '../../../api';
+import { createPortal } from 'react-dom';
+import { api, ApiError, type Grant, type Me } from '../../../api';
 import { EmptyState, Icon, LoadingState, Notice } from '../../../components';
 import { cohortInScope, groupInScope, usableAssignments } from '../access';
 import { liveWorkspaceGateway, WorkspacePendingError, WorkspaceScopeError } from '../api';
@@ -11,6 +12,8 @@ import { HrCohortManagement, HrCreateCohort } from './HrCohortActions';
 import { HrGroupManagement } from './HrGroupManagement';
 import { HrCaseTracker } from './HrCaseTracker';
 import { CohortManagement } from './CohortManagement';
+import { readAll } from '../../cooperation/portal/data';
+import '../../cooperation/portal/context-bar.css';
 
 type ReadState<T> = { status: 'loading' } | { status: 'ready'; value: T } | { status: 'error'; error: unknown };
 
@@ -32,10 +35,11 @@ function Failure({ error, retry }: { error: unknown; retry: () => void }) {
 
 type CaseTarget = { caseId: string; schoolOrgId: string; enterpriseOrgId: string; termId: string; contextAssignmentId?: string };
 export type HrSection = 'overview' | 'cohorts' | 'groups' | 'mentors' | 'cases';
-export function InternshipWorkspace({ me, grants, gateway = liveWorkspaceGateway, initialCase, section, onKindChange, onSectionChange }: {
+export function InternshipWorkspace({ me, grants, gateway = liveWorkspaceGateway, initialCase, section, onKindChange, onSectionChange, topbarTarget }: {
   me: Me; grants: Grant[]; gateway?: WorkspaceGateway; initialCase?: CaseTarget; section?: HrSection;
   onKindChange?: (kind: 'HR' | 'MENTOR' | null) => void;
   onSectionChange?: (section: HrSection) => void;
+  topbarTarget?: HTMLElement | null;
 }) {
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<ReadState<ContextAssignment[]>>({ status: 'loading' });
@@ -68,38 +72,89 @@ export function InternshipWorkspace({ me, grants, gateway = liveWorkspaceGateway
   }, [state, now]);
   const assignments = state.status === 'ready' ? usableAssignments(state.value, me, grants, now) : [];
   const selected = assignments.find(item => item.id === selectedId);
+  const organizationIds = [...new Set(assignments.flatMap(item =>
+    [item.scope.enterpriseOrgId, item.scope.schoolOrgId].filter((id): id is string => !!id)))].sort();
+  const organizationKey = `${me.userId}:${organizationIds.join(',')}`;
+  const [organizationState, setOrganizationState] = useState<{ key: string; names: Record<string, string> }>({ key: '', names: {} });
+  useEffect(() => {
+    if (gateway !== liveWorkspaceGateway || organizationIds.length === 0) return;
+    const controller = new AbortController();
+    void api<{ id: string; name: string }[]>('/cooperation/organizations', { signal: controller.signal })
+      .then(rows => {
+        if (!controller.signal.aborted) setOrganizationState({ key: organizationKey, names: Object.fromEntries(
+          rows.filter(row => organizationIds.includes(row.id) && row.name?.trim()).map(row => [row.id, row.name])) });
+      }).catch(() => {
+        if (!controller.signal.aborted) setOrganizationState({ key: organizationKey, names: {} });
+      });
+    return () => controller.abort();
+  }, [gateway, organizationKey]);
+  const organizationNames = organizationState.key === organizationKey ? organizationState.names : {};
+  const scopeKey = selected ? `${selected.scope.enterpriseOrgId}:${selected.scope.schoolOrgId}:${selected.scope.termId}` : '';
+  const [scopeState, setScopeState] = useState<{ key: string; school: string; term: string }>({ key: '', school: '', term: '' });
+  useEffect(() => {
+    if (gateway !== liveWorkspaceGateway || !selected?.scope.enterpriseOrgId) return;
+    const controller = new AbortController();
+    const enterpriseId = selected.scope.enterpriseOrgId;
+    const schoolId = selected.scope.schoolOrgId;
+    const termId = selected.scope.termId;
+    void Promise.allSettled([
+      readAll<{ schoolOrgId: string; name: string }>(enterpriseId, '/enterprise/demand-references/schools', controller.signal),
+      readAll<{ termId: string; termCode: string }>(enterpriseId,
+        '/enterprise/demand-references/terms?' + new URLSearchParams({ schoolOrgId: schoolId }), controller.signal)
+    ]).then(([schoolsResult, termsResult]) => {
+      if (controller.signal.aborted) return;
+      const school = schoolsResult.status === 'fulfilled'
+        ? schoolsResult.value.find(item => item.schoolOrgId === schoolId)?.name || '' : '';
+      const term = termsResult.status === 'fulfilled'
+        ? termsResult.value.find(item => item.termId === termId)?.termCode || '' : '';
+      setScopeState({ key: scopeKey, school, term });
+    });
+    return () => controller.abort();
+  }, [gateway, scopeKey]);
+  const scopeLabels = scopeState.key === scopeKey ? scopeState : { school: '', term: '' };
   useEffect(() => { onKindChange?.(selected?.kind || null); }, [selected?.kind]);
   const refresh = () => { setSelectedId(''); setState({ status: 'loading' }); setAttempt(value => value + 1); };
 
-  return <div className="internship-workspace stack">
-    <section className="panel">
-      <div className="section-heading"><div><p className="section-kicker">HR / MENTOR</p><h2>Nhóm thực tập được phân công</h2>
-        <p className="section-description">Chọn phân công để xem đúng doanh nghiệp, trường và kỳ thực tập.</p></div>
-        <button className="secondary" disabled={state.status === 'loading'} onClick={refresh}><Icon name="refresh" size={16} />Tải lại phân công</button>
-      </div>
-      {state.status === 'loading' ? <LoadingState label="Đang xác nhận phân công…" />
-        : state.status === 'error' ? <Failure error={state.error} retry={refresh} />
-        : assignments.length === 0 ? <EmptyState icon="lock" title="Chưa có phân công phù hợp"
-          description="Bạn cần phân công HR hoặc Mentor còn hiệu lực và quyền xem trong đúng phạm vi. Liên hệ người phụ trách để kiểm tra." />
-        : <div className="internship-context">
-          <label htmlFor="internship-assignment">Phân công đang làm việc</label>
-          <select id="internship-assignment" value={selected?.id || ''} onChange={event => setSelectedId(event.target.value)}>
-            <option value="">Chọn phân công…</option>
+  const contextBar = <section className="portal-context-bar t3-context-bar" aria-label="Phạm vi thực tập">
+      <div className="portal-organization-field"><span className="portal-organization-icon"><Icon name="briefcase" size={22} /></span>
+        <div className="portal-context-select"><label htmlFor="internship-assignment">Phân công đang làm việc</label>
+          <select id="internship-assignment" value={selected?.id || ''} disabled={state.status !== 'ready' || !assignments.length}
+            onChange={event => setSelectedId(event.target.value)}>
+            <option value="">{state.status === 'loading' ? 'Đang tải phân công…' : 'Chọn phân công…'}</option>
             {assignments.map(item => <option key={item.id} value={item.id}>
-              {item.kind === 'HR' ? 'HR' : 'Mentor'} · DN {item.scope.enterpriseOrgId ? '…' + item.scope.enterpriseOrgId.slice(-8) : 'chưa xác định'} · Trường …{item.scope.schoolOrgId.slice(-8)} · Kỳ …{item.scope.termId.slice(-8)}
+              {item.kind === 'HR' ? 'HR' : 'Mentor'} · {item.scope.enterpriseOrgId
+                ? organizationNames[item.scope.enterpriseOrgId] || 'DN …' + item.scope.enterpriseOrgId.slice(-8)
+                : 'Chưa xác định DN'} · Trường …{item.scope.schoolOrgId.slice(-8)} · Kỳ …{item.scope.termId.slice(-8)}
               {item.scope.groupId ? ' · Nhóm …' + item.scope.groupId.slice(-8) : ''}
             </option>)}
-          </select>
-          {selected && <details className="internship-scope-details"><summary>Xem phạm vi phân công</summary>
-            <dl className="internship-scope" aria-label="Phạm vi phân công đã chọn">
-            <div><dt>Mã doanh nghiệp</dt><dd>{selected.scope.enterpriseOrgId}</dd></div>
-            <div><dt>Mã trường</dt><dd>{selected.scope.schoolOrgId}</dd></div>
-            <div><dt>Mã kỳ thực tập</dt><dd>{selected.scope.termId}</dd></div>
-            {selected.scope.groupId && <div><dt>Mã nhóm được giao</dt><dd>{selected.scope.groupId}</dd></div>}
-          </dl></details>}
-          {!selected && <p className="muted">Chưa chọn phạm vi. Dữ liệu nhóm sẽ xuất hiện sau khi bạn chọn phân công.</p>}
-        </div>}
-    </section>
+          </select></div></div>
+      <div className="notification-scope t3-context-scope"><div className="notification-scope-fields">
+        <div><span className="t3-context-label">Trường theo dõi</span><span className="t3-context-value" title={selected?.scope.schoolOrgId}>
+          {selected ? scopeLabels.school || organizationNames[selected.scope.schoolOrgId] || 'Trường …' + selected.scope.schoolOrgId.slice(-8) : 'Chọn phân công'}</span></div>
+        <div><span className="t3-context-label">Kỳ theo dõi</span><span className="t3-context-value" title={selected?.scope.termId}>
+          {selected ? scopeLabels.term || 'Kỳ …' + selected.scope.termId.slice(-8) : 'Chọn phân công'}</span></div>
+      </div></div>
+      <div className="portal-context-actions t3-context-actions">
+        <button type="button" className="secondary" disabled={state.status === 'loading'} onClick={refresh}>
+          <Icon name="refresh" size={16} />Tải lại phân công</button>
+        <span className="portal-role"><span>{selected?.kind === 'HR' ? 'HR' : selected?.kind === 'MENTOR' ? 'MT' : 'T3'}</span>
+          {selected?.kind === 'HR' ? 'Nhân sự' : selected?.kind === 'MENTOR' ? 'Người hướng dẫn' : 'Thực tập'}</span>
+      </div>
+      {selected && <details className="internship-scope-details t3-context-details"><summary>Xem phạm vi phân công</summary>
+        <dl className="internship-scope" aria-label="Phạm vi phân công đã chọn">
+          <div><dt>Mã doanh nghiệp</dt><dd>{selected.scope.enterpriseOrgId}</dd></div>
+          <div><dt>Mã trường</dt><dd>{selected.scope.schoolOrgId}</dd></div>
+          <div><dt>Mã kỳ thực tập</dt><dd>{selected.scope.termId}</dd></div>
+          {selected.scope.groupId && <div><dt>Mã nhóm được giao</dt><dd>{selected.scope.groupId}</dd></div>}
+        </dl></details>}
+      {state.status === 'loading' ? <div className="t3-context-feedback"><LoadingState label="Đang xác nhận phân công…" /></div>
+        : state.status === 'error' ? <div className="t3-context-feedback"><Failure error={state.error} retry={refresh} /></div>
+        : assignments.length === 0 ? <div className="t3-context-feedback"><EmptyState icon="lock" title="Chưa có phân công phù hợp"
+          description="Bạn cần phân công HR hoặc Mentor còn hiệu lực và quyền xem trong đúng phạm vi. Liên hệ người phụ trách để kiểm tra." /></div>
+        : !selected ? <p className="t3-context-feedback muted">Chọn phân công để xem dữ liệu thực tập trong đúng phạm vi.</p> : null}
+    </section>;
+  return <div className="internship-workspace stack">
+    {topbarTarget === undefined ? contextBar : topbarTarget ? createPortal(contextBar, topbarTarget) : null}
     {selected && <AssignmentWorkspace key={selected.id + ':' + selected.version + ':' + attempt}
       assignment={selected} gateway={gateway} reset={refresh} initialCaseId={initialCase?.caseId} onSectionChange={onSectionChange}
       section={selected.kind === 'HR' ? section || 'all' : 'all'} />}

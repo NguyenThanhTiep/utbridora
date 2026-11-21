@@ -1,6 +1,18 @@
 .internship-workspace .section-heading { flex-wrap: wrap; }
-.internship-workspace { max-width: 1280px; margin-inline: auto; }
+.internship-workspace { min-width: 0; }
 .internship-workspace > .panel { padding: 22px 28px; }
+.topbar.t3-topbar { position: sticky; top: 0; z-index: 25; height: auto; min-height: 78px; padding: 0; align-items: stretch; box-shadow: 0 3px 14px rgba(20, 47, 64, .08); }
+.t3-topbar-slot { flex: 1; min-width: 0; }
+.t3-topbar-slot .t3-context-bar { border: 0; border-radius: 0; box-shadow: none; padding: 16px 34px; }
+.t3-context-bar { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.4fr) max-content; --ink: #142f40; --muted: #64788a; --line: #e3eaf2; font-size: 14px; }
+.t3-context-label { display: block; margin: 0 0 8px; font-size: 12px; line-height: 18px; font-weight: 500; color: #64788a; }
+.t3-context-value { display: block; width: 100%; height: 48px; min-width: 0; padding: 11px 14px; border: 1px solid #e3eaf2; border-radius: 12px; color: #526b7a; background: #f5f7fa; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.t3-context-actions > button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 48px; min-height: 48px; margin: 0; padding: 0 14px; border: 1px solid #e3eaf2; border-radius: 12px; background: #fff; color: #142f40; white-space: nowrap; }
+.t3-context-actions > button:hover:not(:disabled) { border-color: #b8dacf; background: #f3faf7; color: #087463; }
+.t3-context-details, .t3-context-feedback { grid-column: 1 / -1; min-width: 0; }
+.t3-context-bar .t3-context-details { border-top: 1px solid #e3eaf2; padding-top: 14px; }
+.t3-context-feedback { margin: 0; }
+.t3-context-feedback .empty-state, .t3-context-feedback .loading-state { margin: 0; }
 .internship-scope-details { padding: 8px 0 0; color: var(--muted); }
 .internship-scope-details summary { cursor: pointer; width: fit-content; font-size: var(--text-sm); font-weight: 600; }
 .hr-workspace { display: grid; gap: 20px; min-width: 0; }
@@ -56,13 +68,30 @@
 .internship-facts dt { color: var(--muted); font-size: var(--text-sm); }
 .internship-facts dd { margin: 4px 0 0; font-size: 24px; font-weight: 700; color: var(--ink); }
 .internship-feedback code { overflow-wrap: anywhere; }
+@media (max-width: 900px) {
+  .topbar.t3-topbar { position: sticky; }
+  .t3-topbar-menu { position: absolute; top: 16px; left: 14px; z-index: 1; }
+  .t3-topbar-slot .t3-context-bar { padding: 64px 16px 16px; }
+}
 @media (max-width: 600px) {
+  .t3-topbar.is-condensed .t3-context-bar { padding: 10px 12px 10px 58px; }
+  .t3-topbar.is-condensed .t3-topbar-menu { top: 12px; left: 12px; }
+  .t3-topbar.is-condensed .portal-organization-icon,
+  .t3-topbar.is-condensed .portal-context-select label,
+  .t3-topbar.is-condensed .t3-context-scope,
+  .t3-topbar.is-condensed .t3-context-actions,
+  .t3-topbar.is-condensed .t3-context-details,
+  .t3-topbar.is-condensed .t3-context-feedback { display: none; }
+  .t3-topbar.is-condensed .portal-context-select select { height: 44px; }
+  .t3-context-actions > button { width: 100%; }
+  .t3-context-bar .portal-role { justify-self: end; }
   .internship-workspace .panel { padding: 18px; }
   .internship-workspace .section-heading > button { width: 100%; }
   .hr-overview { padding: 20px; }
   .hr-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hr-overview-actions .button-row button { width: 100%; justify-content: flex-start; }
 }
+@media (max-width: 360px) { .t3-context-bar .portal-role { justify-self: start; } }
 .t3-workflow { min-width: 0; overflow-wrap: anywhere; }
 .t3-workflow fieldset { min-width: 0; display: grid; gap: 12px; }
 .t3-workflow textarea { min-height: 96px; width: 100%; box-sizing: border-box; }
