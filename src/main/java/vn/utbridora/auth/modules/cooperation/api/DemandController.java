@@ -29,4 +29,14 @@ public class DemandController {
             @RequestParam(defaultValue="25") int size) {
         return service.list(authentication,org,termId,state,includeDeleted,page,size);
     }
+    @PatchMapping("/{id}/reopen")
+    public DemandDto reopen(Authentication auth,@RequestHeader("X-Organization-Id") String org,@PathVariable String id,
+            @RequestHeader("Idempotency-Key") String key,@RequestBody String body) {
+        return service.lifecycle(auth,org,id,key,DemandJson.rawRequest(body,DemandLifecycle.class),false);
+    }
+    @PatchMapping("/{id}/restore")
+    public DemandDto restore(Authentication auth,@RequestHeader("X-Organization-Id") String org,@PathVariable String id,
+            @RequestHeader("Idempotency-Key") String key,@RequestBody String body) {
+        return service.lifecycle(auth,org,id,key,DemandJson.rawRequest(body,DemandLifecycle.class),true);
+    }
 }

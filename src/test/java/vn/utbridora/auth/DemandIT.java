@@ -97,6 +97,38 @@ class DemandIT {
         assertEquals(snapshot,jdbc.queryForObject("SELECT snapshot_json FROM demand_revisions WHERE demand_id=? AND version=1",String.class,d.demandId()));
         assertEquals(2,jdbc.queryForObject("SELECT count(*) FROM demand_revisions WHERE demand_id=?",Integer.class,d.demandId()));
     }
+    @Test void reopensReadyAndRestoresDeletedWithImmutableCriteriaReplayAndScope() throws Exception {
+        var d=create();
+        String original=jdbc.queryForObject("SELECT snapshot_json FROM demand_revisions WHERE demand_id=? AND version=1",String.class,d.demandId());
+        jdbc.update("UPDATE demands SET state='READY' WHERE id=?",d.demandId());
+        String route=path+"/"+d.demandId()+"/reopen";
+        var body=Map.of("expectedVersion",1,"reasonCode","ENTERPRISE_REOPENED");
+        var first=browser.send("PATCH",route,body,org,true);assertEquals(200,first.statusCode(),first.body());
+        assertEquals(first.body(),browser.send("PATCH",route,body,org,true).body());
+        var reopened=DemandJson.read(first.body(),DemandDto.class);assertEquals(2,reopened.version());assertEquals(1,reopened.criteriaVersion());assertEquals("DRAFT",reopened.state());
+        assertEquals(original,jdbc.queryForObject("SELECT snapshot_json FROM demand_revisions WHERE demand_id=? AND version=1",String.class,d.demandId()));
+        browser.key=UUID.randomUUID().toString();assertEquals(409,browser.send("PATCH",route,body,org,true).statusCode());
+        assertEquals(403,browser.send("PATCH",route,Map.of("expectedVersion",2,"reasonCode","ENTERPRISE_REOPENED"),other,true).statusCode());
+        jdbc.update("UPDATE demands SET soft_deleted_at=UTC_TIMESTAMP(6) WHERE id=?",d.demandId());
+        var restored=browser.send("PATCH",path+"/"+d.demandId()+"/restore",Map.of("expectedVersion",2,"reasonCode","ENTERPRISE_RESTORED"),org,true);
+        assertEquals(200,restored.statusCode(),restored.body());assertNull(DemandJson.read(restored.body(),DemandDto.class).softDeletedAt());
+        assertEquals(3,DemandJson.read(restored.body(),DemandDto.class).version());
+        assertEquals(2,jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE resource_id=? AND reason_code IN ('DEMAND_REOPEN','DEMAND_RESTORE')",Integer.class,d.demandId()));
+        assertEquals(403,browser.send("PATCH",route,body,org,false).statusCode());
+        assertEquals(400,browser.send("PATCH",route,Map.of("expectedVersion",3),org,true).statusCode());
+    }
+    @Test void activeCooperationLocksReopenRestoreAndDraftEdits() throws Exception {
+        var d=create();String coop=UUID.randomUUID().toString();
+        jdbc.update("INSERT INTO cooperations(id,demand_id,school_org_id,enterprise_org_id,term_id,state,created_at) VALUES(?,?,?,?,?,'SUBMITTED',UTC_TIMESTAMP(6))",coop,d.demandId(),school,org,input.termId());
+        jdbc.update("UPDATE demands SET state='READY',cooperation_id=? WHERE id=?",coop,d.demandId());
+        var payload=Map.of("expectedVersion",1,"reasonCode","ENTERPRISE_REOPENED");
+        assertEquals(409,browser.send("PATCH",path+"/"+d.demandId()+"/reopen",payload,org,true).statusCode());
+        jdbc.update("UPDATE demands SET state='DRAFT' WHERE id=?",d.demandId());
+        assertEquals(409,browser.send("PATCH",path+"/"+d.demandId(),new UpdateDemand(1L,input),org,true).statusCode());
+        jdbc.update("UPDATE demands SET soft_deleted_at=UTC_TIMESTAMP(6) WHERE id=?",d.demandId());
+        assertEquals(409,browser.send("PATCH",path+"/"+d.demandId()+"/restore",payload,org,true).statusCode());
+        assertEquals(1,jdbc.queryForObject("SELECT version FROM demands WHERE id=?",Integer.class,d.demandId()));
+    }
     @Test void replayDoesNotDuplicateAndChangedPayloadConflicts() throws Exception {
         var d=create(); assertEquals(d,create());
         var changed=new DemandInput(school,input.termId(),"Different",5,input.description(),null,null,input.deadline(),input.required(),List.of(),input.academicCatalogVersion(),input.taxonomyVersion());

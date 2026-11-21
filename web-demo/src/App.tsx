@@ -7,6 +7,7 @@ import type { HrSection } from './modules/internship/pages/InternshipWorkspace';
 import { CaseEntry } from './modules/internship/pages/CaseEntry';
 import { EvaluationsPage } from './modules/internship/pages/EvaluationsPage';
 import { SchoolCaseLookup } from './modules/internship/pages/SchoolCaseLookup';
+import { OperationsPage } from './modules/internship/pages/OperationsPage';
 import { canDiscoverWorkspace } from './modules/internship/access';
 
 import { studentGrants } from './modules/student/access';
@@ -26,6 +27,7 @@ import { SchoolDelegations } from './modules/delegations/SchoolDelegations';
 
 const screens = [
   { id: 'evaluations', title: 'Đánh giá thực tập', description: 'Chấm rubric, công bố và xem kết quả theo quyền được phân công.', icon: 'graduation', permission: null },
+  { id: 'internship-operations', title: 'Quản lý thực tập', description: 'Tiến độ, phối hợp và tổng kết thực tập theo phạm vi.', icon: 'briefcase', permission: null },
   { id: 'internship-case', title: 'Hồ sơ thực tập', description: 'Hồ sơ trong phạm vi được phân công.', icon: 'briefcase', permission: null },
   { id: 'school-internship-cases', title: 'Theo dõi hồ sơ thực tập', description: 'Tra cứu trạng thái hồ sơ trong phạm vi nhà trường được ủy quyền.', icon: 'briefcase', permission: null },
   { id: 'school', title: 'Hợp tác doanh nghiệp', description: 'Không gian phối hợp thực tập dành cho nhà trường.', icon: 'building', permission: null },
@@ -56,7 +58,7 @@ const internshipSections: { id: HrSection; label: string; icon: string }[] = [
   { id: 'groups', label: 'Nhóm thực tập', icon: 'users' },
   { id: 'mentors', label: 'Người hướng dẫn', icon: 'user' }
 ];
-const utilityScreens = ['account', 'mentor-invitations', 'internship', 'evaluations', 'school-internship-cases', 'demands', 'school', 'taxonomy'];
+const utilityScreens = ['account', 'mentor-invitations', 'internship', 'internship-operations', 'evaluations', 'school-internship-cases', 'demands', 'school', 'taxonomy'];
 function initials(name: string) {
   const words = name.trim().split(/\s+/);
   return (words.length > 1 ? words[0][0] + words[words.length - 1][0] : words[0]?.slice(0, 2) || 'UB').toUpperCase();
@@ -102,6 +104,7 @@ export default function App() {
   const menus = screens.filter(item => item.id === 'internship-case' ? !!caseId
     : item.id === 'school-internship-cases' ? schoolCaseAccess
     : item.id === 'internship' ? enterpriseInternship || schoolGradeAccess || schoolCaseAccess
+    : item.id === 'internship-operations' ? grants.some(grant => ['SCHOOL_STAFF','ENTERPRISE'].includes(grant.role) && !!grant.organizationId && grant.permissions.includes('t3:workspace:read'))
     : item.id === 'evaluations' ? grants.some(grant => ['SCHOOL_STAFF','ENTERPRISE','STUDENT'].includes(grant.role) && !!grant.organizationId)
     : item.id === 'school' ? grants.some(grant => grant.role === 'SCHOOL_STAFF' && !!grant.organizationId)
     : item.id === 'demands' ? grants.some(canAuthorDemands)
@@ -300,7 +303,7 @@ export default function App() {
           <button className="profile-shortcut" aria-label="Mở tài khoản của tôi" onClick={() => navigate('account')}><span className="avatar avatar-small">{initials(me.displayName)}</span><span>{me.displayName}</span><Icon name="chevron-down" size={14} /></button></div>
       </header>
       <main className="content" id="main-content">
-        <div className="page-header"><div><p className="section-kicker">{screen === 'account' || screen === 'mentor-invitations' ? 'KHÔNG GIAN CÁ NHÂN' : screen === 'demands' || screen === 'school' ? current.title : internshipActive || screen === 'evaluations' || screen === 'internship-case' ? 'QUẢN LÝ THỰC TẬP' : current.group === 'student' ? 'KHÔNG GIAN SINH VIÊN' : 'QUẢN TRỊ NỀN TẢNG'}</p>
+        <div className="page-header"><div><p className="section-kicker">{screen === 'account' || screen === 'mentor-invitations' ? 'KHÔNG GIAN CÁ NHÂN' : screen === 'demands' || screen === 'school' ? current.title : internshipActive || screen === 'internship-operations' || screen === 'evaluations' || screen === 'internship-case' ? 'QUẢN LÝ THỰC TẬP' : current.group === 'student' ? 'KHÔNG GIAN SINH VIÊN' : 'QUẢN TRỊ NỀN TẢNG'}</p>
           <h1 ref={heading} tabIndex={-1}>{screenTitle}</h1><p className="page-description">{current.description}</p></div>
           <span className="workspace-label"><span className="live-dot" />UT.Bridora</span></div>
         <Notice message={action.message} tone={action.error ? 'error' : 'info'} />
@@ -319,6 +322,7 @@ export default function App() {
                 setInternshipKind(kind);
                 if (kind === 'MENTOR') setInternshipSection('overview');
               }} onSectionChange={next => { setInternshipSection(next); setInternshipMenuOpen(true); }} />
+          : screen === 'internship-operations' ? <OperationsPage key={me.userId} me={me} grants={grants} />
           : screen === 'student-overview' ? <StudentOverviewPage me={me} schools={schools} openProfile={() => navigate('student-profile')} />
           : screen === 'student-profile' ? <MyProfilePage me={me} schools={schools} />
           : screen === 'student-capability' ? <CapabilityPage key={me.userId} me={me} schools={schools} />

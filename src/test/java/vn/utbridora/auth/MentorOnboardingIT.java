@@ -73,7 +73,7 @@ class MentorOnboardingIT {
         org.springframework.test.util.ReflectionTestUtils.setField(invitations,"clock",java.time.Clock.systemUTC());
         SecurityContextHolder.clearContext();RequestContextHolder.resetRequestAttributes();
     }
-    @Test void samePendingMentorClaimRotatesOnlyAfterCooldownAndCannotTakeOverAnotherScope() {
+    @Test void samePendingMentorClaimRotatesOnlyAfterCooldownAndCannotTakeOverAnotherScope() throws Exception {
         hrContext();var hr=core.currentSubject(id(4)).orElseThrow();String group=jdbc.queryForObject("SELECT id FROM internship_groups ORDER BY id LIMIT 1",String.class);
         var input=new MentorInvitationService.MentorInviteRequest("rotate-mentor@example.test",id(12),List.of(group),id(21),"DEMO-ROTATE");String key=UUID.randomUUID().toString();
         var issued=invitations.issue(hr,key,input);String old=jdbc.queryForObject("SELECT token_id FROM mentor_invitation_refs WHERE id=?",String.class,issued.invitationId());
@@ -84,11 +84,16 @@ class MentorOnboardingIT {
         var rotated=invitations.issue(hr,UUID.randomUUID().toString(),input);
         assertEquals(issued.invitationId(),rotated.invitationId());assertEquals("ACCOUNT_PENDING",rotated.state());assertEquals(2,rotated.version());
         assertNotEquals(old,jdbc.queryForObject("SELECT token_id FROM mentor_invitation_refs WHERE id=?",String.class,issued.invitationId()));
-        assertNotNull(jdbc.queryForObject("SELECT consumed_at FROM one_time_tokens WHERE id=?",java.sql.Timestamp.class,old));
-        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM one_time_tokens WHERE email=? AND consumed_at IS NULL",Integer.class,input.email()));
+        assertNull(jdbc.queryForObject("SELECT consumed_at FROM one_time_tokens WHERE id=?",java.sql.Timestamp.class,old));
+        assertNotNull(jdbc.queryForObject("SELECT revoked_at FROM one_time_tokens WHERE id=?",java.sql.Timestamp.class,old));
+        assertEquals("TOKEN_REPLACED",jdbc.queryForObject("SELECT revocation_reason FROM one_time_tokens WHERE id=?",String.class,old));
+        String oldHash=jdbc.queryForObject("SELECT token_hash FROM one_time_tokens WHERE id=?",String.class,old);
+        String oldRaw=tokenFromDedicatedMailbox(oldHash);
+        assertEquals("TOKEN_REVOKED",assertThrows(vn.utbridora.auth.operations.OperationFailure.class,()->accounts.acceptInvitationV11(oldRaw,"Rejected replaced Mentor","Synthetic-mentor-password-789",UUID.randomUUID().toString())).code);
+        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM one_time_tokens WHERE email=? AND consumed_at IS NULL AND revoked_at IS NULL",Integer.class,input.email()));
         String other=UUID.randomUUID().toString();jdbc.update("INSERT INTO internship_groups(id,cohort_id,code,version) SELECT ?,cohort_id,?,1 FROM internship_groups WHERE id=?",other,"OTHER-"+other,group);
         var review=invitations.issue(hr,UUID.randomUUID().toString(),new MentorInvitationService.MentorInviteRequest(input.email(),id(12),List.of(other),id(21),"DEMO-OTHER-CONTEXT"));
-        assertEquals("REVIEW_REQUIRED",review.state());assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM one_time_tokens WHERE email=? AND consumed_at IS NULL",Integer.class,input.email()));
+        assertEquals("REVIEW_REQUIRED",review.state());assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM one_time_tokens WHERE email=? AND consumed_at IS NULL AND revoked_at IS NULL",Integer.class,input.email()));
     }
     @Test void threeManualReissuesPerRollingDayAreEnforcedAcrossKeys() {
         hrContext();var hr=core.currentSubject(id(4)).orElseThrow();String group=jdbc.queryForObject("SELECT id FROM internship_groups ORDER BY id LIMIT 1",String.class);
@@ -154,7 +159,7 @@ class MentorOnboardingIT {
             java.util.Collections.sort(codes);assertEquals(List.of(202,429),codes);
         }
         assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM mentor_manual_reissues WHERE email=?",Integer.class,input.email()));
-        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM one_time_tokens WHERE email=? AND consumed_at IS NULL",Integer.class,input.email()));
+        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM one_time_tokens WHERE email=? AND consumed_at IS NULL AND revoked_at IS NULL",Integer.class,input.email()));
     }
 
     @Test void sameEmailDoesNotTakeOverAnUnboundPendingIdentity() {
@@ -200,7 +205,7 @@ class MentorOnboardingIT {
             });
         }
         assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM users WHERE email=?",Integer.class,input.email()));
-        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM one_time_tokens WHERE email=? AND consumed_at IS NULL",Integer.class,input.email()));
+        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM one_time_tokens WHERE email=? AND consumed_at IS NULL AND revoked_at IS NULL",Integer.class,input.email()));
         assertEquals("ACCOUNT_PENDING",jdbc.queryForObject("SELECT state FROM mentor_invitation_refs WHERE id=?",String.class,issued.invitationId()));
     }
 }

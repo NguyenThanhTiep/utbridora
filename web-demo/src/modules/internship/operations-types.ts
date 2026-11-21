@@ -1,0 +1,11 @@
+export type CaseRef = { caseId: string; placementId: string; studentUserId: string; schoolOrgId: string; enterpriseOrgId: string; termId: string; state: 'WAITING_START'|'IN_PROGRESS'|'COMPLETED'|'TERMINATED'|'CANCELLED'; version: number };
+export type Summary = {cohortCount:number;caseCount:number;groupCount:number;mentorCount:number;assignmentCounts:{state:string;count:number}[];lateAssignmentCount:number;pendingReviewCount:number};
+export type CalendarEvent = {taskId:string;assignmentId:string|null;title:string;dueAt:string;state:string|null};
+export type QualityTemplate = {templateId:string;version:number;criteria:{code:string;label:string}[]};
+export type QualityInput = {enterpriseOrgId:string;termId:string;templateId:string;templateVersion:number;ratings:{criterionCode:string;stars:number;comment:string|null}[];note:string|null};
+export type QualityFeedback = {id:string;schoolOrgId:string;input:QualityInput;version:number;createdAt:string};
+export type IssueState = 'OPEN'|'IN_PROGRESS'|'RESOLVED';
+export type Issue = {issueId:string;caseId:string;category:'DELAY'|'COMMUNICATION'|'OTHER';description:string;state:IssueState;ownerUserId:string;version:number;createdAt:string;updatedAt:string};
+export type HiringInterest = {caseId:string;interested:boolean;note:string|null;version:number;updatedAt:string|null};
+export type OperationsScope = {schoolId:string;termId:string;enterpriseId?:string;contextId?:string;mode:'school'|'hr'|'mentor';permissions:string[];userId:string};
+export const terminal = (value: CaseRef) => ['COMPLETED','TERMINATED','CANCELLED'].includes(value.state);

@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { api, ApiError } from '../../../api';
 import { newIdempotencyKey } from '../../student/api';
 import type { Cohort, WorkspaceAssignment } from '../types';
@@ -73,6 +73,11 @@ export function HrCohortManagement({ assignment, cohort, changed, versionChanged
   const [busy, setBusy] = useState(false), [feedback, setFeedback] = useState('');
   const pending = usePendingRequest();
   const path = `/t3/cohorts/${encodeURIComponent(cohort.cohortId)}`;
+
+  useEffect(() => {
+    setVersion(cohort.version);
+    setPlan(null);
+  }, [cohort.version]);
 
   async function send<T>(endpoint: string, body: object): Promise<T | undefined> {
     setBusy(true); setFeedback('');

@@ -122,3 +122,13 @@
   .t3-workbench fieldset, .t3-workflow fieldset, .t3-evaluations fieldset { padding: 12px; }
   .t3-workbench .panel { padding: 14px; }
 }
+.t3-operation-card{border:1px solid var(--border,#dbe5ea);border-radius:12px;padding:1rem;min-width:0}
+.t3-operation-card summary{cursor:pointer;font-weight:650;margin-bottom:1rem}
+.t3-operation-card fieldset{border:0;padding:0;margin:0;display:grid;gap:.85rem;min-width:0}
+.t3-table-scroll{max-width:100%;overflow-x:auto}.t3-table-scroll table{width:100%;min-width:620px;border-collapse:collapse}
+.t3-table-scroll th,.t3-table-scroll td{text-align:left;padding:.7rem;border-bottom:1px solid #dbe5ea;overflow-wrap:anywhere}
+.t3-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin:0}.t3-kpis>div{background:#eef8f7;border-radius:10px;padding:1rem}.t3-kpis dd{font-size:1.8rem;font-weight:700;margin:.4rem 0 0}
+.t3-progress-row{display:grid;grid-template-columns:minmax(130px,1fr) 2fr;gap:1rem;align-items:center}.t3-progress-row progress{width:100%;accent-color:#07838d}
+.t3-inline-form{display:flex;gap:.8rem;flex-wrap:wrap;align-items:end}.t3-inline-form label{flex:1;min-width:180px}
+.t3-calendar{padding:0;list-style:none}.t3-calendar li{display:flex;justify-content:space-between;gap:1rem;padding:.8rem 0;border-bottom:1px solid #dbe5ea}.t3-issue{border-bottom:1px solid #dbe5ea;padding-bottom:1rem}.t3-case-operations code{overflow-wrap:anywhere}
+@media(max-width:600px){.t3-calendar li{flex-direction:column}.t3-progress-row{grid-template-columns:1fr;gap:.2rem}.t3-inline-form label{min-width:100%}.t3-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}

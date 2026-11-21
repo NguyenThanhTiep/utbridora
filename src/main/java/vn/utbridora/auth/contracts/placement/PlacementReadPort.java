@@ -11,6 +11,9 @@ public interface PlacementReadPort {
         Instant completedAt,String decisionRef) {}
     /** Must join the caller's transaction and keep the source stable through its commit. */
     Optional<PlacementView> readCurrentForGuard(String placementId);
+    /** Authoritative scoped resolution; never select one arbitrary placement for a student. */
+    default java.util.List<PlacementView> findCurrentForStudent(String student,String school,String enterprise,String term) {throw new UnsupportedOperationException("Placement resolution unavailable");}
+    default boolean hasApprovedRelationship(String school,String enterprise,String term) {throw new UnsupportedOperationException("Placement relationship read unavailable");}
     /** Establishes provenance from the T5 committed outbox, not merely producerModule text. */
     boolean authenticDelivery(TrustedEventContext context,PlacementLifecycleEvent event);
 }

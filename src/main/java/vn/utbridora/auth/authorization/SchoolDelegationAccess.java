@@ -15,8 +15,23 @@ public class SchoolDelegationAccess {
     private final AuthorizationPolicy access;
     public SchoolDelegationAccess(JdbcTemplate jdbc,AuthorizationPolicy access) {this.jdbc=jdbc;this.access=access;}
     private record Grant(String id,String user,String school,String term,String parent,String grantor) {}
+    public record DelegationStamp(String id,long version) {}
+    /** Capture the exact current assignment for a durable delegated job, never a role-only grant. */
+    public DelegationStamp capture(Authentication actor,String school,String term,String permission) {
+        require(actor,school,term,permission);String user=((AppPrincipal)actor.getPrincipal()).userId();
+        var roots=jdbc.queryForList("SELECT id FROM school_delegations WHERE user_id=? AND school_org_id=? AND term_id=? ORDER BY id",String.class,user,school,term);
+        for(String id:roots) if(currentAssignment(id,user,school,term,permission))
+            return new DelegationStamp(id,jdbc.queryForObject("SELECT version FROM school_delegations WHERE id=?"+lockSuffix(),Long.class,id));
+        throw missing();
+    }
+    public void requireStamp(String assignment,long version,String subject,String school,String term,String permission) {
+        if(!currentAssignment(assignment,subject,school,term,permission)
+            || jdbc.queryForObject("SELECT version FROM school_delegations WHERE id=?"+lockSuffix(),Long.class,assignment)!=version) throw missing();
+    }
     public void require(Authentication actor,String school,String term,String permission) {
         if(!access.hasOrganization(actor,school,Role.SCHOOL_STAFF,permission)) throw missing();
+        if(permission.equals("schoolRosterImport:manage") && !lockSuffix().isEmpty()
+            && !access.holdOrganization(actor,school,Role.SCHOOL_STAFF,permission)) throw missing();
         String user=((AppPrincipal)actor.getPrincipal()).userId();
         List<String> roots=jdbc.queryForList("SELECT id FROM school_delegations WHERE user_id=? AND school_org_id=? AND (? IS NULL OR term_id=?) AND active=true AND valid_from<=UTC_TIMESTAMP(6) AND UTC_TIMESTAMP(6)<valid_until",String.class,user,school,term,term);
         if(roots.stream().noneMatch(id->current(id,school,term,permission,new HashSet<>(),0))) throw missing();

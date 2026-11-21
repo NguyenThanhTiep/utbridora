@@ -7,6 +7,16 @@ import java.util.Set;
 final class WorkflowAuditRegistry {
     record Spec(String resourceType,Set<String> fields) {}
     static final Map<String,Spec> ACTIONS=Map.ofEntries(
+        Map.entry("STUDENT_IMPORT_PREVIEWED",new Spec("student_import_job",Set.of("totalRows","validRows","invalidRows","needsReviewRows","previewVersion","fileHash"))),
+        Map.entry("ACCOUNT_INVITATION_REVOKED",new Spec("account_invitation",Set.of("purpose","reasonCode","operationId"))),
+        Map.entry("STUDENT_IMPORT_CONFIRMED",new Spec("student_import_job",Set.of("selectedCount","jobVersion","operationId"))),
+        Map.entry("STUDENT_IMPORT_RESUMED",new Spec("student_import_job",Set.of("retryRowCount","jobVersion","operationId"))),
+        Map.entry("STUDENT_IMPORT_COMPLETED",new Spec("student_import_job",Set.of("jobState","totalRows","processedRows","provisionedRows","alreadyLinkedRows","reviewRows","failedRows"))),
+        Map.entry("STUDENT_IMPORT_FAILED",new Spec("student_import_job",Set.of("jobVersion","errorClass","checkpointVersion"))),
+        Map.entry("STUDENT_ROSTER_PROVISIONED",new Spec("student_import_row",Set.of("rosterId","rowNo","operationId","rosterVersion"))),
+        Map.entry("STUDENT_ROSTER_ALREADY_LINKED",new Spec("student_import_row",Set.of("rosterId","rowNo","operationId","rosterVersion"))),
+        Map.entry("ACTIVATION_EMAIL_SENT",new Spec("email_outbox",Set.of("messageId","attemptNo","operationId"))),
+        Map.entry("ACTIVATION_EMAIL_FAILED",new Spec("email_outbox",Set.of("messageId","attemptNo","errorClass","terminal","operationId"))),
         Map.entry("FILE_UPLOADED",new Spec("file",Set.of("purpose","contentType","sizeBytes","scanStatus"))),
         Map.entry("FILE_SCAN_COMPLETED",new Spec("file",Set.of("scanStatus","attemptNo","reasonCode"))),
         Map.entry("ACTIVATION_INVITATION_REISSUED",new Spec("account_invitation",Set.of("rowId","operationId","reasonCode","expiresAt"))),
@@ -56,10 +66,14 @@ final class WorkflowAuditRegistry {
         // DEV08 bổ sung: metadata được cho phép khi chặn release thứ hai; không gồm bộ lọc yêu cầu hoặc số đếm.
         Map.entry("PRIVACY_RELEASE_BLOCKED",new Spec("privacy_release",Set.of("enterpriseOrgId","schoolOrgId","termId","demoBatchId","reasonCode"))),
         Map.entry("MENTOR_INVITATION_ACCEPTED",new Spec("account_invitation",Set.of("enterpriseOrgId","assignmentId","operationId"))),
-        Map.entry("ACCOUNT_INVITATION_REVOKED",new Spec("account_invitation",Set.of("purpose","reasonCode","operationId"))),
         Map.entry("PLACEMENT_CREATED",new Spec("placement",Set.of("termId","placementVersion","decisionRef","effectiveAt","reasonCode","operationId"))),
         Map.entry("PLACEMENT_APPROVED",new Spec("placement",Set.of("termId","placementVersion","decisionRef","effectiveAt","reasonCode","operationId"))),
         Map.entry("PLACEMENT_ACTIVATED",new Spec("placement",Set.of("termId","placementVersion","decisionRef","effectiveAt","reasonCode","operationId"))),
-        Map.entry("PLACEMENT_CANCELLED",new Spec("placement",Set.of("termId","placementVersion","decisionRef","effectiveAt","reasonCode","operationId")))
+        Map.entry("PLACEMENT_CANCELLED",new Spec("placement",Set.of("termId","placementVersion","decisionRef","effectiveAt","reasonCode","operationId"))),
+        Map.entry("PLACEMENT_COMPLETED",new Spec("placement",Set.of("termId","placementVersion","caseId","caseVersion","decisionRef","operationId"))),
+        Map.entry("CASE_CLOSED",new Spec("internship_case",Set.of("placementId","caseVersion","decision","decisionRef","reasonCode"))),
+        Map.entry("ENTERPRISE_QUALITY_EVALUATED",new Spec("enterprise_quality_evaluation",Set.of("enterpriseOrgId","schoolOrgId","termId","version"))),
+        Map.entry("COORDINATION_ISSUE_CHANGED",new Spec("coordination_issue",Set.of("enterpriseOrgId","schoolOrgId","operation","version"))),
+        Map.entry("HIRING_INTEREST_CHANGED",new Spec("hiring_interest",Set.of("caseId","enterpriseOrgId","schoolOrgId","termId","version","interested")))
     );
 }

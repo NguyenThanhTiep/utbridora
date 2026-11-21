@@ -1,0 +1,30 @@
+# T3 packages 6–8: intake, operations and closure
+
+Scope: FR-01/03/23/25/26/27, CP-WS1/4/5 and BC41 of the user-approved SRS v1.2.4 / Contract v1.1. Hiring interest follows the separate approved extension in `docs/contracts/extensions/`; frozen source documents remain unchanged. This guide describes DEV behavior, not QA or school acceptance.
+
+| Requirement | Runtime and UI | Verification |
+| --- | --- | --- |
+| FR-01: Placement intake | HR creates a cohort in the selected assignment. CSV/XLSX, 5 MiB / 1,000 data rows; one `placementId` or `studentUserId` per row. Real quarantine scan, private preview, row errors, selection and confirm. Current T5 Placement and T3 Case are rechecked at commit; no account provision. | `T3OperationsIT`: 40 valid + invalid, real EICAR rejection, limits, foreign scope, expiry, replay and no identity creation. |
+| FR-03: grouping | Existing preview/confirm API now exposed to HR, configurable group size, remainder group and expiring plan. Confirmation checks the cohort version. | 40 → 4 × 10; 3 → 2 + 1; replay produces no duplicate groups. |
+| FR-23: progress | School term / HR or Mentor assignment selectors; distinct cohort/case/group/current Mentor counts, all five assignment states, late and pending-review counts; bounded task calendar. School calendar stays within an opened Case. | Scope/revocation/count checks and real browser operations flow. |
+| FR-25: partner quality | Delegated school uses a separate, versioned, read-only rubric fixture. Exactly one 1–5 star rating per criterion. Append-only feedback does not modify student grades or enterprise verification. | Template identity, exact ratings, idempotent receipt and no student evaluation mutation. |
+| FR-26: coordination | School creates an issue with a currently authorized staff/HR/Mentor owner. School or exact-case HR moves OPEN → IN_PROGRESS → RESOLVED with versions/history. | Invalid owner, stale version, invalid transition, Mentor denial and immutable history. |
+| FR-27: close | School delegate provides decision/reference/reason. Normal completion requires reached Placement end date, all assignments completed, each applicable week's current report reviewed, current evaluation published. Early closure requires an authorized school decision. | Missing gates, real report/review/evaluation/publication API flow, early closure and competing commands. |
+| FR-27 / BC41: synchronize | T3 closes Case + immutable proof + outbox + audit atomically. T5 verifies producer, proof and current original school authority, then updates its Placement/history/inbox/outbox atomically. Normal → COMPLETED; early → CANCELLED. Duplicate/stale events cannot release capacity twice or reopen a Case. | Real owner consumer, forged delivery denied, injected inbox failure rolls back T5, revoked authority retries/DLQ and no event echo. |
+| FR-27: hiring interest | Exact-case HR records intent before closure; school may read it. Both versions, immutable history and idempotency apply. Terminal Case retains a read-only marker; this is not an employment decision. | Closed JSON contracts, HR/school/Mentor scopes, replay/race, terminal lock and browser retention after closure. |
+
+## Deployment preparation
+
+V43 is a forward-only base migration. Keep every earlier migration/checksum and the database's actual lineage locations. Before any upgrade, back up database and private files and verify migration on an isolated clone using the existing runtime upgrade guide. Do not repair history or change the shared demo database as part of code verification.
+
+The new dispatcher defaults **off**: `app.t3.case-closure-delivery.enabled=false`. A separately authorized deployment must configure `APP_T3_CASE_CLOSURE_DELIVERY_ENABLED=true` on the designated worker instance, alongside the existing T5 lifecycle dispatcher. While disabled, closure commits remain visible but Placement synchronization stays queued. Local host and Docker backends must not both own background workers accidentally. This change does not enable any worker or restart the shared stack.
+
+Dispatch uses the canonical 1/5/30/300/1800-second five retries, then DLQ. Diagnose `last_reason`, original delegation and source/proof before a controlled Ops replay. Replay must use the committed event/operation and the owner consumer; never fabricate an HTTP callback, change a closure proof, or force a Placement state. Events and proofs may include decision references; protect operational tables and exports.
+
+Quality rubric fixtures must be provided separately for the intended school/term, with a new immutable `(id, version)` for changes and matching JSON identity/criterion codes. V43 seeds no organization, user, delegate, assignment or rubric. Role permissions are capability ceilings; current delegation/assignment is still required. An empty rubric list is a setup state, not an invitation to submit arbitrary ratings.
+
+## Verification environment
+
+Full CI uses isolated real MySQL 8.4, real quarantine scanner and Chromium, preserving all previous suites. `T3OperationsIT` owns synthetic prerequisites and invokes the real HR and school UI; no route interception or fake CLEAN status. Its explicit synthetic completed-task prerequisite isolates closure gates; existing task/submission suites verify that workflow separately. This is neither a production load measurement nor a DB/file disaster-recovery rehearsal. R29/R30/R31 and package 9 remain separate work.
+
+On the pinned Ubuntu 24.04 hosted runner, CI downloads the pinned Chromium and launches it with dependency validation and a UTF-8 rendering preflight. If the preflight fails, it installs the official Playwright system dependencies with bounded retries and requires a successful second preflight. It does not suppress host validation or skip browser tests. Optional system font packages can differ from a full `--with-deps` install when the existing runner is sufficient; this is functional/browser evidence, not a typography or visual-baseline certification.

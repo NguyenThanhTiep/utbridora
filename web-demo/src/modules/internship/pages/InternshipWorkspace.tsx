@@ -10,6 +10,7 @@ import { MentorInvitationForm } from './MentorInvitations';
 import { HrCohortManagement, HrCreateCohort } from './HrCohortActions';
 import { HrGroupManagement } from './HrGroupManagement';
 import { HrCaseTracker } from './HrCaseTracker';
+import { CohortManagement } from './CohortManagement';
 
 type ReadState<T> = { status: 'loading' } | { status: 'ready'; value: T } | { status: 'error'; error: unknown };
 
@@ -189,6 +190,9 @@ function AssignmentWorkspace({ assignment, gateway, reset, initialCaseId, sectio
         versionChanged={version => setState(previous => previous.status === 'ready'
           ? { status: 'ready', value: previous.value.map(item => item.cohortId === cohort.cohortId ? { ...item, version } : item) }
           : previous)} />}
+    {gateway === liveWorkspaceGateway && assignment.kind === 'HR' && cohort && section === 'cohorts' &&
+      <CohortManagement key={'file:' + cohort.cohortId + ':' + cohort.version} assignment={assignment} cohort={cohort}
+        changed={() => setReload(value => value + 1)} denied={reset} fileImportOnly />}
     {cohort && section !== 'cohorts' && <GroupWorkspace key={cohort.cohortId + ':' + cohort.version}
       assignment={assignment} cohort={cohort} gateway={gateway} reset={reset} initialCaseId={initialCaseId} section={section} />}
     {!cohort && state.status === 'ready' && state.value.length > 0 && section !== 'cohorts' &&

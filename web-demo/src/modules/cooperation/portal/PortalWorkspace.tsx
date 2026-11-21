@@ -73,7 +73,7 @@ function ScopedPortal({ org, side, page, navigate, viewerId, organizationPicker,
       <div className="button-row">{['overview', 'statistics', 'notifications'].includes(page) && <button className="secondary" onClick={refresh}><Icon name="refresh" size={16} />Tải lại dữ liệu</button>}
         {page !== 'overview' && <button className="secondary" onClick={() => navigate('overview')}><Icon name="grid" size={16} />Tổng quan</button>}</div>
     </header>
-    {page === 'overview' && <PortalDashboard side={side} demands={data.demands} cooperations={data.cooperations} verifications={data.verifications} navigate={navigate} notifications={notifications} />}
+    {page === 'overview' && <PortalDashboard org={org} viewerId={viewerId} side={side} demands={data.demands} cooperations={data.cooperations} verifications={data.verifications} navigate={navigate} notifications={notifications} />}
     {page === 'demands' && !school && <ScopedDemands key={'d:' + revision} organizationId={org} />}
     {page === 'statistics' && !school && <ProtectedStatistics org={org} demands={data.demands} navigate={navigate} />}
     {page === 'matching' && school && <MatchingWorkspace organizationId={org} grants={grants} />}

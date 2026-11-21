@@ -55,6 +55,35 @@ async function fill(page: Page, selectTaxonomy = true) {
 }
 const empty = { content: [], page: 0, size: 25, totalElements: 0, totalPages: 0 };
 
+test('ready and deleted demands use versioned lifecycle commands and reload the current list', async ({ page }) => {
+  await session(page); page.on('dialog', dialog => dialog.accept());
+  const record = { demandId: '44444444-4444-4444-8444-444444444444', enterpriseOrgId: org, state: 'READY',
+    version: 3, criteriaVersion: 1, validationState: 'VALID', cooperationId: null, softDeletedAt: null as string | null,
+    data: { schoolOrgId: school, termId: term, title: 'Lifecycle demand', quantity: 1, description: 'Build APIs',
+      location: null, benefits: null, deadline: '2027-01-01T00:00:00Z', required: { majorCodes: [], skills: [],
+        dateRange: { startDate: '2027-02-01', endDate: '2027-05-01' } }, preferred: [], academicCatalogVersion: 'v1', taxonomyVersion: 'v1' } };
+  const commands: string[] = [];
+  await page.route('**/api/v1/enterprise/demands**', async route => {
+    const request = route.request();
+    if (request.method() === 'PATCH') {
+      expect(request.headers()['idempotency-key']).toBeTruthy();
+      expect(request.postDataJSON().expectedVersion).toBe(record.version);
+      commands.push(new URL(request.url()).pathname.split('/').pop()!);
+      record.version++; record.state = 'DRAFT'; record.softDeletedAt = null;
+      return route.fulfill({ json: record });
+    }
+    return route.fulfill({ json: { ...empty, content: [{ ...record }], totalElements: 1, totalPages: 1 } });
+  });
+  await open(page);
+  await page.getByRole('button', { name: /Mở lại bản nháp/ }).click();
+  await expect(page.getByText('Đã mở lại bản nháp.', { exact: true })).toBeVisible();
+  record.softDeletedAt = '2026-11-19T00:00:00Z';
+  await page.getByLabel('Hiển thị cả nhu cầu đã xóa').check();
+  await page.getByRole('button', { name: /Khôi phục nhu cầu/ }).click();
+  await expect(page.getByText('Đã khôi phục nhu cầu.', { exact: true })).toBeVisible();
+  expect(commands).toEqual(['reopen', 'restore']);
+});
+
 test('demand references are choices and changing school clears the previous term and academic version', async ({ page }) => {
   await session(page);
   const otherSchool = '55555555-5555-4555-8555-555555555555';

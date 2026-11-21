@@ -10,7 +10,7 @@ import vn.utbridora.auth.tokens.OneTimeToken.Purpose;
 
 public interface TokenRepository extends JpaRepository<OneTimeToken,String> {
     @org.springframework.data.jpa.repository.Modifying(flushAutomatically=true)
-    @Query("update OneTimeToken t set t.consumedAt=:now where t.id=:id and t.consumedAt is null and t.expiresAt>:now")
+    @Query("update OneTimeToken t set t.consumedAt=:now where t.id=:id and t.consumedAt is null and t.revokedAt is null and t.expiresAt>:now")
     int consumeIfUsable(@Param("id") String id,@Param("now") java.time.Instant now);
     Optional<OneTimeToken> findByTokenHashAndPurpose(String tokenHash, Purpose purpose);
     @Lock(LockModeType.PESSIMISTIC_WRITE)

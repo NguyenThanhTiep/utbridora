@@ -40,11 +40,13 @@ public class WorkspaceRuntime {
     private final WorkspaceAuthority authority;private final CaseRuntime cases;private final PlacementReadPort placements;
     private final AuthorizationPolicy core;private final SchoolDelegationAccess delegations;private final OperationLedger ledger;
     private final vn.utbridora.auth.audit.AuditService audit;
+    private final PlacementIntakeService intakePreview;
+    private final OperationsAccess operationsAccess;
     private final JsonMapper json=JsonMapper.builder().build();
     public WorkspaceRuntime(JdbcTemplate jdbc,JdbcWorkspaceSession session,WorkspaceService workspace,WorkspaceAuthority authority,
-            CaseRuntime cases,PlacementReadPort placements,AuthorizationPolicy core,SchoolDelegationAccess delegations,OperationLedger ledger,vn.utbridora.auth.audit.AuditService audit) {
+            CaseRuntime cases,PlacementReadPort placements,AuthorizationPolicy core,SchoolDelegationAccess delegations,OperationLedger ledger,vn.utbridora.auth.audit.AuditService audit,PlacementIntakeService intakePreview,OperationsAccess operationsAccess) {
         this.jdbc=jdbc;this.session=session;this.workspace=workspace;this.authority=authority;this.cases=cases;
-        this.placements=placements;this.core=core;this.delegations=delegations;this.ledger=ledger;this.audit=audit;
+        this.placements=placements;this.core=core;this.delegations=delegations;this.ledger=ledger;this.audit=audit;this.intakePreview=intakePreview;this.operationsAccess=operationsAccess;
     }
     @Transactional public CohortDto createCohort(Authentication actor,String key,CreateCohort input) {
         var selected=authority.selected(actor);
@@ -83,9 +85,9 @@ public class WorkspaceRuntime {
     @Transactional public BatchResult intake(Authentication actor,UUID cohortId,String key,BatchCases input) {
         requireKind(actor,"HR");
         Cohort cohort=cohort(cohortId);authority.requireHr(actor,cohort.scope(),null);
-        if(input.previewId()!=null || input.fileHash()!=null) throw new OperationFailure(422,"BUSINESS_VALIDATION","Chỉ nhận danh sách ID trực tiếp ở bước này.",null);
         return ledger.execute(command(actor,cohort.scope(),"T3_COHORT_INTAKE",key,Map.of("cohortId",cohortId,"request",input),200),BatchResult.class,()->{
             requireVersion(cohort,input.expectedVersion());List<BatchItem> items=new ArrayList<>();
+            intakePreview.requireSelection(actor,cohort,input.previewId(),input.fileHash(),input.placementIds());
             for(UUID placementId:input.placementIds().stream().sorted().toList()) {
                 var p=placements.readCurrentForGuard(placementId.toString()).orElse(null);
                 var ids=jdbc.queryForList("SELECT id FROM internship_cases WHERE placement_id=?",String.class,placementId.toString());
@@ -205,18 +207,8 @@ public class WorkspaceRuntime {
     @Transactional public CaseRuntime.CaseRef caseRef(Authentication actor,UUID id) {
         var c=cases.read(id);
         if(core.isSelf(actor,c.studentUserId().toString()) && core.hasOrganization(actor,c.schoolOrgId().toString(),Role.STUDENT,"t3:workspace:read")) return c;
-        try {delegations.require(actor,c.schoolOrgId().toString(),c.termId().toString(),"t3:workspace:read");return c;} catch(OperationFailure denied) { /* try enterprise scope */ }
-        var bound=jdbc.queryForList("SELECT cohort_id,group_id FROM internship_cohort_cases WHERE case_id=?",id.toString());
-        if(!bound.isEmpty()) {
-            var row=bound.getFirst();var cohort=cohort(UUID.fromString((String)row.get("cohort_id")));
-            UUID group=row.get("group_id")==null?null:UUID.fromString((String)row.get("group_id"));
-            try {
-                var selected=authority.selected(actor);
-                if(authority.canReadScope(actor,cohort.scope(),group) && (selected.kind().equals("HR") || group!=null)
-                    && (selected.scope().caseId()==null || selected.scope().caseId().equals(id.toString()))) return c;
-            } catch(WorkspaceRuleException denied) {if(denied.kind()==UNAVAILABLE) throw denied;}
-        }
-        throw new WorkspaceRuleException(NOT_FOUND);
+        try {return operationsAccess.readCase(actor,id);}
+        catch(WorkspaceRuleException denied) {if(denied.kind()==DENIED)throw new WorkspaceRuleException(NOT_FOUND);throw denied;}
     }
     private static OperationLedger.Command command(Authentication actor,WorkspaceScope scope,String op,String key,Object input,int status) {
         return new OperationLedger.Command(WorkspaceAuthority.actor(actor),scope.enterpriseOrgId().toString(),op,key,input,status);
