@@ -422,7 +422,8 @@ class CorePlatformIT {
         env.put("E2E_RESET_TOKEN",reset);env.put("E2E_RESET_EMAIL",resetUser.email);env.put("E2E_ORG_B_ID",orgB.id);
         builder.redirectErrorStream(true).redirectOutput(new java.io.File("target/frontend-e2e.log"));
         Process process=builder.start();
-        if(!process.waitFor(480,TimeUnit.SECONDS)) {
+        // The full UI inventory now includes more than 400 cases; keep every case enabled.
+        if(!process.waitFor(900,TimeUnit.SECONDS)) {
             process.descendants().forEach(child->child.destroyForcibly());process.destroyForcibly();
             fail("Frontend E2E timed out; see target/frontend-e2e.log");
         }

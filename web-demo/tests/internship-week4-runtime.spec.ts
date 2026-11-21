@@ -75,7 +75,10 @@ test('T3-12 real evidence PENDING draft cannot submit or leak into published stu
     await mentor.page.getByLabel('Tệp minh chứng đánh giá').setInputFiles({name:'evidence.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.7\nT312 synthetic evidence\n%%EOF')});
     await mentor.page.getByRole('button',{name:'Tải tệp đánh giá',exact:true}).click();await expect(mentor.page.getByText(/Đang chờ quét/)).toBeVisible();
     await mentor.page.getByRole('button',{name:'Lưu đánh giá',exact:true}).click();await expect(mentor.page.getByRole('button',{name:'Lưu đánh giá',exact:true})).toBeDisabled();
-    await mentor.page.getByRole('button',{name:'Nộp đánh giá',exact:true}).click();await expect(mentor.page.getByRole('alert')).toContainText('FILE_NOT_CLEAN');
+    const rejected=mentor.page.waitForResponse(r=>r.request().method()==='POST' && /\/t3\/evaluations\/[^/]+\/submit$/.test(new URL(r.url()).pathname));
+    await mentor.page.getByRole('button',{name:'Nộp đánh giá',exact:true}).click();
+    const response=await rejected;expect(response.status()).toBe(409);expect(await response.json()).toMatchObject({errorCode:'FILE_NOT_CLEAN'});
+    await expect(mentor.page.getByRole('region',{name:'Mentor chấm rubric',exact:true}).getByRole('alert')).toContainText('FILE_NOT_CLEAN');
     await result(student.page,'20.00');await expect(student.page.getByText('evidence.pdf',{exact:false})).toHaveCount(0);
     await mentor.page.screenshot({path:'../target/t3-12-mentor-evidence.png',fullPage:true});
   } finally {for(const a of [school,mentor,student])await a.context.close();}

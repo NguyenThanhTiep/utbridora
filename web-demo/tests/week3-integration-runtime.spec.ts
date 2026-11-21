@@ -48,8 +48,8 @@ test('school publication, student preference and matching use real T5 and T2 pro
     expect(detailResponse.ok(), await detailResponse.text()).toBeTruthy();
     await openWorkspacePage(school, 'Đề xuất sinh viên');
     await school.getByLabel('Hợp tác đang xem', { exact: true }).selectOption(coop);
-    await school.getByLabel('Thời điểm công bố', { exact: true }).fill(localTime(new Date(Date.now() - 3600000)));
-    await school.getByLabel('Thời điểm đóng', { exact: true }).fill(localTime(new Date(Date.now() + 86400000)));
+    await school.getByLabel(/^Thời điểm công bố/).fill(localTime(new Date(Date.now() - 3600000)));
+    await school.getByLabel(/^Thời điểm đóng/).fill(localTime(new Date(Date.now() + 86400000)));
     await school.getByRole('button', { name: 'Lưu thời gian công bố', exact: true }).click();
     await expect(school.getByText('Đã lưu thời gian công bố cơ hội.', { exact: true })).toBeVisible();
     const opportunity = await (await student.request.get(`/api/v1/opportunities/${coop}`)).json();

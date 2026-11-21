@@ -438,7 +438,7 @@ test('school workspace loads API-backed panels and has no approval action for an
   await expect(page.getByRole('heading', { name: 'Tổng quan Nhà trường', exact: true })).toBeVisible();
   await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Doanh nghiệp đối tác', exact: true }).click();
   await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Xác minh doanh nghiệp', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Xác minh doanh nghiệp', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Xác minh doanh nghiệp', level: 2, exact: true })).toBeVisible();
   await expect(page.getByText('Chưa có hồ sơ xác minh trong phạm vi này.', { exact: true })).toBeVisible();
   await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Duyệt hợp tác', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Đề nghị hợp tác', exact: true })).toBeVisible();

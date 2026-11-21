@@ -285,11 +285,11 @@ test('enterprise candidates use the approved cooperation API and switching organ
   await session(page);
   await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Ứng viên đề xuất', exact: true }).click();
   await page.getByLabel('Hợp tác đang xem', { exact: true }).selectOption(cooperationId);
-  await expect(page.getByRole('heading', { name: demand.data.title, exact: true })).toBeVisible();
+  await expect(page.getByLabel('Hợp tác đang xem', { exact: true }).locator('option:checked')).toHaveText(demand.data.title);
   await expect(page.getByText('Chưa có hồ sơ được chia sẻ hợp lệ.', { exact: true })).toBeVisible();
   await page.getByLabel('Doanh nghiệp đang làm việc', { exact: true }).selectOption(other);
   await expect(page.getByRole('heading', { name: 'Chưa có hợp tác được duyệt', exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: demand.data.title, exact: true })).toHaveCount(0);
+  await expect(page.getByRole('option', { name: demand.data.title, exact: true })).toHaveCount(0);
 });
 
 test('school cooperation presents the submitted details, real term label and readable mobile cards', async ({ page }) => {
@@ -704,7 +704,7 @@ test('school overview uses unavailable marks for denied metrics without blocking
   await expect(page.locator('.school-overview-stat .school-stat-metric strong')).toHaveText(['—', '1', '—', '0']);
   await expect(page.getByRole('button', { name: 'Đợt thực tập: Chưa có số liệu', exact: true })).toBeDisabled();
   await page.getByRole('button', { name: 'Doanh nghiệp đối tác: 1', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Duyệt hợp tác', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Duyệt hợp tác', level: 2, exact: true })).toBeVisible();
 });
 
 test('notification filters and keyboard tabs use current records without a separate notification endpoint', async ({ page }) => {
