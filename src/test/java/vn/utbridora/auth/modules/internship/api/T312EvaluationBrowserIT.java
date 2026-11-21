@@ -82,27 +82,43 @@ class T312EvaluationBrowserIT {
         var m=new Membership();m.userId=u.id;m.organizationId=org;m.role=role;memberships.saveAndFlush(m);return u;
     }
     private static String id(){return UUID.randomUUID().toString();}
-    @Test void fourRolesUseRealEvaluationPublicationAndResultApis() throws Exception {
+    private Map<String,String> browserConfig() {
         var config=new LinkedHashMap<String,String>();
         config.put("password",password);config.put("studentEmail",student.email);config.put("mentorEmail",mentor.email);
         config.put("hrEmail",hr.email);config.put("schoolEmail",staff.email);config.put("outsiderEmail",outsider.email);
         config.put("mentorContext",mentorGrant);config.put("hrContext",hrGrant);config.put("schoolId",school);
         config.put("enterpriseId",enterprise);config.put("termId",term);config.put("caseId",caseId);config.put("templateId",template);
+        return config;
+    }
+    private void runBrowserSpec(String spec,String report,String log) throws Exception {
         boolean windows=System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win");
-        var builder=windows?new ProcessBuilder("cmd.exe","/c","npm.cmd run test:e2e -- internship-week4-runtime.spec.ts"):
-            new ProcessBuilder("npm","run","test:e2e","--","internship-week4-runtime.spec.ts");
+        var builder=windows?new ProcessBuilder("cmd.exe","/c","npm.cmd run test:e2e -- "+spec):
+            new ProcessBuilder("npm","run","test:e2e","--",spec);
         builder.directory(new java.io.File("web-demo"));var env=builder.environment();
-        env.put("API_PROXY_TARGET","http://localhost:"+port);env.put("E2E_REPORT_FILE","../target/t3-12-runtime-browser.xml");
-        env.put("E2E_T312_CONFIG",json.writeValueAsString(config));
-        builder.redirectErrorStream(true).redirectOutput(new java.io.File("target/t3-12-runtime-browser.log"));
+        env.put("API_PROXY_TARGET","http://localhost:"+port);env.put("E2E_REPORT_FILE",report);
+        env.put("E2E_T312_CONFIG",json.writeValueAsString(browserConfig()));
+        builder.redirectErrorStream(true).redirectOutput(new java.io.File(log));
         var process=builder.start();try {
-            if(!process.waitFor(300,TimeUnit.SECONDS))fail("Browser timed out: target/t3-12-runtime-browser.log");
-            assertEquals(0,process.exitValue(),"See target/t3-12-runtime-browser.log");
+            if(!process.waitFor(300,TimeUnit.SECONDS))fail("Browser timed out: "+log);
+            assertEquals(0,process.exitValue(),"See "+log);
         } finally {if(process.isAlive())process.destroyForcibly();}
+    }
+    @Test void fourRolesUseRealEvaluationPublicationAndResultApis() throws Exception {
+        runBrowserSpec("internship-week4-runtime.spec.ts","../target/t3-12-runtime-browser.xml","target/t3-12-runtime-browser.log");
         assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM internship_evaluations WHERE case_id=?",Integer.class,caseId));
         String evaluation=jdbc.queryForObject("SELECT id FROM internship_evaluations WHERE case_id=?",String.class,caseId);
         assertEquals("76.00",jdbc.queryForObject("SELECT total100 FROM internship_evaluation_versions WHERE evaluation_id=? AND version=1",java.math.BigDecimal.class,evaluation).toPlainString());
         assertEquals("20.00",jdbc.queryForObject("SELECT v.total100 FROM internship_evaluation_versions v JOIN internship_evaluations e ON e.id=v.evaluation_id AND e.published_version=v.version WHERE e.id=?",java.math.BigDecimal.class,evaluation).toPlainString());
         assertEquals("DRAFT",jdbc.queryForObject("SELECT v.state FROM internship_evaluation_versions v JOIN internship_evaluations e ON e.id=v.evaluation_id AND e.current_version=v.version WHERE e.id=?",String.class,evaluation));
+    }
+    @Test void qa03VerifiesRubricScorePublicationGateAndImmutableHistory() throws Exception {
+        runBrowserSpec("t3-12-qa03.spec.ts","../target/t3-12-qa03-runtime.xml","target/t3-12-qa03-runtime.log");
+        String evaluation=jdbc.queryForObject("SELECT id FROM internship_evaluations WHERE case_id=?",String.class,caseId);
+        assertTrue(jdbc.queryForObject("SELECT COUNT(*) FROM internship_evaluation_versions WHERE evaluation_id=?",Long.class,evaluation)>=2);
+        assertEquals("76.00",jdbc.queryForObject("SELECT total100 FROM internship_evaluation_versions WHERE evaluation_id=? AND version=1",java.math.BigDecimal.class,evaluation).toPlainString());
+        Long publishedVersion=jdbc.queryForObject("SELECT published_version FROM internship_evaluations WHERE id=?",Long.class,evaluation);
+        assertTrue(publishedVersion>1);
+        assertEquals("20.00",jdbc.queryForObject("SELECT total100 FROM internship_evaluation_versions WHERE evaluation_id=? AND version=?",java.math.BigDecimal.class,evaluation,publishedVersion).toPlainString());
+        assertEquals(publishedVersion,jdbc.queryForObject("SELECT current_version FROM internship_evaluations WHERE id=?",Long.class,evaluation));
     }
 }
