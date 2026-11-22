@@ -1,0 +1,6 @@
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="15.062978">
+<testsuite name="t3-operations-runtime.spec.ts" timestamp="2026-11-21T09:39:46.607Z" hostname="" tests="1" failures="0" skipped="0" time="13.223" errors="0">
+<testcase name="HR imports 40 placements into four groups; school coordinates, evaluates quality and closes the case" classname="t3-operations-runtime.spec.ts" time="13.223">
+</testcase>
+</testsuite>
+</testsuites>

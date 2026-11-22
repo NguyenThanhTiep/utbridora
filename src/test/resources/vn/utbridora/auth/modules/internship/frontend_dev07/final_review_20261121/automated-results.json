@@ -1,0 +1,165 @@
+{
+  "sourceSha": "e3de97db0d78dac083d2bd3f1ac1e68fa1f2f0e9",
+  "browserReports": [
+    {
+      "artifact": "ui-results.xml",
+      "totals": {
+        "id": "",
+        "name": "",
+        "tests": "76",
+        "failures": "0",
+        "skipped": "0",
+        "errors": "0",
+        "time": "80.049751"
+      }
+    },
+    {
+      "artifact": "t3-09-browser-results.xml",
+      "totals": {
+        "id": "",
+        "name": "",
+        "tests": "5",
+        "failures": "0",
+        "skipped": "0",
+        "errors": "0",
+        "time": "42.748008999999996"
+      }
+    },
+    {
+      "artifact": "t3-12-browser-results.xml",
+      "totals": {
+        "id": "",
+        "name": "",
+        "tests": "4",
+        "failures": "0",
+        "skipped": "0",
+        "errors": "0",
+        "time": "58.710213"
+      }
+    },
+    {
+      "artifact": "operations-browser-results.xml",
+      "totals": {
+        "id": "",
+        "name": "",
+        "tests": "1",
+        "failures": "0",
+        "skipped": "0",
+        "errors": "0",
+        "time": "15.062978"
+      }
+    }
+  ],
+  "javaReports": [
+    {
+      "suite": {
+        "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "https://maven.apache.org/surefire/maven-failsafe-plugin/xsd/failsafe-test-report.xsd",
+        "version": "3.0.2",
+        "name": "vn.utbridora.auth.T309WorkflowBrowserIT",
+        "time": "85.117",
+        "tests": "1",
+        "errors": "0",
+        "skipped": "0",
+        "failures": "0",
+        "flakes": "0"
+      },
+      "testcases": [
+        {
+          "name": "browserUsesRealSubmissionCommentReportAndFileApis",
+          "classname": "vn.utbridora.auth.T309WorkflowBrowserIT",
+          "time": "44.657"
+        }
+      ]
+    },
+    {
+      "suite": {
+        "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "https://maven.apache.org/surefire/maven-failsafe-plugin/xsd/failsafe-test-report.xsd",
+        "version": "3.0.2",
+        "name": "vn.utbridora.auth.modules.internship.api.T312EvaluationBrowserIT",
+        "time": "113.354",
+        "tests": "1",
+        "errors": "0",
+        "skipped": "0",
+        "failures": "0",
+        "flakes": "0"
+      },
+      "testcases": [
+        {
+          "name": "fourRolesUseRealEvaluationPublicationAndResultApis",
+          "classname": "vn.utbridora.auth.modules.internship.api.T312EvaluationBrowserIT",
+          "time": "62.754"
+        }
+      ]
+    },
+    {
+      "suite": {
+        "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "https://maven.apache.org/surefire/maven-failsafe-plugin/xsd/failsafe-test-report.xsd",
+        "version": "3.0.2",
+        "name": "vn.utbridora.auth.T3OperationsIT",
+        "time": "126.15",
+        "tests": "11",
+        "errors": "0",
+        "skipped": "0",
+        "failures": "0",
+        "flakes": "0"
+      },
+      "testcases": [
+        {
+          "name": "placementPreviewRejectsForeignExpiredSelectionsAndUsesRealMalwareScanner",
+          "classname": "vn.utbridora.auth.T3OperationsIT",
+          "time": "3.456"
+        },
+        {
+          "name": "calendarAndInterestCommandsCannotBypassOwnerSourceOrClosedWireGuards",
+          "classname": "vn.utbridora.auth.T3OperationsIT",
+          "time": "4.613"
+        },
+        {
+          "name": "dashboardQualityIssuesAndInterestRespectScopeAndPreserveStudentGrades",
+          "classname": "vn.utbridora.auth.T3OperationsIT",
+          "time": "5.353"
+        },
+        {
+          "name": "earlyClosureIsAtomicAndT5ConsumesProofOnceWhileTerminalWritesStayLocked",
+          "classname": "vn.utbridora.auth.T3OperationsIT",
+          "time": "1.335"
+        },
+        {
+          "name": "scannedPlacementPreviewIsScopeBoundAndFortyCasesBecomeFourGroupsWithoutNewIdentities",
+          "classname": "vn.utbridora.auth.T3OperationsIT",
+          "time": "13.479"
+        },
+        {
+          "name": "browserImportsGroupsCoordinatesAndClosesUsingRealOwnerApis",
+          "classname": "vn.utbridora.auth.T3OperationsIT",
+          "time": "19.56"
+        },
+        {
+          "name": "normalClosureRequiresEveryWeekCurrentEvaluationAndAllTasksThenSynchronizesCompletion",
+          "classname": "vn.utbridora.auth.T3OperationsIT",
+          "time": "3.118"
+        },
+        {
+          "name": "concurrentInterestAndCloseCommandsHaveOneWinnerAndNoDuplicateHistory",
+          "classname": "vn.utbridora.auth.T3OperationsIT",
+          "time": "1.824"
+        },
+        {
+          "name": "groupingKeepsRemainderAndStudentResolutionDoesNotLeakAnotherSchool",
+          "classname": "vn.utbridora.auth.T3OperationsIT",
+          "time": "1.115"
+        },
+        {
+          "name": "revokedClosureAuthorityAndInboxFailureCannotPartiallyMutateT5AndRetriesGoToDlq",
+          "classname": "vn.utbridora.auth.T3OperationsIT",
+          "time": "1.117"
+        },
+        {
+          "name": "scannedXlsxPreservesTextIdsAndRejectsNumericAndFormulaIdentifiers",
+          "classname": "vn.utbridora.auth.T3OperationsIT",
+          "time": "0.902"
+        }
+      ]
+    }
+  ]
+}

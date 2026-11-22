@@ -16,12 +16,57 @@ export function MentorInvitations() {
   };
   return <section className="panel workflow-surface"><h2>Lời mời hướng dẫn thực tập</h2><Notice message={message} />{items.length === 0 && <p>Chưa có lời mời hướng dẫn cần xử lý.</p>}{items.map(i => <article key={i.invitationId}><p>{i.groupIds.length} nhóm · {i.state}{i.expiresAt ? ' · hạn ' + new Date(i.expiresAt).toLocaleString('vi-VN') : ''}</p>{i.state === 'MEMBERSHIP_PENDING' && <button disabled={busy} onClick={() => void accept(i)}>Chấp thuận hướng dẫn</button>}</article>)}</section>;
 }
-export function MentorInvitationForm({ assignment, group }: { assignment: WorkspaceAssignment; group: InternshipGroup }) {
-  const [email, setEmail] = useState(''), [decision, setDecision] = useState(''), [message, setMessage] = useState(''), [busy, setBusy] = useState(false);
+export function MentorInvitationForm({ assignment, group, groups = [group] }: {
+  assignment: WorkspaceAssignment; group: InternshipGroup; groups?: InternshipGroup[];
+}) {
+  const [email, setEmail] = useState(''), [decision, setDecision] = useState('');
+  const [selected, setSelected] = useState<string[]>([group.groupId]);
+  const [message, setMessage] = useState(''), [busy, setBusy] = useState(false);
+  const [lastInvite, setLastInvite] = useState<Invitation | null>(null);
+  const [revokeReason, setRevokeReason] = useState('');
   const pending = useRef<{ body: string; key: string } | null>(null);
+  const revokePending = useRef<{ body: string; key: string } | null>(null);
+  async function revoke() {
+    if (!lastInvite || !/^[A-Z0-9_]{3,64}$/.test(revokeReason.trim())) return;
+    const body = JSON.stringify({ expectedVersion: lastInvite.version, reasonCode: revokeReason.trim() });
+    if (revokePending.current?.body !== body) revokePending.current = { body, key: newIdempotencyKey() };
+    setBusy(true); setMessage('');
+    try {
+      const value = await api<Invitation>('/t3/mentor-invitations/' + lastInvite.invitationId + '/revoke', {
+        method: 'POST', body: revokePending.current.body,
+        headers: { 'X-Context-Assignment-Id': assignment.id, 'Idempotency-Key': revokePending.current.key }
+      });
+      revokePending.current = null; setLastInvite(value); setMessage('Đã thu hồi lời mời và phân công liên quan theo kết quả backend.');
+    } catch { setMessage('Chưa thu hồi được. Kiểm tra trạng thái lời mời và quyền HR rồi thử lại.'); }
+    finally { setBusy(false); }
+  }
   return <form className="panel workflow-surface" onSubmit={e => { e.preventDefault();
-    const data = { email, enterpriseOrgId: assignment.scope.enterpriseOrgId, termId: assignment.scope.termId, groupIds: [group.groupId], decisionRef: decision }, body = JSON.stringify(data);
+    if (!selected.length) { setMessage('Chọn ít nhất một nhóm trong phạm vi HR.'); return; }
+    const data = { email: email.trim(), enterpriseOrgId: assignment.scope.enterpriseOrgId,
+      termId: assignment.scope.termId, groupIds: [...selected].sort(), decisionRef: decision.trim() }, body = JSON.stringify(data);
     if (pending.current?.body !== body) pending.current = { body, key: newIdempotencyKey() }; setBusy(true); setMessage('');
-    void api<Invitation>('/t3/mentor-invitations', { method: 'POST', body, headers: { 'X-Context-Assignment-Id': assignment.id, 'Idempotency-Key': pending.current.key } }).then(i => { pending.current = null; setMessage(i.state === 'REVIEW_REQUIRED' ? 'Tài khoản cần được rà soát trước khi nhận lời mời.' : 'Đã gửi lời mời. Mentor cần tự chấp thuận trước khi nhận quyền.'); }).catch(() => setMessage('Chưa gửi được lời mời. Kiểm tra phân công và thử lại.')).finally(() => setBusy(false));
-  }}><h3>Mời Mentor cho nhóm {group.code}</h3><Notice message={message} /><fieldset disabled={busy}><label>Email Mentor<input type="email" required value={email} onChange={e => setEmail(e.target.value)} /></label><label>Căn cứ phân công<input required maxLength={120} value={decision} onChange={e => setDecision(e.target.value)} /></label><button>Gửi lời mời hướng dẫn</button></fieldset></form>;
+    void api<Invitation>('/t3/mentor-invitations', { method: 'POST', body: pending.current.body,
+      headers: { 'X-Context-Assignment-Id': assignment.id, 'Idempotency-Key': pending.current.key } })
+      .then(i => { pending.current = null; setLastInvite(i); setMessage(i.state === 'REVIEW_REQUIRED'
+        ? 'Tài khoản cần được rà soát trước khi nhận lời mời.'
+        : 'Đã gửi lời mời. Mentor cần tự chấp thuận trước khi nhận quyền.'); })
+      .catch(() => setMessage('Chưa gửi được lời mời. Kiểm tra phân công và thử lại.'))
+      .finally(() => setBusy(false));
+  }}><h3>Mời Mentor cho nhóm {group.code}</h3><Notice message={message} />
+    <fieldset disabled={busy}><label>Email Mentor<input type="email" required value={email} onChange={e => setEmail(e.target.value)} /></label>
+      <label>Căn cứ phân công<input required maxLength={120} value={decision} onChange={e => setDecision(e.target.value)} /></label>
+      <fieldset><legend>Nhóm được mời hướng dẫn</legend>{groups.map(item => <label key={item.groupId}>
+        <input type="checkbox" checked={selected.includes(item.groupId)}
+          onChange={e => setSelected(current => e.target.checked ? [...current, item.groupId] : current.filter(id => id !== item.groupId))} />
+        {item.code}</label>)}</fieldset>
+      <button>Gửi lời mời hướng dẫn</button></fieldset>
+    {lastInvite && <p role="status">Lời mời {lastInvite.invitationId} · {lastInvite.state} · {lastInvite.groupIds.length} nhóm.</p>}
+    {lastInvite && lastInvite.state !== 'REVOKED' && <div className="stack">
+      <label>Mã lý do thu hồi<input value={revokeReason}
+        onChange={e => { setRevokeReason(e.target.value.toUpperCase()); revokePending.current = null; }}
+        pattern="[A-Z0-9_]{3,64}" minLength={3} maxLength={64} placeholder="ASSIGNMENT_CHANGED" /></label>
+      <button type="button" className="secondary" disabled={busy || !/^[A-Z0-9_]{3,64}$/.test(revokeReason.trim())}
+        onClick={() => void revoke()}>Thu hồi lời mời vừa gửi</button>
+    </div>}
+  </form>;
 }

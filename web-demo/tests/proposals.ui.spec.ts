@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { mockContextLabels } from './fixtures/internship';
 // Browser contract fixtures; backend privacy/authorization is covered separately in EnterpriseProposalIT.
 const fixture = '/tests/fixtures/proposals.html';
 const item = { proposalItemId: 'proposal-1', cooperationId: 'coop-1', state: 'SHARED', version: 4, shareId: 'share-1', reservationUntil: '2026-11-11T00:00:00Z' };
@@ -411,6 +412,7 @@ test('HR case deep link selects a current assignment and preserves T3 denial aft
   const assignment = {kind: 'HR', userId: 'hr-1', active: true, version: 1, grantedBy: 'coordinator-1', decisionRef: 'TEST',
     validFrom: '2020-01-01T00:00:00Z', validUntil: '2099-01-01T00:00:00Z',
     scope: {schoolOrgId: 'school-1', enterpriseOrgId: 'enterprise-1', termId: 'term-1', groupId: null, caseId: null}};
+  await mockContextLabels(page, assignment.scope);
   await page.route('**/api/v1/t3/context-assignments/me', r => r.fulfill({json: [
     {...assignment, id: 'expired', validUntil: '2020-01-02T00:00:00Z'},
     {...assignment, id: 'other-scope', scope: {...assignment.scope, termId: 'other-term'}},
@@ -426,6 +428,8 @@ test('HR case deep link selects a current assignment and preserves T3 denial aft
   });
   await page.goto(`/workspace/cases/${caseId}`);
   await expect(page.getByText('Trạng thái: Đang thực tập', {exact: true})).toBeVisible();
+  await expect(page.getByLabel('Phân công đang làm việc')).toHaveValue('current-scope');
+  await expect(page.getByText('TERM-FIXTURE', {exact: true})).toBeVisible();
   expect(selected).toContain('');expect(selected.filter(Boolean)).toEqual(['other-scope', 'current-scope']);
   denied = true;await page.getByRole('button', {name: 'Tải lại hồ sơ thực tập'}).click();
   await expect(page.getByText('Không đọc được hồ sơ thực tập. Kiểm tra phân công và quyền truy cập hiện hành.', {exact: true})).toBeVisible();

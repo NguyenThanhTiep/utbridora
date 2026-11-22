@@ -1,0 +1,32 @@
+{
+  "localParent": "1243e34",
+  "remoteParent": "608e21e",
+  "sourceSha256": {
+    "web-demo/src/App.tsx": "68ea2fcee5ac6f124e2aa0e845db0e02380d236b4ed21059d926fd6509f57732",
+    "web-demo/src/modules/internship/pages/CaseEntry.tsx": "1eae7f0041b29bc28ba62c238dbbde8725b2b8aca437f46d23c142bd12978764",
+    "web-demo/src/modules/internship/pages/CaseStatus.tsx": "fabed7731cba9c3c96a7c0eed6bf7dc6537d8c76f4e0119c19ecabac054613dd",
+    "web-demo/src/modules/internship/pages/EvaluationPanels.tsx": "79e357a2a122ec19409126fe1c7f0c94826db7ff9377ed3a767db7b2cb4462f7",
+    "web-demo/src/modules/internship/pages/EvaluationView.tsx": "5fae738c4fc99d53189d5b5e607870a35363a16c1e12b3b00c21fcc1f28c8bee",
+    "web-demo/src/modules/internship/pages/EvaluationsPage.tsx": "1dff90c8fe9bd9ac562bae55ae159eec6d720bd3ebbcf18e40e35ac057f8a0c6",
+    "web-demo/src/modules/internship/pages/HrCaseTracker.tsx": "e340e7507ce8611e3d9173f1959a0ec839c01bd875794c8e18c732dda18a0551",
+    "web-demo/src/modules/internship/pages/InternshipWorkspace.tsx": "6c35c243f3e92fcae4b30fcd2b5945c63a0602e4842ca563d306b462188f1ffd",
+    "web-demo/src/modules/internship/pages/SchoolCaseLookup.tsx": "fdeeae6360f084e780ae4ebb2846d88246032cb796a76c31910e7aee87079098",
+    "web-demo/src/modules/internship/pages/SchoolGradePanels.tsx": "0bcd2524a9a40d1e0c58001fdf5cc4c289fbd29d1c9156554635b94f9cc25971",
+    "web-demo/src/modules/internship/pages/school-grades.css": "749ef3b548b560d07304d483ca7c9dd9396cb73bc3bd84227c1ea218f4b1268d",
+    "web-demo/src/modules/internship/styles.css": "4ec6171cf9673e972332f92d119914db197c243a9451e0ff6d8cfde34a1f93b1",
+    "web-demo/tests/demand.spec.ts": "5edcce981667df383dbf7202e11ef0d7adc3297fd97e35e908cb0fed8951b0cb",
+    "web-demo/tests/fixtures/internship-week4-harness.tsx": "011db7ccdc6eebeb9d210e0c4f2d2f82835a1efd2da37ba0d8ac37c2c300f2c1",
+    "web-demo/tests/internship-runtime.spec.ts": "7e8088ed528d78fa326490641aa3beed7cb3c32732c548babb0af6c12ad82821",
+    "web-demo/tests/internship-week3-runtime.spec.ts": "19025aa86acd5c58c0df02b9fb3163ddce59e3c57d91019748f0b12fe9b42056",
+    "web-demo/tests/internship-week4-runtime.spec.ts": "1cb2585bb1ff9837ce356c7a5bceb09c06a0609a95e8a4b873801552eac38cd7",
+    "web-demo/tests/internship-week4.ui.spec.ts": "cc49ceb2ccc1d2438cc5d4f95ab5f21e06ac8e4e7aa9e6fba55a81668f5059c7",
+    "web-demo/tests/internship.ui.spec.ts": "8055e649802feedcb563ed4fdb679de0a8c617699d61a45b3b4d648c3d68b578"
+  },
+  "evidenceSha256": {
+    "MERGE_BUILD.txt": "3a4ce4a24e62fc3e254cf605c6829b3accbf7e236d415a32f740d6f30e689e13",
+    "MERGE_EVALUATION_RESULTS.xml": "655a0ae0055be860eea83d7ca829870d3906d0ef1a2bf0f5f2e5e4132eb95057",
+    "MERGE_UI_RESULTS.xml": "c9d8b67447efdf11ee8b85fd5e265431647970ed14ae81f85beecb4e401e2c62",
+    "MERGE_UNIT.txt": "c8140b72938205f34622b2cffe79c738bb6ae046a356e5a0899d7cec40203ea0",
+    "MERGE_WORKFLOW_RESULTS.xml": "80f509a8290695b95d0c6d837b99e54157b42c6829d2539f45e29bb6a1052f65"
+  }
+}

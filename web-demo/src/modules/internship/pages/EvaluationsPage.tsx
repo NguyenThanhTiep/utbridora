@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import type { Grant, Me } from '../../../api';
+import { ApiError, type Grant, type Me } from '../../../api';
 import { useOrganizationNames } from '../../useOrganizationNames';
 import type { ContextAssignment } from '../types';
 import { workflowError, workflowPages, workflowRead } from '../workflow-api';
@@ -86,7 +86,7 @@ function HrVisibility({assignment,denied}:{assignment:ContextAssignment;denied:(
   const policy=(caseId:string|null)=><VisibilityEditor title={caseId?'Quyền xem điểm theo hồ sơ':'Quyền xem điểm doanh nghiệp/kỳ'} contextId={assignment.id}
     path={'/t3/organizations/'+scope.enterpriseOrgId+'/grade-visibility?termId='+scope.termId+(caseId?'&caseId='+caseId:'')}
     validate={p=>p.enterpriseOrgId===scope.enterpriseOrgId && p.termId===scope.termId && p.caseId===caseId && p.scope===(caseId?'CASE':'ORGANIZATION_TERM')} denied={denied}/>;
-  return <section className="stack"><h2>HR quản lý quyền xem điểm</h2><p>Chính sách theo hồ sơ ưu tiên hơn chính sách doanh nghiệp/kỳ, kể cả khi tắt. Nhà trường vẫn phải cho phép và công bố điểm.</p>
+  return <section className="stack"><h2>Cấu hình hiển thị kết quả</h2><p>Chọn phạm vi để xem và thay đổi quyền hiển thị điểm của doanh nghiệp. Chính sách riêng của hồ sơ được ưu tiên, kể cả khi tắt.</p>
     {!restricted && <label>Phạm vi chính sách<select value={mode} onChange={e=>setMode(e.target.value)}><option value="ORGANIZATION_TERM">Doanh nghiệp và kỳ</option><option value="CASE">Một hồ sơ</option></select></label>}
     {mode==='CASE'?<CaseChooser fixedCase={scope.caseId} contextId={assignment.id} denied={denied}>{id=>policy(id)}</CaseChooser>:policy(null)}
   </section>;
@@ -107,12 +107,18 @@ function SchoolScope({grants,denied}:{grants:Grant[];denied:()=>void}) {
 }
 function SchoolTerm({schoolId,grant,denied}:{schoolId:string;grant:Grant;denied:()=>void}) {
   const [terms,setTerms]=useState<{termId:string;schoolOrgId:string;termCode:string}[]>([]),[term,setTerm]=useState(''),[input,setInput]=useState(''),[error,setError]=useState('');
-  useEffect(()=>{const c=new AbortController();
+  const [loading,setLoading]=useState(true);
+  useEffect(()=>{const c=new AbortController();setLoading(true);setError('');
     void workflowPages<{termId:string;schoolOrgId:string;termCode:string}>('/terms?schoolOrgId='+schoolId,undefined,c.signal).then(v=>{
       if(c.signal.aborted)return;if(v.some(t=>t.schoolOrgId!==schoolId)){denied();return;}setTerms(v);
-    }).catch(e=>{if(!c.signal.aborted)setError('Không tải được danh sách kỳ. Nhập mã kỳ trong phân công của bạn để kiểm tra quyền.');});return ()=>c.abort();
+    // TermReference requires a separate T5 permission. Its 403/404 does not revoke grade delegation.
+    }).catch(e=>{if(!c.signal.aborted){if(e instanceof ApiError && e.status===401)denied();else setError('Không tải được danh sách kỳ. Nhập mã kỳ trong phân công của bạn để kiểm tra quyền.');}})
+      .finally(()=>{if(!c.signal.aborted)setLoading(false);});return ()=>c.abort();
   },[schoolId]);
   return <div className="stack"><section className="panel stack">
+    <h2>Phạm vi nhà trường</h2>
+    {loading && <p role="status">Đang tải kỳ đánh giá…</p>}
+    {!loading && !error && terms.length===0 && <p>Chưa có kỳ đánh giá. Bạn có thể nhập mã kỳ đã được phân công bên dưới.</p>}
     {terms.length>0 && <label>Kỳ đánh giá<select value={term} onChange={e=>setTerm(e.target.value)}><option value="">Chọn kỳ…</option>{terms.map(t=><option key={t.termId} value={t.termId}>{t.termCode}</option>)}</select></label>}
     {error && <p role="alert">{error}</p>}
     <details><summary>Nhập mã kỳ được phân công</summary><form onSubmit={e=>{e.preventDefault();if(uuidPattern.test(input))setTerm(input.toLowerCase());}}>

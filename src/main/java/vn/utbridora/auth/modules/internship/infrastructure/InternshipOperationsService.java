@@ -23,12 +23,11 @@ public class InternshipOperationsService {
     }
     public WorkspaceSummary summary(Authentication auth,UUID term,UUID cohort,String kind) {
         var scope=access.scope(auth,term,kind);var ids=new ArrayList<>(access.caseIds(scope));
+        var cohorts=jdbc.queryForList("SELECT id FROM internship_cohorts WHERE school_org_id=? AND term_id=? AND (? IS NULL OR enterprise_org_id=?) AND (? IS NULL OR id=?) AND (? IS NULL OR EXISTS(SELECT 1 FROM internship_groups g WHERE g.cohort_id=internship_cohorts.id AND g.id=?))",String.class,scope.school(),scope.term(),scope.enterprise(),scope.enterprise(),str(cohort),str(cohort),scope.group(),scope.group());
         if(cohort!=null) {
-            boolean exists=jdbc.queryForObject("SELECT COUNT(*) FROM internship_cohorts WHERE id=? AND school_org_id=? AND term_id=? AND (? IS NULL OR enterprise_org_id=?)",Integer.class,cohort.toString(),scope.school(),scope.term(),scope.enterprise(),scope.enterprise())==1;
-            if(!exists) throw failure(404,"RESOURCE_NOT_FOUND");
+            if(cohorts.isEmpty()) throw failure(404,"RESOURCE_NOT_FOUND");
             var members=new HashSet<>(jdbc.queryForList("SELECT case_id FROM internship_cohort_cases WHERE cohort_id=?",String.class,cohort.toString()));ids.removeIf(id->!members.contains(id));
         }
-        var cohorts=jdbc.queryForList("SELECT id FROM internship_cohorts WHERE school_org_id=? AND term_id=? AND (? IS NULL OR enterprise_org_id=?) AND (? IS NULL OR id=?) AND (? IS NULL OR EXISTS(SELECT 1 FROM internship_groups g WHERE g.cohort_id=internship_cohorts.id AND g.id=?))",String.class,scope.school(),scope.term(),scope.enterprise(),scope.enterprise(),str(cohort),str(cohort),scope.group(),scope.group());
         var groups=cohorts.isEmpty()?List.<String>of():jdbc.queryForList("SELECT id FROM internship_groups WHERE cohort_id IN ("+marks(cohorts)+") AND (? IS NULL OR id=?) ORDER BY id",String.class,append(cohorts,scope.group(),scope.group()));
         Set<String> mentors=new HashSet<>();
         if(!groups.isEmpty()) for(String user:jdbc.queryForList("SELECT DISTINCT user_id FROM internship_context_assignments WHERE kind='MENTOR' AND group_id IN ("+marks(groups)+")",String.class,groups.toArray())) {

@@ -15,6 +15,7 @@ test('HR and Mentor navigate their actual assigned cohort and group', async ({ p
     await expect(workspace).toBeVisible();
     await workspace.click();
     await page.getByLabel('Phân công đang làm việc').selectOption(assignment);
+    await page.getByRole('button', { name: email === process.env.E2E_T3_HR_EMAIL ? 'Nhóm thực tập' : 'Nhóm được giao', exact: true }).click();
     await page.getByLabel('Đợt thực tập', { exact: true }).selectOption(process.env.E2E_T3_COHORT!);
     await page.getByRole('button', { name: 'Xem nhóm G-' + process.env.E2E_T3_GROUP! }).click();
     await expect(page.getByRole('heading', { name: 'Nhóm G-' + process.env.E2E_T3_GROUP!, exact: true })).toBeVisible();

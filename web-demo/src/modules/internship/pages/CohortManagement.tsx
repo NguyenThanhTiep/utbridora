@@ -18,7 +18,7 @@ export function CohortCreator({assignment,changed,denied}:{assignment:WorkspaceA
     <label>Tên đợt<input value={name} maxLength={200} required onChange={e=>setName(e.target.value)}/></label><button disabled={!code.trim() || !name.trim()}>Tạo đợt trong kỳ đã chọn</button></fieldset><CommandFeedback command={command}/></form></details>;
 }
 
-export function CohortManagement({assignment,cohort,changed,denied}:{assignment:WorkspaceAssignment;cohort:Cohort;changed:()=>void;denied:()=>void}) {
+export function CohortManagement({assignment,cohort,changed,denied,fileImportOnly=false}:{assignment:WorkspaceAssignment;cohort:Cohort;changed:()=>void;denied:()=>void;fileImportOnly?:boolean}) {
   const [file,setFile]=useState<File|null>(null),[preview,setPreview]=useState<Preview|null>(null),[selected,setSelected]=useState<Set<string>>(new Set()),[page,setPage]=useState(0);
   const [result,setResult]=useState<Batch|null>(null),[plan,setPlan]=useState<Plan|null>(null),[groupSize,setGroupSize]=useState('10'),[message,setMessage]=useState('');
   const command=useWorkflowCommand(assignment.id,denied);const blocked=command.busy || command.pending;
@@ -53,7 +53,7 @@ export function CohortManagement({assignment,cohort,changed,denied}:{assignment:
       {result && <div role="status"><p>Đã thêm {result.items.filter(i=>i.outcome==='ADDED').length}; đã có {result.items.filter(i=>i.outcome==='ALREADY_PRESENT').length}; không hợp lệ {result.items.filter(i=>i.outcome==='INVALID').length}.</p>
         <button type="button" onClick={changed}>Tải phiên bản đợt mới</button></div>}
     </section>
-    <section className="t3-operation-card stack"><h3>Chia nhóm tự động</h3><p>Xem trước cách chia trước khi xác nhận. Sinh viên chưa chia hết sẽ nằm trong nhóm cuối.</p>
+    {!fileImportOnly && <section className="t3-operation-card stack"><h3>Chia nhóm tự động</h3><p>Xem trước cách chia trước khi xác nhận. Sinh viên chưa chia hết sẽ nằm trong nhóm cuối.</p>
       <fieldset disabled={blocked || !!result}><label>Số sinh viên mỗi nhóm<input type="number" min={1} max={1000} value={groupSize} onChange={e=>{setGroupSize(e.target.value);setPlan(null);}}/></label>
         <button disabled={!Number.isInteger(Number(groupSize)) || Number(groupSize)<1 || Number(groupSize)>1000} onClick={()=>command.run<Plan>('/t3/cohorts/'+cohort.cohortId+'/groups:auto',{mode:'PREVIEW',groupSize:Number(groupSize),expectedCohortVersion:cohort.version},value=>{
           if(value.cohortVersion!==cohort.version || !uuidPattern.test(value.planId) || !Array.isArray(value.groups) || value.groups.some(g=>!Array.isArray(g.caseIds) || g.caseIds.some(id=>!uuidPattern.test(id)))){denied();return;}setPlan(value);
@@ -63,6 +63,6 @@ export function CohortManagement({assignment,cohort,changed,denied}:{assignment:
             if(!Array.isArray(value) || value.some(g=>g.cohortId!==cohort.cohortId)){denied();return;}changed();
           })}>Xác nhận tạo {plan.groups.length} nhóm</button></div>}
       </fieldset>
-    </section><CommandFeedback command={command}/>
+    </section>}<CommandFeedback command={command}/>
   </div>;
 }

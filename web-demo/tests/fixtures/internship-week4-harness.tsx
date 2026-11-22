@@ -11,6 +11,7 @@ function Harness() {
   const mode=new URLSearchParams(location.search).get('role') || 'mentor';
   const [closed,setClosed]=useState(false),[other,setOther]=useState(false);
   const scope=other?'00000000-0000-4000-8000-000000000099':caseId,denied=()=>setClosed(true);
+  if(mode==='school-root')return <EvaluationsPage me={{...me,memberships:[{role:'SCHOOL_STAFF',organizationId:'school'}]}} grants={[{role:'SCHOOL_STAFF',organizationId:'school',permissions:['t3:grades:publish','t3:result_policy:manage','t3:workspace:read']}]}/>;
   if(mode==='root')return <EvaluationsPage me={me} grants={[{...me.memberships[0],permissions:['internship:enterprise:evaluate','t3:grade_visibility:manage','t3:workspace:read']}]}/>;
   return <main className="t3-evaluations stack" style={{padding:12}}><button onClick={()=>setOther(v=>!v)}>Đổi hồ sơ fixture</button>
     {closed?<p role="alert">Đã đóng dữ liệu fixture</p>:<div key={scope}>

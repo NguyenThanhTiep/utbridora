@@ -7,9 +7,9 @@ import { terminal, type CaseRef, type HiringInterest, type Issue, type Operation
 import { OperationsCalendar } from './OperationsCalendar';
 
 const lost=(e:unknown)=>e instanceof ApiError && [401,403,404].includes(e.status) && e.errorCode!=='CSRF_INVALID';
-export function CaseOperations({scope}:{scope:OperationsScope}) {
-  const [input,setInput]=useState(''),[id,setId]=useState(''),[value,setValue]=useState<CaseRef|null>(null),[error,setError]=useState(''),[revision,setRevision]=useState(0),[message,setMessage]=useState('');
-  const denied=()=>{setValue(null);setId('');setMessage('');setError('Không còn đọc được hồ sơ trong phạm vi này.');};
+export function CaseOperations({scope,initialCaseId='',onDenied}:{scope:OperationsScope;initialCaseId?:string;onDenied?:()=>void}) {
+  const [input,setInput]=useState(initialCaseId),[id,setId]=useState(initialCaseId),[value,setValue]=useState<CaseRef|null>(null),[error,setError]=useState(''),[revision,setRevision]=useState(0),[message,setMessage]=useState('');
+  const denied=()=>{setValue(null);setId('');setMessage('');setError('Không còn đọc được hồ sơ trong phạm vi này.');onDenied?.();};
   useEffect(()=>{
     if(!id)return;const c=new AbortController();setError('');
     void workflowRead<CaseRef>('/t3/cases/'+id,scope.contextId,c.signal).then(v=>{
@@ -21,9 +21,9 @@ export function CaseOperations({scope}:{scope:OperationsScope}) {
   useEffect(()=>{const check=()=>{if(!document.hidden)setRevision(n=>n+1);};window.addEventListener('focus',check);document.addEventListener('visibilitychange',check);
     return ()=>{window.removeEventListener('focus',check);document.removeEventListener('visibilitychange',check);};},[]);
   return <section className="panel stack t3-case-operations"><h2>Vận hành hồ sơ thực tập</h2>
-    <form onSubmit={e=>{e.preventDefault();setValue(null);setMessage('');setError('');if(uuidPattern.test(input))setId(input.toLowerCase());}}>
+    {!initialCaseId && <form onSubmit={e=>{e.preventDefault();setValue(null);setMessage('');setError('');if(uuidPattern.test(input)){setId(input.toLowerCase());setRevision(n=>n+1);}}}>
       <label>Mã Case được cấp<input value={input} onChange={e=>{setInput(e.target.value);setId('');setValue(null);setMessage('');}} required/></label>
-      <button disabled={!uuidPattern.test(input)}>Mở hồ sơ vận hành</button></form>
+      <button disabled={!uuidPattern.test(input)}>Mở hồ sơ vận hành</button></form>}
     {error && <p role="alert">{error}</p>}{message && <p role="status">{message}</p>}
     {id && !value && !error && <p role="status">Đang xác nhận hồ sơ…</p>}
     {value && <div key={value.caseId+':'+value.version} className="stack"><div className="t3-case-summary"><h3>Hồ sơ …{value.caseId.slice(-6)}</h3><p>Trạng thái: {value.state} · Phiên bản {value.version}</p>

@@ -17,7 +17,7 @@ directory = Path('target/surefire-reports' if unit else 'target/failsafe-reports
 groups = [('unit' if unit else 'integration', sorted(directory.glob('TEST-*.xml')))]
 if not unit:
     groups.append(('browser', sorted(path for path in Path('target').glob('*browser*.xml'))))
-summaries = []
+summaries, browser_failures = [], []
 for group, reports in groups:
     counts = dict(tests=0, failures=0, errors=0, skipped=0)
     digests, classes = [], []
@@ -30,6 +30,8 @@ for group, reports in groups:
             counts['tests'] += 1
             for tag, field in [('failure', 'failures'), ('error', 'errors'), ('skipped', 'skipped')]:
                 counts[field] += case.find(tag) is not None
+            if group == 'browser' and (case.find('failure') is not None or case.find('error') is not None):
+                browser_failures.append(f'{path.name}: {case.get("classname")}.{case.get("name")}')
     summary = dict(group=group, sourceSha=os.environ.get('GITHUB_SHA'), counts=counts,
                    suiteCount=len(reports), reportDigest=hashlib.sha256('\n'.join(digests).encode()).hexdigest())
     if group == 'integration':
@@ -60,3 +62,6 @@ for path in sorted(directory.glob('TEST-*.xml')):
         detail = re.sub(r'(?i)(password|token|secret|authorization)[=: ]+\S+', r'\1=<redacted>', detail)
         detail = re.sub(r'jdbc:\S+', '<database>', detail)
         print('::error title=Integration test failed::' + escape(detail[:2000]))
+
+for name in browser_failures:
+    print('::error title=Browser test failed::' + escape(name[:500]))

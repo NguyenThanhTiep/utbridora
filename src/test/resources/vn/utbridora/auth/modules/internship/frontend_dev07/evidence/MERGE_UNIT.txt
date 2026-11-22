@@ -1,0 +1,32 @@
+
+> utbridora-auth-web-demo@0.1.0 test:unit
+> playwright test --config playwright.unit.config.ts
+
+
+Running 15 tests using 1 worker
+
+npm.cmd : (node:20252) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At line:7 char:1
++ npm.cmd run test:unit *> ../target/t3-uiux-merge-unit.log
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:20252) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 tests\unit\internship-evaluation.spec.ts:5:1 › T3-12 weighted preview is 76.00 and rounds HALF_UP only once (9ms)
+  ok  2 tests\unit\internship-evaluation.spec.ts:10:1 › T3-12 score rejects coercion, empty values and precision loss (15ms)
+  ok  3 tests\unit\internship-evaluation.spec.ts:14:1 › T3-12 rubric and criterion completeness reject invalid drafts (4ms)
+  ok  4 tests\unit\internship-evaluation.spec.ts:19:1 › T3-12 student accepts only canonical HIDDEN or authorized published data (12ms)
+  ok  5 tests\unit\internship-workflow.spec.ts:6:1 › T3-09 URL rejects executable schemes, userinfo, whitespace and ambiguous backslashes (10ms)
+  ok  6 tests\unit\internship-workflow.spec.ts:11:1 › T3-09 date is an actual Monday independent of browser timezone (6ms)
+  ok  7 tests\unit\internship-workflow.spec.ts:15:1 › T3-09 text limits use trimmed Unicode codepoints (4ms)
+  ok  8 tests\unit\internship-workflow.spec.ts:21:1 › T3-09 expectedVersion must be a safe positive integer (5ms)
+  ok  9 tests\unit\internship-workflow.spec.ts:25:1 › T3-09 attempt freezes the submitted payload and creates a distinct operation key (4ms)
+  ok 10 tests\unit\internship-workflow.spec.ts:31:1 › T3-09 uncertain outcomes preserve operation; definite version conflict permits refresh (6ms)
+  ok 11 tests\unit\internship-workflow.spec.ts:37:1 › T3-09 CSRF expiry does not discard draft as a revoked permission (2ms)
+  ok 12 tests\unit\internship-workflow.spec.ts:42:1 › T3-09 conflict exposes support code without displaying a raw server message (2ms)
+  ok 13 tests\unit\student-terms.spec.ts:7:1 › keeps active terms on later pages and the selected school filter (8ms)
+  ok 14 tests\unit\student-terms.spec.ts:22:1 › an empty first page does not request another page (2ms)
+  ok 15 tests\unit\student-terms.spec.ts:29:1 › a failed later page rejects rather than presenting a partial term list (11ms)
+
+  15 passed (1.3s)

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="22.084766">
+<testsuite name="week2-runtime.spec.ts" timestamp="2026-11-20T16:35:32.185Z" hostname="" tests="1" failures="0" skipped="0" time="20.222" errors="0">
+<testcase name="week 2 skills, cooperation, consent and tasks use real authenticated APIs" classname="week2-runtime.spec.ts" time="20.222">
+</testcase>
+</testsuite>
+</testsuites>

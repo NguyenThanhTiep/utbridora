@@ -64,7 +64,7 @@ jobs:
             target/ci-result-summary.json
   integration:
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -99,7 +99,9 @@ jobs:
           fi
         working-directory: web-demo
       # Compile tests without running Surefire again. Each runner keeps IT forks sequential.
-      - run: >-
+      - name: Run integration tests
+        timeout-minutes: 27
+        run: >-
           mvn -B test-compile failsafe:integration-test failsafe:verify
           -Dfailsafe.includesFile=target/ci-includes.txt
           -Dfrontend.e2e=true -Dt5.week3.browser=true

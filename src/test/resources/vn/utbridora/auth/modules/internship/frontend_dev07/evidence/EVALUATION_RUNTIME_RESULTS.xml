@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites id="" name="" tests="4" failures="0" skipped="0" errors="0" time="45.95770400000001">
+<testsuite name="internship-week4-runtime.spec.ts" timestamp="2026-11-20T10:05:40.181Z" hostname="" tests="4" failures="0" skipped="0" time="38.062" errors="0">
+<testcase name="T3-12 real four-role rubric submit, triple gate, revision, publication and CASE override" classname="internship-week4-runtime.spec.ts" time="22.215">
+</testcase>
+<testcase name="T3-12 real evidence PENDING draft cannot submit or leak into published student result" classname="internship-week4-runtime.spec.ts" time="7.182">
+</testcase>
+<testcase name="T3-12 real outsider denied and logout clears private result" classname="internship-week4-runtime.spec.ts" time="3.229">
+</testcase>
+<testcase name="week 5 S08 opens an owner case without tasks and clears a withdrawn result on focus" classname="internship-week4-runtime.spec.ts" time="5.436">
+</testcase>
+</testsuite>
+</testsuites>

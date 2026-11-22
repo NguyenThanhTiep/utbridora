@@ -20,11 +20,12 @@ async function openCase(page: Page) {
 test('HR imports 40 placements into four groups; school coordinates, evaluates quality and closes the case', async ({ page, browser }) => {
   test.setTimeout(180000);await login(page, env('HR_EMAIL'));
   await page.getByRole('button', { name: 'Không gian thực tập', exact: true }).click();
+  await page.getByRole('button', { name: 'Đợt thực tập', exact: true }).click();
   await page.getByLabel('Phân công đang làm việc', { exact: true }).selectOption(env('ASSIGNMENT'));
-  await page.getByText('Tạo đợt thực tập', { exact: true }).click();
+  await page.getByRole('button', { name: '+ Tạo đợt thực tập', exact: true }).click();
   await page.getByLabel('Mã đợt', { exact: true }).fill('SYNTHETIC-T3-UI');
   await page.getByLabel('Tên đợt', { exact: true }).fill('Synthetic T3 runtime UI');
-  await page.getByRole('button', { name: 'Tạo đợt trong kỳ đã chọn', exact: true }).click();
+  await page.getByRole('button', { name: 'Tạo đợt', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Tiếp nhận Placement từ danh sách', exact: true })).toBeVisible();
   console.log('T3 runtime: cohort created');
   const csv = 'placementId\n' + env('PLACEMENTS').split(',').join('\n') + '\ninvalid-id\n';
@@ -39,10 +40,11 @@ test('HR imports 40 placements into four groups; school coordinates, evaluates q
   await page.getByRole('button', { name: 'Xác nhận tiếp nhận 40 Placement', exact: true }).click();
   await expect(page.getByText('Đã thêm 40; đã có 0; không hợp lệ 0.', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Tải phiên bản đợt mới', exact: true }).click();
-  await page.getByLabel('Số sinh viên mỗi nhóm', { exact: true }).fill('10');
-  await page.getByRole('button', { name: 'Xem trước chia nhóm', exact: true }).click();
+  await page.getByRole('button', { name: 'Nhóm thực tập', exact: true }).click();
+  await page.getByLabel('Số hồ sơ mỗi nhóm', { exact: true }).fill('10');
+  await page.getByRole('button', { name: 'Xem trước nhóm', exact: true }).click();
   await expect(page.getByText('Nhóm 4: 10 hồ sơ', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Xác nhận tạo 4 nhóm', exact: true }).click();
+  await page.getByRole('button', { name: 'Xác nhận chia nhóm', exact: true }).click();
   await expect(page.getByText('4 nhóm trong phạm vi đã chọn', { exact: true })).toBeVisible();
   console.log('T3 runtime: scanned intake and grouping committed');
   await openWorkspacePage(page, 'Quản lý thực tập');
