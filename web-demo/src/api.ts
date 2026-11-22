@@ -18,6 +18,8 @@ export class ApiError extends Error {
     public errorCode: string | null = null, public fieldErrors: FieldError[] = [], public retryAfterSeconds: number | null = null) { super(message); }
 }
 const messages: Record<string, string> = {
+  NO_GROUPABLE_CASES: 'Không còn hồ sơ chưa được phân nhóm trong đợt này. Hãy xem các nhóm đã có hoặc tiếp nhận thêm hồ sơ.',
+  GROUPING_PLAN_EXPIRED: 'Bản xem trước chia nhóm đã hết hạn. Bấm “Xem trước nhóm” để tạo bản mới trước khi xác nhận.',
   INVALID_CREDENTIALS: 'Email, mật khẩu không đúng hoặc tài khoản chưa sẵn sàng.',
   INVALID_REQUEST: 'Thông tin chưa hợp lệ. Kiểm tra dữ liệu, phạm vi vai trò và trạng thái thao tác.',
   CONFLICT: 'Dữ liệu vừa thay đổi hoặc đã tồn tại. Vui lòng tải lại.',

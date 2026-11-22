@@ -1,6 +1,6 @@
 .workspace-t5 { grid-template-columns: 260px minmax(0, 1fr); background: #f3f6fb; --brand: #0b927c; --brand-dark: #087b68; --brand-light: #e7f6f0; --ink: #142f40; --muted: #64788a; --line: #e3eaf2; }
 .workspace-t5 .sidebar { width: 260px; background: radial-gradient(circle at 115% 6%, #1a9b8d22 0 150px, transparent 151px), radial-gradient(circle at -20% 100%, #c5ede326 0 140px, transparent 141px), linear-gradient(94deg, #102f3d 0%, #0c4c4f 92%); border-color: #1d5556; padding: 24px 14px; }
-.workspace-t5 .account-hero { background: linear-gradient(94deg, #102f3d 0%, #0c4c4f 92%); }
+.workspace-t5:not(:where(.workspace-native-t3)) .account-hero { background: linear-gradient(94deg, #102f3d 0%, #0c4c4f 92%); }
 .workspace-t5 .sidebar > nav { flex: 1; min-height: 0; overflow-y: auto; padding: 4px; margin: -4px -4px 12px; scrollbar-width: thin; scrollbar-color: #5e9791 transparent; }
 .workspace-t5 .sidebar .nav { min-height: 44px; border-radius: 8px; color: #d2e8e9; padding: 10px 12px; margin: 2px 0; font-size: 14px; }
 .workspace-t5 .sidebar .nav:hover { background: #ffffff12; color: #fff; }
@@ -18,8 +18,8 @@
 .workspace-t5 .sidebar-bottom { flex-shrink: 0; padding-top: 16px; border-color: #ffffff26; }
 .workspace-t5 .sidebar-logout { color: #c6d8dc; }
 .workspace-t5 .sidebar-logout:hover { background: #ffffff12; color: #fff; }
-.workspace-t5 .content { width: 100%; max-width: 1510px; padding: 12px 24px 32px; }
-.workspace-t5 .app-footer-inner { max-width: 1510px; padding-inline: 24px; }
+.workspace-t5:not(:where(.workspace-native-t3)) .content { width: 100%; max-width: 1510px; padding: 12px 24px 32px; }
+.workspace-t5:not(:where(.workspace-native-t3)) .app-footer-inner { max-width: 1510px; padding-inline: 24px; }
 .workspace-t5-portal .page-header { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
 .portal-navigation { display: grid; gap: 4px; }
 .portal-workspace { display: grid; gap: 24px; --brand: #0b927c; --brand-dark: #087b68; --ink: #142f40; --muted: #64788a; --line: #e3eaf2; font-size: 14px; min-width: 0; }
@@ -65,8 +65,8 @@
 @media (max-width: 1100px) { .portal-page-header { flex-direction: column; } .portal-page-header .button-row { justify-content: flex-start; } }
 @media (max-width: 900px) {
   .workspace-t5 { grid-template-columns: minmax(0, 1fr); }
-  .workspace-t5 .content { padding: 16px 12px; }
-  .workspace-t5 .app-footer-inner { padding-inline: 12px; }
+  .workspace-t5:not(:where(.workspace-native-t3)) .content { padding: 16px 12px; }
+  .workspace-t5:not(:where(.workspace-native-t3)) .app-footer-inner { padding-inline: 12px; }
   .portal-workspace > .panel, .portal-workspace > .portal-stat-grid, .portal-workspace > .portal-welcome { margin-inline: 0; }
   .portal-page-header { padding: 0; }
   .portal-stat-grid { gap: 10px; }

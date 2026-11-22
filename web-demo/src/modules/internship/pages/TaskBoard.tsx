@@ -167,7 +167,7 @@ function TaskBoardContent({ assignment, group, student = false, showReports = tr
         }} />)}
       <button className="secondary" onClick={() => { setSelected(''); setCalendarTask(''); }}>Đóng chi tiết</button></section>}
     <div hidden={!visible('create')}>{assignment?.kind === 'MENTOR' && group && <CreateTask key={group.groupId+':'+created} group={group} busy={busy} command={command} />}</div>
-    <section hidden={!visible('calendar')} className="panel t3-calendar"><h3>Lịch công việc</h3><p className="muted">Lịch theo quyền của phạm vi đang chọn. Chọn hồ sơ để thu hẹp lịch; mục tất cả có thể gồm nhiều nhóm.</p>{calendarError && <p role="alert">{calendarError}</p>}<label>Tháng<input type="month" value={month} onChange={e => setMonth(e.target.value)} /></label>
+    <section hidden={!visible('calendar')} className="panel t3-calendar"><h3>Lịch công việc</h3><p className="muted">Lịch theo quyền của phạm vi đang chọn. Chọn hồ sơ để thu hẹp lịch; mục tất cả có thể gồm nhiều nhóm.</p>{calendarError && <p role="alert">{calendarError}</p>}<label>Tháng<DateInput type="month" aria-label="Tháng" value={month} onChange={e => setMonth(e.target.value)} /></label>
       <label>Hồ sơ trên lịch<select value={calendarCase} onChange={e=>setCalendarCase(e.target.value)}><option value="">Tất cả trong phạm vi</option>{[...new Set([...(group?.caseIds || []),...people,...(calendarCase?[calendarCase]:[])])].map(id=><option key={id} value={id}>Hồ sơ …{id.slice(-6)}</option>)}</select></label>
       {calendarLoading?<p role="status">Đang tải lịch…</p>:!calendarError && events.length===0 && <p className="t3-empty">Chưa có hạn công việc trong tháng và phạm vi đã chọn.</p>}
       <div style={{ overflowX: 'auto' }}><div role="grid" aria-label="Lịch hạn công việc" style={{ display: 'grid', minWidth: 560, gridTemplateColumns: 'repeat(7,minmax(0,1fr))', gap: 6 }}>
@@ -180,13 +180,9 @@ function TaskBoardContent({ assignment, group, student = false, showReports = tr
 function CreateTask({ group, busy, command }: { group: InternshipGroup; busy: boolean; command: (path: string, method: string, data: unknown) => Promise<void> }) {
   const [title, setTitle] = useState(''), [description, setDescription] = useState(''), [due, setDue] = useState(''), [priority, setPriority] = useState('NORMAL'), [cases, setCases] = useState<string[]>([]);
   const submit = (event: FormEvent) => { event.preventDefault(); if (cases.length) void command('/t3/tasks', 'POST', { groupId: group.groupId, title, description, dueAt: new Date(due).toISOString(), priority, caseIds: cases, lateAllowed: true }); };
-  return <form className="panel t3-create-task" onSubmit={submit}><h3>Giao nhiệm vụ cho nhóm {group.code}</h3><fieldset className="t3-form-fieldset" disabled={busy}>
-    <div className="t3-form-grid">
-      <label className="t3-form-span-full">Tiêu đề<input required maxLength={200} value={title} onChange={e => setTitle(e.target.value)} /></label>
-      <label className="t3-form-span-full">Mô tả<textarea required maxLength={10000} value={description} onChange={e => setDescription(e.target.value)} /></label>
-      <label>Hạn hoàn thành<DateInput type="datetime-local" aria-label="Hạn hoàn thành" required value={due} onChange={e => setDue(e.target.value)} /></label>
-      <label>Ưu tiên<select value={priority} onChange={e => setPriority(e.target.value)}><option value="LOW">Thấp</option><option value="NORMAL">Bình thường</option><option value="HIGH">Cao</option></select></label>
-    </div>
-    <fieldset className="t3-cases-fieldset"><legend>Hồ sơ được giao</legend><div className="t3-cases-chips">{group.caseIds.map(id => <label className="t3-case-checkbox" key={id}><input type="checkbox" checked={cases.includes(id)} onChange={e => setCases(e.target.checked ? [...cases, id] : cases.filter(v => v !== id))} /><span>Hồ sơ …{id.slice(-6)}</span></label>)}</div></fieldset>
-    <div className="button-row t3-form-actions"><button disabled={!cases.length}>Giao nhiệm vụ</button></div></fieldset></form>;
+  return <form className="panel" onSubmit={submit}><h3>Giao nhiệm vụ cho nhóm {group.code}</h3><fieldset disabled={busy}>
+    <label>Tiêu đề<input required maxLength={200} value={title} onChange={e => setTitle(e.target.value)} /></label><label>Mô tả<textarea required maxLength={10000} value={description} onChange={e => setDescription(e.target.value)} /></label>
+    <label>Hạn hoàn thành<input type="datetime-local" required value={due} onChange={e => setDue(e.target.value)} /></label><label>Ưu tiên<select value={priority} onChange={e => setPriority(e.target.value)}><option value="LOW">Thấp</option><option value="NORMAL">Bình thường</option><option value="HIGH">Cao</option></select></label>
+    <fieldset><legend>Hồ sơ được giao</legend>{group.caseIds.map(id => <label key={id}><input type="checkbox" checked={cases.includes(id)} onChange={e => setCases(e.target.checked ? [...cases, id] : cases.filter(v => v !== id))} />Hồ sơ …{id.slice(-6)}</label>)}</fieldset>
+    <button disabled={!cases.length}>Giao nhiệm vụ</button></fieldset></form>;
 }

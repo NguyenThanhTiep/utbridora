@@ -244,7 +244,7 @@ button.role-menu-item.is-danger:hover:not(:disabled) .icon {
 }
 
 /* Global sticky topbar styling synchronized across portal, utility, admin & personal pages */
-.workspace > .workspace-main > .topbar {
+.workspace:not(:where(.workspace-native-t3)) > .workspace-main > .topbar {
   position: sticky;
   top: 0;
   z-index: 25;
@@ -307,11 +307,11 @@ button.role-menu-item.is-danger:hover:not(:disabled) .icon {
   color: #087b68;
 }
 
-.workspace-t5:not(.workspace-t5-portal) .content {
+.workspace-t5:not(:where(.workspace-native-t3)):not(.workspace-t5-portal) .content {
   padding-top: 16px;
 }
 
-.workspace-t5:not(.workspace-t5-portal) .page-header {
+.workspace-t5:not(:where(.workspace-native-t3)):not(.workspace-t5-portal) .page-header {
   margin-bottom: 18px;
   padding: 18px 22px;
   border: 1px solid #e3eaf2;
@@ -321,7 +321,7 @@ button.role-menu-item.is-danger:hover:not(:disabled) .icon {
   box-shadow: 0 4px 20px #142f4006;
 }
 
-.workspace-t5:not(.workspace-t5-portal) .page-header .section-kicker {
+.workspace-t5:not(:where(.workspace-native-t3)):not(.workspace-t5-portal) .page-header .section-kicker {
   margin: 0 0 4px;
   color: #087b68;
   font-size: 11px;
@@ -329,12 +329,12 @@ button.role-menu-item.is-danger:hover:not(:disabled) .icon {
   letter-spacing: 0.04em;
 }
 
-.workspace-t5:not(.workspace-t5-portal) .page-header h1 {
+.workspace-t5:not(:where(.workspace-native-t3)):not(.workspace-t5-portal) .page-header h1 {
   font-size: 22px;
   color: #142f40;
 }
 
-.workspace-t5:not(.workspace-t5-portal) .page-header .page-description {
+.workspace-t5:not(:where(.workspace-native-t3)):not(.workspace-t5-portal) .page-header .page-description {
   margin-top: 4px;
   color: #5b7083;
   font-size: 13px;
@@ -350,7 +350,7 @@ button.role-menu-item.is-danger:hover:not(:disabled) .icon {
     box-shadow: 0 6px 20px rgba(20, 47, 64, 0.08);
   }
 
-  .workspace.workspace-t5:not(.workspace-t5-portal) > .workspace-main > .topbar {
+  .workspace:not(:where(.workspace-native-t3)).workspace-t5:not(:where(.workspace-native-t3)):not(.workspace-t5-portal) > .workspace-main > .topbar {
     position: sticky;
     top: 12px;
     z-index: 25;
@@ -365,7 +365,7 @@ button.role-menu-item.is-danger:hover:not(:disabled) .icon {
     box-shadow: 0 6px 20px rgba(20, 47, 64, 0.08);
   }
 
-  .workspace.workspace-admin > .workspace-main > .topbar {
+  .workspace:not(:where(.workspace-native-t3)).workspace-admin > .workspace-main > .topbar {
     position: sticky;
     top: 12px;
     z-index: 25;
@@ -374,7 +374,7 @@ button.role-menu-item.is-danger:hover:not(:disabled) .icon {
     box-shadow: 0 6px 20px rgba(20, 47, 64, 0.07);
   }
 
-  .workspace:not(.workspace-t5):not(.workspace-admin) > .workspace-main > .topbar {
+  .workspace:not(:where(.workspace-native-t3)):not(.workspace-t5:not(:where(.workspace-native-t3))):not(.workspace-admin) > .workspace-main > .topbar {
     position: sticky;
     top: 12px;
     z-index: 25;
@@ -391,7 +391,7 @@ button.role-menu-item.is-danger:hover:not(:disabled) .icon {
 }
 
 @media (max-width: 720px) {
-  .workspace > .workspace-main > .topbar {
+  .workspace:not(:where(.workspace-native-t3)) > .workspace-main > .topbar {
     padding: 10px 14px;
     gap: 10px;
   }

@@ -922,6 +922,40 @@ for (const schoolSide of [false, true]) {
   });
 }
 
+for (const width of [1440, 390, 320]) test(`school function frames separate scope, heading and content at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 900 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await session(page, true);
+  const portal = page.locator('.portal-workspace.is-school');
+  const nav = page.getByRole('navigation', { name: 'Điều hướng chính' });
+  const screens = [
+    ['Sinh viên', 'Danh sách & kích hoạt', 'Danh sách & kích hoạt'],
+    ['Doanh nghiệp đối tác', 'Xác minh doanh nghiệp', 'Xác minh doanh nghiệp'],
+    ['Doanh nghiệp đối tác', 'Duyệt hợp tác', 'Duyệt hợp tác'],
+    ['Đợt thực tập', 'Đối chiếu hồ sơ', 'Đối chiếu hồ sơ'],
+    ['Đợt thực tập', 'Đề xuất sinh viên', 'Đề xuất sinh viên'],
+    ['Đợt thực tập', 'Tiếp nhận thực tập', 'Tiếp nhận thực tập'],
+    ['', 'Thông báo', 'Trung tâm thông báo'],
+  ];
+  for (const [group, menu, heading] of screens) {
+    const toggle = page.getByRole('button', { name: 'Mở menu điều hướng', exact: true });
+    if (await toggle.isVisible()) await toggle.click();
+    const destination = nav.getByRole('button', { name: menu, exact: true });
+    if (!await destination.isVisible() && group) await nav.getByRole('button', { name: group, exact: true }).click();
+    await destination.click();
+    await expect(portal.getByRole('heading', { name: heading, level: 2, exact: true })).toHaveCount(1);
+    const title = portal.locator('.portal-page-heading');
+    await expect(title.getByRole('heading', { name: heading, exact: true })).toBeVisible();
+    await page.evaluate(() => window.scrollTo(0, 0));
+    const scopeBox = (await portal.locator('.portal-context-bar').boundingBox())!;
+    const titleBox = (await title.boundingBox())!;
+    const contentBox = (await portal.locator('.portal-subpage-sheet').boundingBox())!;
+    expect(titleBox.y).toBeGreaterThanOrEqual(scopeBox.y + scopeBox.height + 12);
+    expect(contentBox.y).toBeGreaterThanOrEqual(titleBox.y + titleBox.height + 12);
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+  }
+});
+
 for (const width of [1440, 390, 320]) test(`enterprise page frames keep one heading and readable scoped lists at ${width}px`, async ({ page }) => {
   await page.setViewportSize({ width, height: 900 });
   await page.emulateMedia({ reducedMotion: 'reduce' });

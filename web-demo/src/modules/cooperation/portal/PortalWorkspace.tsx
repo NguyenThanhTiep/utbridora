@@ -19,7 +19,7 @@ import type { Grant } from '../../../api';
 import { MatchingWorkspace } from '../../matching/MatchingWorkspace';
 import { useSurfaceSpotlight } from '../../../ui/useSurfaceSpotlight';
 import { portalSpotlightTargets } from '../../../ui/workspaceSurfaces';
-import { EnterprisePageHeader } from './EnterprisePageHeader';
+import { PortalPageHeader } from './PortalPageHeader';
 import './portal.css';
 import './features.css';
 import '../notifications/notifications.css';
@@ -106,22 +106,11 @@ function ScopedPortal({ org, side, page, navigate, viewerId, organizationPicker,
     if (canLeaveDemand()) openWorkflow(target, 'task:' + target.page + ':' + target.recordId);
   };
   const refresh = () => { if (canLeaveDemand()) { data.reload();setRevision(value => value + 1); } };
-  const pageHeader = school ? <header className={'portal-page-header' + (page === 'overview' ? ' is-overview' : '')}><div><p className="portal-breadcrumb">{pageMeta ? pageMeta.kicker : `Cổng nhà trường / ${meta.title}`}</p>
-      {page !== 'overview' && <h2>{page === 'notifications' ? 'Trung tâm thông báo' : meta.title}</h2>}
-      {pageMeta && <p className="portal-page-subtitle">{pageMeta.subtitle}</p>}</div>
-      {['overview', 'statistics', 'notifications'].includes(page) && (
-        <div className="button-row">
-          <button className="secondary" onClick={refresh}><Icon name="refresh" size={16} />Tải lại dữ liệu</button>
-        </div>
-      )}
-      {page !== 'overview' && page !== 'notifications' && (
-        <span className="portal-welcome-icon" aria-hidden="true"><Icon name={meta.icon} size={32} /></span>
-      )}
-    </header> : <EnterprisePageHeader
-      title={page === 'overview' ? 'Tổng quan doanh nghiệp' : page === 'notifications' ? 'Trung tâm thông báo' : meta.title}
-      breadcrumb={meta.title} kicker={pageMeta?.kicker || 'CỔNG DOANH NGHIỆP'}
-      description={pageMeta?.subtitle || 'Theo dõi nhu cầu, hợp tác và tiến độ tiếp nhận sinh viên.'}
-      icon={page === 'overview' ? 'building' : meta.icon}
+  const pageHeader = <PortalPageHeader side={side}
+      title={page === 'overview' ? school ? 'Tổng quan Nhà trường' : 'Tổng quan doanh nghiệp' : page === 'notifications' ? 'Trung tâm thông báo' : meta.title}
+      breadcrumb={meta.title} kicker={pageMeta?.kicker || (school ? 'CỔNG NHÀ TRƯỜNG' : 'CỔNG DOANH NGHIỆP')}
+      description={pageMeta?.subtitle || (school ? 'Theo dõi hồ sơ, nhu cầu và các bước hợp tác với nhà trường.' : 'Theo dõi nhu cầu, hợp tác và tiến độ tiếp nhận sinh viên.')}
+      icon={page === 'overview' ? school ? 'graduation' : 'building' : meta.icon}
       refresh={['overview', 'statistics', 'notifications'].includes(page) ? refresh : undefined} />;
   const pageContent = <>
     {page === 'overview' && <PortalDashboard side={side} organizationId={org} revision={data.revision} demands={data.demands} cooperations={data.cooperations} verifications={data.verifications} navigate={navigate} openTask={openTask} notifications={notifications} termId={termId} />}
@@ -153,8 +142,9 @@ function ScopedPortal({ org, side, page, navigate, viewerId, organizationPicker,
       <NotificationScopeFields org={org} side={side} {...scope} change={(schoolOrgId, value) => { if (canLeaveDemand()) changeScope(schoolOrgId, value); }} />
     </div><div className="portal-context-actions"><NotificationBell store={notifications} open={() => navigate('notifications')} />
     </div></div>
-    {school && page !== 'overview' ? <div key={page} className={'portal-subpage-sheet school-page-' + page}>{pageHeader}{pageContent}</div>
-      : !school && page !== 'overview' ? <div key={page} className="portal-page-stage">{pageHeader}<div className={'portal-subpage-sheet enterprise-page enterprise-page-' + page}>{pageContent}</div></div>
-      : <div key="overview" className="portal-page-stage is-overview">{pageHeader}{pageContent}</div>}
+    <div key={page} className={'portal-page-stage' + (page === 'overview' ? ' is-overview' : '')}>
+      {pageHeader}
+      {page === 'overview' ? pageContent : <div className={'portal-subpage-sheet ' + (school ? 'school-page-' + page : 'enterprise-page enterprise-page-' + page)}>{pageContent}</div>}
+    </div>
   </>;
 }

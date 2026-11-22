@@ -152,12 +152,13 @@ export default function App() {
   const hrMentorKicker = canHr && !canMentor ? 'QUẢN LÝ NHÂN SỰ (HR)'
     : canMentor && !canHr ? 'NGƯỜI HƯỚNG DẪN (MENTOR)' : 'ĐIỀU PHỐI THỰC TẬP';
   const portalScreen = screen === 'demands' || screen === 'school';
+  const nativeInternship = ['internship', 'internship-case', 'school-internship-cases', 'internship-operations', 'evaluations', 'mentor-invitations'].includes(screen);
   const portalSide = screen === 'demands' ? 'enterprise' : screen === 'school' ? 'school' : rolePortalSide;
   const adminShell = isAdmin && !portalSide;
   const studentShell = !adminShell && !t5Shell && menus.some(item => item.group === 'student');
   const adminSurface = useAdminSpotlight(adminShell);
   const workspaceSurface = useSurfaceSpotlight<HTMLElement>(
-    (t5Shell && !portalScreen && !adminShell) || studentShell,
+    (t5Shell && !portalScreen && !adminShell && !nativeInternship) || studentShell,
     studentShell ? studentSpotlightTargets : workspaceFrames + ', .t3-report-row-btn',
     'portal',
   );
@@ -339,7 +340,7 @@ export default function App() {
     <button className="text-button full" disabled={action.busy} onClick={() => { setToken(''); setAuthScreen('login'); history.replaceState(null, '', '/'); }}>Về tài khoản của tôi</button>
   </AuthLayout>;
 
-  return <div className={'workspace' + (studentShell ? ' workspace-student' : '') + (adminShell ? ' workspace-admin' : '') + (t5Shell ? ' workspace-t5' : '') + (portalSide ? ' workspace-role-portal' : '') + (portalScreen ? ' workspace-t5-portal' : '') + (internshipShell ? ' workspace-t5-internship' : '') + (t5Shell && !portalScreen ? ' has-workspace-motion' : '') + (justSignedIn ? ' is-just-signed-in' : '')}>
+  return <div className={'workspace' + (studentShell ? ' workspace-student' : '') + (adminShell ? ' workspace-admin' : '') + (t5Shell ? ' workspace-t5' : '') + (portalSide ? ' workspace-role-portal' : '') + (portalScreen ? ' workspace-t5-portal' : '') + (internshipShell ? ' workspace-t5-internship' : '') + (nativeInternship ? ' workspace-native-t3' : '') + (t5Shell && !portalScreen && !nativeInternship ? ' has-workspace-motion' : '') + (justSignedIn ? ' is-just-signed-in' : '')}>
     {justSignedIn && <SessionFeedback variant="login" title="Đăng nhập thành công" subtitle={`Chào mừng ${me.displayName}`} />}
     <a className="skip-link" href="#main-content">Bỏ qua điều hướng</a>
     {mobileOpen && <button className="sidebar-backdrop" aria-label="Đóng phần nền menu" onClick={() => setMobileOpen(false)} tabIndex={-1} />}
@@ -435,7 +436,7 @@ export default function App() {
     </aside>
 
     <div className="workspace-main">
-      <header className={'topbar' + (studentShell || portalSide ? ' workspace-topbar' : '') + (t5Shell ? ` is-portal-topbar is-${portalSide || 'internship'}-topbar` : '')
+      <header className={'topbar' + (!nativeInternship && (studentShell || portalSide) ? ' workspace-topbar' : '') + (t5Shell && !nativeInternship ? ` is-portal-topbar is-${portalSide || 'internship'}-topbar` : '')
         + (screen === 'internship' ? ' t3-topbar' + (internshipScrolled ? ' is-condensed' : '') : '')}>
         {screen === 'internship' ? <><button className="btn-icon menu-toggle t3-topbar-menu" ref={menuButton}
           aria-label="Mở menu điều hướng" aria-expanded={mobileOpen} aria-controls="main-navigation"
@@ -443,7 +444,7 @@ export default function App() {
           <div className="t3-topbar-slot" ref={setInternshipTopbar} /></>
         : <div className="topbar-location"><button className="btn-icon menu-toggle" ref={menuButton} aria-label="Mở menu điều hướng"
           aria-expanded={mobileOpen} aria-controls="main-navigation" onClick={() => setMobileOpen(previous => !previous)}><Icon name="menu" /></button>
-          {studentShell || portalSide ? <div className="topbar-heading"><p className="topbar-kicker">{portalSide ? portalSide === 'school' ? 'KHÔNG GIAN NHÀ TRƯỜNG' : 'KHÔNG GIAN DOANH NGHIỆP' : pageKicker}</p><h1 className="topbar-title" ref={heading} tabIndex={-1}>{screenTitle}</h1></div>
+          {!nativeInternship && (studentShell || portalSide) ? <div className="topbar-heading"><p className="topbar-kicker">{portalSide ? portalSide === 'school' ? 'KHÔNG GIAN NHÀ TRƯỜNG' : 'KHÔNG GIAN DOANH NGHIỆP' : pageKicker}</p><h1 className="topbar-title" ref={heading} tabIndex={-1}>{screenTitle}</h1></div>
             : adminShell ? <div className="admin-location"><small>CỔNG QUẢN TRỊ HỆ THỐNG</small><strong>{screenTitle}</strong></div>
             : internshipShell ? <div className="portal-topbar-identity"><span className="portal-organization-icon"><Icon name="briefcase" size={22} /></span><div><small>KHÔNG GIAN THỰC TẬP · {hrMentorBadge}</small><strong>{screenTitle}</strong></div></div>
             : <><span className="topbar-home"><Icon name="layers" size={17} />Không gian làm việc</span><Icon name="chevron-right" size={14} /><span className="topbar-current">{screenTitle}</span></>}</div>}
@@ -525,8 +526,8 @@ export default function App() {
         </div>}
       </header>
       <main className="content" id="main-content" ref={adminShell ? adminSurface : workspaceSurface}>
-        {!studentShell && !portalSide && <div key={portalScreen ? 'portal-hdr' : 'hdr:' + screen} className="page-header"><div><p className="section-kicker">{screen === 'account' ? 'KHÔNG GIAN CÁ NHÂN' : screen === 'mentor-invitations' ? 'LỜI MỜI HƯỚNG DẪN' : screen === 'demands' || screen === 'school' ? current.title : screen === 'internship' || screen === 'internship-operations' || screen === 'evaluations' || screen === 'internship-case' ? 'KHÔNG GIAN THỰC TẬP' : current.group === 'student' ? 'KHÔNG GIAN SINH VIÊN' : 'QUẢN TRỊ NỀN TẢNG'}</p>
-          <h1 ref={heading} tabIndex={-1}>{current.title}</h1><p className="page-description">{current.description}</p></div>
+        {(!studentShell && !portalSide || nativeInternship) && <div key={portalScreen ? 'portal-hdr' : 'hdr:' + screen} className="page-header"><div><p className="section-kicker">{nativeInternship ? 'QUẢN LÝ THỰC TẬP' : screen === 'account' ? 'KHÔNG GIAN CÁ NHÂN' : screen === 'demands' || screen === 'school' ? current.title : current.group === 'student' ? 'KHÔNG GIAN SINH VIÊN' : 'QUẢN TRỊ NỀN TẢNG'}</p>
+          <h1 ref={heading} tabIndex={-1}>{nativeInternship ? screenTitle : current.title}</h1><p className="page-description">{current.description}</p></div>
           <span className="workspace-label"><span className="live-dot" />UT.Bridora</span></div>}
         <Notice message={action.message} tone={action.error ? 'error' : 'info'} />
         {portalScreen && menus.some(item => item.id === screen) ? (

@@ -101,12 +101,6 @@ export function PortalDashboard({ side, organizationId, revision, demands, coope
     </>}
   </div></section>;
   return <>
-    {school && <section className="portal-welcome">
-      <div><p className="section-kicker">CỔNG NHÀ TRƯỜNG</p>
-        <h2>Tổng quan Nhà trường</h2>
-        <p>Theo dõi hồ sơ, nhu cầu và các bước hợp tác với nhà trường.</p></div>
-      <span className="portal-welcome-icon" aria-hidden="true"><Icon name="graduation" size={38} /></span>
-    </section>}
     {!school && notifications && !notifications.loading && !notifications.errors.length && notifications.unread > 0 && <section className="notification-banner">
       <span className="portal-banner-icon" aria-hidden="true"><Icon name="bell" size={20} /></span>
       <div><strong>Bạn có {notifications.unread} thông báo chưa đọc</strong>

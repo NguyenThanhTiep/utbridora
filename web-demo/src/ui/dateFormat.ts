@@ -1,6 +1,7 @@
 const DATE_PREFIX_RE = /^(\d{4})-(\d{2})-(\d{2})(?:$|[T\s])/;
 const DATE_ONLY_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const DATETIME_LOCAL_RE = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/;
+const MONTH_ONLY_RE = /^(\d{4})-(0[1-9]|1[0-2])$/;
 const HAS_TZ_RE = /(?:Z|[+-]\d{2}:?\d{2})$/i;
 
 function pad2(value: number): string {
@@ -30,12 +31,17 @@ export function formatDateDMY(value: string | null | undefined, fallback = '—'
 }
 
 /**
- * Formats native `<input type="date">` / `<input type="datetime-local">` values
- * (`YYYY-MM-DD` / `YYYY-MM-DDTHH:mm[:ss]`) into day-first display labels.
+ * Formats native date/datetime values into day-first labels and `YYYY-MM` into
+ * a Vietnamese month label without changing the value sent to the API.
  */
-export function formatDateInputDMY(value: string, type: 'date' | 'datetime-local'): string {
+export function formatDateInputDMY(value: string, type: 'date' | 'datetime-local' | 'month'): string {
   const trimmed = value.trim();
   if (!trimmed) return '';
+
+  if (type === 'month') {
+    const match = MONTH_ONLY_RE.exec(trimmed);
+    return match ? `Tháng ${Number(match[2])}/${match[1]}` : '';
+  }
 
   if (type === 'date') {
     const match = DATE_ONLY_RE.exec(trimmed) ?? DATE_PREFIX_RE.exec(trimmed);

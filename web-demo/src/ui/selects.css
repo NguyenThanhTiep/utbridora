@@ -1,5 +1,5 @@
 /* Shared single-choice controls. Keep native labels, validation and keyboard behavior. */
-#root select:not([multiple]):is(:not([size]), [size="1"]) {
+#root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"]) {
   box-sizing: border-box;
   min-inline-size: 0;
   max-inline-size: 100%;
@@ -17,23 +17,23 @@
   transition: border-color var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out), box-shadow var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out), background-color var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out);
 }
 
-#root select:not([multiple]):is(:not([size]), [size="1"]):not(:disabled):hover {
+#root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"]):not(:disabled):hover {
   border-color: #80beaf;
   background-color: #fbfefd;
 }
 
-#root select:not([multiple]):is(:not([size]), [size="1"]):is(:focus, :open) {
+#root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"]):is(:focus, :open) {
   outline: none;
   border-color: #0b927c;
   box-shadow: 0 0 0 3px #0b927c12;
 }
 
-#root select:not([multiple]):is(:not([size]), [size="1"])[aria-invalid="true"] {
+#root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"])[aria-invalid="true"] {
   border-color: #d32f2f;
   box-shadow: 0 0 0 3px #d32f2f12;
 }
 
-#root select:not([multiple]):is(:not([size]), [size="1"]):disabled {
+#root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"]):disabled {
   border-color: #e3eaf2;
   background-color: #f3f6f9;
   color: #8899a6;
@@ -43,10 +43,10 @@
 }
 
 /* Preserve T2's floating-label single frame inside .student-page while keeping the shared dropdown picker. */
-#root .student-page :is(.field, label) > select:not([multiple]):is(:not([size]), [size="1"]),
-#root .student-page :is(.field, label) > select:not([multiple]):is(:not([size]), [size="1"]):not(:disabled):hover,
-#root .student-page :is(.field, label) > select:not([multiple]):is(:not([size]), [size="1"]):is(:focus, :open),
-#root .student-page :is(.field, label) > select:not([multiple]):is(:not([size]), [size="1"])[aria-invalid="true"] {
+#root:not(:where(:has(> .workspace-native-t3))) .student-page :is(.field, label) > select:not([multiple]):is(:not([size]), [size="1"]),
+#root:not(:where(:has(> .workspace-native-t3))) .student-page :is(.field, label) > select:not([multiple]):is(:not([size]), [size="1"]):not(:disabled):hover,
+#root:not(:where(:has(> .workspace-native-t3))) .student-page :is(.field, label) > select:not([multiple]):is(:not([size]), [size="1"]):is(:focus, :open),
+#root:not(:where(:has(> .workspace-native-t3))) .student-page :is(.field, label) > select:not([multiple]):is(:not([size]), [size="1"])[aria-invalid="true"] {
   min-block-size: 24px;
   min-height: 24px;
   margin: 0;
@@ -60,7 +60,7 @@
   color: var(--ink, #142f40);
 }
 
-#root .student-page :is(.field, label) > select:not([multiple]):is(:not([size]), [size="1"]):disabled {
+#root:not(:where(:has(> .workspace-native-t3))) .student-page :is(.field, label) > select:not([multiple]):is(:not([size]), [size="1"]):disabled {
   min-block-size: 24px;
   min-height: 24px;
   margin: 0;
@@ -75,12 +75,12 @@
 
 /* Browsers without customizable pickers retain their accessible native dropdown. */
 @supports (appearance: base-select) and selector(::picker(select)) {
-  #root select:not([multiple]):is(:not([size]), [size="1"]),
-  #root select:not([multiple]):is(:not([size]), [size="1"])::picker(select) {
+  #root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"]),
+#root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"])::picker(select) {
     appearance: base-select;
   }
 
-  #root select:not([multiple]):is(:not([size]), [size="1"]) {
+  #root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"]) {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -91,11 +91,11 @@
     overflow: clip;
   }
 
-  #root .student-page :is(.field, label) > select:not([multiple]):is(:not([size]), [size="1"]) {
+  #root:not(:where(:has(> .workspace-native-t3))) .student-page :is(.field, label) > select:not([multiple]):is(:not([size]), [size="1"]) {
     padding-inline: 0;
   }
 
-  #root select:not([multiple]):is(:not([size]), [size="1"])::picker-icon {
+  #root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"])::picker-icon {
     content: "";
     flex: 0 0 7px;
     inline-size: 7px;
@@ -108,12 +108,12 @@
     transition: rotate var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out), color var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out);
   }
 
-  #root select:not([multiple]):is(:not([size]), [size="1"]):open::picker-icon {
+  #root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"]):open::picker-icon {
     color: #0b927c;
     rotate: 225deg;
   }
 
-  #root select:not([multiple]):is(:not([size]), [size="1"])::picker(select) {
+  #root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"])::picker(select) {
     box-sizing: border-box;
     inline-size: anchor-size(self-inline);
     min-inline-size: 0;
@@ -135,7 +135,7 @@
     transition: opacity var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out);
   }
 
-  #root select:not([multiple]):is(:not([size]), [size="1"]) option {
+  #root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"]) option {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -153,22 +153,22 @@
     cursor: pointer;
   }
 
-  #root select:not([multiple]):is(:not([size]), [size="1"]) option + option {
+  #root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"]) option + option {
     margin-block-start: 3px;
   }
 
-  #root select:not([multiple]):is(:not([size]), [size="1"]) option:not(:disabled):is(:hover, :focus-visible) {
+  #root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"]) option:not(:disabled):is(:hover, :focus-visible) {
     outline: none;
     background: #f0f7f4;
   }
 
-  #root select:not([multiple]):is(:not([size]), [size="1"]) option:checked {
+  #root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"]) option:checked {
     background: #e7f6f0;
     color: #087b68;
     font-weight: 600;
   }
 
-  #root select:not([multiple]):is(:not([size]), [size="1"]) option::checkmark {
+  #root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"]) option::checkmark {
     order: 1;
     margin-inline-start: auto;
     color: #0b927c;
@@ -176,36 +176,36 @@
     font-weight: 700;
   }
 
-  #root select:not([multiple]):is(:not([size]), [size="1"]) option:disabled {
+  #root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"]) option:disabled {
     background: transparent;
     color: #8899a6;
     cursor: not-allowed;
   }
 
-  #root select:not([multiple]):is(:not([size]), [size="1"]) optgroup {
+  #root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"]) optgroup {
     padding: 6px 0;
     color: #64788a;
     font: inherit;
   }
 
   @starting-style {
-    #root select:not([multiple]):is(:not([size]), [size="1"])::picker(select) { opacity: 0; }
+    #root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"])::picker(select) { opacity: 0; }
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #root select:not([multiple]):is(:not([size]), [size="1"]),
-  #root select:not([multiple]):is(:not([size]), [size="1"])::picker-icon,
-  #root select:not([multiple]):is(:not([size]), [size="1"])::picker(select) { transition: none; }
+  #root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"]),
+#root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"])::picker-icon,
+#root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"])::picker(select) { transition: none; }
 }
 
 @media (forced-colors: active) {
-  #root select:not([multiple]):is(:not([size]), [size="1"]),
-  #root select:not([multiple]):is(:not([size]), [size="1"])::picker(select) {
+  #root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"]),
+#root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"])::picker(select) {
     border-color: ButtonText;
     background: Canvas;
     color: CanvasText;
     box-shadow: none;
   }
-  #root select:not([multiple]):is(:not([size]), [size="1"]):focus-visible { outline: 2px solid Highlight; }
+  #root:not(:where(:has(> .workspace-native-t3))) select:not([multiple]):is(:not([size]), [size="1"]):focus-visible { outline: 2px solid Highlight; }
 }

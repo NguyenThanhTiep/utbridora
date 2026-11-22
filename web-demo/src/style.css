@@ -739,17 +739,17 @@ button.profile-shortcut { display: flex; gap: 9px; min-height: 40px; padding: 4p
   --line: #e3eaf2;
 }
 
-.workspace-t5 :is(.content, .topbar) :is(button, a, input, select, textarea, summary):focus-visible {
+.workspace-t5:not(:where(.workspace-native-t3)) :is(.content, .topbar) :is(button, a, input, select, textarea, summary):focus-visible {
   outline: 2px solid #0b927c;
   outline-offset: 2px;
 }
 
-.workspace-t5 :is(input, select, textarea):not([aria-invalid="true"]):focus {
+.workspace-t5:not(:where(.workspace-native-t3)) :is(input, select, textarea):not([aria-invalid="true"]):focus {
   border-color: #0b927c;
   box-shadow: 0 0 0 3px rgba(11, 146, 124, 0.14);
 }
 
-.workspace-t5 :is(input, select, textarea):disabled {
+.workspace-t5:not(:where(.workspace-native-t3)) :is(input, select, textarea):disabled {
   background: #f8fafc;
   color: #64788a;
 }
@@ -761,11 +761,11 @@ button.profile-shortcut { display: flex; gap: 9px; min-height: 40px; padding: 4p
   box-shadow: 0 2px 8px rgba(11, 146, 124, 0.35);
 }
 
-.workspace-t5:not(.workspace-t5-portal) .content {
+.workspace-t5:not(:where(.workspace-native-t3)):not(.workspace-t5-portal) .content {
   padding-top: 22px;
 }
 
-.workspace-t5:not(.workspace-t5-portal) .page-header {
+.workspace-t5:not(:where(.workspace-native-t3)):not(.workspace-t5-portal) .page-header {
   align-items: center;
   gap: 16px;
   margin-bottom: 16px;
@@ -777,7 +777,7 @@ button.profile-shortcut { display: flex; gap: 9px; min-height: 40px; padding: 4p
   box-shadow: 0 4px 20px rgba(20, 47, 64, 0.03);
 }
 
-.workspace-t5:not(.workspace-t5-portal) .page-header .section-kicker {
+.workspace-t5:not(:where(.workspace-native-t3)):not(.workspace-t5-portal) .page-header .section-kicker {
   margin: 0 0 4px;
   color: #087b68;
   font-size: 11px;
@@ -785,7 +785,7 @@ button.profile-shortcut { display: flex; gap: 9px; min-height: 40px; padding: 4p
   letter-spacing: 0.04em;
 }
 
-.workspace-t5:not(.workspace-t5-portal) .page-header h1 {
+.workspace-t5:not(:where(.workspace-native-t3)):not(.workspace-t5-portal) .page-header h1 {
   margin: 0;
   color: #142f40;
   font-size: 23px;
@@ -793,69 +793,69 @@ button.profile-shortcut { display: flex; gap: 9px; min-height: 40px; padding: 4p
   letter-spacing: -0.02em;
 }
 
-.workspace-t5:not(.workspace-t5-portal) .page-header .page-description {
+.workspace-t5:not(:where(.workspace-native-t3)):not(.workspace-t5-portal) .page-header .page-description {
   margin: 4px 0 0;
   color: #64788a;
   font-size: 13.5px;
 }
 
-.workspace-t5:not(.workspace-t5-portal) .workspace-label {
+.workspace-t5:not(:where(.workspace-native-t3)):not(.workspace-t5-portal) .workspace-label {
   background: #e7f6f0;
   border-color: #cdece4;
   color: #087b68;
 }
 
-.workspace-t5 .live-dot {
+.workspace-t5:not(:where(.workspace-native-t3)) .live-dot {
   background: #0b927c;
 }
 
-.workspace-t5 .notice {
+.workspace-t5:not(:where(.workspace-native-t3)) .notice {
   background: #e8f2ff;
   border-color: #c3dbf6;
   color: #2868b0;
 }
 
-.workspace-t5 .notice-success {
+.workspace-t5:not(:where(.workspace-native-t3)) .notice-success {
   background: #e7f6f0;
   border-color: #cdece4;
   color: #087b68;
 }
 
-.workspace-t5 .notice-error {
+.workspace-t5:not(:where(.workspace-native-t3)) .notice-error {
   background: #fdecee;
   border-color: #f7cfd5;
   color: #c23b4e;
 }
 
-.workspace-t5 .status-badge {
+.workspace-t5:not(:where(.workspace-native-t3)) .status-badge {
   border-radius: 7px;
 }
 
-.workspace-t5 .status-badge.active,
-.workspace-t5 .status-badge.verified,
-.workspace-t5 .status-badge.success {
+.workspace-t5:not(:where(.workspace-native-t3)) .status-badge.active,
+.workspace-t5:not(:where(.workspace-native-t3)) .status-badge.verified,
+.workspace-t5:not(:where(.workspace-native-t3)) .status-badge.success {
   color: #087b68;
   background: #e7f6f0;
   border-color: #cdece4;
 }
 
-.workspace-t5 .status-badge.pending,
-.workspace-t5 .status-badge.pending_activation,
-.workspace-t5 .status-badge.suspended {
+.workspace-t5:not(:where(.workspace-native-t3)) .status-badge.pending,
+.workspace-t5:not(:where(.workspace-native-t3)) .status-badge.pending_activation,
+.workspace-t5:not(:where(.workspace-native-t3)) .status-badge.suspended {
   color: #9c5a0c;
   background: #fff4e1;
   border-color: #f1dfbf;
 }
 
-.workspace-t5 .status-badge.deactivated,
-.workspace-t5 .status-badge.failure,
-.workspace-t5 .status-badge.denied {
+.workspace-t5:not(:where(.workspace-native-t3)) .status-badge.deactivated,
+.workspace-t5:not(:where(.workspace-native-t3)) .status-badge.failure,
+.workspace-t5:not(:where(.workspace-native-t3)) .status-badge.denied {
   color: #c23b4e;
   background: #fdecee;
   border-color: #f7cfd5;
 }
 
-.workspace-t5:not(.workspace-t5-portal) .content :is(.panel, .account-membership) {
+.workspace-t5:not(:where(.workspace-native-t3)):not(.workspace-t5-portal) .content :is(.panel, .account-membership) {
   position: relative;
   border: 1px solid #e3eaf2;
   border-radius: 16px;
@@ -863,12 +863,12 @@ button.profile-shortcut { display: flex; gap: 9px; min-height: 40px; padding: 4p
   box-shadow: 0 4px 20px rgba(20, 47, 64, 0.03);
 }
 
-.workspace-t5:not(.workspace-t5-portal) .content .account-membership {
+.workspace-t5:not(:where(.workspace-native-t3)):not(.workspace-t5-portal) .content .account-membership {
   border-radius: 12px;
   background: #fafcfd;
 }
 
-.workspace-t5:not(.workspace-t5-portal) .content button:not([class]):not([role="tab"]) {
+.workspace-t5:not(:where(.workspace-native-t3)):not(.workspace-t5-portal) .content button:not([class]):not([role="tab"]) {
   min-height: 40px;
   padding: 9px 16px;
   border: 1px solid #0b927c;
@@ -878,12 +878,12 @@ button.profile-shortcut { display: flex; gap: 9px; min-height: 40px; padding: 4p
   font-weight: 650;
 }
 
-.workspace-t5:not(.workspace-t5-portal) .content button:not([class]):not([role="tab"]):hover:not(:disabled) {
+.workspace-t5:not(:where(.workspace-native-t3)):not(.workspace-t5-portal) .content button:not([class]):not([role="tab"]):hover:not(:disabled) {
   background: #087b68;
   border-color: #087b68;
 }
 
-.workspace-t5:not(.workspace-t5-portal) .content button.secondary {
+.workspace-t5:not(:where(.workspace-native-t3)):not(.workspace-t5-portal) .content button.secondary {
   min-height: 40px;
   padding: 9px 14px;
   border: 1px solid #cde4db;
@@ -893,13 +893,13 @@ button.profile-shortcut { display: flex; gap: 9px; min-height: 40px; padding: 4p
   font-weight: 650;
 }
 
-.workspace-t5:not(.workspace-t5-portal) .content button.secondary:hover:not(:disabled) {
+.workspace-t5:not(:where(.workspace-native-t3)):not(.workspace-t5-portal) .content button.secondary:hover:not(:disabled) {
   border-color: #0b927c;
   background: #f2faf7;
   color: #087b68;
 }
 
-.workspace-t5 .account-overview .account-hero {
+.workspace-t5:not(:where(.workspace-native-t3)) .account-overview .account-hero {
   background:
     radial-gradient(circle at 105% 10%, #1a9b8d28 0 190px, transparent 191px),
     linear-gradient(94deg, #102f3d 0%, #0c4c4f 92%);
@@ -907,31 +907,31 @@ button.profile-shortcut { display: flex; gap: 9px; min-height: 40px; padding: 4p
   box-shadow: 0 14px 30px rgba(12, 76, 79, 0.16);
 }
 
-.workspace-t5 .account-overview .hero-heading-dot {
+.workspace-t5:not(:where(.workspace-native-t3)) .account-overview .hero-heading-dot {
   color: #56dabb;
 }
 
-.workspace-t5 .account-overview .hero-orbit {
+.workspace-t5:not(:where(.workspace-native-t3)) .account-overview .hero-orbit {
   border-color: rgba(86, 218, 187, 0.24);
 }
 
-.workspace-t5 .account-overview .orbit-two {
+.workspace-t5:not(:where(.workspace-native-t3)) .account-overview .orbit-two {
   border-color: rgba(86, 218, 187, 0.14);
 }
 
-.workspace-t5 .account-overview .hero-art-center {
+.workspace-t5:not(:where(.workspace-native-t3)) .account-overview .hero-art-center {
   background: #0b6e61;
   border-color: rgba(140, 242, 219, 0.48);
   color: #8cf2db;
 }
 
-.workspace-t5 .account-overview .hero-art-node {
+.workspace-t5:not(:where(.workspace-native-t3)) .account-overview .hero-art-node {
   background: #12484e;
   border-color: rgba(86, 218, 187, 0.32);
   color: #d2e8e9;
 }
 
-.workspace-t5 .account-overview .stat-card {
+.workspace-t5:not(:where(.workspace-native-t3)) .account-overview .stat-card {
   position: relative;
   border: 1px solid #e3eaf2;
   border-top: 4px solid #087b68;
@@ -940,56 +940,56 @@ button.profile-shortcut { display: flex; gap: 9px; min-height: 40px; padding: 4p
   transition: transform 0.18s ease, box-shadow 0.2s ease, border-color 0.18s ease;
 }
 
-.workspace-t5 .account-overview .stat-card .stat-icon {
+.workspace-t5:not(:where(.workspace-native-t3)) .account-overview .stat-card .stat-icon {
   background: #e7f6f0;
   border-color: #cdece4;
   color: #087b68;
 }
 
-.workspace-t5 .account-overview .stat-card strong {
+.workspace-t5:not(:where(.workspace-native-t3)) .account-overview .stat-card strong {
   color: #142f40;
 }
 
-.workspace-t5 .account-overview .stat-card:nth-child(2) {
+.workspace-t5:not(:where(.workspace-native-t3)) .account-overview .stat-card:nth-child(2) {
   border-top-color: #2868b0;
 }
 
-.workspace-t5 .account-overview .stat-card:nth-child(2) .stat-icon {
+.workspace-t5:not(:where(.workspace-native-t3)) .account-overview .stat-card:nth-child(2) .stat-icon {
   background: #e8f2ff;
   border-color: #c3dbf6;
   color: #2868b0;
 }
 
-.workspace-t5 .account-overview .stat-card:nth-child(3) {
+.workspace-t5:not(:where(.workspace-native-t3)) .account-overview .stat-card:nth-child(3) {
   border-top-color: #7750b9;
 }
 
-.workspace-t5 .account-overview .stat-card:nth-child(3) .stat-icon {
+.workspace-t5:not(:where(.workspace-native-t3)) .account-overview .stat-card:nth-child(3) .stat-icon {
   background: #f0eafa;
   border-color: #dbcef2;
   color: #7750b9;
 }
 
-.workspace-t5 .account-overview :is(.profile-avatar, .section-icon, .membership-symbol, .password-panel-icon) {
+.workspace-t5:not(:where(.workspace-native-t3)) .account-overview :is(.profile-avatar, .section-icon, .membership-symbol, .password-panel-icon) {
   background: #e7f6f0;
   border-color: #cdece4;
   color: #087b68;
 }
 
-.workspace-t5 .account-overview :is(.membership-check, .permissions li .icon, .security-note > .icon) {
+.workspace-t5:not(:where(.workspace-native-t3)) .account-overview :is(.membership-check, .permissions li .icon, .security-note > .icon) {
   color: #0b927c;
 }
 
-.workspace-t5 .account-overview .membership-reference {
+.workspace-t5:not(:where(.workspace-native-t3)) .account-overview .membership-reference {
   background: #f1f5f9;
   color: #64788a;
 }
 
-.workspace-t5 .account-overview .security-note b {
+.workspace-t5:not(:where(.workspace-native-t3)) .account-overview .security-note b {
   color: #142f40;
 }
 
-.workspace-t5 .account-overview .security-note p {
+.workspace-t5:not(:where(.workspace-native-t3)) .account-overview .security-note p {
   color: #64788a;
 }
 
@@ -1024,34 +1024,34 @@ button.profile-shortcut { display: flex; gap: 9px; min-height: 40px; padding: 4p
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .workspace-t5.has-workspace-motion .content button:not(:disabled):not([aria-disabled="true"]):not(.text-button):not(.stat-card):not([role="tab"]):hover {
+  .workspace-t5:not(:where(.workspace-native-t3)).has-workspace-motion .content button:not(:disabled):not([aria-disabled="true"]):not(.text-button):not(.stat-card):not([role="tab"]):hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(11, 146, 124, 0.16);
   }
 }
 
-.workspace-t5.has-workspace-motion .content button:not(:disabled):not([aria-disabled="true"]):active {
+.workspace-t5:not(:where(.workspace-native-t3)).has-workspace-motion .content button:not(:disabled):not([aria-disabled="true"]):active {
   transform: translateY(1px);
   box-shadow: none;
 }
 
 @media (max-width: 600px) {
-  .workspace-t5:not(.workspace-t5-portal) .page-header {
+  .workspace-t5:not(:where(.workspace-native-t3)):not(.workspace-t5-portal) .page-header {
     padding: 16px;
     border-radius: 14px;
   }
 
-  .workspace-t5:not(.workspace-t5-portal) .page-header h1 {
+  .workspace-t5:not(:where(.workspace-native-t3)):not(.workspace-t5-portal) .page-header h1 {
     font-size: 20px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .workspace .content > .page-header,
-  .app-page-stage,
-  .app-page-stage > * > *,
-  .workspace [role="tabpanel"]:not([hidden]),
-  .workspace-t5.has-workspace-motion .content > * {
+.app-page-stage,
+.app-page-stage > * > *,
+.workspace [role="tabpanel"]:not([hidden]),
+.workspace-t5:not(:where(.workspace-native-t3)).has-workspace-motion .content > * {
     animation: none !important;
   }
 }

@@ -26,8 +26,8 @@ export function CaseOperations({scope,initialCaseId='',onDenied}:{scope:Operatio
       <button disabled={!uuidPattern.test(input)}>Mở hồ sơ vận hành</button></form>}
     {error && <p role="alert">{error}</p>}{message && <p role="status">{message}</p>}
     {id && !value && !error && <p role="status">Đang xác nhận hồ sơ…</p>}
-    {value && <div key={value.caseId+':'+value.version} className="stack"><div className="t3-case-summary"><h3>Hồ sơ …{value.caseId.slice(-6)}</h3><p>Trạng thái: {value.state} · Phiên bản {value.version}</p>
-      <p>Placement: <code>{value.placementId}</code></p><div className="button-row"><button className="secondary" onClick={()=>setRevision(n=>n+1)}>Tải lại hồ sơ vận hành</button></div></div>
+    {value && <div key={value.caseId+':'+value.version} className="stack"><div><h3>Hồ sơ …{value.caseId.slice(-6)}</h3><p>Trạng thái: {value.state} · Phiên bản {value.version}</p>
+      <p>Placement: <code>{value.placementId}</code></p><button className="secondary" onClick={()=>setRevision(n=>n+1)}>Tải lại hồ sơ vận hành</button></div>
       <IssuePanel scope={scope} value={value} denied={denied}/>
       {scope.mode==='school' && <OperationsCalendar scope={scope} caseId={value.caseId} denied={denied}/>}
       {scope.mode!=='mentor' && <InterestPanel scope={scope} value={value} denied={denied}/>}
@@ -50,9 +50,9 @@ function IssuePanel({scope,value,denied}:{scope:OperationsScope;value:CaseRef;de
     {rows.length===0 && !error && <p>Chưa có yêu cầu trong bộ lọc này.</p>}
     {rows.map(row=><article className="t3-issue" key={row.issueId}><h4>{row.category} · {row.state}</h4><p className="t3-preserve-text">{row.description}</p>
       <p>Phụ trách: <code>{row.ownerUserId}</code> · Phiên bản {row.version}</p>
-      {writable && scope.mode!=='mentor' && row.state!=='RESOLVED' && <div className="button-row"><button disabled={command.busy || command.pending} onClick={()=>command.run<Issue>('/t3/school/issues/'+row.issueId,{expectedVersion:row.version,state:row.state==='OPEN'?'IN_PROGRESS':'RESOLVED'},v=>{
+      {writable && scope.mode!=='mentor' && row.state!=='RESOLVED' && <button disabled={command.busy || command.pending} onClick={()=>command.run<Issue>('/t3/school/issues/'+row.issueId,{expectedVersion:row.version,state:row.state==='OPEN'?'IN_PROGRESS':'RESOLVED'},v=>{
         if(v.issueId!==row.issueId || v.caseId!==value.caseId){denied();return;}setRefresh(n=>n+1);
-      },'PATCH')}>{row.state==='OPEN'?'Bắt đầu xử lý':'Đánh dấu đã giải quyết'}</button></div>}</article>)}
+      },'PATCH')}>{row.state==='OPEN'?'Bắt đầu xử lý':'Đánh dấu đã giải quyết'}</button>}</article>)}
     {writable && scope.mode==='school' && <form className="stack" onSubmit={e=>{e.preventDefault();command.run<Issue>('/t3/school/issues',{caseId:value.caseId,category,description:description.trim(),ownerUserId:owner.toLowerCase()},v=>{
       if(v.caseId!==value.caseId){denied();return;}setDescription('');setRefresh(n=>n+1);
     });}}><fieldset disabled={command.busy || command.pending}><legend>Tạo yêu cầu phối hợp</legend><label>Loại vấn đề<select value={category} onChange={e=>setCategory(e.target.value)}><option value="DELAY">Chậm tiến độ</option><option value="COMMUNICATION">Trao đổi/phối hợp</option><option value="OTHER">Khác</option></select></label>

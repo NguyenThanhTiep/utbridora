@@ -52,7 +52,7 @@ export function MentorEvaluation({ caseId, termId, contextId, denied }: Scope & 
   const done=()=>{setDirty(false);setVersion('');setRefresh(n=>n+1);};
   const change=(index:number,patch:Partial<ScoreDraft>)=>{setDirty(true);setScores(old=>old.map((s,i)=>i===index?{...s,...patch}:s));};
   return <section className="stack" aria-label="Mentor chấm rubric"><h2>Chấm đánh giá thực tập</h2>
-    <div className="button-row"><button type="button" className="secondary" disabled={command.busy || command.pending} onClick={()=>setRefresh(n=>n+1)}>Tải lại đánh giá</button></div>
+    <button type="button" className="secondary" disabled={command.busy || command.pending} onClick={()=>setRefresh(n=>n+1)}>Tải lại đánh giá</button>
     {loading && <p role="status">Đang tải đánh giá…</p>}{error && <p role="alert">{error}</p>}<CommandFeedback command={command}/>
     {!loading && !error && <>
       {!value && <label>Rubric áp dụng<select value={templateKey} disabled={blocked} onChange={e=>{
@@ -120,8 +120,8 @@ export function StudentEvaluation({caseId,denied}:Scope) {
   useEffect(()=>{const refresh=()=>{setValue(null);setLoading(true);setRefresh(n=>n+1);};
     window.addEventListener('focus',refresh);return ()=>window.removeEventListener('focus',refresh);
   },[]);
-  return <section className="stack t3-student-eval" aria-label="Kết quả của sinh viên"><h2>Kết quả thực tập của tôi</h2>
-    <div className="button-row"><button className="secondary" onClick={()=>{setValue(null);setLoading(true);setRefresh(n=>n+1);}}>Tải lại kết quả</button></div>
+  return <section className="stack" aria-label="Kết quả của sinh viên"><h2>Kết quả thực tập của tôi</h2>
+    <button className="secondary" onClick={()=>{setValue(null);setLoading(true);setRefresh(n=>n+1);}}>Tải lại kết quả</button>
     {loading?<p role="status">Đang kiểm tra quyền xem kết quả…</p>:error?<p role="alert">{error}</p>
       :value?<EvaluationView value={value} denied={denied}/>:<p>Kết quả chưa được phép hiển thị.</p>}
   </section>;

@@ -1,5 +1,4 @@
 import { useEffect, useState, type Ref } from 'react';
-import { DateInput } from '../../../ui/DateInput';
 import { useReveal } from '../../../useReveal';
 import { accessLost, workflowError, workflowPages, workflowRead } from '../workflow-api';
 import { mondayDate, textWithin, uuidPattern, validVersion, type InternshipTask, type WeeklyReport, type ReportReview, type ReportFile } from '../workflow';
@@ -62,15 +61,13 @@ function ReportList({ caseId, contextId, student, mentor, denied }: {
     return () => c.abort();
   }, [caseId, contextId, refresh]);
   const valid = mondayDate(week) && reportTextValid(completedWork, difficulties, nextPlan);
-  const reloadButton = <button className="secondary" disabled={loading || command.busy} onClick={() => setRefresh(n => n + 1)}>Tải danh sách báo cáo</button>;
-  const reportButtons = items.map(item => <button className={student ? 'secondary student-report-card' : 'secondary t3-report-row-btn' + (selected === item.reportId ? ' is-selected' : '')}
-    key={item.reportId} onClick={() => { setSelected(item.reportId); reveal.request(); }}>Tuần {item.weekStart} · Bản {item.revisionNo} · {item.state}</button>);
-  return <div className="stack">{student ? reloadButton : <div className="button-row">{reloadButton}</div>}
+  return <div className="stack"><button className="secondary" disabled={loading || command.busy} onClick={() => setRefresh(n => n + 1)}>Tải danh sách báo cáo</button>
     {loading && <p role="status">Đang tải báo cáo…</p>}{message && <p role="alert">{message}</p>}
     {!loading && !message && items.length === 0 && <p>Chưa có báo cáo cho hồ sơ này.</p>}
-    {student ? reportButtons : items.length > 0 && <div className="t3-report-list">{reportButtons}</div>}
+    {items.map(item => <button className={student ? 'secondary student-report-card' : 'secondary'} key={item.reportId} onClick={() => { setSelected(item.reportId); if (student) reveal.request(); }}>
+      Tuần {item.weekStart} · Bản {item.revisionNo} · {item.state}</button>)}
     {selected && <ReportEditor key={selected} reportId={selected} caseId={caseId} contextId={contextId} student={student} mentor={mentor}
-      denied={denied} changed={() => setRefresh(n => n + 1)} revealRef={reveal.ref} />}
+      denied={denied} changed={() => setRefresh(n => n + 1)} revealRef={student ? reveal.ref : undefined} />}
     {student && <form onSubmit={event => { event.preventDefault(); if (!valid) return;
       command.run<WeeklyReport>('/t3/reports', { caseId, weekStart: week, completedWork: completedWork.trim(),
         difficulties: difficulties.trim(), nextPlan: nextPlan.trim(), evidenceFileIds: [] }, value => {
@@ -78,8 +75,7 @@ function ReportList({ caseId, contextId, student, mentor, denied }: {
         setSelected(value.reportId); reveal.request(); setRefresh(n => n + 1); setCompletedWork(''); setDifficulties(''); setNextPlan('');
       });
     }}><fieldset disabled={command.busy || command.pending}><legend>Tạo báo cáo tuần</legend>
-      <label>Thứ Hai bắt đầu tuần{student ? <input type="date" required value={week} onChange={event => setWeek(event.target.value)} />
-        : <DateInput type="date" required value={week} onChange={event => setWeek(event.target.value)} />}</label>
+      <label>Thứ Hai bắt đầu tuần<input type="date" required value={week} onChange={event => setWeek(event.target.value)} /></label>
       {week && !mondayDate(week) && <p role="alert">Chọn ngày thứ Hai. Tuần phải giao với thời gian thực tập.</p>}
       <ReportFields completedWork={completedWork} difficulties={difficulties} nextPlan={nextPlan}
         completed={setCompletedWork} difficulty={setDifficulties} plan={setNextPlan} />
@@ -89,7 +85,7 @@ function ReportList({ caseId, contextId, student, mentor, denied }: {
 }
 
 function ReportEditor({ reportId, caseId, contextId, student, mentor, denied, changed, revealRef }: {
-  reportId: string; caseId: string; contextId?: string; student: boolean; mentor: boolean; denied: () => void; changed: () => void; revealRef: Ref<HTMLElement>;
+  reportId: string; caseId: string; contextId?: string; student: boolean; mentor: boolean; denied: () => void; changed: () => void; revealRef?: Ref<HTMLElement>;
 }) {
   const [current, setCurrent] = useState<WeeklyReport | null>(null), [view, setView] = useState<WeeklyReport | null>(null);
   const [revision, setRevision] = useState(''), [refresh, setRefresh] = useState(0), [message, setMessage] = useState(''), [loading, setLoading] = useState(true);

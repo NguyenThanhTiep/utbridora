@@ -1,12 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { ApiError, type Grant, type Me } from '../../../api';
-import { useOrganizationNames } from '../../useOrganizationNames';
 import type { ContextAssignment } from '../types';
 import { workflowError, workflowPages, workflowRead } from '../workflow-api';
 import { gradeAccessLost } from '../evaluation';
 import { uuidPattern, type InternshipTask } from '../workflow';
 import { MentorEvaluation, SchoolEvaluations, StudentEvaluation, VisibilityEditor } from './EvaluationPanels';
-import { useReveal } from '../../../useReveal';
 import '../styles.css';
 
 type Mode='ENTERPRISE'|'SCHOOL_STAFF'|'STUDENT';
@@ -34,8 +32,6 @@ function CaseChooser({children,contextId,student=false,fixedCase,mentorGroup,den
 }) {
   const [choices,setChoices]=useState<string[]>([]),[selected,setSelected]=useState(fixedCase || ''),[input,setInput]=useState('');
   const [message,setMessage]=useState('');
-  // Chọn hoặc nhập mã hồ sơ thì cuộn tới khối đánh giá của hồ sơ đó.
-  const reveal=useReveal<HTMLDivElement>();
   useEffect(()=>{if(fixedCase || !student && !mentorGroup)return;const c=new AbortController();
     const read=student?workflowPages<InternshipTask>('/t3/tasks',undefined,c.signal).then(tasks=>tasks.flatMap(t=>t.assignments.map(a=>a.caseId)))
       :workflowPages<{groupId:string;caseIds:string[]}>('/t3/mentors/me/groups',contextId,c.signal).then(groups=>groups.filter(g=>g.groupId===mentorGroup).flatMap(g=>g.caseIds));
@@ -45,14 +41,14 @@ function CaseChooser({children,contextId,student=false,fixedCase,mentorGroup,den
   },[student,mentorGroup,contextId,fixedCase]);
   return <section className="stack"><div className="panel stack"><h2>Chọn hồ sơ thực tập</h2>
     {message && <p role="alert">{message}</p>}
-    {choices.length>0 && <label>{student?'Hồ sơ từ nhiệm vụ':'Hồ sơ trong nhóm'}<select value={selected} onChange={e=>{setSelected(e.target.value);if(e.target.value)reveal.request();}}><option value="">Chọn hồ sơ…</option>
+    {choices.length>0 && <label>{student?'Hồ sơ từ nhiệm vụ':'Hồ sơ trong nhóm'}<select value={selected} onChange={e=>setSelected(e.target.value)}><option value="">Chọn hồ sơ…</option>
       {choices.map(id=><option key={id} value={id}>Hồ sơ …{id.slice(-6)}</option>)}</select></label>}
-    {fixedCase?<p>Hồ sơ được phân công: {fixedCase}</p>:<form onSubmit={e=>{e.preventDefault();if(uuidPattern.test(input)){setSelected(input.toLowerCase());reveal.request();}}}>
+    {fixedCase?<p>Hồ sơ được phân công: {fixedCase}</p>:<form onSubmit={e=>{e.preventDefault();if(uuidPattern.test(input))setSelected(input.toLowerCase());}}>
       <label>Mã hồ sơ thực tập<input value={input} required onChange={e=>{setInput(e.target.value);setSelected('');}}/></label>
       <p>Dùng mã hồ sơ được cấp. Hệ thống xác nhận quyền khi mở dữ liệu.</p>
       <button disabled={!uuidPattern.test(input)}>Mở đánh giá hồ sơ</button>
     </form>}
-  </div>{selected && <div key={selected+':'+(contextId || '')} ref={reveal.ref}>{children(selected)}</div>}</section>;
+  </div>{selected && <div key={selected+':'+(contextId || '')}>{children(selected)}</div>}</section>;
 }
 
 function EnterpriseEvaluations({me,grants,denied}:{me:Me;grants:Grant[];denied:()=>void}) {
@@ -71,7 +67,7 @@ function EnterpriseEvaluations({me,grants,denied}:{me:Me;grants:Grant[];denied:(
     && grants.some(g=>g.role==='ENTERPRISE' && g.organizationId===a.scope.enterpriseOrgId && g.permissions.includes(a.kind==='MENTOR'?'internship:enterprise:evaluate':'t3:grade_visibility:manage')));
   const assignment=usable.find(a=>a.id===selected);
   return <div className="stack"><section className="panel stack"><h2>Phân công đánh giá</h2>
-    <div className="button-row"><button type="button" className="secondary" onClick={()=>setRefresh(n=>n+1)}>Tải lại phân công đánh giá</button></div>
+    <button className="secondary" onClick={()=>setRefresh(n=>n+1)}>Tải lại phân công đánh giá</button>
     {loading?<p role="status">Đang xác nhận phân công…</p>:error?<p role="alert">{error}</p>:<label>Phân công đánh giá<select value={assignment?.id || ''} onChange={e=>setSelected(e.target.value)}>
       <option value="">Chọn phân công…</option>{usable.map(a=><option key={a.id} value={a.id}>{a.kind} · Kỳ …{a.scope.termId.slice(-6)} · {a.scope.caseId?'Hồ sơ …'+a.scope.caseId.slice(-6):a.scope.groupId?'Nhóm …'+a.scope.groupId.slice(-6):'Toàn doanh nghiệp'}</option>)}</select></label>}
     {!loading && !error && usable.length===0 && <p>Chưa có phân công Mentor/HR phù hợp còn hiệu lực.</p>}
@@ -93,15 +89,11 @@ function HrVisibility({assignment,denied}:{assignment:ContextAssignment;denied:(
 }
 function SchoolScope({grants,denied}:{grants:Grant[];denied:()=>void}) {
   const schools=grants.filter(g=>g.role==='SCHOOL_STAFF' && !!g.organizationId && (g.permissions.includes('t3:grades:publish') || g.permissions.includes('t3:result_policy:manage')));
-  const orgNames=useOrganizationNames(schools.length>0);
   const [school,setSchool]=useState(schools[0]?.organizationId || '');
   const current=schools.find(g=>g.organizationId===school);
-  return <div className="stack"><section className="panel stack">
-    {schools.length>0
-      ? <label>Trường quản lý đánh giá<select value={school} onChange={e=>setSchool(e.target.value)}>
-        {schools.map(g=><option key={g.organizationId} value={g.organizationId!}>{orgNames[g.organizationId!] || ('Trường …'+g.organizationId!.slice(-6))}</option>)}</select></label>
-      : <p className="empty-inline">Chưa có quyền công bố hoặc quản lý chính sách kết quả.</p>}
-  </section>
+  return <div className="stack"><section className="panel"><label>Trường quản lý đánh giá<select value={school} onChange={e=>setSchool(e.target.value)}>
+    {schools.map(g=><option key={g.organizationId} value={g.organizationId!}>Trường …{g.organizationId!.slice(-6)}</option>)}</select></label>
+    {schools.length===0 && <p>Chưa có quyền công bố hoặc quản lý chính sách kết quả.</p>}</section>
     {current && <SchoolTerm key={school} schoolId={school} grant={current} denied={denied}/>}
   </div>;
 }

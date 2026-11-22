@@ -17,3 +17,10 @@ test('formats native date and datetime-local input values day-first', () => {
   expect(formatDateInputDMY('2026-11-28T09:30', 'datetime-local')).toBe('28/11/2026 · 09:30');
   expect(formatDateInputDMY('2026-11-28T09:30:45', 'datetime-local')).toBe('28/11/2026 · 09:30:45');
 });
+
+test('formats calendar months in Vietnamese without accepting an invalid month', () => {
+  expect(formatDateInputDMY('2026-11', 'month')).toBe('Tháng 11/2026');
+  expect(formatDateInputDMY('2027-01', 'month')).toBe('Tháng 1/2027');
+  expect(formatDateInputDMY('', 'month')).toBe('');
+  expect(formatDateInputDMY('2026-13', 'month')).toBe('');
+});
