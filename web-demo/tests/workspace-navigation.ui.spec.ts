@@ -15,6 +15,7 @@ for (const width of [1440, 390]) for (const role of ['SCHOOL_STAFF', 'STUDENT', 
         permissions: ['student_profile:self:read', 'student_profile:self:write', 'cooperation:enterprise:create', 'cooperation:school:review',
           'school:delegation:manage', 't3:workspace:read', ...(role === 'ADMIN' ? ['membership:admin:write'] : [])] }] });
       if (path === '/auth/csrf') return route.fulfill({ json: { headerName: 'X-CSRF-TOKEN', token: 'navigation-ui-token' } });
+      if (path === '/t3/context-assignments/me') return route.fulfill({ json: [] });
       if (path === '/auth/logout' && request.method() === 'POST') { authenticated = false; return route.fulfill({ status: 204 }); }
       if (request.method() === 'GET') return route.fulfill({ json: { content: [], page: 0, number: 0, size: 100, totalElements: 0, totalPages: 0 } });
       return route.fulfill({ status: 400, json: { errorCode: 'SCHEMA_VALIDATION' } });
@@ -23,8 +24,12 @@ for (const width of [1440, 390]) for (const role of ['SCHOOL_STAFF', 'STUDENT', 
     if (role === 'SCHOOL_STAFF') {
       for (const title of ['Phân công quyền cán bộ', 'Duyệt hợp tác', 'Đề xuất sinh viên', 'Quản lý thực tập', 'Đánh giá thực tập']) {
         await openWorkspacePage(page, title);
-        await expect(page.locator('.topbar-title')).toHaveText(title);
+        await expect(page.getByRole('heading', { name: title, exact: true, level: 1 })).toBeVisible();
       }
+    } else if (role === 'ENTERPRISE') {
+      await openWorkspacePage(page, 'Đánh giá thực tập');
+      await expect(page.getByRole('heading', { name: 'Đánh giá thực tập', exact: true, level: 1 })).toBeVisible();
+      await openWorkspacePage(page, 'Tài khoản của tôi');
     } else await openWorkspacePage(page, 'Tài khoản của tôi');
     await signOutFromAccountMenu(page);
     await expect(page.locator('.workspace')).toHaveCount(0);

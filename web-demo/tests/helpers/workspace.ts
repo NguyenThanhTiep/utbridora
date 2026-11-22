@@ -12,6 +12,15 @@ export async function openWorkspacePage(page: Page, title: string) {
   if (await toggle.isVisible() && await toggle.getAttribute('aria-expanded') !== 'true') await toggle.click();
   const navigation = page.getByRole('navigation', { name: 'Điều hướng chính' });
   const entry = navigation.getByRole('button', { name: title, exact: true, includeHidden: true });
+  // The enterprise T3 submenu is mounted only after its parent is opened.
+  if (await entry.count() === 0) {
+    const internship = navigation.locator('button.internship-parent');
+    if (await internship.count() === 1 && await internship.getAttribute('aria-expanded') !== 'true') {
+      await internship.click();
+      // Opening the parent also navigates, which closes the phone drawer.
+      if (await toggle.isVisible() && await toggle.getAttribute('aria-expanded') !== 'true') await toggle.click();
+    }
+  }
   await expect(entry).toHaveCount(1);
   if (!await entry.isVisible()) {
     const group = navigation.locator('.school-nav-group').filter({ has: page.getByRole('button', { name: title, exact: true, includeHidden: true }) });

@@ -308,13 +308,16 @@ test('T3 shell UI mock: global ADMIN has no implicit internship menu', async ({ 
 
 test('DEV06 School can open internship Case lookup and denied lookup clears prior details', async ({ page }) => {
   const memberships = [{ role: 'SCHOOL_STAFF', organizationId: ids.school }];
+  const emptyPage = { content: [], page: 0, totalPages: 1, totalElements: 0 };
+  // Isolate every background read, including notification reads against CI's real server.
+  await page.route('**/api/v1/**', route => route.request().method() === 'GET'
+    ? route.fulfill({ json: emptyPage }) : route.fulfill({ status: 405 }));
   await page.route('**/api/v1/auth/me', route => route.fulfill({ json: { ...me, memberships } }));
   await page.route('**/api/v1/auth/me/permissions', route => route.fulfill({ json: [
     { ...memberships[0], permissions: ['t3:workspace:read', 't3:grades:publish'] }
   ] }));
   // The school portal starts background reads before navigation reaches T3.
   // Keep this UI fixture authenticated without masking the Case lookup response.
-  const emptyPage = { content: [], page: 0, totalPages: 1, totalElements: 0 };
   await page.route('**/api/v1/cooperation/organizations', route => route.fulfill({ json: [] }));
   await page.route('**/api/v1/school/cooperations?*', route => route.fulfill({ json: emptyPage }));
   await page.route('**/api/v1/school/verifications?*', route => route.fulfill({ json: emptyPage }));
