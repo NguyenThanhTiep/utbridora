@@ -69,11 +69,26 @@ export function ScopeOperations({scope,denied,caseId}:{scope:OperationsScope;den
 }
 function Dashboard({scope,denied}:{scope:OperationsScope;denied:()=>void}) {
   const [value,setValue]=useState<Summary|null>(null),[error,setError]=useState(''),[revision,setRevision]=useState(0),[filter,setFilter]=useState(''),[cohort,setCohort]=useState('');
-  useEffect(()=>{const c=new AbortController();setValue(null);setError('');void workflowRead<Summary>('/t3/'+scope.mode+'/dashboard?termId='+scope.termId+(cohort?'&cohortId='+cohort:''),scope.contextId,c.signal).then(v=>{
+  useEffect(()=>{const c=new AbortController();setValue(null);setError('');
+    const dashboard='/t3/'+scope.mode+'/dashboard?termId='+scope.termId;
+    void workflowRead<Summary>(dashboard+(cohort?'&cohortId='+cohort:''),scope.contextId,c.signal).then(v=>{
     if(c.signal.aborted)return;
     if(!v.assignmentCounts || v.assignmentCounts.length!==5 || new Set(v.assignmentCounts.map(x=>x.state)).size!==5 || v.assignmentCounts.some(x=>!(x.state in stateLabels) || !Number.isSafeInteger(x.count) || x.count<0)
       || [v.cohortCount,v.caseCount,v.groupCount,v.mentorCount,v.lateAssignmentCount,v.pendingReviewCount].some(n=>!Number.isSafeInteger(n) || n<0)){denied();return;}setValue(v);
-  }).catch(e=>{if(!c.signal.aborted){setValue(null);if(lost(e))denied();else setError(workflowError(e));}});return ()=>c.abort();},[scope,revision,cohort]);
+  }).catch(async e=>{
+    if(c.signal.aborted)return;
+    if(cohort && e instanceof ApiError && e.status===404 && e.errorCode==='RESOURCE_NOT_FOUND'){
+      // A missing cohort and a revoked term deliberately share the same response.
+      try {
+        await workflowRead<Summary>(dashboard,scope.contextId,c.signal);
+      } catch {
+        if(!c.signal.aborted)denied();
+        return;
+      }
+      if(!c.signal.aborted)setError('Không tìm thấy đợt trong phạm vi hiện tại. Hãy kiểm tra mã đợt hoặc bỏ lọc.');
+    } else if(lost(e))denied();
+    else setError(workflowError(e));
+  });return ()=>c.abort();},[scope,revision,cohort]);
   useEffect(()=>{const check=()=>{if(!document.hidden)setRevision(n=>n+1);};window.addEventListener('focus',check);document.addEventListener('visibilitychange',check);return ()=>{window.removeEventListener('focus',check);document.removeEventListener('visibilitychange',check);};},[]);
   const total=value?.assignmentCounts.reduce((n,x)=>n+x.count,0) || 0;
   return <section className="panel stack"><h2>Tiến độ thực tập</h2><form className="t3-inline-form" onSubmit={e=>{e.preventDefault();setCohort(filter.toLowerCase());}}><label>Mã đợt cần lọc (không bắt buộc)<input value={filter} onChange={e=>setFilter(e.target.value)}/></label><button disabled={!!filter && !uuidPattern.test(filter)}>Lọc tiến độ</button><button type="button" className="secondary" onClick={()=>setRevision(n=>n+1)}>Tải lại tiến độ</button></form>

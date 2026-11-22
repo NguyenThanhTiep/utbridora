@@ -2,6 +2,14 @@
 
 Ngày ghi: 19/11/2026. Chủ bàn giao: DEV05 (Đoàn Phan Vĩnh Phú). Đây là tình trạng code DEV ở checkout hiện tại; không phải QA PASS hay nghiệm thu. Nguồn phân công: [plan frontend T3](../plans/T3_FRONTEND_UIUX_PLAN_2026-11-19.md). Nguồn hành vi: [SRS v1.2.4](../srs/UTBridora_SRS_Tong_The_v1.2.4.docx), [Contract Pack v1.1](../contracts/UTBridora_Contract_Pack_B01_B06_v1.1_Candidate.md) và [trạng thái quyết định contract](../contracts/README.md). Bản bàn giao UI/UX có nhãn **PARTIAL**; bốn màn HR tương ứng T3-UI-01/02 là `1424:17091`, `1424:17161`, `1424:17208`, `1424:17271`.
 
+## Cập nhật ngày 22/11/2026
+
+- Khi lọc tiến độ bằng mã đợt ngoài phạm vi, dashboard kiểm tra lại quyền trên kỳ. Nếu kỳ còn truy cập được, người dùng có thể tiếp tục xử lý hồ sơ và xóa mã để xem lại cả kỳ. Nếu quyền trên kỳ đã mất, giao diện đóng dữ liệu. Backend kiểm tra đợt theo cả nhóm được phân công của HR/Mentor.
+- **FR-04, bỏ xếp nhóm.** CP-WS1 hiện có lệnh thêm và chuyển nhóm. T3 cần thống nhất lệnh đưa Case về trạng thái chưa xếp nhóm, các version cần kiểm tra và audit trước khi mở thao tác này cho HR.
+- **FR-05, quản lý lời mời sau tải lại.** API danh sách hiện phục vụ người nhận. T3 cần thống nhất API đọc danh sách gửi theo phân công HR để lấy trạng thái và version hiện tại trước khi thu hồi.
+- **FR-23, số doanh nghiệp.** Schema đã chốt của `WorkspaceSummary` chỉ nhận các trường được liệt kê. T3 cần thống nhất nguồn và định nghĩa số doanh nghiệp trong kỳ hoặc đợt, cùng cách trả chỉ số này cho giao diện.
+- **FR-15, đính kèm tệp bài nộp.** T3 và T1 cần tích hợp CP-FILE cho `TASK_ASSIGNMENT` với purpose `SUBMISSION` và kết quả quét CLEAN. Hiện sinh viên có thể nộp qua URL.
+
 ## 1. Trạng thái nhận code
 
 - Branch bàn giao: `feature/t3-frontend-uiux`; base trước thay đổi DEV05 là `bc9104f`. DEV06/DEV07 kiểm tra commit SHA và trạng thái remote thật bằng `git fetch origin`, `git log -1 origin/feature/t3-frontend-uiux` trước khi nhận. Tài liệu được soạn trước thao tác Git; dòng này không thay kết quả commit/push thực tế.
