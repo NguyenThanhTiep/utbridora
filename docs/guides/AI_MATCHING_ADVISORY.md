@@ -4,6 +4,8 @@ Lượt 3 ngày 21/11/2026 đã bổ sung code backend/API/UI theo [extension ai
 
 ## Luồng đã triển khai trong code
 
+Bản phát hành tích hợp ngày 23/11/2026 đưa code AI vào Git cùng đóng gói ClamAV hiện hành, giữ cả hai cờ advisory và cờ shadow mặc định OFF. CI bổ sung Python fake-encoder, validation-tools, extension contract trên production DTO và Chromium component/mock-HTTP; full MySQL/ClamAV/browser regression vẫn giữ nguyên. Các kết quả model thật/offline cấp OS/chất lượng/pilot chưa được suy ra từ CI. Đối chiếu commit thực tế bằng `git rev-parse HEAD`; gói source r2 của checkpoint chuẩn bị trước đây là snapshot lịch sử, không thay source mới sau tích hợp.
+
 Nhà trường chạy Matching như hiện hành, sau đó chủ động tạo gợi ý AI. Endpoint mới lấy toàn bộ MATCH của school-origin run, capture nội dung qua owner T2/T5, tạo job bền vững và trả ACK. Worker xử lý sau commit, công bố một snapshot xếp hạng hoàn chỉnh. Cán bộ chọn sinh viên trên giao diện và gọi luồng đề cử hiện hành.
 
 - POST `/api/v1/matching/runs/{runId}/advisories`

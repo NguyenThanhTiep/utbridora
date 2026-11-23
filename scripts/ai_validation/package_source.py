@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 PREFIXES = ('src/', 'scripts/', 'ai-service/', 'web-demo/', 'docs/', 'deploy/', '.mvn/', '.github/')
 TOP = {'pom.xml', 'mvnw', 'mvnw.cmd', '.gitattributes', '.gitignore', '.dockerignore',
        'Dockerfile', 'README.md', 'TEAM_INTEGRATION_QUICKSTART.md', '.env.example',
-       'compose.local.yaml', 'compose.yaml', 'compose.staging.yaml', 'compose.onboarding.yaml', 'run-local.cmd'}
+       'compose.local.yaml', 'compose.yaml', 'compose.staging.yaml', 'compose.onboarding.yaml', 'compose.scanner.yaml', 'run-local.cmd'}
 
 
 def untracked_permitted(name):
@@ -85,7 +85,8 @@ def build(root, destination):
     if any(p.startswith('src/') for p in excluded):
         raise ValueError('BUILD_INPUT_EXCLUDED_REVIEW_REQUIRED')
     manifest = dict(format='utbridora-ai-source-v1', baseCommit=git('rev-parse', 'HEAD'),
-                    state='UNCOMMITTED_WORKING_SOURCE', files=files, sourceContentSha256=identity(files))
+                    state='DIRTY_WORKING_SOURCE' if git('status', '--porcelain') else 'CLEAN_COMMIT',
+                    files=files, sourceContentSha256=identity(files))
     with tarfile.open(destination, 'x:gz') as archive:
         for name in files:
             if sha(root / name) != files[name]:
