@@ -108,7 +108,7 @@ public class AuditService {
     /** Technical SYSTEM actor (null user); sanitized verdict is atomic with scan state. */
     @Transactional(propagation=Propagation.MANDATORY)
     public void workflowFailure(String actor,String action,String id,String org,java.util.Map<String,Object> metadata) {
-        if(!java.util.Set.of("STUDENT_IMPORT_FAILED","ACTIVATION_EMAIL_FAILED").contains(action)) throw new IllegalArgumentException("Unsupported failure audit");
+        if(!java.util.Set.of("STUDENT_IMPORT_FAILED","ACTIVATION_EMAIL_FAILED","AI_ADVISORY_FAILED").contains(action)) throw new IllegalArgumentException("Unsupported failure audit");
         var spec=WorkflowAuditRegistry.ACTIONS.get(action);
         if(!spec.fields().containsAll(metadata.keySet())) throw new IllegalArgumentException("Invalid failure audit metadata");
         var event=store(actor,action,spec.resourceType(),id,"FAILURE",org,null);
@@ -151,7 +151,7 @@ public class AuditService {
     }
     private AuditLog store(String actor,String action,String resourceType,String resourceId,
                        String result,String organizationId,String reasonCode) {
-        AuditAction.valueOf(action);
+        if(!AdvisoryAuditAction.supported(action)) AuditAction.valueOf(action);
         if(resourceType==null || !resourceType.matches("[a-z][a-z0-9_]{0,79}")
             || !java.util.Set.of("SUCCESS","FAILURE","DENIED").contains(result)
             || reasonCode!=null && !reasonCode.matches("[A-Z0-9_]{3,64}"))

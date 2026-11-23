@@ -1,0 +1,7 @@
+*
+!Dockerfile
+!requirements*.txt
+!constraints-light.txt
+!model-lock.json
+!app/
+!app/*.py

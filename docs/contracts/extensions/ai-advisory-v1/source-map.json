@@ -1,0 +1,21 @@
+{
+  "scope": "LOCAL_SOURCE_SURVEY_NOT_RUNTIME_ACCEPTANCE",
+  "baseCommit": "c58a8ee896381e3d50f237b3c4e08ec715a2d836",
+  "sourceHashes": {
+    "src/main/java/vn/utbridora/auth/modules/matching/application/MatchingService.java": "39aaff8820bc3afde973a2a59b43b4cb6bf6342e7d470b07ddfadde12b9e244a",
+    "src/main/java/vn/utbridora/auth/modules/matching/domain/StrictClassifier.java": "c0dac2d4e78db6034a8238a6748c8108dc0e53bab959ab800e6d1fd89ea1802f",
+    "src/main/java/vn/utbridora/auth/modules/matching/semantic/SemanticProtocol.java": "c4492cfc49f2745c2727d32fc8232b56b6b0125e9a7157fc3565a0821e4ecdd7",
+    "src/main/java/vn/utbridora/auth/modules/student/port/StudentProfileSnapshotPort.java": "8dbffbfe338b16b0a95c692c67a974575616caa3f7898ef8029a2b6f02b23f98",
+    "src/main/java/vn/utbridora/auth/modules/student/application/StudentProfileSnapshots.java": "faa0eb3ab1e312b8fec2c6df5e4781dd719058dbbb6f18a9d5cfe5fc3c4c3de9",
+    "src/main/java/vn/utbridora/auth/modules/student/api/StudentProfileDtos.java": "c6c8a5f0c43ac4bf304903b50ac70d8fe7900b2c1c9e9ab0ea4e4b66c6076d26",
+    "src/main/java/vn/utbridora/auth/modules/student/port/StudentProfileProjectionPort.java": "cccee0eb5799f2cfcf5e071d24b5d4e63cd3dd59f007f28402597a0b99cd995f",
+    "src/main/java/vn/utbridora/auth/modules/student/application/StudentProfileProjectionService.java": "a9397bd516b57663304d572799cfb4b3cc762e309e0a3f617d40d6d8cccf6a0f",
+    "src/main/java/vn/utbridora/auth/modules/cooperation/domain/DemandModels.java": "726f5c47d296212d53f59708fc4caad0b0fdccd7f493c89a0f53ec765f2776c4",
+    "src/main/java/vn/utbridora/auth/modules/cooperation/integration/DemandCriteriaPort.java": "1f27716eaf7ebd5baf356f8f2d0383ef9acb2e2cd960d8a1ad46b12a3a12fea1",
+    "src/main/java/vn/utbridora/auth/modules/cooperation/application/DemandService.java": "73d43a7833f9d2c18e704b7b3b10d3ebbf9c89342dd9ded415b3b2f984cac452",
+    "src/main/java/vn/utbridora/auth/modules/cooperation/application/ProposalService.java": "1cd960073ab6efc764fc588b76c23ae82767bb3a767bede54e0a547542cc3e33",
+    "src/main/java/vn/utbridora/auth/authorization/ProfileAccessFacade.java": "edc7755b17138cdfe11033b01408ba6ac24cb90deff895d36117f039d33fa9c9",
+    "src/main/java/vn/utbridora/auth/authorization/SchoolDelegationAccess.java": "71b2afd80b95ab5ef7273985d33f9a4cbe54331277c2d37269f77376c5294505",
+    "src/main/java/vn/utbridora/auth/operations/OperationLedger.java": "ae586f226cb90c40a18333b676b3cc3832b133c4755712450db35653928a7d72"
+  }
+}

@@ -7,6 +7,11 @@ import java.util.Set;
 final class WorkflowAuditRegistry {
     record Spec(String resourceType,Set<String> fields) {}
     static final Map<String,Spec> ACTIONS=Map.ofEntries(
+        Map.entry("AI_ADVISORY_REQUESTED",new Spec("matching_advisory",Set.of("matchRunId","schoolOrgId","termId","policyVersion","modelRevision"))),
+        Map.entry("AI_ADVISORY_COMPLETED",new Spec("matching_advisory",Set.of("matchRunId","state","eligibleCount","scoredCount","policyVersion","modelRevision"))),
+        Map.entry("AI_ADVISORY_FAILED",new Spec("matching_advisory",Set.of("matchRunId","failureCode","attempt"))),
+        Map.entry("AI_ADVISORY_INVALIDATED",new Spec("matching_advisory",Set.of("matchRunId","state","reasonCode"))),
+        Map.entry("AI_ADVISORY_VIEWED",new Spec("matching_advisory",Set.of("matchRunId","page","size","viewKind"))),
         Map.entry("STUDENT_IMPORT_PREVIEWED",new Spec("student_import_job",Set.of("totalRows","validRows","invalidRows","needsReviewRows","previewVersion","fileHash"))),
         Map.entry("ACCOUNT_INVITATION_REVOKED",new Spec("account_invitation",Set.of("purpose","reasonCode","operationId"))),
         Map.entry("STUDENT_IMPORT_CONFIRMED",new Spec("student_import_job",Set.of("selectedCount","jobVersion","operationId"))),

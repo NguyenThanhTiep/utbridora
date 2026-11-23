@@ -17,6 +17,7 @@ import vn.utbridora.auth.modules.student.port.StudentProfileSnapshotPort;
 import vn.utbridora.auth.modules.matching.domain.StrictClassifier;
 import vn.utbridora.auth.modules.matching.domain.StrictClassifier.MatchResult;
 import vn.utbridora.auth.modules.matching.domain.ProtectedAggregatePolicy;
+import vn.utbridora.auth.modules.matching.semantic.SchoolSemanticObserver;
 import vn.utbridora.auth.operations.OperationLedger;
 import static vn.utbridora.auth.operations.WorkflowValues.*;
 
@@ -34,8 +35,10 @@ public class MatchingService {
     public record StoredRun(MatchRunRef run,String schoolOrgId,String enterpriseOrgId,String termId) {}
     private final JdbcTemplate jdbc;private final DemandCriteriaPort demands;private final StudentProfileSnapshotPort profiles;
     private final SchoolDelegationAccess access;private final AuthorizationPolicy authorization;private final OperationLedger ledger;private final AuditService audit;
-    public MatchingService(JdbcTemplate jdbc,DemandCriteriaPort demands,StudentProfileSnapshotPort profiles,SchoolDelegationAccess access,AuthorizationPolicy authorization,OperationLedger ledger,AuditService audit) {
+    private final SchoolSemanticObserver semantic;
+    public MatchingService(JdbcTemplate jdbc,DemandCriteriaPort demands,StudentProfileSnapshotPort profiles,SchoolDelegationAccess access,AuthorizationPolicy authorization,OperationLedger ledger,AuditService audit,SchoolSemanticObserver semantic) {
         this.jdbc=jdbc;this.demands=demands;this.profiles=profiles;this.access=access;this.authorization=authorization;this.ledger=ledger;this.audit=audit;
+        this.semantic=semantic;
     }
     @Transactional public Evaluated evaluate(Authentication auth,String key,Evaluate input) {
         uuid(key);uuid(input.demandId());version(input.expectedDemandVersion());version(input.expectedCriteriaVersion());
@@ -52,16 +55,25 @@ public class MatchingService {
             Map<String,String> aliases=new HashMap<>();
             jdbc.query("SELECT a.alias,s.skill_code FROM skill_aliases a JOIN skills s ON s.id=a.skill_id WHERE s.status='ACTIVE' FOR SHARE",r->{aliases.put(r.getString(1),r.getString(2));});
             var results=new ArrayList<MatchResult>();String cursor=null;
+            var shadowProfiles=semantic.enabled()?new ArrayList<StudentProfileSnapshotPort.ProfileSnapshot>():null;
             do {
                 var p=profiles.readPage(auth,dataset.datasetSnapshotId(),cursor,100);
                 for(var profile:p.items()) results.add(StrictClassifier.evaluate(profile,criteria.required(),criteria.preferred(),aliases));
+                // Bounded snapshot capture only; no HTTP or inference in this transaction.
+                // Keep one page beyond the cap so the entire shadow run is rejected, never silently sampled.
+                if(shadowProfiles!=null && shadowProfiles.size()<=semantic.captureLimit()) shadowProfiles.addAll(p.items());
                 cursor=p.nextCursor();
             } while(cursor!=null);
             var run=new MatchRunRef(id,criteria.demandId(),criteria.demandVersion(),criteria.criteriaVersion(),criteria.criteriaHash(),dataset.datasetSnapshotId(),dataset.profileSnapshotVersion(),StrictClassifier.RULE_VERSION,criteria.taxonomyVersion(),StrictClassifier.SCORING_VERSION,"COMPLETED",now,Instant.now(),null);
             var stored=new StoredRun(run,criteria.schoolOrgId(),criteria.enterpriseOrgId(),criteria.termId());
             jdbc.update("INSERT INTO match_runs(id,demand_id,school_org_id,enterprise_org_id,term_id,dataset_id,data_json) VALUES(?,?,?,?,?,?,?)",id,run.demandId(),stored.schoolOrgId(),stored.enterpriseOrgId(),stored.termId(),run.datasetSnapshotId(),JSON.writeValueAsString(stored));
+            jdbc.update("INSERT INTO matching_run_origins(run_id,audience) VALUES(?,'SCHOOL')",id);
             for(var result:results) jdbc.update("INSERT INTO match_results VALUES(?,?,?,?,?)",id,result.studentUserId(),result.overallStatus(),result.fitScore(),JSON.writeValueAsString(result));
             audit.matchingRunCompleted(actor(auth),criteria.demandId(),id,criteria.schoolOrgId(),Map.of("demandId",criteria.demandId(),"runVersion",1,"status","COMPLETED","ruleVersion",StrictClassifier.RULE_VERSION));
+            if(shadowProfiles!=null) {
+                try {semantic.afterSchoolCommit(id,criteria,dataset,shadowProfiles);}
+                catch(RuntimeException optionalFailure) { /* Semantic enhancement cannot roll back canonical success. */ }
+            }
             return new Evaluated("SCHOOL",new Summary(run,(int)results.stream().filter(r->r.overallStatus().equals("MATCH")).count(),(int)results.stream().filter(r->r.overallStatus().equals("MISSING_DATA")).count(),(int)results.stream().filter(r->r.overallStatus().equals("NOT_MATCH")).count()),null);
         },r->r.summary().run().matchRunId());
     }
@@ -107,6 +119,7 @@ public class MatchingService {
         var stored=new StoredRun(run,criteria.schoolOrgId(),enterpriseOrg,criteria.termId());
         jdbc.update("INSERT INTO match_runs(id,demand_id,school_org_id,enterprise_org_id,term_id,dataset_id,data_json) VALUES(?,?,?,?,?,?,?)",
             runId,run.demandId(),stored.schoolOrgId(),stored.enterpriseOrgId(),stored.termId(),datasetId,JSON.writeValueAsString(stored));
+        jdbc.update("INSERT INTO matching_run_origins(run_id,audience) VALUES(?,'ENTERPRISE')",runId);
         for(var result:results) jdbc.update("INSERT INTO match_results VALUES(?,?,?,?,?)",runId,result.studentUserId(),result.overallStatus(),result.fitScore(),JSON.writeValueAsString(result));
 
         var release=new ProtectedAggregatePolicy.ProtectedAggregate(UUID.randomUUID().toString(),runId,ProtectedAggregatePolicy.eligibleBand(eligible));

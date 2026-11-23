@@ -3,6 +3,7 @@ import { ApiError, api, type Grant } from '../../api';
 import { EmptyState, Notice } from '../../components';
 import type { ContractPage } from '../student/types';
 import './matching.css';
+import { AdvisoryPanel } from './AdvisoryPanel';
 
 type Demand = {
   demandId: string; state: 'DRAFT' | 'READY'; version: number; criteriaVersion: number;
@@ -182,6 +183,9 @@ export function MatchingWorkspace({ organizationId, grants }: { organizationId: 
   const toggleStudent = (studentId: string) => setSelectedStudents(previous => previous.includes(studentId)
     ? previous.filter(id => id !== studentId) : [...previous, studentId]);
   const counts = run?.evaluation.summary;
+  const advisoryGrants = grants.filter(g => g.role === 'SCHOOL_STAFF' && g.organizationId === organizationId);
+  const canReadAdvisory = advisoryGrants.some(g => g.permissions.includes('matching:school:advisory_read'));
+  const canCreateAdvisory = advisoryGrants.some(g => g.permissions.includes('matching:school:advisory_manage'));
 
   return <section className="panel matching-workspace" aria-busy={busy}>
     <div className="matching-heading"><div><p className="section-kicker">T4 · MATCHING</p><h2>Kết quả ghép sinh viên</h2>
@@ -204,6 +208,9 @@ export function MatchingWorkspace({ organizationId, grants }: { organizationId: 
 
     {run && counts && <>
       <div className="matching-run-meta"><h3>Kết quả lần chạy</h3><p>Rule <code>{counts.run.ruleVersion}</code> · Taxonomy <code>{counts.run.taxonomyVersion}</code> · Snapshot <code>{counts.run.profileSnapshotVersion.slice(0, 12)}</code> · Run <code>{counts.run.matchRunId}</code></p></div>
+      {canReadAdvisory && current && <AdvisoryPanel key={organizationId + ':' + counts.run.matchRunId + ':' + JSON.stringify(advisoryGrants)}
+        run={counts.run} termId={current.cooperation.termId} cooperationId={current.cooperation.cooperationId} organizationId={organizationId}
+        canCreate={canCreateAdvisory} canNominate={canNominate} onNomination={() => setRefresh(value => value + 1)} />}
       <div className="matching-counts" aria-label="Tổng hợp kết quả cho nhà trường">
         <button className={status === 'MATCH' ? 'selected' : ''} onClick={() => { setStatus('MATCH'); setPage(0); }}>Đáp ứng <strong>{counts.matched}</strong></button>
         <button className={status === 'MISSING_DATA' ? 'selected' : ''} onClick={() => { setStatus('MISSING_DATA'); setPage(0); }}>Thiếu dữ liệu <strong>{counts.missingData}</strong></button>

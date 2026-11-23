@@ -1,0 +1,10 @@
+# On an isolated CPU host, install requirements-torch-cpu.txt FIRST (README).
+-r requirements.txt
+torch==2.15.0+cpu
+sentence-transformers==6.3.0
+transformers==5.23.0
+huggingface-hub==2.4.0
+tokenizers==0.23.3
+safetensors==0.8.0
+scipy==1.18.1
+scikit-learn==1.9.1

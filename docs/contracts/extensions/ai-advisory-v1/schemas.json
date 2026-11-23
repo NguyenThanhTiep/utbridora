@@ -1,0 +1,973 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:utbridora:contracts:ai-advisory-v1",
+  "title": "School AI advisory extension v1 specification",
+  "$defs": {
+    "Uuid": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "Hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "Instant": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "CreateAdvisoryRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expectedDemandVersion",
+        "expectedCriteriaVersion",
+        "expectedProfileSnapshotVersion"
+      ],
+      "properties": {
+        "expectedDemandVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "expectedCriteriaVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "expectedProfileSnapshotVersion": {
+          "$ref": "#/$defs/Hash"
+        }
+      }
+    },
+    "AdvisoryAccepted": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "advisoryId",
+        "matchRunId",
+        "acceptedAt"
+      ],
+      "properties": {
+        "advisoryId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "matchRunId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "acceptedAt": {
+          "$ref": "#/$defs/Instant"
+        }
+      }
+    },
+    "Versions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "demandVersion",
+        "criteriaVersion",
+        "profileSnapshotVersion",
+        "modelId",
+        "modelRevision",
+        "templateVersion",
+        "policyVersion",
+        "aggregationVersion"
+      ],
+      "properties": {
+        "demandVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "criteriaVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "profileSnapshotVersion": {
+          "$ref": "#/$defs/Hash"
+        },
+        "modelId": {
+          "const": "intfloat/multilingual-e5-small"
+        },
+        "modelRevision": {
+          "const": "614241f622f53c4eeff9890bdc4f31cfecc418b3"
+        },
+        "templateVersion": {
+          "const": "school-advisory-text-v1"
+        },
+        "policyVersion": {
+          "const": "semantic-desc-canonical-tie-v1"
+        },
+        "aggregationVersion": {
+          "const": "token-weighted-mean-v1"
+        }
+      }
+    },
+    "Counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eligibleCount",
+        "scoredCount",
+        "noContentCount",
+        "inputTooLargeCount"
+      ],
+      "properties": {
+        "eligibleCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000
+        },
+        "scoredCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000
+        },
+        "noContentCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000
+        },
+        "inputTooLargeCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000
+        }
+      }
+    },
+    "AdvisoryMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "advisoryId",
+        "matchRunId",
+        "schoolOrgId",
+        "termId",
+        "demandId",
+        "state",
+        "createdAt",
+        "completedAt",
+        "expiresAt",
+        "versions",
+        "counts",
+        "failureCode"
+      ],
+      "properties": {
+        "advisoryId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "matchRunId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "schoolOrgId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "termId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "demandId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "state": {
+          "enum": [
+            "QUEUED",
+            "RUNNING",
+            "READY",
+            "NO_DATA",
+            "FAILED",
+            "STALE",
+            "REVOKED",
+            "EXPIRED"
+          ]
+        },
+        "createdAt": {
+          "$ref": "#/$defs/Instant"
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Instant"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expiresAt": {
+          "$ref": "#/$defs/Instant"
+        },
+        "versions": {
+          "$ref": "#/$defs/Versions"
+        },
+        "counts": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Counts"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "failureCode": {
+          "anyOf": [
+            {
+              "enum": [
+                "MODEL_UNAVAILABLE",
+                "PROTOCOL_INVALID",
+                "INFERENCE_UNAVAILABLE",
+                "WORK_TIMEOUT",
+                "SOURCE_CHANGED",
+                "AUTHORITY_REVOKED",
+                "TTL_EXPIRED",
+                "DEMAND_TEXT_EMPTY",
+                "NO_PROFILE_TEXT",
+                "EMPTY_MATCH_SET"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "READY",
+                  "NO_DATA"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "counts": {
+                "$ref": "#/$defs/Counts"
+              },
+              "completedAt": {
+                "$ref": "#/$defs/Instant"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "counts": {
+                "const": null
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "READY"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "failureCode": {
+                "const": null
+              }
+            }
+          }
+        }
+      ]
+    },
+    "AdvisoryItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "studentUserId",
+        "profileSnapshotId",
+        "profileVersion",
+        "relevantHash",
+        "overallStatus",
+        "fitScore",
+        "position",
+        "rank",
+        "semanticScore",
+        "scoreStatus",
+        "limited",
+        "reasonCode"
+      ],
+      "properties": {
+        "studentUserId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "profileSnapshotId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "profileVersion": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "relevantHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "overallStatus": {
+          "const": "MATCH"
+        },
+        "fitScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "multipleOf": 0.01
+        },
+        "position": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5000
+        },
+        "rank": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "semanticScore": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1,
+              "multipleOf": 1e-06
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "scoreStatus": {
+          "enum": [
+            "SCORED",
+            "NO_CONTENT",
+            "INPUT_TOO_LARGE"
+          ]
+        },
+        "limited": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reasonCode": {
+          "anyOf": [
+            {
+              "enum": [
+                "PROFILE_TEXT_EMPTY",
+                "DEMAND_TEXT_EMPTY",
+                "INPUT_TOO_LARGE"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "scoreStatus": {
+                "const": "SCORED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "rank": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5000
+              },
+              "semanticScore": {
+                "type": "number",
+                "minimum": -1,
+                "maximum": 1
+              },
+              "limited": {
+                "type": "boolean"
+              },
+              "reasonCode": {
+                "const": null
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "rank": {
+                "const": null
+              },
+              "semanticScore": {
+                "const": null
+              },
+              "limited": {
+                "const": null
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "scoreStatus": {
+                "const": "NO_CONTENT"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reasonCode": {
+                "enum": [
+                  "PROFILE_TEXT_EMPTY",
+                  "DEMAND_TEXT_EMPTY"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "scoreStatus": {
+                "const": "INPUT_TOO_LARGE"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reasonCode": {
+                "const": "INPUT_TOO_LARGE"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "AdvisoryPage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "advisoryId",
+        "matchRunId",
+        "state",
+        "policyVersion",
+        "expiresAt",
+        "eligibleCount",
+        "scoredCount",
+        "coverage",
+        "page",
+        "size",
+        "totalElements",
+        "totalPages",
+        "content"
+      ],
+      "properties": {
+        "advisoryId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "matchRunId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "state": {
+          "enum": [
+            "READY",
+            "NO_DATA"
+          ]
+        },
+        "policyVersion": {
+          "const": "semantic-desc-canonical-tie-v1"
+        },
+        "expiresAt": {
+          "$ref": "#/$defs/Instant"
+        },
+        "eligibleCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000
+        },
+        "scoredCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000
+        },
+        "coverage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "totalElements": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000
+        },
+        "totalPages": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000
+        },
+        "content": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AdvisoryItem"
+          },
+          "maxItems": 100
+        }
+      }
+    },
+    "FieldError": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "field",
+        "code",
+        "message"
+      ],
+      "properties": {
+        "field": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      }
+    },
+    "Error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "errorCode",
+        "error",
+        "message",
+        "requestId",
+        "fieldErrors",
+        "retryAfterSeconds"
+      ],
+      "properties": {
+        "errorCode": {
+          "enum": [
+            "SCHEMA_VALIDATION",
+            "INVALID_PAGINATION",
+            "SESSION_EXPIRED",
+            "CSRF_INVALID",
+            "RESOURCE_NOT_FOUND",
+            "AI_ADVISORY_SOURCE_STALE",
+            "AI_ADVISORY_RUN_NOT_ELIGIBLE",
+            "AI_ADVISORY_LIMIT_EXCEEDED",
+            "AI_ADVISORY_INPUT_TOO_LARGE",
+            "AI_ADVISORY_JOB_ACTIVE",
+            "AI_ADVISORY_NOT_READY",
+            "AI_ADVISORY_EXPIRED",
+            "AI_ADVISORY_CAPACITY_EXCEEDED",
+            "AI_ADVISORY_DISABLED",
+            "DEPENDENCY_UNAVAILABLE",
+            "TRANSIENT_FAILURE",
+            "IDEMPOTENCY_KEY_REUSED",
+            "IDEMPOTENCY_RESPONSE_EXPIRED",
+            "REQUEST_IN_PROGRESS"
+          ]
+        },
+        "error": {
+          "enum": [
+            "SCHEMA_VALIDATION",
+            "INVALID_PAGINATION",
+            "SESSION_EXPIRED",
+            "CSRF_INVALID",
+            "RESOURCE_NOT_FOUND",
+            "AI_ADVISORY_SOURCE_STALE",
+            "AI_ADVISORY_RUN_NOT_ELIGIBLE",
+            "AI_ADVISORY_LIMIT_EXCEEDED",
+            "AI_ADVISORY_INPUT_TOO_LARGE",
+            "AI_ADVISORY_JOB_ACTIVE",
+            "AI_ADVISORY_NOT_READY",
+            "AI_ADVISORY_EXPIRED",
+            "AI_ADVISORY_CAPACITY_EXCEEDED",
+            "AI_ADVISORY_DISABLED",
+            "DEPENDENCY_UNAVAILABLE",
+            "TRANSIENT_FAILURE",
+            "IDEMPOTENCY_KEY_REUSED",
+            "IDEMPOTENCY_RESPONSE_EXPIRED",
+            "REQUEST_IN_PROGRESS"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "requestId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "fieldErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FieldError"
+          },
+          "maxItems": 50
+        },
+        "retryAfterSeconds": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3600
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "StrictRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "studentUserId",
+        "profileSnapshotId",
+        "profileVersion",
+        "relevantHash"
+      ],
+      "properties": {
+        "studentUserId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "profileSnapshotId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "profileVersion": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "relevantHash": {
+          "$ref": "#/$defs/Hash"
+        }
+      }
+    },
+    "SemanticSkill": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceId",
+        "kind",
+        "codeOrName",
+        "categoryCode",
+        "level",
+        "yearsPractice",
+        "note",
+        "source"
+      ],
+      "properties": {
+        "sourceId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "kind": {
+          "enum": [
+            "CANONICAL",
+            "CUSTOM"
+          ]
+        },
+        "codeOrName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "categoryCode": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "level": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "yearsPractice": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]*[1-9])?$"
+        },
+        "note": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 1000
+        },
+        "source": {
+          "enum": [
+            "SELF_DECLARED",
+            "SCHOOL_VERIFIED"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "CUSTOM"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "source": {
+                "const": "SELF_DECLARED"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "SemanticProject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceId",
+        "title",
+        "description",
+        "role",
+        "skillCodes",
+        "source"
+      ],
+      "properties": {
+        "sourceId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "description": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 5000
+        },
+        "role": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 200
+        },
+        "skillCodes": {
+          "type": "array",
+          "maxItems": 200,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "source": {
+          "const": "SELF_DECLARED"
+        }
+      }
+    },
+    "SemanticProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "studentUserId",
+        "profileSnapshotId",
+        "profileVersion",
+        "relevantHash",
+        "semanticSnapshotId",
+        "semanticSourceHash",
+        "sourceStatus",
+        "skills",
+        "projects"
+      ],
+      "properties": {
+        "studentUserId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "profileSnapshotId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "profileVersion": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "relevantHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "semanticSnapshotId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "semanticSourceHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "sourceStatus": {
+          "enum": [
+            "AVAILABLE",
+            "NO_CONTENT"
+          ]
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SemanticSkill"
+          },
+          "maxItems": 200
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SemanticProject"
+          },
+          "maxItems": 100
+        }
+      }
+    },
+    "SemanticSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "setId",
+        "sourceSetHash",
+        "allowedFields",
+        "capturedAt",
+        "validUntil",
+        "count"
+      ],
+      "properties": {
+        "setId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sourceSetHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "allowedFields": {
+          "const": [
+            "skills",
+            "projects"
+          ]
+        },
+        "capturedAt": {
+          "$ref": "#/$defs/Instant"
+        },
+        "validUntil": {
+          "$ref": "#/$defs/Instant"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000
+        }
+      }
+    },
+    "DemandSemanticSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "demandId",
+        "schoolOrgId",
+        "termId",
+        "demandVersion",
+        "criteriaVersion",
+        "criteriaHash",
+        "title",
+        "description",
+        "semanticSourceHash",
+        "capturedAt",
+        "validUntil"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "demandId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "schoolOrgId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "termId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "demandVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "criteriaVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "criteriaHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "description": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 10000
+        },
+        "semanticSourceHash": {
+          "$ref": "#/$defs/Hash"
+        },
+        "capturedAt": {
+          "$ref": "#/$defs/Instant"
+        },
+        "validUntil": {
+          "$ref": "#/$defs/Instant"
+        }
+      }
+    }
+  }
+}

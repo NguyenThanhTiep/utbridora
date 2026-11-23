@@ -87,6 +87,8 @@ public class SecurityConfig {
                .requestMatchers(HttpMethod.PUT,"/api/v1/school/terms/*/profile-sharing-policy").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/cooperations/*").authenticated()
                .requestMatchers(HttpMethod.POST,"/api/v1/matching/evaluate","/api/v1/matching/runs/*/nominate","/api/v1/enterprise/cooperations","/api/v1/enterprise/demands/submit-with-cooperation","/api/v1/school/proposals/*/invite").authenticated()
+               .requestMatchers(HttpMethod.POST,"/api/v1/matching/runs/*/advisories").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/matching/advisories/*","/api/v1/matching/advisories/*/items").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/matching/runs/*/details","/api/v1/enterprise/cooperations","/api/v1/school/cooperations","/api/v1/school/cooperations/*","/api/v1/school/cooperations/*/submission-history","/api/v1/school/cooperations/*/capacity","/api/v1/school/cooperations/*/proposals").authenticated()
                // DEV08 bổ sung: yêu cầu đăng nhập cho các route JSON, CSV và biểu đồ của release matching; MatchingService tiếp tục kiểm tra phạm vi tổ chức.
                .requestMatchers(HttpMethod.GET,"/api/v1/matching/runs/*/summary","/api/v1/matching/runs/*/summary.csv","/api/v1/matching/runs/*/summary.chart").authenticated()

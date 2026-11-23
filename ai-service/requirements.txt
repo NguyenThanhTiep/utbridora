@@ -1,0 +1,5 @@
+# Lightweight HTTP/protocol tests do not install or load model weights/PyTorch.
+-c constraints-light.txt
+fastapi==0.165.0
+uvicorn==0.42.0
+numpy==2.4.3

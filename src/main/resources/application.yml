@@ -53,6 +53,22 @@ server:
         secure: ${COOKIE_SECURE:false} # true behind HTTPS in production
         same-site: lax
 app:
+  matching:
+    advisory:
+      enabled: ${AI_ADVISORY_ENABLED:false}
+      worker-enabled: ${AI_ADVISORY_WORKER_ENABLED:false}
+    semantic:
+      # Optional school-only shadow processing; no public API or canonical score changes.
+      enabled: ${AI_MATCHING_ENABLED:false}
+      base-url: ${AI_MATCHING_BASE_URL:}
+      token: ${AI_INTERNAL_TOKEN:}
+      model-revision: ${AI_MODEL_REVISION:614241f622f53c4eeff9890bdc4f31cfecc418b3}
+      timeout-ms: ${AI_MATCHING_TIMEOUT_MS:12000}
+      work-timeout-ms: ${AI_MATCHING_WORK_TIMEOUT_MS:60000}
+      queue-capacity: ${AI_MATCHING_QUEUE_CAPACITY:1}
+      retained-runs: ${AI_MATCHING_RETAINED_RUNS:8}
+      max-profiles: ${AI_MATCHING_MAX_PROFILES:5000}
+      result-ttl-seconds: ${AI_MATCHING_RESULT_TTL_SECONDS:300}
   onboarding:
     import-worker-enabled: ${STUDENT_IMPORT_WORKER_ENABLED:false}
     activation-events-enabled: ${STUDENT_ACTIVATION_EVENTS_ENABLED:false}

@@ -1,0 +1,2086 @@
+{
+  "fixtureKind": "SYNTHETIC_SPECIFICATION_NOT_MODEL_EVIDENCE",
+  "cases": [
+    {
+      "id": "create-current-versions",
+      "schema": "CreateAdvisoryRequest",
+      "valid": true,
+      "value": {
+        "expectedDemandVersion": 2,
+        "expectedCriteriaVersion": 1,
+        "expectedProfileSnapshotVersion": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    },
+    {
+      "id": "accepted-static-ack",
+      "schema": "AdvisoryAccepted",
+      "valid": true,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "acceptedAt": "2026-11-21T03:00:00Z"
+      }
+    },
+    {
+      "id": "metadata-ready",
+      "schema": "AdvisoryMetadata",
+      "valid": true,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "schoolOrgId": "a17e2026-1121-4000-8000-000000000700",
+        "termId": "a17e2026-1121-4000-8000-000000000600",
+        "demandId": "a17e2026-1121-4000-8000-000000000500",
+        "state": "READY",
+        "createdAt": "2026-11-21T03:00:00Z",
+        "completedAt": "2026-11-21T03:01:00Z",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "versions": {
+          "demandVersion": 2,
+          "criteriaVersion": 1,
+          "profileSnapshotVersion": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "modelId": "intfloat/multilingual-e5-small",
+          "modelRevision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+          "templateVersion": "school-advisory-text-v1",
+          "policyVersion": "semantic-desc-canonical-tie-v1",
+          "aggregationVersion": "token-weighted-mean-v1"
+        },
+        "counts": {
+          "eligibleCount": 4,
+          "scoredCount": 3,
+          "noContentCount": 1,
+          "inputTooLargeCount": 0
+        },
+        "failureCode": null
+      }
+    },
+    {
+      "id": "metadata-queued",
+      "schema": "AdvisoryMetadata",
+      "valid": true,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "schoolOrgId": "a17e2026-1121-4000-8000-000000000700",
+        "termId": "a17e2026-1121-4000-8000-000000000600",
+        "demandId": "a17e2026-1121-4000-8000-000000000500",
+        "state": "QUEUED",
+        "createdAt": "2026-11-21T03:00:00Z",
+        "completedAt": null,
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "versions": {
+          "demandVersion": 2,
+          "criteriaVersion": 1,
+          "profileSnapshotVersion": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "modelId": "intfloat/multilingual-e5-small",
+          "modelRevision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+          "templateVersion": "school-advisory-text-v1",
+          "policyVersion": "semantic-desc-canonical-tie-v1",
+          "aggregationVersion": "token-weighted-mean-v1"
+        },
+        "counts": null,
+        "failureCode": null
+      }
+    },
+    {
+      "id": "metadata-running",
+      "schema": "AdvisoryMetadata",
+      "valid": true,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "schoolOrgId": "a17e2026-1121-4000-8000-000000000700",
+        "termId": "a17e2026-1121-4000-8000-000000000600",
+        "demandId": "a17e2026-1121-4000-8000-000000000500",
+        "state": "RUNNING",
+        "createdAt": "2026-11-21T03:00:00Z",
+        "completedAt": null,
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "versions": {
+          "demandVersion": 2,
+          "criteriaVersion": 1,
+          "profileSnapshotVersion": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "modelId": "intfloat/multilingual-e5-small",
+          "modelRevision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+          "templateVersion": "school-advisory-text-v1",
+          "policyVersion": "semantic-desc-canonical-tie-v1",
+          "aggregationVersion": "token-weighted-mean-v1"
+        },
+        "counts": null,
+        "failureCode": null
+      }
+    },
+    {
+      "id": "metadata-failed",
+      "schema": "AdvisoryMetadata",
+      "valid": true,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "schoolOrgId": "a17e2026-1121-4000-8000-000000000700",
+        "termId": "a17e2026-1121-4000-8000-000000000600",
+        "demandId": "a17e2026-1121-4000-8000-000000000500",
+        "state": "FAILED",
+        "createdAt": "2026-11-21T03:00:00Z",
+        "completedAt": null,
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "versions": {
+          "demandVersion": 2,
+          "criteriaVersion": 1,
+          "profileSnapshotVersion": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "modelId": "intfloat/multilingual-e5-small",
+          "modelRevision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+          "templateVersion": "school-advisory-text-v1",
+          "policyVersion": "semantic-desc-canonical-tie-v1",
+          "aggregationVersion": "token-weighted-mean-v1"
+        },
+        "counts": null,
+        "failureCode": "WORK_TIMEOUT"
+      }
+    },
+    {
+      "id": "metadata-stale",
+      "schema": "AdvisoryMetadata",
+      "valid": true,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "schoolOrgId": "a17e2026-1121-4000-8000-000000000700",
+        "termId": "a17e2026-1121-4000-8000-000000000600",
+        "demandId": "a17e2026-1121-4000-8000-000000000500",
+        "state": "STALE",
+        "createdAt": "2026-11-21T03:00:00Z",
+        "completedAt": null,
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "versions": {
+          "demandVersion": 2,
+          "criteriaVersion": 1,
+          "profileSnapshotVersion": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "modelId": "intfloat/multilingual-e5-small",
+          "modelRevision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+          "templateVersion": "school-advisory-text-v1",
+          "policyVersion": "semantic-desc-canonical-tie-v1",
+          "aggregationVersion": "token-weighted-mean-v1"
+        },
+        "counts": null,
+        "failureCode": null
+      }
+    },
+    {
+      "id": "metadata-revoked",
+      "schema": "AdvisoryMetadata",
+      "valid": true,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "schoolOrgId": "a17e2026-1121-4000-8000-000000000700",
+        "termId": "a17e2026-1121-4000-8000-000000000600",
+        "demandId": "a17e2026-1121-4000-8000-000000000500",
+        "state": "REVOKED",
+        "createdAt": "2026-11-21T03:00:00Z",
+        "completedAt": null,
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "versions": {
+          "demandVersion": 2,
+          "criteriaVersion": 1,
+          "profileSnapshotVersion": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "modelId": "intfloat/multilingual-e5-small",
+          "modelRevision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+          "templateVersion": "school-advisory-text-v1",
+          "policyVersion": "semantic-desc-canonical-tie-v1",
+          "aggregationVersion": "token-weighted-mean-v1"
+        },
+        "counts": null,
+        "failureCode": null
+      }
+    },
+    {
+      "id": "metadata-expired",
+      "schema": "AdvisoryMetadata",
+      "valid": true,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "schoolOrgId": "a17e2026-1121-4000-8000-000000000700",
+        "termId": "a17e2026-1121-4000-8000-000000000600",
+        "demandId": "a17e2026-1121-4000-8000-000000000500",
+        "state": "EXPIRED",
+        "createdAt": "2026-11-21T03:00:00Z",
+        "completedAt": null,
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "versions": {
+          "demandVersion": 2,
+          "criteriaVersion": 1,
+          "profileSnapshotVersion": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "modelId": "intfloat/multilingual-e5-small",
+          "modelRevision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+          "templateVersion": "school-advisory-text-v1",
+          "policyVersion": "semantic-desc-canonical-tie-v1",
+          "aggregationVersion": "token-weighted-mean-v1"
+        },
+        "counts": null,
+        "failureCode": null
+      }
+    },
+    {
+      "id": "semantic-order-outranks-canonical-and-null-is-not-zero",
+      "schema": "AdvisoryPage",
+      "valid": true,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "state": "READY",
+        "policyVersion": "semantic-desc-canonical-tie-v1",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "eligibleCount": 4,
+        "scoredCount": 3,
+        "coverage": 0.75,
+        "page": 0,
+        "size": 25,
+        "totalElements": 4,
+        "totalPages": 1,
+        "content": [
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000002",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000102",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 70,
+            "position": 1,
+            "rank": 1,
+            "semanticScore": 0.8,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000001",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000101",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 90,
+            "position": 2,
+            "rank": 2,
+            "semanticScore": 0.6,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000003",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000103",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 50,
+            "position": 3,
+            "rank": 3,
+            "semanticScore": -0.2,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000004",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000104",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 100,
+            "position": 4,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "empty-match-set",
+      "schema": "AdvisoryPage",
+      "valid": true,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "state": "NO_DATA",
+        "policyVersion": "semantic-desc-canonical-tie-v1",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "eligibleCount": 0,
+        "scoredCount": 0,
+        "coverage": 0,
+        "page": 0,
+        "size": 25,
+        "totalElements": 0,
+        "totalPages": 0,
+        "content": []
+      }
+    },
+    {
+      "id": "no-text-keeps-canonical-order",
+      "schema": "AdvisoryPage",
+      "valid": true,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "state": "NO_DATA",
+        "policyVersion": "semantic-desc-canonical-tie-v1",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "eligibleCount": 4,
+        "scoredCount": 0,
+        "coverage": 0,
+        "page": 0,
+        "size": 25,
+        "totalElements": 4,
+        "totalPages": 1,
+        "content": [
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000004",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000104",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 100,
+            "position": 1,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000001",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000101",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 90,
+            "position": 2,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000002",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000102",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 70,
+            "position": 3,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000003",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000103",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 50,
+            "position": 4,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "score-tie-uses-canonical",
+      "schema": "AdvisoryPage",
+      "valid": true,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "state": "READY",
+        "policyVersion": "semantic-desc-canonical-tie-v1",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "eligibleCount": 4,
+        "scoredCount": 3,
+        "coverage": 0.75,
+        "page": 0,
+        "size": 25,
+        "totalElements": 4,
+        "totalPages": 1,
+        "content": [
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000001",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000101",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 90,
+            "position": 1,
+            "rank": 1,
+            "semanticScore": 0.6,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000002",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000102",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 70,
+            "position": 2,
+            "rank": 2,
+            "semanticScore": 0.6,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000003",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000103",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 50,
+            "position": 3,
+            "rank": 3,
+            "semanticScore": -0.2,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000004",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000104",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 100,
+            "position": 4,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "global-positions-second-page",
+      "schema": "AdvisoryPage",
+      "valid": true,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "state": "READY",
+        "policyVersion": "semantic-desc-canonical-tie-v1",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "eligibleCount": 4,
+        "scoredCount": 3,
+        "coverage": 0.75,
+        "page": 1,
+        "size": 2,
+        "totalElements": 4,
+        "totalPages": 2,
+        "content": [
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000003",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000103",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 50,
+            "position": 3,
+            "rank": 3,
+            "semanticScore": -0.2,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000004",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000104",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 100,
+            "position": 4,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-after-end",
+      "schema": "AdvisoryPage",
+      "valid": true,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "state": "READY",
+        "policyVersion": "semantic-desc-canonical-tie-v1",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "eligibleCount": 4,
+        "scoredCount": 3,
+        "coverage": 0.75,
+        "page": 9,
+        "size": 2,
+        "totalElements": 4,
+        "totalPages": 2,
+        "content": []
+      }
+    },
+    {
+      "id": "too-large-is-not-a-zero-score",
+      "schema": "AdvisoryPage",
+      "valid": true,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "state": "NO_DATA",
+        "policyVersion": "semantic-desc-canonical-tie-v1",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "eligibleCount": 4,
+        "scoredCount": 0,
+        "coverage": 0,
+        "page": 0,
+        "size": 25,
+        "totalElements": 4,
+        "totalPages": 1,
+        "content": [
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000004",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000104",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 100,
+            "position": 1,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "INPUT_TOO_LARGE",
+            "limited": null,
+            "reasonCode": "INPUT_TOO_LARGE"
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000001",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000101",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 90,
+            "position": 2,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000002",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000102",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 70,
+            "position": 3,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000003",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000103",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 50,
+            "position": 4,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "safe-capacity-error",
+      "schema": "Error",
+      "valid": true,
+      "value": {
+        "errorCode": "AI_ADVISORY_CAPACITY_EXCEEDED",
+        "error": "AI_ADVISORY_CAPACITY_EXCEEDED",
+        "message": "Hàng đợi đang đầy.",
+        "requestId": "a17e2026-1121-4000-8000-000000000901",
+        "fieldErrors": [],
+        "retryAfterSeconds": 30
+      }
+    },
+    {
+      "id": "permitted-project-snapshot",
+      "schema": "SemanticProfile",
+      "valid": true,
+      "value": {
+        "studentUserId": "a17e2026-1121-4000-8000-000000000001",
+        "profileSnapshotId": "a17e2026-1121-4000-8000-000000000101",
+        "profileVersion": 1,
+        "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "semanticSnapshotId": "a17e2026-1121-4000-8000-000000000201",
+        "semanticSourceHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "sourceStatus": "AVAILABLE",
+        "skills": [],
+        "projects": [
+          {
+            "sourceId": "a17e2026-1121-4000-8000-000000000301",
+            "title": "Ứng dụng quản lý thực tập",
+            "description": "Xây API Java và cơ sở dữ liệu.",
+            "role": "Backend",
+            "skillCodes": [
+              "JAVA"
+            ],
+            "source": "SELF_DECLARED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "semantic-set-mask",
+      "schema": "SemanticSet",
+      "valid": true,
+      "value": {
+        "setId": "a17e2026-1121-4000-8000-000000000200",
+        "sourceSetHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "allowedFields": [
+          "skills",
+          "projects"
+        ],
+        "capturedAt": "2026-11-21T03:00:00Z",
+        "validUntil": "2026-11-22T03:00:00Z",
+        "count": 4
+      }
+    },
+    {
+      "id": "demand-text-snapshot",
+      "schema": "DemandSemanticSnapshot",
+      "valid": true,
+      "value": {
+        "id": "a17e2026-1121-4000-8000-000000000400",
+        "demandId": "a17e2026-1121-4000-8000-000000000500",
+        "schoolOrgId": "a17e2026-1121-4000-8000-000000000700",
+        "termId": "a17e2026-1121-4000-8000-000000000600",
+        "demandVersion": 2,
+        "criteriaVersion": 1,
+        "criteriaHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "title": "Thực tập backend",
+        "description": "Phát triển API và truy vấn SQL.",
+        "semanticSourceHash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "capturedAt": "2026-11-21T03:00:00Z",
+        "validUntil": "2026-11-22T03:00:00Z"
+      }
+    },
+    {
+      "id": "reject-raw-query-from-browser",
+      "schema": "CreateAdvisoryRequest",
+      "valid": false,
+      "value": {
+        "expectedDemandVersion": 2,
+        "expectedCriteriaVersion": 1,
+        "expectedProfileSnapshotVersion": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "query": "override"
+      }
+    },
+    {
+      "id": "reject-string-version",
+      "schema": "CreateAdvisoryRequest",
+      "valid": false,
+      "value": {
+        "expectedDemandVersion": "2",
+        "expectedCriteriaVersion": 1,
+        "expectedProfileSnapshotVersion": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    },
+    {
+      "id": "reject-boolean-version",
+      "schema": "CreateAdvisoryRequest",
+      "valid": false,
+      "value": {
+        "expectedDemandVersion": true,
+        "expectedCriteriaVersion": 1,
+        "expectedProfileSnapshotVersion": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    },
+    {
+      "id": "reject-version-zero",
+      "schema": "CreateAdvisoryRequest",
+      "valid": false,
+      "value": {
+        "expectedDemandVersion": 2,
+        "expectedCriteriaVersion": 0,
+        "expectedProfileSnapshotVersion": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    },
+    {
+      "id": "reject-client-actor",
+      "schema": "CreateAdvisoryRequest",
+      "valid": false,
+      "value": {
+        "expectedDemandVersion": 2,
+        "expectedCriteriaVersion": 1,
+        "expectedProfileSnapshotVersion": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "actorId": "a17e2026-1121-4000-8000-000000000001"
+      }
+    },
+    {
+      "id": "reject-wrong-dataset-hash",
+      "schema": "CreateAdvisoryRequest",
+      "valid": false,
+      "value": {
+        "expectedDemandVersion": 2,
+        "expectedCriteriaVersion": 1,
+        "expectedProfileSnapshotVersion": "bad"
+      }
+    },
+    {
+      "id": "reject-ready-without-counts",
+      "schema": "AdvisoryMetadata",
+      "valid": false,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "schoolOrgId": "a17e2026-1121-4000-8000-000000000700",
+        "termId": "a17e2026-1121-4000-8000-000000000600",
+        "demandId": "a17e2026-1121-4000-8000-000000000500",
+        "state": "READY",
+        "createdAt": "2026-11-21T03:00:00Z",
+        "completedAt": "2026-11-21T03:01:00Z",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "versions": {
+          "demandVersion": 2,
+          "criteriaVersion": 1,
+          "profileSnapshotVersion": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "modelId": "intfloat/multilingual-e5-small",
+          "modelRevision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+          "templateVersion": "school-advisory-text-v1",
+          "policyVersion": "semantic-desc-canonical-tie-v1",
+          "aggregationVersion": "token-weighted-mean-v1"
+        },
+        "counts": null,
+        "failureCode": null
+      }
+    },
+    {
+      "id": "reject-ready-without-completion",
+      "schema": "AdvisoryMetadata",
+      "valid": false,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "schoolOrgId": "a17e2026-1121-4000-8000-000000000700",
+        "termId": "a17e2026-1121-4000-8000-000000000600",
+        "demandId": "a17e2026-1121-4000-8000-000000000500",
+        "state": "READY",
+        "createdAt": "2026-11-21T03:00:00Z",
+        "completedAt": null,
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "versions": {
+          "demandVersion": 2,
+          "criteriaVersion": 1,
+          "profileSnapshotVersion": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "modelId": "intfloat/multilingual-e5-small",
+          "modelRevision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+          "templateVersion": "school-advisory-text-v1",
+          "policyVersion": "semantic-desc-canonical-tie-v1",
+          "aggregationVersion": "token-weighted-mean-v1"
+        },
+        "counts": {
+          "eligibleCount": 4,
+          "scoredCount": 3,
+          "noContentCount": 1,
+          "inputTooLargeCount": 0
+        },
+        "failureCode": null
+      }
+    },
+    {
+      "id": "reject-count-sum",
+      "schema": "AdvisoryMetadata",
+      "valid": false,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "schoolOrgId": "a17e2026-1121-4000-8000-000000000700",
+        "termId": "a17e2026-1121-4000-8000-000000000600",
+        "demandId": "a17e2026-1121-4000-8000-000000000500",
+        "state": "READY",
+        "createdAt": "2026-11-21T03:00:00Z",
+        "completedAt": "2026-11-21T03:01:00Z",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "versions": {
+          "demandVersion": 2,
+          "criteriaVersion": 1,
+          "profileSnapshotVersion": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "modelId": "intfloat/multilingual-e5-small",
+          "modelRevision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+          "templateVersion": "school-advisory-text-v1",
+          "policyVersion": "semantic-desc-canonical-tie-v1",
+          "aggregationVersion": "token-weighted-mean-v1"
+        },
+        "counts": {
+          "eligibleCount": 4,
+          "scoredCount": 4,
+          "noContentCount": 1,
+          "inputTooLargeCount": 0
+        },
+        "failureCode": null
+      }
+    },
+    {
+      "id": "reject-wrong-model-label",
+      "schema": "AdvisoryMetadata",
+      "valid": false,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "schoolOrgId": "a17e2026-1121-4000-8000-000000000700",
+        "termId": "a17e2026-1121-4000-8000-000000000600",
+        "demandId": "a17e2026-1121-4000-8000-000000000500",
+        "state": "READY",
+        "createdAt": "2026-11-21T03:00:00Z",
+        "completedAt": "2026-11-21T03:01:00Z",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "versions": {
+          "demandVersion": 2,
+          "criteriaVersion": 1,
+          "profileSnapshotVersion": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "modelId": "intfloat/multilingual-e5-small",
+          "modelRevision": "0000000000000000000000000000000000000000",
+          "templateVersion": "school-advisory-text-v1",
+          "policyVersion": "semantic-desc-canonical-tie-v1",
+          "aggregationVersion": "token-weighted-mean-v1"
+        },
+        "counts": {
+          "eligibleCount": 4,
+          "scoredCount": 3,
+          "noContentCount": 1,
+          "inputTooLargeCount": 0
+        },
+        "failureCode": null
+      }
+    },
+    {
+      "id": "reject-expiry-before-create",
+      "schema": "AdvisoryMetadata",
+      "valid": false,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "schoolOrgId": "a17e2026-1121-4000-8000-000000000700",
+        "termId": "a17e2026-1121-4000-8000-000000000600",
+        "demandId": "a17e2026-1121-4000-8000-000000000500",
+        "state": "READY",
+        "createdAt": "2026-11-21T03:00:00Z",
+        "completedAt": "2026-11-21T03:01:00Z",
+        "expiresAt": "2026-11-20T03:00:00Z",
+        "versions": {
+          "demandVersion": 2,
+          "criteriaVersion": 1,
+          "profileSnapshotVersion": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "modelId": "intfloat/multilingual-e5-small",
+          "modelRevision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+          "templateVersion": "school-advisory-text-v1",
+          "policyVersion": "semantic-desc-canonical-tie-v1",
+          "aggregationVersion": "token-weighted-mean-v1"
+        },
+        "counts": {
+          "eligibleCount": 4,
+          "scoredCount": 3,
+          "noContentCount": 1,
+          "inputTooLargeCount": 0
+        },
+        "failureCode": null
+      }
+    },
+    {
+      "id": "reject-unfinished-page",
+      "schema": "AdvisoryPage",
+      "valid": false,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "state": "RUNNING",
+        "policyVersion": "semantic-desc-canonical-tie-v1",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "eligibleCount": 4,
+        "scoredCount": 3,
+        "coverage": 0.75,
+        "page": 0,
+        "size": 25,
+        "totalElements": 4,
+        "totalPages": 1,
+        "content": [
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000002",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000102",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 70,
+            "position": 1,
+            "rank": 1,
+            "semanticScore": 0.8,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000001",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000101",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 90,
+            "position": 2,
+            "rank": 2,
+            "semanticScore": 0.6,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000003",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000103",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 50,
+            "position": 3,
+            "rank": 3,
+            "semanticScore": -0.2,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000004",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000104",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 100,
+            "position": 4,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "reject-not-match-item",
+      "schema": "AdvisoryPage",
+      "valid": false,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "state": "READY",
+        "policyVersion": "semantic-desc-canonical-tie-v1",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "eligibleCount": 4,
+        "scoredCount": 3,
+        "coverage": 0.75,
+        "page": 0,
+        "size": 25,
+        "totalElements": 4,
+        "totalPages": 1,
+        "content": [
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000002",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000102",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "NOT_MATCH",
+            "fitScore": 70,
+            "position": 1,
+            "rank": 1,
+            "semanticScore": 0.8,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000001",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000101",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 90,
+            "position": 2,
+            "rank": 2,
+            "semanticScore": 0.6,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000003",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000103",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 50,
+            "position": 3,
+            "rank": 3,
+            "semanticScore": -0.2,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000004",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000104",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 100,
+            "position": 4,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "reject-score-outside-cosine",
+      "schema": "AdvisoryPage",
+      "valid": false,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "state": "READY",
+        "policyVersion": "semantic-desc-canonical-tie-v1",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "eligibleCount": 4,
+        "scoredCount": 3,
+        "coverage": 0.75,
+        "page": 0,
+        "size": 25,
+        "totalElements": 4,
+        "totalPages": 1,
+        "content": [
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000002",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000102",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 70,
+            "position": 1,
+            "rank": 1,
+            "semanticScore": 1.2,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000001",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000101",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 90,
+            "position": 2,
+            "rank": 2,
+            "semanticScore": 0.6,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000003",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000103",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 50,
+            "position": 3,
+            "rank": 3,
+            "semanticScore": -0.2,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000004",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000104",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 100,
+            "position": 4,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "reject-null-score-with-rank",
+      "schema": "AdvisoryPage",
+      "valid": false,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "state": "READY",
+        "policyVersion": "semantic-desc-canonical-tie-v1",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "eligibleCount": 4,
+        "scoredCount": 3,
+        "coverage": 0.75,
+        "page": 0,
+        "size": 25,
+        "totalElements": 4,
+        "totalPages": 1,
+        "content": [
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000002",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000102",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 70,
+            "position": 1,
+            "rank": 1,
+            "semanticScore": 0.8,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000001",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000101",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 90,
+            "position": 2,
+            "rank": 2,
+            "semanticScore": 0.6,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000003",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000103",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 50,
+            "position": 3,
+            "rank": 3,
+            "semanticScore": -0.2,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000004",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000104",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 100,
+            "position": 4,
+            "rank": 4,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "reject-no-content-zero-substitution",
+      "schema": "AdvisoryPage",
+      "valid": false,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "state": "READY",
+        "policyVersion": "semantic-desc-canonical-tie-v1",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "eligibleCount": 4,
+        "scoredCount": 3,
+        "coverage": 0.75,
+        "page": 0,
+        "size": 25,
+        "totalElements": 4,
+        "totalPages": 1,
+        "content": [
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000002",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000102",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 70,
+            "position": 1,
+            "rank": 1,
+            "semanticScore": 0.8,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000001",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000101",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 90,
+            "position": 2,
+            "rank": 2,
+            "semanticScore": 0.6,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000003",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000103",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 50,
+            "position": 3,
+            "rank": 3,
+            "semanticScore": -0.2,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000004",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000104",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 100,
+            "position": 4,
+            "rank": null,
+            "semanticScore": 0,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "reject-wrong-global-position",
+      "schema": "AdvisoryPage",
+      "valid": false,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "state": "READY",
+        "policyVersion": "semantic-desc-canonical-tie-v1",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "eligibleCount": 4,
+        "scoredCount": 3,
+        "coverage": 0.75,
+        "page": 1,
+        "size": 2,
+        "totalElements": 4,
+        "totalPages": 2,
+        "content": [
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000003",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000103",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 50,
+            "position": 1,
+            "rank": 1,
+            "semanticScore": -0.2,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000004",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000104",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 100,
+            "position": 4,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "reject-duplicate-candidate",
+      "schema": "AdvisoryPage",
+      "valid": false,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "state": "READY",
+        "policyVersion": "semantic-desc-canonical-tie-v1",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "eligibleCount": 4,
+        "scoredCount": 3,
+        "coverage": 0.75,
+        "page": 0,
+        "size": 25,
+        "totalElements": 4,
+        "totalPages": 1,
+        "content": [
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000002",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000102",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 70,
+            "position": 1,
+            "rank": 1,
+            "semanticScore": 0.8,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000002",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000101",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 90,
+            "position": 2,
+            "rank": 2,
+            "semanticScore": 0.6,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000003",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000103",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 50,
+            "position": 3,
+            "rank": 3,
+            "semanticScore": -0.2,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000004",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000104",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 100,
+            "position": 4,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "reject-score-order",
+      "schema": "AdvisoryPage",
+      "valid": false,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "state": "READY",
+        "policyVersion": "semantic-desc-canonical-tie-v1",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "eligibleCount": 4,
+        "scoredCount": 3,
+        "coverage": 0.75,
+        "page": 0,
+        "size": 25,
+        "totalElements": 4,
+        "totalPages": 1,
+        "content": [
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000002",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000102",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 70,
+            "position": 1,
+            "rank": 1,
+            "semanticScore": 0.5,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000001",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000101",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 90,
+            "position": 2,
+            "rank": 2,
+            "semanticScore": 0.6,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000003",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000103",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 50,
+            "position": 3,
+            "rank": 3,
+            "semanticScore": -0.2,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000004",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000104",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 100,
+            "position": 4,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "reject-canonical-tie-order",
+      "schema": "AdvisoryPage",
+      "valid": false,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "state": "READY",
+        "policyVersion": "semantic-desc-canonical-tie-v1",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "eligibleCount": 4,
+        "scoredCount": 3,
+        "coverage": 0.75,
+        "page": 0,
+        "size": 25,
+        "totalElements": 4,
+        "totalPages": 1,
+        "content": [
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000002",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000102",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 70,
+            "position": 1,
+            "rank": 1,
+            "semanticScore": 0.6,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000001",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000101",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 90,
+            "position": 2,
+            "rank": 2,
+            "semanticScore": 0.6,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000003",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000103",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 50,
+            "position": 3,
+            "rank": 3,
+            "semanticScore": -0.2,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000004",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000104",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 100,
+            "position": 4,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "reject-wrong-coverage",
+      "schema": "AdvisoryPage",
+      "valid": false,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "state": "READY",
+        "policyVersion": "semantic-desc-canonical-tie-v1",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "eligibleCount": 4,
+        "scoredCount": 3,
+        "coverage": 1,
+        "page": 0,
+        "size": 25,
+        "totalElements": 4,
+        "totalPages": 1,
+        "content": [
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000002",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000102",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 70,
+            "position": 1,
+            "rank": 1,
+            "semanticScore": 0.8,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000001",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000101",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 90,
+            "position": 2,
+            "rank": 2,
+            "semanticScore": 0.6,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000003",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000103",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 50,
+            "position": 3,
+            "rank": 3,
+            "semanticScore": -0.2,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000004",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000104",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 100,
+            "position": 4,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "reject-wrong-total",
+      "schema": "AdvisoryPage",
+      "valid": false,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "state": "READY",
+        "policyVersion": "semantic-desc-canonical-tie-v1",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "eligibleCount": 4,
+        "scoredCount": 3,
+        "coverage": 0.75,
+        "page": 0,
+        "size": 25,
+        "totalElements": 3,
+        "totalPages": 1,
+        "content": [
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000002",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000102",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 70,
+            "position": 1,
+            "rank": 1,
+            "semanticScore": 0.8,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000001",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000101",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 90,
+            "position": 2,
+            "rank": 2,
+            "semanticScore": 0.6,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000003",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000103",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 50,
+            "position": 3,
+            "rank": 3,
+            "semanticScore": -0.2,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000004",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000104",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 100,
+            "position": 4,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "reject-empty-page-before-end",
+      "schema": "AdvisoryPage",
+      "valid": false,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "state": "READY",
+        "policyVersion": "semantic-desc-canonical-tie-v1",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "eligibleCount": 4,
+        "scoredCount": 3,
+        "coverage": 0.75,
+        "page": 0,
+        "size": 25,
+        "totalElements": 4,
+        "totalPages": 1,
+        "content": []
+      }
+    },
+    {
+      "id": "reject-negative-page",
+      "schema": "AdvisoryPage",
+      "valid": false,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "state": "READY",
+        "policyVersion": "semantic-desc-canonical-tie-v1",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "eligibleCount": 4,
+        "scoredCount": 3,
+        "coverage": 0.75,
+        "page": -1,
+        "size": 25,
+        "totalElements": 4,
+        "totalPages": 1,
+        "content": [
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000002",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000102",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 70,
+            "position": 1,
+            "rank": 1,
+            "semanticScore": 0.8,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000001",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000101",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 90,
+            "position": 2,
+            "rank": 2,
+            "semanticScore": 0.6,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000003",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000103",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 50,
+            "position": 3,
+            "rank": 3,
+            "semanticScore": -0.2,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000004",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000104",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 100,
+            "position": 4,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "reject-oversize-page",
+      "schema": "AdvisoryPage",
+      "valid": false,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "state": "READY",
+        "policyVersion": "semantic-desc-canonical-tie-v1",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "eligibleCount": 4,
+        "scoredCount": 3,
+        "coverage": 0.75,
+        "page": 0,
+        "size": 101,
+        "totalElements": 4,
+        "totalPages": 1,
+        "content": [
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000002",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000102",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 70,
+            "position": 1,
+            "rank": 1,
+            "semanticScore": 0.8,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000001",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000101",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 90,
+            "position": 2,
+            "rank": 2,
+            "semanticScore": 0.6,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000003",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000103",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 50,
+            "position": 3,
+            "rank": 3,
+            "semanticScore": -0.2,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000004",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000104",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 100,
+            "position": 4,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "reject-extra-score-precision",
+      "schema": "AdvisoryPage",
+      "valid": false,
+      "value": {
+        "advisoryId": "a17e2026-1121-4000-8000-000000000900",
+        "matchRunId": "a17e2026-1121-4000-8000-000000000800",
+        "state": "READY",
+        "policyVersion": "semantic-desc-canonical-tie-v1",
+        "expiresAt": "2026-11-22T03:00:00Z",
+        "eligibleCount": 4,
+        "scoredCount": 3,
+        "coverage": 0.75,
+        "page": 0,
+        "size": 25,
+        "totalElements": 4,
+        "totalPages": 1,
+        "content": [
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000002",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000102",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 70,
+            "position": 1,
+            "rank": 1,
+            "semanticScore": 0.8000001,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000001",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000101",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 90,
+            "position": 2,
+            "rank": 2,
+            "semanticScore": 0.6,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000003",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000103",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 50,
+            "position": 3,
+            "rank": 3,
+            "semanticScore": -0.2,
+            "scoreStatus": "SCORED",
+            "limited": false,
+            "reasonCode": null
+          },
+          {
+            "studentUserId": "a17e2026-1121-4000-8000-000000000004",
+            "profileSnapshotId": "a17e2026-1121-4000-8000-000000000104",
+            "profileVersion": 1,
+            "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "overallStatus": "MATCH",
+            "fitScore": 100,
+            "position": 4,
+            "rank": null,
+            "semanticScore": null,
+            "scoreStatus": "NO_CONTENT",
+            "limited": null,
+            "reasonCode": "PROFILE_TEXT_EMPTY"
+          }
+        ]
+      }
+    },
+    {
+      "id": "reject-error-code-alias-mismatch",
+      "schema": "Error",
+      "valid": false,
+      "value": {
+        "errorCode": "AI_ADVISORY_CAPACITY_EXCEEDED",
+        "error": "DEPENDENCY_UNAVAILABLE",
+        "message": "Hàng đợi đang đầy.",
+        "requestId": "a17e2026-1121-4000-8000-000000000901",
+        "fieldErrors": [],
+        "retryAfterSeconds": 30
+      }
+    },
+    {
+      "id": "reject-source-email",
+      "schema": "SemanticProfile",
+      "valid": false,
+      "value": {
+        "studentUserId": "a17e2026-1121-4000-8000-000000000001",
+        "profileSnapshotId": "a17e2026-1121-4000-8000-000000000101",
+        "profileVersion": 1,
+        "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "semanticSnapshotId": "a17e2026-1121-4000-8000-000000000201",
+        "semanticSourceHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "sourceStatus": "AVAILABLE",
+        "skills": [],
+        "projects": [
+          {
+            "sourceId": "a17e2026-1121-4000-8000-000000000301",
+            "title": "Ứng dụng quản lý thực tập",
+            "description": "Xây API Java và cơ sở dữ liệu.",
+            "role": "Backend",
+            "skillCodes": [
+              "JAVA"
+            ],
+            "source": "SELF_DECLARED"
+          }
+        ],
+        "email": "private@example.test"
+      }
+    },
+    {
+      "id": "reject-project-url",
+      "schema": "SemanticProfile",
+      "valid": false,
+      "value": {
+        "studentUserId": "a17e2026-1121-4000-8000-000000000001",
+        "profileSnapshotId": "a17e2026-1121-4000-8000-000000000101",
+        "profileVersion": 1,
+        "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "semanticSnapshotId": "a17e2026-1121-4000-8000-000000000201",
+        "semanticSourceHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "sourceStatus": "AVAILABLE",
+        "skills": [],
+        "projects": [
+          {
+            "sourceId": "a17e2026-1121-4000-8000-000000000301",
+            "title": "Ứng dụng quản lý thực tập",
+            "description": "Xây API Java và cơ sở dữ liệu.",
+            "role": "Backend",
+            "skillCodes": [
+              "JAVA"
+            ],
+            "source": "SELF_DECLARED",
+            "url": "https://example.test"
+          }
+        ]
+      }
+    },
+    {
+      "id": "reject-project-verified-inference",
+      "schema": "SemanticProfile",
+      "valid": false,
+      "value": {
+        "studentUserId": "a17e2026-1121-4000-8000-000000000001",
+        "profileSnapshotId": "a17e2026-1121-4000-8000-000000000101",
+        "profileVersion": 1,
+        "relevantHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "semanticSnapshotId": "a17e2026-1121-4000-8000-000000000201",
+        "semanticSourceHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "sourceStatus": "AVAILABLE",
+        "skills": [],
+        "projects": [
+          {
+            "sourceId": "a17e2026-1121-4000-8000-000000000301",
+            "title": "Ứng dụng quản lý thực tập",
+            "description": "Xây API Java và cơ sở dữ liệu.",
+            "role": "Backend",
+            "skillCodes": [
+              "JAVA"
+            ],
+            "source": "SCHOOL_VERIFIED"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+action,actor,resource,metadata,outcomes,status
+AI_ADVISORY_REQUESTED,USER,matching_advisory,"matchRunId; schoolOrgId; termId; policyVersion; modelRevision",SUCCESS,PROPOSED_EXTENSION_NOT_INSTALLED
+AI_ADVISORY_COMPLETED,SYSTEM,matching_advisory,"matchRunId; state; eligibleCount; scoredCount; policyVersion; modelRevision",SUCCESS,PROPOSED_EXTENSION_NOT_INSTALLED
+AI_ADVISORY_FAILED,SYSTEM,matching_advisory,"matchRunId; failureCode; attempt",FAILURE,PROPOSED_EXTENSION_NOT_INSTALLED
+AI_ADVISORY_INVALIDATED,SYSTEM,matching_advisory,"matchRunId; state; reasonCode",SUCCESS,PROPOSED_EXTENSION_NOT_INSTALLED
+AI_ADVISORY_VIEWED,USER,matching_advisory,"matchRunId; page; size; viewKind",SUCCESS,PROPOSED_EXTENSION_NOT_INSTALLED

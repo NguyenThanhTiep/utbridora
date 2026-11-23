@@ -1,0 +1,3 @@
+permission,role,scope,requires,owner,status
+matching:school:advisory_manage,SCHOOL_STAFF,school/term/demand/run,"current delegation; matching:run:execute; matching:school:detail_read; student_profile:school:read; fields skills+projects; source current",T1/T4,PROPOSED_EXTENSION_NOT_INSTALLED
+matching:school:advisory_read,SCHOOL_STAFF,school/term/demand/run,"current delegation; matching:school:detail_read; student_profile:school:read; fields skills+projects; current owner set; valid source/TTL",T1/T4,PROPOSED_EXTENSION_NOT_INSTALLED

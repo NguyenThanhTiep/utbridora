@@ -1,0 +1,648 @@
+{
+  "components": {
+    "schemas": {
+      "EmbeddingRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "inputs": {
+            "items": {
+              "$ref": "#/components/schemas/TextInput"
+            },
+            "maxItems": 16,
+            "minItems": 1,
+            "title": "Inputs",
+            "type": "array"
+          },
+          "requestId": {
+            "title": "Requestid",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": "semantic-v1",
+            "title": "Schemaversion",
+            "type": "string"
+          },
+          "templateVersion": {
+            "enum": [
+              "canonical-v1",
+              "school-advisory-text-v1"
+            ],
+            "title": "Templateversion",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "templateVersion",
+          "inputs"
+        ],
+        "title": "EmbeddingRequest",
+        "type": "object"
+      },
+      "EmbeddingResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "aggregationVersion": {
+            "const": "token-weighted-mean-v1",
+            "default": "token-weighted-mean-v1",
+            "title": "Aggregationversion",
+            "type": "string"
+          },
+          "dimension": {
+            "const": 384,
+            "default": 384,
+            "title": "Dimension",
+            "type": "integer"
+          },
+          "modelId": {
+            "const": "intfloat/multilingual-e5-small",
+            "default": "intfloat/multilingual-e5-small",
+            "title": "Modelid",
+            "type": "string"
+          },
+          "modelRevision": {
+            "title": "Modelrevision",
+            "type": "string"
+          },
+          "requestId": {
+            "title": "Requestid",
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/EmbeddingResult"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "schemaVersion": {
+            "const": "semantic-v1",
+            "default": "semantic-v1",
+            "title": "Schemaversion",
+            "type": "string"
+          },
+          "templateVersion": {
+            "default": "canonical-v1",
+            "enum": [
+              "canonical-v1",
+              "school-advisory-text-v1"
+            ],
+            "title": "Templateversion",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "modelRevision",
+          "results"
+        ],
+        "title": "EmbeddingResponse",
+        "type": "object"
+      },
+      "EmbeddingResult": {
+        "additionalProperties": false,
+        "properties": {
+          "chunks": {
+            "maximum": 4.0,
+            "minimum": 0.0,
+            "title": "Chunks",
+            "type": "integer"
+          },
+          "key": {
+            "pattern": "^[0-9]{1,6}$",
+            "title": "Key",
+            "type": "string"
+          },
+          "limited": {
+            "title": "Limited",
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "READY",
+              "NO_DATA"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "vector": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "maxItems": 384,
+                "minItems": 384,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vector"
+          }
+        },
+        "required": [
+          "key",
+          "status",
+          "vector",
+          "chunks",
+          "limited"
+        ],
+        "title": "EmbeddingResult",
+        "type": "object"
+      },
+      "ErrorResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "errorCode": {
+            "title": "Errorcode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "errorCode"
+        ],
+        "title": "ErrorResponse",
+        "type": "object"
+      },
+      "Passage": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "pattern": "^[0-9]{1,6}$",
+            "title": "Key",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 8192,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "text"
+        ],
+        "title": "Passage",
+        "type": "object"
+      },
+      "SimilarityRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "passages": {
+            "items": {
+              "$ref": "#/components/schemas/Passage"
+            },
+            "maxItems": 16,
+            "minItems": 1,
+            "title": "Passages",
+            "type": "array"
+          },
+          "query": {
+            "maxLength": 8192,
+            "title": "Query",
+            "type": "string"
+          },
+          "requestId": {
+            "title": "Requestid",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": "semantic-v1",
+            "title": "Schemaversion",
+            "type": "string"
+          },
+          "templateVersion": {
+            "enum": [
+              "canonical-v1",
+              "school-advisory-text-v1"
+            ],
+            "title": "Templateversion",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "templateVersion",
+          "query",
+          "passages"
+        ],
+        "title": "SimilarityRequest",
+        "type": "object"
+      },
+      "SimilarityResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "aggregationVersion": {
+            "const": "token-weighted-mean-v1",
+            "default": "token-weighted-mean-v1",
+            "title": "Aggregationversion",
+            "type": "string"
+          },
+          "dimension": {
+            "const": 384,
+            "default": 384,
+            "title": "Dimension",
+            "type": "integer"
+          },
+          "modelId": {
+            "const": "intfloat/multilingual-e5-small",
+            "default": "intfloat/multilingual-e5-small",
+            "title": "Modelid",
+            "type": "string"
+          },
+          "modelRevision": {
+            "title": "Modelrevision",
+            "type": "string"
+          },
+          "requestId": {
+            "title": "Requestid",
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/SimilarityResult"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "schemaVersion": {
+            "const": "semantic-v1",
+            "default": "semantic-v1",
+            "title": "Schemaversion",
+            "type": "string"
+          },
+          "templateVersion": {
+            "default": "canonical-v1",
+            "enum": [
+              "canonical-v1",
+              "school-advisory-text-v1"
+            ],
+            "title": "Templateversion",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "modelRevision",
+          "results"
+        ],
+        "title": "SimilarityResponse",
+        "type": "object"
+      },
+      "SimilarityResult": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "pattern": "^[0-9]{1,6}$",
+            "title": "Key",
+            "type": "string"
+          },
+          "limited": {
+            "title": "Limited",
+            "type": "boolean"
+          },
+          "passageChunks": {
+            "maximum": 4.0,
+            "minimum": 0.0,
+            "title": "Passagechunks",
+            "type": "integer"
+          },
+          "queryChunks": {
+            "maximum": 4.0,
+            "minimum": 0.0,
+            "title": "Querychunks",
+            "type": "integer"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": -1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "status": {
+            "enum": [
+              "READY",
+              "NO_DATA"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "status",
+          "score",
+          "queryChunks",
+          "passageChunks",
+          "limited"
+        ],
+        "title": "SimilarityResult",
+        "type": "object"
+      },
+      "TextInput": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "pattern": "^[0-9]{1,6}$",
+            "title": "Key",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "query",
+              "passage"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 8192,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "role",
+          "text"
+        ],
+        "title": "TextInput",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "InternalToken": {
+        "in": "header",
+        "name": "X-AI-Token",
+        "type": "apiKey"
+      }
+    }
+  },
+  "info": {
+    "description": "Internal optional shadow semantics. X-AI-Token required; no public business API.",
+    "title": "UT.Bridora internal semantic service",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health"
+      }
+    },
+    "/internal/v1/embeddings": {
+      "post": {
+        "operationId": "embeddings_internal_v1_embeddings_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmbeddingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmbeddingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "408": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Timeout"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unsupported Media Type"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "InternalToken": []
+          }
+        ],
+        "summary": "Embeddings"
+      }
+    },
+    "/internal/v1/similarity": {
+      "post": {
+        "operationId": "similarity_internal_v1_similarity_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimilarityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimilarityResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "408": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Timeout"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unsupported Media Type"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "InternalToken": []
+          }
+        ],
+        "summary": "Similarity"
+      }
+    },
+    "/ready": {
+      "get": {
+        "operationId": "ready_ready_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Ready"
+      }
+    }
+  }
+}

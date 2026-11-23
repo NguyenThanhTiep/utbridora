@@ -1,0 +1,36 @@
+# Recipe only. Use an explicitly isolated Docker context/VM; never the shared demo daemon.
+services:
+  semantic:
+    build: .
+    environment:
+      AI_INTERNAL_TOKEN: ${AI_INTERNAL_TOKEN:?Supply a private service token}
+      AI_MODEL_PATH: /models/e5
+      AI_CPU_THREADS: "1"
+      AI_ENCODE_BATCH_SIZE: "8"
+      AI_TIMEOUT_SECONDS: "10"
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+      HF_HUB_DISABLE_TELEMETRY: "1"
+      DO_NOT_TRACK: "1"
+    volumes:
+      - type: bind
+        source: ${AI_MODEL_DIRECTORY:?Supply verified isolated model directory}
+        target: /models/e5
+        read_only: true
+    ports: ["127.0.0.1:18091:8000"]
+    read_only: true
+    tmpfs: ["/tmp:size=64m,mode=1777"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 128
+    cpus: 2
+    mem_limit: 2g
+    networks: [inference]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=2)"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+networks:
+  inference:
+    internal: true

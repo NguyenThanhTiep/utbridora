@@ -29,8 +29,16 @@ public class ProfileAccessFacade implements ProfileAccessPort {
     public Decision decide(ActorContext context,Query q) {
         var auth=context.authentication();actor(auth);uuid(q.studentUserId());uuid(q.termId());fields(q.requestedFields(),false);
         String school=profiles.getObject().schoolOf(context,q.studentUserId(),q.termId());
-        if("SCHOOL_REVIEW".equals(q.purpose())) {
+        if("SCHOOL_REVIEW".equals(q.purpose()) || "SCHOOL_AI_ADVISORY".equals(q.purpose())) {
             if(q.shareId()!=null) throw failure(400,"SCHEMA_VALIDATION");
+            if("SCHOOL_AI_ADVISORY".equals(q.purpose())) {
+                try {delegation.require(auth,school,q.termId(),"matching:school:advisory_read");}
+                catch(vn.utbridora.auth.operations.OperationFailure denied) {
+                    if(denied.status!=404) throw denied;
+                    delegation.require(auth,school,q.termId(),"matching:school:advisory_manage");
+                }
+                if(!java.util.Set.copyOf(q.requestedFields()).equals(java.util.Set.of("skills","projects"))) throw failure(400,"SCHEMA_VALIDATION");
+            }
             var mask=delegation.profileFields(auth,school,q.termId());
             var allowed=q.requestedFields().stream().filter(mask::contains).toList();
             if(allowed.isEmpty()) throw failure(403,"ACCESS_DENIED");

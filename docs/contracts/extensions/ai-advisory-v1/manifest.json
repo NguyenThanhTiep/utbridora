@@ -1,0 +1,22 @@
+{
+  "version": "ai-advisory-v1",
+  "state": "SPEC_READY_FOR_REVIEW",
+  "createdAtUtc": "2026-11-21T03:33:36.993384+00:00",
+  "runtimeImplemented": false,
+  "qualityVerified": false,
+  "artifactHashes": {
+    "docs/contracts/extensions/ai-advisory-v1/API.md": "6ab38b98ecc43d44c29a89dbb2786db550d35eae5903e497fe8d6a154d70b381",
+    "docs/contracts/extensions/ai-advisory-v1/audit.csv": "a9006acc9b2cf31f55da2cf2b4561ecf7505ee51bf8d35c8b1440cda2cdc2ba6",
+    "docs/contracts/extensions/ai-advisory-v1/DATA_PORTS.md": "510de3f0937df618593c255fe171c49c5536a7fb178dabbbdd342867214cefa6",
+    "docs/contracts/extensions/ai-advisory-v1/EVALUATION_PLAN.md": "14cc00475337808506419b0f937d964f0f2fe4b935fb5c671a00d8184efa1c4a",
+    "docs/contracts/extensions/ai-advisory-v1/examples.json": "074e1229a5e882b4f140545243be61fa5a4751393e6499f2df3860af053314b0",
+    "docs/contracts/extensions/ai-advisory-v1/IMPLEMENTATION_HANDOFF.md": "559e1a2f036f2da2e4658447dba531f1a915616dd339b8ba67b48809d4c1efec",
+    "docs/contracts/extensions/ai-advisory-v1/permissions.csv": "44eb8c3a99c3930d12f80f24851844cfa179a39c9cae366779c501830f7e519f",
+    "docs/contracts/extensions/ai-advisory-v1/RANKING_POLICY.md": "846d7ecaf33fe859ddfa219be8b905715cdbf64d4dd68786d29016670ab3e4cf",
+    "docs/contracts/extensions/ai-advisory-v1/README.md": "cc7f55c4f22582fe5b8e4f763ffd9999a6312d4a233388f2954f5881c201a434",
+    "docs/contracts/extensions/ai-advisory-v1/schemas.json": "cb81712959e2bca0823d0834aac97c57ca48265928efc6e3d54597c0dac6e008",
+    "docs/contracts/extensions/ai-advisory-v1/source-map.json": "fa7cee3c1af2eba91fec5c6af8f8e4c9d2f7275d67cabae03456d06af922a50e",
+    "docs/contracts/extensions/ai-advisory-v1/STORAGE_LIFECYCLE.md": "bbd77b22fb3a3cb79778e92993ddcbd668ea3c34833d5b871237b7d40df3eab5",
+    "scripts/contracts/check_ai_advisory.py": "863ea691ebc9c104cbc458f8bd0161f1296ab526f9b35dfff13afdbae38a1f85"
+  }
+}

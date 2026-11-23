@@ -1,0 +1,8 @@
+{
+  "extension": "ai-advisory-v1",
+  "authorization": "USER_REQUESTED_STAGE_6_IMPLEMENTATION_2026_11_21",
+  "decisionRecord": "docs/contracts/extensions/AI_ADVISORY_IMPLEMENTATION_DECISION.md",
+  "specManifest": "docs/contracts/extensions/ai-advisory-v1/manifest.json",
+  "specManifestRawSha256": "ab2a1a0e992d85b7136bb3a1fc09a2b7acde5777457e0d1d7b37b25d89c77b7f",
+  "scope": "CODE_DEFAULT_OFF_NOT_QUALITY_OR_QA_SIGNOFF"
+}
