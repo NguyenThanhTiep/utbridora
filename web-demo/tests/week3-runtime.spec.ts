@@ -1,9 +1,15 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
+import { prepareQa05Demand } from './fixtures/qa05-demand';
 
-test('week 3 school, student and enterprise use real share, decision, Placement and T3 APIs', async ({ browser }) => {
+const qa05 = process.env.E2E_QA05 === 'true';
+const scenario = qa05
+  ? 'QA05 week 5: real Demand, Cooperation, Matching, Consent, Placement and T3'
+  : 'week 3 school, student and enterprise use real share, decision, Placement and T3 APIs';
+
+test(scenario, async ({ browser }) => {
   test.skip(process.env.E2E_WEEK3 !== 'true', 'Run from EnterpriseProposalIT with its isolated MySQL');
   test.setTimeout(210000);
-  const coop = process.env.E2E_COOPERATION!, proposal = process.env.E2E_PROPOSAL!;
+  let coop = process.env.E2E_COOPERATION!, proposal = process.env.E2E_PROPOSAL!;
   async function actor(browser: Browser, email: string) {
     const context = await browser.newContext(), page = await context.newPage();page.setDefaultTimeout(10000);await page.goto('/');
     await page.getByLabel('Email', {exact: true}).fill(email);await page.getByLabel('Mật khẩu', {exact: true}).fill(process.env.E2E_PASSWORD!);
@@ -24,11 +30,13 @@ test('week 3 school, student and enterprise use real share, decision, Placement 
   const student = await actor(browser, 'student@example.test');
   const hr = await actor(browser, 'hr@example.test');
   try {
+    if (qa05) ({ coop, proposal } = await prepareQa05Demand(hr.page, school.page, student.page));
     await openCooperation(school.page, true);
     school.page.once('dialog', d => void d.accept());
     const issued = school.page.waitForResponse(r => r.url().endsWith(`/school/proposals/${proposal}/invite`) && r.request().method() === 'POST');
     await school.page.getByRole('button', {name: 'Gửi lời mời thực tập', exact: true}).click();
     const invitationResponse = await issued;expect(invitationResponse.status()).toBe(202);const invitation = await invitationResponse.json();
+    if (qa05) await hr.page.reload();
     await openCooperation(hr.page, false);await expect(hr.page.getByText('Chưa có hồ sơ được chia sẻ hợp lệ.', {exact: true})).toBeVisible();
     await hr.page.getByRole('tab', {name: 'Lô đề xuất', exact: true}).click();
     await expect(hr.page.getByText('Chưa có dữ liệu lô đề xuất', {exact: true})).toBeVisible();
@@ -97,10 +105,28 @@ test('week 3 school, student and enterprise use real share, decision, Placement 
     await expect(hr.page.getByText('Chưa có dữ liệu lô đề xuất', {exact: true})).toBeVisible();
     await openCooperation(school.page, true, true);
     await expect(school.page.getByRole('heading', {name: 'Tiếp nhận 1 · Đã duyệt, chờ bắt đầu', exact: true})).toBeVisible();
-    await school.page.getByRole('button', {name: 'Hủy tiếp nhận', exact: true}).click();
-    await school.page.getByLabel('Căn cứ thao tác tiếp nhận').fill('DEMO-WEEK3-BROWSER-CANCEL');
-    await school.page.getByRole('combobox', {name: 'Lý do hủy', exact: true}).selectOption('SCHOOL_CANCELLED');
-    await school.page.getByRole('button', {name: 'Xác nhận hủy tiếp nhận', exact: true}).click();
+    const cancelPlacement = async () => {
+      await school.page.getByRole('button', {name: 'Hủy tiếp nhận', exact: true}).click();
+      await school.page.getByLabel('Căn cứ thao tác tiếp nhận').fill('DEMO-WEEK3-BROWSER-CANCEL');
+      await school.page.getByRole('combobox', {name: 'Lý do hủy', exact: true}).selectOption('SCHOOL_CANCELLED');
+      await school.page.getByRole('button', {name: 'Xác nhận hủy tiếp nhận', exact: true}).click();
+    };
+    if (qa05) {
+      await school.page.reload();
+      await openCooperation(school.page, true, true);
+      await school.page.route('**/api/v1/placements/*/cancel', async route => {
+        const body = route.request().postDataJSON();
+        expect(body.expectedVersion).toBeGreaterThan(1);
+        await route.continue({postData: {...body, expectedVersion: body.expectedVersion - 1}});
+      }, {times: 1});
+      const stale = school.page.waitForResponse(r => r.url().endsWith('/cancel') && r.request().method() === 'POST');
+      await cancelPlacement();
+      const conflict = await stale;
+      expect(conflict.status()).toBe(409);
+      expect((await conflict.json()).errorCode).toBe('VERSION_CONFLICT');
+      await expect(school.page.getByText(/^Dữ liệu vừa thay đổi\. Hãy tải lại và kiểm tra trước khi quyết định\./)).toBeVisible();
+    }
+    await cancelPlacement();
     await expect(school.page.getByRole('heading', {name: 'Tiếp nhận 1 · Đã hủy', exact: true})).toBeVisible();
     // The existing ACTIVE fixture independently verifies HR navigation and assignment scope;
     // the new Placement above remains the future-effective APPROVED/cancel workflow.

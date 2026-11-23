@@ -863,18 +863,39 @@ class EnterpriseProposalIT {
     }
     @Test void browserUsesRealSchoolStudentEnterpriseSharingAndPlacementHandoff() throws Exception {
         Assumptions.assumeTrue(Boolean.getBoolean("t5.week3.browser"),"Enable -Dt5.week3.browser=true for the real-browser workflow");
+        runPlacementBrowser(false);
+        assertEquals("CANCELLED",jdbc.queryForObject("SELECT state FROM placements WHERE proposal_item_id=?",String.class,f.proposalId()));
+    }
+    @Test void qa05BrowserCreatesDemandAndCompletesPlacement() throws Exception {
+        Assumptions.assumeTrue(Boolean.getBoolean("qa05.week5.browser"),"Enable -Dqa05.week5.browser=true for the QA05 real-browser workflow");
+        runPlacementBrowser(true);
+        var placement=jdbc.queryForMap("""
+            SELECT COUNT(*) AS total, MAX(p.state) AS state, COUNT(p.approved_at) AS approved
+            FROM placements p JOIN demands d ON d.id=p.demand_id
+            WHERE JSON_UNQUOTE(JSON_EXTRACT(d.data_json,'$.title'))='QA05 Week 5 full path'
+            """);
+        assertEquals(1,((Number)placement.get("total")).intValue());
+        assertEquals("CANCELLED",placement.get("state"));
+        assertEquals(1,((Number)placement.get("approved")).intValue());
+    }
+    private void runPlacementBrowser(boolean qa05) throws Exception {
         boolean windows=System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win");
-        var builder=windows?new ProcessBuilder("cmd.exe","/c","npm.cmd run test:e2e -- week3-runtime.spec.ts week3-integration-runtime.spec.ts"):new ProcessBuilder("npm","run","test:e2e","--","week3-runtime.spec.ts","week3-integration-runtime.spec.ts");
+        var args=new ArrayList<>(windows?List.of("cmd.exe","/c","npm.cmd"):List.of("npm"));
+        args.addAll(List.of("run","test:e2e","--",qa05?"[/\\\\]week3-runtime[.]spec[.]ts$":"week3-runtime.spec.ts"));
+        if(!qa05) args.add("week3-integration-runtime.spec.ts");
+        var builder=new ProcessBuilder(args);
         builder.directory(new java.io.File("web-demo"));
         builder.environment().put("API_PROXY_TARGET","http://localhost:"+port);
         builder.environment().put("E2E_WEEK3","true");builder.environment().put("E2E_PASSWORD","Synthetic-week3-test-password-123");
+        builder.environment().put("E2E_QA05",Boolean.toString(qa05));
         builder.environment().put("E2E_COOPERATION",f.cooperation().cooperationId());builder.environment().put("E2E_PROPOSAL",f.proposalId());
-        builder.environment().put("E2E_REPORT_FILE","../target/week3-browser-results.xml");
-        builder.redirectErrorStream(true).redirectOutput(new java.io.File("target/week3-browser.log"));
+        String report=qa05?"qa05-week5-browser":"week3-browser";
+        builder.environment().put("E2E_REPORT_FILE","../target/"+report+"-results.xml");
+        var log=new java.io.File("target/"+report+".log");
+        builder.redirectErrorStream(true).redirectOutput(log);
         var process=builder.start();
-        if(!process.waitFor(240,java.util.concurrent.TimeUnit.SECONDS)) {process.descendants().forEach(child->child.destroyForcibly());process.destroyForcibly();fail("Browser timeout; see target/week3-browser.log");}
-        assertEquals(0,process.exitValue(),"See target/week3-browser.log");
-        assertEquals("CANCELLED",jdbc.queryForObject("SELECT state FROM placements WHERE proposal_item_id=?",String.class,f.proposalId()));
+        if(!process.waitFor(240,java.util.concurrent.TimeUnit.SECONDS)) {process.descendants().forEach(child->child.destroyForcibly());process.destroyForcibly();fail("Browser timeout; see "+log);}
+        assertEquals(0,process.exitValue(),"See "+log);
     }
     private static OperationFailure failure(int status,String code,org.junit.jupiter.api.function.Executable action) {
         var f=assertThrows(OperationFailure.class,action);assertEquals(status,f.status);assertEquals(code,f.code);return f;
