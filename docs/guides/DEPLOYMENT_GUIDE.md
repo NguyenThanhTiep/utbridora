@@ -49,6 +49,11 @@ Không chạy config không kèm --quiet trong log công khai vì có thể in s
 
 ## Health và logging
 
+Quét tệp local/VPS: ghép thêm `compose.scanner.yaml`, kiểm tra tài nguyên và scanner
+trước khi recreate BE. Xem [bộ triển khai ClamAV](T1_07_FILE_SCANNING.md#bộ-triển-khai-docker-localvps).
+Override không tự áp dụng khi pull source; giữ đúng base/env/project và backup/clone
+đúng lineage trước deploy. Không publish ClamD3310; scanner cần ngân sách4GiB RAM riêng.
+
 Backend GET /actuator/health, /liveness, /readiness trả trạng thái tối thiểu (path đầy đủ /actuator/health/liveness và /actuator/health/readiness). Readiness gồm DB; SMTP không làm identity health DOWN. Frontend /healthz nội bộ. Dockerfile backend có curl healthcheck; frontend dùng wget. Container backend không chạy root, filesystem read-only, /tmp tmpfs, không đặc quyền.
 
 Nginx CSP, X-Content-Type-Options, frame denial và no-referrer; API access log tắt để hạn chế URL/query nhạy cảm. Backend có requestId trong log, không bật DEBUG/TRACE web trên staging. Correlation ID sinh tại backend. Có log rotation10MB×3, chưa có log collector/alert.

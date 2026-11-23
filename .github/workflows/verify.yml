@@ -103,6 +103,9 @@ jobs:
           mvn -B test-compile failsafe:integration-test failsafe:verify
           -Dfailsafe.includesFile=target/ci-includes.txt
           -Dfrontend.e2e=true -Dt5.week3.browser=true
+      - name: Verify official scanner deployment on isolated runner
+        if: matrix.shard == 2
+        run: python scripts/ci/scanner_deployment.py
       - run: python scripts/ci/integration_shards.py check
       - name: Report integration results
         if: always()
@@ -123,6 +126,8 @@ jobs:
             target/*e2e.log
             target/week5-restore-verification.json
             target/package9/
+            target/scanner-deployment.json
+            target/scanner-deployment.log
             target/student-browser.log
             web-demo/test-results/
   # Keep the existing required-check name, and fail if any dependency is skipped/failed.

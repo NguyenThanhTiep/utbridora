@@ -1,0 +1,57 @@
+# Opt in with compose.local.yaml or compose.staging.yaml; never run standalone.
+# Keep the same base file, --env-file and project name on every operation.
+services:
+  backend:
+    environment:
+      FILE_SCAN_ENABLED: 'true'
+      FILE_SCAN_HOST: clamav
+      FILE_SCAN_PORT: '3310'
+    depends_on:
+      clamav: {condition: service_healthy}
+    networks:
+      default: {}
+      file_scan: {}
+  clamav:
+    # Official 1.4 LTS image manifest, resolved 2026-11-23. Review updates before VPS release.
+    image: ${CLAMAV_IMAGE:-clamav/clamav:1.4@sha256:ac15046e610610347c459afabea6683a52cd041c7a10adf5f050ebb05525d62d}
+    entrypoint: [/bin/sh, /opt/utbridora/clamav-start.sh]
+    environment:
+      CLAMAV_NO_CLAMD: 'false'
+      CLAMAV_NO_FRESHCLAMD: 'false'
+      CLAMAV_NO_MILTERD: 'true'
+      CLAMD_STARTUP_TIMEOUT: '900'
+      FRESHCLAM_CHECKS: '12'
+      TZ: UTC
+    volumes:
+      - clamav_signatures:/var/lib/clamav
+      - ./deploy/clamav/clamd.conf:/etc/clamav/clamd.conf:ro
+      - ./deploy/clamav/freshclam.conf:/etc/clamav/freshclam.conf:ro
+      - ./deploy/clamav/start.sh:/opt/utbridora/clamav-start.sh:ro
+    networks:
+      file_scan: {}
+      signature_updates: {}
+    # No published port, host paths, application file volume or Docker socket.
+    mem_limit: 4g
+    mem_reservation: 3g
+    cpus: 2.0
+    pids_limit: 128
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    # Official init sets the persistent DB owner; daemons then drop to clamav.
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    healthcheck:
+      test: [CMD-SHELL, "clamdscan --config-file=/etc/clamav/clamd.conf --ping=1 >/dev/null 2>&1 && pgrep -x freshclam >/dev/null"]
+      interval: 15s
+      timeout: 5s
+      start_period: 10m
+      retries: 8
+    restart: unless-stopped
+    stop_grace_period: 30s
+    logging: {driver: json-file, options: {max-size: 10m, max-file: '3'}}
+volumes:
+  clamav_signatures:
+networks:
+  file_scan:
+    internal: true
+  # Only ClamAV joins this network, for FreshClam DNS/HTTPS egress.
+  signature_updates: {}
