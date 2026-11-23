@@ -56,8 +56,8 @@ def collect(run_id,expected_sha,folder):
     if len(artifacts)!=5 or {a['name'] for a in artifacts}!=expected:raise ValueError('Artifact inventory mismatch')
     folder=Path(folder);folder.mkdir(mode=0o700,exist_ok=False)
     target=folder/('ci-'+str(run_id));target.mkdir(mode=0o700)
-    totals={k:dict(tests=0,failures=0,errors=0,skipped=0) for k in ('unit','integration','browser')}
-    suites=[];browser_seen=set();verified=[];contract=None;operations={}
+    totals={k:dict(tests=0,failures=0,errors=0,skipped=0) for k in ('unit','integration','browser','pythonFakeEncoder','advisoryComponentMockHttp')}
+    suites=[];browser_seen=set();verified=[];contract=None;operations={};advisory_contract=None
     for artifact in artifacts:
         if artifact['expired'] or artifact['workflow_run']['head_sha']!=expected_sha:raise ValueError('Expired/wrong-commit artifact')
         raw=download(artifact['id']);digest=hashlib.sha256(raw).hexdigest()
@@ -69,16 +69,19 @@ def collect(run_id,expected_sha,folder):
             for name in archive.namelist():
                 base=Path(name).name
                 if base=='contract-verification.json':contract=json.loads(archive.read(name));continue
+                if base=='ai-advisory-contract.json':advisory_contract=json.loads(archive.read(name));continue
                 if name.endswith(('operations-verification.json','load-fixture-verification.json')):
                     operations[base]=json.loads(archive.read(name));continue
                 if not base.endswith('.xml'):continue
-                kind=('unit' if 'surefire-reports/' in name and base.startswith('TEST-') else
+                kind=('pythonFakeEncoder' if base=='ai-python-results.xml' else
+                      'advisoryComponentMockHttp' if base=='advisory-browser.xml' else
+                      'unit' if 'surefire-reports/' in name and base.startswith('TEST-') else
                       'integration' if 'failsafe-reports/' in name and base.startswith('TEST-') else
                       'browser' if 'browser' in base or 'test-results/' in name else None)
                 if kind is None:continue
                 body=archive.read(name)
-                if kind=='browser':
-                    fingerprint=hashlib.sha256(body).hexdigest()
+                if kind in ('browser','advisoryComponentMockHttp'):
+                    fingerprint=(kind,hashlib.sha256(body).hexdigest())
                     if fingerprint in browser_seen:continue
                     browser_seen.add(fingerprint)
                 xml=ET.fromstring(body)
@@ -97,12 +100,18 @@ def collect(run_id,expected_sha,folder):
     if any(c['failures']or c['errors'] for c in totals.values()):raise ValueError('Test failure/error')
     if totals['integration']['skipped']:raise ValueError('Skipped integration cases cannot certify the operational regression')
     if not contract or contract['counts']['failed']:raise ValueError('Missing/failed contract evidence')
+    has_ai=bool(git('ls-tree','-r','--name-only',expected_sha,'ai-service/model-lock.json'))
+    if has_ai:
+        if not advisory_contract or advisory_contract['counts']['failed'] or not advisory_contract['counts']['passed']:
+            raise ValueError('Missing/failed advisory extension evidence')
+        for kind in ('pythonFakeEncoder','advisoryComponentMockHttp'):
+            if not totals[kind]['tests'] or totals[kind]['skipped']:raise ValueError('Missing/skipped AI lightweight evidence')
     if 'vn.utbridora.auth.Package9OperationsIT' in inventory and set(operations)!={'operations-verification.json','load-fixture-verification.json'}:
         raise ValueError('Package9 actual operational reports are missing')
     for name,report in operations.items():
         if report['commit']!=expected_sha or report['status'] not in ('PASS','FUNCTIONAL_PASS_NOT_LOAD'):raise ValueError('Operational report is not valid for the exact commit')
     result={'runId':str(run_id),'sha':expected_sha,'conclusion':'success','artifacts':verified,'counts':totals,
-            'integrationSuites':sorted(suites),'contracts':contract['counts'],'operations':operations,
+            'integrationSuites':sorted(suites),'contracts':contract['counts'],'advisoryContracts':advisory_contract['counts'] if advisory_contract else None,'operations':operations,
             'acceptance':'UNVERIFIED','limits':['DEV regression only; conditional browser skips remain explicit','Fixed-hardware load, staging/RPO/RTO and QA/Lead/school acceptance are separate gates']}
     private_json(folder/('VERIFIED_CI-'+str(run_id)+'.json'),result)
     print(json.dumps({'runId':run_id,'sha':expected_sha,'counts':totals,'integrationSuites':len(suites),'operations':list(operations)}))
