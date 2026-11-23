@@ -4,4 +4,6 @@ docs/contracts/UTBridora_Contract_Pack_B01_B06_v1.1_Candidate.md -text
 docs/reviews/*.md -text
 docs/srs/*.docx -text
 scripts/*.sh text eol=lf
+deploy/clamav/*.conf text eol=lf
+deploy/clamav/*.sh text eol=lf
 docs/contracts/extensions/T3_HIRING_INTEREST_PROPOSAL.md -text
