@@ -358,7 +358,7 @@ function GroupWorkspace({ assignment, cohort, gateway, reset, initialCaseId, sec
       : state.value.length === 0 ? <EmptyState icon="users" title="Chưa có nhóm được phân công" description="Nhóm sẽ xuất hiện sau khi người phụ trách hoàn tất phân công." />
       : selected ? <div className="internship-group-detail">
         <header className="t3-group-banner"><button className="text-button" onClick={() => setGroupId('')}><Icon name="arrow-left" size={16} />Về danh sách nhóm</button>
-        <div><h3 title={selected.code}>Nhóm {formatGroupCode(selected.code)}</h3><small>{cohort.code} — {cohort.name}</small></div>
+        <div><h3 title={selected.code} aria-label={'Nhóm ' + selected.code}>Nhóm {formatGroupCode(selected.code)}</h3><small>{cohort.code} — {cohort.name}</small></div>
         <dl className="internship-facts"><div><dt><Icon name="briefcase" size={16} />Hồ sơ thực tập</dt><dd>{selected.caseIds.length}</dd></div>
           <div><dt><Icon name="users" size={16} />Mentor được phân công</dt><dd>{new Set(selected.mentorUserIds).size}</dd></div></dl>
         {section === 'mentors' && selected.mentorUserIds.length > 0 && <div className="t3-group-banner-mentors">
