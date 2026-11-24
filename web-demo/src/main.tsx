@@ -13,5 +13,7 @@ import './ui/portal-foundations.css';
 import './ui/workspace-topbar.css';
 import './modules/cooperation/portal/presentation.css';
 import './ui/internship-shell.css';
+import './modules/cooperation/portal/redesign-content.css';
+import './modules/internship/redesign-t3-content.css';
 
 createRoot(document.getElementById('root')!).render(<React.StrictMode><App /><OperationToasts /></React.StrictMode>);

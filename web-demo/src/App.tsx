@@ -29,7 +29,7 @@ import { DemandWorkspace, SchoolWorkspace, PortalNavigation, portalPageTitle, ca
 import { SchoolDelegations } from './modules/delegations/SchoolDelegations';
 import { RoleAccountMenu } from './RoleAccountMenu';
 import { useSurfaceSpotlight } from './ui/useSurfaceSpotlight';
-import { studentSpotlightTargets, workspaceFrames } from './ui/workspaceSurfaces';
+import { internshipSpotlightTargets, studentSpotlightTargets, workspaceFrames } from './ui/workspaceSurfaces';
 import { useOrganizationNames } from './modules/useOrganizationNames';
 import './auth/AuthEffects.css';
 
@@ -156,10 +156,11 @@ export default function App() {
   const portalSide = screen === 'demands' ? 'enterprise' : screen === 'school' ? 'school' : rolePortalSide;
   const adminShell = isAdmin && !portalSide;
   const studentShell = !adminShell && !t5Shell && menus.some(item => item.group === 'student');
+  const internshipMotion = nativeInternship && !studentShell && !adminShell;
   const adminSurface = useAdminSpotlight(adminShell);
   const workspaceSurface = useSurfaceSpotlight<HTMLElement>(
-    (t5Shell && !portalScreen && !adminShell && !nativeInternship) || studentShell,
-    studentShell ? studentSpotlightTargets : workspaceFrames + ', .t3-report-row-btn',
+    (t5Shell && !portalScreen && !adminShell && !nativeInternship) || studentShell || internshipMotion,
+    studentShell ? studentSpotlightTargets : internshipMotion ? internshipSpotlightTargets : workspaceFrames + ', .t3-report-row-btn',
     'portal',
   );
   const portalEntry = portalSide === 'enterprise' ? 'demands' : 'school';
@@ -340,7 +341,7 @@ export default function App() {
     <button className="text-button full" disabled={action.busy} onClick={() => { setToken(''); setAuthScreen('login'); history.replaceState(null, '', '/'); }}>Về tài khoản của tôi</button>
   </AuthLayout>;
 
-  return <div className={'workspace' + (studentShell ? ' workspace-student' : '') + (adminShell ? ' workspace-admin' : '') + (t5Shell ? ' workspace-t5' : '') + (portalSide ? ' workspace-role-portal' : '') + (portalScreen ? ' workspace-t5-portal' : '') + (internshipShell ? ' workspace-t5-internship' : '') + (nativeInternship ? ' workspace-native-t3' : '') + (t5Shell && !portalScreen && !nativeInternship ? ' has-workspace-motion' : '') + (justSignedIn ? ' is-just-signed-in' : '')}>
+  return <div className={'workspace' + (studentShell ? ' workspace-student' : '') + (adminShell ? ' workspace-admin' : '') + (t5Shell ? ' workspace-t5' : '') + (portalSide ? ' workspace-role-portal' : '') + (portalScreen ? ' workspace-t5-portal' : '') + (internshipShell ? ' workspace-t5-internship' : '') + (nativeInternship ? ' workspace-native-t3' : '') + ((t5Shell && !portalScreen && !nativeInternship) || internshipMotion ? ' has-workspace-motion' : '') + (justSignedIn ? ' is-just-signed-in' : '')}>
     {justSignedIn && <SessionFeedback variant="login" title="Đăng nhập thành công" subtitle={`Chào mừng ${me.displayName}`} />}
     <a className="skip-link" href="#main-content">Bỏ qua điều hướng</a>
     {mobileOpen && <button className="sidebar-backdrop" aria-label="Đóng phần nền menu" onClick={() => setMobileOpen(false)} tabIndex={-1} />}
@@ -535,7 +536,7 @@ export default function App() {
             ? <DemandWorkspace key={me.userId} grants={grants} page={portalPage} onNavigate={navigatePortal} viewerId={me.userId} user={{ displayName: me.displayName, email: me.email }} />
             : <SchoolWorkspace key={me.userId} grants={grants} page={portalPage} onNavigate={navigatePortal} viewerId={me.userId} user={{ displayName: me.displayName, email: me.email }} />
         ) : (
-          <div key={screen} className="app-page-stage">
+          <div key={screen} className={'app-page-stage' + (!adminShell && !studentShell && portalSide === 'school' && (screen === 'delegations' || screen === 'taxonomy') ? ' school-portal-subview' : '')}>
             {screen === 'account' && me.memberships.some(m => m.role === 'ENTERPRISE') && !grants.some(canAuthorDemands) && !internshipShell
               && <Notice message="Tài khoản có vai trò doanh nghiệp nhưng chưa được cấp quyền quản lý nhu cầu. Nhờ quản trị viên kiểm tra trạng thái xác minh tổ chức và liên kết vai trò." />}
             {!menus.some(item => item.id === screen) ? <section className="panel"><EmptyState icon="lock" title="Không có quyền truy cập" description="Chọn một chức năng trong menu để tiếp tục." /></section>

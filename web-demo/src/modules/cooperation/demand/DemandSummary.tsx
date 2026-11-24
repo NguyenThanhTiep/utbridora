@@ -28,7 +28,7 @@ export function DemandSummary({ id, demand, schoolName, onClose }: {
         <button type="button" className="secondary" onClick={onClose}><Icon name="close" size={16} />Đóng chi tiết nhu cầu</button>
       </div>
     </header>
-    <dl className="demand-preview-meta">
+    <div className="demand-preview-body"><dl className="demand-preview-meta">
       <div><dt>Trường tiếp nhận</dt><dd>{schoolName || 'Trường đối tác'}</dd></div>
       <div><dt>Thời gian thực tập</dt><dd>{formatDateDMY(data.required.dateRange.startDate)} – {formatDateDMY(data.required.dateRange.endDate)}</dd></div>
       <div><dt>Chỉ tiêu tuyển</dt><dd>{data.quantity} vị trí</dd></div>
@@ -36,8 +36,9 @@ export function DemandSummary({ id, demand, schoolName, onClose }: {
       <div><dt>Ngành</dt><dd>{data.required.majorCodes.join(', ') || 'Không giới hạn ngành'}</dd></div>
       {data.location && <div><dt>Địa điểm</dt><dd>{data.location}</dd></div>}
     </dl>
-    <CooperationDescription text={data.description} />
+    <div className="demand-preview-copy"><CooperationDescription text={data.description} />
     {data.benefits && <div className="demand-benefits"><h4>Quyền lợi</h4><p>{data.benefits}</p></div>}
+    </div></div>
     <div className="demand-preview-skills">
       <CooperationSkillCriteria label="Kỹ năng bắt buộc" skills={data.required.skills} />
       {data.preferred.length > 0 && <CooperationSkillCriteria label="Kỹ năng ưu tiên" skills={data.preferred} />}

@@ -7,8 +7,8 @@ const states: Record<string, string> = {
 
 export function CaseStatus({ value }: { value: CaseRef }) {
   return <>
-    <p>Mã hồ sơ: {value.caseId}</p>
-    <p>Trạng thái: {states[value.state] || value.state}</p>
+    <p className="t3-case-reference">Mã hồ sơ: {value.caseId}</p>
+    <p className="t3-case-state" data-state={value.state}>Trạng thái: {states[value.state] || value.state}</p>
     {value.state === 'WAITING_START' && <p>Chưa được giao hoặc nộp nhiệm vụ trước khi tiếp nhận thực tập được kích hoạt.</p>}
   </>;
 }

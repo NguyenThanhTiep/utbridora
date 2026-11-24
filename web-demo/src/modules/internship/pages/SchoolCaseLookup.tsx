@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ApiError, type Grant } from '../../../api';
-import { Notice } from '../../../components';
+import { Icon, Notice } from '../../../components';
+import { useOrganizationNames } from '../../useOrganizationNames';
 import { workspacePermission } from '../access';
 import type { CaseRef } from '../cases';
+import { formatEntityShort } from '../displayLabels';
 import { uuidPattern, validVersion } from '../workflow';
 import { workflowRead } from '../workflow-api';
 import { CaseStatus } from './CaseStatus';
@@ -12,6 +14,7 @@ import type { OperationsScope } from '../operations-types';
 type Lookup = { caseId: string };
 
 export function SchoolCaseLookup({ grants,userId }: { grants: Grant[];userId:string }) {
+  const orgNames = useOrganizationNames();
   const schoolIds = [...new Set(grants.flatMap(grant =>
     grant.role === 'SCHOOL_STAFF' && grant.organizationId && grant.permissions.includes(workspacePermission)
       ? [grant.organizationId] : []))];
@@ -19,16 +22,16 @@ export function SchoolCaseLookup({ grants,userId }: { grants: Grant[];userId:str
   const schoolId = schoolIds.includes(selectedSchool) ? selectedSchool : schoolIds[0];
   if (!schoolId) return null;
 
-  return <div className="stack t3-evaluations">
-    {schoolIds.length > 1 && <section className="panel"><label>Trường tra cứu<select value={schoolId}
+  const schoolField = schoolIds.length > 1 && <label>Trường tra cứu<select value={schoolId}
       onChange={event => setSelectedSchool(event.target.value)}>
-      {schoolIds.map(id => <option key={id} value={id}>Trường …{id.slice(-6)}</option>)}
-    </select></label></section>}
-    <ScopedLookup key={schoolId} schoolId={schoolId} userId={userId} permissions={grants.find(g=>g.role==='SCHOOL_STAFF' && g.organizationId===schoolId && g.permissions.includes(workspacePermission))!.permissions} />
+      {schoolIds.map(id => <option key={id} value={id}>{orgNames[id] || 'Trường ' + formatEntityShort(id)}</option>)}
+    </select></label>;
+  return <div className="stack t3-evaluations t3-pro-surface">
+    <ScopedLookup schoolField={schoolField} key={schoolId} schoolId={schoolId} userId={userId} permissions={grants.find(g=>g.role==='SCHOOL_STAFF' && g.organizationId===schoolId && g.permissions.includes(workspacePermission))!.permissions} />
   </div>;
 }
 
-function ScopedLookup({ schoolId,userId,permissions }: { schoolId: string;userId:string;permissions:string[] }) {
+function ScopedLookup({ schoolField,schoolId,userId,permissions }: { schoolField: React.ReactNode;schoolId: string;userId:string;permissions:string[] }) {
   const [input, setInput] = useState('');
   const [request, setRequest] = useState<Lookup | null>(null);
   const [response, setResponse] = useState<{ request: Lookup; value?: CaseRef; message?: string } | null>(null);
@@ -59,11 +62,13 @@ function ScopedLookup({ schoolId,userId,permissions }: { schoolId: string;userId
     return () => controller.abort();
   }, [request, schoolId]);
 
-  return <section className="panel stack" aria-label="Tra cứu hồ sơ nhà trường">
-    <form className="stack" onSubmit={event => {
+  return <section className="panel stack t3-school-case-lookup" aria-label="Tra cứu hồ sơ nhà trường">
+    <h2 className="t3-section-title"><Icon name="search" />Tra cứu hồ sơ nhà trường</h2>
+    <form className="stack t3-case-search-form" onSubmit={event => {
       event.preventDefault();
       if (!loading && uuidPattern.test(caseId)) { setResponse(null); setRequest({ caseId }); }
     }}>
+      {schoolField}
       <label>Mã hồ sơ thực tập<input value={input} onChange={event => {
         setInput(event.target.value); setRequest(null); setResponse(null);
       }} aria-describedby="school-case-help" /></label>
@@ -72,7 +77,7 @@ function ScopedLookup({ schoolId,userId,permissions }: { schoolId: string;userId
     </form>
     {loading && <p role="status">Đang kiểm tra quyền truy cập hồ sơ…</p>}
     {result?.message && <Notice message={result.message} tone="error" />}
-    {result?.value && <section className="stack" aria-label="Thông tin hồ sơ">
+    {result?.value && <section className={operations===request ? "stack" : "stack t3-lookup-result"} aria-label="Thông tin hồ sơ">
       {operations!==request && <><h2>Trạng thái hồ sơ thực tập</h2>
       <CaseStatus value={result.value} /></>}
       {scope && (operations===request ? <ScopeOperations scope={scope} caseId={result.value.caseId} denied={()=>setResponse({request:result.request,message:'Quyền truy cập hồ sơ đã thay đổi.'})}/> :

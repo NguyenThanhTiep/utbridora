@@ -66,7 +66,7 @@ export function ApprovedCooperations({ org, side, placements, records, demands =
       setDetailFocusTick(n => n + 1);
     }} />;
   if (enterpriseCompactPlacements && !detailExpanded) return <>{overview}</>;
-  if (records.loading) return <>{overview}<section className="panel" role="status">Đang tải danh sách hợp tác…</section></>;
+  if (records.loading) return <>{overview}<section className="panel rc-loading-state" role="status">Đang tải danh sách hợp tác…</section></>;
   if (records.error) return <>{overview}<section className="panel"><Notice tone="error" message={records.error} /></section></>;
   if (focusProposalId && selected && !approved.some(record => record.cooperationId === selected)) return <>{overview}<section className="panel">
     <Notice tone="error" message="Hợp tác trong thông báo đã thay đổi hoặc không còn trong phạm vi truy cập. Hãy tải lại danh sách." />
@@ -128,7 +128,7 @@ function ApprovedDetail({ org, side, id, placements, focusProposalId, loaded }: 
   }, [org, side, id, placements, revision, loaded]);
   return <section className={(enterpriseCandidates ? '' : 'panel ') + 'portal-detail' + (enterpriseCandidates ? ' enterprise-candidate-detail' : '')}>
     <Notice tone="error" message={error} />
-    {!detail && !error && <p role="status">Đang tải nội dung hợp tác…</p>}
+    {!detail && !error && <p className="rc-loading-state" role="status">Đang tải nội dung hợp tác…</p>}
     {detail && <>{!enterpriseCandidates && <div className="portal-detail-heading approved-coop-header">
       <div>{side === 'school'
         ? <h3 title={detail.demand.data.title}>{detail.demand.data.title}</h3>

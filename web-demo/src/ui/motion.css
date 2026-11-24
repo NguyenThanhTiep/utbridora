@@ -6,12 +6,12 @@
   --ui-motion-sheen: 800ms;
   --ui-motion-ease: cubic-bezier(.22, 1, .36, 1);
 }
-#root .workspace:not(:where(.workspace-native-t3)) :is(button, a, input, select, textarea, summary) {
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(button, a, input, select, textarea, summary) {
   transition-property: background-color, border-color, color, box-shadow, transform;
   transition-duration: var(--ui-motion-standard);
   transition-timing-function: var(--ui-motion-ease);
 }
-#root .workspace:not(:where(.workspace-native-t3)) :is(.panel, .stat-card, .t5-detail-card, .workflow-item-card, .proposal-card, .placement-item-card, .matching-candidate) {
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(.panel, .stat-card, .t5-detail-card, .workflow-item-card, .proposal-card, .placement-item-card, .matching-candidate) {
   transition: border-color var(--ui-motion-standard) var(--ui-motion-ease), box-shadow var(--ui-motion-standard) var(--ui-motion-ease);
 }
 /* Static frames gain a border highlight, never the lift reserved for clickable cards. */
@@ -100,11 +100,11 @@
   box-shadow: 0 0 0 3px #0b927c12;
 }
 @media (prefers-reduced-motion: no-preference) {
-  #root .workspace:not(:where(.workspace-native-t3)) .app-page-stage,
+  #root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) .app-page-stage,
 #root .workspace:not(:where(.workspace-native-t3)) .portal-workspace > :is(.portal-page-stage, .portal-subpage-sheet) {
     animation: ui-surface-in var(--ui-motion-enter) var(--ui-motion-ease) backwards;
   }
-  #root .workspace:not(:where(.workspace-native-t3)) :is(.notice, .taxonomy-success, [role="tabpanel"]:not([hidden]), .workflow-detail-drawer, .detail-panel, .form-panel:not([hidden]),
+  #root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(.notice, .taxonomy-success, [role="tabpanel"]:not([hidden]), .workflow-detail-drawer, .detail-panel, .form-panel:not([hidden]),
     .demand-editor, .demand-preview, .portal-cooperation-composer, .enterprise-verification-editor, .bm03-detail-card,
     .nomination-eligibility-drawer, .proposal-share-editor > form, .workflow-item-card[tabindex="-1"], details[open] > :not(summary)) {
     animation: ui-feedback-in var(--ui-motion-standard) var(--ui-motion-ease);
@@ -126,7 +126,7 @@
     box-shadow: 0 0 0 1px #dbe8f180, 0 5px 18px #142f4012;
   }
   #root .workspace:not(:where(.workspace-native-t3)) .portal-welcome[data-portal-glow] .portal-welcome-icon::after { animation: ui-welcome-halo 1.2s ease-out; }
-  #root .workspace:not(:where(.workspace-native-t3)) :is(.content, .topbar) button:not(:where(.password-toggle, .nav, .taxonomy-node, .text-button, .btn-icon, .profile-shortcut, .menu-toggle, .role-menu-trigger, .role-menu-item, .student-report-card, .admin-metric, .admin-shortcut, .portal-stat, .portal-shortcut, .kpi-card, .matching-counts > button, [role="tab"], :disabled, [aria-disabled="true"])):hover {
+  #root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(.content, .topbar) button:not(:where(.password-toggle, .nav, .taxonomy-node, .text-button, .btn-icon, .profile-shortcut, .menu-toggle, .role-menu-trigger, .role-menu-item, .student-report-card, .admin-metric, .admin-shortcut, .portal-stat, .portal-shortcut, .kpi-card, .matching-counts > button, [role="tab"], :disabled, [aria-disabled="true"])):hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px #0b927c18;
   }
@@ -149,8 +149,8 @@
   #root .workspace:not(:where(.workspace-native-t3)) :is(.t5-detail-card, .matching-candidate, .proposal-card, .placement-item-card):hover { transform: none; }
 }
 /* The account trigger uses a clipped, neutral sheen; its popover remains outside the button. */
-#root .workspace:not(:where(.workspace-native-t3)) :is(.role-menu-trigger, .workspace-account-trigger) { position: relative; isolation: isolate; overflow: hidden; }
-#root .workspace:not(:where(.workspace-native-t3)) :is(.role-menu-trigger, .workspace-account-trigger)::after {
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(.role-menu-trigger, .workspace-account-trigger) { position: relative; isolation: isolate; overflow: hidden; }
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(.role-menu-trigger, .workspace-account-trigger)::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -159,37 +159,37 @@
   background: linear-gradient(110deg, transparent 15%, #ffffff80 50%, transparent 85%);
   transform: translateX(-110%);
 }
-#root .workspace:not(:where(.workspace-native-t3)) :is(.role-menu-trigger, .workspace-account-trigger) > span:first-child {
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(.role-menu-trigger, .workspace-account-trigger) > span:first-child {
   transition: box-shadow var(--ui-motion-standard) var(--ui-motion-ease);
 }
-#root .workspace:not(:where(.workspace-native-t3)) :is(.role-menu-trigger, .workspace-account-trigger):is(:hover, :focus-visible, [aria-expanded="true"]) > span:first-child { box-shadow: 0 0 0 3px #0b927c1a; }
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(.role-menu-trigger, .workspace-account-trigger):is(:hover, :focus-visible, [aria-expanded="true"]) > span:first-child { box-shadow: 0 0 0 3px #0b927c1a; }
 @media (prefers-reduced-motion: no-preference) {
-  #root .workspace:not(:where(.workspace-native-t3)) :is(.role-menu-trigger, .workspace-account-trigger):focus-visible::after { animation: action-light-sweep var(--ui-motion-sheen) var(--ui-motion-ease); }
+  #root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(.role-menu-trigger, .workspace-account-trigger):focus-visible::after { animation: action-light-sweep var(--ui-motion-sheen) var(--ui-motion-ease); }
 }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  #root .workspace:not(:where(.workspace-native-t3)) :is(.role-menu-trigger, .workspace-account-trigger):not(:disabled):hover::after { animation: action-light-sweep var(--ui-motion-sheen) var(--ui-motion-ease); }
+  #root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(.role-menu-trigger, .workspace-account-trigger):not(:disabled):hover::after { animation: action-light-sweep var(--ui-motion-sheen) var(--ui-motion-ease); }
 }
-#root .workspace:not(:where(.workspace-native-t3)) button:not(:where(.password-toggle, .nav, .taxonomy-node, .text-button, .btn-icon, .profile-shortcut, .menu-toggle, .role-menu-trigger, .role-menu-item, .student-report-card, [role="tab"], :disabled, [aria-disabled="true"])):active {
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) button:not(:where(.password-toggle, .nav, .taxonomy-node, .text-button, .btn-icon, .profile-shortcut, .menu-toggle, .role-menu-trigger, .role-menu-item, .student-report-card, [role="tab"], :disabled, [aria-disabled="true"])):active {
   transform: translateY(1px);
   box-shadow: none;
 }
 @media (max-width: 900px) {
   #root .workspace .sidebar { transition: transform var(--ui-motion-standard) var(--ui-motion-ease), visibility var(--ui-motion-standard) var(--ui-motion-ease); }
 }
-#root .workspace:not(:where(.workspace-native-t3)) button:not(.password-toggle):disabled,
-#root .workspace:not(:where(.workspace-native-t3)) button:not(.password-toggle)[aria-disabled="true"] { transform: none; }
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) button:not(.password-toggle):disabled,
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) button:not(.password-toggle)[aria-disabled="true"] { transform: none; }
 @media (hover: none), (pointer: coarse) {
-  #root .workspace:not(:where(.workspace-native-t3)) button:not(.password-toggle):hover,
+  #root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) button:not(.password-toggle):hover,
 #root .workspace:not(:where(.workspace-native-t3)) :is(.t5-detail-card, .matching-candidate, .proposal-card, .placement-item-card):hover { transform: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  #root .workspace:not(:where(.workspace-native-t3)) *,
-#root .workspace:not(:where(.workspace-native-t3)) *::before,
-#root .workspace:not(:where(.workspace-native-t3)) *::after {
+  #root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) *,
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) *::before,
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) *::after {
     animation: none !important;
     transition: none !important;
   }
-  #root .workspace:not(:where(.workspace-native-t3)) button:not(.password-toggle):is(:hover, :active),
+  #root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) button:not(.password-toggle):is(:hover, :active),
 #root .workspace:not(:where(.workspace-native-t3)) :is(.t5-detail-card, .matching-candidate, .proposal-card, .placement-item-card):hover { transform: none !important; }
 }
 @keyframes ui-surface-in { from { opacity: .5; transform: translateY(10px); } to { opacity: 1; transform: none; } }

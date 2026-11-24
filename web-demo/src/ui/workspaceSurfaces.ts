@@ -11,6 +11,12 @@ export const portalSpotlightTargets = [
   workspaceFrames,
 ].join(', ');
 
+export const internshipSpotlightTargets = '.app-page-stage :is(' + [
+  '.panel', '.t3-kpis > div', '.hr-kpi-card', '.hr-cohort-choice', '.internship-group-card',
+  '.t3-operation-card', '.t3-grade-row', '.t3-task-card', '.t3-month-grid button.text-button',
+  '.t3-priorities > li', '.t3-progress-row', '.t3-group-banner',
+].join(', ') + '):not(:disabled)';
+
 export const studentSpotlightTargets = [
   workspaceFrames, '.student-home-stat', '.student-home-row', '.student-opp-card',
 ].join(', ');

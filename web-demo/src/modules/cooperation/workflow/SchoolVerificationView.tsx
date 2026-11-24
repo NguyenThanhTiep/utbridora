@@ -312,8 +312,8 @@ export function SchoolVerificationView({
           </div>
         </div>
 
-        {loading && <p role="status">Đang tải hồ sơ xác minh…</p>}
-        {!loading && focusId && !activeRecord && !error && <p role="status">Đang mở hồ sơ đã chọn…</p>}
+        {loading && <p className="rc-loading-state" role="status">Đang tải hồ sơ xác minh…</p>}
+        {!loading && focusId && !activeRecord && !error && <p className="rc-loading-state" role="status">Đang mở hồ sơ đã chọn…</p>}
 
         {/* Verification Table */}
         <div className="proposal-table school-verification-table">

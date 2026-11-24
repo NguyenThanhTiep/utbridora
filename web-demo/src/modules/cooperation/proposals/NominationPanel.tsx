@@ -60,7 +60,7 @@ export function NominationPanel({ org, cooperationId, demand, locked, changed, p
     </div>
     <Notice message={error || command.message} tone="error" />
     {command.retryable && <div className="button-row"><button disabled={command.busy} onClick={() => void command.retry()}>Thử lại thao tác tìm hoặc đề xuất đã gửi</button></div>}
-    {loading && <p role="status">Đang đối chiếu điều kiện sinh viên…</p>}
+    {loading && <p className="rc-loading-state" role="status">Đang đối chiếu điều kiện sinh viên…</p>}
     {run && !command.retryable && <div className="nomination-filter-bar"><label>Kết quả đối chiếu<select disabled={disabled} value={filter} onChange={e => { setSelected([]); setPage(0); setFilter(e.target.value); }}>
       <option value="MATCH">Đạt tiêu chí</option><option value="MISSING_DATA">Thiếu dữ liệu</option><option value="NOT_MATCH">Chưa phù hợp</option>
     </select></label><button className="secondary" disabled={disabled} onClick={() => setRevision(n => n + 1)}>Tải lại kết quả đối chiếu</button></div>}

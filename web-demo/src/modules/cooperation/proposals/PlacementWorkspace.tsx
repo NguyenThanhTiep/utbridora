@@ -154,7 +154,7 @@ export function PlacementWorkspace({ org, school, cooperationId, demand, candida
       <button className="secondary" disabled={blocked} onClick={() => setRevision(n => n + 1)}>Tải lại tiếp nhận thực tập</button>
     </div>
     <Notice message={error || command.message} tone="error" /><p role="status">{notice}</p>
-    {loading && <p role="status">Đang tải tiếp nhận thực tập…</p>}
+    {loading && <p className="rc-loading-state" role="status">Đang tải tiếp nhận thực tập…</p>}
     {command.retryable && <div className="button-row"><button disabled={command.busy} onClick={() => void command.retry()}>Thử lại thao tác tiếp nhận đã gửi</button></div>}
     {summary && <>
       <dl className="proposal-capacity">

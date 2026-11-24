@@ -34,8 +34,8 @@ function usePendingRequest() {
   };
 }
 
-export function HrCreateCohort({ assignment, created }: {
-  assignment: WorkspaceAssignment; created: (value: Cohort) => void;
+export function HrCreateCohort({ assignment, created, close }: {
+  assignment: WorkspaceAssignment; close?: () => void; created: (value: Cohort) => void;
 }) {
   const [code, setCode] = useState(''), [name, setName] = useState('');
   const [busy, setBusy] = useState(false), [feedback, setFeedback] = useState('');
@@ -53,8 +53,8 @@ export function HrCreateCohort({ assignment, created }: {
     } catch (error) { setFeedback(errorMessage(error)); }
     finally { setBusy(false); }
   }
-  return <form className="panel stack" onSubmit={event => void submit(event)}>
-    <h3>Tạo đợt thực tập</h3>
+  return <form className="panel stack t3-create-cohort" onSubmit={event => void submit(event)}>
+    <div className="t3-card-heading"><h3>Tạo đợt thực tập</h3>{close && <button type="button" className="secondary" disabled={busy} onClick={close}>Đóng</button>}</div>
     <p className="muted">Trường và kỳ lấy từ phân công HR đang chọn.</p>
     <label>Mã đợt<input required maxLength={64} value={code} onChange={event => setCode(event.target.value)} /></label>
     <label>Tên đợt<input required maxLength={200} value={name} onChange={event => setName(event.target.value)} /></label>
@@ -119,7 +119,7 @@ export function HrCohortManagement({ assignment, cohort, changed, versionChanged
     });
     if (value) { setPlan(null); changed(); }
   }
-  return <div className="stack">
+  return <div className="stack t3-cohort-actions">
     {(section === 'all' || section === 'cohorts') && <form className="panel stack" onSubmit={event => void intake(event)}>
       <h3>Nhận Placement từ T5 vào {cohort.name}</h3>
       <p className="muted">Dán Placement ID đã được cấp, mỗi dòng một ID. T3 chỉ đối chiếu nguồn T5; không tạo Placement mới.</p>
@@ -131,14 +131,16 @@ export function HrCohortManagement({ assignment, cohort, changed, versionChanged
         {item.reasonCode && !['NONE', 'ALREADY_PRESENT'].includes(item.reasonCode) ? ` (${item.reasonCode})` : ''}
       </li>)}</ul>}
     </form>}
-    {(section === 'all' || section === 'groups') && <section className="panel stack">
+    {(section === 'all' || section === 'groups') && <section className="panel t3-grouping-toolbar">
       <h3>Chia nhóm tự động</h3>
       <label>Số hồ sơ mỗi nhóm<input type="number" min="1" max="1000" step="1" value={size}
         onChange={event => { setSize(Number(event.target.value)); setPlan(null); }} /></label>
       <button type="button" disabled={busy} onClick={() => void preview()}>Xem trước nhóm</button>
       {plan && <div>
         <p>{plan.groups.length} nhóm dự kiến; bản xem trước hết hạn {new Date(plan.expiresAt).toLocaleString('vi-VN')}.</p>
-        <ul>{plan.groups.map(group => <li key={group.ordinal}>Nhóm {group.ordinal}: {group.caseIds.length} hồ sơ</li>)}</ul>
+        <div className="t3-table-scroll"><table aria-label="Nhóm dự kiến"><thead><tr><th>Phương án chia nhóm</th></tr></thead>
+          <tbody>{plan.groups.map(group => <tr key={group.ordinal}><td>Nhóm {group.ordinal}: {group.caseIds.length} hồ sơ</td></tr>)}</tbody>
+        </table></div>
         <button type="button" disabled={busy} onClick={() => void confirm()}>Xác nhận chia nhóm</button>
       </div>}
     </section>}

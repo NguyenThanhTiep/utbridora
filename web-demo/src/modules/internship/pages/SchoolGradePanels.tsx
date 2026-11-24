@@ -3,6 +3,7 @@ import { gradeAccessLost, type Evaluation, type VisibilityPolicy } from '../eval
 import { workflowError, workflowPages, workflowRead } from '../workflow-api';
 import { CommandFeedback, useWorkflowCommand } from '../useWorkflowCommand';
 import { textWithin, validVersion, uuidPattern } from '../workflow';
+import { formatEntityShort } from '../displayLabels';
 import { EvaluationView } from './EvaluationView';
 import './school-grades.css';
 
@@ -13,6 +14,9 @@ function HrVisibilityConditions({ policy }: { policy: VisibilityPolicy }) {
   const hrStatus = inherited ? 'Kế thừa doanh nghiệp/kỳ' : policy.enabled ? 'Bật' : 'Tắt';
   return <section aria-label="Ba điều kiện hiển thị điểm">
     <h4>Kiểm tra 3 điều kiện hiển thị</h4>
+    <p className="t3-visibility-note">{!inherited && !policy.enabled
+      ? 'Chính sách HR đang tắt quyền xem điểm trong phạm vi này.'
+      : 'Quyền xem cuối cùng còn phụ thuộc trạng thái công bố và chính sách của trường.'}</p>
     <dl className="t3-visibility-conditions">
       <div><dt>Đánh giá đã công bố</dt><dd>Nhà trường công bố đánh giá của từng hồ sơ.</dd><dd className="t3-grade-status">Chưa xác nhận</dd></div>
       <div><dt>Chính sách nhà trường</dt><dd>Nhà trường cho phép xem điểm trong kỳ thực tập.</dd><dd className="t3-grade-status">Chưa xác nhận</dd></div>
@@ -42,9 +46,11 @@ function ScopedVisibilityEditor({ path, contextId, validate, denied, title }: Pa
     }).catch(e => { if (!c.signal.aborted) { if (gradeAccessLost(e)) denied(); else setError(workflowError(e)); } });
     return () => c.abort();
   }, [path, contextId, refresh]);
-  return <section className="panel stack t3-school-grades" aria-label={title}><h3>{title}</h3>
-    <p>Sinh viên chỉ xem được kết quả khi đã công bố, nhà trường cho phép và chính sách HR có hiệu lực cho phép.</p>
-    <button type="button" className="secondary" disabled={command.busy || command.pending} onClick={() => { command.setMessage(''); setRefresh(n => n + 1); }}>Tải lại chính sách</button>
+  return <section className="panel stack t3-school-grades" aria-label={title}>
+    <div className="t3-card-heading"><div><h3>{title}</h3>
+      <p>Sinh viên chỉ xem được kết quả khi đã công bố, nhà trường cho phép và chính sách HR có hiệu lực cho phép.</p></div>
+      <button type="button" className="secondary" disabled={command.busy || command.pending} onClick={() => { command.setMessage(''); setRefresh(n => n + 1); }}>Tải lại chính sách</button>
+    </div>
     {error && <p role="alert">{error}</p>}{!policy && !error && <p role="status">Đang xác nhận quyền và chính sách…</p>}
     {saved && <p role="status">Đã lưu quyền xem điểm.</p>}
     {contextId && policy && <HrVisibilityConditions policy={policy} />}
@@ -105,21 +111,24 @@ function SchoolGradeScope({ schoolId, termId, denied, canPublish, canPolicy }: P
       </div>
       {notice && <p role="status">{notice}</p>}
       {loading && <p role="status">Đang tải danh sách…</p>}{error && <p role="alert">{error}</p>}
+      <div className="t3-grade-columns"><div>
       {!loading && !error && <>
         <p>{rows.length} đánh giá trong bộ lọc hiện tại. Số lượng này không phải tổng số hồ sơ thực tập.</p>
         {rows.length === 0 && <p>Chưa có đánh giá trong phạm vi này. Thử chọn trạng thái khác hoặc bỏ bộ lọc hồ sơ.</p>}
         <div className="t3-grade-list">{rows.map(v => <button type="button" className={'secondary t3-grade-row' + (selected === v.evaluationId ? ' selected' : '')}
+          aria-label={'Hồ sơ …' + v.caseId.slice(-6) + ' · ' + v.state + ' · Version ' + v.version}
           aria-pressed={selected === v.evaluationId} disabled={locked} key={v.evaluationId} onClick={() => { setSelected(v.evaluationId); setNotice(''); }}>
-          <span>Hồ sơ …{v.caseId.slice(-6)} · {v.state} · Version {v.version}</span>
+          <span>Hồ sơ {formatEntityShort(v.caseId)}</span>
           <span className={'t3-grade-status state-' + v.state}>{stateNames[v.state]}</span>
-          <small>Revision {v.revisionNo} · Điểm {v.total100.toFixed(2)} / 100</small>
+          <small>Lần đánh giá {v.revisionNo} · <strong>Điểm {v.total100.toFixed(2)} / 100</strong></small>
         </button>)}</div>
       </>}
+      </div>
       {!selected && rows.length > 0 && <p>Chọn một hồ sơ để xem chi tiết và xử lý.</p>}
       {selected && <SchoolDecision key={selected} evaluationId={selected} value={value} loading={loading} error={error}
         denied={denied} locked={setLocked} reload={() => setRefresh(n => n + 1)} done={message => {
           setNotice(message); setSelected(''); setRefresh(n => n + 1);
-        }} />}
+        }} />}</div>
     </section>}
   </div>;
 }
@@ -151,13 +160,13 @@ function SchoolDecision({ evaluationId, value, loading, error, denied, locked, r
     </>}
     {(!value || ['SUBMITTED', 'PUBLISHED'].includes(value.state)) && <fieldset disabled={blocked}>
       <legend>Căn cứ xử lý đánh giá</legend>
-      <label>Căn cứ quyết định<input value={decision} onChange={e => setDecision(e.target.value)} aria-describedby="t3-decision-help" /></label>
+      <div className="stack"><label>Căn cứ quyết định<input value={decision} onChange={e => setDecision(e.target.value)} aria-describedby="t3-decision-help" /></label>
       <small id="t3-decision-help">Nhập số hoặc mã quyết định, từ 1 đến 120 ký tự.</small>
       {value?.state === 'SUBMITTED' && <button type="button" disabled={!textWithin(decision, 1, 120)} onClick={() => execute(false)}>Công bố điểm</button>}
-      <label>Mã lý do tạo revision<input value={reason} placeholder="Ví dụ: CORRECTION" onChange={e => setReason(e.target.value)} aria-describedby="t3-reason-help" /></label>
+      </div><div className="stack t3-revision-action"><label>Mã lý do tạo revision<input value={reason} placeholder="Ví dụ: CORRECTION" onChange={e => setReason(e.target.value)} aria-describedby="t3-reason-help" /></label>
       <small id="t3-reason-help">Từ 3 đến 64 ký tự: chữ hoa A–Z, số hoặc dấu gạch dưới.</small>
       <button type="button" className="secondary" disabled={!textWithin(decision, 1, 120) || !/^[A-Z0-9_]{3,64}$/.test(reason)} onClick={() => execute(true)}>Tạo revision đánh giá</button>
-      <p>Revision mới giữ kết quả đã công bố trước đó cho đến khi trường công bố lại. Quyền xem vẫn phụ thuộc chính sách School và HR.</p>
+      <p>Revision mới giữ kết quả đã công bố trước đó cho đến khi trường công bố lại. Quyền xem vẫn phụ thuộc chính sách School và HR.</p></div>
     </fieldset>}<CommandFeedback command={command} />
   </section>;
 }

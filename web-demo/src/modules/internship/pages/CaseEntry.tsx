@@ -17,10 +17,14 @@ export function CaseEntry({ caseId, me, grants }: { caseId: string; me: Me; gran
     }).catch(() => {if (!c.signal.aborted) setError('Không đọc được hồ sơ thực tập. Kiểm tra phân công và quyền truy cập hiện hành.');});
     return () => c.abort();
   }, [caseId, revision, me, grants]);
-  return <div className="stack"><section className="panel"><h2>Hồ sơ thực tập</h2><Notice message={error} tone="error" />
-    <button className="secondary" onClick={() => setRevision(n => n + 1)}>Tải lại hồ sơ thực tập</button>
+  const student = me.memberships.every(m => m.role === 'STUDENT');
+  const refresh = <button className="secondary" onClick={() => setRevision(n => n + 1)}>Tải lại hồ sơ thực tập</button>;
+  const status = value?.caseId === caseId && <CaseStatus value={value} />;
+  return <div className={'stack' + (student ? '' : ' t3-case-entry')}><section className="panel">
+    {student ? <><h2>Hồ sơ thực tập</h2><Notice message={error} tone="error" />{refresh}</> :
+      <><header className="t3-case-hero"><h2>Hồ sơ thực tập</h2>{status}{refresh}</header><Notice message={error} tone="error" /></>}
     {!value && !error && <p role="status">Đang kiểm tra quyền truy cập hồ sơ…</p>}
-    {value?.caseId === caseId && <CaseStatus value={value} />}
+    {student && status}
     </section>{value?.caseId === caseId && me.memberships.some(m => m.role === 'ENTERPRISE')
       && <InternshipWorkspace me={me} grants={grants} initialCase={value} />}</div>;
 }

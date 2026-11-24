@@ -6,6 +6,7 @@ import { gradeAccessLost, previewTotal, rubricValid, scoresValid, studentEvaluat
   type Evaluation, type Rubric, type ScoreDraft, type StudentResult } from '../evaluation';
 import { workflowError, workflowPages, workflowRead } from '../workflow-api';
 import { CommandFeedback, useWorkflowCommand } from '../useWorkflowCommand';
+import { formatEntityShort } from '../displayLabels';
 import { validVersion, type ReportFile } from '../workflow';
 import { ReportEvidence } from './ReportEvidence';
 
@@ -16,6 +17,7 @@ export function MentorEvaluation({ caseId, termId, contextId, denied }: Scope & 
   const [templateKey,setTemplateKey]=useState(''), [scores,setScores]=useState<ScoreDraft[]>([]), [dirty,setDirty]=useState(false);
   const [loading,setLoading]=useState(true), [error,setError]=useState(''), [refresh,setRefresh]=useState(0);
   const [historical,setHistorical]=useState<Evaluation | null>(null), [history,setHistory]=useState<Evaluation[]>([]), [version,setVersion]=useState('');
+  const [evidenceCriterion, setEvidenceCriterion] = useState(0);
   const command=useWorkflowCommand(contextId,denied,gradeAccessLost);
   useEffect(() => {
     const c=new AbortController();setLoading(true);setError('');setValue(null);setHistorical(null);setHistory([]);
@@ -51,62 +53,79 @@ export function MentorEvaluation({ caseId, termId, contextId, denied }: Scope & 
   const blocked=loading || !!error || command.busy || command.pending;
   const done=()=>{setDirty(false);setVersion('');setRefresh(n=>n+1);};
   const change=(index:number,patch:Partial<ScoreDraft>)=>{setDirty(true);setScores(old=>old.map((s,i)=>i===index?{...s,...patch}:s));};
-  return <section className="stack" aria-label="Mentor chấm rubric"><h2>Chấm đánh giá thực tập</h2>
-    <button type="button" className="secondary" disabled={command.busy || command.pending} onClick={()=>setRefresh(n=>n+1)}>Tải lại đánh giá</button>
+  return <section className="stack" aria-label="Mentor chấm rubric"><div className="t3-card-heading"><h2>Chấm đánh giá thực tập</h2>
+    <button type="button" className="secondary" disabled={command.busy || command.pending} onClick={()=>setRefresh(n=>n+1)}>Tải lại đánh giá</button></div>
     {loading && <p role="status">Đang tải đánh giá…</p>}{error && <p role="alert">{error}</p>}<CommandFeedback command={command}/>
     {!loading && !error && <>
       {!value && <label>Rubric áp dụng<select value={templateKey} disabled={blocked} onChange={e=>{
         const t=templates.find(t=>t.templateId+':'+t.templateVersion===e.target.value);setTemplateKey(e.target.value);setDirty(false);
         setScores(t?.criteria.map(c=>({criterionCode:c.criterionCode,score:'',comment:'',evidenceFileIds:[]})) || []);
-      }}><option value="">Chọn rubric…</option>{templates.map(t=><option key={t.templateId+':'+t.templateVersion} value={t.templateId+':'+t.templateVersion}>Rubric …{t.templateId.slice(-6)} · Phiên bản {t.templateVersion}</option>)}</select></label>}
+      }}><option value="">Chọn rubric…</option>{templates.map(t=><option key={t.templateId+':'+t.templateVersion} value={t.templateId+':'+t.templateVersion}>Rubric {formatEntityShort(t.templateId)} · Phiên bản {t.templateVersion}</option>)}</select></label>}
       {!value && templates.length===0 && <p>Chưa có rubric cho kỳ này. Người phụ trách cần cấp rubric trước khi chấm.</p>}
       {value && <><label>Lịch sử đánh giá<select value={version} disabled={blocked} onChange={e=>setVersion(e.target.value)}>
         <option value="">Bản hiện tại</option>{history.map(v=><option key={v.version} value={v.version}>Version {v.version} · Revision {v.revisionNo} · {v.state}</option>)}</select></label>
-        <EvaluationView value={historical || value} contextId={contextId} denied={denied}/></>}
+         {historical || value.state !== 'DRAFT'
+          ? <EvaluationView value={historical || value} contextId={contextId} denied={denied}/>
+          : <header className="t3-card-heading"><h3>Điểm tổng: {value.total100.toFixed(2)} / 100</h3>
+              <small>Trạng thái: {value.state} · Revision {value.revisionNo} · Version {value.version} · Rubric {value.template.templateVersion}</small></header>}</>}
       {!version && template && (!value || value.state==='DRAFT') && <>
-        <form onSubmit={e=>{e.preventDefault();if(!valid || !template)return;
+        <form role="region" aria-label="Nội dung đánh giá" onSubmit={e=>{e.preventDefault();if(!valid || !template)return;
           command.run<Evaluation>(value?'/t3/evaluations/'+value.evaluationId:'/t3/evaluations',value?
             {expectedVersion:value.version,scores:wireScores(scores)}:{caseId,templateId:template.templateId,templateVersion:template.templateVersion,scores:wireScores(scores)},
             saved=>{if(saved.caseId!==caseId || value && saved.evaluationId!==value.evaluationId){denied();return;}done();},value?'PUT':'POST');
         }}><fieldset disabled={blocked}><legend>{value?'Sửa bản nháp đánh giá':'Chấm rubric mới'}</legend>
-          {template.criteria.map((c,index)=><div className="panel stack" key={c.criterionCode}><h3>{c.label} · Trọng số {c.weight}%</h3>
-            <label>Điểm {c.label} (0–5)<input type="text" inputMode="decimal" required value={scores[index]?.score || ''} onChange={e=>change(index,{score:e.target.value})}/></label>
+          {value && <label>Tiêu chí nhận minh chứng<select value={evidenceCriterion} onChange={e=>setEvidenceCriterion(Number(e.target.value))}>
+            {template.criteria.map((c,i)=><option key={c.criterionCode} value={i}>{c.label}</option>)}</select></label>}
+          {template.criteria.map((c,index)=><div className="panel stack t3-criterion-card" key={c.criterionCode}>
+            <div className="t3-criterion-head">
+              <h3>{c.label} <span className="t3-weight">Trọng số {c.weight}%</span></h3>
+              <label className="t3-criterion-score"><span>Điểm (0–5)</span><input type="text" inputMode="decimal" required aria-label={'Điểm ' + c.label + ' (0–5)'} placeholder="0–5" value={scores[index]?.score || ''} onChange={e=>change(index,{score:e.target.value})}/></label>
+            </div>
             <label>Nhận xét {c.label}<textarea aria-label={'Nhận xét '+c.label} value={scores[index]?.comment || ''} onChange={e=>change(index,{comment:e.target.value})}/></label>
+            {value && <div className="t3-criterion-evidence">
+              {scores[index] && <ReportEvidence evaluation reportId={value.evaluationId} contextId={contextId} denied={denied}
+                fileIds={scores[index].evidenceFileIds} editable disabled={blocked} changed={ids=>change(index,{evidenceFileIds:ids})}/>}
+              {index === evidenceCriterion && <EvaluationUploads value={value} score={scores[index]} command={command}
+                denied={denied} blocked={blocked} changed={ids=>change(index,{evidenceFileIds:ids})}/>}
+            </div>}
           </div>)}
-          <p>Điểm có tối đa 2 chữ số thập phân; nhận xét tối đa 2.000 ký tự.</p>
-          <p>Điểm dự kiến: {template ? previewTotal(template,scores) ?? 'Chưa đủ điểm hợp lệ' : '—'}</p>
-          <button disabled={!valid || !!value && !dirty}>{value?'Lưu đánh giá':'Tạo bản nháp đánh giá'}</button>
+          <footer className="t3-score-footer">
+            <p className="t3-score-strip"><span>Điểm dự kiến: {previewTotal(template,scores) ?? 'Chưa đủ điểm hợp lệ'}</span> / 100</p>
+            <small className="t3-score-hint">Điểm tổng tính theo trọng số, làm tròn đến hai chữ số thập phân. Nhận xét tối đa 2.000 ký tự.</small>
+            <div className="button-row">
+              <button disabled={!valid || !!value && !dirty}>{value?'Lưu đánh giá':'Tạo bản nháp đánh giá'}</button>
+              {value && <button type="button" className="secondary" disabled={blocked || dirty || !validVersion(value.version)}
+                onClick={()=>command.run('/t3/evaluations/'+value.evaluationId+'/submit',{expectedVersion:value.version},done)}>Nộp đánh giá</button>}
+            </div>
+            {dirty && value && <p>Lưu thay đổi trước khi nộp đánh giá.</p>}
+          </footer>
         </fieldset></form>
-        {value && <><EvaluationUploads value={value} scores={scores} changed={change} contextId={contextId} denied={denied} command={command} blocked={blocked}/>
-          <button type="button" disabled={blocked || dirty || !validVersion(value.version)} onClick={()=>command.run('/t3/evaluations/'+value.evaluationId+'/submit',{expectedVersion:value.version},done)}>Nộp đánh giá</button>
-          {dirty && <p>Lưu thay đổi trước khi nộp đánh giá.</p>}</>}
       </>}
     </>}
   </section>;
 }
 
-function EvaluationUploads({value,scores,changed,contextId,denied,command,blocked}: {
-  value:Evaluation;scores:ScoreDraft[];changed:(index:number,patch:Partial<ScoreDraft>)=>void;contextId?:string;denied:()=>void;
-  command:ReturnType<typeof useWorkflowCommand>;blocked:boolean;
+function EvaluationUploads({ value, score, changed, denied, command, blocked }: {
+  value: Evaluation; score: ScoreDraft; changed: (ids: string[]) => void; denied: () => void;
+  command: ReturnType<typeof useWorkflowCommand>; blocked: boolean;
 }) {
-  const [index,setIndex]=useState(0),[file,setFile]=useState<File|null>(null),[reset,setReset]=useState(0);
+  const [file,setFile]=useState<File|null>(null), [reset,setReset]=useState(0);
   const valid=!!file && file.size>0 && file.size<=10*1024*1024 && ['application/pdf','image/png','image/jpeg'].includes(file.type);
-  return <section className="stack"><h3>Minh chứng theo tiêu chí</h3>
-    {scores.map((s,i)=><div key={s.criterionCode}><h4>{value.template.criteria.find(c=>c.criterionCode===s.criterionCode)?.label}</h4>
-      <ReportEvidence evaluation reportId={value.evaluationId} fileIds={s.evidenceFileIds} contextId={contextId} editable disabled={blocked}
-        changed={ids=>changed(i,{evidenceFileIds:ids})} denied={denied}/></div>)}
-    <form onSubmit={e=>{e.preventDefault();if(!valid || !file || scores[index].evidenceFileIds.length>=20)return;
-      command.upload<ReportFile>(value.evaluationId,file,result=>{
-        if(result.resource.resourceId!==value.evaluationId || result.resource.resourceType!=='EVALUATION' || result.purpose!=='EVIDENCE'){denied();return;}
-        changed(index,{evidenceFileIds:[...new Set([...scores[index].evidenceFileIds,result.fileId])]});setFile(null);setReset(n=>n+1);
-      },{resourceType:'EVALUATION',purpose:'EVIDENCE'});
-    }}><fieldset disabled={blocked}><legend>Tải minh chứng đánh giá</legend>
-      <label>Tiêu chí nhận minh chứng<select value={index} onChange={e=>setIndex(Number(e.target.value))}>{scores.map((s,i)=><option key={s.criterionCode} value={i}>{value.template.criteria.find(c=>c.criterionCode===s.criterionCode)?.label}</option>)}</select></label>
-      <label>Tệp minh chứng đánh giá<input key={reset} type="file" accept=".pdf,.png,.jpg,.jpeg" onChange={e=>setFile(e.target.files?.[0] || null)}/></label>
-      <p>PDF/PNG/JPEG, tối đa 10 MiB và 20 tệp mỗi tiêu chí. Lưu đánh giá sau khi tải lên. Có thể nộp không kèm file; file đính kèm cần được quét sạch.</p>
-      <button disabled={!valid || scores[index]?.evidenceFileIds.length>=20}>Tải tệp đánh giá</button>
-    </fieldset></form>
-  </section>;
+  function upload() {
+    if (!file || !valid || blocked || score.evidenceFileIds.length >= 20) return;
+    command.upload<ReportFile>(value.evaluationId,file,result=>{
+      if(result.resource.resourceId!==value.evaluationId || result.resource.resourceType!=='EVALUATION' || result.purpose!=='EVIDENCE'){denied();return;}
+      changed([...new Set([...score.evidenceFileIds,result.fileId])]);setFile(null);setReset(n=>n+1);
+    },{resourceType:'EVALUATION',purpose:'EVIDENCE'});
+  }
+  return <div className="stack t3-rubric-upload">
+    <label>Tệp minh chứng đánh giá<span className="t3-placement-file">
+      <input key={reset} aria-label="Tệp minh chứng đánh giá" type="file" accept=".pdf,.png,.jpg,.jpeg" onChange={e=>setFile(e.target.files?.[0] || null)}/>
+      <span className="t3-file-prompt" aria-hidden="true"><b>Kéo thả tệp hoặc chọn tệp</b><span>{file?.name || 'PDF, PNG, JPEG · Tối đa 10 MiB'}</span></span>
+    </span></label>
+    <small>Tối đa 20 tệp mỗi tiêu chí. Lưu đánh giá sau khi tải lên.</small>
+    <button type="button" className="secondary" disabled={blocked || !valid || score.evidenceFileIds.length>=20} onClick={upload}>Tải tệp đánh giá</button>
+  </div>;
 }
 
 export function StudentEvaluation({caseId,denied}:Scope) {
@@ -123,6 +142,6 @@ export function StudentEvaluation({caseId,denied}:Scope) {
   return <section className="stack" aria-label="Kết quả của sinh viên"><h2>Kết quả thực tập của tôi</h2>
     <button className="secondary" onClick={()=>{setValue(null);setLoading(true);setRefresh(n=>n+1);}}>Tải lại kết quả</button>
     {loading?<p role="status">Đang kiểm tra quyền xem kết quả…</p>:error?<p role="alert">{error}</p>
-      :value?<EvaluationView value={value} denied={denied}/>:<p>Kết quả chưa được phép hiển thị.</p>}
+      :value?<EvaluationView value={value} denied={denied} student/>:<p>Kết quả chưa được phép hiển thị.</p>}
   </section>;
 }

@@ -7,6 +7,7 @@ import type { NotificationStore } from './notifications/useNotifications';
 import type { NotificationTarget } from './notifications/notificationService';
 import { useCooperationTitles } from './workflow/useCooperationTitles';
 import { SchoolOverviewCards } from './portal/SchoolOverviewCards';
+import { PortalStatusSummary } from './portal/PortalStatusSummary';
 
 export function PortalDashboard({ side, organizationId, revision, demands, cooperations, verifications, navigate, openTask, notifications, termId = '' }: {
   organizationId: string; revision: number; termId?: string;
@@ -21,13 +22,16 @@ export function PortalDashboard({ side, organizationId, revision, demands, coope
     .map(row => [row.enterpriseOrgId, row.data.registeredName]));
   const cards = [
     { title: school ? 'Hồ sơ chờ xác minh' : 'Xác minh cần bổ sung', icon: 'shield', page: 'verifications' as const,
-      resource: verifications, value: verifications.items.filter(row => row.state === (school ? 'SUBMITTED' : 'NEEDS_CHANGES')).length, tone: 'mint',
+      resource: verifications, value: verifications.items.filter(row => row.state === (school ? 'SUBMITTED' : 'NEEDS_CHANGES')).length, tone: school ? 'blue' : 'warm',
       hint: 'Hồ sơ cần bổ sung hoặc cập nhật' },
     { title: school ? 'Hợp tác chờ xét duyệt' : 'Bản nháp nhu cầu', icon: 'briefcase', page: school ? 'cooperations' as const : 'demands' as const,
       resource: school ? cooperations : demands, value: school ? cooperations.items.filter(row => row.state === 'SUBMITTED').length : demands.items.filter(row => row.state === 'DRAFT' && !row.softDeletedAt).length, tone: 'blue',
       hint: 'Nhu cầu đang soạn thảo theo kỳ' },
+    { title: 'Hợp tác đang chờ / phản hồi', icon: 'clock', page: 'cooperations' as const, resource: cooperations,
+      value: cooperations.items.filter(row => ['SUBMITTED', 'NEEDS_CHANGES'].includes(row.state)).length, tone: 'warm',
+      hint: 'Đang xét duyệt hoặc cần bổ sung' },
     { title: 'Hợp tác đã duyệt', icon: 'users', page: 'proposals' as const, resource: cooperations,
-      value: cooperations.items.filter(row => row.state === 'APPROVED').length, tone: 'violet',
+      value: cooperations.items.filter(row => row.state === 'APPROVED').length, tone: 'mint',
       hint: 'Sẵn sàng xem hồ sơ ứng viên' },
   ];
   const tasks = [
@@ -59,7 +63,7 @@ export function PortalDashboard({ side, organizationId, revision, demands, coope
       </div>
       {!loading && tasks.length > 0 && <span className="school-task-counter">{tasks.length} mục chờ</span>}
     </div>
-    {loading ? <p role="status">Đang tải công việc…</p> : tasks.length ? <div className="proposal-table"><table>
+    {loading ? <p className="rc-loading-state" role="status">Đang tải công việc…</p> : tasks.length ? <div className="proposal-table"><table>
       <thead><tr><th>Nội dung</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
       <tbody>{tasks.map(task => <tr key={task.page + ':' + task.id} className={!school ? 'enterprise-task' : undefined}>
         <td>
@@ -121,6 +125,10 @@ export function PortalDashboard({ side, organizationId, revision, demands, coope
         Lưu ý: Nếu kỳ đang chọn ở trạng thái Đã đóng/Nháp hoặc tài khoản chưa được ủy quyền trong riêng kỳ đó, dữ liệu của kỳ sẽ bị ẩn theo phạm vi ủy quyền. Hãy chọn «Tất cả kỳ» hoặc một kỳ đang hoạt động.
       </p>
     )}
-    {school ? <div className="school-dashboard-grid">{taskSection}{shortcutSection}</div> : <div className="enterprise-dashboard-grid">{taskSection}{shortcutSection}</div>}
+    <PortalStatusSummary cooperations={cooperations} verifications={verifications} />
+    <div className={school ? 'school-dashboard-grid' : 'enterprise-dashboard-grid'}>
+      {taskSection}
+      {shortcutSection}
+    </div>
   </>;
 }

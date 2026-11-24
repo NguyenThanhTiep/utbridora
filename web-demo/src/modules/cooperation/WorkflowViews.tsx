@@ -182,7 +182,7 @@ export function CooperationFlows({ org, school, demands = [], onLoaded, includeP
         </fieldset>
       </>}
 
-      {loading && <p role="status">Đang tải đề nghị hợp tác…</p>}
+      {loading && <p className="rc-loading-state" role="status">Đang tải đề nghị hợp tác…</p>}
       {!school && !loading && !error && items.length === 0 && <EmptyState icon="building" title="Chưa có đề nghị trong phạm vi này." description="Chọn một nhu cầu để soạn đề nghị hợp tác với nhà trường." />}
       {!school && items.length > 0 && indexedItems.length === 0 && <EmptyState icon="search" title="Không tìm thấy đề nghị hợp tác phù hợp bộ lọc hiện tại." description="Thử từ khóa khác hoặc xóa bộ lọc để xem lại các đề nghị trong trang." />}
 
@@ -374,7 +374,7 @@ export function VerificationFlows({ org, school, onLoaded, focusId }: { org: str
       </div>
     </>}
 
-    {loading && <p role="status">Đang tải hồ sơ xác minh…</p>}
+    {loading && <p className="rc-loading-state" role="status">Đang tải hồ sơ xác minh…</p>}
     {!school && !loading && !error && items.length === 0 && <EmptyState icon="shield" title="Chưa có hồ sơ xác minh trong phạm vi này." description="Tạo hồ sơ để gửi xác minh đến trường tiếp nhận sinh viên." />}
     {!school && items.length > 0 && filteredItems.length === 0 && <p>Không có hồ sơ xác minh khớp với bộ lọc hiện tại.</p>}
 

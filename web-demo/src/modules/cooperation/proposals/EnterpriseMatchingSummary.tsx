@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ApiError } from '../../../api';
 import { Icon, Notice } from '../../../components';
 import type { Demand } from '../types';
@@ -21,7 +21,7 @@ const exposedErrors = new Set([
 ]);
 
 /** T4 owns release, threshold and ledger. This consumer never calculates counts from school results. */
-export function EnterpriseMatchingSummary({ org, demand, showDemandContext = true }: { org: string; demand: Demand; showDemandContext?: boolean }) {
+export function EnterpriseMatchingSummary({ org, demand, showDemandContext = true, asideContent }: { org: string; demand: Demand; showDemandContext?: boolean; asideContent?: ReactNode }) {
   const [release, setRelease] = useState<Release | null>(null), [error, setError] = useState('');
   const command = useWorkflowCommand<Evaluation>(org, result => {
     const r = result?.release;
@@ -76,12 +76,13 @@ export function EnterpriseMatchingSummary({ org, demand, showDemandContext = tru
           </button>}
         </div>
       </div>
-      <div className="p30-agg-privacy-card"><span className="statistics-privacy-icon" aria-hidden="true"><Icon name="lock" size={23} /></span>
+      <div className="p30-agg-side"><div className="p30-agg-privacy-card"><span className="statistics-privacy-icon" aria-hidden="true"><Icon name="lock" size={23} /></span>
         <h4>Quyền riêng tư</h4>
         <span className="p30-k-badge">Ngưỡng công bố: 5 ứng viên</span>
         <p>Danh tính và hồ sơ sinh viên không xuất hiện trong thống kê.</p>
         <p className="p30-agg-caption">Mỗi doanh nghiệp chỉ nhận một bản công bố cho cùng trường, kỳ và đợt dữ liệu.</p>
       </div>
+      {asideContent}</div>
     </div>
     {showDemandContext && <div className="p30-agg-demand-card">
       <h4>Nhu cầu đang áp dụng</h4>

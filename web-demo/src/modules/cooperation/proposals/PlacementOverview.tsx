@@ -50,10 +50,10 @@ export function PlacementOverview({ org, school, select, selectedDemandId, selec
       <button className="placement-overview-search-btn" disabled={loading}>Tìm theo phạm vi</button>
       {(query || schoolId || selectedTerm || status) && <button type="button" className="secondary" onClick={() => resetPage(() => {setDraft('');setQuery('');setSchool('');setTerm('');setStatus('');onTermChange?.('');})}>Xóa lọc tổng hợp</button>}
     </form>
-    <Notice tone="error" message={error} />{loading && <p role="status">Đang cập nhật tổng hợp…</p>}
+    <Notice tone="error" message={error} />{loading && <p className="rc-loading-state" role="status">Đang cập nhật tổng hợp…</p>}
     {progress && <>
       <ul className="placement-progress-counters" aria-label="Chỉ tiêu của toàn bộ kết quả lọc">
-        {tiles.map(([key, label]) => <li key={key}><span title={label}>{school && key === 'pendingCreation' ? 'Chờ tạo tiếp nhận' : label}</span><strong>{progress.totals[key]}</strong></li>)}
+        {tiles.map(([key, label]) => <li key={key} data-counter={key}><span title={label}>{school && key === 'pendingCreation' ? 'Chờ tạo tiếp nhận' : label}</span><strong>{progress.totals[key]}</strong></li>)}
       </ul>
       <p className="placement-overview-help">Chỉ tiêu tính trên các hợp tác đã duyệt.{school && ' Chỉ tạo tiếp nhận khi doanh nghiệp đã đồng ý, sinh viên xác nhận lời mời và hồ sơ đang được chia sẻ hợp lệ.'}</p>
       {progress.totalElements === 0 ? <p>Không có nhu cầu trong phạm vi và bộ lọc đã chọn.</p> : <div className="proposal-table"><table><caption title="Tiến độ theo nhu cầu trong phạm vi được cấp">Tiến độ theo nhu cầu</caption>

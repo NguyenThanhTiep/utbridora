@@ -43,7 +43,7 @@ export function EnterpriseBatches({ org, cooperationId, openCandidates }: { org:
       {result && result.totalElements > 0 && <span className="workflow-count-pill">{result.totalElements} lô</span>}</div><button type="button" className="secondary" disabled={loading}
       onClick={() => {if (canLeaveDemand()) setRevision(value => value + 1);}}><Icon name="refresh" size={16} />Tải lại lô đề xuất</button></div>
     <p className="candidate-batches-hint">Chỉ hiển thị lô có hồ sơ đang được nhà trường chia sẻ hợp lệ cho doanh nghiệp của bạn.</p>
-    <Notice tone="error" message={error} />{loading && <p role="status">Đang tải lô đề xuất…</p>}
+    <Notice tone="error" message={error} />{loading && <p className="rc-loading-state" role="status">Đang tải lô đề xuất…</p>}
     {result && (result.totalElements === 0 ? <EmptyState icon="users" title="Chưa có dữ liệu lô đề xuất"
       description="Lô sẽ xuất hiện khi nhà trường chia sẻ ít nhất một hồ sơ hợp lệ cho hợp tác này." />
       : <div className="proposal-table candidate-batches-table"><table><caption>Lô đề xuất của hợp tác đang xem</caption>

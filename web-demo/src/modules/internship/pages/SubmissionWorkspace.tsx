@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { ApiError } from '../../../api';
 import type { InternshipTask, Review, Submission, TaskAssignment, TaskComment } from '../workflow';
 import { httpsArtifact, textWithin, validVersion } from '../workflow';
+import { assignmentStateLabel, formatEntityShort, formatUserLabel } from '../displayLabels';
 import { accessLost, workflowError, workflowPages, workflowRead } from '../workflow-api';
 import { CommandFeedback, useWorkflowCommand } from '../useWorkflowCommand';
 
-export function SubmissionWorkspace({ taskId, assignment, contextId, student, mentor, denied, updated }: {
-  taskId: string; assignment: TaskAssignment; contextId?: string; student: boolean; mentor: boolean;
+export function SubmissionWorkspace({ taskId, assignment, contextId, student, mentor, denied, updated, taskSummary }: {
+  taskSummary?: React.ReactNode; taskId: string; assignment: TaskAssignment; contextId?: string; student: boolean; mentor: boolean;
   denied: () => void; updated: (value: TaskAssignment) => void;
 }) {
   const [current, setCurrent] = useState(assignment), [refresh, setRefresh] = useState(0);
@@ -43,9 +44,15 @@ export function SubmissionWorkspace({ taskId, assignment, contextId, student, me
   const reload = () => setRefresh(n => n + 1), blocked = command.busy || command.pending || !currentReady || !validVersion(current.version);
   const reviewedSubmission = history.find(item => item.submissionId === selectedReview)
     || history.reduce<Submission | undefined>((latest, item) => !latest || item.versionNo > latest.versionNo ? item : latest, undefined);
+  const Column = student ? Fragment : 'div';
+  const Layout = student ? Fragment : 'div';
+  const latest = history.find(item => item.submissionId === current.currentSubmissionId);
   return <section className="panel stack t3-workflow" aria-label="Bài nộp và trao đổi">
-    <h4>Bài nộp · hồ sơ …{current.caseId.slice(-6)}</h4>
-    <p>Trạng thái: {current.state} · Phiên bản phân công: {current.version}</p>
+    {student ? <><h4>Bài nộp · hồ sơ …{current.caseId.slice(-6)}</h4>
+      <p>Trạng thái: {current.state} · Phiên bản phân công: {current.version}</p></> : <>
+    <div className="t3-card-heading"><h4 title={current.caseId}>Bài nộp · hồ sơ {formatEntityShort(current.caseId)}</h4>
+      <span className={'t3-state t3-state-' + current.state}>{assignmentStateLabel(current.state)}</span></div>
+    <p className="t3-tech-meta">Trạng thái: {current.state} · Phiên bản phân công: {current.version}</p></>}
     <button type="button" className="secondary" disabled={command.busy} onClick={reload}>Tải phiên bản hiện tại</button>
     {currentError && <p role="alert">{currentError}</p>}
     <CommandFeedback command={command} />
@@ -63,6 +70,9 @@ export function SubmissionWorkspace({ taskId, assignment, contextId, student, me
       {!textWithin(note, 0, 2000) && <p role="alert">Ghi chú tối đa 2.000 ký tự.</p>}
       <button disabled={!httpsArtifact(url) || !textWithin(note, 0, 2000)}>Gửi bài nộp</button>
     </fieldset></form>}
+    <Layout {...(student ? {} : { className: 't3-submission-layout' })}>
+    <Column {...(student ? {} : { className: 'stack t3-submission-history' })}>
+    {taskSummary}
     <h4>Lịch sử bài nộp</h4>
     {loading ? <p role="status">Đang tải bài nộp…</p> : historyError ? <p role="alert">{historyError}</p>
       : history.length === 0 ? <p>Chưa có bài nộp.</p> : history.map(item => <article className="panel" key={item.submissionId}>
@@ -74,30 +84,34 @@ export function SubmissionWorkspace({ taskId, assignment, contextId, student, me
         <button type="button" className="secondary" aria-pressed={reviewedSubmission?.submissionId === item.submissionId}
           onClick={() => setSelectedReview(item.submissionId)}>Xem nhận xét bản v{item.versionNo}</button>
         {reviewedSubmission?.submissionId === item.submissionId && <SubmissionFeedback key={item.submissionId}
-          submission={item} contextId={contextId} denied={denied} />}
-        {mentor && current.state === 'SUBMITTED' && current.currentSubmissionId === item.submissionId && <form onSubmit={event => {
+          submission={item} contextId={contextId} denied={denied} student={student} />}
+
+      </article>)}
+    </Column>
+    <Column {...(student ? {} : { className: 'stack t3-submission-thread' })}>
+        {mentor && !loading && !historyError && current.state === 'SUBMITTED' && latest && <form className="t3-mentor-review" onSubmit={event => {
           event.preventDefault(); if (!textWithin(reviewText, 1, 2000)) return;
-          command.run<Review>('/t3/submissions/' + item.submissionId + '/reviews',
-            { expectedAssignmentVersion: current.version, verdict, comment: reviewText.trim() }, () => { setSelectedReview(item.submissionId); setReviewText(''); reload(); });
+          command.run<Review>('/t3/submissions/' + latest.submissionId + '/reviews',
+            { expectedAssignmentVersion: current.version, verdict, comment: reviewText.trim() }, () => { setSelectedReview(latest.submissionId); setReviewText(''); reload(); });
         }}><fieldset disabled={blocked}><legend>Nhận xét bản nộp hiện tại</legend>
           <label>Kết quả review<select value={verdict} onChange={event => setVerdict(event.target.value as Review['verdict'])}>
             <option value="REQUEST_REVISION">Yêu cầu sửa</option><option value="ACCEPT">Chấp nhận</option></select></label>
           <label>Nhận xét bài nộp<textarea required value={reviewText} onChange={event => setReviewText(event.target.value)} /></label>
           <button disabled={!textWithin(reviewText, 1, 2000)}>Gửi nhận xét bài nộp</button>
         </fieldset></form>}
-      </article>)}
     <h4>Trao đổi về nhiệm vụ</h4>
     {commentError && <p role="alert">{commentError}</p>}
-    {comments.map(item => <article key={item.commentId}><p>{item.authorUserId} · {new Date(item.createdAt).toLocaleString('vi-VN')}</p><p className="t3-preserve-text">{item.text}</p></article>)}
+    {comments.map(item => <article key={item.commentId}><p>{student ? item.authorUserId : <strong title={item.authorUserId}>{formatUserLabel(item.authorUserId, undefined, 'Thành viên')}</strong>} · {new Date(item.createdAt).toLocaleString('vi-VN')}</p><p className="t3-preserve-text">{item.text}</p></article>)}
     {(student || mentor) && <form onSubmit={event => { event.preventDefault(); if (!textWithin(comment, 1, 2000)) return;
       command.run('/t3/assignments/' + current.assignmentId + '/comments', { text: comment.trim() }, () => { setComment(''); reload(); });
     }}><fieldset disabled={blocked}><label>Nội dung trao đổi<textarea required value={comment} onChange={event => setComment(event.target.value)} /></label>
       <button disabled={!textWithin(comment, 1, 2000)}>Gửi trao đổi</button></fieldset></form>}
+    </Column></Layout>
   </section>;
 }
 
-function SubmissionFeedback({ submission, contextId, denied }: {
-  submission: Submission; contextId?: string; denied: () => void;
+function SubmissionFeedback({ submission, contextId, denied, student }: {
+  submission: Submission; contextId?: string; denied: () => void; student: boolean;
 }) {
   const [review, setReview] = useState<Review | null>(null), [loading, setLoading] = useState(true);
   const [message, setMessage] = useState(''), [retry, setRetry] = useState(0);
@@ -124,7 +138,7 @@ function SubmissionFeedback({ submission, contextId, denied }: {
       <p role="alert">{message}</p><button type="button" onClick={() => setRetry(n => n + 1)}>Tải lại nhận xét bài nộp</button>
     </> : review ? <>
       <p>Kết quả: {review.verdict === 'ACCEPT' ? 'Chấp nhận' : 'Yêu cầu sửa'}</p>
-      <p>Người nhận xét: {review.reviewerUserId} · {new Date(review.createdAt).toLocaleString('vi-VN')}</p>
+      <p>Người nhận xét: {student ? review.reviewerUserId : <span title={review.reviewerUserId}>{formatUserLabel(review.reviewerUserId, undefined, 'Mentor')}</span>} · {new Date(review.createdAt).toLocaleString('vi-VN')}</p>
       <p className="t3-preserve-text">{review.comment}</p>
     </> : <p>Bản nộp này chưa có nhận xét.</p>}
   </section>;

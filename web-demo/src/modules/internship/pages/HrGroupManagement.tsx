@@ -2,6 +2,7 @@ import { useRef, useState, type FormEvent } from 'react';
 import { api, ApiError } from '../../../api';
 import { newIdempotencyKey } from '../../student/api';
 import type { CaseRef } from '../cases';
+import { caseStateLabel, formatEntityShort, formatGroupCode } from '../displayLabels';
 import type { InternshipGroup, WorkspaceAssignment } from '../types';
 
 const isUuid = (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
@@ -30,10 +31,13 @@ export function HrGroupManagement({ assignment, group, groups, changed }: {
     }
     return value;
   }
-  async function inspect() {
-    if (!inspectId) return;
+  const [query, setQuery] = useState('');
+  const members = group.caseIds.filter(id => id.toLowerCase().includes(query.trim().toLowerCase()));
+  async function inspect(id = inspectId) {
+    if (!id) return;
+    setInspectId(id);
     setBusy(true); setDetail(null); setDetailError('');
-    try { setDetail(await readCase(inspectId)); }
+    try { setDetail(await readCase(id)); }
     catch (error) { setDetailError(failureMessage(error)); }
     finally { setBusy(false); }
   }
@@ -72,43 +76,55 @@ export function HrGroupManagement({ assignment, group, groups, changed }: {
     }
     finally { setBusy(false); }
   }
-  return <section className="panel stack">
-    <h4>Quản lý hồ sơ nhóm {group.code}</h4>
-    <p className="muted">Chỉ thao tác trên Case đã thuộc đợt và đúng phạm vi HR. Backend kiểm tra version và quyền khi lưu.</p>
-    {group.caseIds.length > 0 && <div className="stack">
-      <label>Kiểm tra trạng thái Case<select value={inspectId} onChange={event => {
+  return <section className="panel stack t3-group-management">
+    <div className="t3-group-mgmt-head"><h4>Hồ sơ trong nhóm</h4>
+      <p className="muted">Chọn hồ sơ để kiểm tra trạng thái hoặc chuyển sang nhóm khác trong đợt.</p></div>
+    <div className={'t3-group-mgmt-grid' + (group.caseIds.length === 0 ? ' is-single' : '')}>
+    {group.caseIds.length > 0 && <div className="stack t3-group-members-pane">
+      <label>Lọc theo mã hồ sơ<input type="search" value={query} placeholder="Tìm theo mã hồ sơ..." onChange={e=>setQuery(e.target.value)} /></label>
+      <div className="t3-table-scroll"><table><thead><tr><th>Hồ sơ</th><th>Nhóm</th><th>Thao tác</th></tr></thead><tbody>
+        {members.map(id=><tr key={id}>
+          <th scope="row" title={id}><span className="t3-code-pill">Hồ sơ {formatEntityShort(id)}</span></th><td title={group.code}>{formatGroupCode(group.code)}</td><td><button className="secondary" disabled={busy}
+          aria-label={'Xem hồ sơ ' + id} onClick={()=>void inspect(id)}>Xem hồ sơ</button></td></tr>)}
+      </tbody></table></div>
+      {members.length === 0 && <p>Không tìm thấy hồ sơ phù hợp.</p>}
+      <details><summary>Tra cứu theo mã Case</summary><label>Kiểm tra trạng thái Case<select disabled={busy} value={inspectId} onChange={event => {
         setInspectId(event.target.value); setDetail(null); setDetailError('');
       }}>
-        <option value="">Chọn Case…</option>
-        {group.caseIds.map(id => <option key={id} value={id}>{id}</option>)}
+        <option value="">Chọn hồ sơ…</option>
+        {group.caseIds.map(id => <option key={id} value={id}>Hồ sơ {formatEntityShort(id)}</option>)}
       </select></label>
-      <button type="button" className="secondary" disabled={busy || !inspectId} onClick={() => void inspect()}>Xem hồ sơ</button>
+      <button type="button" className="secondary" disabled={busy || !inspectId} onClick={() => void inspect()}>Xem hồ sơ</button></details>
       {detail && <dl className="internship-facts">
-        <div><dt>Trạng thái</dt><dd>{detail.state}</dd></div>
-        <div><dt>Placement ID</dt><dd><code>{detail.placementId}</code></dd></div>
-        <div><dt>Version Case</dt><dd>{detail.version}</dd></div>
+        <div><dt>Trạng thái</dt><dd>{caseStateLabel(detail.state)}</dd></div>
+        <div><dt>Mã tiếp nhận</dt><dd><code title={detail.placementId}>{formatEntityShort(detail.placementId)}</code></dd></div>
+        <div><dt>Cập nhật</dt><dd>#{detail.version}</dd></div>
       </dl>}
       {detailError && <p role="alert">{detailError}</p>}
     </div>}
+    <div className="stack t3-group-forms-pane">
     <form className="stack" onSubmit={event => void submit('add', event)}>
+      <h4>Thêm vào nhóm</h4>
       <label>Case ID chưa có nhóm<input value={caseId} onChange={event => { setCaseId(event.target.value); pending.current = null; }} placeholder="UUID hồ sơ trong đợt" required /></label>
       <button disabled={busy || !isUuid(caseId.trim())}>Thêm vào nhóm</button>
     </form>
     {group.caseIds.length > 0 && groups.length > 1 && <form className="stack" onSubmit={event => void submit('move', event)}>
       <h4>Chuyển hồ sơ sang nhóm khác</h4>
       <label>Hồ sơ trong nhóm<select value={moveId} onChange={event => { setMoveId(event.target.value); pending.current = null; }} required>
-        <option value="">Chọn Case…</option>
-        {group.caseIds.map(id => <option key={id} value={id}>{id}</option>)}
+        <option value="">Chọn hồ sơ…</option>
+        {group.caseIds.map(id => <option key={id} value={id}>Hồ sơ {formatEntityShort(id)}</option>)}
       </select></label>
       <label>Nhóm đích<select value={targetId} onChange={event => { setTargetId(event.target.value); pending.current = null; }} required>
         <option value="">Chọn nhóm…</option>
         {groups.filter(item => item.groupId !== group.groupId).map(item =>
-          <option key={item.groupId} value={item.groupId}>{item.code} · {item.caseIds.length} hồ sơ</option>)}
+          <option key={item.groupId} value={item.groupId}>{formatGroupCode(item.code)} · {item.caseIds.length} hồ sơ</option>)}
       </select></label>
       <label>Mã lý do<input value={reason} onChange={event => { setReason(event.target.value.toUpperCase()); pending.current = null; }}
         minLength={3} maxLength={64} pattern="[A-Z0-9_]{3,64}" placeholder="GROUP_REBALANCE" required /></label>
       <button disabled={busy || !moveId || !targetId || !/^[A-Z0-9_]{3,64}$/.test(reason.trim())}>Chuyển hồ sơ</button>
     </form>}
+    </div>
+    </div>
     {feedback && <p role="status">{feedback}</p>}
   </section>;
 }

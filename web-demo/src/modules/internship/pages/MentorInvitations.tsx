@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../../../api';
-import { Notice } from '../../../components';
+import { EmptyState, Icon, Notice } from '../../../components';
 import { newIdempotencyKey } from '../../student/api';
 import type { ContractPage } from '../../student/types';
+import { formatEntityShort, formatGroupCode, invitationStateLabel } from '../displayLabels';
 import type { WorkspaceAssignment, InternshipGroup } from '../types';
 type Invitation = { invitationId: string; version: number; state: string; groupIds: string[]; expiresAt: string | null };
 export function MentorInvitations() {
@@ -14,7 +15,9 @@ export function MentorInvitations() {
     try { await api('/t3/mentor-invitations/' + i.invitationId + '/accept', { method: 'POST', body: JSON.stringify({ expectedVersion: i.version }), headers: { 'Idempotency-Key': keys.current.get(i.invitationId)! } }); setItems(current => current.filter(v => v.invitationId !== i.invitationId)); setMessage('Đã chấp thuận hướng dẫn. Đăng nhập lại để cập nhật phân công.'); }
     catch { setMessage('Chưa chấp thuận được. Lời mời hoặc quyền của người mời có thể đã thay đổi.'); } finally { setBusy(false); }
   };
-  return <section className="panel workflow-surface"><h2>Lời mời hướng dẫn thực tập</h2><Notice message={message} />{items.length === 0 && <p>Chưa có lời mời hướng dẫn cần xử lý.</p>}{items.map(i => <article key={i.invitationId}><p>{i.groupIds.length} nhóm · {i.state}{i.expiresAt ? ' · hạn ' + new Date(i.expiresAt).toLocaleString('vi-VN') : ''}</p>{i.state === 'MEMBERSHIP_PENDING' && <button disabled={busy} onClick={() => void accept(i)}>Chấp thuận hướng dẫn</button>}</article>)}</section>;
+  return <section className="panel workflow-surface t3-mentor-invitations"><h2 className="t3-section-title"><Icon name="mail" />Lời mời hướng dẫn thực tập</h2><p className="muted">Kiểm tra nhóm được phân công và thời hạn trước khi chấp thuận.</p><Notice message={message} />{items.length === 0 && <EmptyState icon="mail" title="Chưa có lời mời hướng dẫn cần xử lý." />}{items.map(i => <article className="t3-invitation" key={i.invitationId}>
+    <Icon name="mail" /><div><strong>{i.groupIds.length} nhóm</strong> <span className="t3-invitation-state">{invitationStateLabel(i.state)}</span>
+    {i.expiresAt && <p>Hạn chấp nhận · <time dateTime={i.expiresAt}>{new Date(i.expiresAt).toLocaleString('vi-VN')}</time></p>}</div>{i.state === 'MEMBERSHIP_PENDING' && <button disabled={busy} onClick={() => void accept(i)}>Chấp thuận hướng dẫn</button>}</article>)}</section>;
 }
 export function MentorInvitationForm({ assignment, group, groups = [group] }: {
   assignment: WorkspaceAssignment; group: InternshipGroup; groups?: InternshipGroup[];
@@ -40,7 +43,7 @@ export function MentorInvitationForm({ assignment, group, groups = [group] }: {
     } catch { setMessage('Chưa thu hồi được. Kiểm tra trạng thái lời mời và quyền HR rồi thử lại.'); }
     finally { setBusy(false); }
   }
-  return <form className="panel workflow-surface" onSubmit={e => { e.preventDefault();
+  return <form className="panel workflow-surface t3-mentor-invitation-form" onSubmit={e => { e.preventDefault();
     if (!selected.length) { setMessage('Chọn ít nhất một nhóm trong phạm vi HR.'); return; }
     const data = { email: email.trim(), enterpriseOrgId: assignment.scope.enterpriseOrgId,
       termId: assignment.scope.termId, groupIds: [...selected].sort(), decisionRef: decision.trim() }, body = JSON.stringify(data);
@@ -52,15 +55,15 @@ export function MentorInvitationForm({ assignment, group, groups = [group] }: {
         : 'Đã gửi lời mời. Mentor cần tự chấp thuận trước khi nhận quyền.'); })
       .catch(() => setMessage('Chưa gửi được lời mời. Kiểm tra phân công và thử lại.'))
       .finally(() => setBusy(false));
-  }}><h3>Mời Mentor cho nhóm {group.code}</h3><Notice message={message} />
+  }}><h3>Mời Mentor cho nhóm {formatGroupCode(group.code)}</h3><Notice message={message} />
     <fieldset disabled={busy}><label>Email Mentor<input type="email" required value={email} onChange={e => setEmail(e.target.value)} /></label>
       <label>Căn cứ phân công<input required maxLength={120} value={decision} onChange={e => setDecision(e.target.value)} /></label>
       <fieldset><legend>Nhóm được mời hướng dẫn</legend>{groups.map(item => <label key={item.groupId}>
         <input type="checkbox" checked={selected.includes(item.groupId)}
           onChange={e => setSelected(current => e.target.checked ? [...current, item.groupId] : current.filter(id => id !== item.groupId))} />
-        {item.code}</label>)}</fieldset>
+        <span title={item.code}>{formatGroupCode(item.code)}</span></label>)}</fieldset>
       <button>Gửi lời mời hướng dẫn</button></fieldset>
-    {lastInvite && <p role="status">Lời mời {lastInvite.invitationId} · {lastInvite.state} · {lastInvite.groupIds.length} nhóm.</p>}
+    {lastInvite && <p role="status">Lời mời {formatEntityShort(lastInvite.invitationId)} · {invitationStateLabel(lastInvite.state)} · {lastInvite.groupIds.length} nhóm.</p>}
     {lastInvite && lastInvite.state !== 'REVOKED' && <div className="stack">
       <label>Mã lý do thu hồi<input value={revokeReason}
         onChange={e => { setRevokeReason(e.target.value.toUpperCase()); revokePending.current = null; }}

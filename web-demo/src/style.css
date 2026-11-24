@@ -1024,13 +1024,13 @@ button.profile-shortcut { display: flex; gap: 9px; min-height: 40px; padding: 4p
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .workspace-t5:not(:where(.workspace-native-t3)).has-workspace-motion .content button:not(:disabled):not([aria-disabled="true"]):not(.text-button):not(.stat-card):not([role="tab"]):hover {
+  .workspace-t5.has-workspace-motion:not(.workspace-student) .content button:not(:disabled):not([aria-disabled="true"]):not(.text-button):not(.stat-card):not([role="tab"]):hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(11, 146, 124, 0.16);
   }
 }
 
-.workspace-t5:not(:where(.workspace-native-t3)).has-workspace-motion .content button:not(:disabled):not([aria-disabled="true"]):active {
+.workspace-t5.has-workspace-motion:not(.workspace-student) .content button:not(:disabled):not([aria-disabled="true"]):active {
   transform: translateY(1px);
   box-shadow: none;
 }

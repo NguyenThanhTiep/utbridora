@@ -236,8 +236,7 @@ export function MatchingWorkspace({ organizationId, grants, onOpenProposals, ter
   });
   const counts = run?.evaluation.summary;
 
-  return <section className="panel matching-workspace" aria-busy={busy}>
-    <div className="matching-counts" aria-label="Tổng hợp kết quả cho nhà trường">
+  const summary = <div className="matching-counts" aria-label="Tổng hợp kết quả cho nhà trường">
       <button type="button" disabled={!counts} className={status === 'MATCH' ? 'selected' : ''} onClick={() => { if (counts) { setStatus('MATCH'); setPage(0); } }}>
         <span className="kpi-card-top">
           <span className="matching-count-meta">Đáp ứng</span>
@@ -268,8 +267,8 @@ export function MatchingWorkspace({ organizationId, grants, onOpenProposals, ter
           <span className="kpi-card-hint" aria-hidden="true">{counts ? 'Xem danh sách →' : 'Chưa đối chiếu'}</span>
         </span>
       </button>
-    </div>
-
+    </div>;
+  return <section className="panel matching-workspace" aria-busy={busy}>
     <div className="school-section-card">
       <div className="school-section-head">
         <div className="school-section-title">
@@ -310,6 +309,7 @@ export function MatchingWorkspace({ organizationId, grants, onOpenProposals, ter
         </div>
         </>}
 
+      {summary}
       <div className="portal-tabs matching-tabs" role="tablist" aria-label="Nhóm kết quả đối chiếu">
         {([
           ['MATCH', counts ? `Đáp ứng (${counts.matched})` : 'Đáp ứng'],
@@ -376,6 +376,7 @@ function Candidate({ result, profile, selectable, selectDisabled, eligibility, c
   return <tr className={`matching-candidate${checked ? ' table-row-selected' : ''}`}>
     <td><div className="matching-candidate-cell">
       {selectable && <label className="matching-select"><input type="checkbox" checked={checked} disabled={selectDisabled} onChange={onToggle} aria-label={`Chọn sinh viên ${typeof code === 'string' ? code : ''}`} /></label>}
+      {typeof name === 'string' && <span className="matching-avatar" aria-hidden="true">{name.trim().slice(0, 2).toLocaleUpperCase('vi')}</span>}
       <div className="matching-candidate-ident"><strong>{typeof name === 'string' ? name : profile === null ? 'Thông tin định danh không được cấp' : 'Đang tải hồ sơ…'}</strong>
         <small>{typeof code === 'string' ? `MSSV ${code}` : ''}{typeof major === 'string' ? ` · Ngành ${major}` : ''}</small>
         {eligibilityNote && <span className={'matching-eligibility-tag ' + (eligibility?.reasonCode === 'PROPOSAL_ALREADY_EXISTS' ? 'is-existing' : 'is-pending')}>{eligibilityNote}</span>}</div>

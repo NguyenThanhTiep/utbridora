@@ -138,14 +138,13 @@ export function ScopedDemands({ organizationId, cooperations, onLoaded }: {
       </div>
       <Notice message={success} tone="success" />
       <Notice message={listError} tone="error" />
+      <div className="demand-filter-toolbar">
       <label className="demand-deleted-filter" htmlFor={prefix + '-include-deleted'}>
         <input id={prefix + '-include-deleted'} type="checkbox" checked={includeDeleted} disabled={blocked}
           onChange={event => { if (canLeaveDemand()) {setIncludeDeleted(event.target.checked);setPageIndex(0);} }} />
         <span>Hiển thị cả nhu cầu đã xóa</span>
       </label>
-      {loading ? <LoadingState /> : page && page.content.length === 0 ? <EmptyState icon="briefcase" title="Chưa có nhu cầu"
-        description="Tạo bản nháp đầu tiên cho doanh nghiệp này." /> : page && <>
-        <div className="demand-list-filters">
+      {!loading && page && page.content.length > 0 && <div className="demand-list-filters">
           <label className="demand-search" htmlFor={prefix + '-search'}>Tìm trong trang
             <span><Icon name="search" size={18} /><input id={prefix + '-search'} type="search" value={search}
               placeholder="Tên nhu cầu, trường hoặc địa điểm…" onChange={event => {setSearch(event.target.value);setPreviewId('');}} /></span>
@@ -156,7 +155,10 @@ export function ScopedDemands({ organizationId, cooperations, onLoaded }: {
             <option value="READY">Đã sẵn sàng</option><option value="SENT">Đã gửi hợp tác</option>
           </select></div>
           {(search || status) && <button type="button" className="secondary" onClick={() => {setSearch('');setStatus('');setPreviewId('');}}>Xóa bộ lọc nhu cầu</button>}
-        </div>
+        </div>}
+      </div>
+      {loading ? <LoadingState /> : page && page.content.length === 0 ? <EmptyState icon="briefcase" title="Chưa có nhu cầu"
+        description="Tạo bản nháp đầu tiên cho doanh nghiệp này." /> : page && <>
         {(search || status) && <p className="demand-filter-result" role="status">{visible.length}/{page.content.length} nhu cầu trong trang hiện tại</p>}
         {!visible.length ? <EmptyState icon="search" title="Không tìm thấy nhu cầu phù hợp" description="Thử tên khác hoặc xóa bộ lọc để xem lại danh sách." /> :
         <div className="proposal-table portal-demands-table enterprise-mobile-list">

@@ -11,7 +11,7 @@ export function PortalPageHeader({ side, title, breadcrumb, kicker, description,
   return <div className={'portal-page-intro' + (enterprise ? ' enterprise-page-intro' : '')}>
     <div className={'portal-page-toolbar' + (enterprise ? ' enterprise-page-toolbar' : '')}>
       <p className="portal-breadcrumb">{enterprise ? 'Cổng doanh nghiệp' : 'Cổng nhà trường'} <span aria-hidden="true">/</span> {breadcrumb}</p>
-      {refresh && <button type="button" className="secondary" onClick={refresh}><Icon name="refresh" size={16} />Tải lại dữ liệu</button>}
+      {refresh && <button type="button" className="secondary portal-refresh-btn" onClick={refresh}><Icon name="refresh" size={16} />Tải lại dữ liệu</button>}
     </div>
     <header className={'portal-welcome portal-page-heading' + (enterprise ? ' enterprise-page-heading' : '')} aria-labelledby={titleId}>
       <div><p className="section-kicker">{kicker}</p><h2 id={titleId}>{title}</h2><p>{description}</p></div>

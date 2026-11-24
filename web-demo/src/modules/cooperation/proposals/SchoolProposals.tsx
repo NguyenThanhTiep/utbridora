@@ -66,14 +66,14 @@ export function SchoolProposals({ org, cooperationId, demand, includePlacement =
       <button className="secondary" disabled={loading || pending.size > 0} onClick={() => setRevision(n => n + 1)}>Tải lại tiến trình</button>
     </div>
     <Notice message={error} tone="error" /><p role="status">{notice}</p>
-    {loading && <p role="status">Đang tải tiến trình…</p>}
+    {loading && <p className="rc-loading-state" role="status">Đang tải tiến trình…</p>}
     {capacity && <dl className="proposal-capacity"><div className="kpi-pending"><dt>Chỉ tiêu tuyển</dt><dd>{capacity.quantity}</dd></div>
       <div className="kpi-warning"><dt>Đang giữ chỗ</dt><dd>{capacity.activeReservations}</dd></div><div className="kpi-approved"><dt>Đã nhận (chốt thực tập)</dt><dd>{capacity.placedCount}</dd></div>
       <div className="kpi-open"><dt>Còn lại</dt><dd>{capacity.openForNomination}</dd></div></dl>}
     {demand && <NominationPanel key={org + cooperationId + ':' + revision} org={org} cooperationId={cooperationId} demand={demand}
       locked={pending.size > 0 && !pending.has('nomination')} pendingChanged={active => markPending('nomination', active)}
       changed={message => { setNotice(message); setRevision(n => n + 1); }} />}
-    <div className="proposal-filter-toolbar">
+    <div className="school-proposal-progress"><div className="proposal-filter-toolbar">
       <ProposalStateFilter school value={state} disabled={loading || pending.size > 0} changed={value => {setState(value);setPage(0);}} />
       {result && <span className="workflow-count-pill">{result.totalElements} ứng viên</span>}
     </div>
@@ -115,6 +115,7 @@ export function SchoolProposals({ org, cooperationId, demand, includePlacement =
       })}{!result.content.length && <tr><td colSpan={6}>{state ? 'Không có đề xuất trong trạng thái đã chọn.' : 'Chưa có ứng viên được đề xuất.'}</td></tr>}</tbody></table></div>}
     {result && result.totalPages > 1 && <div className="button-row"><button className="secondary" disabled={page === 0 || loading || pending.size > 0} onClick={() => setPage(n => n - 1)}>Trang tiến trình trước</button>
       <span>Trang {page + 1}/{result.totalPages}</span><button className="secondary" disabled={page + 1 >= result.totalPages || loading || pending.size > 0} onClick={() => setPage(n => n + 1)}>Trang tiến trình sau</button></div>}
+    </div>
     {demand && includePlacement && <PlacementWorkspace org={org} school cooperationId={cooperationId} demand={demand} candidates={result?.content || []}
       locked={pending.size > 0 && !pending.has('placement')} pendingChanged={active => markPending('placement', active)} changed={() => setRevision(n => n + 1)} />}
     <PublicationEditor key={org + cooperationId} org={org} cooperationId={cooperationId} />
