@@ -27,7 +27,7 @@ export function CaseOperations({scope,initialCaseId='',onDenied}:{scope:Operatio
       <button disabled={!uuidPattern.test(input)}>Mở hồ sơ vận hành</button></form>}
     {error && <p role="alert">{error}</p>}{message && <p role="status">{message}</p>}
     {id && !value && !error && <p role="status">Đang xác nhận hồ sơ…</p>}
-    {value && <div key={value.caseId+':'+value.version} className="stack"><div className="t3-case-header"><h3 title={value.caseId}>Hồ sơ …{value.caseId.slice(-6)}</h3><p><span className="t3-case-state" data-state={value.state}>{caseStateLabel(value.state)}</span></p>
+    {value && <div key={value.caseId+':'+value.version} className="stack"><div className="t3-case-header"><h3 title={value.caseId}>Hồ sơ …{value.caseId.slice(-6)}</h3><p><span className="t3-case-state" data-state={value.state}>{caseStateLabel(value.state)}</span> <small className="t3-tech-meta">Trạng thái: {value.state}</small></p>
       <p className="t3-placement-badge" title={value.placementId}>Mã tiếp nhận: <code>{formatEntityShort(value.placementId)}</code></p><button className="secondary" onClick={()=>setRevision(n=>n+1)}>Tải lại hồ sơ vận hành</button></div>
       <div className="t3-operations-cards"><IssuePanel scope={scope} value={value} denied={denied}/>
       {scope.mode==='school' && <OperationsCalendar scope={scope} caseId={value.caseId} denied={denied}/>}
@@ -54,7 +54,7 @@ function IssuePanel({scope,value,denied}:{scope:OperationsScope;value:CaseRef;de
       <label>Nội dung vấn đề<textarea value={description} maxLength={5000} required onChange={e=>setDescription(e.target.value)}/></label><label>Mã người phụ trách<input value={owner} onChange={e=>setOwner(e.target.value)} required/></label>
       <p>Người phụ trách phải là cán bộ trường, HR hoặc Mentor đang được phân công hợp lệ cho Case.</p><button disabled={!description.trim() || !uuidPattern.test(owner)}>Tạo yêu cầu phối hợp</button></fieldset></form>}
     </div><div className="stack">    {rows.length===0 && !error && <p>Chưa có yêu cầu trong bộ lọc này.</p>}
-    {rows.map(row=><article className="t3-issue" key={row.issueId}><h4>{issueCategoryLabel(row.category)} · {issueStateLabel(row.state)}</h4><p className="t3-preserve-text">{row.description}</p>
+    {rows.map(row=><article className="t3-issue" key={row.issueId}><h4 aria-label={row.category + ' · ' + row.state}>{issueCategoryLabel(row.category)} · {issueStateLabel(row.state)}</h4><p className="t3-preserve-text">{row.description}</p>
       <p>Phụ trách: <span title={row.ownerUserId}>{formatUserLabel(row.ownerUserId, scope.userId, 'Cán bộ')}</span></p>
       {writable && scope.mode!=='mentor' && row.state!=='RESOLVED' && <button disabled={command.busy || command.pending} onClick={()=>command.run<Issue>('/t3/school/issues/'+row.issueId,{expectedVersion:row.version,state:row.state==='OPEN'?'IN_PROGRESS':'RESOLVED'},v=>{
         if(v.issueId!==row.issueId || v.caseId!==value.caseId){denied();return;}setRefresh(n=>n+1);

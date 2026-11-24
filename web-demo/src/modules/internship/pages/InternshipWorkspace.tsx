@@ -254,7 +254,7 @@ function AssignmentWorkspace({ assignment, gateway, reset, initialCaseId, sectio
     {section === 'all' && cohortActions}
     {gateway === liveWorkspaceGateway && assignment.kind === 'HR' && cohort && section === 'cohorts' &&
       <section className="panel stack t3-intake-methods">
-        <h3>Tiếp nhận Placement từ T5</h3>
+        <h3>Tiếp nhận Placement từ danh sách</h3>
         <div className="button-row" aria-label="Cách tiếp nhận">
           <button className="secondary" aria-pressed={intake === 'file'} onClick={() => setIntake('file')}>Tải tệp CSV/XLSX</button>
           <button className="secondary" aria-pressed={intake === 'manual'} onClick={() => setIntake('manual')}>Dán danh sách UUID</button>
