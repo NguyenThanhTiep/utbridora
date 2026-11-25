@@ -36,6 +36,8 @@ import { useSurfaceSpotlight } from './ui/useSurfaceSpotlight';
 import { internshipSpotlightTargets, studentSpotlightTargets, workspaceFrames } from './ui/workspaceSurfaces';
 import { useOrganizationNames } from './modules/useOrganizationNames';
 import './auth/AuthEffects.css';
+import { BrowserRouting, useBrowserRouting } from './routing/BrowserRouting';
+import { view, routeHref, type ViewRoute } from './routing/routes';
 
 const screens = [
   { id: 'matching-statistics', title: 'Thống kê Matching', description: 'Tra cứu số lượt đối chiếu hoàn tất trong nhật ký hệ thống.', icon: 'activity', permission: 'audit:global:read' },
@@ -99,16 +101,26 @@ function isInternshipShell(grants: Grant[]): boolean {
   return grants.some(grant => grant.role === 'ENTERPRISE' && !!grant.organizationId);
 }
 
-export default function App() {
+function defaultDestination(user:Me, grants:Grant[]):ViewRoute {
+  const side=defaultPortalSide(grants);
+  return side ? view(side==='school'?'school':'demands',{portalPage:'overview'})
+    : isInternshipShell(grants) && canDiscoverWorkspace(user) ? view('internship',{section:'overview'})
+    : studentGrants(grants).length ? view('student-overview') : view('account');
+}
+export default function App() { return <BrowserRouting><AppShell /></BrowserRouting>; }
+function AppShell() {
+  const router=useBrowserRouting()!,route=router.route;
+  const destination=route.kind==='workspace'?route:view('account');
+  const screen=route.kind==='not-found'?'not-found':destination.screen;
+  const portalPage=destination.portalPage || 'overview';
+  const caseId=destination.caseId || '';
+  const studentTab=destination.studentTab || 'invitations';
+  const internshipSection=destination.section || 'overview';
+  const authScreen=route.kind==='auth'?route.auth:'login';
+  const requestedDestination=useRef<ViewRoute|null>(null);
   const [me, setMe] = useState<Me | null>(null);
   const [grants, setGrants] = useState<Grant[]>([]);
   const [initializing, setInitializing] = useState(true);
-  const [screen, setScreen] = useState('account');
-  const [portalPage, setPortalPage] = useState<PortalPage>('overview');
-  const [caseId, setCaseId] = useState(() => /^\/workspace\/cases\/([0-9a-f-]{36})$/i.exec(location.pathname)?.[1] || '');
-  const [studentTab, setStudentTab] = useState<StudentResponseTab>('invitations');
-  const [authScreen, setAuthScreen] = useState(location.pathname === '/reset-password' ? 'reset'
-    : location.pathname === '/accept-invitation' ? 'activate' : 'login');
   const [token, setToken] = useState(() => new URLSearchParams(location.hash.slice(1)).get('token') || '');
   const [sessionMessage, setSessionMessage] = useState('');
   const [context, setContext] = useState('0');
@@ -119,7 +131,6 @@ export default function App() {
   const [internshipTopbar, setInternshipTopbar] = useState<HTMLDivElement | null>(null);
   const [internshipScrolled, setInternshipScrolled] = useState(false);
   const [internshipMenuOpen, setInternshipMenuOpen] = useState(false);
-  const [internshipSection, setInternshipSection] = useState<HrSection>('overview');
   const [internshipKind, setInternshipKind] = useState<'HR' | 'MENTOR' | null>(null);
   const generation = useRef(0);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -148,7 +159,7 @@ export default function App() {
     : item.id === 'demands' ? grants.some(canAuthorDemands)
     : item.id === 'delegations' ? permissions.has('membership:admin:write') || grants.some(g => g.role === 'SCHOOL_STAFF' && g.permissions.includes('school:delegation:manage'))
     : item.permission === null || (item.id === 'taxonomy' ? grants.some(grant => grant.permissions.includes('taxonomy:skills:read')) : (item.group === 'student' ? schools.length > 0 : permissions.has(item.permission))));
-  const current = screens.find(item => item.id === screen) || screens[0];
+  const current = screens.find(item => item.id === screen) || {id:'not-found',title:'Không tìm thấy trang',description:'Đường dẫn không tương ứng với một màn hình của hệ thống.',group:undefined};
   const rolePortalSide = defaultPortalSide(grants);
   const internshipShell = isInternshipShell(grants);
   const t5Shell = !!rolePortalSide || internshipShell || screen === 'demands' || screen === 'school';
@@ -193,21 +204,13 @@ export default function App() {
   useEffect(() => {
     let active = true;
     const currentGeneration = ++generation.current;
-    if (location.hash) history.replaceState(null, '', location.pathname);
     void (async () => {
       try {
         const user = await whoAmI();
         const effective = await api<Grant[]>('/auth/me/permissions');
         if (active && generation.current === currentGeneration) {
           setMe(user); setGrants(effective);
-          const side = defaultPortalSide(effective);
-          setScreen(location.pathname.startsWith('/workspace/cases/') ? 'internship-case'
-            : side === 'enterprise' ? 'demands'
-            : side === 'school' ? 'school'
-            : isInternshipShell(effective) && canDiscoverWorkspace(user) ? 'internship'
-            : studentGrants(effective).length ? 'student-overview'
-            : 'account');
-          setPortalPage('overview');
+
         }
       } catch (error) {
         if (active && !(error instanceof ApiError && error.status === 401)) action.setMessage('Không thể tải phiên. Vui lòng thử đăng nhập lại.');
@@ -215,23 +218,34 @@ export default function App() {
     })();
     const expired = () => {
       generation.current += 1;
-      setJustSignedIn(false); setJustSignedOut(false); setMe(null); setGrants([]); setMobileOpen(false); setAuthScreen('login');
-      setInternshipKind(null); setInternshipMenuOpen(false); setInternshipSection('overview');
+      setJustSignedIn(false); setJustSignedOut(false); setMe(null); setGrants([]); setMobileOpen(false);
+      setInternshipKind(null); setInternshipMenuOpen(false);
       setSessionMessage('Phiên đã hết hạn hoặc bị thu hồi. Vui lòng đăng nhập lại.');
     };
     const onNavigate = (event: Event) => {
       const target = (event as CustomEvent<string>).detail;
-      if (target && canLeaveDemand()) { setScreen(target); setPortalPage('overview'); setMobileOpen(false); }
+      if (target && router.go(view(target))) setMobileOpen(false);
     };
     window.addEventListener('session-expired', expired);
     window.addEventListener('bridora:navigate', onNavigate);
     return () => { active = false; window.removeEventListener('session-expired', expired); window.removeEventListener('bridora:navigate', onNavigate); };
   }, []);
 
+  useEffect(()=>{
+    if(!me && route.kind==='workspace')requestedDestination.current=route;
+    if(initializing)return;
+    if(route.kind==='home' || me && route.kind==='auth' && !token)
+      router.go(me?defaultDestination(me,grants):{kind:'auth',auth:'login'},{replace:true,guard:false});
+  },[initializing,me,grants,route,token,router.go]);
+  useEffect(()=>{
+    if(screen==='internship' && internshipKind==='MENTOR' && internshipSection!=='overview')
+      router.go(view('internship',{section:'overview'}),{replace:true,guard:false});
+  },[screen,internshipKind,internshipSection,router.go]);
   useEffect(() => {
     const frame = requestAnimationFrame(() => heading.current?.focus({ preventScroll: true }));
     return () => cancelAnimationFrame(frame);
-  }, [screen, me?.userId]);
+  }, [route, me?.userId]);
+  useEffect(()=>{setMobileOpen(false);setAccountOpen(false);},[route]);
   useEffect(() => {
     const media = window.matchMedia('(min-width: 901px)');
     const changed = () => { if (media.matches) setMobileOpen(false); };
@@ -278,17 +292,18 @@ export default function App() {
     return () => { document.removeEventListener('mousedown', pointer); document.removeEventListener('keydown', keydown); };
   }, [accountOpen]);
 
-  const navigate = (next: string) => { if (next !== screen && !canLeaveDemand()) return;
-    if (next !== 'organizations') setOrganizationForm(null);
-    if (next !== 'internship-case' && caseId) {setCaseId('');history.replaceState(null, '', '/');}
-    if (next !== screen) setPortalPage(next === 'demands' ? 'demands' : 'overview');
-    setScreen(next); setMobileOpen(false); };
-  const navigatePortal = (next: PortalPage) => {
-    if (!canLeaveDemand()) return;
-    if (caseId) { setCaseId(''); history.replaceState(null, '', '/'); }
-    setScreen(portalEntry);
-    setPortalPage(next);setMobileOpen(false);
+  const navigate = (next:string) => {
+    if(router.go(next===screen?destination:view(next,next==='demands'?{portalPage:'demands'}:{}))){
+      if(next!=='organizations')setOrganizationForm(null);setMobileOpen(false);
+    }
   };
+  const navigatePortal = (next:PortalPage) => {
+    if(router.go(view(portalEntry,{portalPage:next,...(destination.screen===portalEntry?{orgId:destination.orgId,schoolId:destination.schoolId,termId:destination.termId,cooperationId:['proposals','placements'].includes(next)?destination.cooperationId:undefined}:{})})))setMobileOpen(false);
+  };
+  const navigateInternship=(next:HrSection)=>{
+    if(router.go(view('internship',{section:next}))){setInternshipMenuOpen(true);setMobileOpen(false);}
+  };
+  const setStudentTab=(tab:StudentResponseTab)=>{router.go(view('student-invitations',{studentTab:tab}));};
   useEffect(() => {
     if (!justSignedIn) return;
     const timer = setTimeout(() => setJustSignedIn(false), 2600);
@@ -302,9 +317,9 @@ export default function App() {
   const signOut = async () => {
     if (!canLeaveDemand()) return;
     await logout(); generation.current += 1;
-    setJustSignedIn(false); setJustSignedOut(true); setMe(null); setGrants([]); setContext('0'); setMobileOpen(false); setCaseId('');
-    setInternshipKind(null); setInternshipMenuOpen(false); setInternshipSection('overview');
-    setAuthScreen('login'); setSessionMessage(''); history.replaceState(null, '', '/');
+    setJustSignedIn(false); setJustSignedOut(true); setMe(null); setGrants([]); setContext('0'); setMobileOpen(false); requestedDestination.current=null;setToken('');
+    setInternshipKind(null); setInternshipMenuOpen(false);
+    setSessionMessage(''); router.go({kind:'auth',auth:'login'},{replace:true,guard:false});
   };
   useEffect(() => {
     const onLogout = () => { void action.run(signOut); };
@@ -314,21 +329,16 @@ export default function App() {
   const signedIn = async (user: Me) => {
     const effective = await api<Grant[]>('/auth/me/permissions');
     generation.current += 1;
-    const side = defaultPortalSide(effective);
     setJustSignedOut(false); setJustSignedIn(true);
     setGrants(effective); setMe(user);
-    setInternshipKind(null); setInternshipSection('overview');
-    setScreen(caseId ? 'internship-case'
-      : side === 'enterprise' ? 'demands'
-      : side === 'school' ? 'school'
-      : isInternshipShell(effective) && canDiscoverWorkspace(user) ? 'internship'
-      : studentGrants(effective).length ? 'student-overview'
-      : 'account');
-    setPortalPage('overview'); setContext('0'); setSessionMessage('');
+    setInternshipKind(null);
+    router.go(route.kind==='workspace'?route:requestedDestination.current || defaultDestination(user,effective),{replace:true,guard:false});
+    requestedDestination.current=null;setContext('0');setSessionMessage('');
   };
-  const navigateAuth = (next: string) => { setJustSignedOut(false); setAuthScreen(next); action.setMessage(''); setSessionMessage(''); };
+  const navigateAuth = (next:string) => { if(['login','forgot','reset','activate'].includes(next) && router.go({kind:'auth',auth:next as 'login'|'forgot'|'reset'|'activate'})){setJustSignedOut(false);action.setMessage('');setSessionMessage('');} };
 
-  if (initializing) return <main className="startup"><Brand /><div className="startup-status" role="status"><span className="spinner" />Đang chuẩn bị không gian của bạn…</div></main>;
+  if (initializing || route.kind==='home' || me && route.kind==='auth' && !token) return <main className="startup"><Brand /><div className="startup-status" role="status"><span className="spinner" />Đang chuẩn bị không gian của bạn…</div></main>;
+  if(!me && route.kind==='not-found')return <main className="content"><section className="panel stack"><h1>Không tìm thấy trang</h1><p>Đường dẫn không tương ứng với một màn hình của hệ thống.</p><button onClick={()=>router.go({kind:'auth',auth:'login'})}>Đến trang đăng nhập</button></section></main>;
   if (!me) return <>
     {justSignedOut && <SessionFeedback variant="logout" title="Đã đăng xuất an toàn" subtitle="Phiên làm việc đã được đóng" />}
     <AuthLayout screen={authScreen} justSignedOut={justSignedOut}><AuthForm screen={authScreen} token={token} clearToken={() => setToken('')}
@@ -349,7 +359,7 @@ export default function App() {
     <button className="full" disabled={action.busy} onClick={() => void action.run(async () => {
       await logout(); generation.current += 1; setJustSignedIn(false); setMe(null); setGrants([]);
     })}>Đăng xuất và mở liên kết<Icon name="arrow-right" size={18} /></button>
-    <button className="text-button full" disabled={action.busy} onClick={() => { setToken(''); setAuthScreen('login'); history.replaceState(null, '', '/'); }}>Về tài khoản của tôi</button>
+    <button className="text-button full" disabled={action.busy} onClick={() => { setToken(''); router.go(defaultDestination(me,grants),{replace:true,guard:false}); }}>Về tài khoản của tôi</button>
   </AuthLayout>;
 
   return <div className={'workspace' + (studentShell ? ' workspace-student' : '') + (adminShell ? ' workspace-admin' : '') + (t5Shell ? ' workspace-t5' : '') + (portalSide ? ' workspace-role-portal' : '') + (portalScreen ? ' workspace-t5-portal' : '') + (internshipShell ? ' workspace-t5-internship' : '') + (nativeInternship ? ' workspace-native-t3' : '') + ((t5Shell && !portalScreen && !nativeInternship) || internshipMotion ? ' has-workspace-motion' : '') + (justSignedIn ? ' is-just-signed-in' : '')}>
@@ -357,7 +367,7 @@ export default function App() {
     <a className="skip-link" href="#main-content">Bỏ qua điều hướng</a>
     {mobileOpen && <button className="sidebar-backdrop" aria-label="Đóng phần nền menu" onClick={() => setMobileOpen(false)} tabIndex={-1} />}
     <aside className={'sidebar' + (mobileOpen ? ' is-open' : '')} ref={sidebar} id="main-navigation">
-      <div className="sidebar-brand"><a href="/" aria-label="UT.Bridora trang chủ">{adminShell ? <span className="admin-brand"><span>U</span><span><b>UT.BRIDORA</b><small>Quản trị hệ thống</small></span></span> : <Brand inverse={t5Shell || studentShell} />}</a>
+      <div className="sidebar-brand"><a href={routeHref(defaultDestination(me,grants))} aria-label="UT.Bridora trang chủ">{adminShell ? <span className="admin-brand"><span>U</span><span><b>UT.BRIDORA</b><small>Quản trị hệ thống</small></span></span> : <Brand inverse={t5Shell || studentShell} />}</a>
         <button className="btn-icon sidebar-close" aria-label="Đóng menu điều hướng" onClick={() => setMobileOpen(false)}><Icon name="close" /></button></div>
       <nav aria-label="Điều hướng chính">
         {adminShell ? <>
@@ -387,7 +397,7 @@ export default function App() {
             {screen === 'internship' && <div className="internship-submenu">{visibleInternshipSections.map(section => <button key={section.id}
               className={'nav internship-subnav' + (internshipSection === section.id ? ' active' : '')}
               aria-current={internshipSection === section.id ? 'page' : undefined}
-              onClick={() => { setInternshipSection(section.id); setMobileOpen(false); }}>
+              onClick={() => navigateInternship(section.id)}>
               <Icon name={section.icon} size={16} /><span>{section.label}</span></button>)}</div>}
           </div>
           <p className="nav-group-label">TÀI KHOẢN & TIỆN ÍCH</p>
@@ -415,7 +425,7 @@ export default function App() {
               {visibleInternshipSections.map(section => <button key={section.id}
                 className={'nav internship-subnav' + (screen === 'internship' && internshipSection === section.id ? ' active' : '')}
                 aria-current={screen === 'internship' && internshipSection === section.id ? 'page' : undefined}
-                onClick={() => { setInternshipSection(section.id); navigate('internship'); }}>
+                onClick={() => navigateInternship(section.id)}>
                 <Icon name={section.icon} size={16} /><span>{section.label}</span>
               </button>)}
               {menus.filter(child => (child.id === 'evaluations' && nestedEvaluations) || child.id === 'school-internship-cases')
@@ -550,7 +560,7 @@ export default function App() {
           <div key={screen} className={'app-page-stage' + (!adminShell && !studentShell && portalSide === 'school' && (screen === 'delegations' || screen === 'taxonomy') ? ' school-portal-subview' : '')}>
             {screen === 'account' && me.memberships.some(m => m.role === 'ENTERPRISE') && !grants.some(canAuthorDemands) && !internshipShell
               && <Notice message="Tài khoản có vai trò doanh nghiệp nhưng chưa được cấp quyền quản lý nhu cầu. Nhờ quản trị viên kiểm tra trạng thái xác minh tổ chức và liên kết vai trò." />}
-            {!menus.some(item => item.id === screen) ? <section className="panel"><EmptyState icon="lock" title="Không có quyền truy cập" description="Chọn một chức năng trong menu để tiếp tục." /></section>
+            {route.kind==='not-found' ? <section className="panel"><EmptyState icon="alert" title="Không tìm thấy trang" description="Chọn một chức năng trong menu để tiếp tục." /></section> : !menus.some(item => item.id === screen) ? <section className="panel"><EmptyState icon="lock" title="Không có quyền truy cập" description="Chọn một chức năng trong menu để tiếp tục." /></section>
               : screen === 'admin-overview' ? <AdminOverview permissions={permissions} navigate={navigate} />
               : screen === 'users' ? <UserManagement me={me} permissions={permissions} invite={() => { navigate('organizations'); setOrganizationForm('invite'); }} />
               : screen === 'organizations' ? <OrganizationManagement permissions={permissions} initialForm={organizationForm} />
@@ -560,7 +570,7 @@ export default function App() {
               : screen === 'school-preferences' ? <SchoolPreferenceReview key={me.userId} />
               : screen === 'sent-mentor-invitations' ? <SentMentorInvitations key={me.userId} me={me} grants={grants} />
               : screen === 'assignment-management' ? <AssignmentManagementPage key={me.userId} />
-              : screen === 'internship-case' ? <CaseEntry key={me.userId + caseId} caseId={caseId} me={me} grants={grants} />
+              : screen === 'internship-case' ? <CaseEntry key={me.userId + caseId + (destination.followup || '')} caseId={caseId} me={me} grants={grants} />
               : screen === 'school-internship-cases' ? <SchoolCaseLookup key={me.userId} grants={grants} userId={me.userId} />
               : screen === 'evaluations' ? <EvaluationsPage key={me.userId} me={me} grants={grants} />
               : screen === 'internship-operations' ? <OperationsPage key={me.userId} me={me} grants={grants} />
@@ -570,12 +580,11 @@ export default function App() {
                     onLogout={() => void action.run(signOut)} logoutDisabled={action.busy} />}
                   section={internshipSection} onKindChange={kind => {
                     setInternshipKind(kind);
-                    if (kind === 'MENTOR') setInternshipSection('overview');
-                  }} onSectionChange={next => { setInternshipSection(next); setInternshipMenuOpen(true); }} />
+                  }} onSectionChange={navigateInternship} />
               : screen === 'student-overview' ? <StudentOverviewPage me={me} schools={schools} openProfile={() => navigate('student-profile')} />
               : screen === 'student-profile' ? <MyProfilePage me={me} schools={schools} />
               : screen === 'student-capability' ? <CapabilityPage key={me.userId} me={me} schools={schools} />
-              : screen === 'student-opportunities' ? <OpportunitiesPage schools={schools} openPreferences={() => { setStudentTab('preferences'); navigate('student-invitations'); }} />
+              : screen === 'student-opportunities' ? <OpportunitiesPage schools={schools} openPreferences={() => setStudentTab('preferences')} />
               : screen === 'student-invitations' ? <InvitationsPreferencesPage tab={studentTab} setTab={setStudentTab} />
               : screen === 'student-tasks' ? <InternshipTasksPage key={me.userId} me={me} />
               : screen === 'student-reports' ? <ReportsResultsPage key={me.userId} me={me} />
@@ -583,7 +592,7 @@ export default function App() {
               // DEV08 hiển thị mô-đun danh mục kỹ năng trong khung ứng dụng hiện có để người kiểm thử bắt đầu kiểm tra giao diện.
               : screen === 'taxonomy' ? <SkillTaxonomy />
               : <AccountOverview me={me} grants={grants} context={context} setContext={setContext}
-                signedOut={() => { generation.current += 1; setJustSignedIn(false); setJustSignedOut(false); setMe(null); setGrants([]); setAuthScreen('login'); setSessionMessage('Đổi mật khẩu thành công. Vui lòng đăng nhập lại.'); }} />}
+                signedOut={() => { generation.current += 1; setJustSignedIn(false); setJustSignedOut(false); setMe(null); setGrants([]); setSessionMessage('Đổi mật khẩu thành công. Vui lòng đăng nhập lại.'); }} />}
           </div>
         )}
       </main>

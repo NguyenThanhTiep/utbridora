@@ -1,4 +1,5 @@
 import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useViewRouting } from '../../../routing/BrowserRouting';
 import { EmptyState, Icon, Notice } from '../../../components';
 import { ScopedDemands } from '../demand/ScopedDemands';
 import { canLeaveDemand } from '../navigation';
@@ -55,18 +56,20 @@ export function PortalWorkspace({ organizations, side, page, navigate, viewerId,
   user?: { displayName: string; email?: string };
 }) {
   const [selected, setSelected] = useState(organizations[0] || '');
-  const scope = organizations.includes(selected) ? selected : organizations[0];
+  const routing=useViewRouting(side==='school'?'school':'demands');
+  const requested=routing?.route.orgId;
+  const scope = requested ? organizations.includes(requested)?requested:undefined : organizations.includes(selected) ? selected : organizations[0];
   const surface = useSurfaceSpotlight<HTMLDivElement>(!!scope, portalSpotlightTargets, 'portal');
   const id = useId();
   const organizationNames = usePortalOrganizations(viewerId, side, organizations);
   if (!scope) return <section className="panel"><EmptyState icon="lock" title="Chưa có quyền truy cập"
-    description="Bạn cần vai trò và phạm vi tổ chức được cấp để sử dụng cổng này." /></section>;
+    description={requested?'Tổ chức trong đường dẫn không thuộc phạm vi được cấp. Chọn lại chức năng hoặc sửa đường dẫn.':'Bạn cần vai trò và phạm vi tổ chức được cấp để sử dụng cổng này.'} /></section>;
   return <div className={'cooperation-workspace portal-workspace has-portal-motion is-' + side} ref={surface}>
     <ScopedPortal key={scope + side} org={scope} side={side} page={page} navigate={navigate} viewerId={viewerId} grants={grants}
       organizationPicker={<div className="portal-organization-field"><span className="portal-organization-icon"><Icon name={side === 'school' ? 'graduation' : 'building'} size={22} /></span>
         <div className="portal-context-select"><label htmlFor={id}>{side === 'school' ? 'Nhà trường' : 'Doanh nghiệp'} đang làm việc</label>
           <select id={id} value={scope} title={organizationNames.names[scope] || (side === 'school' ? 'Nhà trường đang làm việc' : 'Doanh nghiệp đang làm việc')} aria-busy={organizationNames.loading}
-            onChange={event => { if (canLeaveDemand()) setSelected(event.target.value); }}>
+            onChange={event => { if(canLeaveDemand()){if(routing)routing.go({...routing.route,orgId:event.target.value,schoolId:undefined,termId:undefined,recordId:undefined,cooperationId:undefined,proposalId:undefined});else setSelected(event.target.value);} }}>
             {organizations.map((org, index) => <option key={org} value={org}>
               {organizationNames.names[org] || (organizationNames.loading ? 'Đang tải tên tổ chức…' : `${side === 'school' ? 'Nhà trường' : 'Doanh nghiệp'} ${index + 1}`)}
             </option>)}
@@ -79,23 +82,27 @@ function ScopedPortal({ org, side, page, navigate, viewerId, organizationPicker,
   org: string; side: PortalSide; page: PortalPage; navigate: (page: PortalPage) => void; viewerId: string; organizationPicker: ReactNode; grants: Grant[];
 }) {
   const school = side === 'school';
-  const [scope, setScope] = useState({ schoolOrgId: side === 'school' ? org : '', termId: '' });
+  const routing=useViewRouting(side==='school'?'school':'demands');
+  const [localScope, setScope] = useState({ schoolOrgId: side === 'school' ? org : '', termId: '' });
+  const scope=routing?{schoolOrgId:school?org:routing.route.schoolId || '',termId:routing.route.termId || ''}:localScope;
   const termId = school ? scope.termId : '';
   const data = usePortalData(org, side, termId);
-  const [revision, setRevision] = useState(0), [cooperationId, setCooperationId] = useState('');
-  const [focus, setFocus] = useState<{ key: string; target: NotificationTarget } | null>(null);
+  const [revision, setRevision] = useState(0), [localCooperationId, setLocalCooperationId] = useState('');
+  const cooperationId=routing?routing.route.cooperationId || '':localCooperationId;
+  const setCooperationId=(id:string)=>{if(routing)routing.go({...routing.route,orgId:org,cooperationId:id || undefined,recordId:page==='placements' && id?id:undefined,proposalId:undefined});else setLocalCooperationId(id);};
+  const [localFocus, setFocus] = useState<{ key: string; target: NotificationTarget } | null>(null);
+  const focus=routing?routing.route.recordId?{key:routing.route.recordId,target:{page,recordId:routing.route.recordId,cooperationId:routing.route.cooperationId,proposalId:routing.route.proposalId}}:null:localFocus;
   const notifications = useNotifications({ org, side, viewerId, ...scope }, data);
   const meta = pagesFor(side).find(item => item.id === page) || pagesFor(side)[0];
   const pageMeta = page !== 'overview' ? (school ? schoolPageMeta : enterprisePageMeta)[page] : undefined;
   const changeScope = (schoolOrgId: string, selectedTermId: string) => {
-    setScope({ schoolOrgId, termId: selectedTermId });
-    if (school) {setCooperationId('');setFocus(null);}
+    if(routing)routing.go({...routing.route,orgId:org,schoolId:school?undefined:schoolOrgId || undefined,termId:selectedTermId || undefined,recordId:undefined,cooperationId:undefined,proposalId:undefined});
+    else {setScope({ schoolOrgId,termId:selectedTermId });if(school){setCooperationId('');setFocus(null);}}
   };
   useEffect(() => { if (focus && focus.target.page !== page) setFocus(null); }, [page, focus]);
   const openWorkflow = (target: NotificationTarget, key: string) => {
-    setFocus({ key, target });
-    if (target.cooperationId) setCooperationId(target.cooperationId);
-    navigate(target.page);
+    if(routing)routing.go({...routing.route,orgId:org,portalPage:target.page,recordId:target.recordId,cooperationId:target.cooperationId,proposalId:target.proposalId});
+    else {setFocus({key,target});if(target.cooperationId)setCooperationId(target.cooperationId);navigate(target.page);}
   };
   const openNotification = (notification: PortalNotification) => {
     if (!canLeaveDemand()) return;

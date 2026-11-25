@@ -99,7 +99,7 @@ class CooperationReportingIT {
     }
     @Test void reportingScreensWorkInRealChromiumWithIsolatedMySql() throws Exception {
         Assumptions.assumeTrue(Boolean.getBoolean("frontend.e2e"),"Enable frontend.e2e for real Chromium");
-        var config=Map.of("password",password,"staffEmail",staff.email,"adminEmail",admin.email,"demandId",demandId,"cooperationId",coopId);
+        var config=Map.of("password",password,"staffEmail",staff.email,"adminEmail",admin.email,"demandId",demandId,"cooperationId",coopId,"schoolId",school);
         boolean windows=System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win");
         var builder=windows?new ProcessBuilder("cmd.exe","/c","npm.cmd run test:e2e -- cooperation-reporting-live.spec.ts"):new ProcessBuilder("npm","run","test:e2e","--","cooperation-reporting-live.spec.ts");builder.directory(new java.io.File("web-demo"));builder.environment().put("API_PROXY_TARGET","http://localhost:"+port);builder.environment().put("E2E_COOPERATION_REPORTING",JSON.writeValueAsString(config));builder.environment().put("E2E_REPORT_FILE","../target/cooperation-reporting-browser.xml");
         builder.redirectErrorStream(true).redirectOutput(new java.io.File("target/cooperation-reporting-browser.log"));var process=builder.start();try {if(!process.waitFor(240,TimeUnit.SECONDS))fail("Reporting browser timed out");assertEquals(0,process.exitValue(),"See target/cooperation-reporting-browser.log");}finally{if(process.isAlive()){process.descendants().forEach(ProcessHandle::destroyForcibly);process.destroyForcibly();}}

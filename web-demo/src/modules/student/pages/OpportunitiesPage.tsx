@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
+import { useViewRouting } from '../../../routing/BrowserRouting';
 import type { Grant } from '../../../api';
 import { EmptyState, Icon, LoadingState, Notice, Pagination } from '../../../components';
 import { getOpportunity, listMajors, listMyPreferences, listOpportunities, newIdempotencyKey, sendPreference, type AcademicCatalogItem } from '../api';
@@ -22,7 +23,10 @@ export function OpportunitiesPage({ schools, openPreferences }: { schools: Grant
   const [filter, setFilter] = useState<Filter>({ q: '', majorCode: '', page: 0 });
   const [result, setResult] = useState<ContractPage<OpportunityView> | null>(null);
   const [error, setError] = useState(''), [attempt, setAttempt] = useState(0);
-  const [selected, setSelected] = useState<string | null>(null);
+  const routing=useViewRouting('student-opportunities');
+  const [localSelected, setLocalSelected] = useState<string | null>(null);
+  const selected=routing?routing.route.detailId || null:localSelected;
+  const setSelected=(id:string|null)=>{if(routing)routing.go({...routing.route,detailId:id || undefined});else setLocalSelected(id);};
   const searchId = useId(), majorId = useId(), termSelectId = useId(), heroId = useId();
 
   useEffect(() => {

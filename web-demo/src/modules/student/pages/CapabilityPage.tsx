@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useViewRouting } from '../../../routing/BrowserRouting';
 import { ApiError, type Grant, type Me } from '../../../api';
 import { EmptyState, Icon, LoadingState, Notice } from '../../../components';
 import { askConfirm } from '../../../confirm';
@@ -59,7 +60,10 @@ function AddTile({ label, hint, busy, onClick }: { label: string; hint: string; 
 
 export function CapabilityPage({ me, schools }: { me: Me; schools: Grant[] }) {
   const { terms, failed, termId, setTermId, retry } = useStudentTerm(schools);
-  const [tab, setTab] = useState<CapabilityTab>('projects');
+  const routing=useViewRouting('student-capability');
+  const [localTab, setLocalTab] = useState<CapabilityTab>('projects');
+  const tab=routing?.route.capabilityTab || localTab;
+  const setTab=(next:CapabilityTab)=>{if(routing)routing.go({...routing.route,capabilityTab:next});else setLocalTab(next);};
   const term = terms?.find(item => item.termId === termId);
   const termSelect = terms && terms.length > 1 && <label className="student-term-select">Học kỳ<select value={termId} onChange={event => setTermId(event.target.value)}>
     <option value="" disabled>Chọn học kỳ</option>{terms.map(item => <option key={item.termId} value={item.termId}>{item.termCode}</option>)}</select></label>;

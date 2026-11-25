@@ -1,3 +1,4 @@
+import { useViewRouting } from '../../routing/BrowserRouting';
 ﻿import { useEffect, useRef, useState } from 'react';
 import { api } from '../../api';
 import { EmptyState, Icon, Notice } from '../../components';
@@ -30,6 +31,9 @@ export type { CooperationRecord, VerificationInput, VerificationRecord } from '.
 
 export function CooperationFlows({ org, school, demands = [], onLoaded, includeProgress = true, focusId, termId = '' }: { org: string; school: boolean; demands?: Demand[]; onLoaded?: (items: Cooperation[]) => void; includeProgress?: boolean; focusId?: string; termId?: string }) {
   const [items, setItems] = useState<Cooperation[]>([]), [detail, setDetail] = useState<Detail | null>(null);
+  const routeContext=useViewRouting(school?'school':'demands');
+  const routing=routeContext?.route.portalPage==='cooperations'?routeContext:null;
+  const closeRoute=(force=false)=>!routing || routing.go({...routing.route,recordId:undefined},{replace:force,guard:!force});
   const [refresh, setRefresh] = useState(0), [page, setPage] = useState(0), [total, setTotal] = useState(0), [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [stateFilter, setStateFilter] = useState(''), [searchText, setSearchText] = useState('');
@@ -40,20 +44,22 @@ export function CooperationFlows({ org, school, demands = [], onLoaded, includeP
   loadedRef.current = onLoaded;
   const side = school ? 'school' : 'enterprise', changed = () => {
     detailRequest.current?.abort(); setOpeningId(''); setDetailError('');
-    setDetail(null); setComposing(false); setRefresh(n => n + 1);
+    closeRoute(true);setDetail(null); setComposing(false); setRefresh(n => n + 1);
   };
   const termNames = useSchoolTermNames(org, school);
   const schoolNames = useSchoolNames(org, !school);
   const action = useCommand(org, changed);
   const focusedRef = useRef<HTMLElement>(null);
   useFocusedWorkflow<Detail>(org, '/' + side + '/cooperations', focusId, refresh, value => {
-    if (value.cooperation.cooperationId !== focusId) throw new Error('Unexpected cooperation');
+    if (value.cooperation.cooperationId !== focusId || value.cooperation.demandId!==value.demand.demandId
+      || (school?value.demand.data.schoolOrgId!==org:value.demand.enterpriseOrgId!==org)
+      || termId && value.cooperation.termId!==termId) throw new Error('Unexpected cooperation');
     setDetail(value);
   }, () => setDetailError('Đề nghị đã thay đổi hoặc không còn trong phạm vi truy cập.'));
   useWorkflowFocus(focusedRef, !!focusId && !loading, detail);
 
   useEffect(() => {
-    const update = () => changed();
+    const update = () => {if(canLeaveDemand())changed();};
     window.addEventListener('cooperation-updated', update);
     return () => window.removeEventListener('cooperation-updated', update);
   }, []);
@@ -112,6 +118,7 @@ export function CooperationFlows({ org, school, demands = [], onLoaded, includeP
 
   const openEnterpriseCooperation = (item: Cooperation) => {
     if (action.busy || !canLeaveDemand()) return;
+    if(routing){routing.go({...routing.route,orgId:org,recordId:routing.route.recordId===item.cooperationId?undefined:item.cooperationId});return;}
     detailRequest.current?.abort();
     setOpeningId(''); setDetailError(''); setComposing(false);
     if (detail?.cooperation.cooperationId === item.cooperationId) { setDetail(null); return; }
@@ -192,8 +199,7 @@ export function CooperationFlows({ org, school, demands = [], onLoaded, includeP
       : <SchoolCooperationList items={indexedItems} selectedId={detail?.cooperation.cooperationId} termNames={termNames} demandTitles={demandTitles} titlesLoading={titles.loading}
         loading={loading || Boolean(error)} busy={action.busy}
         emptyMessage={items.length === 0 ? 'Chưa có đề nghị trong phạm vi này.' : 'Không tìm thấy đề nghị hợp tác phù hợp bộ lọc hiện tại.'}
-        open={c => void api<Detail>('/school/cooperations/' + c.cooperationId, { headers: { 'X-Organization-Id': org } })
-          .then(setDetail).catch(() => setError('Không đọc được đề nghị.'))} />}
+        open={c => {if(routing)routing.go({...routing.route,orgId:org,recordId:c.cooperationId});else void api<Detail>('/school/cooperations/' + c.cooperationId, { headers: { 'X-Organization-Id': org } }).then(setDetail).catch(() => setError('Không đọc được đề nghị.'));}} />}
 
       {total > 1 && <div className="button-row cooperation-pagination">
         <button className="secondary" disabled={page === 0 || (!school && (action.busy || loading))} onClick={() => setPage(n => n - 1)}>Trước</button>
@@ -206,10 +212,10 @@ export function CooperationFlows({ org, school, demands = [], onLoaded, includeP
       id={school ? 'school-cooperation-detail-' + detail.cooperation.cooperationId : undefined} ref={focusedRef} tabIndex={-1}>
       {school ? <SchoolCooperationSummary key={detail.cooperation.cooperationId + ':' + detail.demand.version + ':' + detail.cooperation.version} detail={detail} termName={termNames[detail.demand.data.termId]} close={() => {
         document.getElementById('school-cooperation-open-' + detail.cooperation.cooperationId)?.focus();
-        setDetail(null);
+        if(closeRoute())setDetail(null);
       }} /> : <EnterpriseCooperationSummary key={detail.cooperation.cooperationId + ':' + detail.demand.version + ':' + detail.cooperation.version}
         detail={detail} schoolName={schoolNames[detail.demand.data.schoolOrgId]} busy={action.busy} close={() => {
-          document.getElementById('enterprise-cooperation-open-' + detail.cooperation.cooperationId)?.focus(); setDetail(null);
+          document.getElementById('enterprise-cooperation-open-' + detail.cooperation.cooperationId)?.focus(); if(closeRoute())setDetail(null);
         }} />}
 
       {school && <CooperationSubmissionHistory key={org+':'+detail.cooperation.cooperationId+':'+detail.cooperation.version} org={org} cooperationId={detail.cooperation.cooperationId} disabled={action.busy} />}

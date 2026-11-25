@@ -1,3 +1,4 @@
+import { useViewRouting } from '../../../routing/BrowserRouting';
 import { useEffect, useRef, useState } from 'react';
 import { ApiError } from '../../../api';
 import { Icon, LoadingState, Notice } from '../../../components';
@@ -46,6 +47,8 @@ function steps(i: InternshipInvitation, open: boolean, shared: boolean): Step[] 
 }
 type Command = (operation: string, body: unknown, send: (key: string) => Promise<unknown>) => Promise<boolean>;
 export function InvitationConsentPage() {
+  const routing=useViewRouting('student-invitations');
+  const selectedId=routing?.route.studentTab!=='preferences'?routing?.route.detailId:undefined;
   const [invitations, setInvitations] = useState<InternshipInvitation[] | null>(null), [consents, setConsents] = useState<ConsentGrant[]>([]), [refresh, setRefresh] = useState(0);
   const [message, setMessage] = useState(''), [busy, setBusy] = useState(false), [loadFailed, setLoadFailed] = useState(false);
   const pending = useRef(new Map<string, string>());
@@ -91,7 +94,8 @@ export function InvitationConsentPage() {
     {invitations === null && !loadFailed && <LoadingState label="Đang tải lời mời…" />}
     {invitations?.length === 0 && <section className="panel student-invite-empty"><span className="student-invite-empty-icon" aria-hidden="true"><Icon name="mail" size={26} /></span>
       <h2>Chưa có lời mời thực tập</h2><p className="student-list-meta">Khi có lời mời thực tập dành cho bạn, lời mời sẽ hiện ở đây để bạn xem và phản hồi.</p></section>}
-    {invitations?.map(i => { const open = isOpen(i), shared = consents.some(c => c.invitationId === i.invitationId && isActive(c));
+    {selectedId && invitations && !loadFailed && !invitations.some(i=>i.invitationId===selectedId) && <Notice message="Lời mời không tồn tại hoặc không còn thuộc phạm vi được phép xem." tone="error" />}
+    {invitations?.filter(i=>!selectedId || i.invitationId===selectedId).map(i => { const open = isOpen(i), shared = consents.some(c => c.invitationId === i.invitationId && isActive(c));
       return <section className={'panel student-offer ' + (open ? 'is-open' : i.state === 'ACCEPTED' ? 'is-accepted' : 'is-closed')} key={i.invitationId}>
         <div className="student-offer-head">
           <span className="student-offer-logo" aria-hidden="true">{orgInitials(i.enterpriseName)}</span>
@@ -123,12 +127,17 @@ export function InvitationConsentPage() {
 }
 // S06-I: đọc lại chi tiết mới nhất từ T5 khi sinh viên mở; đổi version thì đóng lại.
 function InvitationDetail({ invitationId }: { invitationId: string }) {
-  const [detail, setDetail] = useState<InternshipInvitation | 'loading' | 'error' | null>(null);
-  const toggle = () => {
-    if (detail !== null) { setDetail(null); return; }
-    setDetail('loading'); void getInvitation(invitationId).then(setDetail).catch(() => setDetail('error'));
-  };
-  return <div className="student-invitation-detail"><button type="button" className="text-button student-detail-toggle" aria-expanded={detail !== null} onClick={toggle}>{detail === null ? 'Xem chi tiết' : 'Ẩn chi tiết'}<Icon name="chevron-down" size={15} /></button>
+  const routing=useViewRouting('student-invitations');
+  const [localOpen,setLocalOpen]=useState(false),[detail,setDetail]=useState<InternshipInvitation | 'loading' | 'error' | null>(null);
+  const open=routing?routing.route.detailId===invitationId:localOpen;
+  useEffect(()=>{
+    if(!open){setDetail(null);return;}
+    const c=new AbortController();setDetail('loading');
+    void getInvitation(invitationId,c.signal).then(value=>{if(!c.signal.aborted)setDetail(value);}).catch(()=>{if(!c.signal.aborted)setDetail('error');});
+    return ()=>c.abort();
+  },[invitationId,open]);
+  const toggle=()=>{if(routing)routing.go({...routing.route,detailId:open?undefined:invitationId});else setLocalOpen(!open);};
+  return <div className="student-invitation-detail"><button type="button" className="text-button student-detail-toggle" aria-expanded={open} onClick={toggle}>{open ? 'Ẩn chi tiết' : 'Xem chi tiết'}<Icon name="chevron-down" size={15} /></button>
     {detail === 'loading' && <LoadingState label="Đang tải chi tiết…" />}
     {detail === 'error' && <p className="student-error-note">Không tải được chi tiết lời mời. Ẩn rồi mở lại để thử lại.</p>}
     {typeof detail === 'object' && detail !== null && <dl>

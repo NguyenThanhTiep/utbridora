@@ -15,12 +15,16 @@ import { canLeaveDemand } from '../navigation';
 import { PlacementOverview } from '../proposals/PlacementOverview';
 import type { PlacementProgress } from '../proposals/placementProgress';
 import { useCooperationTitles } from '../workflow/useCooperationTitles';
+import { useViewRouting } from '../../../routing/BrowserRouting';
 
 export function ApprovedCooperations({ org, side, placements, records, demands = [], selected, select, focusProposalId, termId, onTermChange }: {
   org: string; side: PortalSide; placements: boolean; records: Resource<CooperationRecord>;
   selected: string; select: (id: string) => void; focusProposalId?: string; demands?: Demand[]; termId?: string; onTermChange?: (termId: string) => void;
 }) {
   const selectId = useId();
+  const routing=useViewRouting(side==='school'?'school':'demands');
+  const explicitSelection=!!routing?.route.cooperationId;
+  const explicitFocus=!!routing?.route.recordId;
   const detailRef = useRef<HTMLElement>(null);
   const enterpriseCompactPlacements = side === 'enterprise' && placements;
   const enterpriseCandidates = side === 'enterprise' && !placements;
@@ -29,11 +33,16 @@ export function ApprovedCooperations({ org, side, placements, records, demands =
     setResolvedTitle({ org, side, id: record.cooperation.cooperationId, title: record.demand.data.title });
   }, [org, side]);
   const [progressChoice, setProgressChoice] = useState<PlacementProgress | null>(null);
-  const [detailExpanded, setDetailExpanded] = useState(() => !enterpriseCompactPlacements || Boolean(focusProposalId));
+  const [detailExpanded, setDetailExpanded] = useState(() => !enterpriseCompactPlacements || Boolean(focusProposalId) || explicitFocus);
   const [detailFocusTick, setDetailFocusTick] = useState(0);
   useEffect(() => {
-    setDetailExpanded(!enterpriseCompactPlacements || Boolean(focusProposalId));
-  }, [org, enterpriseCompactPlacements, focusProposalId]);
+    setDetailExpanded(!enterpriseCompactPlacements || Boolean(focusProposalId) || explicitFocus);
+  }, [org, enterpriseCompactPlacements, focusProposalId, explicitFocus]);
+  const collapse=()=>{
+    if(!canLeaveDemand())return;
+    if(routing && !routing.go({...routing.route,recordId:undefined,proposalId:undefined}))return;
+    setDetailExpanded(false);
+  };
   useEffect(() => {
     setProgressChoice(old => old && old.cooperationState === 'APPROVED' && old.cooperationId === selected ? old : null);
   }, [org, selected]);
@@ -48,7 +57,7 @@ export function ApprovedCooperations({ org, side, placements, records, demands =
   const matchedSelected = approved.find(record => record.cooperationId === selected);
   const activeApproved = progressChoice?.cooperationState === 'APPROVED' && progressChoice.cooperationId
     ? approved.find(record => record.cooperationId === progressChoice.cooperationId)
-    : matchedSelected || (!selected || !focusProposalId ? approved[0] : undefined);
+    : matchedSelected || (!selected || !focusProposalId && !explicitSelection ? approved[0] : undefined);
   const current = progressChoice && progressChoice.cooperationState !== 'APPROVED'
     ? undefined
     : activeApproved || (progressChoice?.cooperationState === 'APPROVED' && progressChoice.cooperationId
@@ -68,7 +77,7 @@ export function ApprovedCooperations({ org, side, placements, records, demands =
   if (enterpriseCompactPlacements && !detailExpanded) return <>{overview}</>;
   if (records.loading) return <>{overview}<section className="panel rc-loading-state" role="status">Đang tải danh sách hợp tác…</section></>;
   if (records.error) return <>{overview}<section className="panel"><Notice tone="error" message={records.error} /></section></>;
-  if (focusProposalId && selected && !approved.some(record => record.cooperationId === selected)) return <>{overview}<section className="panel">
+  if ((focusProposalId || explicitSelection) && selected && !approved.some(record => record.cooperationId === selected)) return <>{overview}<section className="panel">
     <Notice tone="error" message="Hợp tác trong thông báo đã thay đổi hoặc không còn trong phạm vi truy cập. Hãy tải lại danh sách." />
   </section></>;
   if (!currentId) return <>{overview}<section ref={detailRef} tabIndex={-1} className={'panel placement-detail-target' + (detailFocusTick ? ' is-focused-target' : '')}>{progressChoice ? <><h3>{progressChoice.title}</h3><p>{progressChoice.cooperationState === 'REJECTED'
@@ -76,7 +85,7 @@ export function ApprovedCooperations({ org, side, placements, records, demands =
     : 'Nhu cầu chưa có hợp tác được duyệt. Chức năng tạo tiếp nhận chỉ mở sau khi nhà trường phê duyệt hợp tác.'}</p><div className="button-row">{approved.length > 0 && <button type="button" className="secondary" onClick={() => {
       setProgressChoice(null);
       if (!approved.some(record => record.cooperationId === selected)) select(approved[0].cooperationId);
-    }}>Quay lại hợp tác đã duyệt</button>}{enterpriseCompactPlacements && <button type="button" className="secondary" onClick={() => setDetailExpanded(false)}>Đóng chi tiết</button>}</div></> : side === 'enterprise' && !placements ? <EnterpriseCandidateWorkspace org={org} /> : <>
+    }}>Quay lại hợp tác đã duyệt</button>}{enterpriseCompactPlacements && <button type="button" className="secondary" onClick={collapse}>Đóng chi tiết</button>}</div></> : side === 'enterprise' && !placements ? <EnterpriseCandidateWorkspace org={org} /> : <>
     <EmptyState icon="briefcase" title="Chưa có hợp tác được duyệt"
       description="Danh sách ứng viên và tiếp nhận thực tập sẽ được mở theo từng hợp tác đã được nhà trường duyệt." />
     {side === 'enterprise' && <div className="proposal-table"><table><thead><tr><th>Hồ sơ tiếp nhận</th><th>Trạng thái</th><th>Thời gian thực tập</th></tr></thead>
@@ -93,7 +102,7 @@ export function ApprovedCooperations({ org, side, placements, records, demands =
             : `Hợp tác #${index + 1}${record.submissionNo > 1 ? ` · Đợt nộp ${record.submissionNo}` : ''}`}
         </option>;
       })}
-    </select>{enterpriseCompactPlacements && <button type="button" className="secondary placement-collapse-btn" onClick={() => setDetailExpanded(false)}>Đóng chi tiết</button>}</div></section>;
+    </select>{enterpriseCompactPlacements && <button type="button" className="secondary placement-collapse-btn" onClick={collapse}>Đóng chi tiết</button>}</div></section>;
   const detail = <ApprovedDetail key={org + current.cooperationId + placements + focusProposalId} org={org} side={side} id={current.cooperationId} placements={placements} focusProposalId={focusProposalId} loaded={rememberTitle} />;
   return <>
     {overview}

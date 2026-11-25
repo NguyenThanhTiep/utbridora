@@ -142,7 +142,8 @@ for (const role of ['ADMIN', 'STUDENT']) {
       { role: 'ENTERPRISE', organizationId: enterprise, permissions: ['cooperation:enterprise:create'] },
       { role, organizationId: role === 'ADMIN' ? null : school, permissions: [] },
     ] }));
-    await page.reload();
+    // A role-default landing is tested at the root; explicit permitted URLs now survive Reload.
+    await page.goto('/');
     await expect(page.getByRole('heading', { name: 'Tài khoản của tôi', exact: true })).toBeVisible();
     await expect(page.locator('.workspace-t5')).toHaveCount(0);
   });

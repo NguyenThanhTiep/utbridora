@@ -1,3 +1,4 @@
+import { useViewRouting } from '../../../routing/BrowserRouting';
 import { useEffect, useRef, useState } from 'react';
 import { ApiError } from '../../../api';
 import { EmptyState, Icon, LoadingState, Notice } from '../../../components';
@@ -13,6 +14,8 @@ import '../styles.css';
 type OpportunityRef = OpportunityView | 'missing' | 'unavailable';
 
 export function PreferencesPage() {
+  const routing=useViewRouting('student-invitations');
+  const selectedId=routing?.route.studentTab==='preferences'?routing.route.detailId:undefined;
   const [preferences, setPreferences] = useState<PreferenceView[] | null>(null), [loadError, setLoadError] = useState('');
   const [attempt, setAttempt] = useState(0), [opportunities, setOpportunities] = useState<Record<string, OpportunityRef>>({});
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState('');
@@ -54,7 +57,8 @@ export function PreferencesPage() {
     } finally { setBusy(false); }
   };
 
-  const groups = preferences ? groupPreferences(preferences) : [];
+  const allGroups=preferences?groupPreferences(preferences):[];
+  const groups=selectedId?allGroups.filter(g=>[g.current,...g.history].some(p=>p.preferenceId===selectedId)):allGroups;
   return <div className="student-page">
     <Notice message={error} tone="error" /><StudentToast message={notice} onClose={() => setNotice('')} />
     <section className="panel">
@@ -65,7 +69,7 @@ export function PreferencesPage() {
       {loadError ? <EmptyState icon="alert" title="Chưa tải được nguyện vọng" description={loadError}>
         <button type="button" className="secondary" onClick={() => setAttempt(previous => previous + 1)}><Icon name="refresh" size={16} />Thử lại</button></EmptyState>
         : preferences === null ? <LoadingState label="Đang tải nguyện vọng…" />
-        : groups.length === 0 ? <EmptyState icon="check-circle" title="Chưa có nguyện vọng" description="Mở Cơ hội thực tập để gửi nguyện vọng cho vị trí bạn muốn." />
+        : groups.length === 0 ? <EmptyState icon="check-circle" title={selectedId?'Không tìm thấy nguyện vọng':'Chưa có nguyện vọng'} description={selectedId?'Lần gửi không tồn tại hoặc không còn thuộc phạm vi được phép xem.':'Mở Cơ hội thực tập để gửi nguyện vọng cho vị trí bạn muốn.'} />
         : <ul className="student-list">{groups.map(group => <PreferenceItem key={group.current.termId + ':' + group.current.opportunityId} group={group}
           opportunity={opportunities[group.current.opportunityId]} busy={busy} withdraw={withdraw} />)}</ul>}
     </section>
@@ -75,8 +79,13 @@ export function PreferencesPage() {
 function PreferenceItem({ group, opportunity, busy, withdraw }: {
   group: PreferenceGroup; opportunity: OpportunityRef | undefined; busy: boolean; withdraw: (preference: PreferenceView) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const { current, history } = group;
+  const routing=useViewRouting('student-invitations');
+  const [localOpen,setLocalOpen]=useState(false);
+  const open=routing?!!routing.route.detailId:localOpen;
+  const setOpen=()=>{if(routing)routing.go({...routing.route,detailId:open?undefined:group.current.preferenceId});else setLocalOpen(!open);};
+  const {current:latest,history}=group;
+  const current=routing?.route.detailId?[latest,...history].find(p=>p.preferenceId===routing.route.detailId) || latest:latest;
+  const historical=current.preferenceId!==latest.preferenceId;
   const title = opportunity === undefined ? 'Đang tải tên cơ hội…' : opportunity === 'missing' ? 'Cơ hội đã đóng hoặc không còn hiển thị'
     : opportunity === 'unavailable' ? 'Chưa tải được thông tin cơ hội' : opportunity.title;
   // Frame 477:11949 "Nguyện vọng đang gửi" cùng kiểu thẻ thư của tab Lời mời: logo chữ doanh nghiệp, tiêu đề + badge trạng thái,
@@ -88,11 +97,12 @@ function PreferenceItem({ group, opportunity, busy, withdraw }: {
         <p className={'student-status ' + current.status.toLowerCase()}>{preferenceLabels[current.status]}</p></div>
         {typeof opportunity === 'object' && <p className="student-company">{opportunity.enterpriseName}</p>}</div>
     </div>
+    {historical && <p className="student-list-meta">Đây là lần gửi trước. Trở về danh sách để xem lần gửi hiện tại.</p>}
     {current.message && <p className="student-field-box">Lời nhắn: {current.message}</p>}
     {current.status === 'REVIEWED' && <p className="student-list-meta">Nguyện vọng đã được xét nên không thể rút. Muốn đổi ý, hãy gửi nguyện vọng mới từ Cơ hội thực tập.</p>}
     <div className="button-row">
-      {current.status === 'SUBMITTED' && <button type="button" className="secondary student-danger-outline" disabled={busy} onClick={() => withdraw(current)}>Rút nguyện vọng</button>}
-      <button type="button" className="text-button student-detail-toggle" aria-expanded={open} onClick={() => setOpen(previous => !previous)}>{open ? 'Ẩn chi tiết' : 'Xem chi tiết'}<Icon name="chevron-down" size={15} /></button>
+      {current.status === 'SUBMITTED' && !historical && <button type="button" className="secondary student-danger-outline" disabled={busy} onClick={() => withdraw(current)}>Rút nguyện vọng</button>}
+      <button type="button" className="text-button student-detail-toggle" aria-expanded={open} onClick={setOpen}>{open ? 'Ẩn chi tiết' : 'Xem chi tiết'}<Icon name="chevron-down" size={15} /></button>
     </div>
     {open && <dl className="student-detail">
       <div><dt>Lần gửi</dt><dd>{current.intentVersion}</dd></div>
