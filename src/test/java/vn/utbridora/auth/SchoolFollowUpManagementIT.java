@@ -64,7 +64,7 @@ class SchoolFollowUpManagementIT {
         jdbc.update("INSERT INTO internship_task_assignments(id,task_id,case_id,student_user_id,state,version) VALUES (?,?,?,?,'IN_PROGRESS',2)",id(),task,caseId,student.id);
         jdbc.update("UPDATE school_delegations SET profile_read_fields_json=JSON_ARRAY('studentCode','majorCode') WHERE id=?",delegation);
         String roster=id(),code=jdbc.queryForObject("SELECT term_code FROM terms WHERE id=?",String.class,term);
-        jdbc.update("INSERT INTO student_rosters(id,school_org_id,student_code,user_id,full_name,email,major_code,term_code,created_at) VALUES (?,?,?,?,'Private Academic Name',?,'IT','STALE_LEGACY_CODE',UTC_TIMESTAMP(6))",roster,school,"SV-"+id(),student.id,student.email);
+        jdbc.update("INSERT INTO student_rosters(id,school_org_id,student_code,user_id,full_name,email,major_code,term_code,created_at) VALUES (?,?,?,?,'Private Academic Name',?,'IT','STALE_LEGACY_CODE',UTC_TIMESTAMP(6))",roster,school,"SV-"+id().substring(0,16),student.id,student.email);
         jdbc.update("INSERT INTO student_term_eligibilities(id,student_roster_id,term_code,user_id,school_org_id,term_id,school_approved,created_at) VALUES (?,?,?,?,?,?,false,UTC_TIMESTAMP(6))",id(),roster,code,student.id,school,term);
         String demand=id();cooperation=id();preference=id();
         jdbc.update("INSERT INTO demands(id,enterprise_org_id,school_org_id,term_id,state,validation_state,version,criteria_version,criteria_hash,data_json,created_at,updated_at) VALUES (?,?,?,?,'READY','VALID',1,1,REPEAT('a',64),JSON_OBJECT(),UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",demand,enterprise,school,term);
