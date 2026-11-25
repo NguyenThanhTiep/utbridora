@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { api, send, login, logout, whoAmI, ApiError, type Me, type Grant } from './api';
 import { Brand, EmptyState, Field, Icon, Notice, useAction, roleNames, permissionNames } from './components';
+import { MatchingStatistics } from './modules/matching/MatchingStatistics';
 import { AdminOverview, UserManagement, OrganizationManagement, AuditViewer } from './management';
 import { useAdminSpotlight } from './adminEffects';
 import { RotatingHeadline } from './auth/RotatingHeadline';
@@ -37,6 +38,7 @@ import { useOrganizationNames } from './modules/useOrganizationNames';
 import './auth/AuthEffects.css';
 
 const screens = [
+  { id: 'matching-statistics', title: 'Thống kê Matching', description: 'Tra cứu số lượt đối chiếu hoàn tất trong nhật ký hệ thống.', icon: 'activity', permission: 'audit:global:read' },
   { id: 'school-preferences', title: 'Rà soát nguyện vọng', description: 'Ghi nhận rà soát ý định sinh viên trong phạm vi ủy nhiệm.', icon: 'graduation', permission: null },
   { id: 'sent-mentor-invitations', title: 'Lời mời Mentor đã gửi', description: 'Tra cứu, gửi lại và thu hồi lời mời do HR cấp.', icon: 'mail', permission: null },
   { id: 'assignment-management', title: 'Phân công thực tập', description: 'Xác nhận Coordinator, phân công HR, bàn giao Mentor và thu hồi quyền theo phạm vi.', icon: 'shield', permission: null },
@@ -552,6 +554,7 @@ export default function App() {
               : screen === 'admin-overview' ? <AdminOverview permissions={permissions} navigate={navigate} />
               : screen === 'users' ? <UserManagement me={me} permissions={permissions} invite={() => { navigate('organizations'); setOrganizationForm('invite'); }} />
               : screen === 'organizations' ? <OrganizationManagement permissions={permissions} initialForm={organizationForm} />
+              : screen === 'matching-statistics' ? <MatchingStatistics key={me.userId} />
               : screen === 'audit' ? <AuditViewer permissions={permissions} />
               : screen === 'delegations' ? <SchoolDelegations key={me.userId} grants={grants} />
               : screen === 'school-preferences' ? <SchoolPreferenceReview key={me.userId} />

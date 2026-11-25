@@ -19,6 +19,7 @@ import { canLeaveDemand } from './navigation';
 import { useFocusedWorkflow, useWorkflowFocus } from './workflow/useFocusedWorkflow';
 import { SchoolVerificationView } from './workflow/SchoolVerificationView';
 import { SchoolCooperationList } from './workflow/SchoolCooperationList';
+import { CooperationSubmissionHistory } from './workflow/CooperationSubmissionHistory';
 import { SchoolCooperationSummary } from './workflow/SchoolCooperationSummary';
 import { useSchoolTermNames } from './workflow/useSchoolTermNames';
 import { useCooperationTitles } from './workflow/useCooperationTitles';
@@ -210,6 +211,8 @@ export function CooperationFlows({ org, school, demands = [], onLoaded, includeP
         detail={detail} schoolName={schoolNames[detail.demand.data.schoolOrgId]} busy={action.busy} close={() => {
           document.getElementById('enterprise-cooperation-open-' + detail.cooperation.cooperationId)?.focus(); setDetail(null);
         }} />}
+
+      {school && <CooperationSubmissionHistory key={org+':'+detail.cooperation.cooperationId+':'+detail.cooperation.version} org={org} cooperationId={detail.cooperation.cooperationId} disabled={action.busy} />}
 
       {school && detail.cooperation.state === 'SUBMITTED' && (
         <ReviewDecision
