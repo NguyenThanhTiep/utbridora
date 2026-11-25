@@ -16,7 +16,9 @@ import vn.utbridora.auth.modules.internship.infrastructure.WorkspaceAuthority.*;
 import static vn.utbridora.auth.operations.WorkflowValues.*;
 
 /** Read projections for the existing CP-AUTHZ1 commands. No new capability or role is granted here. */
-@Service @Transactional(readOnly=true)
+// Current authority uses SELECT ... FOR SHARE fences, as existing WorkspaceRuntime GETs do.
+// A normal transaction permits these locks on MySQL; these methods perform no business writes.
+@Service @Transactional
 public class AssignmentManagementReadService {
     public record ManagementScope(String id,String mode,String schoolOrgId,String enterpriseOrgId,String termId,String termCode,Instant validFrom,Instant validUntil,String contextId) {}
     public record ManagedAssignment(Assignment assignment,String displayName,boolean effective,boolean canRevoke) {}

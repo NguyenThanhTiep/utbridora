@@ -10,6 +10,8 @@ The UI reuses CP-AUTHZ1/CP-WS1 commands: `POST /t3/coordinators/confirm`, `POST 
 
 Every list uses C.0 `Page<T> = {content,page,size,totalElements,totalPages}`. `page` is 0–10000; `size` is 1–100, default 25. Stable ordering includes resource ID. Reads have `Cache-Control: private, no-store`. Input filters select a scope; they never authorize it.
 
+T3 authority reads and issuer-invitation reads run in ordinary transactions to permit the existing Core `FOR SHARE` revocation fences on MySQL, just like existing WorkspaceRuntime GETs. They perform no business writes. A JDBC read-only transaction must not be used around an authority path that acquires these locks.
+
 Base: `/api/v1/t3/assignment-management`.
 
 | GET path | Parameters | Projection / guard |

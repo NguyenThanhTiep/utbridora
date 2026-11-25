@@ -63,7 +63,7 @@ public class WorkspaceAssignmentService implements MentorScopePort {
             return insert(auth,request.userId(),"MENTOR",new Scope(hr.scope().schoolOrgId(),hr.scope().enterpriseOrgId(),hr.scope().termId(),group,null),hr.id(),null,request.validFrom(),request.validUntil(),request.decisionRef(),invite);
         },Assignment::id);
     }
-    @Override @Transactional(readOnly=true)
+    @Override @Transactional
     public InviteScope invitationManagementScope(Authentication auth,String enterprise,String term) {
         var hr=authority.selected(auth);
         if(!hr.kind().equals("HR") || !hr.scope().enterpriseOrgId().equals(uuid(enterprise)) || !hr.scope().termId().equals(uuid(term))

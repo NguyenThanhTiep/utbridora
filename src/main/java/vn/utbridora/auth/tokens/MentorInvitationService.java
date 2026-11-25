@@ -137,7 +137,7 @@ public class MentorInvitationService implements MentorActivationPort {
         var ids=jdbc.queryForList("SELECT id FROM mentor_invitation_refs WHERE user_id=? ORDER BY id",String.class,actor(auth));int from=Math.min(page*size,ids.size());
         return new vn.utbridora.auth.modules.cooperation.domain.DemandModels.Page<>(ids.subList(from,Math.min(from+size,ids.size())).stream().map(this::read).map(Stored::dto).toList(),page,size,ids.size(),(ids.size()+size-1)/size);
     }
-    @Transactional(readOnly=true)
+    @Transactional
     public vn.utbridora.auth.modules.cooperation.domain.DemandModels.Page<SentInvitation> sent(Authentication auth,String enterprise,String term,int page,int size) {
         page(page,size);var scope=workspace.invitationManagementScope(auth,uuid(enterprise),uuid(term));
         String where=" WHERE hr_user_id=? AND JSON_UNQUOTE(JSON_EXTRACT(scope_json,'$.enterpriseOrgId'))=? AND JSON_UNQUOTE(JSON_EXTRACT(scope_json,'$.schoolOrgId'))=? AND JSON_UNQUOTE(JSON_EXTRACT(scope_json,'$.termId'))=?";
@@ -147,7 +147,7 @@ public class MentorInvitationService implements MentorActivationPort {
         var rows=jdbc.query("SELECT * FROM mentor_invitation_refs"+where+" ORDER BY id LIMIT ? OFFSET ?",MentorInvitationService::stored,params.toArray());
         return new vn.utbridora.auth.modules.cooperation.domain.DemandModels.Page<>(rows.stream().map(s->new SentInvitation(s.dto(),s.email(),s.userId())).toList(),page,size,total,(int)((total+size-1)/size));
     }
-    @Transactional(readOnly=true)
+    @Transactional
     public SentInvitation sentDetail(Authentication auth,String enterprise,String term,String id) {
         var scope=workspace.invitationManagementScope(auth,uuid(enterprise),uuid(term));
         var s=jdbc.query("SELECT * FROM mentor_invitation_refs WHERE id=? AND hr_user_id=?",MentorInvitationService::stored,uuid(id),actor(auth))
