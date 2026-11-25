@@ -244,7 +244,7 @@ function AppShell() {
   useEffect(() => {
     const frame = requestAnimationFrame(() => heading.current?.focus({ preventScroll: true }));
     return () => cancelAnimationFrame(frame);
-  }, [route, me?.userId]);
+  }, [screen, portalPage, internshipSection, caseId, destination.detailId, me?.userId]);
   useEffect(()=>{setMobileOpen(false);setAccountOpen(false);},[route]);
   useEffect(() => {
     const media = window.matchMedia('(min-width: 901px)');

@@ -47,9 +47,11 @@ test('school menu and term keep the same URL scope after Reload and Back',async(
 test('student SRS pages and capability/response tabs restore their destination',async({page})=>{
   await session(page,'STUDENT');await page.goto('/');await expect(page).toHaveURL(/\/tong-quan$/);
   await openWorkspacePage(page,'Năng lực');await expect(page).toHaveURL(/\/ho-so\/nang-luc\?tab=du-an$/);
-  await page.getByRole('tab',{name:/Chứng chỉ/}).click();await expect(page).toHaveURL(/\?tab=chung-chi$/);await page.reload();await expect(page.getByRole('tab',{name:/Chứng chỉ/})).toHaveAttribute('aria-selected','true');
+  await page.getByRole('tab',{name:/Chứng chỉ/}).click();await expect(page).toHaveURL(/\?tab=chung-chi$/);
+  await page.getByRole('tab',{name:/Chứng chỉ/}).press('ArrowRight');await expect(page.getByRole('tab',{name:'CV',exact:true})).toBeFocused();await expect(page).toHaveURL(/\?tab=cv$/);
+  await page.getByRole('tab',{name:'CV',exact:true}).press('ArrowLeft');await expect(page.getByRole('tab',{name:/Chứng chỉ/})).toBeFocused();await page.reload();await expect(page.getByRole('tab',{name:/Chứng chỉ/})).toHaveAttribute('aria-selected','true');
   await openWorkspacePage(page,'Lời mời & nguyện vọng');await expect(page).toHaveURL(/\/loi-moi$/);
-  await page.getByRole('tab',{name:/Nguyện vọng/}).click();await expect(page).toHaveURL(/\/nguyen-vong$/);await page.reload();await expect(page.getByRole('tab',{name:/Nguyện vọng/})).toHaveAttribute('aria-selected','true');
+  await page.getByRole('tab',{name:/Lời mời/}).press('ArrowRight');await expect(page.getByRole('tab',{name:/Nguyện vọng/})).toBeFocused();await expect(page).toHaveURL(/\/nguyen-vong$/);await page.reload();await expect(page.getByRole('tab',{name:/Nguyện vọng/})).toHaveAttribute('aria-selected','true');
   await page.goBack();await expect(page).toHaveURL(/\/loi-moi$/);await expect(page.getByRole('tab',{name:/Lời mời/})).toHaveAttribute('aria-selected','true');
 });
 test('deep link waits for login and resumes Case including followup without putting credentials in history',async({page})=>{
