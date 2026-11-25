@@ -5368,7 +5368,7 @@
     "src/main/java/vn/utbridora/auth/security/DemandSecurityErrors.java": "7d91ff3ff07df57dadbb1047ddc6599dbc9bdb9fc96f4dbd3fe84fb5ed8eabc2",
     "src/main/java/vn/utbridora/auth/security/OrganizationAccess.java": "c04b8ae3357b17e2c24a34e1f17d194cd79178110cfa17fb1252299d2b7722d0",
     "src/main/java/vn/utbridora/auth/security/SecurityConfig.java": "6177f9738baa9bb604c62fc7d44014f85c50d79ee2df89c2eae5111341b74bed",
-    "src/main/java/vn/utbridora/auth/student/SchoolRosterVisibilityAdapter.java": "c1b2a2b47aa953e42f48b6137f6da93770c07cbee4809bc10ce60273460067fc",
+    "src/main/java/vn/utbridora/auth/student/SchoolRosterVisibilityAdapter.java": "68cf08faaa6a9ba08565c156e664c5e38c7e39b247247856184950af95b88cff",
     "src/main/java/vn/utbridora/auth/student/StudentEligibilityQueryService.java": "de74551cd0a993394948127fb635e89bc0c396c86ad4c3dcfa521a60288f8407",
     "src/main/java/vn/utbridora/auth/student/StudentRosterController.java": "cea4fad70eef85fcb9ee88d449f99bfa5e8fca9d69a3f93c80ea49c99d6778d5",
     "src/main/java/vn/utbridora/auth/student/StudentRosterQueryService.java": "6f01182f174116e9f121f587fa428576ee72cd3cb3fc7b4fc5ac2f700457309a",

@@ -27,7 +27,8 @@ public class SchoolRosterVisibilityAdapter {
                 +"JOIN student_term_eligibilities e ON e.student_roster_id=r.id AND e.user_id=r.user_id AND e.school_org_id=r.school_org_id "
                 +"JOIN terms t ON t.id=e.term_id AND t.school_org_id=e.school_org_id AND t.status='ACTIVE' "
                 +"JOIN users u ON u.id=r.user_id AND u.status='ACTIVE' "
-                +"WHERE r.school_org_id=? AND e.term_id=? AND EXISTS(SELECT 1 FROM memberships m WHERE m.user_id=r.user_id AND m.organization_id=r.school_org_id AND m.role='STUDENT' AND m.active=true) "
+                +"JOIN memberships m ON m.user_id=r.user_id AND m.organization_id=r.school_org_id AND m.role='STUDENT' AND m.active=true "
+                +"WHERE r.school_org_id=? AND e.term_id=? "
                 +"ORDER BY r.id FOR SHARE",(r,n)->new StudentRosterDto(r.getString("id"),school,
                     fields.contains("studentCode")?r.getString("student_code"):null,r.getString("user_id"),
                     fields.contains("displayName")?r.getString("full_name"):null,
