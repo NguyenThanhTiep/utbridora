@@ -262,7 +262,7 @@ for (const provider of ['missing', 'denied', 'ready']) test(`school handoff load
   await page.getByRole('button', { name: 'Chi tiết bàn giao', exact: true }).click();await page.getByRole('button', { name: 'Tải đánh giá từ T3', exact: true }).click();
   if (provider === 'ready') {await expect(page.getByText('Đã công bố · Lần 1 · Điểm: 88/100')).toBeVisible();await expect(page.getByText(/Điểm: 99/)).toHaveCount(0);}
   else await expect(page.getByText(provider === 'missing' ? /Đang chờ T3 cung cấp/ : /Bạn chưa được cấp quyền xem đánh giá/)).toBeVisible();
-  await expect(page.getByText(/Đang chờ T1 cung cấp API/)).toBeVisible();
+  await expect(page.getByText(/Chưa có API audit dành cho trường/)).toBeVisible();
   expect(calls.some(call => call.includes('/admin/audit-logs'))).toBeFalsy();expect(calls.every(call => call.startsWith('GET '))).toBeTruthy();
 });
 

@@ -389,6 +389,7 @@ function ImportSession({
   useEffect(() => {
     if (expired) return;
     const controller = new AbortController();
+    setExistingRoster([]);
     void api<JobPage>(`${base}?` + new URLSearchParams({ termId: term, page: '0', size: '6' }), { signal: controller.signal })
       .then(data => {
         if (!controller.signal.aborted && Array.isArray(data?.content)) setRecentJobs(data.content);
@@ -406,7 +407,7 @@ function ImportSession({
       .then(items => {
         if (!controller.signal.aborted && Array.isArray(items)) setExistingRoster(items);
       })
-      .catch(() => { /* Existing roster table stays hidden when read delegation is not assigned. */ });
+      .catch(() => { if (!controller.signal.aborted) setExistingRoster([]); });
     return () => controller.abort();
   }, [org, term, termCode, revision, expired, onPrimaryMajor]);
 
