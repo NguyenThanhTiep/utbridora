@@ -67,7 +67,8 @@ test('T3-12 real four-role rubric submit, triple gate, revision, publication and
       await mentor.page.setViewportSize({width,height:960});
       expect(await mentor.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
       await mentor.page.evaluate(async()=>{document.documentElement.style.scrollBehavior='auto';window.scrollTo(0,0);await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));});
-      if(width===1440)expect((await mentor.page.locator('#main-navigation').boundingBox())!.y).toBe(0);
+      // Sticky layout may round to a fractional CSS pixel; it must remain at the viewport top.
+      if(width===1440)await expect.poll(async()=>Math.abs((await mentor.page.locator('#main-navigation').boundingBox())?.y ?? Infinity)).toBeLessThan(1);
       if(width===1440)await mentor.page.getByRole('region',{name:'Nội dung đánh giá',exact:true}).scrollIntoViewIfNeeded();
       await mentor.page.screenshot({path:`../target/t3-uiux-rubric-${width}.png`,fullPage:width!==1440,animations:'disabled'});
     }

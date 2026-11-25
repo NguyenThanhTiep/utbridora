@@ -81,7 +81,8 @@ test('T3-09 real backend: student URL v1, Mentor revision, URL v2, ACCEPT, comme
         await mentor.page.keyboard.press('Escape');await expect(menu).toBeFocused();await expect(menu).toHaveAttribute('aria-expanded','false');
       }
       await mentor.page.evaluate(async()=>{document.documentElement.style.scrollBehavior='auto';window.scrollTo(0,0);await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));});
-      if(width===1440)expect((await mentor.page.locator('#main-navigation').boundingBox())!.y).toBe(0);
+      // Sticky layout may round to a fractional CSS pixel; it must remain at the viewport top.
+      if(width===1440)await expect.poll(async()=>Math.abs((await mentor.page.locator('#main-navigation').boundingBox())?.y ?? Infinity)).toBeLessThan(1);
       await mentor.page.screenshot({path:`../target/t3-uiux-shell-${width}.png`,fullPage:width!==1440,animations:'disabled'});
     }
     await mentor.page.setViewportSize({width:1440,height:960});
