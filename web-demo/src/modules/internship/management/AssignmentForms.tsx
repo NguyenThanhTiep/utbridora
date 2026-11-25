@@ -22,7 +22,10 @@ export function GrantAssignment({ scope, enterprise, query, command, changed }: 
   const busy = command.busy || command.pending;
   const start = Date.parse(from), end = Date.parse(until);
   const periodValid = Number.isFinite(start) && Number.isFinite(end) && start < end && start >= Date.parse(scope.validFrom) && end <= Date.parse(scope.validUntil);
-  const valid = !!target && !!decision.trim() && periodValid && (!limited || !!groupId);
+  const valid = !!target && !!decision.trim() && periodValid && !members.loading && !members.error
+    && !!members.data?.content.some(m => m.userId === target.userId)
+    && (!limited || !!groups.data?.content.some(g => g.groupId === groupId) && !groups.loading && !groups.error
+      && (!caseId || !!cases.data?.content.some(c => c.caseId === caseId) && !cases.loading && !cases.error));
   return <section className="panel stack"><h2>{coordinator ? 'Xác nhận Coordinator' : 'Cấp phân công HR'}</h2>
     <p>{coordinator ? 'Người nhận phải là thành viên doanh nghiệp đã được xác minh và được trường chấp thuận.' : 'Người nhận và thời hạn phải thuộc phạm vi Coordinator đang được xác nhận.'}</p>
     <form className="stack" onSubmit={e => {
@@ -66,6 +69,7 @@ export function MentorHandover({ scope, query, command, changed }: Omit<FormProp
   const cases = useManagementRead<WorkspacePage<CaseOption>>(managementBase + '/cases?' + query + '&page=' + casePage, context, revision);
   const mentors = useManagementRead<WorkspacePage<Member>>(selected ? managementBase + '/cases/' + selected.caseId + '/mentors?' + query + '&page=' + mentorPage : null, context, revision);
   const busy = command.busy || command.pending;
+  const validMentor = !!mentor && !mentors.loading && !mentors.error && !!mentors.data?.content.some(m => m.userId === mentor);
   return <section className="panel stack"><h2>Bàn giao Mentor</h2><p>Mentor mới phải đã chấp thuận lời mời và còn phân công đúng nhóm/Case. Bàn giao cho phép tiếp nhận quyền hướng dẫn các nhiệm vụ thuộc nhóm cũ; không cấp quyền sửa sản phẩm cũ.</p>
     <form onSubmit={e => { e.preventDefault(); if (!selected || !mentor || !/^[A-Z0-9_]{3,64}$/.test(reason)) return;
       command.run('/t3/cases/' + selected.caseId + '/mentor-handover', { caseId: selected.caseId, newMentorUserId: mentor, expectedCaseVersion: selected.version, reasonCode: reason }, () => {
@@ -79,7 +83,7 @@ export function MentorHandover({ scope, query, command, changed }: Omit<FormProp
         <ManagementPager data={mentors.data} disabled={busy || mentors.loading} change={p => { setMentor(''); setMentorPage(p); }} />
         <p className="muted">Phiên bản hồ sơ: {selected.version}. Nếu có thay đổi, tải lại danh sách rồi chọn lại.</p></>}
       <label>Mã lý do bàn giao<input value={reason} minLength={3} maxLength={64} pattern="[A-Z0-9_]{3,64}" onChange={e => setReason(e.target.value.toUpperCase())} required /></label>
-      <button disabled={!selected || !mentor || !/^[A-Z0-9_]{3,64}$/.test(reason)}>Xác nhận bàn giao Mentor</button>
+      <button disabled={!selected || !validMentor || !/^[A-Z0-9_]{3,64}$/.test(reason)}>Xác nhận bàn giao Mentor</button>
       <button className="secondary" type="button" onClick={() => { setSelected(null); setMentor(''); setRevision(n => n + 1); }}>Tải lại hồ sơ và Mentor</button>
     </fieldset></form>
   </section>;

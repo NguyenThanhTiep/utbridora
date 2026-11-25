@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ApiError } from '../../../api';
 import { workflowError, workflowRead } from '../workflow-api';
 import type { ContextAssignment, WorkspacePage } from '../types';
 
@@ -10,17 +11,17 @@ export type ManagedAssignment = { assignment: ContextAssignment; displayName: st
 export type GroupOption = { groupId: string; code: string; cohortCode: string };
 export type CaseOption = { caseId: string; groupId: string; groupCode: string; state: string; version: number };
 export function useManagementRead<T>(path: string | null, contextId?: string, revision = 0) {
-  const [state, setState] = useState<{ path: string | null; contextId?: string; revision: number; data?: T; error: string; loading: boolean }>(
+  const [state, setState] = useState<{ path: string | null; contextId?: string; revision: number; data?: T; error: string; status?: number; loading: boolean }>(
     { path: null, revision: -1, error: '', loading: false });
   useEffect(() => {
     const c = new AbortController();
     setState({ path, contextId, revision, error: '', loading: !!path });
     if (path) void workflowRead<T>(path, contextId, c.signal)
       .then(data => { if (!c.signal.aborted) setState({ path, contextId, revision, data, error: '', loading: false }); })
-      .catch(error => { if (!c.signal.aborted) setState({ path, contextId, revision, error: workflowError(error), loading: false }); });
+      .catch(error => { if (!c.signal.aborted) setState({ path, contextId, revision, error: workflowError(error), status: error instanceof ApiError ? error.status : undefined, loading: false }); });
     return () => c.abort();
   }, [path, contextId, revision]);
-  return state.path === path && state.contextId === contextId && state.revision === revision ? state : { data: undefined, error: '', loading: !!path };
+  return state.path === path && state.contextId === contextId && state.revision === revision ? state : { data: undefined, error: '', status: undefined, loading: !!path };
 }
 export function ManagementPager<T>({ data, disabled, change }: { data?: WorkspacePage<T>; disabled: boolean; change: (page: number) => void }) {
   return data && <div className="assignment-pager" aria-label="Phân trang">

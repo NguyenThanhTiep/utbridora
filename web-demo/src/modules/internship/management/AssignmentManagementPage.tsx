@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import { ApiError } from '../../../api';
 import { EmptyState, LoadingState, Notice } from '../../../components';
 import { useOrganizationNames } from '../../useOrganizationNames';
 import type { WorkspacePage } from '../types';
 import { useWorkflowCommand } from '../useWorkflowCommand';
+import { accessLost } from '../workflow-api';
 import { CommandFeedback, GrantAssignment, MentorHandover } from './AssignmentForms';
 import { dateLabel, ManagementPager, managementBase, shortId, useManagementRead, type ManagedAssignment, type ManagementScope } from './read';
 import './assignment-management.css';
@@ -50,10 +52,11 @@ function ScopeManagement({ scope, enterprise, canGrant, lock, reset }: { scope: 
   const [selected, setSelected] = useState(''), [reason, setReason] = useState(''), [confirm, setConfirm] = useState(false);
   const context = scope.contextId || undefined;
   const query = new URLSearchParams({ schoolOrgId: scope.schoolOrgId, enterpriseOrgId: enterprise, termId: scope.termId }).toString();
-  const command = useWorkflowCommand(context, reset);
+  const command = useWorkflowCommand(context, reset, error => accessLost(error) || error instanceof ApiError && error.status === 404);
   const busy = command.busy || command.pending;
   useEffect(() => { lock(busy); return () => lock(false); }, [busy, lock]);
   const rows = useManagementRead<WorkspacePage<ManagedAssignment>>(managementBase + '/assignments?' + query + '&includeInactive=' + inactive + '&page=' + page, context, revision);
+  useEffect(() => { if (rows.status === 403 || rows.status === 404) reset(); }, [rows.status, reset]);
   const detail = useManagementRead<ManagedAssignment>(selected ? managementBase + '/assignments/' + selected + '?' + query : null, context, revision);
   const changed = (text: string) => { setMessage(text); setSelected(''); setConfirm(false); setReason(''); setRevision(n => n + 1); };
   const child = scope.mode === 'SCHOOL' ? 'Coordinator' : scope.mode === 'COORDINATOR' ? 'HR' : 'Mentor';
