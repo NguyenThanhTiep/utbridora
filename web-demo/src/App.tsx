@@ -10,6 +10,8 @@ import { CaseEntry } from './modules/internship/pages/CaseEntry';
 import { EvaluationsPage } from './modules/internship/pages/EvaluationsPage';
 import { SchoolCaseLookup } from './modules/internship/pages/SchoolCaseLookup';
 import { OperationsPage } from './modules/internship/pages/OperationsPage';
+import { SchoolPreferenceReview } from './modules/internship/management/SchoolPreferenceReview';
+import { SentMentorInvitations } from './modules/internship/management/SentMentorInvitations';
 import { AssignmentManagementPage } from './modules/internship/management/AssignmentManagementPage';
 import { canDiscoverWorkspace } from './modules/internship/access';
 
@@ -35,6 +37,8 @@ import { useOrganizationNames } from './modules/useOrganizationNames';
 import './auth/AuthEffects.css';
 
 const screens = [
+  { id: 'school-preferences', title: 'Rà soát nguyện vọng', description: 'Ghi nhận rà soát ý định sinh viên trong phạm vi ủy nhiệm.', icon: 'graduation', permission: null },
+  { id: 'sent-mentor-invitations', title: 'Lời mời Mentor đã gửi', description: 'Tra cứu, gửi lại và thu hồi lời mời do HR cấp.', icon: 'mail', permission: null },
   { id: 'assignment-management', title: 'Phân công thực tập', description: 'Xác nhận Coordinator, phân công HR, bàn giao Mentor và thu hồi quyền theo phạm vi.', icon: 'shield', permission: null },
   { id: 'evaluations', title: 'Đánh giá thực tập', description: 'Chấm rubric, công bố và xem kết quả theo quyền được phân công.', icon: 'graduation', permission: null },
   { id: 'internship-operations', title: 'Quản lý thực tập', description: 'Tiến độ, phối hợp và tổng kết thực tập theo phạm vi.', icon: 'briefcase', permission: null },
@@ -69,7 +73,7 @@ const internshipSections: { id: HrSection; label: string; icon: string }[] = [
   { id: 'groups', label: 'Nhóm thực tập', icon: 'users' },
   { id: 'mentors', label: 'Người hướng dẫn', icon: 'user' }
 ];
-const utilityScreens = ['account', 'mentor-invitations', 'internship', 'internship-operations', 'evaluations', 'school-internship-cases', 'demands', 'school', 'taxonomy', 'assignment-management'];
+const utilityScreens = ['school-preferences', 'sent-mentor-invitations', 'account', 'mentor-invitations', 'internship', 'internship-operations', 'evaluations', 'school-internship-cases', 'demands', 'school', 'taxonomy', 'assignment-management'];
 function initials(name: string) {
   const words = name.replace(/\([^)]*\)/g, ' ').trim().split(/\s+/).filter(w => /[\p{L}\p{N}]/u.test(w));
   return (words.length > 1 ? words[0].charAt(0) + words[words.length - 1].charAt(0) : words[0]?.slice(0, 2) || 'UB').toUpperCase();
@@ -131,6 +135,8 @@ export default function App() {
   const schoolCaseAccess = grants.some(g => g.role === 'SCHOOL_STAFF' && !!g.organizationId && g.permissions.includes('t3:workspace:read'));
   const nestedEvaluations = enterpriseInternship || schoolGradeAccess;
   const menus = screens.filter(item => item.id === 'admin-overview' ? isAdmin : item.id === 'internship-case' ? !!caseId
+    : item.id === 'school-preferences' ? grants.some(g => g.role === 'SCHOOL_STAFF' && !!g.organizationId && g.permissions.includes('student:preference:school:review'))
+    : item.id === 'sent-mentor-invitations' ? grants.some(g => g.role === 'ENTERPRISE' && !!g.organizationId && g.permissions.includes('t3:mentor:invite'))
     : item.id === 'assignment-management' ? grants.some(g => !!g.organizationId && (g.role === 'SCHOOL_STAFF' && g.permissions.includes('t3:coordinator:confirm') || g.role === 'ENTERPRISE' && (g.permissions.includes('t3:hr:manage') || g.permissions.includes('t3:mentors:manage'))))
     : item.id === 'school-internship-cases' ? schoolCaseAccess
     : item.id === 'internship' ? enterpriseInternship
@@ -155,7 +161,7 @@ export default function App() {
   const hrMentorKicker = canHr && !canMentor ? 'QUẢN LÝ NHÂN SỰ (HR)'
     : canMentor && !canHr ? 'NGƯỜI HƯỚNG DẪN (MENTOR)' : 'ĐIỀU PHỐI THỰC TẬP';
   const portalScreen = screen === 'demands' || screen === 'school';
-  const nativeInternship = ['internship', 'internship-case', 'school-internship-cases', 'internship-operations', 'evaluations', 'mentor-invitations', 'assignment-management'].includes(screen);
+  const nativeInternship = ['school-preferences', 'sent-mentor-invitations', 'internship', 'internship-case', 'school-internship-cases', 'internship-operations', 'evaluations', 'mentor-invitations', 'assignment-management'].includes(screen);
   const portalSide = screen === 'demands' ? 'enterprise' : screen === 'school' ? 'school' : rolePortalSide;
   const adminShell = isAdmin && !portalSide;
   const studentShell = !adminShell && !t5Shell && menus.some(item => item.group === 'student');
@@ -548,6 +554,8 @@ export default function App() {
               : screen === 'organizations' ? <OrganizationManagement permissions={permissions} initialForm={organizationForm} />
               : screen === 'audit' ? <AuditViewer permissions={permissions} />
               : screen === 'delegations' ? <SchoolDelegations key={me.userId} grants={grants} />
+              : screen === 'school-preferences' ? <SchoolPreferenceReview key={me.userId} />
+              : screen === 'sent-mentor-invitations' ? <SentMentorInvitations key={me.userId} me={me} grants={grants} />
               : screen === 'assignment-management' ? <AssignmentManagementPage key={me.userId} />
               : screen === 'internship-case' ? <CaseEntry key={me.userId + caseId} caseId={caseId} me={me} grants={grants} />
               : screen === 'school-internship-cases' ? <SchoolCaseLookup key={me.userId} grants={grants} userId={me.userId} />

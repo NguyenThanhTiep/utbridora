@@ -1,51 +1,21 @@
-
 package vn.utbridora.auth.student;
 
 import java.util.List;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import vn.utbridora.auth.student.dto.StudentRosterDto;
-import vn.utbridora.auth.student.roster.StudentRoster;
-import vn.utbridora.auth.student.roster.StudentRosterRepository;
 
 @Service
 public class StudentRosterQueryService {
-
-    private final StudentRosterRepository rosterRepository;
-    private final StudentSchoolAccessGuard accessGuard;
-
-    public StudentRosterQueryService(
-            StudentRosterRepository rosterRepository,
-            StudentSchoolAccessGuard accessGuard
-    ) {
-        this.rosterRepository = rosterRepository;
-        this.accessGuard = accessGuard;
+    private final SchoolRosterVisibilityAdapter visibility;
+    private final StudentSchoolAccessGuard guard;
+    public StudentRosterQueryService(SchoolRosterVisibilityAdapter visibility,StudentSchoolAccessGuard guard) {
+        this.visibility=visibility;this.guard=guard;
     }
-
-    @Transactional(readOnly = true)
+    // Current authority and rows are held FOR SHARE through projection; MySQL needs a normal transaction.
+    @Transactional
     public List<StudentRosterDto> findBySchool(String schoolOrgId) {
-        accessGuard.requireSchoolStaff(schoolOrgId);
-
-        return rosterRepository.findBySchoolOrgId(schoolOrgId)
-                .stream()
-                .filter(roster->accessGuard.canReadUser(roster.userId,schoolOrgId))
-                .map(this::toDto)
-                .toList();
-    }
-
-    private StudentRosterDto toDto(StudentRoster roster) {
-        return new StudentRosterDto(
-                roster.id,
-                roster.schoolOrgId,
-                roster.studentCode,
-                roster.userId,
-                roster.fullName,
-                roster.email,
-                roster.majorCode,
-                roster.termCode,
-                roster.createdAt
-        );
+        guard.requireSchoolStaff(schoolOrgId);
+        return visibility.read(schoolOrgId);
     }
 }

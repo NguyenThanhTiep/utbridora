@@ -284,7 +284,7 @@ async function openSchoolFollowUp(page: Page, evaluations: unknown[]) {
   return page.getByRole('region', { name: 'Theo dõi đánh giá và lịch sử', exact: true });
 }
 
-for (const mode of ['SUMMARY_ONLY', 'DETAILED']) test(`school post-handoff panels show scoped ${mode} results without enabling publication or closure`, async ({ page }) => {
+for (const mode of ['SUMMARY_ONLY', 'DETAILED']) test(`school post-handoff ignores legacy ${mode} policy hints and links the scoped T3 operations`, async ({ page }) => {
   const calls: string[] = [];page.on('request', request => {if (request.url().includes('/api/v1/')) calls.push(request.method() + ' ' + request.url());});
   const panel = await openSchoolFollowUp(page, [{ evaluationId: 'summary-1', placementId: placement.placementId, publicationStatus: 'PUBLISHED', summaryScore: 86,
     visibilityMode: mode, comments: 'Nhận xét được cung cấp từ dịch vụ đánh giá.', publishedAt: null }]);
@@ -294,15 +294,13 @@ for (const mode of ['SUMMARY_ONLY', 'DETAILED']) test(`school post-handoff panel
   await expect(panel.getByText('Đã công bố · Điểm: 86/100', { exact: true })).toBeVisible();
   await expect(panel.getByText('Nhận xét được cung cấp từ dịch vụ đánh giá.', { exact: true })).toBeVisible();
   const policy = panel.getByRole('region', { name: 'Chính sách hiển thị điểm nhà trường', exact: true });
-  const badge = policy.locator('.t5-card-heading > .t5-badge');
-  await expect(badge).toHaveText(mode === 'SUMMARY_ONLY' ? 'Chỉ xem điểm tổng kết' : 'Xem chi tiết tiêu chí & nhận xét');
-  await expect(badge).toHaveCSS('background-color', mode === 'SUMMARY_ONLY' ? 'rgb(240, 234, 250)' : 'rgb(229, 246, 237)');
+  await expect(policy.getByRole('link', { name: 'Mở công bố điểm và chính sách T3', exact: true })).toHaveAttribute('href', '/workspace/cases/' + reviewCaseId + '?followup=policy');
+  await expect(policy).not.toContainText(mode === 'SUMMARY_ONLY' ? 'Chỉ xem điểm tổng kết' : 'Xem chi tiết tiêu chí & nhận xét');
   await expect(panel.locator('.t5-detail-card').first()).toHaveCSS('background-color', 'rgb(255, 255, 255)');
   await expect(panel.locator('.t5-detail-card').first()).toHaveCSS('color', 'rgb(20, 47, 64)');
   await expect(panel.locator('.t5-detail-card').first()).toHaveCSS('border-top-color', 'rgb(227, 234, 242)');
-  await expect(panel.getByText('Mức độ hỗ trợ mentor', { exact: true })).toBeVisible();
-  await expect(panel.getByText(/Chờ kết nối API hậu kiểm đối tác/)).toBeVisible();
-  await expect(panel.getByText(/Chờ tích hợp API quyết định kết thúc hồ sơ/)).toBeVisible();
+  await expect(panel.getByRole('link', { name: 'Mở chất lượng doanh nghiệp và phối hợp T3', exact: true })).toHaveAttribute('href', '/workspace/cases/' + reviewCaseId + '?followup=quality');
+  await expect(panel.getByRole('link', { name: 'Mở tổng kết và đóng Case T3', exact: true })).toHaveAttribute('href', '/workspace/cases/' + reviewCaseId + '?followup=close');
   await expect(panel.getByRole('button', { name: /Công bố điểm|Đóng hồ sơ|Chấm dứt sớm/ })).toHaveCount(0);
   expect(calls.every(call => call.startsWith('GET '))).toBeTruthy();expect(calls.some(call => call.includes('/admin/audit-logs'))).toBeFalsy();
   if (mode === 'SUMMARY_ONLY') {
@@ -316,7 +314,7 @@ test('school post-handoff remains unconfirmed without evaluations or visibility 
   const panel = await openSchoolFollowUp(page, []);
   await panel.getByRole('button', { name: 'Tải đánh giá từ T3', exact: true }).click();
   await expect(panel.getByText('Chưa có đánh giá đã công bố từ T3 cho hồ sơ thực tập này.', { exact: true })).toBeVisible();
-  await expect(panel.getByText('Chưa có chính sách từ API', { exact: true })).toBeVisible();
+  await expect(panel.getByRole('link', { name: 'Mở công bố điểm và chính sách T3', exact: true })).toBeVisible();
   await expect(panel.getByLabel('Điều kiện công bố điểm').getByText('Chưa xác nhận', { exact: true })).toBeVisible();
   await expect(panel.getByText(/Điểm: \d/)).toHaveCount(0);
 });

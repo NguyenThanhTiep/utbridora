@@ -1,0 +1,32 @@
+import { test, expect, type Page } from '@playwright/test';
+import { openWorkspacePage } from './helpers/workspace';
+
+test('school reviews intent, HR manages persisted invitations and school follows up the exact Case', async ({ browser }) => {
+  test.skip(!process.env.E2E_SCHOOL_FOLLOWUP, 'Run through SchoolFollowUpManagementIT with isolated MySQL');
+  test.setTimeout(180000);
+  const cfg=JSON.parse(process.env.E2E_SCHOOL_FOLLOWUP!) as Record<string,string>;
+  const signIn=async (page:Page,email:string)=>{await page.getByLabel('Email',{exact:true}).fill(email);await page.getByLabel('Mật khẩu',{exact:true}).fill(cfg.password);await page.getByRole('button',{name:'Đăng nhập',exact:true}).click();await expect(page.locator('.workspace')).toBeVisible();};
+  const schoolContext=await browser.newContext({reducedMotion:'reduce'}), school=await schoolContext.newPage();await school.goto('/');await signIn(school,cfg.staffEmail);
+  await openWorkspacePage(school,'Rà soát nguyện vọng');await school.getByLabel('Phạm vi rà soát nguyện vọng',{exact:true}).selectOption(cfg.school+':'+cfg.term);
+  await school.getByRole('button',{name:'Xem nguyện vọng',exact:true}).click();await expect(school.getByRole('region',{name:'Chi tiết nguyện vọng'})).toContainText('Synthetic phase two intent');
+  await school.getByLabel('Mã lý do rà soát',{exact:true}).fill('INTENT_REVIEWED');await expect(school.getByRole('button',{name:'Ghi nhận đã rà soát',exact:true})).toBeDisabled();
+  await school.getByRole('checkbox',{name:'Tôi xác nhận đã rà soát ý định này.',exact:true}).check();await school.getByRole('button',{name:'Ghi nhận đã rà soát',exact:true}).click();
+  await expect(school.getByText('Đã ghi nhận rà soát nguyện vọng.',{exact:true})).toBeVisible();await school.getByLabel('Trạng thái nguyện vọng',{exact:true}).selectOption('REVIEWED');await expect(school.getByRole('row').filter({hasText:'Đã rà soát'})).toHaveCount(1);
+  const hrContext=await browser.newContext({reducedMotion:'reduce'}), hr=await hrContext.newPage();await hr.goto('/');await signIn(hr,cfg.hrEmail);
+  await openWorkspacePage(hr,'Lời mời Mentor đã gửi');await hr.getByLabel('Phân công HR quản lý lời mời',{exact:true}).selectOption(cfg.hrGrant);
+  await hr.getByLabel('Email Mentor được mời',{exact:true}).fill(cfg.mentorEmail);await hr.getByLabel('Căn cứ mời Mentor',{exact:true}).fill('BROWSER-INVITATION');await hr.getByRole('checkbox',{name:/G-current/}).check();await hr.getByRole('button',{name:'Gửi lời mời Mentor',exact:true}).click();
+  await expect(hr.getByText('Đã gửi lời mời. Mentor cần tự chấp thuận để nhận quyền.',{exact:true})).toBeVisible();
+  await hr.reload();await openWorkspacePage(hr,'Lời mời Mentor đã gửi');await hr.getByLabel('Phân công HR quản lý lời mời',{exact:true}).selectOption(cfg.hrGrant);
+  await hr.getByRole('row').filter({hasText:cfg.mentorEmail}).getByRole('button',{name:'Chi tiết lời mời',exact:true}).click();await hr.getByLabel('Mã lý do thu hồi lời mời',{exact:true}).fill('MENTOR_CHANGED');
+  await hr.getByRole('checkbox',{name:'Tôi xác nhận thu hồi lời mời và các quyền phụ thuộc.',exact:true}).check();await hr.getByRole('button',{name:'Thu hồi lời mời đã chọn',exact:true}).click();await expect(hr.getByText('Đã thu hồi lời mời theo kết quả máy chủ.',{exact:true})).toBeVisible();
+  await hr.setViewportSize({width:390,height:844});await expect.poll(()=>hr.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await school.goto('/workspace/cases/'+cfg.caseId+'?followup=policy');
+  const policy=school.getByRole('region',{name:'Chính sách nhà trường',exact:true});await expect(policy.getByText('Trạng thái đã lưu: Tắt · Version 0',{exact:true})).toBeVisible();
+  await policy.getByRole('checkbox',{name:'Cho phép sinh viên xem điểm',exact:true}).check();await policy.getByRole('button',{name:'Lưu quyền xem điểm',exact:true}).click();await expect(policy.getByText('Đã lưu quyền xem điểm.',{exact:true})).toBeVisible();
+  const quality=school.locator('.t3-enterprise-quality');await expect(quality.getByLabel('Mã doanh nghiệp được đánh giá',{exact:true})).toHaveValue(cfg.enterprise);await expect(quality.getByLabel('Mã doanh nghiệp được đánh giá',{exact:true})).toHaveAttribute('readonly','');
+  await quality.getByLabel('Rubric chất lượng',{exact:true}).selectOption(cfg.template+':1');await quality.getByRole('button',{name:'Lưu đánh giá doanh nghiệp',exact:true}).click();await expect(quality.getByRole('status')).toContainText('Đã lưu đánh giá doanh nghiệp');
+  const issues=school.locator('.t3-coordination-card');await issues.getByLabel('Nội dung vấn đề',{exact:true}).fill('Synthetic follow-up coordination');await issues.getByRole('button',{name:'Tạo yêu cầu phối hợp',exact:true}).click();await expect(issues.getByText('Synthetic follow-up coordination',{exact:true})).toBeVisible();
+  const close=school.locator('.t3-close-card');await close.getByLabel('Hình thức kết thúc',{exact:true}).selectOption('EARLY_TERMINATION');await close.getByLabel('Căn cứ quyết định đóng Case',{exact:true}).fill('BROWSER-CLOSURE');await close.getByLabel('Mã lý do đóng Case',{exact:true}).fill('EARLY_TERMINATION');await close.getByRole('button',{name:'Xác nhận đóng Case',exact:true}).click();await expect(school.getByText('Case đã ở trạng thái kết thúc. Lịch sử và các dữ liệu đã lưu được giữ nguyên.',{exact:true})).toBeVisible();
+  await expect(issues.getByRole('button',{name:'Tạo yêu cầu phối hợp',exact:true})).toHaveCount(0);await school.setViewportSize({width:390,height:844});await expect.poll(()=>school.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await school.screenshot({path:'../target/school-followup-terminal-mobile.png',fullPage:true});await schoolContext.close();await hrContext.close();
+});

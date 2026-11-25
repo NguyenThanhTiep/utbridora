@@ -62,8 +62,8 @@ function EnterpriseOperations({heading,me,grants,denied}:{heading:React.ReactNod
     {scope && <ScopeOperations key={assignment!.id+':'+assignment!.version} scope={scope} denied={denied}/>}</div>;
 }
 
-export function ScopeOperations({scope,denied,caseId}:{scope:OperationsScope;denied:()=>void;caseId?:string}) {
-  const [showEvaluations,setShowEvaluations]=useState(false),[evaluationDenied,setEvaluationDenied]=useState(false);
+export function ScopeOperations({scope,denied,caseId,initialEvaluations=false}:{scope:OperationsScope;denied:()=>void;caseId?:string;initialEvaluations?:boolean}) {
+  const [showEvaluations,setShowEvaluations]=useState(initialEvaluations),[evaluationDenied,setEvaluationDenied]=useState(false);
   return <div className="stack t3-scope-operations"><Dashboard scope={scope} denied={denied}/>
     <CaseOperations scope={scope} initialCaseId={caseId} onDenied={caseId ? denied : undefined}/>
     <div className="t3-operations-support">{scope.mode!=='school' && <OperationsCalendar scope={scope} denied={denied}/>}

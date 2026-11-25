@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { ApiError } from '../../api';
 import { accessLost, executeAttempt, newAttempt, uncertainOutcome, workflowError, type WorkflowAttempt } from './workflow-api';
 import { newIdempotencyKey } from '../student/api';
 
@@ -7,21 +8,23 @@ export function useWorkflowCommand(contextId: string | undefined, denied: () => 
   const lifecycle = useRef<AbortController | null>(null), active = useRef(false), saved = useRef<Pending | null>(null);
   const [busy, setBusy] = useState(false), [pending, setPending] = useState(false), [message, setMessage] = useState('');
   useEffect(() => { const c = new AbortController(); lifecycle.current = c; return () => { c.abort(); saved.current = null; }; }, []);
+  const [failureStatus, setFailureStatus] = useState<number>();
   const execute = async (item: Pending) => {
     const signal = lifecycle.current?.signal; if (!signal || signal.aborted || active.current) return;
-    active.current = true; setBusy(true); setMessage('');
+    active.current = true; setBusy(true); setMessage(''); setFailureStatus(undefined);
     try {
       const value = await executeAttempt(item.attempt, contextId, signal);
       if (signal.aborted) return;
       saved.current = null; setPending(false); item.success(value);
     } catch (error) {
       if (signal.aborted) return;
+      setFailureStatus(error instanceof ApiError ? error.status : undefined);
       if (lost(error)) { saved.current = null; denied(); return; }
       saved.current = uncertainOutcome(error) ? item : null;
       setPending(saved.current !== null); setMessage(workflowError(error));
     } finally { active.current = false; if (!signal.aborted) setBusy(false); }
   };
-  return { busy, pending, message, setMessage,
+  return { busy, pending, message, setMessage, failureStatus,
     run: <T,>(path: string, payload: unknown, success: (value: T) => void, method = 'POST') => {
       if (saved.current || active.current) return;
       const item = { attempt: newAttempt(path, method, payload), success: success as (value: unknown) => void };

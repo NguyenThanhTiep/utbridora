@@ -11,11 +11,11 @@ type MajorItem = { code: string; name: string; status: string };
 type ExistingRosterRow = {
   id: string;
   schoolOrgId: string;
-  studentCode: string;
+  studentCode: string | null;
   userId: string;
-  fullName: string;
-  email: string;
-  majorCode: string;
+  fullName: string | null;
+  email: string | null;
+  majorCode: string | null;
   termCode: string;
   createdAt: string;
 };
@@ -935,9 +935,9 @@ function ImportSession({
                   </thead>
                   <tbody>
                     {filteredExistingRoster.slice(0, 50).map(item => (
-                      <tr key={item.id}>
-                        <td><code>{item.studentCode}</code></td>
-                        <td>{item.fullName}<br /><small>{item.email}</small></td>
+                      <tr key={item.id + ':' + item.termCode}>
+                        <td><code>{item.studentCode || 'Không được cấp quyền xem'}</code></td>
+                        <td>{item.fullName || 'Không được cấp quyền xem'}<br /><small>{item.email || 'Không được cấp quyền xem'}</small></td>
                         <td><span className="t5-badge t5-badge-neutral">{item.majorCode}</span></td>
                         <td>{item.termCode}</td>
                         <td>{formatDateDMY(item.createdAt)}</td>

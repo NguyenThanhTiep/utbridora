@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { type Me, type Grant } from '../../../api';
 import { Notice } from '../../../components';
 import { InternshipWorkspace } from './InternshipWorkspace';
 import { readCase, type CaseRef } from '../cases';
+import { ScopeOperations } from './OperationsPage';
+import type { OperationsScope } from '../operations-types';
 import { CaseStatus } from './CaseStatus';
 
 /** Deep link remains a T3 read: the Placement link itself confers no case/task authority. */
@@ -17,6 +19,9 @@ export function CaseEntry({ caseId, me, grants }: { caseId: string; me: Me; gran
     }).catch(() => {if (!c.signal.aborted) setError('Không đọc được hồ sơ thực tập. Kiểm tra phân công và quyền truy cập hiện hành.');});
     return () => c.abort();
   }, [caseId, revision, me, grants]);
+  const schoolGrant = value && grants.find(g=>g.role==='SCHOOL_STAFF' && g.organizationId===value.schoolOrgId && g.permissions.includes('t3:workspace:read'));
+  const scope = useMemo<OperationsScope | null>(()=>value && schoolGrant ? {mode:'school',schoolId:value.schoolOrgId,enterpriseId:value.enterpriseOrgId,termId:value.termId,userId:me.userId,permissions:schoolGrant.permissions} : null,[value,schoolGrant,me.userId]);
+  const followup = new URLSearchParams(location.search).get('followup');
   const student = me.memberships.every(m => m.role === 'STUDENT');
   const refresh = <button className="secondary" onClick={() => setRevision(n => n + 1)}>Tải lại hồ sơ thực tập</button>;
   const status = value?.caseId === caseId && <CaseStatus value={value} />;
@@ -25,6 +30,7 @@ export function CaseEntry({ caseId, me, grants }: { caseId: string; me: Me; gran
       <><header className="t3-case-hero"><h2>Hồ sơ thực tập</h2>{status}{refresh}</header><Notice message={error} tone="error" /></>}
     {!value && !error && <p role="status">Đang kiểm tra quyền truy cập hồ sơ…</p>}
     {student && status}
-    </section>{value?.caseId === caseId && me.memberships.some(m => m.role === 'ENTERPRISE')
+    </section>{value?.caseId === caseId && scope && <ScopeOperations key={caseId+':'+revision} scope={scope} caseId={caseId} initialEvaluations={followup==='policy'} denied={()=>{setValue(null);setError('Quyền truy cập hồ sơ đã thay đổi. Hãy xác nhận lại quyền.');}} />}
+    {value?.caseId === caseId && !scope && me.memberships.some(m => m.role === 'ENTERPRISE')
       && <InternshipWorkspace me={me} grants={grants} initialCase={value} />}</div>;
 }

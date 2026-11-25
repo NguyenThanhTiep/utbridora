@@ -54,6 +54,6 @@ export function SchoolPlacementFollowUp({ org, termId, caseId, placementId, plac
       <ul className="t5-checklist" aria-label="Điều kiện công bố điểm"><li><span>Đánh giá do T3 cung cấp</span><span className={'t5-badge ' + (rows?.length ? 't5-badge-success' : 't5-badge-info')}>{rows?.length ? 'Đã có dữ liệu' : 'Chưa xác nhận'}</span></li>
         <li><span>Quyền và căn cứ công bố của trường</span><span className="t5-badge t5-badge-info">Máy chủ kiểm tra</span></li></ul>
       <p className="field-hint">Công bố kết quả cần thao tác có quyền và phiên bản hiện hành tại dịch vụ đánh giá. Màn hình này chỉ đọc kết quả.</p>
-    </section><SchoolFollowUpPanels evaluations={rows} placementState={placementState} /></div>
+    </section><SchoolFollowUpPanels evaluations={rows} placementState={placementState} caseId={caseId} /></div>
   </section>;
 }
