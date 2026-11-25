@@ -134,7 +134,7 @@ function ScopedPortal({ org, side, page, navigate, viewerId, organizationPicker,
     </>}
     {page === 'cooperations' && <>
       {!school && <Notice tone="error" message={data.demands.error} />}
-      <CooperationFlows key={'c:' + revision + ':' + termId + (focus?.key || '')} org={org} school={school} demands={data.demands.items} includeProgress={false} focusId={focus?.target.recordId} termId={termId} />
+      <CooperationFlows key={'c:' + revision + ':' + termId} org={org} school={school} demands={data.demands.items} includeProgress={false} focusId={focus?.target.recordId} termId={termId} />
     </>}
     {(page === 'proposals' || page === 'placements') && <>
       {!school && page === 'placements' && <div className="enterprise-info-banner" role="note"><Icon name="graduation" size={20} /><div>

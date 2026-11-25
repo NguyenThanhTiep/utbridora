@@ -44,6 +44,8 @@ test('preference review reloads version after conflict, retries exact uncertain 
   await expect(page.getByRole('button',{name:'Thử lại thao tác vừa gửi',exact:true})).toBeVisible();await expect(page.getByLabel('Phạm vi rà soát nguyện vọng',{exact:true})).toBeDisabled();await expect(page.getByLabel('Mã lý do rà soát',{exact:true})).toBeDisabled();
   await page.getByRole('button',{name:'Thử lại thao tác vừa gửi',exact:true}).click();await expect(page.getByText('Đã ghi nhận rà soát nguyện vọng.',{exact:true})).toBeVisible();
   expect(commands[1]).toEqual(commands[2]);expect(commands[0].key).not.toBe(commands[1].key);expect(JSON.parse(commands[1].body!)).toEqual({expectedVersion:2,reasonCode:'SCHOOL_REVIEWED'});
+  // Wait for the successful command's automatic refresh before simulating a later revocation.
+  await expect(page.getByRole('region',{name:'Chi tiết nguyện vọng'})).toContainText('1 / 3');
   lost=true;await page.getByRole('button',{name:'Tải phiên bản nguyện vọng hiện tại',exact:true}).click();await expect(page.getByText('Private synthetic intent',{exact:true})).toHaveCount(0);await expect(page.getByRole('region',{name:'Chi tiết nguyện vọng'})).toHaveCount(0);
 });
 

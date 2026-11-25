@@ -122,6 +122,7 @@ function AppShell() {
   const [grants, setGrants] = useState<Grant[]>([]);
   const [initializing, setInitializing] = useState(true);
   const [token, setToken] = useState(() => new URLSearchParams(location.hash.slice(1)).get('token') || '');
+  const mailAction=route.kind==='auth' && ['reset','activate'].includes(route.auth) && !!token;
   const [sessionMessage, setSessionMessage] = useState('');
   const [context, setContext] = useState('0');
   const [organizationForm, setOrganizationForm] = useState<'invite' | null>(null);
@@ -179,9 +180,10 @@ function AppShell() {
   const adminShell = isAdmin && !portalSide;
   const studentShell = !adminShell && !t5Shell && menus.some(item => item.group === 'student');
   const internshipMotion = nativeInternship && !studentShell && !adminShell;
-  const adminSurface = useAdminSpotlight(adminShell);
+  const workspaceReady=!!me && !initializing && (route.kind==='workspace' || route.kind==='not-found');
+  const adminSurface = useAdminSpotlight(adminShell && workspaceReady);
   const workspaceSurface = useSurfaceSpotlight<HTMLElement>(
-    (t5Shell && !portalScreen && !adminShell && !nativeInternship) || studentShell || internshipMotion,
+    workspaceReady && ((t5Shell && !portalScreen && !adminShell && !nativeInternship) || studentShell || internshipMotion),
     studentShell ? studentSpotlightTargets : internshipMotion ? internshipSpotlightTargets : workspaceFrames + ', .t3-report-row-btn',
     'portal',
   );
@@ -234,9 +236,9 @@ function AppShell() {
   useEffect(()=>{
     if(!me && route.kind==='workspace')requestedDestination.current=route;
     if(initializing)return;
-    if(route.kind==='home' || me && route.kind==='auth' && !token)
+    if(route.kind==='home' || me && route.kind==='auth' && !mailAction)
       router.go(me?defaultDestination(me,grants):{kind:'auth',auth:'login'},{replace:true,guard:false});
-  },[initializing,me,grants,route,token,router.go]);
+  },[initializing,me,grants,route,mailAction,router.go]);
   useEffect(()=>{
     if(screen==='internship' && internshipKind==='MENTOR' && internshipSection!=='overview')
       router.go(view('internship',{section:'overview'}),{replace:true,guard:false});
@@ -337,7 +339,7 @@ function AppShell() {
   };
   const navigateAuth = (next:string) => { if(['login','forgot','reset','activate'].includes(next) && router.go({kind:'auth',auth:next as 'login'|'forgot'|'reset'|'activate'})){setJustSignedOut(false);action.setMessage('');setSessionMessage('');} };
 
-  if (initializing || route.kind==='home' || me && route.kind==='auth' && !token) return <main className="startup"><Brand /><div className="startup-status" role="status"><span className="spinner" />Đang chuẩn bị không gian của bạn…</div></main>;
+  if (initializing || route.kind==='home' || me && route.kind==='auth' && !mailAction) return <main className="startup"><Brand /><div className="startup-status" role="status"><span className="spinner" />Đang chuẩn bị không gian của bạn…</div></main>;
   if(!me && route.kind==='not-found')return <main className="content"><section className="panel stack"><h1>Không tìm thấy trang</h1><p>Đường dẫn không tương ứng với một màn hình của hệ thống.</p><button onClick={()=>router.go({kind:'auth',auth:'login'})}>Đến trang đăng nhập</button></section></main>;
   if (!me) return <>
     {justSignedOut && <SessionFeedback variant="logout" title="Đã đăng xuất an toàn" subtitle="Phiên làm việc đã được đóng" />}
@@ -351,7 +353,7 @@ function AppShell() {
 
   // A mail link can be opened in a browser which is already signed in.
   // Keep its token in memory and provide an explicit session switch.
-  if (token && ['reset', 'activate'].includes(authScreen)) return <AuthLayout screen={authScreen}>
+  if (mailAction) return <AuthLayout screen={authScreen}>
     <span className="auth-form-icon"><Icon name="mail" size={26} /></span>
     <h2 className="auth-title">Tiếp tục với liên kết email</h2>
     <p className="auth-description">Bạn đang đăng nhập bằng tài khoản <strong>{me.email}</strong>. Đăng xuất trước khi sử dụng liên kết này.</p>

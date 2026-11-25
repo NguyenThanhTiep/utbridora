@@ -1,5 +1,5 @@
 import { useViewRouting } from '../../routing/BrowserRouting';
-﻿import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { api } from '../../api';
 import { EmptyState, Icon, Notice } from '../../components';
 import { formatDateDMY } from '../../ui/dateFormat';
@@ -54,9 +54,13 @@ export function CooperationFlows({ org, school, demands = [], onLoaded, includeP
     if (value.cooperation.cooperationId !== focusId || value.cooperation.demandId!==value.demand.demandId
       || (school?value.demand.data.schoolOrgId!==org:value.demand.enterpriseOrgId!==org)
       || termId && value.cooperation.termId!==termId) throw new Error('Unexpected cooperation');
-    setDetail(value);
+    setDetailError('');setDetail(value);
   }, () => setDetailError('Đề nghị đã thay đổi hoặc không còn trong phạm vi truy cập.'));
-  useWorkflowFocus(focusedRef, !!focusId && !loading, detail);
+  // Enterprise summary owns its heading focus. School deep links focus the dossier.
+  useWorkflowFocus(focusedRef, school && !!focusId && !loading, detail);
+  useLayoutEffect(()=>{
+    detailRequest.current?.abort();setOpeningId('');setDetailError('');setDetail(null);setComposing(false);
+  },[org,school,termId,focusId]);
 
   useEffect(() => {
     const update = () => {if(canLeaveDemand())changed();};
