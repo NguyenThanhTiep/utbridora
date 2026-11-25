@@ -13,18 +13,24 @@ const fixture = (name: string) => {
   if (!value) throw new Error('Missing test fixture: ' + name);
   return value;
 };
-async function signIn(page: Page, email: string) {
+// Tài khoản sinh viên vào thẳng Tổng quan (S01) sau đăng nhập; tài khoản khác vào Tài khoản của tôi.
+async function signIn(page: Page, email: string, landing = 'Tổng quan') {
   await page.goto('/');
   await page.getByLabel('Email', { exact: true }).fill(email);
   await page.getByLabel('Mật khẩu', { exact: true }).fill(fixture('E2E_PASSWORD'));
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Tài khoản của tôi', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: landing, exact: true })).toBeVisible();
 }
 async function navigate(page: Page, title: string) {
   const menu = page.getByRole('button', { name: 'Mở menu điều hướng', exact: true });
   if (await menu.isVisible() && await menu.getAttribute('aria-expanded') !== 'true') await menu.click();
   await page.getByRole('button', { name: title, exact: true }).click();
   await expect(page.getByRole('heading', { name: title, exact: true }).first()).toBeVisible();
+}
+// Hộp xác nhận của giao diện (src/confirm.tsx) thay cho window.confirm: bấm nút theo tên trong đúng hộp có tiêu đề đó.
+async function confirmDialog(page: Page, title: string, button: string) {
+  await page.getByRole('dialog', { name: title, exact: true }).getByRole('button', { name: button, exact: true }).click();
+  await expect(page.getByRole('dialog', { name: title, exact: true })).toHaveCount(0);
 }
 async function expectNoPageOverflow(page: Page) {
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
@@ -76,7 +82,7 @@ test('Sinh viên thấy nhóm Sinh viên, mở Tổng quan và Thông tin chung'
 });
 
 test('Quản trị viên không thấy nhóm Sinh viên', async ({ page }) => {
-  await signIn(page, fixture('E2E_ADMIN_EMAIL'));
+  await signIn(page, fixture('E2E_ADMIN_EMAIL'), 'Tài khoản của tôi');
   const nav = page.getByRole('navigation', { name: 'Điều hướng chính' });
   await expect(nav.getByRole('button', { name: 'Tài khoản & phân quyền', exact: true })).toBeVisible();
   await expect(nav.getByText('SINH VIÊN', { exact: true })).toHaveCount(0);
@@ -105,7 +111,7 @@ test('Các màn sinh viên vừa màn hình 320px và 390px', async ({ page }) =
 test('UX UI mock: không có grant STUDENT hợp lệ thì không hiện nhóm Sinh viên', async ({ page }) => {
   // Giả lập trường chưa VERIFIED: backend không trả grant STUDENT nào.
   await page.route('**/api/v1/auth/me/permissions', route => route.fulfill({ json: [] }));
-  await signIn(page, fixture('E2E_STUDENT_EMAIL'));
+  await signIn(page, fixture('E2E_STUDENT_EMAIL'), 'Tài khoản của tôi');
   const nav = page.getByRole('navigation', { name: 'Điều hướng chính' });
   await expect(nav.getByRole('button', { name: 'Tài khoản của tôi', exact: true })).toBeVisible();
   await expect(nav.getByText('SINH VIÊN', { exact: true })).toHaveCount(0);
@@ -166,8 +172,8 @@ test('UX UI mock: 409 giữ bản nháp và cho tải lại dữ liệu mới nh
   await expect(phone).toHaveValue('0901234567');
   await expect(save).toBeDisabled();
   latest = profileView(4, '0911111111');
-  page.once('dialog', dialog => dialog.accept());
   await page.getByRole('button', { name: 'Tải lại dữ liệu mới nhất', exact: true }).click();
+  await confirmDialog(page, 'Tải lại dữ liệu mới nhất?', 'Tải lại và bỏ thay đổi');
   await expect(phone).toHaveValue('0911111111');
   await expect(page.getByText('Hồ sơ đã thay đổi ở nơi khác', { exact: false })).toHaveCount(0);
   await phone.fill('0922222222');
@@ -381,12 +387,12 @@ test('UX UI mock: từ chối cần xác nhận; 409 INVITATION_EXPIRED báo rõ
   await signIn(page, fixture('E2E_STUDENT_EMAIL'));
   await navigate(page, 'Lời mời & nguyện vọng');
   const panel = invitationPanel(page, 'Thực tập Java thử nghiệm');
-  page.once('dialog', dialog => void dialog.dismiss());
   await panel.getByRole('button', { name: 'Từ chối', exact: true }).click();
+  await confirmDialog(page, 'Từ chối lời mời?', 'Quay lại');
   expect(bodies).toEqual([]);
   const before = listCalls;
-  page.once('dialog', dialog => void dialog.accept());
   await panel.getByRole('button', { name: 'Từ chối', exact: true }).click();
+  await confirmDialog(page, 'Từ chối lời mời?', 'Từ chối lời mời');
   await expect(page.getByText('Lời mời đã hết hạn phản hồi.', { exact: true })).toBeVisible();
   await expect.poll(() => listCalls).toBeGreaterThan(before);
   expect(bodies).toEqual([{ decision: 'DECLINE', expectedVersion: 1, reasonCode: 'STUDENT_DECLINED', reasonText: null }]);
@@ -452,14 +458,16 @@ test('UX UI mock: cơ hội lọc theo kỳ và ngành, xem chi tiết, gửi ng
     return route.fulfill({ status: 201, json: preferences[0] });
   });
   await signIn(page, fixture('E2E_STUDENT_EMAIL'));
+  // Sau đăng nhập sinh viên vào Tổng quan (S01); khối cơ hội ở đó cũng gọi /opportunities (size 25). Chỉ đếm request của S05.
+  const s05Queries = () => listQueries.filter(query => query.get('size') === '20');
   await navigate(page, 'Cơ hội thực tập');
   await expect(page.getByRole('heading', { name: 'Thực tập Java thử nghiệm', exact: true })).toBeVisible();
-  expect(Object.fromEntries(listQueries[0])).toEqual({ termId: TERM_ID, page: '0', size: '20' });
+  expect(Object.fromEntries(s05Queries()[0])).toEqual({ termId: TERM_ID, page: '0', size: '20' });
   await page.getByLabel('Vị trí hoặc doanh nghiệp', { exact: true }).fill('Java');
   await page.getByLabel('Ngành', { exact: true }).selectOption('SE');
   await page.getByRole('button', { name: 'Tìm cơ hội', exact: true }).click();
-  await expect.poll(() => listQueries.length).toBe(2);
-  expect(Object.fromEntries(listQueries[1])).toEqual({ termId: TERM_ID, q: 'Java', majorCode: 'SE', page: '0', size: '20' });
+  await expect.poll(() => s05Queries().length).toBe(2);
+  expect(Object.fromEntries(s05Queries()[1])).toEqual({ termId: TERM_ID, q: 'Java', majorCode: 'SE', page: '0', size: '20' });
   await page.getByRole('button', { name: 'Xem chi tiết', exact: true }).click();
   await expect(page.getByText('Hỗ trợ chi phí đi lại', { exact: true })).toBeVisible();
   await expect(page.getByText('Kỹ thuật phần mềm', { exact: true })).toBeVisible();
@@ -527,8 +535,8 @@ test('UX UI mock: nguyện vọng hiện trạng thái và lịch sử, chỉ r�
   await submitted.getByRole('button', { name: 'Xem chi tiết', exact: true }).click();
   await expect(submitted.getByText('Lần 1: Đã rút', { exact: false })).toBeVisible();
   const before = listCalls;
-  page.once('dialog', dialog => void dialog.accept());
   await submitted.getByRole('button', { name: 'Rút nguyện vọng', exact: true }).click();
+  await confirmDialog(page, 'Rút nguyện vọng?', 'Rút nguyện vọng');
   await expect(page.getByText('Nguyện vọng đã được nhà trường xét nên không thể rút. Muốn đổi ý, hãy gửi nguyện vọng mới.', { exact: true })).toBeVisible();
   await expect.poll(() => listCalls).toBeGreaterThan(before);
   expect(bodies).toEqual([{ action: 'WITHDRAW', preferenceId: '00000000-0000-4000-8000-000000000092', expectedVersion: 3, reasonCode: 'STUDENT_WITHDREW' }]);

@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { ApiError } from '../../../api';
 import { EmptyState, Icon, LoadingState, Notice } from '../../../components';
+import { askConfirm } from '../../../confirm';
 import { getOpportunity, listMyPreferences, newIdempotencyKey, sendPreference } from '../api';
+import { StudentToast, orgInitials } from '../components/StudentUI';
 import { dateTime, groupPreferences, isStale, preferenceError, preferenceLabels, type PreferenceGroup } from '../preferences';
 import type { OpportunityView, PreferenceView, WithdrawPreference } from '../types';
 import '../styles.css';
@@ -36,7 +38,7 @@ export function PreferencesPage() {
   }, [preferences]);
 
   const withdraw = async (preference: PreferenceView) => {
-    if (!window.confirm('Rút nguyện vọng này? Khi cơ hội còn hạn, bạn vẫn có thể gửi nguyện vọng mới.')) return;
+    if (!await askConfirm({ title: 'Rút nguyện vọng?', message: 'Rút nguyện vọng này? Khi cơ hội còn hạn, bạn vẫn có thể gửi nguyện vọng mới.', confirmLabel: 'Rút nguyện vọng', tone: 'danger' })) return;
     const body: WithdrawPreference = { action: 'WITHDRAW', preferenceId: preference.preferenceId, expectedVersion: preference.version, reasonCode: 'STUDENT_WITHDREW' };
     const ref = JSON.stringify(body);
     if (!pending.current.has(ref)) pending.current.set(ref, newIdempotencyKey());
@@ -54,7 +56,7 @@ export function PreferencesPage() {
 
   const groups = preferences ? groupPreferences(preferences) : [];
   return <div className="student-page">
-    <Notice message={error} tone="error" /><Notice message={notice} tone="success" />
+    <Notice message={error} tone="error" /><StudentToast message={notice} onClose={() => setNotice('')} />
     <section className="panel">
       <div className="section-heading"><div><p className="section-kicker">NGUYỆN VỌNG</p><h2>Nguyện vọng đã gửi</h2>
         <p className="section-description">Nhà trường xét nguyện vọng; bạn rút được khi chưa xét. Nguyện vọng không tự tạo lời mời, chia sẻ hồ sơ hay Placement.</p></div>
@@ -77,16 +79,20 @@ function PreferenceItem({ group, opportunity, busy, withdraw }: {
   const { current, history } = group;
   const title = opportunity === undefined ? 'Đang tải tên cơ hội…' : opportunity === 'missing' ? 'Cơ hội đã đóng hoặc không còn hiển thị'
     : opportunity === 'unavailable' ? 'Chưa tải được thông tin cơ hội' : opportunity.title;
-  // Frame 477:11949 "Nguyện vọng đang gửi": tiêu đề, badge trạng thái, doanh nghiệp, ô lời nhắn đi kèm, thao tác.
-  return <li className="student-list-item">
-    <div className="student-title-row"><h3>{title}</h3>
-      <p className={'student-status ' + current.status.toLowerCase()}>{preferenceLabels[current.status]}</p></div>
-    {typeof opportunity === 'object' && <p className="student-company">{opportunity.enterpriseName}</p>}
+  // Frame 477:11949 "Nguyện vọng đang gửi" cùng kiểu thẻ thư của tab Lời mời: logo chữ doanh nghiệp, tiêu đề + badge trạng thái,
+  // doanh nghiệp, ô lời nhắn dạng trích dẫn, thao tác; viền trái theo trạng thái (đã gửi xanh dương, đã xét xanh lá, đã rút xám).
+  return <li className={'student-list-item student-pref-card is-' + current.status.toLowerCase()}>
+    <div className="student-pref-head">
+      <span className="student-offer-logo" aria-hidden="true">{typeof opportunity === 'object' ? orgInitials(opportunity.enterpriseName) : <Icon name="briefcase" size={20} />}</span>
+      <div className="student-pref-title"><div className="student-title-row"><h3>{title}</h3>
+        <p className={'student-status ' + current.status.toLowerCase()}>{preferenceLabels[current.status]}</p></div>
+        {typeof opportunity === 'object' && <p className="student-company">{opportunity.enterpriseName}</p>}</div>
+    </div>
     {current.message && <p className="student-field-box">Lời nhắn: {current.message}</p>}
     {current.status === 'REVIEWED' && <p className="student-list-meta">Nguyện vọng đã được xét nên không thể rút. Muốn đổi ý, hãy gửi nguyện vọng mới từ Cơ hội thực tập.</p>}
     <div className="button-row">
-      {current.status === 'SUBMITTED' && <button type="button" className="secondary" disabled={busy} onClick={() => withdraw(current)}>Rút nguyện vọng</button>}
-      <button type="button" className="text-button" aria-expanded={open} onClick={() => setOpen(previous => !previous)}>{open ? 'Ẩn chi tiết' : 'Xem chi tiết'}</button>
+      {current.status === 'SUBMITTED' && <button type="button" className="secondary student-danger-outline" disabled={busy} onClick={() => withdraw(current)}>Rút nguyện vọng</button>}
+      <button type="button" className="text-button student-detail-toggle" aria-expanded={open} onClick={() => setOpen(previous => !previous)}>{open ? 'Ẩn chi tiết' : 'Xem chi tiết'}<Icon name="chevron-down" size={15} /></button>
     </div>
     {open && <dl className="student-detail">
       <div><dt>Lần gửi</dt><dd>{current.intentVersion}</dd></div>

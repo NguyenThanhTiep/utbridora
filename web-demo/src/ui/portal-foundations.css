@@ -1,0 +1,92 @@
+/* School and Enterprise share the Student palette and shell proportions.
+   Business state colours and module layouts retain their own meaning. */
+#root .workspace-role-portal {
+  --brand: #097b69;
+  --brand-dark: #086859;
+  --brand-light: #e7f6f0;
+  --ink: #142f40;
+  --muted: #64788a;
+  --line: #e3eaf2;
+  --workspace-gutter: 34px;
+  grid-template-columns: 276px minmax(0, 1fr);
+  background: #f3f6fb;
+}
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .workspace-main { background: #f3f6fb; }
+#root .workspace-role-portal .sidebar { width: 276px; }
+#root .workspace-role-portal .sidebar .nav { border-radius: 10px; }
+#root .workspace-role-portal .sidebar > nav { overflow-x: hidden; }
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .content { max-width: 1570px; padding: 20px var(--workspace-gutter) 32px; }
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .app-footer-inner { max-width: 1570px; padding-inline: var(--workspace-gutter); }
+
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .role-menu-popover { width: 280px; max-width: calc(100vw - 24px); border-color: #e3eaf2; border-radius: 12px; box-shadow: 0 12px 32px #102c3924; }
+
+/* Scope controls remain functional, separate from the account and page identity. */
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-workspace {
+  --brand: #097b69;
+  --brand-dark: #086859;
+  --brand-light: #e7f6f0;
+  --ink: #142f40;
+  --muted: #64788a;
+  --line: #e3eaf2;
+  gap: 18px;
+}
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-context-bar { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.6fr) auto; align-items: end; gap: 16px; padding: 14px 18px; border: 1px solid #e3eaf2; border-radius: 12px; box-shadow: 0 3px 12px #102c3908; }
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-context-bar.is-school { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto; }
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-context-bar :is(.portal-context-select label, .notification-scope label) { margin-bottom: 5px; color: #64788a; font-size: 12px; line-height: 18px; font-weight: 500; }
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-context-bar :is(select, .select-trigger) { min-height: 40px; height: 40px; padding-block: 8px; border-color: #e3eaf2; border-radius: 10px; background-color: #fff; color: #142f40; font-size: 14px; line-height: 22px; }
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-context-bar :is(select, .select-trigger):disabled { background: #f3f6fb; color: #64788a; }
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-organization-field { align-items: end; gap: 10px; }
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-organization-icon { flex-basis: 38px; height: 40px; border-radius: 10px; }
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-context-actions { display: flex; grid-column: 3; grid-row: 1; justify-self: end; gap: 0; padding-left: 16px; border-left: 1px solid #e3eaf2; }
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-context-actions .portal-notification-shortcut { height: 40px; min-height: 40px; border-radius: 10px; color: #314c5c; font-size: 14px; }
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-page-stage { display: grid; min-width: 0; gap: 18px; }
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-workspace :is(.portal-subpage-sheet, .school-section-card) { border-color: #e3eaf2; border-radius: 12px; background: #fff; box-shadow: 0 3px 12px #102c3908; }
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-workspace .panel { border-color: #e3eaf2; border-radius: 12px; background: #fff; box-shadow: 0 3px 12px #102c3908; }
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-workspace :is(.portal-shortcut, .portal-task-list) { border-color: #e3eaf2; border-radius: 10px; background-color: #fbfdfe; }
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-page-stage.is-overview .portal-stat { border: 1px solid #e3eaf2; border-radius: 18px; background: #fff; box-shadow: 0 3px 12px #102c390d; }
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-workspace button:not([class]):not([role="tab"]) { background-color: #097b69; border-color: #097b69; }
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-workspace button:not([class]):not([role="tab"]):hover:not(:disabled) { background-color: #086859; border-color: #086859; }
+
+/* Overview banners follow the existing Student welcome card, without changing its UI. */
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-page-stage.is-overview .portal-welcome {
+  position: relative;
+  overflow: hidden;
+  gap: 24px;
+  padding: 28px 30px;
+  border: 0;
+  border-radius: 18px;
+  background: radial-gradient(circle at 88% -10%, #5fd3bb61, transparent 42%), radial-gradient(circle at -5% 120%, #2969a966, transparent 45%), linear-gradient(120deg, #0f3440, #0d4a4f 52%, #0b5f58);
+  box-shadow: 0 10px 26px #102c391a;
+}
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-page-stage.is-overview .portal-welcome::before { content: ''; position: absolute; inset: 0; background: radial-gradient(#ffffff17 1.2px, transparent 1.6px) 0 0 / 16px 16px; mask-image: linear-gradient(90deg, transparent 10%, #000 70%); pointer-events: none; }
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-page-stage.is-overview .portal-welcome > * { position: relative; }
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-page-stage.is-overview .portal-welcome h2 { color: #fff; }
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-page-stage.is-overview .portal-welcome p:not(.section-kicker) { color: #cfe5e1; }
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-page-stage.is-overview .portal-welcome .section-kicker { color: #9fe3d2; background: #ffffff0d; }
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-page-stage.is-overview .portal-welcome-icon { background: #ffffff0d; border-color: #9fe3d240; color: #9fe3d2; box-shadow: none; }
+
+@media (min-width: 1500px) { #root .workspace-role-portal { --workspace-gutter: 42px; } }
+@media (min-width: 901px) and (max-width: 1200px) {
+  #root .workspace-role-portal { --workspace-gutter: 25px; }
+  #root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-context-bar,
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-context-bar.is-school { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+  #root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-context-actions { grid-column: 1 / -1; grid-row: 2; padding-left: 0; border-left: 0; }
+}
+@media (max-width: 900px) {
+  #root .workspace-role-portal { --workspace-gutter: 18px; grid-template-columns: minmax(0, 1fr); }
+  #root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-context-bar :is(select, .select-trigger) { min-height: 44px; height: 44px; font-size: 16px; }
+  #root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-context-bar,
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-context-bar.is-school { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  #root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-context-actions { grid-column: 1 / -1; grid-row: 2; padding-left: 0; border-left: 0; }
+}
+@media (max-width: 680px) {
+  #root .workspace-role-portal { --workspace-gutter: 14px; }
+  #root .workspace-role-portal:not(:where(.workspace-native-t3)) .content { padding-top: 16px; }
+  #root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-context-bar,
+#root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-context-bar.is-school { grid-template-columns: minmax(0, 1fr); padding: 14px; gap: 12px; }
+  #root .workspace-role-portal:not(:where(.workspace-native-t3)) .notification-scope { grid-column: 1; grid-row: 2; }
+  #root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-context-actions { grid-column: 1; grid-row: 3; justify-self: stretch; padding-top: 12px; border-top: 1px solid #e3eaf2; }
+  #root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-context-actions .portal-notification-shortcut { width: 100%; }
+  #root .workspace-role-portal:not(:where(.workspace-native-t3)) .notification-scope-fields { grid-template-columns: minmax(0, 1fr); }
+  #root .workspace-role-portal:not(:where(.workspace-native-t3)) .portal-page-stage.is-overview .portal-welcome { padding: 22px 20px; gap: 14px; }
+}

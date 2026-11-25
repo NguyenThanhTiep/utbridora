@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test';
 import type { Grant, Me } from '../../src/api';
 import type { Cohort, ContextAssignment, InternshipGroup } from '../../src/modules/internship/types';
 // Shared synthetic wire examples, also round-tripped through DEV06's Java DTOs
@@ -25,3 +26,16 @@ export const cohort: Cohort = wire.cohort;
 export const group: InternshipGroup = wire.group;
 export const groupWithRepeatedMentors: InternshipGroup = wire.groupWithRepeatedMentors;
 export const emptyGroup: InternshipGroup = wire.emptyGroup;
+
+export async function mockContextLabels(page: Page, scope = hr.scope) {
+  const pageOf = (content: unknown[]) => ({ content, page: 0, size: 100, totalElements: content.length, totalPages: 1 });
+  await page.route('**/api/v1/cooperation/organizations', route => route.fulfill({ json: [
+    { id: scope.enterpriseOrgId, name: 'Enterprise fixture' }, { id: scope.schoolOrgId, name: 'School fixture' }
+  ] }));
+  await page.route('**/api/v1/enterprise/demand-references/schools?*', route => route.fulfill({
+    json: pageOf([{ schoolOrgId: scope.schoolOrgId, name: 'School fixture' }])
+  }));
+  await page.route('**/api/v1/enterprise/demand-references/terms?*', route => route.fulfill({
+    json: pageOf([{ termId: scope.termId, termCode: 'TERM-FIXTURE' }])
+  }));
+}

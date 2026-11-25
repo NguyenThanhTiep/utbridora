@@ -1,0 +1,23 @@
+/* Hộp xác nhận dùng chung (confirm.tsx): thẻ trắng bo 20 giữa màn hình, nền mờ xanh đậm cùng kiểu hộp "Hỗ trợ truy cập";
+   ô biểu tượng tròn có quầng (xanh thương hiệu; đỏ khi thao tác nguy hiểm), tiêu đề 18 đậm, nội dung xám giữ xuống dòng,
+   hai nút canh phải (Hủy viền, xác nhận đặc: xanh hoặc đỏ); màn ≤480px hai nút xếp dọc full chiều ngang. */
+.confirm-dialog { width: min(460px, calc(100% - 32px)); max-height: calc(100dvh - 48px); margin: auto; padding: 0; color: var(--ink); background: var(--surface);
+  border: 1px solid #e3eaf2; border-radius: 20px; box-shadow: 0 24px 80px #102f3d33; }
+.confirm-dialog::backdrop { background: #102f3d66; backdrop-filter: blur(3px); }
+.confirm-dialog[open] { animation: confirm-dialog-enter .2s ease-out; }
+.confirm-dialog-body { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 6px 16px; padding: 24px 24px 20px; }
+.confirm-dialog-icon { display: grid; grid-row: span 2; place-items: center; width: 48px; height: 48px; color: var(--brand); background: var(--brand-light); border-radius: 50%; box-shadow: 0 0 0 6px #eaf7f599; }
+.confirm-dialog.is-danger .confirm-dialog-icon { color: #b42318; background: #fdecea; box-shadow: 0 0 0 6px #fdecea99; }
+.confirm-dialog h2 { margin: 2px 0 0; color: var(--ink); font-size: 18px; font-weight: 700; line-height: 26px; overflow-wrap: anywhere; }
+.confirm-dialog p { margin: 0; color: var(--muted); font-size: 14px; line-height: 21px; white-space: pre-line; overflow-wrap: anywhere; }
+.confirm-dialog-actions { display: flex; grid-column: 1 / -1; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+.confirm-dialog-actions > button { min-width: 112px; min-height: 40px; margin: 0; }
+.confirm-dialog-actions > button.confirm-dialog-danger { color: #fff; background: #b42318; border-color: #b42318; }
+.confirm-dialog-actions > button.confirm-dialog-danger:hover { background: #912018; border-color: #912018; }
+.confirm-dialog-actions > button.confirm-dialog-danger:focus-visible { outline: 3px solid #f4b4ad; outline-offset: 2px; }
+@keyframes confirm-dialog-enter { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+@media (prefers-reduced-motion: reduce) { .confirm-dialog[open] { animation: none; } }
+@media (max-width: 480px) {
+  .confirm-dialog-body { padding: 20px 18px 18px; }
+  .confirm-dialog-actions > button { flex: 1 1 100%; }
+}

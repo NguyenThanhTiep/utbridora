@@ -1,0 +1,153 @@
+/* Enterprise cooperation: scoped presentation, shared workflow APIs. */
+#root .enterprise-cooperation-workspace { display: grid; gap: 22px; min-width: 0; color: #142f40; }
+#root .enterprise-cooperation-workspace .cooperation-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
+#root .enterprise-cooperation-workspace .workflow-kpi-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 0; }
+#root .enterprise-cooperation-workspace .kpi-card { display: grid; gap: 12px; min-width: 0; padding: 18px 20px; border: 1px solid #dce7f2; border-top: 3px solid #5c96d5; border-radius: 12px; background: #f4f8fe; text-align: left; box-shadow: none; }
+#root .enterprise-cooperation-workspace .kpi-warning { border-color: #f1e2c5; border-top-color: #d99b35; background: #fffbf3; }
+#root .enterprise-cooperation-workspace .kpi-approved { border-color: #cfe9df; border-top-color: #0b927c; background: #f0faf5; }
+#root .enterprise-cooperation-workspace .kpi-card.is-active { outline: 2px solid #0b927c; outline-offset: 2px; }
+#root .enterprise-cooperation-workspace .kpi-card-label { color: #314d5e; font-size: 15px; font-weight: 600; }
+#root .enterprise-cooperation-workspace .kpi-card-bottom { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+#root .enterprise-cooperation-workspace .kpi-card-value { color: #2869b3; font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; }
+#root .enterprise-cooperation-workspace .kpi-warning .kpi-card-value { color: #a56814; }
+#root .enterprise-cooperation-workspace .kpi-approved .kpi-card-value { color: #087b68; }
+#root .enterprise-cooperation-workspace .kpi-card-hint { color: #64788a; font-size: 12px; line-height: 1.4; white-space: normal; font-weight: 400; }
+#root .enterprise-cooperation-workspace .workflow-section-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin: 0; }
+#root .enterprise-cooperation-workspace .workflow-section-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; min-width: 0; }
+#root .enterprise-cooperation-workspace .workflow-subtoolbar-title { margin: 0; font-size: 18px; }
+#root .enterprise-cooperation-workspace .workflow-count-pill { padding: 4px 9px; border-radius: 6px; background: #f0f4f8; color: #526978; font-size: 13px; }
+#root .enterprise-cooperation-workspace .button-row { margin: 0; gap: 10px; }
+#root .enterprise-cooperation-workspace .placement-filter-bar { display: grid; grid-template-columns: minmax(180px, .8fr) minmax(240px, 1.7fr) auto; align-items: end; gap: 14px; min-width: 0; margin: 0; padding: 16px; border: 1px solid #e3eaf2; border-radius: 12px; background: #f8fafc; }
+#root .enterprise-cooperation-workspace .placement-filter-bar label { display: grid; gap: 7px; min-width: 0; color: #526978; font-size: 14px; font-weight: 500; }
+#root .enterprise-cooperation-workspace .placement-filter-bar :is(input, select) { width: 100%; margin: 0; background: #fff; }
+#root .enterprise-cooperation-workspace .enterprise-cooperations-table { margin: 0; border: 1px solid #e3eaf2; border-radius: 12px; }
+#root .enterprise-cooperation-workspace .enterprise-cooperations-table table { width: 100%; min-width: 0; table-layout: fixed; border-spacing: 0; }
+#root .enterprise-cooperation-workspace .enterprise-cooperations-table thead th { padding: 14px 16px; background: #f5f8fb; color: #64788a; font-size: 13px; font-weight: 600; text-transform: none; letter-spacing: 0; }
+#root .enterprise-cooperation-workspace .enterprise-cooperations-table thead th:first-child { width: 36%; }
+#root .enterprise-cooperation-workspace .enterprise-cooperations-table thead th:nth-child(2) { width: 28%; }
+#root .enterprise-cooperation-workspace .enterprise-cooperations-table thead th:nth-child(3) { width: 16%; }
+#root .enterprise-cooperation-workspace .enterprise-cooperations-table thead th:last-child { width: 20%; text-align: right; }
+#root .enterprise-cooperation-workspace .enterprise-cooperations-table tbody :is(th, td) { padding: 18px 16px; border-bottom: 1px solid #edf2f6; background: #fff; vertical-align: middle; font-size: 15px; font-weight: 400; }
+#root .enterprise-cooperation-workspace .enterprise-cooperations-table tbody tr:last-child > :is(th, td) { border-bottom: 0; }
+#root .enterprise-cooperation-workspace .enterprise-cooperations-table tbody td:last-child { text-align: right; }
+#root .enterprise-cooperation-workspace .enterprise-cooperations-table tbody tr.table-row-selected > :is(th, td) { background: #eff9f5; }
+#root .enterprise-cooperation-workspace .enterprise-cooperations-table .table-row-selected > th { box-shadow: inset 3px 0 #0b927c; }
+#root .enterprise-cooperation-workspace .enterprise-cooperations-table button { gap: 8px; padding: 8px 12px; font-size: 14px; }
+#root .enterprise-cooperation-workspace .enterprise-cooperations-table .status-pill { max-width: 100%; font-size: 13px; white-space: normal; }
+#root .enterprise-cooperation-workspace .enterprise-coop-name { display: flex; align-items: center; gap: 12px; min-width: 0; }
+#root .enterprise-cooperation-workspace .enterprise-coop-name > div { min-width: 0; }
+#root .enterprise-cooperation-workspace .enterprise-coop-name b { display: block; color: #142f40; font-size: 16px; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
+#root .enterprise-cooperation-workspace .enterprise-coop-name small { display: block; margin-top: 5px; color: #64788a; font-size: 13px; }
+#root .enterprise-cooperation-workspace .enterprise-coop-icon { display: grid; place-items: center; flex: 0 0 42px; width: 42px; height: 42px; border: 1px solid #cfe9df; border-radius: 11px; background: #eaf7f1; color: #087b68; }
+#root .enterprise-cooperation-workspace .enterprise-coop-school { color: #425d6e; line-height: 1.6; overflow-wrap: anywhere; }
+#root .enterprise-cooperation-workspace .cooperation-pagination { justify-content: flex-end; color: #64788a; font-size: 14px; }
+
+#root .enterprise-cooperation-workspace .enterprise-cooperation-detail { margin: 2px 0 0; padding: 24px; border: 1px solid #cde4db; border-radius: 14px; background: #fff; box-shadow: 0 4px 18px #142f4004; scroll-margin-top: 110px; }
+#root .enterprise-coop-summary { --feedback-bg: #f1faf6; --feedback-line: #cde9dd; --feedback-text: #087b68; min-width: 0; font-size: 16px; line-height: 1.7; }
+#root .enterprise-coop-summary.review-needs_changes { --feedback-bg: #fffbf2; --feedback-line: #f1dfb9; --feedback-text: #996014; }
+#root .enterprise-coop-summary.review-rejected { --feedback-bg: #fff6f7; --feedback-line: #f1d3d8; --feedback-text: #b34151; }
+#root .enterprise-coop-detail-header { display: flex; align-items: flex-start; gap: 14px; padding-bottom: 20px; border-bottom: 1px solid #edf2f6; }
+#root .enterprise-coop-detail-header .enterprise-coop-icon { flex-basis: 48px; width: 48px; height: 48px; border-radius: 12px; }
+#root .enterprise-coop-detail-title { flex: 1; min-width: 0; }
+#root .enterprise-coop-detail-title .enterprise-coop-eyebrow { margin: 0 0 6px; color: #64788a; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+#root .enterprise-coop-detail-title h3 { margin: 0; color: #142f40; font-size: 23px; line-height: 1.4; font-weight: 650; overflow-wrap: anywhere; }
+#root .enterprise-coop-detail-title .enterprise-coop-detail-context { display: flex; flex-wrap: wrap; gap: 4px 8px; margin: 8px 0 0; color: #526978; font-size: 14px; }
+#root .enterprise-coop-detail-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+#root .enterprise-coop-detail-actions .status-pill { font-size: 13px; }
+#root .enterprise-coop-detail-actions button { font-size: 14px; }
+#root .enterprise-coop-summary .enterprise-coop-status-note { display: flex; align-items: flex-start; gap: 9px; margin: 20px 0; color: #526978; font-size: 15px; }
+#root .enterprise-coop-status-note > .icon { flex-shrink: 0; margin-top: 4px; color: var(--feedback-text); }
+#root .enterprise-coop-summary .enterprise-coop-feedback { margin: 0 0 22px; padding: 18px; border: 1px solid var(--feedback-line); border-left: 3px solid var(--feedback-text); border-radius: 12px; background: var(--feedback-bg); }
+#root .enterprise-coop-feedback h4 { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--feedback-text); font-size: 16px; font-weight: 600; }
+#root .enterprise-coop-feedback dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 14px 0 0; }
+#root .enterprise-coop-feedback-fields { grid-column: 1 / -1; }
+#root .enterprise-coop-feedback :is(dl > div, dd) { min-width: 0; }
+#root .enterprise-coop-feedback dt { color: #64788a; font-size: 14px; }
+#root .enterprise-coop-feedback dd { margin: 5px 0 0; color: #142f40; font-size: 16px; overflow-wrap: anywhere; }
+#root .enterprise-coop-feedback ul { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+#root .enterprise-coop-feedback li { padding: 3px 10px; border: 1px solid var(--feedback-line); border-radius: 7px; background: #ffffffb3; font-size: 14px; }
+#root .enterprise-coop-summary .enterprise-coop-meta { display: grid; grid-template-columns: minmax(0, .65fr) minmax(0, 1.2fr) minmax(0, 1fr); gap: 12px; margin: 0 0 24px; }
+#root .enterprise-coop-meta > div { min-width: 0; padding: 16px; border: 1px solid #e3eaf2; border-radius: 11px; background: #f8fafc; }
+#root .enterprise-coop-meta dt { display: flex; align-items: center; gap: 7px; color: #64788a; font-size: 14px; }
+#root .enterprise-coop-meta dt > .icon { flex-shrink: 0; color: #7d978f; }
+#root .enterprise-coop-meta dd { margin: 9px 0 0; color: #142f40; font-size: 16px; font-weight: 500; line-height: 1.65; overflow-wrap: anywhere; }
+#root .enterprise-coop-criteria { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); align-items: start; gap: 14px; min-width: 0; }
+#root .enterprise-coop-summary button.school-coop-expand { min-height: 44px; max-width: 100%; margin-top: 12px; padding: 8px 12px; border-color: #cde4db; color: #087b68; background: #fff; font-size: 15px; white-space: normal; }
+#root .enterprise-coop-benefits { margin-top: 20px; }
+#root .enterprise-coop-benefits h4 { margin: 0; color: #314d5e; font-size: 16px; font-weight: 600; }
+#root .enterprise-coop-benefits p { margin: 8px 0 0; font-size: 16px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+#root .enterprise-cooperation-detail > .button-row { justify-content: flex-end; margin-top: 22px; padding-top: 18px; border-top: 1px solid #edf2f6; }
+
+#root .enterprise-cooperation-workspace .portal-cooperation-composer { display: grid; gap: 20px; margin: 0; padding: 22px; border: 1px solid #cde4db; border-radius: 14px; background: #fbfdfc; scroll-margin-top: 110px; }
+#root .enterprise-coop-composer-header { display: flex; align-items: flex-start; gap: 12px; }
+#root .enterprise-coop-composer-header h3 { margin: 0; color: #142f40; font-size: 20px; }
+#root .enterprise-coop-composer-header p { margin: 5px 0 0; color: #64788a; font-size: 14px; }
+#root .portal-cooperation-composer .cooperation-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+#root .enterprise-cooperation-workspace .portal-cooperation-composer > fieldset { display: block; min-width: 0; margin: 0; padding: 0; border: 0; }
+#root .portal-cooperation-composer label { display: grid; gap: 8px; min-width: 0; color: #425d6e; font-size: 14px; }
+#root .portal-cooperation-composer :is(select, input) { width: 100%; min-width: 0; margin: 0; background: #fff; }
+#root .portal-cooperation-composer input[readonly] { background: #f3f7f6; color: #526978; }
+#root .enterprise-coop-preview { min-width: 0; padding: 18px; border: 1px solid #e3eaf2; border-radius: 11px; background: #fff; }
+#root .enterprise-coop-preview h4 { margin: 0; color: #142f40; font-size: 17px; }
+#root .enterprise-coop-preview dl { display: grid; grid-template-columns: minmax(0, .7fr) minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; margin: 14px 0 0; }
+#root .enterprise-coop-preview dl > div { min-width: 0; }
+#root .enterprise-coop-preview dt { color: #64788a; font-size: 13px; }
+#root .enterprise-coop-preview dd { margin: 6px 0 0; color: #142f40; font-size: 15px; overflow-wrap: anywhere; }
+#root .portal-cooperation-composer .t5-rule-note { display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 14px 16px; border: 1px solid #d9eae4; border-radius: 10px; background: #f0f8f4; color: #526978; }
+#root .portal-cooperation-composer .t5-rule-note > .icon { flex-shrink: 0; margin-top: 2px; color: #087b68; }
+#root .portal-cooperation-composer .t5-rule-note strong { color: #087b68; font-size: 14px; }
+#root .portal-cooperation-composer .t5-rule-note p { margin: 4px 0 0; font-size: 14px; line-height: 1.65; }
+#root .portal-cooperation-composer > .button-row { justify-content: flex-end; padding-top: 18px; border-top: 1px solid #e3eaf2; }
+
+@media (min-width: 901px) and (max-width: 1179px) {
+  #root .enterprise-cooperation-workspace :is(.portal-cooperation-composer, .enterprise-cooperation-detail) { scroll-margin-top: 200px; }
+}
+@media (max-width: 1150px) {
+  #root .enterprise-coop-detail-header { flex-wrap: wrap; }
+  #root .enterprise-coop-detail-actions { flex-basis: 100%; justify-content: flex-end; }
+  #root .enterprise-cooperation-workspace .placement-filter-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #root .enterprise-cooperation-workspace .placement-filter-bar > button { justify-self: start; }
+}
+@media (max-width: 900px) {
+  #root .enterprise-cooperation-workspace :is(.portal-cooperation-composer, .enterprise-cooperation-detail) { scroll-margin-top: 90px; }
+}
+@media (max-width: 700px) {
+  #root .enterprise-cooperation-workspace { gap: 18px; }
+  #root .enterprise-cooperation-workspace .workflow-kpi-grid { gap: 8px; }
+  #root .enterprise-cooperation-workspace .kpi-card { gap: 10px; padding: 12px 10px; border-radius: 10px; }
+  #root .enterprise-cooperation-workspace .kpi-card-label { font-size: 13px; }
+  #root .enterprise-cooperation-workspace .kpi-card-value { font-size: 25px; }
+  #root .enterprise-cooperation-workspace .kpi-card-hint { font-size: 11px; }
+  #root .enterprise-cooperation-workspace .workflow-section-header > .button-row { width: 100%; }
+  #root .enterprise-cooperation-workspace .workflow-section-header > .button-row > button { flex: 1; }
+  #root .enterprise-cooperation-workspace .placement-filter-bar { grid-template-columns: minmax(0, 1fr); padding: 14px; }
+  #root .enterprise-cooperation-workspace .enterprise-cooperations-table { border: 0; border-radius: 0; background: transparent; }
+  #root .enterprise-cooperation-workspace .enterprise-cooperations-table table { display: block; min-width: 0; }
+  #root .enterprise-cooperation-workspace .enterprise-cooperations-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  #root .enterprise-cooperation-workspace .enterprise-cooperations-table tbody { display: grid; gap: 12px; }
+  #root .enterprise-cooperation-workspace .enterprise-cooperations-table tbody tr { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; min-width: 0; padding: 16px; border: 1px solid #e3eaf2; border-radius: 12px; background: #fff; }
+  #root .enterprise-cooperation-workspace .enterprise-cooperations-table tbody tr.table-row-selected { border-color: #b4ddce; background: #eff9f5; box-shadow: inset 3px 0 #0b927c; }
+  #root .enterprise-cooperation-workspace .enterprise-cooperations-table tbody tr > :is(th, td) { display: block; grid-column: auto; min-width: 0; padding: 0; border: 0; background: transparent; box-shadow: none; text-align: left; }
+  #root .enterprise-cooperation-workspace .enterprise-cooperations-table tbody th[scope="row"] { width: 100%; max-width: none; }
+  #root .enterprise-cooperation-workspace .enterprise-cooperations-table .table-row-selected > th { box-shadow: none; }
+  #root .enterprise-cooperation-workspace .enterprise-cooperations-table tbody th::before,
+  #root .enterprise-cooperation-workspace .enterprise-cooperations-table tbody td[data-label="Thao tác"]::before { display: none; }
+  #root .enterprise-cooperation-workspace .enterprise-cooperations-table tbody td[data-label="Trường tiếp nhận"]::before,
+  #root .enterprise-cooperation-workspace .enterprise-cooperations-table tbody td[data-label="Trạng thái"]::before { display: block; margin: 0 0 5px; color: #64788a; font-size: 12px; font-weight: 500; }
+  #root .enterprise-cooperation-workspace .enterprise-cooperations-table tbody td:last-child { text-align: left; }
+  #root .enterprise-cooperation-workspace .enterprise-cooperations-table tbody td:last-child button { width: 100%; justify-content: center; }
+  #root .enterprise-cooperation-workspace :is(.portal-cooperation-composer, .enterprise-cooperation-detail) { padding: 16px; }
+  #root .enterprise-coop-detail-title h3 { font-size: 21px; }
+  #root .enterprise-coop-detail-header { gap: 12px; }
+  #root .enterprise-coop-detail-header .enterprise-coop-icon { flex-basis: 40px; width: 40px; height: 40px; }
+  #root .enterprise-coop-detail-actions { justify-content: space-between; }
+  #root .enterprise-coop-summary .enterprise-coop-meta,
+  #root .enterprise-coop-feedback dl,
+  #root .enterprise-coop-preview dl,
+  #root .portal-cooperation-composer .cooperation-form-grid { grid-template-columns: minmax(0, 1fr); }
+  #root .enterprise-coop-meta > div { padding: 14px; }
+  #root .enterprise-coop-summary .enterprise-coop-feedback { padding: 14px; }
+  #root .enterprise-coop-preview { padding: 14px; }
+  #root .portal-cooperation-composer > .button-row > button { flex: 1 1 100%; }
+  #root .enterprise-cooperation-detail > .button-row > button { flex: 1; }
+}

@@ -2,9 +2,9 @@
   "vn.utbridora.auth.StudentImportIT": 600.0,
   "vn.utbridora.auth.T3OperationsIT": 180.0,
   "vn.utbridora.auth.BusinessModulesIT": 24.21,
-  "vn.utbridora.auth.CorePlatformIT": 157.694,
+  "vn.utbridora.auth.CorePlatformIT": 900.0,
   "vn.utbridora.auth.DemandIT": 29.54,
-  "vn.utbridora.auth.EnterpriseProposalIT": 65.767,
+  "vn.utbridora.auth.EnterpriseProposalIT": 180.0,
   "vn.utbridora.auth.FileProxyIT": 3.54,
   "vn.utbridora.auth.InternshipRuntimeIT": 25.6,
   "vn.utbridora.auth.LocalDemoAppendIT": 15.615,
@@ -26,6 +26,7 @@
   "vn.utbridora.auth.bootstrap.LocalDemoMatchingDelegationIT": 16.863,
   "vn.utbridora.auth.modules.student.StudentPreferenceIT": 20.211,
   "vn.utbridora.auth.modules.student.StudentProfileIT": 25.774,
+  "vn.utbridora.auth.modules.internship.api.T312EvaluationBrowserIT": 90.0,
   "vn.utbridora.auth.operations.OperationLedgerIT": 15.993,
   "vn.utbridora.auth.student.StudentDataConstraintsIT": 9.367
 }

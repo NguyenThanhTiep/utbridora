@@ -45,13 +45,15 @@ test('school selects eligible candidates, nominates once, adds to the same batch
   await page.getByLabel('Kết quả đối chiếu').selectOption('MISSING_DATA');await expect(page.getByRole('checkbox', { name: 'Chọn SV003' })).toBeDisabled();
   await page.getByLabel('Kết quả đối chiếu').selectOption('NOT_MATCH');await expect(page.getByRole('checkbox', { name: 'Chọn SV003' })).toBeDisabled();
   await page.getByLabel('Kết quả đối chiếu').selectOption('MATCH');await page.getByRole('checkbox', { name: 'Chọn SV001' }).check();
-  page.once('dialog', d => void d.dismiss());await page.getByRole('button', { name: 'Tạo đề xuất cho sinh viên đã chọn' }).click();expect(requests).toHaveLength(0);
-  page.once('dialog', d => void d.accept());await page.getByRole('button', { name: 'Tạo đề xuất cho sinh viên đã chọn' }).click();
+  // Hộp xác nhận của giao diện (confirm.tsx) thay cho window.confirm.
+  const answer = (title: string, label: string) => page.getByRole('dialog', { name: title, exact: true }).getByRole('button', { name: label, exact: true }).click();
+  await page.getByRole('button', { name: 'Tạo đề xuất cho sinh viên đã chọn' }).click();await answer('Tạo đề xuất sinh viên?', 'Quay lại');expect(requests).toHaveLength(0);
+  await page.getByRole('button', { name: 'Tạo đề xuất cho sinh viên đã chọn' }).click();await answer('Tạo đề xuất sinh viên?', 'Tạo đề xuất');
   await expect(page.getByRole('button', { name: 'Gửi lời mời thực tập', exact: true })).toBeVisible();expect(requests[0].studentUserIds).toEqual(['student-a']);
-  page.once('dialog', d => void d.accept());await page.getByRole('button', { name: 'Gửi lời mời thực tập', exact: true }).click();
+  await page.getByRole('button', { name: 'Gửi lời mời thực tập', exact: true }).click();await answer('Gửi lời mời thực tập?', 'Gửi lời mời');
   await expect(page.getByText('Đang chờ sinh viên', { exact: true })).toBeVisible();await expect(page.getByRole('button', { name: 'Nhận lời mời', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Tìm sinh viên phù hợp', exact: true }).click();await expect(page.getByRole('checkbox', { name: 'Chọn SV001' })).toBeDisabled();
-  await page.getByRole('checkbox', { name: 'Chọn SV002' }).check();page.once('dialog', d => void d.accept());await page.getByRole('button', { name: 'Tạo đề xuất cho sinh viên đã chọn' }).click();
+  await page.getByRole('checkbox', { name: 'Chọn SV002' }).check();await page.getByRole('button', { name: 'Tạo đề xuất cho sinh viên đã chọn' }).click();await answer('Tạo đề xuất sinh viên?', 'Tạo đề xuất');
   await expect.poll(() => requests.length).toBe(2);expect(requests[1].expectedBatchVersion).toBe(1);
 });
 test('T2 eligibility confirmation is explicit and candidate selection respects remaining slots', async ({ page }) => {
@@ -107,7 +109,14 @@ test('Placement UI separates create, approve, activate, handoff and cancel; ente
     placements = [{...placements[0], state: action === 'approve' ? 'APPROVED' : action === 'activate' ? 'ACTIVE' : 'CANCELLED', version: placements[0].version + 1}];
     return r.fulfill({json: placements[0]});
   });
-  await page.goto(url);await page.getByLabel('Ứng viên đã được doanh nghiệp đồng ý').selectOption('proposal-a');await page.getByLabel('Thời điểm có hiệu lực').fill('2026-11-11T10:00');
+  await page.goto(url);await page.getByLabel('Ứng viên đã được doanh nghiệp đồng ý').selectOption('proposal-a');
+  const start=page.getByLabel('Ngày bắt đầu', {exact: true}), end=page.getByLabel('Ngày kết thúc', {exact: true});
+  await expect(start).toHaveValue('2026-11-24');await expect(end).toHaveValue('2027-02-24');
+  await expect(start).toHaveJSProperty('readOnly',true);await expect(end).toHaveJSProperty('readOnly',true);
+  await expect(page.getByText('Ngày bắt đầu và kết thúc được lấy theo nhu cầu doanh nghiệp đã được duyệt.',{exact:true})).toBeVisible();
+  await start.evaluate(node => { (node as HTMLInputElement).value='2026-12-01'; });
+  await end.evaluate(node => { (node as HTMLInputElement).value='2027-01-01'; });
+  await page.getByLabel('Thời điểm có hiệu lực').fill('2026-11-11T10:00');
   await page.getByRole('button', {name: 'Tạo hồ sơ chờ phê duyệt', exact: true}).click();await expect(page.getByText('Tiếp nhận 1 · Chờ trường phê duyệt')).toBeVisible();expect(commands).toEqual(['create']);
   await page.getByRole('button', {name: 'Phê duyệt tiếp nhận', exact: true}).click();await page.getByLabel('Căn cứ thao tác tiếp nhận').fill('QD-APPROVE');await page.getByRole('button', {name: 'Xác nhận phê duyệt', exact: true}).click();
   await expect(page.getByRole('button', {name: 'Kích hoạt thực tập', exact: true})).toBeDisabled();expect(commands).toEqual(['create', 'approve']);

@@ -1,0 +1,168 @@
+/* Enterprise candidate review. Identity always comes from the live shared projection. */
+.enterprise-candidates { display: grid; gap: 10px; min-width: 0; }
+.candidate-context-summary { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; padding-top: 10px; }
+.candidate-context-summary > .candidate-sharing-note { flex: 1 1 300px; }
+.candidate-sharing-note { display: flex; align-items: flex-start; gap: 7px; min-width: 0; padding: 0; color: #64788a; }
+.candidate-sharing-note > .icon { flex-shrink: 0; margin-top: 2px; color: #3978b8; }
+.candidate-sharing-note p { margin: 0; font-size: 13px; line-height: 1.65; }
+#root .portal-workspace.is-enterprise .enterprise-candidate-review { display: grid; gap: 0; min-width: 0; padding: 0; }
+#root .portal-workspace.is-enterprise .enterprise-candidate-scope { grid-template-columns: auto minmax(0, 1fr); gap: 10px 16px; margin: 0; padding: 0 0 12px; border: 0; border-bottom: 1px solid #edf2f6; border-radius: 0; background: transparent; }
+#root .portal-workspace.is-enterprise .enterprise-candidate-detail { min-width: 0; margin: 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.candidate-cooperation-meta { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.enterprise-candidates .portal-tabs { margin-bottom: 12px; }
+
+#root .enterprise-proposals { margin: 0; padding: 0; border: 0; min-width: 0; }
+#root .enterprise-proposals .candidate-list-toolbar { display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 10px 16px; margin: 0 0 10px; padding: 0 0 10px; border-bottom: 1px solid #edf2f6; }
+#root .enterprise-proposals .candidate-list-toolbar .workflow-section-heading { align-items: center; gap: 10px; min-width: 0; }
+#root .enterprise-proposals .candidate-list-toolbar h3 { margin: 0; font-size: 18px; font-weight: 650; line-height: 1.5; }
+.candidate-list-controls { display: flex; align-items: end; flex-wrap: wrap; gap: 8px; min-width: 0; }
+#root .enterprise-proposals .candidate-list-controls .proposal-state-filter { width: 220px; max-width: 100%; margin: 0; color: #64788a; font-size: 13px; font-weight: 500; }
+#root .enterprise-proposals .candidate-list-controls :is(select, button) { min-height: 42px; }
+#root .enterprise-proposals .candidate-list-controls select { margin: 0; }
+.candidate-card-list { display: grid; gap: 18px; min-width: 0; }
+#root .enterprise-proposals .enterprise-candidate-card { min-width: 0; margin: 0; padding: 22px; border: 1px solid #dfe9ee; border-radius: 14px; background: #fff; box-shadow: 0 2px 8px #142f4004; }
+#root .enterprise-proposals .candidate-card-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; margin: 0 0 18px; padding: 0 0 18px; border-bottom: 1px solid #edf2f6; }
+.candidate-identity { display: flex; align-items: center; gap: 13px; min-width: 0; flex: 1 1 240px; }
+.candidate-identity > div { min-width: 0; }
+.candidate-avatar { display: grid; place-items: center; flex: 0 0 48px; width: 48px; height: 48px; border: 1px solid #cce8de; border-radius: 12px; background: #e7f6f0; color: #087b68; font-size: 17px; font-weight: 700; }
+#root .enterprise-proposals .candidate-identity h4 { margin: 0; color: #142f40; font-size: 18px; font-weight: 650; line-height: 1.45; overflow-wrap: anywhere; }
+.candidate-identity p { margin: 5px 0 0; color: #64788a; font-size: 13px; line-height: 1.5; }
+#root .enterprise-proposals .candidate-state-badge { display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px; border: 1px solid #cee1fb; border-radius: 7px; background: #ebf3ff; color: #2868ad; font-size: 12px; font-weight: 550; line-height: 1.5; }
+.candidate-state-dot { width: 6px; height: 6px; flex: 0 0 6px; border-radius: 50%; background: currentColor; }
+#root .enterprise-proposals .candidate-state-badge.state-enterprise_accepted { border-color: #c7e9dc; background: #e7f6f0; color: #087b68; }
+#root .enterprise-proposals .candidate-state-badge.state-declined { border-color: #f4d1d6; background: #fff1f3; color: #b33b50; }
+#root .enterprise-proposals .candidate-state-badge.state-placed { border-color: #dfd5f3; background: #f3eefc; color: #7954b3; }
+.candidate-list-loading, .candidate-profile-loading { display: flex; align-items: center; gap: 9px; }
+
+/* The profile stays grouped by the fields actually granted by the student. */
+#root .enterprise-proposals .proposal-profile { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; }
+#root .enterprise-proposals .proposal-whitelist-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; grid-column: 1 / -1; margin: 0; padding: 10px 13px; border: 1px solid #e0ede7; border-radius: 9px; background: #f5faf7; color: #527463; font-size: 13px; }
+.proposal-whitelist-bar > .icon { flex-shrink: 0; color: #0b927c; }
+.candidate-sharing-fields { margin-left: auto; min-width: 0; }
+.candidate-sharing-fields summary { color: #087b68; cursor: pointer; font-size: 13px; font-weight: 550; }
+.candidate-sharing-fields[open] { flex-basis: 100%; margin: 4px 0 0; }
+.candidate-sharing-fields .proposal-whitelist-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; }
+.candidate-sharing-fields .placement-seq-badge { padding: 4px 8px; border: 1px solid #dceae4; border-radius: 6px; background: #fff; font-size: 12px; letter-spacing: 0; }
+#root .enterprise-proposals .candidate-contact-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 18px; grid-column: 1 / -1; min-width: 0; margin: 0; padding: 12px 14px; border: 1px solid #e5edf3; border-radius: 10px; background: #f8fafc; }
+.candidate-contact-grid > div { min-width: 0; }
+.candidate-contact-grid dt { margin-bottom: 6px; color: #64788a; font-size: 13px; font-weight: 450; }
+.candidate-contact-grid dd { margin: 0; color: #142f40; font-size: 15px; font-weight: 550; overflow-wrap: anywhere; }
+.candidate-profile-section { min-width: 0; padding: 12px 14px; border: 1px solid #e5edf3; border-radius: 10px; background: #fbfcfe; }
+.candidate-profile-section:has(.proposal-skills) { grid-column: 1 / -1; }
+.candidate-profile-section:has(.candidate-project-items), .candidate-profile-section.candidate-cv { grid-column: 1 / -1; }
+.candidate-profile-section-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+#root .enterprise-proposals .candidate-profile-section h5 { margin: 0; color: #142f40; font-size: 15px; font-weight: 600; letter-spacing: 0; text-transform: none; }
+.candidate-section-count { display: inline-flex; align-items: center; justify-content: center; min-width: 23px; height: 23px; padding-inline: 6px; border-radius: 6px; background: #edf2f6; color: #64788a; font-size: 12px; font-weight: 550; }
+.candidate-profile-items { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.candidate-profile-items > li { min-width: 0; margin: 0; padding-bottom: 12px; border-bottom: 1px solid #e5edf3; overflow-wrap: anywhere; }
+.candidate-profile-items > li:last-child { padding-bottom: 0; border-bottom: 0; }
+#root .enterprise-proposals .candidate-profile-items p { margin: 5px 0 0; color: #52687a; font-size: 14px; line-height: 1.7; }
+#root .enterprise-proposals .candidate-profile-items strong { color: #142f40; font-size: 15px; font-weight: 600; }
+#root .enterprise-proposals .candidate-project-items { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+#root .enterprise-proposals .candidate-project-items > li { padding: 14px; border: 1px solid #e5edf3; border-radius: 9px; background: #fff; }
+#root .enterprise-proposals .proposal-skills { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
+#root .enterprise-proposals .proposal-skills > li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 5px 9px; max-width: 100%; min-width: 0; padding: 7px 10px; border: 1px solid #d5e9e1; border-radius: 8px; background: #eef8f3; color: #087b68; font-size: 14px; font-weight: 400; }
+#root .enterprise-proposals .proposal-skills b { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+#root .enterprise-proposals .proposal-skills span { color: #52687a; font-size: 13px; }
+#root .enterprise-proposals .proposal-skills p { flex-basis: 100%; margin-top: 2px; }
+#root .enterprise-proposals .candidate-show-more { margin-top: 13px; font-size: 13px; }
+#root .enterprise-proposals .candidate-section-empty { margin: 0; color: #64788a; font-size: 14px; }
+.candidate-file-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; min-width: 0; margin-top: 10px; }
+.candidate-file-row > p { flex: 1 1 140px; min-width: 0; margin: 0; overflow-wrap: anywhere; }
+.candidate-file-icon, .candidate-batch-icon { display: grid; place-items: center; flex: 0 0 38px; width: 38px; height: 40px; border: 1px solid #d9e8f8; border-radius: 10px; background: #eef5ff; color: #3978b8; }
+
+/* Review actions never replace the school approval / placement workflow. */
+.candidate-decision-footer { display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: 16px; margin-top: 18px; padding-top: 16px; border-top: 1px solid #edf2f6; }
+#root .enterprise-proposals .candidate-decision-footer .reservation-box { display: flex; align-items: center; gap: 8px; min-width: 0; margin: 0; padding: 9px 12px; border: 1px solid #f0dfb8; border-radius: 9px; background: #fff8e9; color: #946415; }
+#root .enterprise-proposals .candidate-decision-footer .reservation-box p { margin: 0; font-size: 13px; line-height: 1.6; }
+.candidate-decision-footer .reservation-box > .icon { flex-shrink: 0; }
+#root .enterprise-proposals .candidate-decision-footer .reservation-box.expired { border-color: #f4d1d6; background: #fff1f3; color: #b33b50; }
+#root .enterprise-proposals .candidate-decision-footer fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+#root .enterprise-proposals .candidate-decision-footer .button-row { margin: 0; gap: 8px; }
+.candidate-decision-footer:has(.candidate-decline-form) > fieldset { flex-basis: 100%; }
+.candidate-decline-form { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; min-width: 0; padding: 14px; border: 1px solid #f3d5d9; border-radius: 10px; background: #fff8f8; }
+.candidate-decline-form > div:first-child { flex: 1 1 230px; min-width: 0; }
+.candidate-decline-form label { display: block; margin: 0 0 7px; color: #52687a; font-size: 14px; }
+.candidate-decline-form select { width: 100%; margin: 0; }
+#root .enterprise-proposals .candidate-confirm-decline { border-color: #bd3d52; background: #bd3d52; color: #fff; }
+#root .enterprise-proposals .candidate-next-step { display: flex; align-items: flex-start; gap: 9px; margin: 18px 0 0; padding: 12px 14px; border: 1px solid #cfe8db; border-radius: 9px; background: #eff9f3; color: #287052; font-size: 14px; line-height: 1.65; }
+.candidate-next-step > .icon { flex-shrink: 0; margin-top: 2px; }
+.candidate-retry { margin: 14px 0; padding: 14px; border: 1px solid #f0dfb8; border-radius: 10px; background: #fff8e9; }
+.candidate-retry p { margin: 0 0 10px; color: #946415; font-size: 14px; }
+.enterprise-candidates .candidate-batches-toolbar { margin-bottom: 10px; }
+.enterprise-candidates .candidate-batches-hint { margin: 0 0 16px; color: #64788a; font-size: 14px; line-height: 1.6; }
+.candidate-batch-name { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.candidate-batch-name > div { min-width: 0; }
+.candidate-batch-count { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; margin-right: 4px; padding: 3px 8px; border: 1px solid #cde6df; border-radius: 7px; background: #eaf7f2; color: #087b68; font-size: 15px; font-weight: 600; }
+.candidate-batches-table caption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+/* Long candidate lists stay compact; only one authorized profile opens at a time. */
+#root .enterprise-proposals .candidate-card-list { gap: 8px; }
+#root .enterprise-proposals .enterprise-candidate-card { padding: 10px 12px; }
+#root .enterprise-proposals .enterprise-candidate-card.is-expanded { border-color: #a5d6c9; }
+#root .enterprise-proposals .candidate-card-header { gap: 12px; margin: 0; padding: 0; border: 0; cursor: pointer; }
+#root .enterprise-proposals .is-expanded .candidate-card-header { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #edf2f6; }
+.enterprise-proposals .candidate-identity { gap: 10px; flex-basis: 200px; }
+.enterprise-proposals .candidate-avatar { flex-basis: 40px; width: 40px; height: 40px; font-size: 15px; border-radius: 10px; }
+#root .enterprise-proposals .candidate-identity h4 { font-size: 16px; }
+.enterprise-proposals .candidate-identity p { margin-top: 3px; }
+#root .enterprise-proposals .candidate-details-toggle { flex: 0 0 auto; gap: 8px; min-width: 132px; margin: 0; padding: 9px 12px; }
+.candidate-details-toggle > .icon { transition: transform var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out); }
+.candidate-details-toggle[aria-expanded="true"] > .icon { transform: rotate(180deg); }
+.candidate-loaded-count { margin: 0 0 8px; color: #64788a; font-size: 13px; }
+.candidate-load-more { display: grid; justify-items: center; gap: 10px; min-height: 64px; margin-top: 12px; padding: 14px 0; overflow-anchor: none; }
+.candidate-load-more > p { display: flex; align-items: center; gap: 8px; margin: 0; color: #64788a; font-size: 13px; }
+.candidate-load-more > .notice { width: 100%; min-width: 0; }
+.candidate-list-end { margin: 16px 0 0; color: #64788a; font-size: 13px; text-align: center; }
+@media (prefers-reduced-motion: no-preference) {
+  .candidate-card-list > .enterprise-candidate-card { animation: ui-feedback-in var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out); }
+  .candidate-expanded-content:not([hidden]) { animation: ui-feedback-in var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .candidate-details-toggle > .icon { transition: none; }
+}
+
+@media (max-width: 1050px) {
+  #root .enterprise-proposals .candidate-contact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #root .enterprise-proposals .candidate-project-items { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+  #root .portal-workspace.is-enterprise .enterprise-candidate-scope { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .candidate-cooperation-meta { justify-content: flex-start; }
+  #root .enterprise-candidates .portal-tabs { gap: 2px; }
+  #root .enterprise-candidates .portal-tabs > button[role="tab"] { padding-inline: 8px; font-size: 13px; }
+  #root .enterprise-proposals .candidate-list-toolbar { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .candidate-list-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; width: 100%; gap: 8px; }
+  #root .enterprise-proposals .candidate-list-controls > button { width: 44px; min-width: 44px; min-height: 44px; padding: 0; }
+  #root .enterprise-proposals .candidate-list-controls > button > .candidate-refresh-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  #root .enterprise-proposals .candidate-list-controls .proposal-state-filter { width: 100%; }
+  #root .enterprise-proposals .enterprise-candidate-card { padding: 12px; }
+  #root .enterprise-proposals .candidate-card-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+  #root .enterprise-proposals .candidate-card-header > .candidate-identity { grid-column: 1 / -1; }
+  #root .enterprise-proposals .candidate-card-header > .candidate-state-badge { justify-self: start; max-width: 100%; white-space: normal; }
+  #root .enterprise-proposals .candidate-details-toggle { margin-left: auto; min-width: 0; }
+  .candidate-identity { flex-basis: 100%; gap: 10px; }
+  .candidate-avatar { flex-basis: 42px; width: 42px; height: 42px; font-size: 15px; }
+  #root .enterprise-proposals .candidate-identity h4 { font-size: 16px; }
+  #root .enterprise-proposals .proposal-profile, #root .enterprise-proposals .candidate-contact-grid { grid-template-columns: minmax(0, 1fr); }
+  #root .enterprise-proposals .candidate-project-items { grid-template-columns: minmax(0, 1fr); }
+  #root .enterprise-proposals .candidate-contact-grid { padding: 14px; gap: 14px; }
+  #root .enterprise-proposals .proposal-whitelist-bar { align-items: flex-start; font-size: 13px; }
+  .proposal-whitelist-bar > span { flex: 1; min-width: 0; }
+  .candidate-sharing-fields { flex-basis: 100%; margin: 4px 0 0; }
+  .candidate-profile-section { padding: 14px; }
+  .candidate-decision-footer { display: grid; grid-template-columns: minmax(0, 1fr); }
+  #root .enterprise-proposals .candidate-decision-footer .button-row { display: flex; }
+  #root .enterprise-proposals .candidate-decision-footer .button-row > button { flex: 1 1 auto; }
+  .candidate-decline-form { display: grid; grid-template-columns: minmax(0, 1fr); padding: 12px; }
+  #root .enterprise-candidates .candidate-batches-table { padding: 0; border: 0; background: transparent; }
+  #root .workspace .portal-workspace .enterprise-candidates .candidate-batches-table > table:has(thead tr > :nth-child(3)) { display: block; min-width: 0; width: 100%; }
+  .candidate-batches-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .candidate-batches-table tbody { display: grid; gap: 14px; }
+  .candidate-batches-table tbody tr { display: grid; min-width: 0; padding: 16px; border: 1px solid #e3eaf2; border-radius: 12px; background: #fff; }
+  #root .enterprise-candidates .candidate-batches-table tbody tr > :is(th, td) { min-width: 0; padding: 10px 0; border: 0; border-radius: 0; background: transparent; text-align: left; }
+  #root .enterprise-candidates .candidate-batches-table tbody tr > th { padding-top: 0; }
+  .candidate-batches-table td[data-label="Hồ sơ được phép xem"]::before { content: attr(data-label); display: block; margin-bottom: 8px; color: #64788a; font-size: 13px; }
+  #root .enterprise-candidates .candidate-batches-table td:last-child { padding-bottom: 0; border-top: 1px solid #edf2f6; }
+  #root .workspace .enterprise-candidates .candidate-batches-table td:last-child button { width: 100%; min-width: 0; white-space: normal; }
+}

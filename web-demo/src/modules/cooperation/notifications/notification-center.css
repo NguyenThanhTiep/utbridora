@@ -1,0 +1,114 @@
+/* Shared inbox for school and enterprise portals. */
+#root .portal-workspace .notification-center { min-width: 0; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+#root .notification-center .notification-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
+#root .notification-inbox-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding-bottom: 20px; }
+#root .notification-inbox-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
+#root .notification-inbox-title > div { min-width: 0; }
+#root .notification-inbox-icon { display: grid; place-items: center; flex: 0 0 46px; width: 46px; height: 46px; border: 1px solid #cfe9df; border-radius: 13px; background: #eaf7f1; color: #087b68; }
+#root .notification-inbox-title h3 { margin: 0; color: #142f40; font-size: 19px; font-weight: 650; line-height: 1.5; }
+#root .notification-inbox-title p { margin: 4px 0 0; color: #64788a; font-size: 14px; line-height: 1.6; }
+#root .notification-inbox-title strong { color: #087b68; font-weight: 650; }
+#root .notification-center .notification-mark-all { min-height: 42px; padding: 9px 13px; gap: 7px; border-color: #cde4db; background: #f3faf7; color: #087b68; font-size: 14px; }
+#root .notification-center .notification-mark-all:disabled { color: #64788a; background: #f8fafc; border-color: #e3eaf2; }
+#root .notification-center .portal-tabs { gap: 6px; margin: 0 0 20px; padding: 0 0 12px; border: 0; border-bottom: 1px solid #e3eaf2; border-radius: 0; background: transparent; box-shadow: none; }
+#root .notification-center .portal-tabs > [role="tab"] { min-height: 40px; min-width: 84px; padding: 9px 16px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: #64788a; font-size: 14px; font-weight: 500; box-shadow: none; }
+#root .notification-center .portal-tabs > [aria-selected="true"] { border-color: #d5ece3; background: #eaf7f1; color: #087b68; font-weight: 650; }
+#root .notification-center .portal-tabs > [role="tab"]::after { content: none; }
+#root .notification-center .notification-filters { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(160px, .8fr) auto; align-items: end; gap: 14px; margin: 0; padding: 16px; border: 1px solid #e3eaf2; border-radius: 12px; background: #f8fafc; }
+#root .notification-center .notification-filters > div { min-width: 0; }
+#root .notification-center .notification-filters label { display: block; margin: 0 0 7px; color: #526978; font-size: 14px; font-weight: 500; line-height: 1.5; }
+#root .notification-center .notification-filters :is(input, select) { width: 100%; min-width: 0; height: 42px; margin: 0; border-color: #dfe8f0; border-radius: 9px; background: #fff; font-size: 14px; }
+#root .notification-center .notification-filters > button { height: 42px; padding: 8px 14px; white-space: nowrap; font-size: 14px; }
+#root .notification-search-input { position: relative; min-width: 0; }
+#root .notification-search-input > .icon { position: absolute; top: 12px; left: 12px; z-index: 1; pointer-events: none; color: #8297a5; }
+#root .notification-center .notification-search-input input { padding-left: 38px; padding-right: 12px; }
+#root .notification-results-toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; min-height: 42px; margin: 8px 0; }
+#root .notification-results-toolbar:empty { display: none; }
+#root .notification-center .notification-filter-summary { margin: 0; color: #64788a; font-size: 13px; line-height: 1.6; }
+#root .notification-results-toolbar button { min-height: 40px; gap: 5px; padding: 6px 8px; color: #087b68; font-size: 13px; }
+#root .notification-center .notification-loading { display: flex; align-items: center; gap: 9px; margin: 18px 0; color: #64788a; font-size: 14px; }
+#root .notification-center .notification-table { width: 100%; min-width: 0; max-width: 100%; margin: 0; padding: 0; overflow-x: auto; border: 1px solid #e3eaf2; border-radius: 12px; background: #fff; }
+#root .notification-center .notification-table table { width: 100%; min-width: 0; table-layout: fixed; border-collapse: separate; border-spacing: 0; text-align: left; }
+#root .notification-center .notification-table thead th { padding: 14px 16px; border: 0; border-bottom: 1px solid #e3eaf2; background: #f3f6fb; color: #64788a; font-size: 13px; font-weight: 600; text-transform: none; letter-spacing: 0; white-space: normal; }
+#root .notification-center .notification-table thead th:first-child { width: 40%; }
+#root .notification-center .notification-table thead th:nth-child(2) { width: 22%; }
+#root .notification-center .notification-table thead th:nth-child(3) { width: 16%; }
+#root .notification-center .notification-table thead th:last-child { width: 22%; text-align: left; }
+#root .notification-center .notification-table tbody tr > :is(th, td) { min-width: 0; padding: 20px 16px; border: 0; border-bottom: 1px solid #e8eef3; background: #fff; color: #142f40; text-align: left; vertical-align: top; overflow-wrap: anywhere; transition: background-color .18s ease; }
+#root .notification-center .notification-table tbody tr:last-child > :is(th, td) { border-bottom: 0; }
+#root .notification-center .notification-table tbody th[scope="row"] { width: auto; min-width: 0; font-weight: 500; }
+#root .notification-center .notification-table tbody td:last-child { min-width: 0; }
+#root .notification-center .notification-table tr.notification-unread > :is(th, td) { background: #f3faf7; }
+#root .notification-center .notification-table tr.notification-unread > th { box-shadow: inset 3px 0 #0b927c; }
+#root .notification-center .notification-message { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+#root .notification-message-icon { display: grid; place-items: center; flex: 0 0 38px; width: 38px; height: 38px; border-radius: 11px; }
+#root .notification-message-icon.tone-warning { background: #fff0d3; color: #a86b13; }
+#root .notification-message-icon.tone-success { background: #dff4e9; color: #087b68; }
+#root .notification-message-icon.tone-info { background: #e4effd; color: #2868b0; }
+#root .notification-message-icon.tone-danger { background: #fde8ec; color: #b34151; }
+#root .notification-message-content { min-width: 0; flex: 1; }
+#root .notification-message-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; color: #64788a; font-size: 12px; font-weight: 500; line-height: 1.5; }
+#root .notification-unread-dot { width: 6px; height: 6px; border-radius: 50%; background: #0b927c; }
+#root .notification-center .notification-kind { display: block; margin: 0; padding: 0; border-radius: 0; background: transparent; color: #142f40; font-size: 15px; font-weight: 650; line-height: 1.6; overflow-wrap: anywhere; }
+#root .notification-read .notification-kind { color: #425d6e; font-weight: 500; }
+#root .notification-center .notification-description { max-width: none; margin: 7px 0 0; color: #64788a; font-size: 14px; font-weight: 400; line-height: 1.7; overflow-wrap: anywhere; }
+#root .notification-related { display: block; color: #425d6e; font-size: 14px; font-weight: 500; line-height: 1.7; overflow-wrap: anywhere; }
+#root .notification-center time { display: flex; flex-direction: column; gap: 3px; color: #526978; font-size: 13px; line-height: 1.6; font-variant-numeric: tabular-nums; }
+#root .notification-center time > span:last-child { color: #8297a5; }
+#root .notification-time-unknown { color: #8297a5; font-size: 13px; }
+#root .notification-row-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; min-width: 0; }
+#root .notification-center .notification-state { display: inline-flex; align-items: center; gap: 6px; width: fit-content; max-width: 100%; margin: 0; padding: 3px 8px; border: 1px solid #cce9dc; border-radius: 6px; background: #e7f6ef; color: #087b68; font-size: 12px; font-weight: 500; line-height: 1.6; }
+#root .notification-center .notification-state.is-read { border-color: #e3eaf2; background: #f4f7fa; color: #64788a; }
+#root .notification-state-dot { flex: 0 0 5px; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+#root .notification-row-actions .button-row { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; margin: 0; }
+#root .notification-center button.notification-open { min-height: 36px; max-width: 100%; gap: 8px; padding: 7px 10px; border-color: #cde4db; border-radius: 8px; color: #087b68; font-size: 13px; font-weight: 600; white-space: normal; }
+#root .notification-center button.notification-mark-read { min-height: 32px; max-width: 100%; gap: 5px; padding: 4px 0; border: 0; color: #64788a; font-size: 12px; font-weight: 400; white-space: normal; }
+#root .notification-center .notification-storage-note { display: flex; align-items: flex-start; gap: 7px; margin: 16px 0 0; color: #64788a; font-size: 12px; line-height: 1.7; }
+#root .notification-storage-note > .icon { flex-shrink: 0; margin-top: 2px; color: #8297a5; }
+#root .notification-center .notification-empty > td { padding: 28px 18px; background: #fff; text-align: center; }
+#root .notification-center .notification-empty .empty-state { padding: 18px; }
+@media (hover: hover) and (pointer: fine) {
+  #root .notification-center .notification-table tbody tr:not(.notification-empty):hover > :is(th, td),
+  #root .notification-center .notification-table tbody tr:focus-within > :is(th, td) { background: #edf7f3; }
+  #root .notification-center button.notification-mark-read:hover { color: #087b68; }
+}
+@media (max-width: 1100px) {
+  #root .notification-center .notification-table tbody tr > :is(th, td) { padding: 16px 12px; }
+  #root .notification-center .notification-message { gap: 9px; }
+  #root .notification-message-icon { flex-basis: 32px; width: 32px; height: 32px; border-radius: 9px; }
+  #root .notification-center .notification-filters { grid-template-columns: minmax(0, 1.2fr) minmax(140px, 1fr) auto; }
+}
+@media (max-width: 700px) {
+  #root .notification-inbox-header { align-items: stretch; padding-bottom: 18px; }
+  #root .notification-inbox-title h3 { font-size: 18px; }
+  #root .notification-center .notification-mark-all { width: 100%; min-height: 44px; justify-content: center; }
+  #root .workspace .notification-center .portal-tabs > [role="tab"] { flex: 1 1 0; min-width: 0; min-height: 44px; padding: 9px 8px; }
+  #root .notification-center .notification-filters { grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 14px; }
+  #root .notification-center .notification-filters :is(input, select) { height: 46px; min-height: 46px; font-size: 16px; }
+  #root .notification-search-input > .icon { top: 14px; }
+  #root .notification-center .notification-filters > button { height: 44px; }
+  #root .notification-center .notification-filter-summary { font-size: 12px; }
+  #root .notification-center .notification-table { overflow: visible; border: 0; border-radius: 0; background: transparent; }
+  #root .workspace .notification-center .notification-table > table:has(thead tr > :nth-child(4)):has(tbody tr > :nth-child(2)) { display: block; width: 100%; min-width: 0; }
+  #root .notification-center .notification-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  #root .notification-center .notification-table tbody { display: grid; gap: 12px; }
+  #root .notification-center .notification-table tbody tr { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; min-width: 0; padding: 16px; border: 1px solid #e3eaf2; border-radius: 12px; background: #fff; }
+  #root .notification-center .notification-table tbody tr.notification-unread { border-color: #cde7dc; background: #f3faf7; box-shadow: inset 3px 0 #0b927c; }
+  #root .notification-center .notification-table tbody tr > :is(th, td),
+  #root .notification-center .notification-table tbody tr:last-child > :is(th, td),
+  #root .notification-center .notification-table tbody tr.notification-unread > :is(th, td) { display: block; width: auto; min-width: 0; max-width: none; padding: 0; border: 0; background: transparent; box-shadow: none; text-align: left; }
+  #root .notification-center .notification-table td[data-label="Nội dung liên quan"]::before { content: attr(data-label); display: block; margin-bottom: 4px; color: #64788a; font-size: 12px; }
+  #root .notification-center .notification-table td[data-label="Thời gian"] { padding-top: 12px; border-top: 1px solid #e3eaf2; }
+  #root .notification-center .notification-table time { display: flex; flex-direction: row; flex-wrap: wrap; gap: 6px 12px; }
+  #root .notification-center .notification-message { gap: 10px; }
+  #root .notification-message-icon { flex-basis: 36px; width: 36px; height: 36px; }
+  #root .notification-row-actions { gap: 12px; }
+  #root .notification-row-actions .button-row { width: 100%; flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
+  #root .notification-center button.notification-open { min-height: 44px; padding: 8px 12px; font-size: 14px; }
+  #root .notification-center button.notification-mark-read { min-height: 44px; font-size: 13px; }
+  #root .notification-center .notification-empty { padding: 20px 12px; background: #fafcfd; }
+  #root .notification-center .notification-empty .empty-state { padding: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #root .notification-center .notification-table tbody tr > :is(th, td) { transition: none; }
+}

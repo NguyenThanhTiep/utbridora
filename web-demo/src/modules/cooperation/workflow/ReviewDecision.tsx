@@ -41,8 +41,8 @@ export function ReviewDecision({ busy, fields, submit }: { busy: boolean; fields
           </label>)}
         </div>
       </fieldset>}
-      <div className="button-row">
-        <button disabled={decision === 'REQUEST_INFO' && missing.length === 0}>Lưu kết quả xét duyệt</button>
+      <div className="button-row workflow-review-actions">
+        <button className={decision === 'REJECT' ? 'danger' : decision === 'REQUEST_INFO' ? 'secondary' : 'btn-action-approve-teal'} disabled={decision === 'REQUEST_INFO' && missing.length === 0}>Lưu kết quả xét duyệt</button>
       </div>
     </fieldset>
   </form>;

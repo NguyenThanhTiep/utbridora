@@ -1,23 +1,28 @@
-.workspace-t5 { grid-template-columns: 260px minmax(0, 1fr); background: #f3f6fb; --brand: #0b927c; --brand-dark: #087463; --ink: #142f40; }
-.workspace-t5 .sidebar { width: 260px; background: #102c39; border-color: #173a47; padding: 24px 14px; }
-.workspace-t5 .sidebar > nav { flex: 1; min-height: 0; overflow-y: auto; margin-bottom: 16px; scrollbar-width: thin; scrollbar-color: #365361 transparent; }
-.workspace-t5 .sidebar .nav { min-height: 44px; border-radius: 8px; color: #c6d8dc; padding: 10px 12px; margin: 2px 0; font-size: 14px; }
-.workspace-t5 .sidebar .nav:hover { background: #1b4351; color: #fff; }
-.workspace-t5 .sidebar .nav.active { background: #0b927c; color: #fff; }
+.workspace-t5 { grid-template-columns: 260px minmax(0, 1fr); background: #f3f6fb; --brand: #0b927c; --brand-dark: #087b68; --brand-light: #e7f6f0; --ink: #142f40; --muted: #64788a; --line: #e3eaf2; }
+.workspace-t5 .sidebar { width: 260px; background: radial-gradient(circle at 115% 6%, #1a9b8d22 0 150px, transparent 151px), radial-gradient(circle at -20% 100%, #c5ede326 0 140px, transparent 141px), linear-gradient(94deg, #102f3d 0%, #0c4c4f 92%); border-color: #1d5556; padding: 24px 14px; }
+.workspace-t5:not(:where(.workspace-native-t3)) .account-hero { background: linear-gradient(94deg, #102f3d 0%, #0c4c4f 92%); }
+.workspace-t5 .sidebar > nav { flex: 1; min-height: 0; overflow-y: auto; padding: 4px; margin: -4px -4px 12px; scrollbar-width: thin; scrollbar-color: #5e9791 transparent; }
+.workspace-t5 .sidebar .nav { min-height: 44px; border-radius: 8px; color: #d2e8e9; padding: 10px 12px; margin: 2px 0; font-size: 14px; }
+.workspace-t5 .sidebar .nav:hover { background: #ffffff12; color: #fff; }
+.workspace-t5 .sidebar .nav.active { background: #0b927c; color: #fff; box-shadow: inset 0 0 0 1px #56dabb55; }
 .workspace-t5 .sidebar .nav.active::before { content: none; }
-.workspace-t5 .sidebar .nav .icon { color: #a4c1ca; }
+.workspace-t5 .sidebar .nav .icon { color: #b9eadb; }
+.workspace-t5 .sidebar .nav:hover .icon { color: #fff; }
 .workspace-t5 .sidebar .nav.active .icon { color: #fff; }
-.workspace-t5 .sidebar .nav-group-label { color: #8faab5; font-size: 11px; letter-spacing: 1px; margin: 20px 12px 10px; }
+.workspace-t5 .sidebar .nav-group-label { color: #b8d5d7; font-size: 11px; letter-spacing: 1px; margin: 20px 12px 10px; }
 .workspace-t5 .sidebar-brand { flex-shrink: 0; margin-bottom: 4px; padding-bottom: 16px; }
+.workspace-t5 .sidebar .brand-lockup.inverse { color: #0b927c; }
+.workspace-t5 .sidebar .brand-lockup.inverse .brand-dot { color: #56dabb; }
 .workspace-t5 .sidebar-user b { color: #fff; }
-.workspace-t5 .sidebar-user small, .workspace-t5 .sidebar-caption { color: #a5bdc7; }
-.workspace-t5 .sidebar-bottom { flex-shrink: 0; padding-top: 16px; border-color: #284754; }
+.workspace-t5 .sidebar .brand-lockup.inverse .brand-caption, .workspace-t5 .sidebar-user small, .workspace-t5 .sidebar-caption { color: #c6d8dc; }
+.workspace-t5 .sidebar-bottom { flex-shrink: 0; padding-top: 16px; border-color: #ffffff26; }
 .workspace-t5 .sidebar-logout { color: #c6d8dc; }
-.workspace-t5 .sidebar-logout:hover { background: #1b4351; color: #fff; }
-.workspace-t5 .content { max-width: 1510px; padding: 12px 24px 32px; }
+.workspace-t5 .sidebar-logout:hover { background: #ffffff12; color: #fff; }
+.workspace-t5:not(:where(.workspace-native-t3)) .content { width: 100%; max-width: 1510px; padding: 12px 24px 32px; }
+.workspace-t5:not(:where(.workspace-native-t3)) .app-footer-inner { max-width: 1510px; padding-inline: 24px; }
 .workspace-t5-portal .page-header { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
 .portal-navigation { display: grid; gap: 4px; }
-.portal-workspace { display: grid; gap: 24px; --brand: #0b927c; --brand-dark: #087463; --ink: #142f40; --muted: #64788a; --line: #e3eaf2; font-size: 14px; min-width: 0; }
+.portal-workspace { display: grid; gap: 24px; --brand: #0b927c; --brand-dark: #087b68; --ink: #142f40; --muted: #64788a; --line: #e3eaf2; font-size: 14px; min-width: 0; }
 .portal-workspace h2 { font-size: 22px; color: #142f40; }
 .portal-workspace h3 { color: #142f40; }
 .portal-workspace button, .portal-workspace input, .portal-workspace select, .portal-workspace textarea { font-size: 14px; }
@@ -53,13 +58,15 @@
 .portal-workspace .proposal-table thead th { background: #f3f6fb; text-transform: none; letter-spacing: 0; color: #64788a; }
 .portal-workspace .portal-demands-table h3 { font-size: 14px; margin: 0 0 8px; }
 .portal-workspace .portal-demands-table .button-row { flex-wrap: wrap; }
+.portal-workspace.is-enterprise .portal-demands-table { position: relative; }
 .portal-workspace .workflow-item-card { box-shadow: none; }
 .portal-workspace .placement-header-bar { flex-wrap: wrap; }
 @media (min-width: 901px) { .workspace-t5-portal > .workspace-main > .topbar { display: none; } }
 @media (max-width: 1100px) { .portal-page-header { flex-direction: column; } .portal-page-header .button-row { justify-content: flex-start; } }
 @media (max-width: 900px) {
   .workspace-t5 { grid-template-columns: minmax(0, 1fr); }
-  .workspace-t5 .content { padding: 16px 12px; }
+  .workspace-t5:not(:where(.workspace-native-t3)) .content { padding: 16px 12px; }
+  .workspace-t5:not(:where(.workspace-native-t3)) .app-footer-inner { padding-inline: 12px; }
   .portal-workspace > .panel, .portal-workspace > .portal-stat-grid, .portal-workspace > .portal-welcome { margin-inline: 0; }
   .portal-page-header { padding: 0; }
   .portal-stat-grid { gap: 10px; }
@@ -70,4 +77,161 @@
   .portal-welcome { padding: 22px 18px; }
   .portal-welcome > .icon { display: none; }
   .portal-workspace .panel { padding: 18px 14px; }
+}
+
+/* Unified shell: school & enterprise portals share clean Figma canvas, sidebar proportions and nav polish. */
+.workspace-t5:has(.portal-navigation) {
+  grid-template-columns: 276px minmax(0, 1fr);
+  background: #f3f6fb;
+  --brand-dark: #087b68;
+  --brand-light: #e7f6f0;
+  --muted: #64788a;
+  --line: #e3eaf2;
+}
+.workspace-t5:has(.portal-navigation) .sidebar { width: 276px; max-width: calc(100vw - 24px); }
+.workspace-t5:has(.portal-navigation) .sidebar .nav {
+  width: calc(100% - 4px); gap: 10px; padding: 11px 12px 11px 14px;
+  border-radius: 10px; white-space: nowrap;
+  transition: background-color .2s ease, color .2s ease, transform .18s ease, box-shadow .2s ease;
+}
+.workspace-t5:has(.portal-navigation) .sidebar .nav.active {
+  background: #0b927c; box-shadow: 0 6px 16px #0b927c45, inset 0 0 0 1px #82f0d673;
+}
+.workspace-t5:has(.portal-navigation) .sidebar .nav::before {
+  content: ''; position: absolute; left: 5px; top: calc(50% - 12px); width: 3px; height: 24px; border-radius: 3px; background: #8cf2db;
+  opacity: 0; transform: scaleY(0.25); pointer-events: none;
+  transition: opacity .2s ease, transform .24s cubic-bezier(.22, 1, .36, 1);
+}
+.workspace-t5:has(.portal-navigation) .sidebar .nav.active::before {
+  opacity: 1; transform: scaleY(1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .workspace-t5:has(.portal-navigation) .sidebar .nav::before { transition: none !important; }
+}
+.workspace-t5:has(.portal-navigation) .sidebar .nav:focus-visible {
+  outline: 2px solid transparent;
+  box-shadow: 0 0 0 2px #102f3d, 0 0 0 4px #8cf2db;
+}
+.workspace-t5:has(.portal-navigation) .sidebar .nav.active:focus-visible {
+  outline: 2px solid transparent;
+  box-shadow: 0 6px 16px #0b927c45, inset 0 0 0 1px #82f0d673, 0 0 0 2px #102f3d, 0 0 0 4px #8cf2db;
+}
+@media (max-width: 900px) { .workspace-t5:has(.portal-navigation) { grid-template-columns: minmax(0, 1fr); } }
+.portal-workspace.is-school { --brand-dark: #087b68; --surface-subtle: #f8fafc; gap: 20px; }
+.portal-workspace.is-school > :is(.panel, .portal-stat-grid, .portal-welcome, .notification-banner, .portal-subpage-sheet) { margin-inline: 0; }
+.portal-workspace.is-school .portal-subpage-sheet { display: grid; gap: 18px; min-width: 0; padding: 24px 26px; border: 1px solid #e3eaf2; border-radius: 16px; background: #fff; }
+.portal-workspace.is-school .portal-subpage-sheet > .portal-page-header { padding: 2px 0 18px 16px; border: 0; border-left: 4px solid #0b927c; border-bottom: 1px solid #edf2f6; border-radius: 0; background: transparent; }
+.portal-workspace.is-school .portal-subpage-sheet > .panel { padding: 0; border: 0; border-radius: 0; background: transparent; }
+.portal-workspace.is-school .portal-subpage-sheet > .panel + .panel { padding-top: 20px; border-top: 1px solid #edf2f6; }
+.portal-workspace.is-school .portal-subpage-sheet > .portal-record-picker { padding: 14px 16px; border: 1px solid #e3eaf2; border-left: 3px solid #0b927c; border-radius: 12px; background: #f8fafc; }
+.portal-workspace.is-school .panel { min-width: 0; padding: 22px 24px; border: 1px solid #e3eaf2; border-radius: 12px; background: #fff; }
+.portal-workspace.is-school .portal-page-header { align-items: center; padding: 18px 22px; border: 1px solid #e3eaf2; border-left: 4px solid #0b927c; border-radius: 12px; background: #fff; }
+.portal-workspace.is-school .portal-page-header.is-overview { padding: 0; border: 0; border-radius: 0; background: transparent; }
+.portal-workspace.is-school .portal-page-header.is-overview .portal-breadcrumb { margin: 0; font-weight: 600; }
+.portal-workspace.is-school .portal-page-header.is-overview button { min-height: 36px; padding: 7px 12px; font-size: 13px; }
+.portal-workspace.is-school .portal-page-header h2 { margin: 6px 0 0; font-size: clamp(22px, 2vw, 26px); font-weight: 700; line-height: 1.35; }
+.portal-workspace.is-school .portal-page-subtitle { margin: 4px 0 0; color: #64788a; font-size: 13px; line-height: 1.5; }
+.portal-workspace.is-school .portal-page-header .button-row { margin: 0; flex-shrink: 0; }
+.portal-workspace.is-school .portal-page-header:not(.is-overview) .portal-breadcrumb { margin: 0; color: #087b68; font-size: 11px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; }
+.portal-workspace.is-school .portal-welcome { padding: 22px 24px; border-color: #cdece4; border-left: 4px solid #0b927c; background: linear-gradient(115deg, #e7f6f0, #f5fbf8 80%); }
+.portal-workspace.is-school .portal-welcome .section-kicker { color: #087b68; font-size: 11px; font-weight: 700; letter-spacing: .8px; }
+.portal-workspace.is-school .portal-welcome h2 { margin: 6px 0 10px; font-size: clamp(24px, 2.2vw, 30px); font-weight: 750; line-height: 1.35; }
+.portal-workspace.is-school .portal-welcome p:last-child { line-height: 1.6; }
+.portal-welcome-icon { display: grid; place-items: center; flex: 0 0 70px; width: 70px; height: 70px; border: 1px solid #cdece4; border-radius: 16px; background: #ffffffcc; color: #0b927c; box-shadow: 0 4px 14px #102f3d08; }
+.portal-workspace.is-school .portal-stat { --stat-accent: #087b68; --stat-icon-bg: #d3f1e5; gap: 14px; padding: 20px; border: 1px solid #cdece4; border-top: 4px solid var(--stat-accent); background: #e7f6f0; transition: transform .18s ease, box-shadow .2s ease, border-color .2s ease; }
+.portal-workspace.is-school .portal-stat.tone-warm { --stat-accent: #9c5a0c; --stat-icon-bg: #fde8c4; border-color: #f1dfbf; border-top-color: var(--stat-accent); background: #fff4e1; }
+.portal-workspace.is-school .portal-stat.tone-rose { --stat-accent: #c23b4e; --stat-icon-bg: #fadadd; border-color: #f7cfd5; border-top-color: var(--stat-accent); background: #fdecee; }
+.portal-workspace.is-school .portal-stat > strong { color: var(--stat-accent); font-size: 36px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.portal-workspace.is-school .portal-stat-title { align-items: center; line-height: 1.5; }
+.portal-workspace.is-school .portal-stat-icon { display: grid; place-items: center; flex: 0 0 36px; width: 36px; height: 36px; border-radius: 10px; background: var(--stat-icon-bg); color: var(--stat-accent); }
+.portal-workspace.is-school .portal-stat > span:last-child { color: var(--stat-accent); font-weight: 600; }
+.school-dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; align-items: stretch; min-width: 0; }
+.school-dashboard-grid > .panel { display: flex; flex-direction: column; margin: 0; }
+.school-dashboard-grid > .panel > h2 { font-size: 18px; line-height: 1.4; margin: 0 0 16px; }
+.portal-task-title { display: block; margin: 0; color: #142f40; font-size: 14px; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
+.portal-task-description { display: block; margin: 5px 0 0; color: #64788a; font-size: 12px; font-weight: 400; line-height: 1.6; overflow-wrap: anywhere; }
+.portal-dashboard-tasks .proposal-table td:first-child { overflow-wrap: anywhere; }
+.portal-dashboard-tasks .proposal-table td:last-child button { white-space: nowrap; }
+.portal-workspace :is(.workflow-detail-drawer, #school-bm03-detail) { scroll-margin-top: 128px; }
+.portal-workspace :is(.workflow-detail-drawer, #school-bm03-detail):focus { outline: 2px solid #86caba; outline-offset: 3px; }
+.school-dashboard-grid .portal-dashboard-tasks > .empty-state { flex: 1; min-height: 220px; border: 1px dashed #dce6ec; border-radius: 12px; background: #f8fafc; }
+.portal-workspace.is-school .portal-shortcuts { display: grid; align-content: space-between; flex: 1; gap: 10px; margin-top: 0; }
+.portal-workspace.is-school button.secondary.school-shortcut { display: flex; justify-content: flex-start; gap: 12px; width: 100%; min-width: 0; padding: 13px 14px; border: 1px solid #e3eaf2; border-left: 3px solid #0b927c; border-radius: 10px; color: #142f40; background: #f8fafc; text-align: left; transition: background-color .2s ease, border-color .2s ease, transform .18s ease; }
+.school-shortcut-icon { display: grid; place-items: center; flex: 0 0 38px; width: 38px; height: 38px; border: 1px solid #cdece4; border-radius: 10px; background: #e7f6f0; color: #087b68; }
+.school-shortcut > span:nth-child(2) { flex: 1; min-width: 0; }
+.school-shortcut b { display: block; font-size: 14px; font-weight: 650; line-height: 1.5; }
+.school-shortcut small { display: block; margin-top: 4px; font-size: 12px; color: #64788a; line-height: 1.5; }
+.school-shortcut > .icon { flex-shrink: 0; color: #64788a; }
+.portal-workspace.is-school :is(button, a, input, select, textarea):focus-visible { outline: 2px solid #0b927c; outline-offset: 2px; }
+.portal-workspace.is-school :is(input:not([type="checkbox"]):not([type="radio"]), select) { min-height: 44px; border-color: #e3eaf2; border-radius: 10px; }
+.portal-workspace.is-school textarea { min-height: 100px; border-color: #e3eaf2; border-radius: 10px; }
+.portal-workspace.is-school :is(input, select, textarea):focus { border-color: #0b927c; box-shadow: 0 0 0 3px #0b927c12; }
+.portal-workspace.is-school [aria-invalid="true"] { border-color: #d32f2f; }
+.portal-workspace.is-school button { border-radius: 10px; }
+.portal-workspace.is-school button:not([class]):not([role="tab"]) { background: #0b927c; border-color: #0b927c; color: #fff; font-weight: 600; }
+.portal-workspace.is-school button:not([class]):not([role="tab"]):hover:not(:disabled) { background: #087b68; border-color: #087b68; }
+.portal-workspace.is-school button.secondary { border-color: #e3eaf2; color: #425c6e; background: #fff; }
+.portal-workspace.is-school button.secondary:hover:not(:disabled) { border-color: #a5d6c9; color: #087b68; background: #f4fbf8; }
+.portal-workspace.is-school button.danger { color: #c23b4e; border-color: #f7cfd5; background: #fdecee; }
+.portal-workspace.is-school button.danger:hover:not(:disabled) { background: #fadadd; border-color: #eeafb7; }
+.portal-workspace.is-school :is(button, input, select):disabled { cursor: not-allowed; }
+.portal-workspace.is-school :is(.table-wrap, .proposal-table) { min-width: 0; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; padding: 8px 12px 4px; border: 1px solid #e3eaf2; border-radius: 14px; background: #fafcfd; scrollbar-width: thin; scrollbar-color: #b9d4cb transparent; }
+.portal-workspace.is-school :is(.data-table, .proposal-table table) { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+.portal-workspace.is-school :is(.data-table, .proposal-table) thead th { background: #f1f5f9; color: #64788a; font-size: 12px; font-weight: 650; text-transform: none; letter-spacing: 0; border: 0; padding: 11px 16px; }
+.portal-workspace.is-school :is(.data-table, .proposal-table) thead th:first-child { border-radius: 8px 0 0 8px; }
+.portal-workspace.is-school :is(.data-table, .proposal-table) thead th:last-child { border-radius: 0 8px 8px 0; }
+.portal-workspace.is-school :is(.data-table, .proposal-table) thead th:only-child { border-radius: 8px; }
+.portal-workspace.is-school :is(.data-table, .proposal-table) tbody > tr > :is(th, td) { background: #fff; border-top: 1px solid #e8eef5; border-bottom: 1px solid #e8eef5; padding: 13px 16px; vertical-align: middle; transition: background-color .15s ease, border-color .15s ease; }
+.portal-workspace.is-school :is(.data-table, .proposal-table) tbody > tr > :first-child { border-left: 1px solid #e8eef5; border-radius: 10px 0 0 10px; }
+.portal-workspace.is-school :is(.data-table, .proposal-table) tbody > tr > :last-child { border-right: 1px solid #e8eef5; border-radius: 0 10px 10px 0; }
+.portal-workspace.is-school :is(.data-table, .proposal-table) tbody > tr > :only-child { border-radius: 10px; }
+.portal-workspace.is-school :is(.data-table, .proposal-table) tbody > tr > th[scope="row"] { background: #fff; color: #142f40; font-weight: 600; text-transform: none; }
+.portal-workspace.is-school .proposal-table small { display: block; margin-top: 3px; padding: 0; background: transparent; border-radius: 0; font-family: inherit; font-size: 12px; color: #64788a; max-width: none; }
+.portal-workspace.is-school :is(.data-table, .proposal-table) tbody > tr:focus-within > :is(th, td) { background: #f2faf7; border-color: #b7e2d5; }
+.portal-workspace.is-school :is(.data-table, .proposal-table) tbody > tr.table-row-selected > :is(th, td) { background: #edf9f5; border-color: #9dd8c8; }
+.portal-workspace.is-school :is(.data-table, .proposal-table) :is(th, td):last-child { text-align: right; }
+.portal-workspace.is-school :is(.data-table, .proposal-table) td:last-child .button-row { justify-content: flex-end; }
+.portal-workspace.is-school .status-pill { text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 8px; }
+.portal-workspace.is-school :is(.status-pill, .t5-badge) { vertical-align: middle; }
+.portal-workspace.is-school :is(.portal-detail, .workflow-detail-drawer) { border-color: #e3eaf2; box-shadow: none; }
+.portal-workspace.is-school .portal-detail-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 16px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #edf2f6; }
+.portal-workspace.is-school .portal-detail-heading > p:last-child { margin: 0; font-size: 13px; }
+.portal-workspace.is-school :is(.pagination, .matching-pagination) { flex-wrap: wrap; gap: 12px; padding-top: 16px; border-top: 1px solid #e3eaf2; color: #64788a; font-size: 13px; }
+@media (hover: hover) and (pointer: fine) {
+  .workspace-t5:has(.portal-navigation.is-school) .sidebar .nav:hover:not(.active):not(.is-group-active):not(.school-nav-subitem) { transform: translateX(4px); color: #fff; background: #ffffff1f; }
+  .portal-workspace.is-school .portal-stat:hover { transform: translateY(-3px); box-shadow: 0 8px 20px #142f4010; }
+  .portal-workspace.is-school button.secondary.school-shortcut:hover { transform: translateX(2px); border-color: #a5d6c9; background: #f2faf7; }
+  .portal-workspace.is-school :is(.data-table, .proposal-table) tbody > tr:hover > :is(th, td) { background: #f7fbf9; border-color: #cdece4; }
+}
+@media (max-width: 1179px) { .school-dashboard-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (min-width: 901px) and (max-width: 1179px) { .portal-workspace :is(.workflow-detail-drawer, #school-bm03-detail) { scroll-margin-top: 220px; } }
+@media (max-width: 900px) { .portal-workspace :is(.workflow-detail-drawer, #school-bm03-detail) { scroll-margin-top: 90px; } }
+@media (max-width: 900px) { .workspace-t5:has(.portal-navigation.is-school) { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 600px) {
+  .portal-workspace.is-school .portal-dashboard-tasks .proposal-table { padding: 0; border: 0; background: transparent; overflow: visible; }
+  .portal-workspace.is-school .portal-dashboard-tasks .proposal-table table { display: block; width: 100%; min-width: 0; }
+  .portal-dashboard-tasks .proposal-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .portal-dashboard-tasks .proposal-table tbody { display: grid; gap: 12px; }
+  .portal-dashboard-tasks .proposal-table tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; min-width: 0; padding: 14px; border: 1px solid #e3eaf2; border-radius: 12px; background: #fff; }
+  .portal-workspace.is-school .portal-dashboard-tasks .proposal-table tbody tr > td { min-width: 0; padding: 0; border: 0; border-radius: 0; background: transparent; }
+  .portal-dashboard-tasks .proposal-table tbody td:first-child { grid-column: 1 / -1; }
+  .portal-workspace.is-school { gap: 16px; }
+  .portal-workspace.is-school .panel { padding: 18px 16px; }
+  .portal-workspace.is-school .portal-subpage-sheet { padding: 18px 16px; }
+  .portal-workspace.is-school .portal-subpage-sheet > .portal-page-header { padding: 0 0 14px 12px; }
+  .portal-workspace.is-school .portal-page-header { align-items: stretch; padding: 14px 16px; }
+  .portal-workspace.is-school .portal-page-header .button-row { justify-content: flex-start; }
+  .portal-workspace.is-school .portal-welcome { padding: 18px 20px; }
+  .portal-welcome-icon { display: none; }
+  .portal-workspace.is-school .portal-stat { padding: 16px 18px; }
+  .portal-workspace.is-school button { min-height: 44px; }
+  .portal-workspace.is-school button.school-shortcut { padding: 12px; gap: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workspace-t5:has(.portal-navigation.is-school) .sidebar .nav,
+  .workspace-t5:has(.portal-navigation.is-school) .sidebar .nav:hover,
+  .portal-workspace.is-school .portal-stat, .portal-workspace.is-school .portal-stat:hover,
+  .portal-workspace.is-school button.school-shortcut, .portal-workspace.is-school button.school-shortcut:hover {
+    transition: none !important; transform: none !important;
+  }
 }

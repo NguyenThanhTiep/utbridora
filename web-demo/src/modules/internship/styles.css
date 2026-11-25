@@ -1,4 +1,53 @@
 .internship-workspace .section-heading { flex-wrap: wrap; }
+.internship-workspace { min-width: 0; }
+.internship-workspace > .panel { padding: 22px 28px; }
+.topbar.t3-topbar { position: sticky; top: 0; z-index: 25; height: auto; min-height: 78px; padding: 0; align-items: stretch; box-shadow: 0 3px 14px rgba(20, 47, 64, .08); }
+.t3-topbar-slot { flex: 1; min-width: 0; }
+.t3-topbar-slot .t3-context-bar { border: 0; border-radius: 0; box-shadow: none; padding: 16px 34px; }
+.t3-context-bar { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.4fr) max-content; --ink: #142f40; --muted: #64788a; --line: #e3eaf2; font-size: 14px; }
+.t3-context-label { display: block; margin: 0 0 8px; font-size: 12px; line-height: 18px; font-weight: 500; color: #64788a; }
+.t3-context-value { display: block; width: 100%; height: 48px; min-width: 0; padding: 11px 14px; border: 1px solid #e3eaf2; border-radius: 12px; color: #526b7a; background: #f5f7fa; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.t3-context-actions > button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 48px; min-height: 48px; margin: 0; padding: 0 14px; border: 1px solid #e3eaf2; border-radius: 12px; background: #fff; color: #142f40; white-space: nowrap; }
+.t3-context-actions > button:hover:not(:disabled) { border-color: #b8dacf; background: #f3faf7; color: #087463; }
+.t3-context-details, .t3-context-feedback { grid-column: 1 / -1; min-width: 0; }
+.t3-context-bar .t3-context-details { border-top: 1px solid #e3eaf2; padding-top: 14px; }
+.t3-context-feedback { margin: 0; }
+.t3-context-feedback .empty-state, .t3-context-feedback .loading-state { margin: 0; }
+.internship-scope-details { padding: 8px 0 0; color: var(--muted); }
+.internship-scope-details summary { cursor: pointer; width: fit-content; font-size: var(--text-sm); font-weight: 600; }
+.hr-workspace { display: grid; gap: 20px; min-width: 0; }
+.hr-workspace-context { display: grid; gap: 14px; }
+.hr-workspace-context .section-heading { margin-bottom: 0; }
+.hr-workspace-context .internship-context { max-width: 640px; }
+.hr-workspace > .panel, .hr-overview, .internship-groups > .panel { border: 1px solid var(--line); box-shadow: 0 10px 24px rgba(11, 42, 58, .035); }
+.hr-workspace > form.panel, .hr-workspace > .stack > .panel { padding: 28px 32px; }
+.hr-overview { display: grid; gap: 20px; padding: 26px 30px; border-radius: var(--radius); background: #fff; }
+.hr-overview h3 { margin: 3px 0 6px; font-size: 22px; color: var(--ink); }
+.hr-overview .muted { margin: 0; }
+.hr-overview-actions { display: grid; gap: 12px; padding-top: 18px; border-top: 1px solid var(--line); }
+.hr-overview-actions .section-kicker { margin: 0; }
+.hr-overview-actions .button-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.hr-overview-actions .button-row button { min-height: 42px; }
+.hr-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 14px; }
+.hr-kpi-card { display: grid; gap: 6px; min-height: 105px; padding: 18px 20px; border: 1px solid #cce8de; border-left: 4px solid var(--brand); border-radius: 12px; background: #eaf8f2; }
+.hr-kpi-card span { color: #466b66; font-size: var(--text-sm); }
+.hr-kpi-card strong { color: var(--brand-dark); font-size: 31px; line-height: 1; }
+.hr-kpi-card small { color: var(--muted); }
+.hr-overview-metrics .internship-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 14px; }
+.hr-overview-metrics .internship-facts > div { padding: 18px 20px; border: 1px solid #d8e6f1; border-left: 4px solid #3987bd; border-radius: 12px; background: #eef6fc; }
+.hr-overview-metrics .internship-facts > div:nth-child(2) { border-color: #dcd2f1; border-left-color: #8556bc; background: #f5effc; }
+.hr-overview-metrics .internship-facts > div:nth-child(3) { border-color: #f0d9bd; border-left-color: #c77722; background: #fff5e7; }
+.hr-cohort-directory .section-heading { align-items: center; }
+.hr-cohort-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 12px; }
+.hr-cohort-choice { display: grid; gap: 6px; width: 100%; min-height: 112px; padding: 17px 18px; text-align: left; background: #fff; border: 1px solid var(--line); border-radius: 12px; color: var(--ink); }
+.hr-cohort-choice:hover, .hr-cohort-choice.selected { border-color: var(--brand); background: #f0faf7; }
+.hr-cohort-choice strong { font-size: var(--text-md); }
+.hr-cohort-choice span { color: var(--muted); font-size: var(--text-sm); }
+.hr-cohort-choice small { color: var(--brand-dark); font-weight: 700; }
+.hr-step-hint { margin: 0; padding: 20px 24px; border: 1px dashed var(--line); border-radius: var(--radius); background: #fff; color: var(--muted); }
+.hr-workspace .stack > form.panel, .hr-workspace .stack > section.panel { margin: 0; }
+.hr-workspace textarea { width: 100%; min-height: 108px; box-sizing: border-box; }
+.hr-workspace .internship-facts code { font-size: var(--text-sm); overflow-wrap: anywhere; }
 .internship-context { display: grid; gap: 10px; min-width: 0; }
 .internship-context label { font-weight: 600; color: var(--ink); }
 .internship-context select { width: 100%; min-width: 0; max-width: 100%; text-overflow: ellipsis; }
@@ -19,10 +68,30 @@
 .internship-facts dt { color: var(--muted); font-size: var(--text-sm); }
 .internship-facts dd { margin: 4px 0 0; font-size: 24px; font-weight: 700; color: var(--ink); }
 .internship-feedback code { overflow-wrap: anywhere; }
+@media (max-width: 900px) {
+  .topbar.t3-topbar { position: sticky; }
+  .t3-topbar-menu { position: absolute; top: 16px; left: 14px; z-index: 1; }
+  .t3-topbar-slot .t3-context-bar { padding: 64px 16px 16px; }
+}
 @media (max-width: 600px) {
+  .t3-topbar.is-condensed .t3-context-bar { padding: 10px 12px 10px 58px; }
+  .t3-topbar.is-condensed .t3-topbar-menu { top: 12px; left: 12px; }
+  .t3-topbar.is-condensed .portal-organization-icon,
+  .t3-topbar.is-condensed .portal-context-select label,
+  .t3-topbar.is-condensed .t3-context-scope,
+  .t3-topbar.is-condensed .t3-context-actions,
+  .t3-topbar.is-condensed .t3-context-details,
+  .t3-topbar.is-condensed .t3-context-feedback { display: none; }
+  .t3-topbar.is-condensed .portal-context-select select { height: 44px; }
+  .t3-context-actions > button { width: 100%; }
+  .t3-context-bar .portal-role { justify-self: end; }
   .internship-workspace .panel { padding: 18px; }
   .internship-workspace .section-heading > button { width: 100%; }
+  .hr-overview { padding: 20px; }
+  .hr-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hr-overview-actions .button-row button { width: 100%; justify-content: flex-start; }
 }
+@media (max-width: 360px) { .t3-context-bar .portal-role { justify-self: start; } }
 .t3-workflow { min-width: 0; overflow-wrap: anywhere; }
 .t3-workflow fieldset { min-width: 0; display: grid; gap: 12px; }
 .t3-workflow textarea { min-height: 96px; width: 100%; box-sizing: border-box; }
@@ -34,6 +103,54 @@
 .t3-evaluations textarea { min-height: 90px; }
 .t3-evaluations input[type="checkbox"] { width: 20px; height: 20px; min-height: 0; margin-right: 8px; vertical-align: middle; }
 @media (max-width: 600px) { .t3-evaluations .panel { padding: 14px; } }
+.t3-workbench { min-width: 0; }
+.t3-workbench [hidden] { display: none !important; }
+.t3-view-nav { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; background: var(--brand-light); border-radius: 12px; }
+.t3-view-nav button { flex: 1 1 auto; font-size: 14px; }
+.t3-view-nav button[aria-pressed="true"] { background: var(--brand); color: white; border-color: var(--brand); }
+.t3-metrics { display: grid; grid-template-columns: repeat(auto-fit,minmax(130px,1fr)); gap: 16px; margin: 0; }
+.t3-metrics div { padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--brand-light); }
+.t3-metrics dt { font-size: 13px; color: var(--muted); }
+.t3-metrics dd { font-size: 28px; font-weight: 700; margin: 8px 0 0; }
+.t3-kanban { display: grid; grid-template-columns: repeat(5,minmax(155px,1fr)); gap: 12px; overflow-x: auto; padding-bottom: 12px; }
+.t3-kanban-column { border: 1px solid var(--line); border-radius: 12px; background: #f3f6fb; min-height: 240px; padding: 12px; }
+.t3-kanban-column h4 { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 0 0 16px; }
+.t3-task-card { background: white; border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 12px; overflow-wrap: anywhere; }
+.t3-task-card .text-button { text-align: left; font-weight: 650; }
+.t3-task-card p { font-size: 12px; color: var(--muted); line-height: 1.7; }
+.t3-state { display: inline-block; font-size: 12px; padding: 5px 8px; border-radius: 8px; color: #24455d; background: #e8f2ff; }
+.t3-state-REVISION_REQUIRED { background: #fff2db; color: #765000; }
+.t3-state-COMPLETED { background: #e5f6ed; color: #176143; }
+.t3-task-list { display: grid; gap: 12px; }
+.t3-task-list .t3-task-card { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; }
+.t3-task-list p { grid-column: 1/-1; }
+.t3-empty { padding: 24px; text-align: center; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); }
+.t3-workbench fieldset, .t3-workflow fieldset { border: 1px solid var(--line); border-radius: 12px; padding: 20px; min-width: 0; }
+.t3-workbench input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; margin: 0 8px 0 0; }
+.t3-task-detail { border-top: 4px solid var(--brand); }
+.t3-workflow > article { border-left: 3px solid var(--brand); }
+.t3-evaluations > section, .t3-evaluations fieldset { border-radius: 12px; }
+.t3-evaluations fieldset { border: 1px solid var(--line); padding: 20px; }
+.t3-evaluations [aria-label="Nội dung đánh giá"] { border-top: 4px solid var(--brand); }
+.t3-evaluations [aria-label="Nội dung đánh giá"] article { padding: 16px; background: var(--brand-light); border-radius: 12px; }
+.t3-workbench button:focus-visible, .t3-evaluations button:focus-visible { outline: 3px solid var(--brand); outline-offset: 3px; }
+.t3-workbench label, .t3-workflow label, .t3-evaluations label { display: block; }
+.t3-workbench textarea, .t3-workflow textarea, .t3-evaluations textarea {
+  display: block; width: 100%; min-height: 96px; margin-top: 6px; padding: 12px;
+  font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 9px; resize: vertical;
+}
+.t3-workbench textarea:focus-visible, .t3-workflow textarea:focus-visible, .t3-evaluations textarea:focus-visible { outline: 3px solid #7bd1c7; outline-offset: 3px; }
+@media(max-width: 768px) {
+  .t3-kanban { grid-template-columns: repeat(5,220px); }
+  .t3-workbench .button-row { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .t3-calendar [role="gridcell"] { padding: 8px; }
+}
+@media(max-width: 480px) {
+  .t3-workbench .button-row { grid-template-columns: minmax(0,1fr); }
+  .t3-view-nav { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .t3-workbench fieldset, .t3-workflow fieldset, .t3-evaluations fieldset { padding: 12px; }
+  .t3-workbench .panel { padding: 14px; }
+}
 .t3-operation-card{border:1px solid var(--border,#dbe5ea);border-radius:12px;padding:1rem;min-width:0}
 .t3-operation-card summary{cursor:pointer;font-weight:650;margin-bottom:1rem}
 .t3-operation-card fieldset{border:0;padding:0;margin:0;display:grid;gap:.85rem;min-width:0}

@@ -1,10 +1,11 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { ApiError, type Grant, type Me } from '../../../api';
 import { EmptyState, Field, Icon, LoadingState, Notice, useAction } from '../../../components';
+import { askConfirm } from '../../../confirm';
 import { getMyProfile, listMajors, listTerms, newIdempotencyKey, saveMyProfile, toProfileInput, type AcademicCatalogItem } from '../api';
 import { AvailabilityEditor } from '../components/AvailabilityEditor';
 import { SkillsEditor } from '../components/SkillsEditor';
-import { CompletenessCards } from '../components/StudentUI';
+import { CompletenessChecklist, CompletenessRing, StudentIcon, StudentToast } from '../components/StudentUI';
 import type { DateRange, ProfileInput, SelfProfileView, TermReference } from '../types';
 import '../styles.css';
 
@@ -33,8 +34,7 @@ function validate(draft: Draft): DraftErrors {
   return errors;
 }
 const hasErrors = (errors: DraftErrors) => Boolean(errors.phone) || Object.keys(errors.periods).length > 0;
-const initials = (name: string) => { const words = name.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
-  return ((words[0]?.[0] ?? '') + (words.length > 1 ? words[words.length - 1][0] : '')).toUpperCase() || '?'; };
+const day = (value: string) => value.split('-').reverse().join('/');
 // Tạo lần đầu dùng version 0; PUT vẫn kiểm quan hệ student–school–term ở server.
 const emptyInput = (termId: string): ProfileInput => ({
   expectedProfileVersion: 0, termId, majorCode: null, skillsDeclared: false, skills: [], customSkills: [],
@@ -113,8 +113,9 @@ export function MyProfilePage({ me, schools }: { me: Me; schools: Grant[] }) {
   const phoneError = errors.phone || (rejectedFields.some(field => PHONE_FIELDS.includes(field)) ? 'Số điện thoại chưa được hệ thống chấp nhận.' : '');
   const availabilityError = rejectedFields.some(field => AVAILABILITY_FIELDS.includes(field)) ? 'Thời gian có thể tham gia chưa được hệ thống chấp nhận.' : '';
   const otherRejected = rejectedFields.some(field => !PHONE_FIELDS.includes(field) && !AVAILABILITY_FIELDS.includes(field));
-  const reload = () => {
-    if ((dirty || conflict) && !window.confirm('Thay đổi chưa lưu sẽ được thay bằng dữ liệu mới nhất. Tiếp tục?')) return;
+  const reload = async () => {
+    if ((dirty || conflict) && !await askConfirm({ title: 'Tải lại dữ liệu mới nhất?', message: 'Thay đổi chưa lưu sẽ được thay bằng dữ liệu mới nhất. Tiếp tục?',
+      confirmLabel: 'Tải lại và bỏ thay đổi', tone: 'danger' })) return;
     setProfileAttempt(previous => previous + 1);
   };
   const createProfile = () => {
@@ -198,6 +199,7 @@ export function MyProfilePage({ me, schools }: { me: Me; schools: Grant[] }) {
     : profile.status === 'error' ? <EmptyState icon="alert" title="Không tải được hồ sơ" description={profile.message}>
       <button type="button" className="secondary" onClick={() => setProfileAttempt(previous => previous + 1)}><Icon name="refresh" size={16} />Thử lại</button></EmptyState>
     : view && draft && <form className="student-profile-form" noValidate aria-busy={save.busy} onSubmit={submit}>
+      <div className="student-form-block tone-blue"><h3 className="student-block-title"><Icon name="user" size={17} />Thông tin cơ bản</h3>
       <div className="student-form-grid"><div><div className="field"><label htmlFor={majorInputId}>Ngành đào tạo</label><select id={majorInputId} value={draft.majorCode ?? ''} disabled={save.busy || majors === null || majorsFailed}
         onChange={event => change({ ...draft, majorCode: event.target.value || null })}>
         <option value="">Chưa khai báo</option>
@@ -208,48 +210,54 @@ export function MyProfilePage({ me, schools }: { me: Me; schools: Grant[] }) {
       {rejectedFields.includes('majorCode') && <p className="student-field-error">Ngành đã chọn không còn hợp lệ. Tải lại danh mục rồi chọn lại.</p>}</div>
       <div><Field label="Số điện thoại" type="tel" autoComplete="tel" required={false} value={draft.phone} disabled={save.busy}
         onChange={phone => change({ ...draft, phone })} {...(phoneError ? { 'aria-invalid': true, 'aria-describedby': phoneErrorId } : {})} />
-      {phoneError && <p className="student-field-error" id={phoneErrorId}>{phoneError}</p>}</div></div>
+      {phoneError && <p className="student-field-error" id={phoneErrorId}>{phoneError}</p>}</div></div></div>
       <AvailabilityEditor declared={draft.availabilityDeclared} periods={draft.availablePeriods} errors={errors.periods} groupError={availabilityError} disabled={save.busy}
         setDeclared={availabilityDeclared => change({ ...draft, availabilityDeclared })} setPeriods={availablePeriods => change({ ...draft, availablePeriods })} />
-      <div className="student-kept"><h3>Dữ liệu được giữ nguyên khi lưu</h3>
+      <div className="student-form-block student-kept tone-purple"><h3 className="student-block-title"><Icon name="lock" size={17} />Dữ liệu được giữ nguyên khi lưu</h3>
         <ul>
-          <li>Kỹ năng: {view.profile.skillsDeclared ? `${view.profile.skills.length} kỹ năng chuẩn, ${view.profile.customSkills.length} kỹ năng tự khai` : 'Chưa khai báo'}</li>
-          <li>Định hướng: {view.profile.orientationCodes.length}</li>
-          <li>Môn học: {view.profile.subjectCodes.length}</li>
-          <li>Dự án: {view.profile.projects.length}</li>
-          <li>Chứng chỉ: {view.profile.certificates.length}</li>
-          <li>CV: {view.profile.cvFileId ? 'Đã có' : 'Chưa có'}</li>
+          <li className="tone-green"><span className="student-kept-icon"><Icon name="layers" size={17} /></span><span>Kỹ năng</span>
+            <b>{view.profile.skillsDeclared ? `${view.profile.skills.length} chuẩn · ${view.profile.customSkills.length} tự khai` : 'Chưa khai báo'}</b></li>
+          <li className="tone-blue"><span className="student-kept-icon"><StudentIcon name="folder" size={17} /></span><span>Dự án</span><b>{view.profile.projects.length}</b></li>
+          <li className="tone-purple"><span className="student-kept-icon"><StudentIcon name="award" size={17} /></span><span>Chứng chỉ</span><b>{view.profile.certificates.length}</b></li>
+          <li className="tone-amber"><span className="student-kept-icon"><StudentIcon name="file" size={17} /></span><span>CV</span><b>{view.profile.cvFileId ? 'Đã có' : 'Chưa có'}</b></li>
         </ul>
         <p className="field-hint">Các mục này được chỉnh ở màn kỹ năng và năng lực; lưu thông tin chung không thay đổi chúng.</p>
       </div>
-      <Notice message={save.message} tone={save.error ? 'error' : 'success'} />
+      {save.error ? <Notice message={save.message} tone="error" /> : <StudentToast message={save.message} onClose={() => save.setMessage('')} />}
       {otherRejected && <p className="student-error-note">Một số dữ liệu khác trong hồ sơ chưa hợp lệ{rejected?.requestId ? ' (mã yêu cầu: ' + rejected.requestId + ')' : ''}.</p>}
-      <div className="button-row">
-        <button type="submit" disabled={save.busy || conflict || !dirty}>{save.busy ? <span className="spinner spinner-light" /> : <Icon name="check" size={17} />}Lưu thông tin chung</button>
+      <div className="button-row student-form-actions">
+        <p className={'student-save-state' + (dirty ? ' dirty' : '')}>{dirty ? 'Bạn có thay đổi chưa lưu' : 'Chưa có thay đổi'}</p>
         <button type="button" className="secondary" disabled={save.busy} onClick={reload}><Icon name="refresh" size={16} />Tải lại dữ liệu mới nhất</button>
+        <button type="submit" disabled={save.busy || conflict || !dirty}>{save.busy ? <span className="spinner spinner-light" /> : <Icon name="check" size={17} />}Lưu thông tin chung</button>
       </div>
     </form>;
 
-  // Frame 477:11203: độ hoàn thiện + 6 tiêu chí ở trên, thẻ "Thông tin sinh viên" chia cột tài khoản | thông tin cơ bản.
-  // Chưa có API ảnh đại diện nên ô bên trái hiện chữ viết tắt và thông tin tài khoản đăng nhập.
+  // Frame 477:11203 gộp thành thẻ hồ sơ đầu trang: tài khoản đăng nhập + chip học kỳ/ngành/số điện thoại đã lưu, vòng độ hoàn thiện
+  // và chip tiêu chí; bên dưới mỗi khối form là một thẻ riêng. Không có ô ảnh đại diện (lead chốt bỏ 21/11; SRS S02 không có).
+  const ready = Boolean(terms?.length && termId && view && draft);
+  const shown = ready ? view : null;
+  const major = shown?.profile.majorCode ? majors?.find(item => item.code === shown.profile.majorCode)?.name ?? shown.profile.majorCode : null;
   return <div className="student-page">
-    {view && <CompletenessCards result={view.completeness} />}
-    <section className="panel student-term-panel">
-      <div className="section-heading"><div><h2>Thông tin sinh viên</h2>
-        {term && <p className="section-description">Học kỳ {term.termCode} · {term.startDate} – {term.endDate}</p>}</div>
-        {terms && terms.length > 1 && <label className="student-term-select">Học kỳ<select value={termId} onChange={event => setTermId(event.target.value)}>
-          <option value="" disabled>Chọn học kỳ</option>
-          {terms.map(item => <option key={item.termId} value={item.termId}>{item.termCode}</option>)}</select></label>}</div>
-      <div className="student-profile-layout">
-        <div className="student-identity-card">
-          <span className="student-avatar" aria-hidden="true">{initials(me.displayName)}</span>
-          <p className="student-group-label">Tài khoản đăng nhập</p>
-          <strong className="student-identity-name">{me.displayName}</strong>
-          <span className="student-identity-email">{me.email}</span>
+    <section className="panel student-profile-hero" aria-label="Hồ sơ sinh viên">
+      <div className="student-profile-hero-top">
+        <div className="student-profile-hero-text">
+          <p className="student-home-kicker">HỒ SƠ SINH VIÊN</p>
+          <h2>{me.displayName}</h2>
+          <p className="student-identity-email">{me.email}</p>
+          {(term || shown) && <ul className="student-profile-chips" aria-label="Thông tin đã lưu">
+            {term && <li><Icon name="calendar" size={15} /><span>Học kỳ {term.termCode} · {day(term.startDate)} – {day(term.endDate)}</span></li>}
+            {shown && <li><Icon name="graduation" size={15} /><span>{major ?? 'Chưa khai ngành'}</span></li>}
+            {shown && <li><StudentIcon name="phone" size={15} /><span>{shown.profile.phone ?? 'Chưa có số điện thoại'}</span></li>}
+          </ul>}
+          {terms && terms.length > 1 && <label className="student-term-select">Học kỳ<select value={termId} onChange={event => setTermId(event.target.value)}>
+            <option value="" disabled>Chọn học kỳ</option>
+            {terms.map(item => <option key={item.termId} value={item.termId}>{item.termCode}</option>)}</select></label>}
         </div>
-        <div className="student-profile-main"><p className="student-group-label">THÔNG TIN CƠ BẢN</p>{content}</div>
+        {shown && <CompletenessRing result={shown.completeness} />}
       </div>
+      {shown && <CompletenessChecklist result={shown.completeness} />}
     </section>
+    {ready ? content : <section className="panel student-term-panel">{content}</section>}
     {profile.status === 'ready' && <SkillsEditor key={termId + ':' + profile.view.profileVersion} view={profile.view}
       disabled={dirty || save.busy || conflict} onSaved={view => { setProfile({ status: 'ready', view }); setDraft(draftOf(view)); }} />}
   </div>;

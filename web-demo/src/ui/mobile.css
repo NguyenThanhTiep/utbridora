@@ -1,0 +1,163 @@
+/* Shared phone layout; desktop module layouts keep their own sizing. */
+@media (max-width: 640px), (max-width: 900px) and (max-height: 500px) and (pointer: coarse) {
+  html { scroll-padding-block-start: 80px; }
+
+  #root .workspace:not(:where(.workspace-native-t3)) { min-width: 0; }
+  #root .workspace:not(:where(.workspace-native-t3)) .content {
+    width: 100%;
+    min-width: 0;
+    padding: 18px max(12px, env(safe-area-inset-right)) 20px max(12px, env(safe-area-inset-left));
+  }
+  #root .workspace:not(:where(.workspace-native-t3)) .app-footer-inner {
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    gap: 4px;
+    padding: 14px max(12px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  }
+
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.panel, fieldset, .section-heading, .button-row, .portal-page-header) { min-width: 0; }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.panel, .portal-subpage-sheet) { padding: 16px 14px; }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.section-heading, .workflow-section-header, .detail-heading, .portal-detail-heading) {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.section-heading, .workflow-section-header, .detail-heading) > div { min-width: 0; }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.notice, .field-hint, .field-error, .loading-state, .empty-state, .detail-reference) {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  /* Touch targets and readable form values, including controls in module toolbars. */
+  #root :is(.workspace:not(:where(.workspace-native-t3)), .auth-shell) button {
+    min-height: 44px;
+    min-block-size: 44px;
+    line-height: 1.45;
+    touch-action: manipulation;
+  }
+  #root :is(.workspace:not(:where(.workspace-native-t3)), .auth-shell) :is(button, a) { -webkit-tap-highlight-color: #0b927c20; }
+  #root :is(.workspace:not(:where(.workspace-native-t3)), .auth-shell) :is(.btn-icon, .password-toggle, .profile-shortcut) { min-width: 44px; }
+  /* Keep touch targets at their full size while the form fades in. */
+  #root .auth-shell :is(.auth-form, .auth-fields > .field, button.auth-submit) { animation-name: auth-surface-enter; }
+  #root .workspace :is(.menu-toggle, .sidebar-close) {
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    flex-shrink: 0;
+  }
+  #root :is(.workspace:not(:where(.workspace-native-t3)), .auth-shell) input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="range"]),
+#root :is(.workspace:not(:where(.workspace-native-t3)), .auth-shell) :is(select, textarea) {
+    max-width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    font-size: 16px;
+    line-height: 1.5;
+    scroll-margin-block: 90px 24px;
+  }
+  #root .workspace:not(:where(.workspace-native-t3)) textarea { min-height: 112px; resize: vertical; }
+  #root :is(.workspace:not(:where(.workspace-native-t3)), .auth-shell) select:not([multiple]):is(:not([size]), [size="1"]) { min-height: 44px; min-block-size: 44px; }
+  #root :is(.auth-show-password, .delegation-choices label, .check-label) { min-height: 44px; }
+  #root .workspace:not(:where(.workspace-native-t3)) .button-row { flex-wrap: wrap; align-items: stretch; gap: 8px; }
+  #root .workspace:not(:where(.workspace-native-t3)) .button-row > button { max-width: 100%; white-space: normal; }
+
+  /* Filters and forms stack rather than squeezing columns down to unreadable widths. */
+  #root .workspace:not(:where(.workspace-native-t3)) :is(
+    .placement-filter-bar, .placement-overview-filters, .portal-list-toolbar,
+    .cooperation-form-grid, .delegation-scope-toolbar, .delegation-staff-grid,
+    .bm01-two-col-grid, .user-filters, .audit-filters, .student-opp-filters, .internship-scope
+  ) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    align-items: end;
+  }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.placement-filter-bar, .placement-overview-filters, .portal-list-toolbar) > :is(label, button, input, select) {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+  }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.cooperation-form-grid, .bm01-two-col-grid, .delegation-staff-grid) > * { min-width: 0; }
+  #root .workspace:not(:where(.workspace-native-t3)) .pagination { flex-wrap: wrap; gap: 12px; }
+  #root .workspace:not(:where(.workspace-native-t3)) .pagination-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  /* Keep table semantics and horizontal scrolling inside the table, not the page. */
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.table-wrap, .proposal-table) {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-padding-inline: 12px;
+  }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.table-wrap, .proposal-table) button { white-space: nowrap; }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.table-wrap, .proposal-table) > table { min-width: 100%; table-layout: auto; }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.table-wrap, .proposal-table) > table:has(thead tr > :nth-child(3)):has(tbody tr > :nth-child(2)) { min-width: 480px; }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.table-wrap, .proposal-table) > table:has(thead tr > :nth-child(4)):has(tbody tr > :nth-child(2)) { min-width: 640px; }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(td, th) .table-person { min-width: 180px; }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.portal-tabs, .student-tabs) {
+    display: flex;
+    flex-wrap: nowrap;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+  }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.portal-tabs, .student-tabs) > [role="tab"] { flex: 0 0 auto; white-space: nowrap; }
+
+  #root .workspace .sidebar {
+    width: min(320px, calc(100dvw - 20px));
+    max-height: 100dvh;
+    padding-top: max(18px, env(safe-area-inset-top));
+    padding-bottom: max(18px, env(safe-area-inset-bottom));
+    overscroll-behavior-y: contain;
+    scrollbar-width: thin;
+  }
+  #root .workspace .sidebar .nav { min-height: 44px; }
+  #root .workspace:not(:where(.workspace-native-t3)) .topbar { min-height: 64px; height: auto; padding-block: 8px; }
+  #root .workspace:not(:where(.workspace-native-t3)) .topbar-current { max-width: none; }
+  #root .workspace:not(:where(.workspace-native-t3)) .topbar-location { flex: 1; min-width: 0; }
+  #root .workspace:not(:where(.workspace-native-t3)) .topbar-right { flex-shrink: 0; }
+  #root .workspace:not(:where(.workspace-native-t3)) .topbar :is(.admin-location, .portal-topbar-identity, .portal-topbar-identity > div) { min-width: 0; }
+  #root .workspace:not(:where(.workspace-native-t3)) .topbar :is(.admin-location > small, .admin-location > strong, .portal-topbar-identity strong) {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #root .workspace:not(:where(.workspace-native-t3)) .topbar .role-menu-label { display: none; }
+  #root .workspace:not(:where(.workspace-native-t3)):has(.topbar .role-menu-wrapper) .topbar .profile-shortcut { display: none; }
+
+  /* The account menu is already available in the phone's topbar. */
+  #root .workspace:not(:where(.workspace-native-t3)):has(.topbar .role-menu-wrapper) .portal-context-actions:not(.t3-context-actions) > .role-menu-wrapper { display: none; }
+  #root .workspace:not(:where(.workspace-native-t3)) .portal-context-actions { grid-template-columns: minmax(0, 1fr); }
+  #root .workspace:not(:where(.workspace-native-t3)) .role-menu-popover { max-width: calc(100dvw - 24px); max-height: calc(100dvh - 100px); overflow-y: auto; overscroll-behavior: contain; }
+  #root .workspace:not(:where(.workspace-native-t3)) .workflow-kpi-grid.school-summary-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  #root .workspace:not(:where(.workspace-native-t3)) .school-summary-strip .kpi-card { min-height: 96px; padding: 12px; }
+  #root .workspace:not(:where(.workspace-native-t3)) .school-summary-strip .kpi-card-label { font-size: 12px; white-space: normal; }
+  #root .workspace:not(:where(.workspace-native-t3)) .school-summary-strip .kpi-card-hint { display: none; }
+
+  #root .auth-shell .auth-entry-header { padding: 16px; gap: 10px; }
+  #root .auth-shell .auth-entry-body { padding: 20px 12px max(20px, env(safe-area-inset-bottom)); }
+  #root .auth-shell .auth-card { padding: 26px 20px; }
+  #root .auth-shell .auth-options { gap: 8px 16px; }
+  #root .auth-help-dialog {
+    box-sizing: border-box;
+    width: calc(100dvw - 24px);
+    max-width: 480px;
+    max-height: calc(100dvh - 32px);
+    padding: 20px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+@media (min-width: 380px) and (max-width: 640px) {
+  #root .workspace:not(:where(.workspace-native-t3)) .workflow-kpi-grid.school-summary-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 359px) {
+  #root .workspace:not(:where(.workspace-native-t3)) .content { padding-inline: max(10px, env(safe-area-inset-left)) max(10px, env(safe-area-inset-right)); }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.panel, .portal-subpage-sheet) { padding: 14px 12px; }
+  #root .workspace:not(:where(.workspace-native-t3)) .button-row > button { flex: 1 1 100%; }
+}

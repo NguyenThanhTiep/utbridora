@@ -51,8 +51,12 @@ public class StudentImportService {
         access.require(auth,term.schoolOrgId(),term.termId(),PERMISSION);
         if(term.status()!=TermReferencePort.Status.ACTIVE) throw failure(422,"REFERENCE_DATA_CHANGED");return term;
     }
+    private static final String JOB_COLUMNS="SELECT id,school_org_id,term_id,actor_id,initiated_by,initiated_security_version,authority_assignment_id,authority_version,state,version,file_hash,catalog_version,term_version,preview_expires_at,total_rows,selected_rows,lease_owner,lease_epoch,lease_until,started_at,finished_at FROM student_import_jobs";
+    private Job mapJob(java.sql.ResultSet r) throws java.sql.SQLException {
+        return new Job(r.getString("id"),r.getString("school_org_id"),r.getString("term_id"),r.getString("actor_id"),r.getString("initiated_by"),(Long)r.getObject("initiated_security_version"),r.getString("authority_assignment_id"),(Long)r.getObject("authority_version"),r.getString("state"),r.getLong("version"),r.getString("file_hash"),r.getString("catalog_version"),r.getLong("term_version"),instant(r,"preview_expires_at"),r.getInt("total_rows"),r.getInt("selected_rows"),r.getString("lease_owner"),r.getLong("lease_epoch"),instant(r,"lease_until"),instant(r,"started_at"),instant(r,"finished_at"));
+    }
     @Transactional(propagation=Propagation.MANDATORY) public Job job(String id,boolean locked) {
-        return jdbc.query("SELECT * FROM student_import_jobs WHERE id=?"+(locked?" FOR UPDATE":""),(r,n)->new Job(r.getString("id"),r.getString("school_org_id"),r.getString("term_id"),r.getString("actor_id"),r.getString("initiated_by"),(Long)r.getObject("initiated_security_version"),r.getString("authority_assignment_id"),(Long)r.getObject("authority_version"),r.getString("state"),r.getLong("version"),r.getString("file_hash"),r.getString("catalog_version"),r.getLong("term_version"),instant(r,"preview_expires_at"),r.getInt("total_rows"),r.getInt("selected_rows"),r.getString("lease_owner"),r.getLong("lease_epoch"),instant(r,"lease_until"),instant(r,"started_at"),instant(r,"finished_at")),uuid(id)).stream().findFirst().orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
+        return jdbc.query(JOB_COLUMNS+" WHERE id=?"+(locked?" FOR UPDATE":""),(r,n)->mapJob(r),uuid(id)).stream().findFirst().orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
     }
     @Transactional(propagation=Propagation.MANDATORY) public Job authorized(Authentication auth,String id) {
         actor(auth);var candidate=job(id,false);
@@ -127,6 +131,21 @@ public class StudentImportService {
             audit.workflow(actor(auth),"STUDENT_IMPORT_CONFIRMED",id,j.school(),Map.of("selectedCount",selected.size(),"jobVersion",j.version()+1,"operationId",uuid(key)));
             return new ImportAccepted(id,j.version()+1,"PROCESSING",selected.size());
         },ImportAccepted::importJobId);
+    }
+    @Transactional(readOnly=true)
+    public Page<ImportJobDto> listJobs(Authentication auth,String termId,int page,int size) {
+        actor(auth);
+        var term=terms.findById(uuid(termId)).orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
+        access.require(auth,term.schoolOrgId(),term.termId(),PERMISSION);
+        WorkflowValues.page(page,size);
+        long total=jdbc.queryForObject("SELECT COUNT(*) FROM student_import_jobs WHERE school_org_id=? AND term_id=?",Long.class,term.schoolOrgId(),term.termId());
+        var jobs=jdbc.query(JOB_COLUMNS+" WHERE school_org_id=? AND term_id=? ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?",(r,n)->mapJob(r),term.schoolOrgId(),term.termId(),size,page*size);
+        return new Page<>(jobs.stream().map(this::project).toList(),page,size,total,(int)((total+size-1)/size));
+    }
+    public List<AcademicCatalogService.Item> listActiveMajors(Authentication auth,String termId) {
+        var term=scope(auth,termId);
+        return catalogs.forProfile(term.schoolOrgId(),term.termId()).entries().get(AcademicCatalogService.Kind.MAJOR).stream()
+            .filter(entry->"ACTIVE".equals(entry.status())).toList();
     }
     public ImportJobDto get(Authentication auth,String id) {return project(authorized(auth,id));}
     public OperationLedger.HttpResult resume(Authentication auth,String id,String key,ResumeImport in) {

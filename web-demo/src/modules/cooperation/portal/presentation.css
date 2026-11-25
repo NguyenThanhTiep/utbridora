@@ -1,0 +1,181 @@
+/* Shared presentation for the two cooperation portals. Business and student UI stay scoped. */
+#root .workspace-role-portal .portal-workspace:is(.is-school, .is-enterprise) {
+  --portal-surface: #fff;
+  --portal-soft: #f8fafc;
+  --portal-border: #e1e9f0;
+  --portal-radius: 16px;
+  --portal-shadow: 0 4px 18px #142f4006;
+  --portal-type-title: 25px;
+  --portal-type-body: 15px;
+  --portal-type-control: 15px;
+  --portal-type-label: 14px;
+  gap: 20px;
+}
+#root .workspace-role-portal .portal-workspace .portal-page-stage { gap: 20px; }
+#root .workspace-role-portal .portal-page-intro { display: grid; gap: 12px; min-width: 0; }
+#root .workspace-role-portal .portal-page-toolbar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 10px 16px; min-height: 40px; padding: 0 2px;
+}
+#root .workspace-role-portal .portal-page-toolbar .portal-breadcrumb {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0;
+  font-size: 13px; font-weight: 400; letter-spacing: 0; text-transform: none; color: #64788a;
+}
+#root .workspace-role-portal .portal-page-toolbar .portal-breadcrumb > span { color: #bac7d0; }
+#root .workspace-role-portal .portal-page-toolbar > button { margin: 0; flex-shrink: 0; }
+#root .workspace-role-portal .portal-workspace .portal-page-heading {
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  min-width: 0; margin: 0; padding: 22px 26px; border: 1px solid #dceae6;
+  border-radius: var(--portal-radius); background: linear-gradient(110deg, #fff 20%, #f0f9f6);
+  box-shadow: var(--portal-shadow);
+}
+#root .workspace-role-portal .portal-page-heading > div { min-width: 0; }
+#root .workspace-role-portal .portal-workspace .portal-page-heading h2 {
+  margin: 0; font-size: var(--portal-type-title); line-height: 1.35; letter-spacing: -.025em;
+}
+#root .workspace-role-portal .portal-page-heading .section-kicker {
+  display: inline-block; margin: 0 0 8px; padding: 0; border-radius: 0;
+  background: transparent; color: #087b68; font-size: 11px; font-weight: 700; letter-spacing: .07em;
+}
+#root .workspace-role-portal .portal-page-heading p:not(.section-kicker) {
+  max-width: 76ch; margin: 8px 0 0; color: #607687; font-size: 14px; line-height: 1.6;
+}
+#root .workspace-role-portal .portal-page-heading .portal-welcome-icon {
+  display: grid; place-items: center; flex: 0 0 56px; width: 56px; height: 56px;
+  border: 1px solid #d2e9e0; border-radius: 16px; background: #ffffffb3; color: #0b927c; box-shadow: none;
+}
+#root .workspace-role-portal .portal-page-heading .portal-welcome-icon > .icon { width: 28px; height: 28px; }
+#root .workspace-role-portal .portal-page-stage.is-overview .portal-page-heading {
+  padding: 24px 28px; border: 0;
+  background: radial-gradient(ellipse at 100% 0, #24a78c55, transparent 65%), linear-gradient(110deg, #143c48, #0c5752);
+  box-shadow: 0 6px 20px #163c4712;
+}
+#root .workspace-role-portal .portal-page-stage.is-overview .portal-page-heading::before { content: none; }
+#root .workspace-role-portal .portal-page-stage.is-overview .portal-page-heading .section-kicker { color: #a5e5d4; }
+#root .workspace-role-portal .portal-page-stage.is-overview .portal-page-heading h2 { color: #fff; }
+#root .workspace-role-portal .portal-page-stage.is-overview .portal-page-heading p:not(.section-kicker) { color: #d2e8e3; }
+#root .workspace-role-portal .portal-page-stage.is-overview .portal-page-heading .portal-welcome-icon { color: #b5f0df; background: #ffffff0d; border-color: #b5f0df38; }
+
+/* Consistent surfaces and spacing prevent the double frames that grow across pages. */
+#root .workspace-role-portal .portal-workspace .portal-subpage-sheet {
+  display: grid; grid-template-columns: minmax(0, 1fr); align-content: start;
+  gap: 22px; min-width: 0; padding: 22px; border: 1px solid var(--portal-border);
+  border-radius: var(--portal-radius); background: var(--portal-surface); box-shadow: var(--portal-shadow);
+}
+#root .workspace-role-portal .portal-subpage-sheet > .panel:not(.cooperation-editor):not(.placement-detail-target),
+#root .workspace-role-portal .portal-subpage-sheet > :is(.workflow-surface, .notification-center, .placement-overview, .portal-detail) {
+  margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none;
+}
+#root .workspace-role-portal .portal-subpage-sheet .school-section-card {
+  min-width: 0; padding: 20px 0 0; border: 0; border-top: 1px solid #edf2f6;
+  border-radius: 0; background: transparent; box-shadow: none;
+}
+#root .workspace-role-portal .portal-workspace :is(.workflow-section-header, .section-heading, .placement-header-bar) {
+  align-items: center; gap: 12px 16px;
+}
+#root .workspace-role-portal .portal-workspace :is(.workflow-section-header, .section-heading) :is(h2, h3) { margin: 0; }
+#root .workspace-role-portal .portal-workspace :is(.school-dashboard-grid, .enterprise-dashboard-grid) {
+  display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: stretch; gap: 20px;
+}
+#root .workspace-role-portal .portal-workspace :is(.school-dashboard-grid, .enterprise-dashboard-grid) > .panel {
+  min-width: 0; padding: 20px; border-radius: var(--portal-radius); box-shadow: var(--portal-shadow);
+}
+#root .workspace-role-portal .portal-workspace .school-section-head { margin-bottom: 16px; }
+#root .workspace-role-portal .portal-workspace .school-section-title { gap: 10px; }
+#root .workspace-role-portal .portal-workspace .school-section-title h2 { font-size: 18px; }
+#root .workspace-role-portal .portal-workspace .portal-shortcuts { display: grid; gap: 10px; margin: 0; }
+#root .workspace-role-portal .portal-workspace button.portal-shortcut {
+  min-width: 0; min-height: 76px; margin: 0; padding: 14px; gap: 12px;
+  border: 1px solid var(--portal-border); border-radius: 12px; background: #fff; box-shadow: none;
+}
+#root .workspace-role-portal .portal-workspace button.portal-shortcut > span:not(.portal-shortcut-icon) { min-width: 0; }
+#root .workspace-role-portal .portal-workspace .portal-shortcut b { font-size: 15px; line-height: 1.45; }
+#root .workspace-role-portal .portal-workspace .portal-shortcut small { margin-top: 4px; font-size: 13px; }
+#root .workspace-role-portal .portal-workspace .portal-dashboard-tasks .empty-state {
+  min-height: 230px; padding: 28px 20px; border: 1px dashed var(--portal-border); border-radius: 12px; background: var(--portal-soft);
+}
+
+/* Keep semantic card colours: blue for drafts, amber for attention, green for approved. */
+#root .workspace-role-portal .portal-page-stage.is-overview .portal-stat {
+  --summary-accent: #087b68; --summary-soft: #e7f6f0;
+  position: relative; gap: 10px; min-width: 0; padding: 18px 20px;
+  border: 1px solid var(--portal-border); border-top: 3px solid var(--summary-accent);
+  border-radius: 14px; background: #fff; box-shadow: var(--portal-shadow);
+}
+#root .workspace-role-portal .portal-page-stage.is-overview .portal-stat.tone-blue { --summary-accent: #2868b0; --summary-soft: #e8f2ff; }
+#root .workspace-role-portal .portal-page-stage.is-overview .portal-stat.tone-violet { --summary-accent: #7750b9; --summary-soft: #f0eafa; }
+#root .workspace-role-portal .portal-page-stage.is-overview .portal-stat.tone-warm { --summary-accent: #b76e00; --summary-soft: #fff2db; }
+#root .workspace-role-portal .portal-page-stage.is-overview .portal-stat::before { background: var(--summary-soft); }
+#root .workspace-role-portal .portal-page-stage.is-overview .portal-stat-title { color: #314d5e; font-size: 14px; line-height: 1.45; }
+#root .workspace-role-portal .portal-page-stage.is-overview .portal-stat .portal-stat-icon { width: 38px; height: 38px; flex-basis: 38px; border-radius: 11px; color: var(--summary-accent); background: var(--summary-soft); }
+#root .workspace-role-portal .portal-page-stage.is-overview .portal-stat .school-stat-meta-pills { gap: 6px; }
+#root .workspace-role-portal .portal-page-stage.is-overview .portal-stat .school-stat-badge { color: var(--summary-accent); background: var(--summary-soft); }
+#root .workspace-role-portal .portal-page-stage.is-overview .portal-stat :is(.school-stat-metric > strong, .portal-stat-action, .school-stat-link) { color: var(--summary-accent); }
+#root .workspace-role-portal .portal-page-stage.is-overview .portal-stat .school-stat-order { color: #8194a1; }
+
+/* Form and filter controls use a single comfortable scale, including empty states. */
+#root .workspace-role-portal .portal-workspace :is(.portal-list-toolbar, .placement-filter-bar, .enterprise-cooperation-filters, .bm03-filter-bar) {
+  gap: 12px; padding: 14px; border: 1px solid var(--portal-border); border-radius: 12px; background: var(--portal-soft);
+}
+#root .workspace-role-portal .portal-workspace :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]), select, .select-trigger) {
+  min-width: 0; min-height: 44px; border-radius: 10px;
+}
+#root .workspace-role-portal .portal-workspace :is(input, textarea)::placeholder { color: #8798a6; opacity: 1; }
+#root .workspace-role-portal .portal-workspace textarea { min-width: 0; padding: 12px 14px; border-radius: 10px; line-height: 1.65; resize: vertical; }
+#root .workspace-role-portal .portal-workspace :is(input, select, textarea):disabled { color: #718697; background-color: #f3f6fa; }
+#root .workspace-role-portal .portal-workspace :is(input[type="checkbox"], input[type="radio"]) {
+  display: inline-block; flex: 0 0 18px; width: 18px; height: 18px; min-width: 18px; min-height: 18px; margin: 0; padding: 0; accent-color: #0b927c;
+}
+#root .workspace-role-portal .portal-workspace :is(button.secondary, button.t5-btn-teal, button.danger, button:not([class]):not([role="tab"])) {
+  min-height: 42px; border-radius: 10px; font-weight: 600;
+}
+#root .workspace-role-portal .portal-workspace .portal-context-bar :is(select, .select-trigger, .portal-notification-shortcut, .portal-organization-icon) { height: 48px; min-height: 48px; }
+#root .workspace-role-portal .portal-workspace .portal-organization-icon { flex-basis: 42px; }
+#root .workspace-role-portal .portal-workspace :is(.cooperation-editor, .enterprise-verification-editor, .portal-cooperation-composer) {
+  min-width: 0; padding: 22px; border: 1px solid #cfe3dc; border-radius: 14px; background: #fbfdfc; box-shadow: none;
+}
+#root .workspace-role-portal .portal-workspace :is(.cooperation-fields, .t5-detail-card) { border-color: var(--portal-border); border-radius: 12px; background: #fff; }
+#root .workspace-role-portal .portal-workspace .cooperation-form-grid { column-gap: 18px; row-gap: 16px; }
+#root .workspace-role-portal .portal-workspace .portal-key-values { margin-block: 16px; }
+#root .workspace-role-portal .portal-workspace .portal-key-values > div { gap: 8px 20px; padding-block: 12px; }
+
+/* Preserve mobile card tables and their labels; only normalize desktop cell rhythm. */
+#root .workspace-role-portal .portal-workspace :is(.proposal-table, .table-wrap) { border-color: var(--portal-border); border-radius: 12px; box-shadow: none; }
+#root .workspace-role-portal .portal-workspace :is(.proposal-table, .table-wrap) :is(th, td) { vertical-align: middle; }
+#root .workspace-role-portal .portal-workspace :is(.proposal-table, .table-wrap) thead th { color: #607687; background: #f5f8fb; font-weight: 600; }
+#root .workspace-role-portal .portal-workspace :is(.cooperation-pagination, .proposal-pagination, .pagination-bar, .pagination) {
+  align-items: center; gap: 12px; margin-top: 18px; padding-top: 16px; border-top: 1px solid #edf2f6;
+}
+#root .workspace-role-portal .portal-workspace :is(.notice, .empty-state, .portal-pending, .enterprise-info-banner) { border-radius: 12px; }
+#root .workspace-role-portal .portal-workspace .enterprise-info-banner { padding: 12px 16px; }
+#root .workspace-role-portal .portal-workspace .empty-state :is(p, .muted) { max-width: 52ch; margin-inline: auto; }
+
+@media (min-width: 701px) {
+  #root .workspace-role-portal .portal-workspace :is(.proposal-table, .table-wrap) :is(th, td) { padding-block: 14px; }
+}
+@media (max-width: 1179px) {
+  #root .workspace-role-portal .portal-workspace :is(.school-dashboard-grid, .enterprise-dashboard-grid) { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 700px) {
+  #root .workspace-role-portal .portal-workspace:is(.is-school, .is-enterprise) { --portal-type-title: 22px; --portal-type-control: 16px; gap: 16px; }
+  #root .workspace-role-portal .portal-workspace .portal-page-stage { gap: 16px; }
+  #root .workspace-role-portal .portal-page-intro { gap: 10px; }
+  #root .workspace-role-portal .portal-page-toolbar { gap: 8px; }
+  #root .workspace-role-portal .portal-page-toolbar .portal-breadcrumb { font-size: 12px; }
+  #root .workspace-role-portal .portal-workspace .portal-page-heading,
+  #root .workspace-role-portal .portal-page-stage.is-overview .portal-page-heading { gap: 12px; padding: 20px 18px; border-radius: 14px; }
+  #root .workspace-role-portal .portal-page-heading .portal-welcome-icon { display: none; }
+  #root .workspace-role-portal .portal-workspace .portal-subpage-sheet { gap: 18px; padding: 16px; border-radius: 14px; }
+  #root .workspace-role-portal .portal-workspace :is(.school-dashboard-grid, .enterprise-dashboard-grid) { gap: 16px; }
+  #root .workspace-role-portal .portal-workspace :is(.school-dashboard-grid, .enterprise-dashboard-grid) > .panel { padding: 16px; }
+  #root .workspace-role-portal .portal-page-stage.is-overview .portal-stat { padding: 16px; }
+  #root .workspace-role-portal .portal-page-stage.is-overview .school-overview-stat .portal-stat-title { min-height: 2.9em; align-items: flex-start; }
+  #root .workspace-role-portal .portal-page-stage.is-overview .school-stat-meta-pills { display: none; }
+  #root .workspace-role-portal .portal-workspace :is(.cooperation-editor, .enterprise-verification-editor, .portal-cooperation-composer) { padding: 16px; }
+  #root .workspace-role-portal .portal-workspace :is(button.secondary, button.t5-btn-teal, button.danger, button:not([class]):not([role="tab"])) { min-height: 44px; }
+  #root .workspace-role-portal .portal-workspace .portal-context-bar :is(select, .select-trigger) { font-size: 16px; }
+}
+@media (max-width: 380px) {
+  #root .workspace-role-portal .portal-page-toolbar { align-items: flex-start; flex-direction: column; }
+  #root .workspace-role-portal .portal-workspace .portal-subpage-sheet { padding: 14px 12px; }
+}

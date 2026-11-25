@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { ApiError, type Grant, type Me } from '../../../api';
 import { EmptyState, Icon, LoadingState, Notice } from '../../../components';
+import { askConfirm } from '../../../confirm';
 import { httpsArtifact } from '../../internship/workflow';
 import { getMyProfile, newIdempotencyKey, saveMyProfile, toProfileInput } from '../api';
 import { StudentTabs } from '../components/StudentTabs';
+import { StudentIcon, StudentToast } from '../components/StudentUI';
 import { downloadProfileFile, fileProblem, getFileMetadata, scanLabels, uploadProfileFile, type ProfileFile, type ProfileFilePurpose } from '../files';
 import { useStudentTerm } from '../preferences';
 import type { Certificate, ProfileInput, Project, SelfProfileView } from '../types';
@@ -12,8 +14,9 @@ import '../styles.css';
 // S04 (SRS 14.1, /ho-so/nang-luc), US-T2-05, T2-F10..F13: dự án, chứng chỉ, CV và minh chứng trong một màn có tab.
 // Mọi thay đổi là PUT hồ sơ đầy đủ (BC11) với expectedProfileVersion; kỹ năng, lịch rảnh và học vụ được chép nguyên.
 export type CapabilityTab = 'projects' | 'certificates' | 'cv' | 'evidence';
-const tabs: { id: CapabilityTab; label: string }[] = [
-  { id: 'projects', label: 'Dự án' }, { id: 'certificates', label: 'Chứng chỉ' }, { id: 'cv', label: 'CV' }, { id: 'evidence', label: 'Minh chứng' }];
+const tabIcons = { projects: 'folder', certificates: 'award', cv: 'file', evidence: 'paperclip' } as const;
+const tabs: { id: CapabilityTab; label: string; icon: ReactNode }[] = (['projects', 'certificates', 'cv', 'evidence'] as const).map(id => ({
+  id, label: { projects: 'Dự án', certificates: 'Chứng chỉ', cv: 'CV', evidence: 'Minh chứng' }[id], icon: <StudentIcon name={tabIcons[id]} /> }));
 type Files = Record<string, ProfileFile | 'error'>;
 type Save = (change: (input: ProfileInput) => ProfileInput, success: string) => Promise<boolean>;
 type Upload = (purpose: ProfileFilePurpose, file: File, key: string) => Promise<boolean>;
@@ -41,6 +44,18 @@ const tabHeadings: Record<CapabilityTab, { kicker: string; title: string }> = {
   projects: { kicker: 'DỰ ÁN', title: 'Dự án đã thực hiện' }, certificates: { kicker: 'CHỨNG CHỈ', title: 'Chứng chỉ đã đạt' },
   cv: { kicker: 'CV', title: 'CV trong hồ sơ' }, evidence: { kicker: 'MINH CHỨNG', title: 'Tệp minh chứng' }
 };
+// Đầu thẻ của từng tab: biểu tượng trong ô mint, nhãn nhỏ + tiêu đề, mô tả (nếu có).
+function TabHeading({ id, children }: { id: CapabilityTab; children?: ReactNode }) {
+  return <div className="section-heading"><div className="student-cap-title">
+    <span className="student-cap-title-icon" aria-hidden="true"><StudentIcon name={tabIcons[id]} size={19} /></span>
+    <div><p className="section-kicker">{tabHeadings[id].kicker}</p><h2>{tabHeadings[id].title}</h2>{children}</div></div></div>;
+}
+// Ô "Thêm" nằm cuối lưới dự án/chứng chỉ (kiểu thư viện thẻ): tên nút đúng bằng nhãn, dòng gợi ý chỉ để nhìn.
+function AddTile({ label, hint, busy, onClick }: { label: string; hint: string; busy: boolean; onClick: () => void }) {
+  return <li className="student-add-tile"><button type="button" aria-label={label} disabled={busy} onClick={onClick}>
+    <span className="student-add-tile-icon" aria-hidden="true"><Icon name="plus" size={22} /></span>
+    <span aria-hidden="true"><b>{label}</b><small>{hint}</small></span></button></li>;
+}
 
 export function CapabilityPage({ me, schools }: { me: Me; schools: Grant[] }) {
   const { terms, failed, termId, setTermId, retry } = useStudentTerm(schools);
@@ -53,21 +68,25 @@ export function CapabilityPage({ me, schools }: { me: Me; schools: Grant[] }) {
       description={(failed ? 'Chưa tải được danh sách học kỳ của trường. ' : 'Trường chưa có học kỳ đang mở. ') + 'Hồ sơ được đọc theo học kỳ nên chưa thể mở năng lực.'}>
       <button type="button" className="secondary" onClick={retry}><Icon name="refresh" size={16} />Thử lại</button></EmptyState>
     : <EmptyState icon="calendar" title="Chọn học kỳ" description="Trường có nhiều học kỳ đang mở. Chọn học kỳ để mở hồ sơ năng lực." />;
-  // Frame 477:11368 không có thẻ tiêu đề riêng: một dòng thông tin gọn phía trên tab. Chưa có học kỳ thì vẫn giữ 4 tab,
-  // mỗi tab báo trạng thái học kỳ trong thẻ của chính mục đó.
+  // Thanh nhỏ đầu trang: nhãn học kỳ / chọn học kỳ bên trái, nút tải lại và kiểm tra trạng thái tệp bên phải. Không dùng banner
+  // riêng để màn không lặp kiểu thẻ đầu trang của Tổng quan và Thông tin chung; số lượng từng mục nằm ngay trên thanh tab.
+  // Chưa có học kỳ thì vẫn giữ 4 tab, mỗi tab báo trạng thái học kỳ trong thẻ của mục đó.
+  const toolbar: Toolbar = actions => <div className="student-cap-toolbar">
+    {term && <span className="student-status tone-brand"><Icon name="calendar" size={14} />Học kỳ {term.termCode}</span>}
+    {termSelect}{actions && <div className="student-cap-actions">{actions}</div>}</div>;
   return <div className="student-page">
-    <div className="student-toolbar student-term-bar">
-      <p className="student-card-note">{term ? 'Học kỳ ' + term.termCode + ' · ' : ''}Tệp được lưu riêng tư và chỉ tải xuống khi đã được xác nhận an toàn.</p>{termSelect}</div>
-    {termId ? <Capability key={termId} me={me} termId={termId} tab={tab} setTab={setTab} />
-      : <StudentTabs label="Hồ sơ năng lực" idPrefix="student-capability" tabs={tabs} tab={tab} setTab={setTab} render={id =>
-        <section className="panel student-term-panel">
-          <div className="section-heading"><div><p className="section-kicker">{tabHeadings[id].kicker}</p><h2>{tabHeadings[id].title}</h2></div></div>
-          {termState}
-        </section>} />}
+    {termId ? <Capability key={termId} me={me} termId={termId} tab={tab} setTab={setTab} toolbar={toolbar} />
+      : <>{toolbar()}<StudentTabs label="Hồ sơ năng lực" idPrefix="student-capability" tabs={segmentTabs()} tab={tab} setTab={setTab} variant="segmented" render={id =>
+        <section className="panel student-term-panel"><TabHeading id={id} />{termState}</section>} /></>}
   </div>;
 }
 
-function Capability({ me, termId, tab, setTab }: { me: Me; termId: string; tab: CapabilityTab; setTab: (tab: CapabilityTab) => void }) {
+type Toolbar = (actions?: ReactNode) => ReactNode;
+// Thanh tab phân đoạn liền khối: biểu tượng, tên mục và dòng phụ số lượng đọc từ hồ sơ (chưa đọc được hồ sơ thì không có dòng phụ).
+const segmentTabs = (meta?: Record<CapabilityTab, string>) => tabs.map(item => ({ ...item, icon: <StudentIcon name={tabIcons[item.id]} size={19} />, meta: meta?.[item.id] }));
+function Capability({ me, termId, tab, setTab, toolbar }: {
+  me: Me; termId: string; tab: CapabilityTab; setTab: (tab: CapabilityTab) => void; toolbar: Toolbar;
+}) {
   const [view, setView] = useState<SelfProfileView | null>(null), [loadError, setLoadError] = useState(''), [missing, setMissing] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [files, setFiles] = useState<Files>({}), [fileAttempt, setFileAttempt] = useState(0);
@@ -125,19 +144,24 @@ function Capability({ me, termId, tab, setTab }: { me: Me; termId: string; tab: 
   };
   const reload = () => { setView(null); setFiles({}); setAttempt(previous => previous + 1); };
 
-  if (missing) return <section className="panel"><EmptyState icon="user" title="Chưa có hồ sơ trong học kỳ này"
-    description="Mở Thông tin chung để tạo và lưu hồ sơ trước, sau đó quay lại khai dự án, chứng chỉ, CV và minh chứng." /></section>;
-  if (loadError) return <section className="panel"><EmptyState icon="alert" title="Không tải được hồ sơ" description={loadError}>
-    <button type="button" className="secondary" onClick={reload}><Icon name="refresh" size={16} />Thử lại</button></EmptyState></section>;
-  if (!view || !profile) return <section className="panel"><LoadingState label="Đang tải hồ sơ…" /></section>;
+  if (missing) return <>{toolbar()}<section className="panel"><EmptyState icon="user" title="Chưa có hồ sơ trong học kỳ này"
+    description="Mở Thông tin chung để tạo và lưu hồ sơ trước, sau đó quay lại khai dự án, chứng chỉ, CV và minh chứng." /></section></>;
+  if (loadError) return <>{toolbar()}<section className="panel"><EmptyState icon="alert" title="Không tải được hồ sơ" description={loadError}>
+    <button type="button" className="secondary" onClick={reload}><Icon name="refresh" size={16} />Thử lại</button></EmptyState></section></>;
+  if (!view || !profile) return <>{toolbar()}<section className="panel"><LoadingState label="Đang tải hồ sơ…" /></section></>;
   const locked = busy || conflict;
+  // Số lượng trên thẻ tab đọc từ hồ sơ đã lưu; minh chứng gồm cả tệp vừa tải trong phiên.
+  const meta: Record<CapabilityTab, string> = {
+    projects: profile.projects.length + ' dự án', certificates: profile.certificates.length + ' chứng chỉ',
+    cv: profile.cvFileId ? 'Đã có CV' : 'Chưa có CV', evidence: evidence.length + ' tệp'
+  };
   return <>
-    <Notice message={error} tone="error" /><Notice message={notice} tone="success" />
-    <div className="button-row student-toolbar">
-      <button type="button" className="secondary" disabled={busy} onClick={reload}><Icon name="refresh" size={16} />Tải lại dữ liệu mới nhất</button>
-      <button type="button" className="secondary" disabled={busy} onClick={() => setFileAttempt(previous => previous + 1)}>Kiểm tra trạng thái tệp</button>
-    </div>
-    <StudentTabs label="Hồ sơ năng lực" idPrefix="student-capability" tabs={tabs} tab={tab} setTab={setTab} render={id =>
+    <Notice message={error} tone="error" /><StudentToast message={notice} onClose={() => setNotice('')} />
+    {toolbar(<>
+      <button type="button" className="secondary" disabled={busy} onClick={reload}><Icon name="refresh" size={15} />Tải lại dữ liệu mới nhất</button>
+      <button type="button" className="secondary" disabled={busy} onClick={() => setFileAttempt(previous => previous + 1)}><Icon name="shield" size={15} />Kiểm tra trạng thái tệp</button>
+    </>)}
+    <StudentTabs label="Hồ sơ năng lực" idPrefix="student-capability" tabs={segmentTabs(meta)} tab={tab} setTab={setTab} variant="segmented" render={id =>
       id === 'projects' ? <ProjectsTab view={view} evidence={evidence} files={files} busy={locked} save={save} />
       : id === 'certificates' ? <CertificatesTab view={view} evidence={evidence} files={files} busy={locked} save={save} />
       : id === 'cv' ? <CvTab view={view} candidates={uploaded.CV} files={files} busy={locked} save={save} upload={upload} />
@@ -150,6 +174,7 @@ function FileRow({ id, files }: { id: string; files: Files }) {
   const file = files[id];
   const name = file === undefined ? 'Đang tải thông tin tệp…' : file === 'error' ? 'Tệp …' + id.slice(-6) + ' (chưa đọc được thông tin)' : file.originalName;
   return <span className="student-file">
+    <span className="student-file-icon" aria-hidden="true"><StudentIcon name="file" size={16} /></span>
     <span className="student-file-name">{name}</span>
     {typeof file === 'object' && <span className={'student-status ' + file.scanStatus.toLowerCase()}>{scanLabels[file.scanStatus]}</span>}
     {typeof file === 'object' && <button type="button" className="text-button" aria-label={'Tải xuống ' + file.originalName} disabled={busy || file.scanStatus !== 'CLEAN'}
@@ -157,6 +182,10 @@ function FileRow({ id, files }: { id: string; files: Files }) {
     {error && <span className="student-field-error">{error}</span>}
   </span>;
 }
+// Thẻ dự án chỉ hiện tên miền của đường dẫn (đủ đường dẫn khi rê chuột) và chữ cái đầu của tên làm biểu tượng.
+const host = (url: string) => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; } };
+const initial = (title: string) => [...title.trim()][0]?.toUpperCase() ?? '?';
+const day = (value: string) => value.split('-').reverse().join('/');
 function FileList({ ids, files }: { ids: string[]; files: Files }) {
   return ids.length === 0 ? null : <ul className="student-file-list">{ids.map(id => <li key={id}><FileRow id={id} files={files} /></li>)}</ul>;
 }
@@ -168,6 +197,7 @@ function UploadForm({ label, action, busy, onUpload }: { label: string; action: 
     const key = keys.current.get(file) ?? newIdempotencyKey(); keys.current.set(file, key);
     void onUpload(file, key).then(ok => { if (ok) { keys.current.delete(file); setFile(null); setReset(previous => previous + 1); } });
   }}>
+    <span className="student-upload-icon" aria-hidden="true"><StudentIcon name="upload" size={20} /></span>
     <label>{label}<input key={reset} type="file" accept=".pdf,.png,.jpg,.jpeg" onChange={event => setFile(event.target.files?.[0] ?? null)} /></label>
     {problem && <p className="student-field-error">{problem}</p>}
     <p className="field-hint">PDF, PNG hoặc JPEG; tối đa 10 MiB. Tệp mới luôn chờ quét trước khi gắn vào hồ sơ.</p>
@@ -208,26 +238,36 @@ function ProjectsTab({ view, evidence, files, busy, save }: { view: SelfProfileV
   };
   const toggle = (key: 'skillCodes' | 'evidenceFileIds', value: string) =>
     setDraft(previous => ({ ...previous, [key]: previous[key].includes(value) ? previous[key].filter(item => item !== value) : [...previous[key], value] }));
-  // Frame 477:11368 "Dự án cá nhân": tiêu đề dự án, dòng phụ vai trò · kỹ năng, nút thêm ở cuối card.
-  return <section className="panel">
-    <div className="section-heading"><div><p className="section-kicker">DỰ ÁN</p><h2>Dự án đã thực hiện</h2></div></div>
-    {projects.length === 0 ? <EmptyState icon="briefcase" title="Chưa có dự án" description="Thêm dự án để nhà trường và doanh nghiệp hiểu năng lực thực tế của bạn." />
-      : <ul className="student-list">{projects.map((item, index) => <li className="student-list-item" key={item.projectId ?? index}>
+  // Frame 477:11368 "Dự án cá nhân" dựng thành thư viện thẻ (portfolio): mỗi dự án có dải bìa xanh với chữ lồng (chữ cái đầu tên),
+  // nút Sửa/Xóa nổi trên bìa, tên, vai trò, kỹ năng, mô tả và chân thẻ (tên miền đường dẫn, số minh chứng); ô "Thêm dự án" ở cuối lưới
+  // (ẩn khi đang sửa). Chưa có dự án thì chính ô thêm là trạng thái trống.
+  return <section className="panel student-cap-section">
+    <TabHeading id="projects" />
+    {(projects.length > 0 || editing === null) && <ul className="student-gallery">{projects.map((item, index) => <li className="student-project-card" key={item.projectId ?? index}>
+      <div className="student-project-cover" aria-hidden="true"><span className="student-project-monogram">{initial(item.title)}</span></div>
+      <div className="student-item-actions student-card-tools">
+        <button type="button" className="secondary student-icon-button" aria-label={'Sửa dự án ' + item.title} title="Sửa" disabled={busy || editing !== null} onClick={() => open(index)}><StudentIcon name="pencil" size={15} /></button>
+        <button type="button" className="secondary student-icon-button student-danger" aria-label={'Xóa dự án ' + item.title} title="Xóa" disabled={busy || editing !== null} onClick={async () => {
+          if (await askConfirm({ title: 'Xóa dự án?', message: 'Xóa dự án này khỏi hồ sơ?', confirmLabel: 'Xóa dự án', tone: 'danger' })) void save(input => ({ ...input, projects: input.projects.filter((_, position) => position !== index) }), 'Đã xóa dự án.');
+        }}><StudentIcon name="trash" size={15} /></button></div>
+      <div className="student-project-body">
         <h3>{item.title}</h3>
-        {(item.role || item.skillCodes.length > 0) && <p className="student-list-meta">{[item.role && 'Vai trò: ' + item.role, item.skillCodes.length > 0 && 'Kỹ năng: ' + item.skillCodes.join(', ')].filter(Boolean).join(' · ')}</p>}
-        {item.description && <p className="student-list-text student-pre-line">{item.description}</p>}
-        {item.url && <p className="student-list-meta"><a href={item.url} target="_blank" rel="noopener noreferrer">{item.url}</a></p>}
+        {item.role && <p className="student-project-role"><Icon name="user" size={14} />Vai trò: {item.role}</p>}
+        {item.skillCodes.length > 0 && <p className="student-item-tags">{item.skillCodes.map(code => <span key={code} className="tone-skill">{code}</span>)}</p>}
+        {item.description && <p className="student-list-text student-pre-line student-item-text">{item.description}</p>}
+        {(item.url || item.evidenceFileIds.length > 0) && <div className="student-item-foot">
+          {item.url && <a className="student-item-link" href={item.url} target="_blank" rel="noopener noreferrer" title={item.url}><StudentIcon name="link" size={14} /><span>{host(item.url)}</span></a>}
+          {item.evidenceFileIds.length > 0 && <span className="student-item-count"><StudentIcon name="paperclip" size={13} />{item.evidenceFileIds.length} minh chứng</span>}
+        </div>}
         <FileList ids={item.evidenceFileIds} files={files} />
-        <div className="button-row">
-          <button type="button" className="secondary" aria-label={'Sửa dự án ' + item.title} disabled={busy || editing !== null} onClick={() => open(index)}>Sửa</button>
-          <button type="button" className="secondary" aria-label={'Xóa dự án ' + item.title} disabled={busy || editing !== null} onClick={() => {
-            if (window.confirm('Xóa dự án này khỏi hồ sơ?')) void save(input => ({ ...input, projects: input.projects.filter((_, position) => position !== index) }), 'Đã xóa dự án.');
-          }}>Xóa</button></div>
-      </li>)}</ul>}
-    {editing === null && <div className="student-card-actions"><button type="button" className="student-btn-wide" disabled={busy} onClick={() => open('new')}><Icon name="plus" size={16} />Thêm dự án</button></div>}
+      </div>
+    </li>)}
+      {editing === null && <AddTile label="Thêm dự án" busy={busy} onClick={() => open('new')}
+        hint={projects.length ? 'Ghi lại một dự án bạn đã làm' : 'Thêm dự án để nhà trường và doanh nghiệp hiểu năng lực thực tế của bạn'} />}
+    </ul>}
     {editing !== null && <form className="student-profile-form" noValidate onSubmit={submit}><fieldset className="student-fieldset" disabled={busy}>
       <legend>{editing === 'new' ? 'Thêm dự án' : 'Sửa dự án'}</legend>
-      <label>Tên dự án<input value={draft.title} onChange={event => setDraft({ ...draft, title: event.target.value })} /></label>
+      <label>Tên dự án<input autoFocus value={draft.title} onChange={event => setDraft({ ...draft, title: event.target.value })} /></label>
       <label>Vai trò của bạn<input value={draft.role} onChange={event => setDraft({ ...draft, role: event.target.value })} /></label>
       <label>Mô tả<textarea value={draft.description} onChange={event => setDraft({ ...draft, description: event.target.value })} /></label>
       <label>Đường dẫn dự án (https)<input type="url" value={draft.url} onChange={event => setDraft({ ...draft, url: event.target.value })} /></label>
@@ -266,22 +306,30 @@ function CertificatesTab({ view, evidence, files, busy, save }: { view: SelfProf
     void save(input => ({ ...input, certificates: editing === 'new' ? [...input.certificates, next] : input.certificates.map((item, index) => index === editing ? next : item) }),
       editing === 'new' ? 'Đã thêm chứng chỉ.' : 'Đã cập nhật chứng chỉ.').then(ok => { if (ok) setEditing(null); });
   };
-  return <section className="panel">
-    <div className="section-heading"><div><p className="section-kicker">CHỨNG CHỈ</p><h2>Chứng chỉ đã đạt</h2></div></div>
-    {certificates.length === 0 ? <EmptyState icon="check-circle" title="Chưa có chứng chỉ" description="Thêm chứng chỉ kèm minh chứng để hồ sơ đáng tin cậy hơn." />
-      : <ul className="student-list">{certificates.map((item, index) => <li className="student-list-item" key={item.certificateId ?? index}>
-        <h3>{item.title}</h3><p className="student-list-meta">{item.issuer} · Cấp ngày {item.issuedOn}{item.expiresOn ? ' · Hết hạn ' + item.expiresOn : ''}</p>
+  // Thẻ chứng chỉ kiểu huy chương: cột huy chương xanh bên trái, tên, đơn vị cấp, ô ngày cấp / hết hạn và tệp minh chứng;
+  // nút Sửa/Xóa ở góc; ô "Thêm chứng chỉ" ở cuối lưới (chưa có chứng chỉ thì chính ô thêm là trạng thái trống).
+  return <section className="panel student-cap-section">
+    <TabHeading id="certificates" />
+    {(certificates.length > 0 || editing === null) && <ul className="student-gallery">{certificates.map((item, index) => <li className="student-cert-card" key={item.certificateId ?? index}>
+      <div className="student-cert-medal" aria-hidden="true"><StudentIcon name="award" size={26} /></div>
+      <div className="student-item-actions student-card-tools">
+        <button type="button" className="secondary student-icon-button" aria-label={'Sửa chứng chỉ ' + item.title} title="Sửa" disabled={busy || editing !== null} onClick={() => open(index)}><StudentIcon name="pencil" size={15} /></button>
+        <button type="button" className="secondary student-icon-button student-danger" aria-label={'Xóa chứng chỉ ' + item.title} title="Xóa" disabled={busy || editing !== null} onClick={async () => {
+          if (await askConfirm({ title: 'Xóa chứng chỉ?', message: 'Xóa chứng chỉ này khỏi hồ sơ?', confirmLabel: 'Xóa chứng chỉ', tone: 'danger' })) void save(input => ({ ...input, certificates: input.certificates.filter((_, position) => position !== index) }), 'Đã xóa chứng chỉ.');
+        }}><StudentIcon name="trash" size={15} /></button></div>
+      <div className="student-cert-body">
+        <h3>{item.title}</h3>
+        <p className="student-company">{item.issuer}</p>
+        <dl className="student-cert-dates"><div><dt>Ngày cấp</dt><dd>{day(item.issuedOn)}</dd></div><div><dt>Hết hạn</dt><dd>{item.expiresOn ? day(item.expiresOn) : 'Không có'}</dd></div></dl>
         <FileList ids={item.fileId ? [item.fileId] : []} files={files} />
-        <div className="button-row">
-          <button type="button" className="secondary" aria-label={'Sửa chứng chỉ ' + item.title} disabled={busy || editing !== null} onClick={() => open(index)}>Sửa</button>
-          <button type="button" className="secondary" aria-label={'Xóa chứng chỉ ' + item.title} disabled={busy || editing !== null} onClick={() => {
-            if (window.confirm('Xóa chứng chỉ này khỏi hồ sơ?')) void save(input => ({ ...input, certificates: input.certificates.filter((_, position) => position !== index) }), 'Đã xóa chứng chỉ.');
-          }}>Xóa</button></div>
-      </li>)}</ul>}
-    {editing === null && <div className="student-card-actions"><button type="button" className="student-btn-wide" disabled={busy} onClick={() => open('new')}><Icon name="plus" size={16} />Thêm chứng chỉ</button></div>}
+      </div>
+    </li>)}
+      {editing === null && <AddTile label="Thêm chứng chỉ" busy={busy} onClick={() => open('new')}
+        hint={certificates.length ? 'Thêm chứng chỉ bạn vừa đạt' : 'Thêm chứng chỉ kèm minh chứng để hồ sơ đáng tin cậy hơn'} />}
+    </ul>}
     {editing !== null && <form className="student-profile-form" noValidate onSubmit={submit}><fieldset className="student-fieldset" disabled={busy}>
       <legend>{editing === 'new' ? 'Thêm chứng chỉ' : 'Sửa chứng chỉ'}</legend>
-      <label>Tên chứng chỉ<input value={draft.title} onChange={event => setDraft({ ...draft, title: event.target.value })} /></label>
+      <label>Tên chứng chỉ<input autoFocus value={draft.title} onChange={event => setDraft({ ...draft, title: event.target.value })} /></label>
       <label>Đơn vị cấp<input value={draft.issuer} onChange={event => setDraft({ ...draft, issuer: event.target.value })} /></label>
       <label>Ngày cấp<input type="date" value={draft.issuedOn} onChange={event => setDraft({ ...draft, issuedOn: event.target.value })} /></label>
       <label>Ngày hết hạn (nếu có)<input type="date" value={draft.expiresOn} onChange={event => setDraft({ ...draft, expiresOn: event.target.value })} /></label>
@@ -298,15 +346,23 @@ function CertificatesTab({ view, evidence, files, busy, save }: { view: SelfProf
 function CvTab({ view, candidates, files, busy, save, upload }: { view: SelfProfileView; candidates: string[]; files: Files; busy: boolean; save: Save; upload: Upload }) {
   const current = view.profile.cvFileId;
   const fresh = candidates.filter(id => id !== current);
-  return <section className="panel">
-    <div className="section-heading"><div><p className="section-kicker">CV</p><h2>CV trong hồ sơ</h2>
-      <p className="section-description">Doanh nghiệp chỉ xem được CV khi bạn đồng ý chia sẻ và tệp đã được xác nhận an toàn.</p></div></div>
-    {current ? <><FileList ids={[current]} files={files} />
-      <div className="button-row"><button type="button" className="secondary" disabled={busy} onClick={() => {
-        if (window.confirm('Gỡ CV khỏi hồ sơ?')) void save(input => ({ ...input, cvFileId: null }), 'Đã gỡ CV khỏi hồ sơ.');
-      }}>Gỡ CV khỏi hồ sơ</button></div></>
-      : <p className="student-list-meta">Chưa có CV trong hồ sơ.</p>}
-    <UploadForm label="Chọn tệp CV" action="Tải CV lên" busy={busy} onUpload={(file, key) => upload('CV', file, key)} />
+  // Bên trái: thẻ "CV đang dùng" có hình trang giấy minh họa (chỉ để nhìn), tên tệp, trạng thái quét, tải xuống, gỡ CV;
+  // bên phải: khối tải CV mới. Hẹp thì xếp dọc.
+  return <section className="panel student-cap-section">
+    <TabHeading id="cv"><p className="section-description">Doanh nghiệp chỉ xem được CV khi bạn đồng ý chia sẻ và tệp đã được xác nhận an toàn.</p></TabHeading>
+    <div className="student-cv-layout">
+      <div className={'student-cv-current' + (current ? '' : ' empty')}>
+        <div className="student-cv-paper" aria-hidden="true"><b>CV</b><span /><span /><span /><span /><span /></div>
+        <div className="student-cv-info"><p className="student-cv-label">CV đang dùng</p>
+          {current ? <><FileList ids={[current]} files={files} />
+            <div className="button-row"><button type="button" className="secondary" disabled={busy} onClick={async () => {
+              if (await askConfirm({ title: 'Gỡ CV khỏi hồ sơ?', message: 'Gỡ CV khỏi hồ sơ? CV sẽ không còn gắn với hồ sơ của bạn.', confirmLabel: 'Gỡ CV', tone: 'danger' })) void save(input => ({ ...input, cvFileId: null }), 'Đã gỡ CV khỏi hồ sơ.');
+            }}>Gỡ CV khỏi hồ sơ</button></div></>
+            : <p className="student-list-meta">Chưa có CV trong hồ sơ. Tải tệp CV ở khung bên cạnh, chờ quét an toàn rồi bấm "Dùng làm CV".</p>}
+        </div>
+      </div>
+      <UploadForm label="Chọn tệp CV" action="Tải CV lên" busy={busy} onUpload={(file, key) => upload('CV', file, key)} />
+    </div>
     {fresh.length > 0 && <><h3>CV vừa tải lên</h3><ul className="student-file-list">{fresh.map(id => <li key={id}><FileRow id={id} files={files} />
       <button type="button" disabled={busy || !isClean(files, id)} onClick={() => void save(input => ({ ...input, cvFileId: id }), 'Đã gắn CV vào hồ sơ.')}>Dùng làm CV</button></li>)}</ul>
       <p className="field-hint">Bấm "Kiểm tra trạng thái tệp" sau ít phút; chỉ dùng làm CV khi tệp đã được xác nhận an toàn.</p></>}
@@ -316,12 +372,13 @@ function CvTab({ view, candidates, files, busy, save, upload }: { view: SelfProf
 function EvidenceTab({ view, evidence, files, busy, upload }: { view: SelfProfileView; evidence: string[]; files: Files; busy: boolean; upload: Upload }) {
   const usage = (id: string) => [...view.profile.projects.filter(item => item.evidenceFileIds.includes(id)).map(item => 'Dự án: ' + item.title),
     ...view.profile.certificates.filter(item => item.fileId === id).map(item => 'Chứng chỉ: ' + item.title)];
-  return <section className="panel">
-    <div className="section-heading"><div><p className="section-kicker">MINH CHỨNG</p><h2>Tệp minh chứng</h2>
-      <p className="section-description">Minh chứng chỉ được lưu trong hồ sơ khi gắn vào một dự án hoặc chứng chỉ; tệp chưa gắn sẽ không còn hiện sau khi tải lại trang.</p></div></div>
+  // Khối tải lên ở trên; mỗi minh chứng là một ô trong lưới tệp: tên, trạng thái quét, tải xuống, nơi đang gắn (chip).
+  return <section className="panel student-cap-section">
+    <TabHeading id="evidence"><p className="section-description">Minh chứng chỉ được lưu trong hồ sơ khi gắn vào một dự án hoặc chứng chỉ; tệp chưa gắn sẽ không còn hiện sau khi tải lại trang.</p></TabHeading>
     <UploadForm label="Chọn tệp minh chứng" action="Tải minh chứng lên" busy={busy} onUpload={(file, key) => upload('EVIDENCE', file, key)} />
     {evidence.length === 0 ? <p className="student-list-meta">Chưa có minh chứng.</p>
-      : <ul className="student-file-list">{evidence.map(id => { const used = usage(id);
-        return <li key={id}><FileRow id={id} files={files} /><span className="student-list-meta">{used.length ? used.join(' · ') : 'Chưa gắn vào dự án hoặc chứng chỉ'}</span></li>; })}</ul>}
+      : <ul className="student-file-list student-file-grid">{evidence.map(id => { const used = usage(id);
+        return <li key={id}><FileRow id={id} files={files} />
+          <p className="student-item-tags">{used.length ? used.map(text => <span key={text} className="tone-skill">{text}</span>) : <span>Chưa gắn vào dự án hoặc chứng chỉ</span>}</p></li>; })}</ul>}
   </section>;
 }

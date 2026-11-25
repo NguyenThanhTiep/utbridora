@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type Ref } from 'react';
+import { useReveal } from '../../../useReveal';
 import { accessLost, workflowError, workflowPages, workflowRead } from '../workflow-api';
 import { mondayDate, textWithin, uuidPattern, validVersion, type InternshipTask, type WeeklyReport, type ReportReview, type ReportFile } from '../workflow';
 import { CommandFeedback, useWorkflowCommand } from '../useWorkflowCommand';
@@ -46,6 +47,7 @@ function ReportList({ caseId, contextId, student, mentor, denied }: {
 }) {
   const [items, setItems] = useState<WeeklyReport[]>([]), [message, setMessage] = useState(''), [loading, setLoading] = useState(true);
   const [refresh, setRefresh] = useState(0), [selected, setSelected] = useState(''), [week, setWeek] = useState('');
+  const reveal = useReveal();
   const [completedWork, setCompletedWork] = useState(''), [difficulties, setDifficulties] = useState(''), [nextPlan, setNextPlan] = useState('');
   const command = useWorkflowCommand(contextId, denied);
   useEffect(() => {
@@ -62,15 +64,15 @@ function ReportList({ caseId, contextId, student, mentor, denied }: {
   return <div className="stack"><button className="secondary" disabled={loading || command.busy} onClick={() => setRefresh(n => n + 1)}>Tải danh sách báo cáo</button>
     {loading && <p role="status">Đang tải báo cáo…</p>}{message && <p role="alert">{message}</p>}
     {!loading && !message && items.length === 0 && <p>Chưa có báo cáo cho hồ sơ này.</p>}
-    {items.map(item => <button className="secondary" key={item.reportId} onClick={() => setSelected(item.reportId)}>
-      Tuần {item.weekStart} · Bản {item.revisionNo} · {item.state}</button>)}
+    {items.map(item => <button className={student ? 'secondary student-report-card' : 'secondary t3-week-choice'} key={item.reportId} onClick={() => { setSelected(item.reportId); if (student) reveal.request(); }}>
+      Tuần {item.weekStart} · Bản {item.revisionNo} · {student ? item.state : <span className="t3-grade-status" data-state={item.state}>{item.state}</span>}</button>)}
     {selected && <ReportEditor key={selected} reportId={selected} caseId={caseId} contextId={contextId} student={student} mentor={mentor}
-      denied={denied} changed={() => setRefresh(n => n + 1)} />}
+      denied={denied} changed={() => setRefresh(n => n + 1)} revealRef={student ? reveal.ref : undefined} />}
     {student && <form onSubmit={event => { event.preventDefault(); if (!valid) return;
       command.run<WeeklyReport>('/t3/reports', { caseId, weekStart: week, completedWork: completedWork.trim(),
         difficulties: difficulties.trim(), nextPlan: nextPlan.trim(), evidenceFileIds: [] }, value => {
         if (value.caseId !== caseId) { denied(); return; }
-        setSelected(value.reportId); setRefresh(n => n + 1); setCompletedWork(''); setDifficulties(''); setNextPlan('');
+        setSelected(value.reportId); reveal.request(); setRefresh(n => n + 1); setCompletedWork(''); setDifficulties(''); setNextPlan('');
       });
     }}><fieldset disabled={command.busy || command.pending}><legend>Tạo báo cáo tuần</legend>
       <label>Thứ Hai bắt đầu tuần<input type="date" required value={week} onChange={event => setWeek(event.target.value)} /></label>
@@ -82,8 +84,8 @@ function ReportList({ caseId, contextId, student, mentor, denied }: {
   </div>;
 }
 
-function ReportEditor({ reportId, caseId, contextId, student, mentor, denied, changed }: {
-  reportId: string; caseId: string; contextId?: string; student: boolean; mentor: boolean; denied: () => void; changed: () => void;
+function ReportEditor({ reportId, caseId, contextId, student, mentor, denied, changed, revealRef }: {
+  reportId: string; caseId: string; contextId?: string; student: boolean; mentor: boolean; denied: () => void; changed: () => void; revealRef?: Ref<HTMLElement>;
 }) {
   const [current, setCurrent] = useState<WeeklyReport | null>(null), [view, setView] = useState<WeeklyReport | null>(null);
   const [revision, setRevision] = useState(''), [refresh, setRefresh] = useState(0), [message, setMessage] = useState(''), [loading, setLoading] = useState(true);
@@ -120,7 +122,12 @@ function ReportEditor({ reportId, caseId, contextId, student, mentor, denied, ch
   const isCurrent = !!view && !!current && !revision && view.revisionNo === current.revisionNo;
   const uploadValid = !!upload && upload.size > 0 && upload.size <= 10 * 1024 * 1024
     && ['application/pdf', 'image/png', 'image/jpeg'].includes(upload.type);
-  return <section className="panel stack" aria-label="Chi tiết báo cáo">
+  const reportText = view && <dl className="t3-preserve-text"><dt>Việc đã làm</dt><dd>{view.completedWork}</dd><dt>Khó khăn</dt><dd>{view.difficulties || 'Không có'}</dd><dt>Kế hoạch tiếp theo</dt><dd>{view.nextPlan}</dd></dl>;
+  const evidencePanel = view && <ReportEvidence key={view.revisionNo} reportId={reportId} contextId={contextId}
+        fileIds={student && isCurrent && view.state === 'DRAFT' ? evidence : view.evidenceFileIds}
+        editable={student && isCurrent && view.state === 'DRAFT'} disabled={!!blocked}
+        changed={ids => { setDirty(true); setEvidence(ids); }} denied={denied} />;
+  return <section className="panel stack" aria-label="Chi tiết báo cáo" ref={revealRef}>
     <h4>Chi tiết báo cáo tuần</h4>
     <button className="secondary" disabled={command.busy} onClick={() => setRefresh(n => n + 1)}>Tải phiên bản báo cáo hiện tại</button>
     <label>Phiên bản báo cáo<select disabled={command.busy || command.pending} value={revision} onChange={event => setRevision(event.target.value)}>
@@ -133,10 +140,7 @@ function ReportEditor({ reportId, caseId, contextId, student, mentor, denied, ch
       <p>Hạn nộp: {new Date(view.dueAt).toLocaleString('vi-VN')} · {view.lateFlag ? 'Nộp trễ' : 'Chưa trễ'}</p>
       {view.submittedAt && <p>Đã nộp: {new Date(view.submittedAt).toLocaleString('vi-VN')}</p>}
       {view.reviewedAt && <p>Đã nhận xét: {new Date(view.reviewedAt).toLocaleString('vi-VN')}</p>}
-      <ReportEvidence key={view.revisionNo} reportId={reportId} contextId={contextId}
-        fileIds={student && isCurrent && view.state === 'DRAFT' ? evidence : view.evidenceFileIds}
-        editable={student && isCurrent && view.state === 'DRAFT'} disabled={!!blocked}
-        changed={ids => { setDirty(true); setEvidence(ids); }} denied={denied} />
+      {student && evidencePanel}
       {reviewError && <p role="alert">Không tải được nhận xét đã lưu. {reviewError}</p>}
       {review && <section aria-label="Nhận xét báo cáo đã lưu"><h5>Nhận xét của Mentor · Bản {review.revisionNo}</h5>
         <p>Người nhận xét: {review.reviewerUserId} · {new Date(review.reviewedAt).toLocaleString('vi-VN')}</p>
@@ -161,13 +165,13 @@ function ReportEditor({ reportId, caseId, contextId, student, mentor, denied, ch
           <button disabled={!uploadValid}>Tải lên minh chứng</button></fieldset></form>
         <button disabled={blocked || dirty} onClick={() => current && command.run('/t3/reports/' + reportId + '/submit', { expectedVersion: current.version }, done)}>Nộp báo cáo tuần</button>
         {dirty && <p>Lưu nội dung vừa sửa trước khi nộp báo cáo.</p>}
-      </> : <dl className="t3-preserve-text"><dt>Việc đã làm</dt><dd>{view.completedWork}</dd><dt>Khó khăn</dt><dd>{view.difficulties || 'Không có'}</dd><dt>Kế hoạch tiếp theo</dt><dd>{view.nextPlan}</dd></dl>}
+      </> : student ? reportText : <div className="t3-report-content stack">{reportText}{evidencePanel}</div>}
       {student && isCurrent && ['SUBMITTED', 'REVIEWED'].includes(view.state) && <form onSubmit={event => {
         event.preventDefault(); if (current && /^[A-Z0-9_]{3,64}$/.test(reason)) command.run('/t3/reports/' + reportId + '/revisions', { expectedVersion: current.version, reasonCode: reason }, done);
       }}><fieldset disabled={blocked}><label>Mã lý do sửa báo cáo<input required value={reason} onChange={event => setReason(event.target.value)} /></label>
         <p>Dùng 3–64 ký tự A–Z, 0–9 hoặc dấu gạch dưới, ví dụ UPDATE_PROGRESS.</p>
         <button disabled={!/^[A-Z0-9_]{3,64}$/.test(reason)}>Tạo bản sửa báo cáo</button></fieldset></form>}
-      {mentor && isCurrent && view.state === 'SUBMITTED' && <form onSubmit={event => {
+      {mentor && isCurrent && view.state === 'SUBMITTED' && <form className="t3-mentor-review" onSubmit={event => {
         event.preventDefault(); if (current && textWithin(comment, 1, 2000)) command.run('/t3/reports/' + reportId + '/reviews',
           { expectedVersion: current.version, comment: comment.trim() }, () => { setComment(''); done(); });
       }}><fieldset disabled={blocked}><label>Nhận xét báo cáo<textarea required value={comment} onChange={event => setComment(event.target.value)} /></label>

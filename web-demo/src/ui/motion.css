@@ -1,0 +1,212 @@
+/* One motion rhythm for every workspace; layout and business state stay unchanged. */
+:root {
+  --ui-motion-fast: 160ms;
+  --ui-motion-standard: 200ms;
+  --ui-motion-enter: 320ms;
+  --ui-motion-sheen: 800ms;
+  --ui-motion-ease: cubic-bezier(.22, 1, .36, 1);
+}
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(button, a, input, select, textarea, summary) {
+  transition-property: background-color, border-color, color, box-shadow, transform;
+  transition-duration: var(--ui-motion-standard);
+  transition-timing-function: var(--ui-motion-ease);
+}
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(.panel, .stat-card, .t5-detail-card, .workflow-item-card, .proposal-card, .placement-item-card, .matching-candidate) {
+  transition: border-color var(--ui-motion-standard) var(--ui-motion-ease), box-shadow var(--ui-motion-standard) var(--ui-motion-ease);
+}
+/* Static frames gain a border highlight, never the lift reserved for clickable cards. */
+#root .workspace:not(:where(.workspace-native-t3)) :is(.panel, .portal-context-bar, .portal-welcome, .portal-subpage-sheet, .school-section-card,
+  .portal-workspace.is-school .portal-page-header:not(.is-overview), .workflow-detail-drawer,
+  .internship-group-card, .stat-card, .account-membership, .t3-task-card, .taxonomy-version) {
+  transition: border-color var(--ui-motion-standard) var(--ui-motion-ease), box-shadow var(--ui-motion-standard) var(--ui-motion-ease);
+}
+#root .workspace:not(:where(.workspace-native-t3)) :is(.panel, .portal-context-bar, .portal-welcome, .portal-subpage-sheet, .school-section-card,
+  .portal-workspace.is-school .portal-page-header:not(.is-overview), .workflow-detail-drawer,
+  .internship-group-card, .stat-card, .account-membership, .t3-task-card, .taxonomy-version):has(:focus-visible) {
+  border-color: #adc7d9;
+  box-shadow: 0 0 0 1px #dbe8f180, 0 5px 18px #142f400a;
+}
+#root .workspace .sidebar .nav,
+#root .workspace:not(:where(.workspace-native-t3)) :is(.admin-metric, .admin-shortcut, .portal-stat, .portal-shortcut, button.kpi-card, .matching-counts > button) {
+  transition: background-color var(--ui-motion-standard) var(--ui-motion-ease), border-color var(--ui-motion-standard) var(--ui-motion-ease),
+    color var(--ui-motion-standard) var(--ui-motion-ease), box-shadow var(--ui-motion-standard) var(--ui-motion-ease), transform var(--ui-motion-standard) var(--ui-motion-ease);
+}
+#root .workspace :is(.sidebar .nav .icon, .admin-shortcut-icon, .portal-shortcut-icon, .portal-stat-icon, .school-stat-icon-tile, .school-stat-link > svg, .school-nav-chevron, .role-menu-caret, .workspace-account-caret, .bm03-row-caret) {
+  transition: transform var(--ui-motion-standard) var(--ui-motion-ease), color var(--ui-motion-standard) var(--ui-motion-ease), box-shadow var(--ui-motion-standard) var(--ui-motion-ease);
+}
+#root .workspace:not(:where(.workspace-native-t3)) :is(.school-nav-collapse-wrap, .school-nav-sublist) {
+  transition-duration: var(--ui-motion-standard);
+  transition-timing-function: var(--ui-motion-ease);
+}
+#root .workspace:not(:where(.workspace-native-t3)) :is(.admin-metric, .admin-shortcut, .admin-welcome, .stat-card, .taxonomy-version, .portal-stat, .portal-shortcut, .kpi-card, .t5-detail-card, .matching-candidate, .proposal-card, .placement-item-card)::after {
+  transition: opacity var(--ui-motion-standard) var(--ui-motion-ease);
+}
+#root .workspace:not(:where(.workspace-native-t3)) :is(.delegation-choices > label, .workflow-checkbox-item, .workflow-checkbox-item > input, .notification-row-actions .icon) {
+  transition: background-color var(--ui-motion-standard) var(--ui-motion-ease), border-color var(--ui-motion-standard) var(--ui-motion-ease), color var(--ui-motion-standard) var(--ui-motion-ease);
+}
+/* KPI cards fade their own tinted backgrounds; only ordinary actions use a light sweep. */
+#root .workspace:not(:where(.workspace-native-t3)) :is(.portal-stat, button.kpi-card, .matching-counts > button)::before {
+  animation: none;
+  transform: none;
+  transition: opacity var(--ui-motion-standard) var(--ui-motion-ease);
+}
+#root .workspace:not(:where(.workspace-native-t3)) :is(.portal-stat, button.kpi-card, .matching-counts > button):is(:hover, :focus-visible)::before { transform: none; }
+#root .workspace:not(:where(.workspace-native-t3)) :is(.portal-stat, button.kpi-card, .matching-counts > button):not(:disabled):not([aria-disabled="true"]):focus-visible::before { opacity: 1; }
+#root .workspace:not(:where(.workspace-native-t3)) :is(.portal-stat, .admin-metric, button.kpi-card, .matching-counts > button):is(:hover, :focus-visible) :is(.portal-stat-icon, .portal-stat-title > .icon, .school-stat-icon-tile) {
+  transform: none;
+  box-shadow: none;
+}
+#root .workspace:not(:where(.workspace-native-t3)) .matching-counts > button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(240px circle at var(--portal-glow-x, 50%) var(--portal-glow-y, 50%), #ffffff70, transparent 74%);
+  opacity: 0;
+  transition: opacity var(--ui-motion-standard) var(--ui-motion-ease);
+}
+#root .workspace:not(:where(.workspace-native-t3)) .matching-counts > button[data-portal-glow]::after { opacity: 1; }
+#root .workspace:not(:where(.workspace-native-t3)) :is(.placement-quota-fill.placed, .placement-quota-fill.pending) {
+  transition: width var(--ui-motion-enter) var(--ui-motion-ease);
+}
+/* Tables share one selection treatment instead of separate inset bars and hover shadows. */
+#root .workspace:not(:where(.workspace-native-t3)) :is(.data-table, .proposal-table, .school-cooperation-table, .school-verification-table, .notification-table) tbody > tr,
+#root .workspace:not(:where(.workspace-native-t3)) :is(.data-table, .proposal-table, .school-cooperation-table, .school-verification-table, .notification-table) tbody > tr > :is(th, td) {
+  transition: background-color var(--ui-motion-standard) var(--ui-motion-ease), border-color var(--ui-motion-standard) var(--ui-motion-ease);
+  box-shadow: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.data-table, .proposal-table, .school-cooperation-table, .school-verification-table, .notification-table) tbody > tr:not(:is(.table-row-selected, .is-selected, [aria-selected="true"])):hover > :is(th, td) {
+    background-color: #f7fbf9;
+    border-color: #cde6df;
+    box-shadow: none;
+  }
+}
+#root .workspace:not(:where(.workspace-native-t3)) :is(.data-table, .proposal-table, .school-cooperation-table, .school-verification-table, .notification-table) tbody > tr:is(.table-row-selected, .is-selected, [aria-selected="true"]),
+#root .workspace:not(:where(.workspace-native-t3)) :is(.data-table, .proposal-table, .school-cooperation-table, .school-verification-table, .notification-table) tbody > tr:is(.table-row-selected, .is-selected, [aria-selected="true"]) > :is(th, td) {
+  background-color: #eff9f5;
+  border-color: #bde4d6;
+  box-shadow: none;
+}
+#root .workspace:not(:where(.workspace-native-t3)) :is(.data-table, .proposal-table, .school-cooperation-table, .school-verification-table, .notification-table) tbody > tr > :is(th, td):first-child { box-shadow: none; }
+#root .workspace:not(:where(.workspace-native-t3)) :is(button, a, summary, .demand-clickable-row):not(:disabled):not([aria-disabled="true"]):focus-visible {
+  outline: 2px solid #0b927c;
+  outline-offset: 3px;
+}
+#root .workspace .sidebar button:focus-visible { outline-color: #8cf2db; }
+#root .workspace:not(:where(.workspace-native-t3)) :is(input, select, textarea):not([aria-invalid="true"]):focus {
+  border-color: #0b927c;
+  box-shadow: 0 0 0 3px #0b927c12;
+}
+@media (prefers-reduced-motion: no-preference) {
+  #root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) .app-page-stage,
+#root .workspace:not(:where(.workspace-native-t3)) .portal-workspace > :is(.portal-page-stage, .portal-subpage-sheet) {
+    animation: ui-surface-in var(--ui-motion-enter) var(--ui-motion-ease) backwards;
+  }
+  #root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(.notice, .taxonomy-success, [role="tabpanel"]:not([hidden]), .workflow-detail-drawer, .detail-panel, .form-panel:not([hidden]),
+    .demand-editor, .demand-preview, .portal-cooperation-composer, .enterprise-verification-editor, .bm03-detail-card,
+    .nomination-eligibility-drawer, .proposal-share-editor > form, .workflow-item-card[tabindex="-1"], details[open] > :not(summary)) {
+    animation: ui-feedback-in var(--ui-motion-standard) var(--ui-motion-ease);
+  }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.admin-metrics > .admin-metric, .portal-stat-grid > .portal-stat) {
+    animation: ui-feedback-in var(--ui-motion-enter) var(--ui-motion-ease) backwards;
+    animation-delay: 0ms;
+  }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.admin-metrics > .admin-metric, .portal-stat-grid > .portal-stat):nth-child(2) { animation-delay: 40ms; }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.admin-metrics > .admin-metric, .portal-stat-grid > .portal-stat):nth-child(3) { animation-delay: 80ms; }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.admin-metrics > .admin-metric, .portal-stat-grid > .portal-stat):nth-child(n+4) { animation-delay: 120ms; }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.admin-welcome-icon, .portal-welcome-icon)::after { animation: ui-welcome-halo 1.2s ease-out 2; }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.panel, .portal-context-bar, .portal-welcome, .portal-subpage-sheet, .school-section-card,
+    .portal-workspace.is-school .portal-page-header:not(.is-overview), .workflow-detail-drawer,
+    .internship-group-card, .stat-card, .account-membership, .t3-task-card, .taxonomy-version):is([data-portal-glow], [data-admin-glow]) {
+    border-color: #adc7d9;
+    box-shadow: 0 0 0 1px #dbe8f180, 0 5px 18px #142f4012;
+  }
+  #root .workspace:not(:where(.workspace-native-t3)) .portal-welcome[data-portal-glow] .portal-welcome-icon::after { animation: ui-welcome-halo 1.2s ease-out; }
+  #root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(.content, .topbar) button:not(:where(.password-toggle, .nav, .taxonomy-node, .text-button, .btn-icon, .profile-shortcut, .menu-toggle, .role-menu-trigger, .role-menu-item, .student-report-card, .admin-metric, .admin-shortcut, .portal-stat, .portal-shortcut, .kpi-card, .matching-counts > button, [role="tab"], :disabled, [aria-disabled="true"])):hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px #0b927c18;
+  }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.admin-metric, .portal-stat, button.kpi-card, .matching-counts > button):not(:disabled):not([aria-disabled="true"]):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px #142f4012;
+  }
+  #root .workspace :is(.admin-shortcut, .portal-shortcut, .sidebar .nav:not(.active):not(.is-group-active)):not(:disabled):hover {
+    transform: translateX(2px);
+  }
+  #root .workspace .sidebar .nav:not(.active):not(.is-group-active):hover { background-color: #ffffff1f; color: #fff; }
+  #root .workspace .sidebar .nav:is(.active, .is-group-active):hover { transform: none; }
+  #root .workspace .sidebar .nav:hover > .icon:not(.school-nav-chevron) { transform: scale(1.04); }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.admin-shortcut, .portal-shortcut):hover :is(.admin-shortcut-icon, .portal-shortcut-icon) { transform: none; }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.admin-shortcut, .portal-shortcut):hover > .icon { transform: translateX(2px); }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.portal-stat-action svg, .school-stat-link > svg) { transition: transform var(--ui-motion-standard) var(--ui-motion-ease); }
+  #root .workspace:not(:where(.workspace-native-t3)) .portal-stat:hover :is(.portal-stat-action svg, .school-stat-link > svg) { transform: translateX(2px); }
+  #root .workspace:not(:where(.workspace-native-t3)) .role-menu-item:not(:disabled):hover { transform: translateX(2px); box-shadow: none; }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.role-menu-trigger, .btn-icon, .profile-shortcut, .menu-toggle):not(:disabled):hover { transform: none; }
+  #root .workspace:not(:where(.workspace-native-t3)) :is(.t5-detail-card, .matching-candidate, .proposal-card, .placement-item-card):hover { transform: none; }
+}
+/* The account trigger uses a clipped, neutral sheen; its popover remains outside the button. */
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(.role-menu-trigger, .workspace-account-trigger) { position: relative; isolation: isolate; overflow: hidden; }
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(.role-menu-trigger, .workspace-account-trigger)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 15%, #ffffff80 50%, transparent 85%);
+  transform: translateX(-110%);
+}
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(.role-menu-trigger, .workspace-account-trigger) > span:first-child {
+  transition: box-shadow var(--ui-motion-standard) var(--ui-motion-ease);
+}
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(.role-menu-trigger, .workspace-account-trigger):is(:hover, :focus-visible, [aria-expanded="true"]) > span:first-child { box-shadow: 0 0 0 3px #0b927c1a; }
+@media (prefers-reduced-motion: no-preference) {
+  #root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(.role-menu-trigger, .workspace-account-trigger):focus-visible::after { animation: action-light-sweep var(--ui-motion-sheen) var(--ui-motion-ease); }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  #root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(.role-menu-trigger, .workspace-account-trigger):not(:disabled):hover::after { animation: action-light-sweep var(--ui-motion-sheen) var(--ui-motion-ease); }
+}
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) button:not(:where(.password-toggle, .nav, .taxonomy-node, .text-button, .btn-icon, .profile-shortcut, .menu-toggle, .role-menu-trigger, .role-menu-item, .student-report-card, [role="tab"], :disabled, [aria-disabled="true"])):active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+@media (max-width: 900px) {
+  #root .workspace .sidebar { transition: transform var(--ui-motion-standard) var(--ui-motion-ease), visibility var(--ui-motion-standard) var(--ui-motion-ease); }
+}
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) button:not(.password-toggle):disabled,
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) button:not(.password-toggle)[aria-disabled="true"] { transform: none; }
+@media (hover: none), (pointer: coarse) {
+  #root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) button:not(.password-toggle):hover,
+#root .workspace:not(:where(.workspace-native-t3)) :is(.t5-detail-card, .matching-candidate, .proposal-card, .placement-item-card):hover { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) *,
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) *::before,
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  #root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) button:not(.password-toggle):is(:hover, :active),
+#root .workspace:not(:where(.workspace-native-t3)) :is(.t5-detail-card, .matching-candidate, .proposal-card, .placement-item-card):hover { transform: none !important; }
+}
+@keyframes ui-surface-in { from { opacity: .5; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes ui-feedback-in { from { opacity: .5; } to { opacity: 1; } }
+@keyframes ui-overlay-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@keyframes ui-welcome-halo { from { opacity: .7; transform: scale(.95); } to { opacity: 0; transform: scale(1.2); } }
+
+/* Add the shared feedback to Student without changing its content, sizes or colours. */
+#root .workspace-student :is(.student-home-stat, .student-home-row, .student-opp-card) {
+  transition: border-color var(--ui-motion-standard) var(--ui-motion-ease), box-shadow var(--ui-motion-standard) var(--ui-motion-ease), transform var(--ui-motion-standard) var(--ui-motion-ease);
+}
+@media (prefers-reduced-motion: no-preference) {
+  #root .workspace-student .account-menu { animation: ui-overlay-in var(--ui-motion-standard) var(--ui-motion-ease); }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  #root .workspace-student :is(.student-home-stat, .student-home-row, .student-opp-card)[data-portal-glow] {
+    border-color: #adc7d9;
+    box-shadow: 0 0 0 1px #dbe8f180, 0 5px 18px #142f4012;
+  }
+}

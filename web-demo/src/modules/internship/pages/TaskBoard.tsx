@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Notice } from '../../../components';
+import { Icon, Notice } from '../../../components';
+import { DateInput } from '../../../ui/DateInput';
+import { useReveal } from '../../../useReveal';
 import type { WorkspaceAssignment, InternshipGroup, WorkspacePage } from '../types';
+import { formatEntityShort, formatGroupCode } from '../displayLabels';
 import type { InternshipTask as Task } from '../workflow';
 import { accessLost, workflowError, workflowRead } from '../workflow-api';
 import { CommandFeedback, useWorkflowCommand } from '../useWorkflowCommand';
@@ -8,10 +11,12 @@ import { SubmissionWorkspace } from './SubmissionWorkspace';
 import { WeeklyReports } from './WeeklyReports';
 import '../styles.css';
 type CalendarEvent = { taskId: string; assignmentId: string | null; title: string; dueAt: string; state: string | null };
+const stateIcons: Record<string, string> = { NEW: 'calendar', IN_PROGRESS: 'clock', SUBMITTED: 'mail', REVISION_REQUIRED: 'edit', COMPLETED: 'check' };
 const states = ['NEW', 'IN_PROGRESS', 'SUBMITTED', 'REVISION_REQUIRED', 'COMPLETED'];
 const names: Record<string, string> = { NEW: 'Chưa bắt đầu', IN_PROGRESS: 'Đang làm', SUBMITTED: 'Đã nộp', REVISION_REQUIRED: 'Cần sửa', COMPLETED: 'Hoàn thành' };
 // showReports=false: S07 sinh viên (T2-10) mở báo cáo tuần ở S08; Mentor/HR vẫn mở báo cáo ngay trong bảng việc.
-type BoardProps = { assignment?: WorkspaceAssignment; group?: InternshipGroup; student?: boolean; showReports?: boolean };
+type View = 'all' | 'overview' | 'board' | 'list' | 'calendar' | 'reports' | 'create';
+type BoardProps = { initialView?: View; assignment?: WorkspaceAssignment; group?: InternshipGroup; student?: boolean; showReports?: boolean };
 export function TaskBoard(props: BoardProps) {
   return <ScopedTaskBoard key={(props.assignment?.id || 'student') + ':' + (props.assignment?.version || '') + ':' + (props.group?.groupId || '')} {...props} />;
 }
@@ -22,28 +27,42 @@ function ScopedTaskBoard(props: BoardProps) {
   return denied ? <section className="panel"><p role="alert">Phiên hoặc quyền truy cập đã thay đổi. Dữ liệu của phạm vi này đã được đóng.</p>
     <button onClick={() => setDenied(false)}>Xác nhận lại quyền truy cập</button></section> : <TaskBoardContent {...props} denied={invalidate} />;
 }
-function TaskBoardContent({ assignment, group, student = false, showReports = true, denied }: BoardProps & { denied: () => void }) {
+function TaskBoardContent({ assignment, group, student = false, showReports = true, initialView = 'all', denied }: BoardProps & { denied: () => void }) {
+  const [view,setView]=useState<View>(initialView),[query,setQuery]=useState(''),[loading,setLoading]=useState(true),[calendarError,setCalendarError]=useState('');
+  const visible=(name:View)=>view==='all' || view===name;
   const [tasks, setTasks] = useState<Task[]>([]), [refresh, setRefresh] = useState(0), [page, setPage] = useState(0), [total, setTotal] = useState(0);
   const [state, setState] = useState(''), [person, setPerson] = useState(''), [until, setUntil] = useState(''), [selected, setSelected] = useState('');
   const [message, setMessage] = useState(''), [events, setEvents] = useState<CalendarEvent[]>([]);
   const [artifactAssignment, setArtifactAssignment] = useState(''), [reports, setReports] = useState(false), [calendarTask, setCalendarTask] = useState('');
-  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [month, setMonth] = useState(()=>{const now=new Date();return now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');});
+  const [created,setCreated]=useState(0);
+  const [calendarLoading,setCalendarLoading]=useState(true),[calendarCase,setCalendarCase]=useState('');
   const mutation = useWorkflowCommand(assignment?.id, denied), busy = mutation.busy || mutation.pending;
+  const reveal = useReveal();
+  const openTask = (taskId: string, assignmentId: string) => {
+    setSelected(taskId); setArtifactAssignment(assignmentId); setCalendarTask(''); reveal.request();
+  };
+  const openCalendarTask = (event: CalendarEvent) => {
+    setSelected(''); setArtifactAssignment(event.assignmentId || ''); setCalendarTask(event.taskId); reveal.request();
+  };
   useEffect(() => {
-    const c = new AbortController(); setMessage(''); setTasks([]);
+    const c = new AbortController(); setMessage(''); setTasks([]); setLoading(true);
     const params = new URLSearchParams({ page: String(page), size: '25' });
+    if (person) params.set('caseId',person);
     if (group) params.set('groupId', group.groupId); if (state) params.set('state', state); if (until) params.set('dueUntil', new Date(until + 'T23:59:59').toISOString());
-    void workflowRead<WorkspacePage<Task>>('/t3/tasks?' + params, assignment?.id, c.signal).then(p => { if (!c.signal.aborted) { setTasks(p.content); setTotal(p.totalPages); } }).catch(error => { if (!c.signal.aborted) { if (accessLost(error)) denied(); else setMessage(workflowError(error)); } });
+    void workflowRead<WorkspacePage<Task>>('/t3/tasks?' + params, assignment?.id, c.signal).then(p => { if (!c.signal.aborted) { setTasks(p.content); setTotal(p.totalPages); } }).catch(error => { if (!c.signal.aborted) { if (accessLost(error)) denied(); else setMessage(workflowError(error)); } }).finally(()=>{if(!c.signal.aborted)setLoading(false);});
     return () => c.abort();
-  }, [assignment?.id, group?.groupId, refresh, page, state, until]);
+  }, [assignment?.id, group?.groupId, refresh, page, state, until, person]);
   useEffect(() => {
-    const c = new AbortController(); setEvents([]); const from = new Date(month + '-01T00:00:00'); if (!Number.isFinite(from.getTime())) return;
+    const c = new AbortController(); setEvents([]); setCalendarError(''); setCalendarLoading(true); const from = new Date(month + '-01T00:00:00'); if (!Number.isFinite(from.getTime())) {setCalendarLoading(false);return;}
     const end = new Date(from); end.setMonth(end.getMonth() + 1);
     void (async () => { const all: CalendarEvent[] = []; let index = 0, pages = 1; while (index < pages) {
-      const p = await workflowRead<WorkspacePage<CalendarEvent>>('/t3/calendar?' + new URLSearchParams({ from: from.toISOString(), until: end.toISOString(), page: String(index), size: '100' }), assignment?.id, c.signal); all.push(...p.content); index++; pages = p.totalPages;
-    } if (!c.signal.aborted) setEvents(all); })().catch(error => { if (!c.signal.aborted) { if (accessLost(error)) denied(); else setMessage(workflowError(error)); } });
+      const params = new URLSearchParams({ from: from.toISOString(), until: end.toISOString(), page: String(index), size: '100' });
+      if(calendarCase)params.set('caseId',calendarCase);
+      const p = await workflowRead<WorkspacePage<CalendarEvent>>('/t3/calendar?' + params, assignment?.id, c.signal); all.push(...p.content); index++; pages = p.totalPages;
+    } if (!c.signal.aborted) setEvents(all); })().catch(error => { if (!c.signal.aborted) { if (accessLost(error)) denied(); else setCalendarError(workflowError(error)); } }).finally(()=>{if(!c.signal.aborted)setCalendarLoading(false);});
     return () => c.abort();
-  }, [assignment?.id, month, refresh]);
+  }, [assignment?.id, month, refresh, calendarCase]);
   useEffect(() => {
     if (!calendarTask) return;
     const c = new AbortController();
@@ -52,24 +71,53 @@ function TaskBoardContent({ assignment, group, student = false, showReports = tr
     }).catch(error => { if (!c.signal.aborted) { if (accessLost(error)) denied(); else setMessage(workflowError(error)); } });
     return () => c.abort();
   }, [calendarTask, assignment?.id]);
-  const command = async (path: string, method: string, data: unknown) => { mutation.run(path, data, () => setRefresh(n => n + 1), method); };
+  const command = async (path: string, method: string, data: unknown) => { mutation.run(path, data, () => {if(path==='/t3/tasks' && method==='POST')setCreated(n=>n+1);setRefresh(n => n + 1);}, method); };
   const detail = tasks.find(t => t.taskId === selected), people = [...new Set(tasks.flatMap(t => t.assignments.map(a => a.caseId)))];
   const date = new Date(month + '-01T00:00:00'), days = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  return <div className="stack workflow-surface"><h3>Bảng công việc</h3><Notice message={message} tone="error" />
+  const monthControl = <label>Tháng<input type="month" value={month} onChange={e => setMonth(e.target.value)} /></label>;
+  const calendarGrid = <div role="grid" aria-label="Lịch hạn công việc" className={student ? undefined : 't3-calendar-grid'}
+    style={student ? { display: 'grid', minWidth: 560, gridTemplateColumns: 'repeat(7,minmax(0,1fr))', gap: 6 } : undefined}>
+    {['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'].map(day => <strong role="columnheader" key={day}>{day}</strong>)}
+    {Array.from({ length: Number.isFinite(date.getTime()) ? (date.getDay() + 6) % 7 : 0 }, (_, n) => <span className={student ? undefined : 't3-calendar-blank'} aria-hidden="true" key={'blank-' + n} />)}
+    {Array.from({ length: Number.isFinite(days) ? days : 0 }, (_, n) => {
+      const day = n + 1, dayEvents = events.filter(e => new Date(e.dueAt).getDate() === day);
+      return <div role="gridcell" className={student ? 'panel' : 'panel t3-calendar-cell' + (dayEvents.length ? ' has-events' : '')} key={day}><strong>{day}</strong>
+        {dayEvents.map(e => <button key={e.taskId + e.assignmentId} className="text-button" onClick={() => openCalendarTask(e)}>{e.title}{e.state ? ': ' + names[e.state] : ''}</button>)}
+      </div>;
+    })}
+  </div>;
+  const filtered=tasks.filter(t=>t.title.toLocaleLowerCase('vi').includes(query.trim().toLocaleLowerCase('vi')));
+  const entries=filtered.flatMap(task=>task.assignments.filter(a=>(!state || a.state===state) && (!person || a.caseId===person)).map(assignment=>({task,assignment})));
+  const open=(task:Task,id:string)=>{setSelected(task.taskId);setArtifactAssignment(id);setCalendarTask('');};
+  if (student) {
+  return <div className="stack workflow-surface"><h3>Bảng công việc</h3><Notice message={message || calendarError} tone="error" />
     <CommandFeedback command={mutation} />
     {showReports && <button className="secondary" onClick={() => setReports(value => !value)}>{reports ? 'Đóng báo cáo tuần' : 'Mở báo cáo tuần'}</button>}
     {showReports && reports && <WeeklyReports contextId={assignment?.id} caseIds={group?.caseIds} student={student} mentor={assignment?.kind === 'MENTOR'} denied={denied} />}
-    <div className="button-row"><label>Trạng thái<select value={state} onChange={e => { setState(e.target.value); setPage(0); }}><option value="">Tất cả</option>{states.map(s => <option value={s} key={s}>{names[s]}</option>)}</select></label>
-      <label>Hồ sơ được giao<select value={person} onChange={e => setPerson(e.target.value)}><option value="">Tất cả</option>{people.map(p => <option key={p} value={p}>Hồ sơ …{p.slice(-6)}</option>)}</select></label>
-      <label>Hạn đến ngày<input type="date" value={until} onChange={e => { setUntil(e.target.value); setPage(0); }} /></label>
+    <div className={'button-row' + (student ? '' : ' t3-filter-bar')}><label>Trạng thái<select value={state} onChange={e => { setState(e.target.value); setPage(0); }}><option value="">Tất cả</option>{states.map(s => <option value={s} key={s}>{names[s]}</option>)}</select></label>
+      <label>Hồ sơ được giao<select value={person} onChange={e => setPerson(e.target.value)}><option value="">Tất cả</option>{people.map(p => <option key={p} value={p}>Hồ sơ {student ? '…' + p.slice(-6) : formatEntityShort(p)}</option>)}</select></label>
+      <label>Hạn đến ngày{student ? <input type="date" value={until} onChange={e => { setUntil(e.target.value); setPage(0); }} />
+        : <DateInput type="date" value={until} onChange={e => { setUntil(e.target.value); setPage(0); }} />}</label>
       <button className="secondary" disabled={busy} onClick={() => setRefresh(n => n + 1)}>Tải lại bảng việc</button></div>
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(170px,1fr))', gap: 12 }}>{states.map(s => <section className="panel" key={s}><h4>{names[s]}</h4>
+    {student ? <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(170px,1fr))', gap: 12 }}>{states.map(s => <section className="panel" key={s}><h4>{names[s]}</h4>
       {tasks.flatMap(t => t.assignments.filter(a => a.state === s && (!state || state === s) && (!person || person === a.caseId)).map(a => <article key={a.assignmentId}>
-        <button type="button" className="text-button" onClick={() => { setSelected(t.taskId); setArtifactAssignment(a.assignmentId); setCalendarTask(''); }}>{t.title}</button><p>Hạn: {new Date(t.dueAt).toLocaleString('vi-VN')}</p>
-        {student && ['NEW', 'REVISION_REQUIRED'].includes(a.state) && <button disabled={busy} onClick={() => void command('/t3/assignments/' + a.assignmentId + '/status', 'PATCH', { expectedVersion: a.version, state: 'IN_PROGRESS' })}>Bắt đầu làm</button>}
-      </article>))}</section>)}</div>
-    <div className="button-row"><button className="secondary" disabled={page === 0} onClick={() => setPage(n => n - 1)}>Trước</button><span>Trang {page + 1}/{Math.max(1, total)}</span><button className="secondary" disabled={page + 1 >= total} onClick={() => setPage(n => n + 1)}>Sau</button></div>
-    {detail && <section className="panel"><h3>{detail.title}</h3><p>{detail.description}</p><p>Ưu tiên: {{ LOW: 'Thấp', NORMAL: 'Bình thường', HIGH: 'Cao' }[detail.priority]} · Hạn: {new Date(detail.dueAt).toLocaleString('vi-VN')}</p><ul>{detail.assignments.map(a => <li key={a.assignmentId}>
+        <button type="button" className="text-button" onClick={() => openTask(t.taskId, a.assignmentId)}>{t.title}</button><p>Hạn: {new Date(t.dueAt).toLocaleString('vi-VN')}</p>
+        {['NEW', 'REVISION_REQUIRED'].includes(a.state) && <button disabled={busy} onClick={() => void command('/t3/assignments/' + a.assignmentId + '/status', 'PATCH', { expectedVersion: a.version, state: 'IN_PROGRESS' })}>Bắt đầu làm</button>}
+      </article>))}</section>)}</div> : <div className="t3-kanban-grid">{states.map(s => {
+      const colCards = tasks.flatMap(t => t.assignments.filter(a => a.state === s && (!state || state === s) && (!person || person === a.caseId)).map(a => ({ t, a })));
+      return <section className={'panel t3-kanban-col is-' + s.toLowerCase()} key={s}>
+        <div className="t3-kanban-col-head"><h4>{names[s]}</h4><span className="t3-col-count">{colCards.length}</span></div>
+        {colCards.map(({ t, a }) => <article className="t3-task-card" key={a.assignmentId}>
+          <button type="button" className="text-button" onClick={() => openTask(t.taskId, a.assignmentId)}>{t.title}</button><p>Hạn: {new Date(t.dueAt).toLocaleString('vi-VN')}</p>
+          {student && ['NEW', 'REVISION_REQUIRED'].includes(a.state) && <button disabled={busy} onClick={() => void command('/t3/assignments/' + a.assignmentId + '/status', 'PATCH', { expectedVersion: a.version, state: 'IN_PROGRESS' })}>Bắt đầu làm</button>}
+        </article>)}
+      </section>;
+    })}</div>}
+    <div className={'button-row' + (student ? '' : ' t3-pagination-row')}><button className="secondary" disabled={page === 0} onClick={() => setPage(n => n - 1)}>Trước</button><span>Trang {page + 1}/{Math.max(1, total)}</span><button className="secondary" disabled={page + 1 >= total} onClick={() => setPage(n => n + 1)}>Sau</button></div>
+    {detail && <section className={'panel' + (student ? '' : ' t3-task-detail')} ref={reveal.ref}><h3>{detail.title}</h3><p>{detail.description}</p>
+      {student ? <p>Ưu tiên: {{ LOW: 'Thấp', NORMAL: 'Bình thường', HIGH: 'Cao' }[detail.priority]} · Hạn: {new Date(detail.dueAt).toLocaleString('vi-VN')}</p>
+        : <p className="t3-task-meta"><span className={'t3-priority-pill is-' + detail.priority.toLowerCase()}>Ưu tiên: {{ LOW: 'Thấp', NORMAL: 'Bình thường', HIGH: 'Cao' }[detail.priority]}</span><span>Hạn: {new Date(detail.dueAt).toLocaleString('vi-VN')}</span></p>}
+      <ul className={student ? undefined : 't3-assignment-links'}>{detail.assignments.map(a => <li key={a.assignmentId}>
       <button className="text-button" onClick={() => setArtifactAssignment(a.assignmentId)}>Hồ sơ …{a.caseId.slice(-6)}: {names[a.state]} · Bài nộp và trao đổi</button></li>)}</ul>
       {detail.assignments.filter(a => a.assignmentId === artifactAssignment).map(a => <SubmissionWorkspace key={a.assignmentId} taskId={detail.taskId} assignment={a}
         contextId={assignment?.id} student={student} mentor={assignment?.kind === 'MENTOR'} denied={denied}
@@ -79,20 +127,80 @@ function TaskBoardContent({ assignment, group, student = false, showReports = tr
         }} />)}
       <button className="secondary" onClick={() => { setSelected(''); setCalendarTask(''); }}>Đóng chi tiết</button></section>}
     {assignment?.kind === 'MENTOR' && group && <CreateTask key={group.groupId + ':' + refresh} group={group} busy={busy} command={command} />}
-    <section className="panel"><h3>Lịch công việc</h3><label>Tháng<input type="month" value={month} onChange={e => setMonth(e.target.value)} /></label>
-      <div style={{ overflowX: 'auto' }}><div role="grid" aria-label="Lịch hạn công việc" style={{ display: 'grid', minWidth: 560, gridTemplateColumns: 'repeat(7,minmax(0,1fr))', gap: 6 }}>
-        {['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'].map(day => <strong role="columnheader" key={day}>{day}</strong>)}
-        {Array.from({ length: Number.isFinite(date.getTime()) ? (date.getDay() + 6) % 7 : 0 }, (_, n) => <span aria-hidden="true" key={'blank-' + n} />)}
-        {Array.from({ length: Number.isFinite(days) ? days : 0 }, (_, n) => { const day = n + 1; return <div role="gridcell" className="panel" key={day}><strong>{day}</strong>{events.filter(e => new Date(e.dueAt).getDate() === day).map(e => <button key={e.taskId + e.assignmentId} className="text-button" onClick={() => { setSelected(''); setArtifactAssignment(e.assignmentId || ''); setCalendarTask(e.taskId); }}>{e.title}{e.state ? ': ' + names[e.state] : ''}</button>)}</div>; })}
-      </div></div></section>
+    <section className={student ? 'panel' : 'panel t3-calendar-panel'}>
+      {student ? <><h3>Lịch công việc</h3>{monthControl}</> : <div className="t3-calendar-toolbar"><h3>Lịch công việc</h3>{monthControl}</div>}
+      <div className={student ? undefined : 't3-calendar-scroll'} style={student ? { overflowX: 'auto' } : undefined}>{calendarGrid}</div>
+    </section>
+  </div>;
+  }
+  const taskSummary = detail && <div className="stack t3-task-summary"><p>{detail.description}</p><p>Ưu tiên: {{ LOW: 'Thấp', NORMAL: 'Bình thường', HIGH: 'Cao' }[detail.priority]} · Hạn: {new Date(detail.dueAt).toLocaleString('vi-VN')}</p><ul className="t3-assignment-choices">{detail.assignments.map(a => <li key={a.assignmentId}>
+      <button className="text-button" onClick={() => setArtifactAssignment(a.assignmentId)}>Hồ sơ {formatEntityShort(a.caseId)}: {names[a.state]} · Bài nộp và trao đổi</button></li>)}</ul></div>;
+  return <div className={'stack workflow-surface t3-workbench' + (detail ? ' is-detail-open' : '')}><h3>Bảng công việc</h3>
+    <nav className="t3-view-nav" aria-label="Màn công việc thực tập">{([['overview','Tổng quan nhiệm vụ'],['board','Bảng Kanban'],['list','Danh sách nhiệm vụ'],['calendar','Lịch công việc'],...(showReports?[['reports','Báo cáo tuần']]:[]),...(assignment?.kind==='MENTOR'&&group?[['create','Giao nhiệm vụ mới']]:[]),['all','Tất cả khu vực']] as [View,string][]).map(([id,label])=><button key={id} type="button" className="secondary" aria-pressed={view===id} onClick={()=>setView(id)}>{label}</button>)}</nav>
+    <Notice message={message} tone="error" />
+    {detail && <section className="panel t3-task-detail" aria-label="Chi tiết nhiệm vụ" ref={reveal.ref}><header className="t3-card-heading"><h3>{detail.title}</h3><button className="secondary" onClick={() => { setSelected(''); setCalendarTask(''); }}>Đóng chi tiết</button></header>
+      {!detail.assignments.some(a => a.assignmentId === artifactAssignment) && taskSummary}
+      {detail.assignments.filter(a => a.assignmentId === artifactAssignment).map(a => <SubmissionWorkspace taskSummary={taskSummary} key={a.assignmentId} taskId={detail.taskId} assignment={a}
+        contextId={assignment?.id} student={student} mentor={assignment?.kind === 'MENTOR'} denied={denied}
+        updated={value => {
+          setTasks(current => current.map(task => task.taskId === detail.taskId ? { ...task, assignments: task.assignments.map(item => item.assignmentId === value.assignmentId ? value : item) } : task));
+          setEvents(current => current.map(event => event.assignmentId === value.assignmentId ? { ...event, state: value.state } : event));
+        }} />)}
+      </section>}
+    {visible('overview') && <section className="panel stack" aria-label="Tổng quan nhiệm vụ"><h3>Theo dõi tiến độ</h3><p className="muted">Số liệu trong trang nhiệm vụ đang tải theo bộ lọc hiện tại; không phải tổng toàn kỳ.</p>
+      {loading?<p role="status">Đang tải tiến độ…</p>:!message && <dl className="t3-metrics">{states.map(s=><div key={s}><dt><Icon name={stateIcons[s]} size={16} />{names[s]}</dt><dd>{entries.filter(e=>e.assignment.state===s).length}</dd></div>)}</dl>}
+      <button className="secondary" onClick={()=>{setState('SUBMITTED');setPage(0);setView('board');}}>Xem bài đang chờ duyệt</button></section>}
+    <CommandFeedback command={mutation} />
+    <div hidden={!visible('reports')} className="stack">
+    {showReports && <button className="secondary" onClick={() => setReports(value => !value)}>{reports ? 'Đóng báo cáo tuần' : 'Mở báo cáo tuần'}</button>}
+    {showReports && reports && <WeeklyReports contextId={assignment?.id} caseIds={group?.caseIds} student={student} mentor={assignment?.kind === 'MENTOR'} denied={denied} />}
+    </div><div hidden={!visible('board') && !visible('list')} className="stack">
+    <div className="button-row t3-task-filters">
+    <label className="t3-work-search">Tìm tiêu đề trong trang<span><Icon name="search" size={16} /><input type="search" value={query} onChange={e=>setQuery(e.target.value)}/></span></label>
+    <label>Trạng thái<select value={state} onChange={e => { setState(e.target.value); setPage(0); }}><option value="">Tất cả</option>{states.map(s => <option value={s} key={s}>{names[s]}</option>)}</select></label>
+      <label>Hồ sơ được giao<select value={person} onChange={e => {setPerson(e.target.value);setPage(0);}}><option value="">Tất cả</option>{[...new Set([...(group?.caseIds || []),...people,...(person?[person]:[])])].map(p => <option key={p} value={p}>Hồ sơ {formatEntityShort(p)}</option>)}</select></label>
+      <label>Hạn đến ngày<DateInput type="date" aria-label="Hạn đến ngày" value={until} onChange={e => { setUntil(e.target.value); setPage(0); }} /></label>
+      <button className="secondary" disabled={busy} onClick={() => setRefresh(n => n + 1)}>Tải lại bảng việc</button></div>
+    {loading && <p role="status">Đang tải nhiệm vụ…</p>}
+    {!loading && !message && entries.length===0 && <p className="t3-empty">Chưa có nhiệm vụ phù hợp với bộ lọc.</p>}
+    {view==='list' && <section aria-label="Danh sách nhiệm vụ" className="t3-task-list">{entries.map(({task,assignment:a})=><article className="t3-task-card" key={a.assignmentId}><button className="text-button" onClick={()=>open(task,a.assignmentId)}>{task.title}</button><span className={'t3-state t3-state-'+a.state}>{names[a.state]}</span><span className="t3-priority" data-priority={task.priority}>{{ LOW: 'Thấp', NORMAL: 'Bình thường', HIGH: 'Cao' }[task.priority]}</span><p>Hồ sơ {formatEntityShort(a.caseId)} · Hạn {new Date(task.dueAt).toLocaleString('vi-VN')}</p></article>)}</section>}
+    <div hidden={!visible('board')} className="t3-kanban">{states.map(s => <section className="t3-kanban-column" key={s}><h4><span className={'t3-state t3-state-'+s}>{names[s]}</span> <span className="muted">{entries.filter(e=>e.assignment.state===s).length}</span></h4>
+      {filtered.flatMap(t => t.assignments.filter(a => a.state === s && (!state || state === s) && (!person || person === a.caseId)).map(a => <article className="t3-task-card" key={a.assignmentId}>
+        <button type="button" className="text-button" onClick={() => { setSelected(t.taskId); setArtifactAssignment(a.assignmentId); setCalendarTask(''); }}>{t.title}</button><div className="t3-task-facts"><span className="t3-priority" data-priority={t.priority}>{{ LOW: 'Thấp', NORMAL: 'Bình thường', HIGH: 'Cao' }[t.priority]}</span><span>{names[a.state]}</span></div><p><Icon name="clock" size={14} /> Hạn: {new Date(t.dueAt).toLocaleString('vi-VN')}</p>
+        {student && ['NEW', 'REVISION_REQUIRED'].includes(a.state) && <button disabled={busy} onClick={() => void command('/t3/assignments/' + a.assignmentId + '/status', 'PATCH', { expectedVersion: a.version, state: 'IN_PROGRESS' })}>Bắt đầu làm</button>}
+      </article>))}</section>)}</div>
+    <div className="button-row"><button className="secondary" disabled={page === 0} onClick={() => setPage(n => n - 1)}>Trước</button><span>Trang {page + 1}/{Math.max(1, total)}</span><button className="secondary" disabled={page + 1 >= total} onClick={() => setPage(n => n + 1)}>Sau</button></div>
+    </div>
+    <div hidden={!visible('create')}>{assignment?.kind === 'MENTOR' && group && <CreateTask key={group.groupId+':'+created} group={group} busy={busy} command={command} />}</div>
+    <section hidden={!visible('calendar')} className="panel t3-calendar">
+      <div className="t3-calendar-layout">
+        <div className="t3-calendar-aside">
+          <div className="t3-calendar-head">
+            <h3>Lịch công việc</h3>
+            <p className="muted">Lịch theo quyền của phạm vi đang chọn. Chọn hồ sơ để thu hẹp lịch; mục tất cả có thể gồm nhiều nhóm.</p>
+          </div>
+          {calendarError && <p role="alert">{calendarError}</p>}
+          <div className="t3-calendar-controls">
+            <label>Tháng<DateInput type="month" aria-label="Tháng" value={month} onChange={e => setMonth(e.target.value)} /></label>
+            <label>Hồ sơ trên lịch<select value={calendarCase} onChange={e=>setCalendarCase(e.target.value)}><option value="">Tất cả trong phạm vi</option>{[...new Set([...(group?.caseIds || []),...people,...(calendarCase?[calendarCase]:[])])].map(id=><option key={id} value={id}>Hồ sơ {formatEntityShort(id)}</option>)}</select></label>
+          </div>
+          {calendarLoading?<p role="status">Đang tải lịch…</p>:!calendarError && events.length===0 && <p className="t3-empty">Chưa có hạn công việc trong tháng và phạm vi đã chọn.</p>}
+        </div>
+        <div className="t3-month-scroll"><div role="grid" aria-label="Lịch hạn công việc" className="t3-month-grid">
+          {['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'].map(day => <strong role="columnheader" key={day}>{day}</strong>)}
+          {Array.from({ length: Number.isFinite(date.getTime()) ? (date.getDay() + 6) % 7 : 0 }, (_, n) => <span aria-hidden="true" key={'blank-' + n} />)}
+          {Array.from({ length: Number.isFinite(days) ? days : 0 }, (_, n) => { const day = n + 1; return <div role="gridcell" key={day}><strong>{day}</strong>{events.filter(e => new Date(e.dueAt).getDate() === day).map(e => <button key={e.taskId + e.assignmentId} className="text-button" onClick={() => { setSelected(''); setArtifactAssignment(e.assignmentId || ''); setCalendarTask(e.taskId); }}>{e.title}{e.state ? ': ' + names[e.state] : ''}</button>)}</div>; })}
+        </div></div>
+      </div>
+    </section>
   </div>;
 }
 function CreateTask({ group, busy, command }: { group: InternshipGroup; busy: boolean; command: (path: string, method: string, data: unknown) => Promise<void> }) {
   const [title, setTitle] = useState(''), [description, setDescription] = useState(''), [due, setDue] = useState(''), [priority, setPriority] = useState('NORMAL'), [cases, setCases] = useState<string[]>([]);
   const submit = (event: FormEvent) => { event.preventDefault(); if (cases.length) void command('/t3/tasks', 'POST', { groupId: group.groupId, title, description, dueAt: new Date(due).toISOString(), priority, caseIds: cases, lateAllowed: true }); };
-  return <form className="panel" onSubmit={submit}><h3>Giao nhiệm vụ cho nhóm {group.code}</h3><fieldset disabled={busy}>
+  return <form className="panel" onSubmit={submit}><h3>Giao nhiệm vụ cho nhóm {formatGroupCode(group.code)}</h3><fieldset disabled={busy}>
     <label>Tiêu đề<input required maxLength={200} value={title} onChange={e => setTitle(e.target.value)} /></label><label>Mô tả<textarea required maxLength={10000} value={description} onChange={e => setDescription(e.target.value)} /></label>
-    <label>Hạn hoàn thành<input type="datetime-local" required value={due} onChange={e => setDue(e.target.value)} /></label><label>Ưu tiên<select value={priority} onChange={e => setPriority(e.target.value)}><option value="LOW">Thấp</option><option value="NORMAL">Bình thường</option><option value="HIGH">Cao</option></select></label>
-    <fieldset><legend>Hồ sơ được giao</legend>{group.caseIds.map(id => <label key={id}><input type="checkbox" checked={cases.includes(id)} onChange={e => setCases(e.target.checked ? [...cases, id] : cases.filter(v => v !== id))} />Hồ sơ …{id.slice(-6)}</label>)}</fieldset>
+    <label>Hạn hoàn thành<DateInput type="datetime-local" aria-label="Hạn hoàn thành" required value={due} onChange={e => setDue(e.target.value)} /></label><label>Ưu tiên<select value={priority} onChange={e => setPriority(e.target.value)}><option value="LOW">Thấp</option><option value="NORMAL">Bình thường</option><option value="HIGH">Cao</option></select></label>
+    <fieldset><legend>Hồ sơ được giao</legend>{group.caseIds.map(id => <label key={id}><input type="checkbox" checked={cases.includes(id)} onChange={e => setCases(e.target.checked ? [...cases, id] : cases.filter(v => v !== id))} />Hồ sơ {formatEntityShort(id)}</label>)}</fieldset>
     <button disabled={!cases.length}>Giao nhiệm vụ</button></fieldset></form>;
 }

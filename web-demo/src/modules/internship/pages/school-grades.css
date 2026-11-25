@@ -1,0 +1,271 @@
+/* UT.Bridora Figma-aligned Evaluation & Grade Policy (also styles standalone DEV06 fixture cleanly) */
+.t3-school-grades {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.t3-school-grades .t3-card-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 18px;
+}
+
+.t3-school-grades .t3-card-heading > div {
+  min-width: 0;
+  flex: 1 1 280px;
+}
+
+.t3-school-grades .t3-card-heading > div > p {
+  margin-top: 4px;
+  color: #64788a;
+  font-size: 13.5px;
+}
+
+.t3-school-grades :is(form, fieldset, .stack) > button {
+  justify-self: start;
+  width: auto;
+  max-width: 100%;
+}
+
+.t3-grade-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) auto;
+  align-items: end;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border: 1px solid #e3eaf2;
+  border-radius: 12px;
+}
+
+.t3-grade-toolbar > label,
+.t3-grade-toolbar > form {
+  min-width: 0;
+  margin: 0;
+}
+
+.t3-grade-toolbar > form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+}
+
+.t3-grade-toolbar label {
+  display: grid;
+  align-content: end;
+  gap: 6px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #243e50;
+}
+
+.t3-grade-toolbar :is(input, select, button) {
+  height: 42px;
+  min-height: 42px;
+  margin: 0;
+  box-sizing: border-box;
+  border-radius: 10px;
+}
+
+.t3-grade-toolbar > button {
+  white-space: nowrap;
+}
+
+.t3-grade-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+.t3-grade-row.secondary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px 12px;
+  width: 100%;
+  text-align: left;
+  justify-items: start;
+  padding: 14px 16px;
+  border: 1px solid #e3eaf2;
+  border-radius: 12px;
+  background: #ffffff;
+  white-space: normal;
+  font-weight: 600;
+  color: #142f40;
+}
+
+.t3-grade-row.secondary > .t3-grade-status {
+  justify-self: end;
+}
+
+.t3-grade-row.secondary > small {
+  grid-column: 1 / -1;
+}
+
+.t3-grade-row.secondary:hover:not(:disabled) {
+  border-color: #9fdcd0;
+  background: #f4fbf8;
+}
+
+.t3-grade-row.selected {
+  border-color: #0b927c;
+  background: #e7f6f0;
+}
+
+.t3-grade-row small {
+  color: #64788a;
+}
+
+.t3-grade-row small strong {
+  color: #087b68;
+  font-variant-numeric: tabular-nums;
+}
+
+.t3-grade-status {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #eef3f7;
+  color: #445b6b;
+  border: 1px solid #d7e2ec;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.t3-grade-status.state-SUBMITTED {
+  background: #fff2db;
+  color: #986618;
+  border-color: #f3d79e;
+}
+
+.t3-grade-status.state-PUBLISHED {
+  background: #e5f6ed;
+  color: #1a7d50;
+  border-color: #bde7d8;
+}
+
+.t3-grade-detail {
+  padding-top: 18px;
+  border-top: 1px solid #e3eaf2;
+}
+
+/* Figma 1433-17305: 3-Condition Check List */
+.t3-visibility-note {
+  margin: 0 0 10px;
+  padding: 11px 14px;
+  border: 1px solid #f3d79e;
+  border-radius: 10px;
+  background: #fff8ea;
+  color: #986618;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.t3-visibility-conditions {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  counter-reset: condition;
+}
+
+.t3-visibility-conditions > div {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 3px 14px;
+  padding: 14px 16px;
+  border: 1px solid #e3eaf2;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.t3-visibility-conditions > div::before {
+  counter-increment: condition;
+  content: counter(condition, decimal-leading-zero);
+  grid-column: 1;
+  grid-row: 1 / 3;
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 26px;
+  border-radius: 999px;
+  background: #e8f2ff;
+  color: #1d5698;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.t3-visibility-conditions dt {
+  grid-column: 2;
+  font-size: 14px;
+  font-weight: 700;
+  color: #142f40;
+}
+
+.t3-visibility-conditions dd {
+  grid-column: 2;
+  margin: 0;
+  font-size: 12.5px;
+  color: #64788a;
+}
+
+.t3-visibility-conditions .t3-grade-status {
+  grid-column: 3;
+  grid-row: 1 / 3;
+}
+
+.t3-school-grades fieldset {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid #e3eaf2;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.t3-school-grades legend {
+  padding: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #142f40;
+}
+
+.t3-school-grades input:not([type="checkbox"]):not([type="radio"]),
+.t3-school-grades select {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+  .t3-grade-toolbar,
+  .t3-grade-toolbar > form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .t3-visibility-conditions > div {
+    grid-template-columns: 32px minmax(0, 1fr);
+  }
+  .t3-visibility-conditions .t3-grade-status {
+    grid-column: 2;
+    grid-row: auto;
+    margin-top: 6px;
+  }
+  .t3-school-grades :is(form, fieldset, .stack) > button,
+  .t3-grade-toolbar > button,
+  .t3-grade-toolbar > form > button {
+    width: 100%;
+  }
+}

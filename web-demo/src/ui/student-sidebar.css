@@ -1,0 +1,40 @@
+/* Sidebar-only adaptation: the T2 page content and its styles remain untouched. */
+#root .workspace-student { grid-template-columns: 276px minmax(0, 1fr); }
+#root .workspace-student .sidebar {
+  width: 276px;
+  max-width: calc(100vw - 24px);
+  padding: 24px 14px;
+  border-color: #1d5556;
+  background: radial-gradient(circle at 115% 6%, #1a9b8d22 0 150px, transparent 151px),
+    radial-gradient(circle at -20% 100%, #c5ede326 0 140px, transparent 141px),
+    linear-gradient(94deg, #102f3d 0%, #0c4c4f 92%);
+}
+#root .workspace-student .sidebar-brand { flex-shrink: 0; margin-bottom: 4px; padding-bottom: 16px; }
+#root .workspace-student .sidebar > nav { flex: 1; min-height: 0; margin: -4px -4px 12px; padding: 4px; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: #5e9791 transparent; }
+.student-navigation { display: grid; gap: 4px; min-width: 0; }
+#root .workspace-student .sidebar .nav-group-label { margin: 18px 12px 10px; color: #b8d5d7; font-size: 11px; font-weight: 650; letter-spacing: 1px; }
+#root .workspace-student .sidebar .nav {
+  position: relative; display: flex; align-items: center; gap: 10px;
+  width: calc(100% - 4px); min-width: 0; min-height: 44px; margin: 0; padding: 11px 12px 11px 14px;
+  border: 1px solid transparent; border-radius: 10px; color: #d2e8e9;
+  font-size: 14px; font-weight: 600; line-height: 1.5; text-align: left; white-space: normal;
+}
+#root .workspace-student .sidebar .nav > span { min-width: 0; overflow-wrap: anywhere; }
+#root .workspace-student .sidebar .nav > .icon { flex-shrink: 0; width: 20px; height: 20px; color: #b9eadb; }
+#root .workspace-student .sidebar .nav.active { background: #0b927c; border-color: #82f0d673; color: #fff; box-shadow: 0 6px 16px #0b927c45; }
+#root .workspace-student .sidebar .nav.active > .icon { color: #fff; }
+#root .workspace-student .sidebar .nav::before { content: ''; position: absolute; left: 5px; top: calc(50% - 12px); width: 3px; height: 24px; border-radius: 3px; background: #8cf2db; opacity: 0; pointer-events: none; transition: opacity var(--ui-motion-standard, 200ms) var(--ui-motion-ease, ease-out); }
+#root .workspace-student .sidebar .nav.active::before { display: block; opacity: 1; }
+#root .workspace-student .sidebar-bottom { flex-shrink: 0; padding-top: 16px; border-color: #ffffff26; }
+#root .workspace-student .sidebar-user b { color: #fff; font-size: 14px; white-space: normal; overflow-wrap: anywhere; }
+#root .workspace-student .sidebar-user .avatar { background: #e7f6f0; color: #087b68; }
+#root .workspace-student .sidebar .sidebar-close { background: #ffffff12; color: #fff; }
+#root .workspace-student .sidebar :is(button, a):focus-visible { outline: 2px solid #8cf2db; outline-offset: 3px; }
+@media (hover: hover) and (pointer: fine) {
+  #root .workspace-student .sidebar .nav:not(.active):hover { background: #ffffff1f; color: #fff; }
+  #root .workspace-student .sidebar .nav:hover > .icon { color: #fff; }
+}
+@media (max-width: 900px) {
+  #root .workspace-student { grid-template-columns: minmax(0, 1fr); }
+  #root .workspace-student .sidebar { width: min(320px, calc(100dvw - 20px)); max-width: calc(100dvw - 20px); }
+}

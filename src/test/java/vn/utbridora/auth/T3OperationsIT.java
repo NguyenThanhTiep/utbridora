@@ -208,6 +208,11 @@ class T3OperationsIT {
         assertEquals(200,limited.call("GET","/t3/cases/"+c,null,null,false).statusCode());assertEquals(404,limited.call("GET","/t3/cases/"+secondCase,null,null,false).statusCode());
         var limitedSummary=json.readTree(ok(limited.call("GET","/t3/hr/dashboard?termId="+term,null,null,false),200));assertEquals(1,limitedSummary.get("caseCount").asInt());assertEquals(1,limitedSummary.get("mentorCount").asInt());
         assertEquals(403,st.call("GET","/t3/hr/dashboard?termId="+term,null,null,false).statusCode());
+        String otherCohort=cohort(h);
+        String filter="?termId="+term+"&cohortId="+otherCohort;
+        assertEquals(200,h.call("GET","/t3/hr/dashboard"+filter,null,null,false).statusCode());
+        assertEquals(404,limited.call("GET","/t3/hr/dashboard"+filter,null,null,false).statusCode());
+        assertEquals(404,m.call("GET","/t3/mentor/dashboard"+filter,null,null,false).statusCode());
         String template=qualityTemplate();var rating=Map.of("criterionCode","MENTOR_SUPPORT","stars",5,"comment","Synthetic quality note");var feedback=new LinkedHashMap<String,Object>();feedback.put("enterpriseOrgId",enterprise);feedback.put("termId",term);feedback.put("templateId",template);feedback.put("templateVersion",1);feedback.put("ratings",List.of(rating));feedback.put("note",null);
         String key=id();var first=s.call("POST","/t3/school/enterprise-feedback",feedback,key,true);ok(first,201);assertEquals(first.body(),ok(s.call("POST","/t3/school/enterprise-feedback",feedback,key,true),201));
         feedback.put("ratings",List.of(rating,rating));assertEquals(422,s.call("POST","/t3/school/enterprise-feedback",feedback,id(),true).statusCode());assertEquals(0,count("internship_evaluations","case_id",c));

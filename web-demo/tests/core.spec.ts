@@ -1,3 +1,4 @@
+import { signOutFromAccountMenu } from './helpers/workspace';
 import { test, expect, type Page } from '@playwright/test';
 const env = (name: string) => { const value = process.env[name]; if (!value) throw new Error('Missing test fixture: ' + name); return value; };
 async function signIn(page: Page, email: string, password = env('E2E_PASSWORD')) {
@@ -19,7 +20,7 @@ test('Quản trị viên đăng nhập, tra cứu tài khoản, audit và đăng
   await page.getByRole('button', { name: 'Nhật ký hệ thống', exact: true }).click();
   await page.getByLabel('Mã sự kiện').fill('LOGIN'); await page.getByRole('button', { name: 'Lọc nhật ký' }).click();
   await expect(page.getByRole('cell', { name: 'LOGIN Thành công', exact: false }).first()).toBeVisible();
-  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  await signOutFromAccountMenu(page);
   await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible();
   expect((await page.request.get('/api/v1/auth/me')).status()).toBe(401);
 });
@@ -51,7 +52,10 @@ test('Đặt lại mật khẩu một lần, liên kết cũ bị từ chối', 
   await page.getByRole('button', { name: 'Lưu mật khẩu mới', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible();
   await signIn(page, env('E2E_RESET_EMAIL'), env('E2E_NEW_PASSWORD'));
-  await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+  // Tài khoản đặt lại mật khẩu là sinh viên: "Đăng xuất" nằm trong menu tài khoản trên thanh trên cùng.
+  const account = page.getByRole('button', { name: 'Mở menu tài khoản', exact: true });
+  if (await account.isVisible()) await account.click();
+  await signOutFromAccountMenu(page);
   await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible();
   await page.goto(path); await page.getByLabel('Mật khẩu mới', { exact: true }).fill(env('E2E_NEW_PASSWORD'));
   await page.getByLabel('Xác nhận mật khẩu', { exact: true }).fill(env('E2E_NEW_PASSWORD'));
@@ -70,16 +74,20 @@ test('Khóa, mở tài khoản và quản lý membership trên giao diện', asy
   await signIn(page, env('E2E_ADMIN_EMAIL')); await page.getByRole('button', { name: 'Tài khoản & phân quyền' }).click();
   await page.getByLabel('Tìm tên hoặc email').fill(env('E2E_ENTERPRISE_EMAIL'));
   await page.getByRole('button', { name: 'Chi tiết', exact: true }).click();
-  page.on('dialog', dialog => dialog.accept());
+  // Hộp xác nhận của giao diện (confirm.tsx) thay cho window.confirm.
+  const confirm = (title: string, label: string) => page.getByRole('dialog', { name: title, exact: true }).getByRole('button', { name: label, exact: true }).click();
   await page.getByRole('button', { name: 'Khóa tài khoản', exact: true }).click();
+  await confirm('Đổi trạng thái tài khoản?', 'Đổi trạng thái');
   await expect(page.getByRole('button', { name: 'Mở khóa', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Mở khóa', exact: true }).click();
+  await confirm('Đổi trạng thái tài khoản?', 'Đổi trạng thái');
   await expect(page.getByRole('button', { name: 'Khóa tài khoản', exact: true })).toBeVisible();
   await page.getByRole('combobox', { name: 'Vai trò mới', exact: true }).selectOption('ENTERPRISE');
   await page.getByRole('combobox', { name: 'Tổ chức', exact: true }).selectOption(env('E2E_ORG_B_ID'));
   await page.getByRole('button', { name: 'Cấp vai trò', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Thu hồi', exact: true })).toHaveCount(2);
   await page.getByRole('button', { name: 'Thu hồi', exact: true }).last().click();
+  await confirm('Thu hồi vai trò?', 'Thu hồi vai trò');
   await expect(page.getByRole('button', { name: 'Thu hồi', exact: true })).toHaveCount(1);
 });
 test('Phiên bị thu hồi đưa người dùng về đăng nhập khi gọi API', async ({ page, browser }) => {

@@ -1,0 +1,1282 @@
+/* Teal Modern Enterprise SaaS (Untitled UI + Linear) — T5 Portal & Subpage Content Redesign
+ * Strictly scoped to .portal-workspace main content; preserves Dark Teal Sidebar, Topbar, Context Bar, Student Workspace, and all E2E invariants. */
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student, .workspace-admin)):not(:has(.student-nav-group)) .school-portal-subview {
+  --saas-canvas: #f3f6fb;
+  --saas-surface: #ffffff;
+  --saas-surface-subtle: #f8fafc;
+  --saas-surface-hover: #f4fbf8;
+  --saas-border: #e3eaf2;
+  --saas-border-strong: #cfdbe6;
+  --saas-ink: #0f2735;
+  --saas-ink-body: #1f3949;
+  --saas-ink-muted: #526a7a;
+  --saas-ink-subtle: #6b8190;
+  --saas-teal: #0b927c;
+  --saas-teal-hover: #087b68;
+  --saas-teal-deep: #0c4c4f;
+  --saas-teal-soft: #e7f6f0;
+  --saas-teal-border: #9fdcd0;
+  --saas-teal-ring: rgba(11, 146, 124, 0.16);
+  --saas-shadow-xs: 0 1px 2px rgba(16, 44, 57, 0.04);
+  --saas-shadow-sm: 0 1px 3px rgba(16, 44, 57, 0.05), 0 8px 24px -16px rgba(16, 44, 57, 0.1);
+  --saas-shadow-hover: 0 8px 20px -10px rgba(11, 146, 124, 0.18), 0 2px 6px rgba(16, 44, 57, 0.05);
+}
+
+/* ---------- Page Intro & Clean Header (Canvas-Integrated, No Double Box) ---------- */
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-page-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-page-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--saas-ink-muted);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-breadcrumb strong,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-breadcrumb > :last-child {
+  color: var(--saas-teal-hover);
+  font-weight: 600;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 14px;
+  background: var(--saas-surface);
+  color: var(--saas-ink);
+  border: 1px solid var(--saas-border-strong);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: var(--saas-shadow-xs);
+  transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-refresh-btn:hover:not(:disabled) {
+  background: var(--saas-surface-hover);
+  border-color: var(--saas-teal-border);
+  color: var(--saas-teal-hover);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-refresh-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--saas-teal-ring);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-welcome.portal-page-heading,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .enterprise-page-heading {
+  background: linear-gradient(135deg, #ffffff 0%, #f7fbf9 100%);
+  border: 1px solid var(--saas-border);
+  border-left: 4px solid var(--saas-teal);
+  border-radius: 14px;
+  box-shadow: var(--saas-shadow-sm);
+  padding: 15px 20px;
+  margin: 0;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-welcome.portal-page-heading h2 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--saas-ink);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-welcome.portal-page-heading p {
+  margin: 3px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--saas-ink-muted);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Info & Handoff Banners (Soft Mint & Deep Teal Accent) ---------- */
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .enterprise-info-banner,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .school-info-banner,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .p30-info-banner,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .matching-handoff-banner,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .delegation-mode {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 16px;
+  background: var(--saas-surface-hover);
+  border: 1px solid #cce9df;
+  border-left: 3px solid var(--saas-teal);
+  border-radius: 12px;
+  color: var(--saas-ink);
+  box-shadow: none;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .matching-handoff-banner {
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .enterprise-info-banner svg,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .school-info-banner svg,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .p30-info-banner svg,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .delegation-mode svg {
+  color: var(--saas-teal-hover);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .enterprise-info-banner strong,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .school-info-banner strong,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .p30-info-banner strong {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--saas-ink);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .enterprise-info-banner p,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .school-info-banner p,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .p30-info-banner p,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .delegation-mode p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--saas-ink-muted);
+}
+
+/* ---------- Overview KPI Summary Cards (4-Col Balanced + Semantic Icon Tiles) ---------- */
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-stats,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .enterprise-stats-row,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .school-overview-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-stat,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .school-overview-stat {
+  --stat-accent: var(--saas-teal);
+  --stat-soft: #e7f6f0;
+  --stat-ink: #087b68;
+  --stat-border: #bde7d8;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 18px 20px;
+  background: var(--saas-surface);
+  border: 1px solid var(--saas-border);
+  border-top: 3px solid var(--stat-accent);
+  border-radius: 14px;
+  text-align: left;
+  color: var(--saas-ink);
+  box-shadow: var(--saas-shadow-xs);
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-stat.tone-mint,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .school-overview-stat.tone-mint,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .kpi-card.tone-mint,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .kpi-card.kpi-approved,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .proposal-capacity > .kpi-approved {
+  --stat-accent: #0b927c;
+  --stat-soft: #e7f6f0;
+  --stat-ink: #087b68;
+  --stat-border: #bde7d8;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-stat.tone-blue,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .school-overview-stat.tone-blue,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .kpi-card.tone-blue,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .kpi-card.kpi-pending,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .proposal-capacity > .kpi-pending,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .proposal-capacity > .kpi-open {
+  --stat-accent: #2868b0;
+  --stat-soft: #e8f2ff;
+  --stat-ink: #1d5698;
+  --stat-border: #c4ddfa;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-stat.tone-warm,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .school-overview-stat.tone-warm,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .kpi-card.tone-warm,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .kpi-card.kpi-warning,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .proposal-capacity > .kpi-warning {
+  --stat-accent: #c87b06;
+  --stat-soft: #fff4df;
+  --stat-ink: #a36100;
+  --stat-border: #f3d79e;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-stat.tone-violet,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .school-overview-stat.tone-violet,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .kpi-card.tone-violet {
+  --stat-accent: #7750b9;
+  --stat-soft: #f0eafa;
+  --stat-ink: #5f3c9b;
+  --stat-border: #d8cbf2;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .kpi-card.kpi-rejected {
+  --stat-accent: #c73e3a;
+  --stat-soft: #feecec;
+  --stat-ink: #a62f2b;
+  --stat-border: #f5c2c0;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage button.portal-stat:hover,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-stat.is-interactive:hover {
+  transform: translateY(-2px);
+  border-color: var(--stat-accent);
+  box-shadow: var(--saas-shadow-hover);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage button.portal-stat:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--saas-teal-ring);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-stat-title,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-stat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--saas-ink-muted);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-stat-icon,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .school-section-icon,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .notification-inbox-icon,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .demand-position-icon,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .statistics-demand-icon,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .statistics-privacy-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--stat-soft, var(--saas-teal-soft));
+  color: var(--stat-ink, var(--saas-teal-hover));
+  border: 1px solid var(--stat-border, #c5e8dc);
+  flex-shrink: 0;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-stat strong,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .school-stat-metric strong {
+  display: block;
+  font-size: 30px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+  color: var(--saas-ink);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-stat > small,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-stat-note,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .school-stat-note {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--saas-ink-muted);
+}
+
+/* Keep School Stat Meta Pills visible & crisp */
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .school-stat-meta-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .school-stat-meta-pills > * {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 500;
+  background: var(--saas-surface-subtle);
+  color: var(--saas-ink-body);
+  border: 1px solid var(--saas-border);
+}
+
+/* ---------- Dashboard Grid & Equal-Height Columns ---------- */
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .enterprise-dashboard-grid,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .school-dashboard-grid,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.48fr) minmax(320px, 1fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-dashboard-tasks,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-dashboard-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  height: 100%;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-dashboard-tasks > .portal-summary-panel,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-dashboard-side > .portal-summary-panel:last-child {
+  flex: 1 1 auto;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-summary-panel,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-status-summary {
+  background: var(--saas-surface);
+  border: 1px solid var(--saas-border);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: var(--saas-shadow-sm);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-summary-panel h3,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-status-summary h3 {
+  margin: 0 0 14px;
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--saas-ink);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-status-summary ul,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-status-summary dl {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-status-summary li,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-status-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--saas-surface-subtle);
+  border: 1px solid #edf2f7;
+  font-size: 13px;
+}
+
+/* Fix Broken Shortcuts (Truy cập nhanh): Crisp Interactive SaaS Cards */
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-shortcuts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage button.portal-shortcut {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 16px;
+  background: var(--saas-surface-subtle);
+  border: 1px solid var(--saas-border);
+  border-radius: 12px;
+  color: var(--saas-ink);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage button.portal-shortcut:hover:not(:disabled) {
+  background: var(--saas-surface-hover);
+  border-color: var(--saas-teal-border);
+  color: var(--saas-teal-hover);
+  transform: translateX(2px);
+  box-shadow: 0 2px 8px rgba(11, 146, 124, 0.08);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage button.portal-shortcut:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--saas-teal-ring);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage button.portal-shortcut small,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage button.portal-shortcut .portal-shortcut-desc {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--saas-ink-muted);
+}
+
+/* ---------- Main Subpage Sheet & Inner Panels (Zero Cluttered Double Shadows) ---------- */
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-subpage-sheet {
+  background: var(--saas-surface);
+  border: 1px solid var(--saas-border);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--saas-shadow-sm);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-subpage-sheet .panel,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-subpage-sheet .card,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-subpage-sheet .workspace-card,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-subpage-sheet .matching-panel,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-subpage-sheet .workflow-surface,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-subpage-sheet .notification-center,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-subpage-sheet .placement-overview,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-subpage-sheet .demand-editor,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-subpage-sheet .demand-preview {
+  box-shadow: none;
+  border-color: var(--saas-border);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-subpage-sheet > .workflow-surface,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-subpage-sheet > .notification-center,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-subpage-sheet > .matching-workspace {
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+/* Strip ugly native fieldset outlines inside T5 editors */
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  background: transparent;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  margin-bottom: 12px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--saas-ink);
+}
+
+/* ---------- Unified Buttons, Inputs, Selects & Focus ---------- */
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage button.primary,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .primary-btn,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage button.t5-btn-teal,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .delegation-submit,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .placement-overview-search-btn {
+  background: var(--saas-teal);
+  border: 1px solid var(--saas-teal);
+  color: #ffffff;
+  border-radius: 10px;
+  min-height: 38px;
+  padding: 0 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  box-shadow: 0 1px 2px rgba(8, 123, 104, 0.16);
+  transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage button.primary:hover:not(:disabled),
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .primary-btn:hover:not(:disabled),
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage button.t5-btn-teal:hover:not(:disabled),
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .delegation-submit:hover:not(:disabled),
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .placement-overview-search-btn:hover:not(:disabled) {
+  background: var(--saas-teal-hover);
+  border-color: var(--saas-teal-hover);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage button.secondary,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .secondary-btn,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage a.button.secondary {
+  background: var(--saas-surface);
+  border: 1px solid var(--saas-border-strong);
+  color: var(--saas-ink);
+  border-radius: 10px;
+  min-height: 38px;
+  padding: 0 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage button.secondary:hover:not(:disabled),
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .secondary-btn:hover:not(:disabled),
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage a.button.secondary:hover {
+  background: var(--saas-surface-hover);
+  border-color: var(--saas-teal-border);
+  color: var(--saas-teal-hover);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage button.danger {
+  border-radius: 10px;
+  min-height: 38px;
+  padding: 0 14px;
+  font-weight: 600;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage input:not([type="checkbox"]):not([type="radio"]),
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage textarea {
+  border: 1px solid var(--saas-border-strong);
+  border-radius: 10px;
+  background: var(--saas-surface);
+  color: var(--saas-ink);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage input:not([type="checkbox"]):not([type="radio"]):focus,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage textarea:focus {
+  outline: none;
+  border-color: var(--saas-teal);
+  box-shadow: 0 0 0 3px var(--saas-teal-ring);
+}
+
+/* ---------- Linear Underline Workflow Tabs (Preserves border-radius: 0px & hover rgb(244, 251, 248)) ---------- */
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .workflow-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid var(--saas-border);
+  margin-bottom: 18px;
+  overflow-x: auto;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .workflow-tabs [role="tab"] {
+  border-radius: 0px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--saas-ink-muted);
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 10px 14px;
+  white-space: nowrap;
+  transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .workflow-tabs [role="tab"]:hover {
+  background: rgb(244, 251, 248);
+  color: var(--saas-ink);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .workflow-tabs [role="tab"][aria-selected="true"] {
+  border-bottom-color: var(--saas-teal);
+  color: var(--saas-teal-hover);
+  background: transparent;
+}
+
+/* Matching & Segmented Pill Tabs */
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .matching-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 5px;
+  background: var(--saas-surface-subtle);
+  border: 1px solid var(--saas-border);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .matching-tabs [role="tab"] {
+  border-radius: 8px;
+  border: 0;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--saas-ink-muted);
+  background: transparent;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .matching-tabs [role="tab"]:hover {
+  color: var(--saas-ink);
+  background: var(--saas-surface-hover);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .matching-tabs [role="tab"][aria-selected="true"] {
+  background: var(--saas-surface);
+  color: var(--saas-teal-hover);
+  box-shadow: var(--saas-shadow-xs);
+}
+
+/* ---------- Workflow KPI Strips, Proposals Capacity & Placement Counters ---------- */
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .workflow-kpi-grid,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .proposal-capacity {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+  gap: 14px;
+  margin: 0 0 18px;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .kpi-card,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .proposal-capacity > div {
+  background: var(--saas-surface);
+  border: 1px solid var(--saas-border);
+  border-top: 3px solid var(--stat-accent, var(--saas-teal));
+  border-radius: 12px;
+  padding: 15px 16px;
+  text-align: left;
+  transition: transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .kpi-card:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: var(--stat-accent, var(--saas-teal));
+  box-shadow: var(--saas-shadow-hover);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .kpi-card.is-active {
+  background: var(--stat-soft, var(--saas-teal-soft));
+  border-color: var(--stat-accent, var(--saas-teal));
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .kpi-card-label,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .proposal-capacity dt {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--saas-ink-muted);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .kpi-card-value,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .proposal-capacity dd {
+  margin: 4px 0 0;
+  font-size: 26px;
+  line-height: 1.15;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--saas-ink);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .kpi-card-hint {
+  font-size: 12px;
+  color: var(--saas-ink-muted);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .workflow-section-header,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .placement-header-bar,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .statistics-demand-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .workflow-section-heading,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .school-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .workflow-count-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--saas-teal-soft);
+  color: var(--saas-teal-hover);
+  border: 1px solid #c5e8dc;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ---------- Tables ---------- */
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage thead th {
+  background: var(--saas-surface-subtle);
+  color: var(--saas-ink-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-top: 1px solid var(--saas-border);
+  border-bottom: 1px solid var(--saas-border);
+  padding: 11px 14px;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage thead th:first-child {
+  border-top-left-radius: 10px;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage thead th:last-child {
+  border-top-right-radius: 10px;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage tbody td,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage tbody th {
+  padding: 12px 14px;
+  border-bottom: 1px solid #eef3f8;
+  font-size: 13.5px;
+  color: var(--saas-ink-body);
+  vertical-align: middle;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage tbody tr:hover {
+  background: #f7fbf9;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage tbody tr.table-row-selected {
+  background: #eff9f5;
+}
+
+/* ---------- Filter Toolbars & Demands Preview Fix ---------- */
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .demand-filter-toolbar,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .placement-filter-bar,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .placement-overview-filters,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .notification-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--saas-surface-subtle);
+  border: 1px solid var(--saas-border);
+  border-radius: 12px;
+  margin-bottom: 18px;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .demand-deleted-filter {
+  order: initial;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 12px;
+  background: var(--saas-surface);
+  border: 1px solid var(--saas-border-strong);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--saas-ink-body);
+  cursor: pointer;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .demand-preview {
+  background: var(--saas-surface);
+  border: 1px solid var(--saas-border);
+  border-radius: 14px;
+  padding: 20px;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .demand-preview-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .demand-preview-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .demand-preview-meta > div,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .placement-meta-item,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .delegation-meta > div {
+  padding: 10px 12px;
+  background: var(--saas-surface-subtle);
+  border: 1px solid var(--saas-border);
+  border-radius: 10px;
+}
+
+/* ---------- Verification BM-03 & Stepper Polish ---------- */
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .workflow-detail-drawer,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .workflow-item-card,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .t5-detail-card {
+  background: #ffffff;
+  color: #142f40;
+  border: 1px solid var(--saas-border);
+  border-top-color: #e3eaf2;
+  border-radius: 14px;
+  padding: 20px;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .bm03-missing-chip {
+  border: 1px solid var(--saas-border-strong);
+  background: var(--saas-surface);
+  color: var(--saas-ink-body);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .bm03-missing-chip.is-selected {
+  background: #fff4df;
+  border-color: #c87b06;
+  color: #8f5400;
+}
+
+/* ---------- Matching Workspace (Semantic 3-Tone Cards & Clean Table) ---------- */
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .matching-counts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .matching-counts > button {
+  --stat-accent: var(--saas-teal);
+  --stat-soft: #e7f6f0;
+  --stat-ink: #087b68;
+  --stat-border: #bde7d8;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--saas-border);
+  border-top: 3px solid var(--stat-accent);
+  background: var(--saas-surface);
+  color: var(--saas-ink);
+  text-align: left;
+  transition: border-color 150ms ease, background-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .matching-counts > button:nth-child(1) {
+  --stat-accent: #0b927c;
+  --stat-soft: #e7f6f0;
+  --stat-ink: #087b68;
+  --stat-border: #bde7d8;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .matching-counts > button:nth-child(2) {
+  --stat-accent: #c87b06;
+  --stat-soft: #fff4df;
+  --stat-ink: #a36100;
+  --stat-border: #f3d79e;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .matching-counts > button:nth-child(3) {
+  --stat-accent: #c73e3a;
+  --stat-soft: #feecec;
+  --stat-ink: #a62f2b;
+  --stat-border: #f5c2c0;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .matching-counts > button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: var(--stat-accent);
+  box-shadow: var(--saas-shadow-hover);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .matching-counts > button.selected {
+  background: var(--stat-soft);
+  border-color: var(--stat-accent);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .matching-counts .school-stat-icon-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--stat-soft);
+  color: var(--stat-ink);
+  border: 1px solid var(--stat-border);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .matching-counts strong {
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 700;
+  color: var(--saas-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .matching-avatar,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .delegation-avatar {
+  background: var(--saas-teal-soft);
+  color: var(--saas-teal-hover);
+  border: 1px solid #c5e8dc;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .matching-criterion-status.pass {
+  background: #e7f6f0;
+  color: #087b68;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .matching-criterion-status.fail {
+  background: #feecec;
+  color: #a62f2b;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .matching-criterion-status.unknown {
+  background: #fff4df;
+  color: #a36100;
+}
+
+/* ---------- Proposals Stepper & Placement Progress Counters ---------- */
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .proposal-flow-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .proposal-flow-pills li {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--saas-surface-subtle);
+  border: 1px solid var(--saas-border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--saas-ink-body);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .placement-progress-counters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 14px;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .placement-progress-counters > li {
+  --stat-accent: #2868b0;
+  --stat-soft: #e8f2ff;
+  --stat-border: #c3dbf6;
+  background: var(--stat-soft);
+  border: 1px solid var(--stat-border);
+  border-top: 2px solid var(--stat-accent);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .placement-progress-counters > :is([data-counter="placed"], [data-counter="enterpriseAccepted"]) {
+  --stat-accent: var(--saas-teal-hover);
+  --stat-soft: var(--saas-teal-soft);
+  --stat-border: #bfe6d2;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .placement-progress-counters > [data-counter="reservations"] {
+  --stat-accent: #b76e00;
+  --stat-soft: #fff4df;
+  --stat-border: #f5dca8;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .placement-progress-counters > :is([data-counter="remaining"], [data-counter="declined"]) {
+  --stat-accent: #c73e3a;
+  --stat-soft: #feecec;
+  --stat-border: #f3c8cd;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .placement-progress-counters > [data-counter="openForNomination"] {
+  --stat-accent: #7750b9;
+  --stat-soft: #f0eafa;
+  --stat-border: #dbcef2;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .placement-progress-counters > li > span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--saas-ink-muted);
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .placement-progress-counters > li > strong {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--stat-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Protected Statistics (K-Threshold) ---------- */
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .p30-agg-main-card,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .p30-agg-privacy-card,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .p30-agg-demand-card,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .enterprise-applied-demand,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-record-picker {
+  background: var(--saas-surface);
+  border: 1px solid var(--saas-border);
+  border-radius: 14px;
+  padding: 20px;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .p30-band-step.is-active {
+  background: var(--saas-teal-soft);
+  border-color: var(--saas-teal);
+  color: var(--saas-teal-hover);
+}
+
+/* ---------- Notifications Center ---------- */
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .notification-inbox-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--saas-border);
+  margin-bottom: 14px;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .notification-inbox-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ---------- Shared School Admin Subviews (Delegations & Taxonomy in T5 Portal) ---------- */
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student, .workspace-admin)):not(:has(.student-nav-group)) .school-portal-subview {
+  background: transparent;
+}
+
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student, .workspace-admin)):not(:has(.student-nav-group)) .school-portal-subview > section,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student, .workspace-admin)):not(:has(.student-nav-group)) .school-portal-subview .panel {
+  background: var(--saas-surface);
+  border: 1px solid var(--saas-border);
+  border-radius: 14px;
+  box-shadow: var(--saas-shadow-xs);
+}
+
+/* ---------- Responsive Rules (Preserves ALL Mobile E2E Contracts) ---------- */
+@media (max-width: 1120px) {
+  #root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-stats,
+  #root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .enterprise-stats-row,
+  #root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .school-overview-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .enterprise-dashboard-grid,
+  #root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .school-dashboard-grid,
+  #root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-dashboard-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  #root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .demand-preview-meta,
+  #root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .matching-counts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 699px) {
+  #root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-subpage-sheet {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  #root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-stats,
+  #root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .enterprise-stats-row,
+  #root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .school-overview-cards,
+  #root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .demand-preview-meta,
+  #root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .matching-counts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .portal-demands-table tbody > tr,
+  #root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .enterprise-cooperations-table tbody > tr,
+  #root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .notification-table tbody > tr {
+    display: grid;
+  }
+
+  #root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage .notification-table tbody button {
+    min-height: 44px;
+  }
+}
+
+/* Connect the upgraded visual system to the existing JSX, without styling shell chrome. */
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student)):not(:has(.student-nav-group)) .portal-page-stage,
+#root .workspace-t5.workspace-role-portal:not(:where(.workspace-native-t3, .workspace-student, .workspace-admin)):not(:has(.student-nav-group)) .school-portal-subview {
+  --saas-teal: var(--t5-teal-primary, #0b927c);
+  --saas-surface: var(--surface);
+  --saas-border: var(--line);
+  --saas-control-size: 14px;
+  & .portal-welcome.portal-page-heading { min-height: 0; padding: 15px 20px; border: 1px solid var(--saas-border); border-left: 4px solid var(--saas-teal); border-radius: 14px; background: linear-gradient(135deg, #ffffff 0%, #f7fbf9 100%); box-shadow: var(--saas-shadow-sm); }
+  & .portal-page-heading::before, & .portal-page-heading::after { content: none; }
+  & .portal-page-heading p.section-kicker { color: var(--saas-teal-hover); font-size: 11px; }
+  & .portal-page-heading h2 { color: var(--saas-ink); font-size: 22px; }
+  & .portal-page-heading p:not(.section-kicker) { color: var(--saas-ink-muted); max-width: 76ch; }
+  & .portal-page-heading .portal-welcome-icon { flex: 0 0 36px; width: 36px; height: 36px; border: 1px solid #c5e8dc; border-radius: 10px; color: var(--saas-teal-hover); background: var(--saas-teal-soft); }
+  & .portal-page-heading .portal-welcome-icon > .icon { width: 22px; height: 22px; }
+  & .portal-stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+  & .portal-stat { min-width: 0; min-height: 0; padding: 16px 18px; }
+  & .portal-stat::before, & .portal-stat::after, & .panel::after { opacity: 0; }
+  & .portal-stat :is(.portal-stat-icon, .school-stat-icon-tile) { flex: 0 0 36px; width: 36px; height: 36px; background: var(--stat-soft); color: var(--stat-accent); border-color: var(--stat-border); }
+  & .portal-stat :is(.portal-stat-action, .school-stat-link) { color: var(--stat-ink); font-size: 12px; }
+  & .school-stat-meta-pills { display: inline-flex; flex-shrink: 0; gap: 5px; }
+  & .school-stat-meta-pills > * { padding: 2px 6px; color: var(--stat-ink); background: var(--stat-soft); border-color: var(--stat-border); font-size: 11px; }
+  & .school-stat-description { font-size: 12px; color: var(--saas-ink-muted); }
+  & .portal-status-summary.is-summary-strip { display: grid; grid-template-columns: minmax(150px, .9fr) minmax(190px, 1.1fr) minmax(0, 2fr); align-items: center; column-gap: 20px; row-gap: 8px; min-width: 0; padding: 14px 20px; border-radius: 12px; }
+  & .portal-status-summary .section-heading { grid-column: 1; grid-row: 1 / span 2; display: grid; gap: 3px; margin: 0; }
+  & .portal-status-summary h3 { margin: 0; font-size: 15px; }
+  & .portal-status-summary .muted { font-size: 12px; }
+  & .portal-status-total { grid-column: 2; grid-row: 1 / span 2; display: flex; align-items: center; gap: 8px; min-width: 0; }
+  & .portal-status-total strong { font-size: 26px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  & .portal-status-total > span { max-width: 20ch; color: var(--saas-ink-muted); font-size: 12px; }
+  & .portal-status-bar { grid-column: 3; grid-row: 1; display: flex; align-self: end; gap: 3px; height: 8px; margin: 0; overflow: hidden; border-radius: 999px; background: var(--saas-canvas); }
+  & .portal-status-bar > span { min-width: 3px; }
+  & :is(.portal-status-bar > span, .portal-status-dot).is-success { background: var(--saas-teal); }
+  & :is(.portal-status-bar > span, .portal-status-dot).is-info { background: #2868b0; }
+  & :is(.portal-status-bar > span, .portal-status-dot).is-warning { background: #c87b06; }
+  & :is(.portal-status-bar > span, .portal-status-dot).is-danger { background: #c73e3a; }
+  & :is(.portal-status-bar > span, .portal-status-dot).is-neutral { background: #8194a1; }
+  & .portal-status-summary .portal-status-legend { grid-column: 3; grid-row: 2; display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px 16px; margin: 0; }
+  & .portal-status-legend > div { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  & .portal-status-legend :is(dt, dd) { display: flex; align-items: center; gap: 6px; margin: 0; }
+  & .portal-status-legend dd { font-weight: 650; font-variant-numeric: tabular-nums; }
+  & .portal-status-dot { width: 7px; height: 7px; border-radius: 50%; }
+  & .portal-status-summary > .rc-loading-state, & .portal-status-summary > p { grid-column: 3; grid-row: 1 / span 2; margin: 0; font-size: 13px; }
+  & :is(.enterprise-dashboard-grid, .school-dashboard-grid) > .panel { min-width: 0; min-height: 0; height: auto; margin: 0; padding: 20px; border: 1px solid var(--saas-border); border-radius: 14px; background: var(--saas-surface); box-shadow: var(--saas-shadow-xs); }
+  & .portal-dashboard-tasks > .empty-state { flex: 1; }
+  & .portal-shortcuts { gap: 10px; }
+  & button.portal-shortcut { min-height: 70px; border: 1px solid var(--saas-border); border-radius: 12px; padding: 12px 14px; background: var(--saas-surface-subtle); }
+  & button.portal-shortcut:hover:not(:disabled) { border-color: #8fd4c4; background: #f1faf6; transform: none; }
+  & button.portal-shortcut > span:not(.portal-shortcut-icon) { flex: 1; min-width: 0; }
+  & .is-tone-teal :is(.portal-shortcut-icon, .school-shortcut-icon) { color: var(--saas-teal-hover); background: var(--saas-teal-soft); border-color: #cdece4; }
+  & .is-tone-blue :is(.portal-shortcut-icon, .school-shortcut-icon) { color: #2868b0; background: #e8f2ff; border-color: #c3dbf6; }
+  & .is-tone-violet :is(.portal-shortcut-icon, .school-shortcut-icon), & .school-section-icon.is-placements { color: #7750b9; background: #f0eafa; border-color: #dbcef2; }
+  & .section-heading, & .school-section-head { gap: 12px; margin-bottom: 16px; }
+  & :is(.section-heading, .school-section-head) :is(h2, h3) { margin: 0; font-size: 17px; }
+  & .school-section-icon { width: 32px; height: 32px; flex-basis: 32px; }
+  & .workflow-kpi-grid .kpi-card-icon, & .kpi-card .school-stat-icon-tile { color: var(--stat-ink); background: var(--stat-soft); border-color: var(--stat-border); }
+  & .matching-workspace > .school-section-card { border: 0; padding-top: 0; }
+  & .matching-controls { gap: 12px; padding: 14px; background: var(--saas-surface-subtle); border: 1px solid var(--saas-border); border-radius: 10px; }
+  & .matching-counts > button { background: var(--stat-soft); border-color: var(--stat-border); border-top-color: var(--stat-accent); }
+  & .matching-counts strong { color: var(--stat-ink); }
+  & .matching-avatar { display: grid; place-items: center; flex: 0 0 34px; width: 34px; height: 34px; border-radius: 50%; font-size: 12px; }
+  & .demand-filter-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) max-content; align-items: end; gap: 12px; }
+  & .demand-filter-toolbar .demand-list-filters { grid-column: 1; grid-row: 1; display: grid; grid-template-columns: minmax(0, 2fr) minmax(160px, 1fr); gap: 12px; min-width: 0; padding: 0; border: 0; margin: 0; }
+  & .demand-filter-toolbar .demand-list-filters > button { grid-column: 1 / -1; justify-self: start; }
+  & .demand-deleted-filter { grid-column: 2; grid-row: 1; align-self: end; margin: 0; }
+  & .demand-preview-meta { margin: 0; }
+  & .demand-preview-meta > div { min-width: 0; }
+  & .demand-preview-meta dd { margin: 4px 0 0; overflow-wrap: anywhere; font-size: 14px; }
+  & .demand-preview-copy { display: grid; gap: 16px; min-width: 0; }
+  & .bm01-two-col-grid > div { min-width: 0; }
+  & .demand-row-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+  & .demand-row-actions > button { width: auto; max-width: 100%; }
+  & .placement-filter-bar:has(input[type="search"]) { display: grid; grid-template-columns: minmax(180px, .7fr) minmax(0, 2fr) auto; align-items: end; gap: 12px; }
+  & .placement-filter-bar:has(input[type="search"]) > label { min-width: 0; margin: 0; }
+  & :is(.workflow-tabs, .portal-tabbed-view .portal-tabs) [role="tab"] { border-radius: 0; }
+  & :is(.workflow-tabs, .portal-tabbed-view .portal-tabs) [role="tab"]:hover:not(:disabled) { background-color: rgb(244, 251, 248); }
+  & :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]), select, textarea, .select-trigger) { min-width: 0; max-width: 100%; font-size: var(--saas-control-size); border-radius: 10px; }
+  & :is(input[type="checkbox"], input[type="radio"]) { width: 17px; height: 17px; min-width: 17px; min-height: 17px; flex: 0 0 17px; margin: 0; accent-color: var(--saas-teal); }
+  & :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]), select, textarea):hover:not(:focus):not(:disabled):not([readonly]):not([aria-invalid="true"]) { border-color: var(--saas-teal-border); }
+  & :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]), select, textarea):focus-visible { outline: 0; border-color: var(--saas-teal); box-shadow: 0 0 0 3px var(--saas-teal-ring); }
+  & :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]), select, textarea)[aria-invalid="true"] { border-color: #d32f2f; box-shadow: 0 0 0 3px #d32f2f1f; }
+  & :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]), select, textarea):is(:disabled, [readonly]) { background-color: #f3f6fa; border-color: var(--saas-border); color: var(--saas-ink-muted); }
+  & :is(button, a):focus-visible { outline: 2px solid var(--saas-teal); outline-offset: 3px; }
+  & .school-coop-description > h4 { font-size: 16px; }
+  & .school-coop-description > p { font-size: 17px; }
+  & .school-coop-description > p.is-clamped { max-height: 186px; }
+  & .school-coop-quantity { font-size: 16px; }
+  & .school-coop-feedback { background: #f1faf6; }
+  & .t5-detail-card { background: #fff; color: #142f40; border-top-color: #e3eaf2; }
+  & .p30-agg-side { display: grid; align-content: start; gap: 16px; min-width: 0; }
+  & .p30-agg-grid { align-items: start; }
+  /* Layout wrappers share their sheet; only records, controls and distinct cards own a frame. */
+  & .portal-subpage-sheet > .portal-record-picker { margin: 0; padding: 0 0 16px; border: 0; border-bottom: 1px solid var(--saas-border); border-radius: 0; background: transparent; box-shadow: none; }
+  & .portal-subpage-sheet > .portal-detail { margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+  & .portal-subpage-sheet > .cooperation-editor, & .portal-subpage-sheet > .demand-preview { margin: 0; padding: 20px 0 0; border: 0; border-top: 1px solid var(--saas-border); border-radius: 0; background: transparent; box-shadow: none; }
+  & .approved-coop-header { margin: 0 0 16px; padding: 0 0 16px; border: 0; border-bottom: 1px solid var(--saas-border); border-radius: 0; background: transparent; box-shadow: none; }
+  & .portal-detail > :is(.proposal-workspace, .proposal-placement) { margin-top: 16px; padding-top: 0; border-top: 0; }
+  & :is(.proposal-nomination, .proposal-publication) { margin: 20px 0 0; padding: 20px 0 0; border: 0; border-top: 1px solid var(--saas-border); border-radius: 0; background: transparent; box-shadow: none; }
+  & .nomination-header { padding-bottom: 0; border: 0; }
+  & .proposal-table { margin-block: 16px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+  & .proposal-table > table { width: 100%; margin: 0; border: 1px solid var(--saas-border); border-spacing: 0; border-radius: 12px; background: var(--saas-surface); }
+  & .proposal-table caption { padding: 0 0 12px; background: transparent; text-align: left; }
+  & .proposal-table thead th { border-top: 0; }
+  & .proposal-table:not(:is(.enterprise-mobile-list, .notification-table)) tbody > tr > :is(th, td) { border: 0; border-bottom: 1px solid var(--saas-border); border-radius: 0; }
+  & .proposal-table:not(:is(.enterprise-mobile-list, .notification-table)) tbody > tr:last-child > :is(th, td) { border-bottom: 0; }
+  & .portal-subpage-sheet:is(.enterprise-page-statistics, .school-page-students) { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+  & .enterprise-page-statistics > .portal-record-picker { padding: 0 0 16px; }
+  & .school-roster-panel.is-embedded { margin: 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
+  & :is(.portal-subpage-sheet, .portal-detail, .cooperation-editor, .demand-preview)::after { content: none; }
+  & :is(.portal-detail, .cooperation-editor, .demand-preview) { transform: none; }
+  & :is(.bm01-header, .demand-preview-header) :is(h2, h3)[tabindex="-1"]:focus { outline: none; }
+  & .rc-loading-state { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 64px; margin: 0; color: var(--saas-ink-muted); }
+  & .rc-loading-state::before { content: ''; width: 18px; height: 18px; flex: 0 0 18px; border: 2px solid #d5e8e8; border-top-color: var(--saas-teal); border-radius: 50%; }
+  @media (max-width: 1179px) {
+    & .portal-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    & :is(.enterprise-dashboard-grid, .school-dashboard-grid) { grid-template-columns: minmax(0, 1fr); }
+    & .demand-filter-toolbar { grid-template-columns: minmax(0, 1fr); }
+    & .demand-deleted-filter { grid-column: 1; grid-row: 2; justify-self: start; }
+  }
+  @media (max-width: 900px) {
+    & .portal-status-summary.is-summary-strip { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    & .portal-status-summary .section-heading, & .portal-status-total { grid-row: 1; }
+    & .portal-status-summary .portal-status-bar { grid-column: 1 / -1; grid-row: 2; }
+    & .portal-status-summary .portal-status-legend { grid-column: 1 / -1; grid-row: 3; }
+    & .portal-status-summary > .rc-loading-state, & .portal-status-summary > p { grid-column: 1 / -1; grid-row: auto; }
+  }
+  @media (max-width: 699px) {
+    --saas-control-size: 16px;
+    & .portal-welcome.portal-page-heading { padding: 14px 16px; }
+    & .portal-welcome.portal-page-heading h2 { font-size: 20px; }
+    & .portal-stat-grid, & .demand-filter-toolbar .demand-list-filters, & .cooperation-form-grid, & .placement-filter-bar:has(input[type="search"]) { grid-template-columns: minmax(0, 1fr); }
+    & :is(.enterprise-dashboard-grid, .school-dashboard-grid) > .panel { padding: 16px; }
+    & .portal-status-summary.is-summary-strip { padding: 14px; }
+    & .demand-deleted-filter { white-space: normal; }
+    & :is(.enterprise-mobile-list, .portal-demands-table, .enterprise-cooperations-table, .notification-table) table :is(td, tbody th) { padding: 0; }
+    & :is(button.secondary, button.t5-btn-teal, button.danger, button:not([class])) { min-height: 44px; }
+    & .notification-table button { min-height: 44px; }
+    & .proposal-capacity { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    & .proposal-table:is(.enterprise-mobile-list, .notification-table) > table { border: 0; border-radius: 0; background: transparent; }
+  }
+  @media (prefers-reduced-motion: no-preference) { & .rc-loading-state::before { animation: rc-finish-spin .8s linear infinite; } }
+}
+@keyframes rc-finish-spin { to { transform: rotate(360deg); } }

@@ -1,3 +1,5 @@
+import { clearOperationFeedback, mutationFailed, mutationFeedback, mutationSucceeded } from './ui/operationFeedback';
+
 export type Membership = { role: string; organizationId: string | null };
 export type Me = { userId: string; email: string; displayName: string; memberships: Membership[] };
 export type Grant = Membership & { permissions: string[] };
@@ -16,6 +18,8 @@ export class ApiError extends Error {
     public errorCode: string | null = null, public fieldErrors: FieldError[] = [], public retryAfterSeconds: number | null = null) { super(message); }
 }
 const messages: Record<string, string> = {
+  NO_GROUPABLE_CASES: 'Không còn hồ sơ chưa được phân nhóm trong đợt này. Hãy xem các nhóm đã có hoặc tiếp nhận thêm hồ sơ.',
+  GROUPING_PLAN_EXPIRED: 'Bản xem trước chia nhóm đã hết hạn. Bấm “Xem trước nhóm” để tạo bản mới trước khi xác nhận.',
   INVALID_CREDENTIALS: 'Email, mật khẩu không đúng hoặc tài khoản chưa sẵn sàng.',
   INVALID_REQUEST: 'Thông tin chưa hợp lệ. Kiểm tra dữ liệu, phạm vi vai trò và trạng thái thao tác.',
   CONFLICT: 'Dữ liệu vừa thay đổi hoặc đã tồn tại. Vui lòng tải lại.',
@@ -68,8 +72,16 @@ async function apiResponse(path: string, init: RequestInit = {}): Promise<Respon
   return response;
 }
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await apiResponse(path, init);
-  return response.status === 204 ? undefined as T : response.json() as Promise<T>;
+  const operation = mutationFeedback(path, init);
+  try {
+    const response = await apiResponse(path, init);
+    const value = response.status === 204 ? undefined as T : await response.json() as T;
+    if (operation && !init.signal?.aborted) mutationSucceeded(operation, response.status);
+    return value;
+  } catch (error) {
+    if (operation && !init.signal?.aborted) mutationFailed(operation, error);
+    throw error;
+  }
 }
 export async function apiBlob(path: string, init: RequestInit = {}): Promise<Blob> {
   return (await apiResponse(path, init)).blob();
@@ -84,6 +96,7 @@ export async function login(email: string, password: string): Promise<Me> {
 }
 export async function logout(): Promise<void> {
   await send('/auth/logout', 'POST');
+  clearOperationFeedback();
   csrf = null;
 }
 export const whoAmI = () => api<Me>('/auth/me');

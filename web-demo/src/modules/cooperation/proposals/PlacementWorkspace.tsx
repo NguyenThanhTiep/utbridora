@@ -1,12 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { ApiError } from '../../../api';
 import { Notice } from '../../../components';
+import { DateInput } from '../../../ui/DateInput';
+import { formatDateDMY } from '../../../ui/dateFormat';
 import type { ContractPage } from '../../student/types';
 import type { Demand } from '../types';
 import type { SchoolProposal } from './types';
 import { scopedRead, workflowError } from './api';
 import { useWorkflowCommand } from './useWorkflowCommand';
 import { WorkspaceHandoff } from './WorkspaceHandoff';
+import { useStudentIdentities } from './useStudentIdentities';
 
 type Placement = { placementId: string; schoolOrgId: string; enterpriseOrgId: string; cooperationId: string; proposalItemId: string;
   state: string; version: number; effectiveAt: string; startDate: string; endDate: string };
@@ -58,7 +61,9 @@ export function PlacementWorkspace({ org, school, cooperationId, demand, candida
   const [page, setPage] = useState(0), [filter, setFilter] = useState(''), [search, setSearch] = useState(''), [revision, setRevision] = useState(0), [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState('');
   const [error, setError] = useState(''), [notice, setNotice] = useState(''), [selected, setSelected] = useState('');
-  const [start, setStart] = useState(demand.data.required.dateRange.startDate), [end, setEnd] = useState(demand.data.required.dateRange.endDate), [effective, setEffective] = useState('');
+  const { startDate: start, endDate: end } = demand.data.required.dateRange;
+  const [effective, setEffective] = useState('');
+  const datesHintId = useId();
   const [decision, setDecision] = useState<{ item: Placement; action: string } | null>(null), [reference, setReference] = useState(''), [reason, setReason] = useState('');
   const [links, setLinks] = useState<Record<string, Link>>({}), [now, setNow] = useState(Date.now());
   const [expandedPlacement, setExpandedPlacement] = useState<string | null>(null);
@@ -105,12 +110,23 @@ export function PlacementWorkspace({ org, school, cooperationId, demand, candida
     return () => c.abort();
   }, [org, school, side, cooperationId, demand.demandId, demand.data.termId, demand.data.schoolOrgId, page, filter, search, revision]);
   const ready = candidates.filter(item => item.state === 'ENTERPRISE_ACCEPTED' && !item.placementId && item.shareIsActive && item.eligibilityVersion > 0);
+  const candidateStudentByProposal = useMemo(
+    () => Object.fromEntries(candidates.map(item => [item.proposalItemId, item.studentUserId])),
+    [candidates],
+  );
+  const studentIds = useMemo(
+    () => (school ? candidates.map(item => item.studentUserId) : []),
+    [school, candidates],
+  );
+  const identities = useStudentIdentities(studentIds, school ? demand.data.termId : undefined);
   useEffect(() => {
     if (initialCandidateId && candidates.some(item => item.proposalItemId === initialCandidateId && item.state === 'ENTERPRISE_ACCEPTED'
       && !item.placementId && item.shareIsActive && item.eligibilityVersion > 0)) setSelected(initialCandidateId);
   }, [initialCandidateId, candidates]);
   const blocked = locked || command.blocked || loading;
   const visibleItems = (result?.content || []).map((item, n) => ({ item, seq: page * 25 + n + 1 }));
+  const schoolDetailId = expandedPlacement === '__none__' ? null
+    : visibleItems.find(({ item }) => item.placementId === expandedPlacement)?.item.placementId || visibleItems[0]?.item.placementId;
   const placedPct = summary && summary.target > 0 ? Math.min(100, Math.round((summary.placed / summary.target) * 100)) : 0;
   const pendingPct = summary && summary.target > 0 ? Math.min(100 - placedPct, Math.round((summary.pending / summary.target) * 100)) : 0;
   const quotaStatus = summary && (summary.target > 0 && summary.placed >= summary.target
@@ -128,21 +144,31 @@ export function PlacementWorkspace({ org, school, cooperationId, demand, candida
     <div className="placement-header-bar">
       <div>
         <h4>Tiếp nhận thực tập</h4>
+        <ol className="proposal-flow-pills" aria-hidden="true">
+          <li>1. Tạo hồ sơ chờ duyệt</li>
+          <li>2. Nhà trường phê duyệt</li>
+          <li>3. Kích hoạt thực tập</li>
+          <li>4. Bàn giao không gian thực tập</li>
+        </ol>
       </div>
       <button className="secondary" disabled={blocked} onClick={() => setRevision(n => n + 1)}>Tải lại tiếp nhận thực tập</button>
     </div>
     <Notice message={error || command.message} tone="error" /><p role="status">{notice}</p>
-    {loading && <p role="status">Đang tải tiếp nhận thực tập…</p>}
-    {command.retryable && <button disabled={command.busy} onClick={() => void command.retry()}>Thử lại thao tác tiếp nhận đã gửi</button>}
+    {loading && <p className="rc-loading-state" role="status">Đang tải tiếp nhận thực tập…</p>}
+    {command.retryable && <div className="button-row"><button disabled={command.busy} onClick={() => void command.retry()}>Thử lại thao tác tiếp nhận đã gửi</button></div>}
     {summary && <>
-      <dl className="proposal-capacity"><div><dt>Chỉ tiêu tiếp nhận</dt><dd>{summary.target}</dd></div><div><dt>Đã chốt</dt><dd>{summary.placed}</dd></div>
-        <div><dt>Chờ tạo Placement</dt><dd>{summary.pending}</dd></div><div><dt>Còn thiếu chỉ tiêu</dt><dd>{summary.remaining}</dd></div></dl>
+      <dl className="proposal-capacity">
+        <div className="kpi-pending"><dt>Chỉ tiêu tiếp nhận</dt><dd>{summary.target}</dd></div>
+        <div className="kpi-approved"><dt>Đã chốt</dt><dd>{summary.placed}</dd></div>
+        <div className="kpi-warning"><dt>Chờ tạo hồ sơ</dt><dd>{summary.pending}</dd></div>
+        <div className="kpi-open"><dt>Còn thiếu chỉ tiêu</dt><dd>{summary.remaining}</dd></div>
+      </dl>
       {quotaStatus && <p className={'placement-quota-status quota-' + quotaStatus.code.toLowerCase()} role="status"
         aria-label="Tình trạng chỉ tiêu tiếp nhận" data-state={quotaStatus.code}>{quotaStatus.label}</p>}
       {school && <div className="placement-quota-bar" aria-label="Tiến độ lấp đầy chỉ tiêu tiếp nhận">
         <div className="placement-quota-legend">
           <span>Tiến độ lấp đầy chỉ tiêu: <strong>{summary.placed}/{summary.target}</strong> đã chốt ({placedPct}%)</span>
-          <span>Chờ tạo Placement: <strong>{summary.pending}</strong> · Còn thiếu: <strong>{summary.remaining}</strong></span>
+          <span>Chờ tạo hồ sơ: <strong>{summary.pending}</strong> · Còn thiếu: <strong>{summary.remaining}</strong></span>
         </div>
         <div className="placement-quota-track">
           <div className="placement-quota-fill placed" style={{ width: `${placedPct}%` }} />
@@ -156,27 +182,57 @@ export function PlacementWorkspace({ org, school, cooperationId, demand, candida
           <option value="">Tất cả trạng thái</option>{Object.entries(states).map(([key, text]) => <option value={key} key={key}>{text}</option>)}
         </select></label>
         <form onSubmit={event => {event.preventDefault();if (!blocked) {setSearch(searchInput.trim());setPage(0);}}}>
-          <label>Tìm kiếm tiếp nhận<input type="search" maxLength={150} disabled={blocked} placeholder="Mã tiếp nhận, nhu cầu, phiếu hợp tác, mã sinh viên, vị trí tuyển…" value={searchInput} onChange={e => setSearchInput(e.target.value)} /></label>
+          <label>Tìm kiếm tiếp nhận<input type="search" maxLength={150} disabled={blocked} placeholder="Tìm theo tên sinh viên, MSSV, vị trí tuyển…" value={searchInput} onChange={e => setSearchInput(e.target.value)} /></label>
           <button className="secondary" disabled={blocked}>Tìm tiếp nhận</button>
         </form>
         {(filter || search) && <button type="button" className="secondary" disabled={blocked} onClick={() => { setFilter(''); setSearch(''); setSearchInput(''); setPage(0); }}>Xóa bộ lọc</button>}
       </div>
-      {!result.content.length && <p>{search ? 'Không tìm thấy hồ sơ tiếp nhận khớp từ khóa trong phạm vi được phép.' : 'Chưa có hồ sơ tiếp nhận trong nhóm trạng thái này.'}</p>}
+      {!school && !result.content.length && <p>{search ? 'Không tìm thấy hồ sơ tiếp nhận khớp từ khóa trong phạm vi được phép.' : 'Chưa có hồ sơ tiếp nhận trong nhóm trạng thái này.'}</p>}
       {!school && <div className="proposal-table"><table><thead><tr><th>Tiếp nhận</th><th>Trạng thái</th><th>Thời gian thực tập</th><th>Thao tác</th></tr></thead>
         <tbody>{visibleItems.map(({ item, seq }) => <tr key={item.placementId}>
           <th scope="row">Tiếp nhận {seq} · {states[item.state] || item.state}</th>
           <td><span className={'status-pill pill-' + item.state.toLowerCase()}>{states[item.state] || item.state}</span></td>
-          <td>{item.startDate} – {item.endDate}</td><td><div className="button-row">
+          <td>{formatDateDMY(item.startDate)} – {formatDateDMY(item.endDate)}</td><td><div className="button-row">
             <button className="secondary" disabled={blocked} aria-expanded={expandedPlacement === item.placementId}
               onClick={() => setExpandedPlacement(old => old === item.placementId ? null : item.placementId)}>Xem chi tiết</button>
             {['APPROVED', 'ACTIVE', 'COMPLETED'].includes(item.state) && <button className="secondary" disabled={blocked}
               onClick={() => checkHandoff(item)}>Kiểm tra bàn giao sang không gian thực tập</button>}
           </div></td>
         </tr>)}</tbody></table></div>}
-      {visibleItems.filter(({ item }) => school || expandedPlacement === item.placementId).map(({ item, seq }) => {
+      {school && <div className="proposal-table school-placement-table"><table><caption>Danh sách hồ sơ tiếp nhận thực tập</caption>
+        <thead><tr><th>Hồ sơ tiếp nhận</th><th>Thời gian thực tập</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+        <tbody>{visibleItems.map(({ item, seq }) => {
+          const studentId = candidateStudentByProposal[item.proposalItemId];
+          const identity = studentId ? identities[studentId] : null;
+          return <tr key={item.placementId} className={schoolDetailId === item.placementId ? 'table-row-selected' : undefined}>
+            <th scope="row">
+              {identity?.displayName ? (
+                <div className="proposal-student-ident">
+                  <strong>{identity.displayName}</strong>
+                  <small>Hồ sơ #{seq}{identity.studentCode ? ` · MSSV ${identity.studentCode}` : ''}</small>
+                </div>
+              ) : identity?.studentCode ? (
+                <div className="proposal-student-ident">
+                  <strong>MSSV {identity.studentCode}</strong>
+                  <small>Hồ sơ #{seq}</small>
+                </div>
+              ) : (
+                <span>Hồ sơ #{seq}</span>
+              )}
+            </th>
+            <td>{formatDateDMY(item.startDate)} – {formatDateDMY(item.endDate)}</td>
+            <td><span className={'status-pill pill-' + item.state.toLowerCase()}>{states[item.state] || item.state}</span></td>
+            <td><button type="button" className="secondary" disabled={blocked || !!decision} aria-expanded={schoolDetailId === item.placementId}
+              aria-label={`Xem hồ sơ tiếp nhận ${seq}`} onClick={() => setExpandedPlacement(schoolDetailId === item.placementId ? '__none__' : item.placementId)}>Xem chi tiết</button></td>
+          </tr>;
+        })}{!visibleItems.length && <tr><td colSpan={4}>{search ? 'Không tìm thấy hồ sơ tiếp nhận khớp từ khóa trong phạm vi được phép.' : 'Chưa có hồ sơ tiếp nhận trong nhóm trạng thái này.'}</td></tr>}</tbody>
+      </table></div>}
+      {visibleItems.filter(({ item }) => school ? schoolDetailId === item.placementId : expandedPlacement === item.placementId).map(({ item, seq }) => {
         const rank = stepRank(item.state);
         const guide = statusGuides[item.state]?.[school ? 'school' : 'enterprise'];
         const handoff = links[item.placementId];
+        const studentId = candidateStudentByProposal[item.proposalItemId];
+        const identity = studentId ? identities[studentId] : null;
         return <article key={item.placementId} className={`placement-item-card state-${item.state.toLowerCase()}`}>
           <div className="placement-card-header">
             <div className="placement-title-group">
@@ -200,25 +256,31 @@ export function PlacementWorkspace({ org, school, cooperationId, demand, candida
           <div className="placement-meta-grid">
             <div className="placement-meta-item">
               <span className="placement-meta-label">Khoảng thời gian thực tập</span>
-              <span className="placement-meta-value"><strong>{item.startDate}</strong> đến <strong>{item.endDate}</strong></span>
+              <span className="placement-meta-value"><strong>{formatDateDMY(item.startDate)}</strong> đến <strong>{formatDateDMY(item.endDate)}</strong></span>
             </div>
             <div className="placement-meta-item">
               <span className="placement-meta-label">Thời điểm có hiệu lực</span>
               <span className="placement-meta-value">{new Date(item.effectiveAt).toLocaleString('vi-VN')}</span>
             </div>
             <div className="placement-meta-item">
-              <span className="placement-meta-label">Mã tiếp nhận · Phiên bản</span>
-              <span className="placement-meta-value"><code>{item.placementId.slice(0, 8)}…</code> · v{item.version}</span>
+              <span className="placement-meta-label">{identity?.displayName || identity?.studentCode ? 'Sinh viên thực tập' : 'Vị trí tiếp nhận'}</span>
+              <span className="placement-meta-value">
+                {identity?.displayName
+                  ? `${identity.displayName}${identity.studentCode ? ` (${identity.studentCode})` : ''}`
+                  : identity?.studentCode
+                    ? `MSSV ${identity.studentCode}`
+                    : demand.data.title}
+              </span>
             </div>
           </div>
-          {school && <div className="button-row">
+          {(school && (['PENDING_APPROVAL', 'APPROVED', 'ACTIVE', 'COMPLETED'].includes(item.state))) && <div className="button-row placement-card-actions">
             {item.state === 'PENDING_APPROVAL' && <button className="btn-action-approve" disabled={blocked} onClick={() => {setDecision({item, action: 'approve'});setReference('');setReason('SCHOOL_APPROVED');}}>Phê duyệt tiếp nhận</button>}
             {item.state === 'APPROVED' && <button className="btn-action-activate" disabled={blocked || now < Date.parse(item.effectiveAt)} onClick={() => {setDecision({item, action: 'activate'});setReference('');setReason('START_REQUESTED');}}>Kích hoạt thực tập</button>}
             {['PENDING_APPROVAL', 'APPROVED', 'ACTIVE'].includes(item.state) && <button className="secondary btn-action-cancel" disabled={blocked} onClick={() => {setDecision({item, action: 'cancel'});setReference('');setReason('');}}>Hủy tiếp nhận</button>}
+            {['APPROVED', 'ACTIVE', 'COMPLETED'].includes(item.state) && <button className="secondary" disabled={blocked}
+              aria-label="Kiểm tra bàn giao sang không gian thực tập" onClick={() => checkHandoff(item)}>Kiểm tra bàn giao</button>}
           </div>}
           {item.state === 'APPROVED' && now < Date.parse(item.effectiveAt) && <p className="placement-time-warning">Chưa đến thời điểm kích hoạt. Hồ sơ chưa cho phép giao hoặc nộp nhiệm vụ thực tập.</p>}
-          {school && ['APPROVED', 'ACTIVE', 'COMPLETED'].includes(item.state) && <button className="secondary" disabled={blocked}
-            onClick={() => checkHandoff(item)}>Kiểm tra bàn giao sang không gian thực tập</button>}
           {handoff && <WorkspaceHandoff link={handoff} placementId={item.placementId} placementState={item.state} effectiveAt={item.effectiveAt} locked={blocked}
             schoolOrgId={school ? org : undefined} termId={demand.data.termId} />}
         </article>;
@@ -241,19 +303,36 @@ export function PlacementWorkspace({ org, school, cooperationId, demand, candida
       </select></label>}<div className="button-row"><button>Xác nhận {decision.action === 'approve' ? 'phê duyệt' : decision.action === 'activate' ? 'kích hoạt' : 'hủy tiếp nhận'}</button>
         <button className="secondary" type="button" onClick={() => setDecision(null)}>Đóng thao tác tiếp nhận</button></div>
     </fieldset></form>}
-    {school && result && <form onSubmit={e => {
+    {school && result && <form className="placement-create-form" onSubmit={e => {
       e.preventDefault();const item = ready.find(c => c.proposalItemId === selected);
       if (!item || !effective || !Number.isFinite(Date.parse(effective)) || start > end) {setError('Chọn ứng viên đủ điều kiện và khoảng thời gian tiếp nhận hợp lệ.');return;}
       void command.submit('/school/placements', 'POST', { proposalItemId: item.proposalItemId, expectedProposalVersion: item.version,
         expectedEligibilityVersion: item.eligibilityVersion, effectiveAt: new Date(effective).toISOString(), startDate: start, endDate: end });
-    }}><fieldset disabled={blocked}><legend>Tạo tiếp nhận chờ phê duyệt</legend><label>Ứng viên đã được doanh nghiệp đồng ý<select required value={selected} onChange={e => setSelected(e.target.value)}>
-      <option value="">Chọn ứng viên</option>{ready.map((item, n) => <option value={item.proposalItemId} key={item.proposalItemId}>Ứng viên {n + 1} · {item.studentUserId}</option>)}
-    </select></label>{!ready.length && <p>Chưa có ứng viên đủ điều kiện tạo tiếp nhận trên trang đề xuất đang xem.</p>}
-      <div className="cooperation-form-grid"><label>Ngày bắt đầu<input type="date" required value={start} onChange={e => setStart(e.target.value)} /></label>
-        <label>Ngày kết thúc<input type="date" required min={start} value={end} onChange={e => setEnd(e.target.value)} /></label></div>
-      <label>Thời điểm có hiệu lực<input type="datetime-local" required value={effective} onChange={e => setEffective(e.target.value)} /></label>
+    }}><fieldset disabled={blocked}><legend>Tạo tiếp nhận chờ phê duyệt</legend>
+      <div className="placement-create-head">
+        <p>Chọn sinh viên đã được doanh nghiệp đồng ý và thiết lập thời gian hiệu lực để trình phê duyệt tiếp nhận.</p>
+        <span className={'nomination-status-pill ' + (ready.length ? 'is-ready' : 'is-blocked')}>
+          {ready.length ? `Sẵn sàng: ${ready.length} ứng viên` : 'Chưa có ứng viên sẵn sàng'}
+        </span>
+      </div>
+      <label>Ứng viên đã được doanh nghiệp đồng ý<select required value={selected} onChange={e => setSelected(e.target.value)}>
+        <option value="">Chọn ứng viên</option>
+        {ready.map((item, n) => {
+          const identity = identities[item.studentUserId];
+          const label = identity?.displayName
+            ? `${identity.displayName}${identity.studentCode ? ` (${identity.studentCode})` : ''}`
+            : identity?.studentCode
+              ? `MSSV ${identity.studentCode}`
+              : `Ứng viên ${n + 1}`;
+          return <option value={item.proposalItemId} key={item.proposalItemId}>{label}</option>;
+        })}
+      </select></label>{!ready.length && <p className="placement-create-empty">Chưa có ứng viên đủ điều kiện tạo tiếp nhận trên trang đề xuất đang xem.</p>}
+      <div className="placement-create-dates"><label>Ngày bắt đầu<DateInput type="date" readOnly value={start} wrapperClassName="placement-fixed-date" aria-label="Ngày bắt đầu" aria-describedby={datesHintId} /></label>
+        <label>Ngày kết thúc<DateInput type="date" readOnly value={end} wrapperClassName="placement-fixed-date" aria-label="Ngày kết thúc" aria-describedby={datesHintId} /></label>
+        <label>Thời điểm có hiệu lực<DateInput type="datetime-local" required value={effective} aria-label="Thời điểm có hiệu lực" onChange={e => setEffective(e.target.value)} /></label></div>
+      <p id={datesHintId} className="field-hint">Ngày bắt đầu và kết thúc được lấy theo nhu cầu doanh nghiệp đã được duyệt.</p>
       <div className="button-row">
-        <button disabled={!ready.length}>Tạo hồ sơ chờ phê duyệt</button>
+        <button className="btn-action-approve-teal" disabled={!ready.length}>Tạo hồ sơ chờ phê duyệt</button>
         <button type="button" className="text-button" onClick={() => {
           const d = new Date();
           setEffective(new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16));

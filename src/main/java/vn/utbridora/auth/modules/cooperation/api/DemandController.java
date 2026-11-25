@@ -32,11 +32,16 @@ public class DemandController {
     @PatchMapping("/{id}/reopen")
     public DemandDto reopen(Authentication auth,@RequestHeader("X-Organization-Id") String org,@PathVariable String id,
             @RequestHeader("Idempotency-Key") String key,@RequestBody String body) {
-        return service.lifecycle(auth,org,id,key,DemandJson.rawRequest(body,DemandLifecycle.class),false);
+        return service.lifecycle(auth,org,id,key,DemandJson.rawRequest(body,DemandLifecycle.class),DemandService.LifecycleAction.REOPEN);
+    }
+    @PatchMapping("/{id}/soft-delete")
+    public DemandDto softDelete(Authentication auth,@RequestHeader("X-Organization-Id") String org,@PathVariable String id,
+            @RequestHeader("Idempotency-Key") String key,@RequestBody String body) {
+        return service.lifecycle(auth,org,id,key,DemandJson.rawRequest(body,DemandLifecycle.class),DemandService.LifecycleAction.SOFT_DELETE);
     }
     @PatchMapping("/{id}/restore")
     public DemandDto restore(Authentication auth,@RequestHeader("X-Organization-Id") String org,@PathVariable String id,
             @RequestHeader("Idempotency-Key") String key,@RequestBody String body) {
-        return service.lifecycle(auth,org,id,key,DemandJson.rawRequest(body,DemandLifecycle.class),true);
+        return service.lifecycle(auth,org,id,key,DemandJson.rawRequest(body,DemandLifecycle.class),DemandService.LifecycleAction.RESTORE);
     }
 }

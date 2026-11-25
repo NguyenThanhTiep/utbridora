@@ -39,8 +39,9 @@ async function preview(page: Page) {
 test('preview preserves identifiers and confirms only selected valid row IDs with CSRF and a UUID key', async ({ page }) => {
   const requests = await fixture(page);await preview(page);
   await expect(page.getByText('2 / 000Ab', { exact: true })).toBeVisible();await expect(page.getByLabel('Chọn dòng 3')).toBeDisabled();
-  await page.getByLabel('Chọn dòng 2').check();page.once('dialog', dialog => dialog.accept());
+  await page.getByLabel('Chọn dòng 2').check();
   await page.getByRole('button', { name: 'Xác nhận nhập 1 dòng', exact: true }).click();
+  await page.getByRole('dialog', { name: 'Nhập danh sách sinh viên?', exact: true }).getByRole('button', { name: 'Nhập 1 dòng', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Đang xử lý', exact: true })).toBeVisible();
   expect(requests.find(request => request.path.endsWith('/confirm'))?.body).toEqual({ expectedJobVersion: 1, fileHash: initial.fileHash, selectedRowIds: [rowId] });
   expect(requests.every(request => /^[0-9a-f-]{36}$/.test(request.key || ''))).toBeTruthy();

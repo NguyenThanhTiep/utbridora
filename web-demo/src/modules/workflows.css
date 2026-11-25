@@ -1,19 +1,196 @@
-.workflow-surface { min-width: 0; }
-.workflow-surface > h2 { margin-bottom: 14px; }
-.workflow-surface > .secondary { margin-bottom: 14px; }
-.workflow-surface fieldset { min-width: 0; margin: 18px 0; padding: 16px 18px 20px; border: 1px solid #d9e5ec; border-radius: 12px; background: #fbfdfe; }
-.workflow-surface legend { max-width: 100%; padding: 0 8px; font-weight: 650; color: var(--ink); overflow-wrap: anywhere; }
-.workflow-surface label:has(> input[type="checkbox"]) { display: flex; align-items: flex-start; gap: 10px; font-weight: 500; margin-top: 10px; }
-.workflow-surface input[type="checkbox"] { width: 18px; height: 18px; min-height: 18px; flex: 0 0 18px; margin: 3px 0 0; padding: 0; accent-color: var(--brand); }
-.workflow-surface textarea { display: block; width: 100%; min-height: 110px; margin-top: 7px; padding: 12px; font: inherit; border: 1px solid var(--line); border-radius: 8px; resize: vertical; }
-.workflow-surface p, .workflow-surface li { overflow-wrap: anywhere; }
-.workflow-surface p + p { margin-top: 6px; }
-.workflow-surface button { max-width: 100%; white-space: normal; }
-.workflow-surface > article { padding: 18px 20px; margin: 14px 0; border: 1px solid #dfe8ee; border-radius: 12px; background: #fbfdfe; transition: border-color .15s, box-shadow .15s; }
-.workflow-surface > article:hover { border-color: #c5d8e2; box-shadow: 0 3px 12px rgba(20, 48, 64, .04); }
-.workflow-surface > article h3 { font-size: var(--text-lg); margin-bottom: 8px; color: var(--ink); }
-.workflow-surface > article p { color: #395465; font-size: var(--text-sm); line-height: 1.65; }
-.workflow-surface > article > button, .workflow-surface > article > .button-row { margin-top: 12px; }
-.workflow-surface > .button-row { margin: 14px 0; align-items: center; }
-.workflow-surface article .text-button { text-align: left; overflow-wrap: anywhere; }
-@media (max-width: 700px) { .workflow-surface fieldset { padding: 12px; } .workflow-surface > article { padding: 14px; } }
+/* Task, Submission, Weekly Report & Evaluation Workflows */
+
+.t3-workflow {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 20px 22px;
+  border: 1px solid #e3eaf2;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(20, 47, 64, 0.03);
+}
+
+.t3-workflow :is(h3, h4) {
+  margin: 0;
+  color: #142f40;
+  font-weight: 750;
+  letter-spacing: -0.015em;
+}
+
+.t3-workflow :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea) {
+  max-width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #e3eaf2;
+  border-radius: 10px;
+  background: #fff;
+  color: #142f40;
+  font-size: 13px;
+  box-sizing: border-box;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.t3-workflow textarea {
+  min-height: 84px;
+}
+
+.t3-workflow label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: #425c6e;
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.t3-workflow fieldset {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 16px 18px;
+  border: 1px solid #e3eaf2;
+  border-radius: 12px;
+  background: #fafcfd;
+}
+
+.t3-workflow fieldset > legend {
+  padding: 0 8px;
+  color: #087b68;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.t3-workflow button:not([class]) {
+  min-height: 40px;
+  padding: 9px 16px;
+  border: 1px solid #0b927c;
+  border-radius: 10px;
+  background: #0b927c;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background-color 0.16s ease, border-color 0.16s ease, box-shadow 0.18s ease;
+}
+
+.t3-workflow button:not([class]):hover:not(:disabled) {
+  background: #087b68;
+  border-color: #087b68;
+  box-shadow: 0 4px 12px rgba(11, 146, 124, 0.22);
+}
+
+.t3-workflow button.secondary {
+  min-height: 40px;
+  padding: 9px 14px;
+  border: 1px solid #cde4db;
+  border-radius: 10px;
+  background: #fff;
+  color: #087b68;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background-color 0.16s ease, transform 0.15s ease;
+}
+
+.t3-workflow button.secondary:hover:not(:disabled) {
+  border-color: #0b927c;
+  background: #f2faf7;
+}
+
+.t3-workflow .stack {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* Report List Row Cards (Figma 1433-17091) */
+.t3-report-list {
+  display: grid;
+  gap: 8px;
+}
+
+.t3-report-row-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 16px !important;
+  border: 1px solid #e3eaf2 !important;
+  border-left: 4px solid #0b927c !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  color: #142f40 !important;
+  text-align: left;
+  font-weight: 650;
+}
+
+.t3-report-row-btn:hover:not(:disabled),
+.t3-report-row-btn.is-selected {
+  border-color: #0b927c !important;
+  background: #f2faf7 !important;
+  box-shadow: 0 6px 16px rgba(11, 146, 124, 0.1);
+}
+
+.t3-workflow :is(dl, ul, ol) {
+  min-width: 0;
+  margin: 0;
+}
+
+.t3-workflow dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #e3eaf2;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.t3-workflow dl > div {
+  min-width: 0;
+}
+
+.t3-workflow dt {
+  color: #64788a;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.t3-workflow dd {
+  margin: 4px 0 0;
+  color: #142f40;
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.t3-workflow article {
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid #e3eaf2;
+  border-radius: 12px;
+  background: #fafcfd;
+}
+
+.t3-workflow :is(li, dd, p, a) {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  .t3-workflow {
+    padding: 15px;
+    border-radius: 14px;
+  }
+
+  .t3-workflow :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    font-size: 16px;
+  }
+}

@@ -1,5 +1,8 @@
-import type { SharedProfile } from './types';
+import type { SharedFile, SharedProfile } from './types';
+import { formatDateDMY } from '../../../ui/dateFormat';
 import { SharedFileDownload, type SharedFileContext } from './SharedFileDownload';
+import { Icon } from '../../../components';
+import { SharedProfileSection } from './SharedProfileSection';
 
 const allowedLabels: Record<string, string> = {
   displayName: 'Họ tên',
@@ -14,38 +17,48 @@ const allowedLabels: Record<string, string> = {
   evidence: 'Minh chứng',
 };
 
-export function SharedProfileView({ profile, files }: { profile: SharedProfile; files: SharedFileContext }) {
+function fileDescription(file: SharedFile) {
+  const type = file.contentType === 'application/pdf' ? 'PDF' : file.contentType;
+  const unit = file.sizeBytes < 1024 ? 1 : file.sizeBytes < 1024 * 1024 ? 1024 : 1024 * 1024;
+  const size = (file.sizeBytes / unit).toLocaleString('vi-VN', { maximumFractionDigits: 1 });
+  return `${type} · ${size} ${unit === 1 ? 'B' : unit === 1024 ? 'KB' : 'MB'}`;
+}
+
+export function SharedProfileView({ profile, files, hideDisplayName = false }: { profile: SharedProfile; files: SharedFileContext; hideDisplayName?: boolean }) {
   const allowed = new Set(profile.allowedFields), data = profile.data;
   return <div className="proposal-profile">
     <div className="proposal-whitelist-bar" aria-label="Phạm vi trường dữ liệu được chia sẻ">
-      <span className="placement-meta-label">Phạm vi dữ liệu được phép xem (Consent Whitelist):</span>
-      <div className="proposal-whitelist-chips">
+      <Icon name="shield" size={17} /><span>Thông tin được sinh viên cho phép chia sẻ</span>
+      <details className="candidate-sharing-fields"><summary>Xem phạm vi chia sẻ</summary><div className="proposal-whitelist-chips">
         {profile.allowedFields.map(field => <span key={field} className="placement-seq-badge">{allowedLabels[field] || field}</span>)}
-      </div>
+      </div></details>
     </div>
-    {allowed.has('displayName') && <p><strong>Họ tên:</strong> {data.displayName || 'Chưa khai báo'}</p>}
-    {allowed.has('studentCode') && <p><strong>Mã sinh viên:</strong> {data.studentCode || 'Chưa khai báo'}</p>}
-    {allowed.has('email') && <p><strong>Email:</strong> {data.email || 'Chưa khai báo'}</p>}
-    {allowed.has('phone') && <p><strong>Điện thoại:</strong> {data.phone || 'Chưa khai báo'}</p>}
-    {allowed.has('majorCode') && <p><strong>Chuyên ngành:</strong> {data.majorCode || 'Chưa khai báo'}</p>}
-    {allowed.has('skills') && <div><h5>Kỹ năng</h5><ul className="proposal-skills">
-      {(data.skills || []).map((entry, n) => {
+    {['studentCode', 'email', 'phone', 'majorCode', ...(!hideDisplayName ? ['displayName'] : [])].some(field => allowed.has(field)) && <dl className="candidate-contact-grid">
+      {allowed.has('displayName') && !hideDisplayName && <div><dt>Họ tên</dt><dd>{data.displayName || 'Chưa khai báo'}</dd></div>}
+      {allowed.has('studentCode') && <div><dt>Mã sinh viên</dt><dd>{data.studentCode || 'Chưa khai báo'}</dd></div>}
+      {allowed.has('email') && <div><dt>Email</dt><dd>{data.email || 'Chưa khai báo'}</dd></div>}
+      {allowed.has('phone') && <div><dt>Điện thoại</dt><dd>{data.phone || 'Chưa khai báo'}</dd></div>}
+      {allowed.has('majorCode') && <div><dt>Chuyên ngành</dt><dd>{data.majorCode || 'Chưa khai báo'}</dd></div>}
+    </dl>}
+    {allowed.has('skills') && <SharedProfileSection title="Kỹ năng" items={data.skills || []} limit={6} listClass="proposal-skills"
+      empty="Chưa có kỹ năng được khai báo." render={entry => {
         const s = entry.skill || (entry as unknown as { skillCode?: string; name?: string; level?: number; yearsPractice?: number });
-        return <li key={n}>{(entry.kind === 'CANONICAL' || !entry.kind) ? (s.skillCode || s.name) : s.name}
-          {' · Cấp độ '}{s.level ?? 1}{' · '}{s.yearsPractice ?? 0} năm{entry.kind === 'CUSTOM' ? ' · Tự khai báo' : ''}
-          {'note' in s && s.note ? <p>{s.note}</p> : null}</li>;
-      })}
-    </ul>{!data.skills?.length && <p>Chưa có kỹ năng được khai báo.</p>}</div>}
-    {allowed.has('projects') && <div><h5>Dự án</h5>{(data.projects || []).map(project => <div key={project.projectId}>
+        return <><b>{(entry.kind === 'CANONICAL' || !entry.kind) ? (s.skillCode || s.name) : s.name}</b>
+          <span>{'Cấp độ '}{s.level ?? 1}{' · '}{s.yearsPractice ?? 0} năm{entry.kind === 'CUSTOM' ? ' · Tự khai báo' : ''}</span>
+          {'note' in s && s.note ? <p>{s.note}</p> : null}</>;
+      }} />}
+    {allowed.has('projects') && <SharedProfileSection title="Dự án" items={data.projects || []} listClass="candidate-project-items" empty="Chưa có dự án được khai báo." render={project => <>
       <strong>{project.title}</strong><p>{project.description}</p><p>Vai trò: {project.role}</p><p>{project.skillCodes.join(', ')}</p>
-    </div>)}{!data.projects?.length && <p>Chưa có dự án được khai báo.</p>}</div>}
-    {allowed.has('certificates') && <div><h5>Chứng chỉ</h5>{(data.certificates || []).map(certificate => <div key={certificate.certificateId}>
-      <strong>{certificate.title}</strong><p>{certificate.issuer} · Cấp ngày {certificate.issuedOn}{certificate.expiresOn ? ` · Hết hạn ${certificate.expiresOn}` : ''}</p>
-    </div>)}{!data.certificates?.length && <p>Chưa có chứng chỉ được khai báo.</p>}</div>}
-    {allowed.has('cv') && <div><p><strong>CV:</strong> {data.cv ? `${data.cv.contentType} · ${data.cv.sizeBytes} byte` : 'Chưa có CV được chia sẻ.'}</p>
-      {data.cv && <SharedFileDownload key={data.cv.fileId} context={files} file={data.cv} field="cv" validUntil={profile.validUntil} />}</div>}
-    {allowed.has('evidence') && <div><h5>Minh chứng</h5>{(data.evidence || []).map(file => <div key={file.fileId}><p>{file.contentType} · {file.sizeBytes} byte</p>
-      <SharedFileDownload context={files} file={file} field="evidence" validUntil={profile.validUntil} /></div>)}
-      {!data.evidence?.length && <p>Chưa có minh chứng được chia sẻ.</p>}</div>}
+    </>} />}
+    {allowed.has('certificates') && <SharedProfileSection title="Chứng chỉ" items={data.certificates || []} empty="Chưa có chứng chỉ được khai báo." render={certificate => <>
+      <strong>{certificate.title}</strong><p>{certificate.issuer} · Cấp ngày {formatDateDMY(certificate.issuedOn)}{certificate.expiresOn ? ` · Hết hạn ${formatDateDMY(certificate.expiresOn)}` : ''}</p>
+    </>} />}
+    {allowed.has('cv') && <section className="candidate-profile-section candidate-cv"><h5>CV</h5><div className="candidate-file-row"><span className="candidate-file-icon" aria-hidden="true"><Icon name="file" size={22} /></span>
+      <p>{data.cv ? fileDescription(data.cv) : 'Chưa có CV được chia sẻ.'}</p>
+      {data.cv && <SharedFileDownload key={data.cv.fileId} context={files} file={data.cv} field="cv" validUntil={profile.validUntil} />}</div></section>}
+    {allowed.has('evidence') && <SharedProfileSection title="Minh chứng" items={data.evidence || []} empty="Chưa có minh chứng được chia sẻ." render={file => <div className="candidate-file-row">
+      <span className="candidate-file-icon" aria-hidden="true"><Icon name="file" size={22} /></span><p>{fileDescription(file)}</p>
+      <SharedFileDownload context={files} file={file} field="evidence" validUntil={profile.validUntil} />
+    </div>} />}
   </div>;
 }

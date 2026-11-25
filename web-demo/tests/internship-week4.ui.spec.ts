@@ -32,6 +32,7 @@ async function setup(page:Page,current:Evaluation|null=draft()) {
       else {state.current={...state.current,version:state.current.version+1,...(body.scores?{scores:body.scores}:{})};}
       if(path.endsWith('/publish'))Object.assign(state.current,{state:'PUBLISHED',decisionRef:body.decisionRef,publishedAt:'2026-11-14T03:00:00Z'});
       if(path.endsWith('/submit'))state.current.state='SUBMITTED';
+      if(path.endsWith('/revisions'))Object.assign(state.current,{state:'DRAFT',revisionNo:state.current.revisionNo+1,publishedAt:null,decisionRef:null});
       return route.fulfill({json:state.current});
     }
     return route.fulfill({status:404,json:error('RESOURCE_NOT_FOUND')});
@@ -109,6 +110,11 @@ test('T3-12 group-scoped HR has only CASE policy and revoked session closes it',
   });await open(page,'root');await page.getByRole('combobox',{name:'Phân công đánh giá',exact:true}).selectOption(ids.hr);
   await expect(page.getByLabel('Phạm vi chính sách')).toHaveCount(0);await page.getByLabel('Mã hồ sơ thực tập',{exact:true}).fill(caseId);
   await page.getByRole('button',{name:'Mở đánh giá hồ sơ'}).click();await expect(page.getByRole('region',{name:'Quyền xem điểm theo hồ sơ'})).toBeVisible();
+  const conditions=page.getByRole('region',{name:'Ba điều kiện hiển thị điểm'});
+  await expect(conditions.getByText('Chưa xác nhận',{exact:true})).toHaveCount(2);
+  await expect(conditions.getByText('Kế thừa doanh nghiệp/kỳ',{exact:true})).toBeVisible();
+  await page.getByLabel('Cho phép sinh viên xem điểm').check();
+  await expect(conditions.getByText('Kế thừa doanh nghiệp/kỳ',{exact:true})).toBeVisible();
   expect(s.paths.some(p=>p.includes('school/evaluations'))).toBe(false);await expect(page.getByRole('button',{name:'Công bố điểm',exact:true})).toHaveCount(0);
   await page.evaluate(()=>window.dispatchEvent(new Event('session-expired')));await expect(page.getByText('Quyền truy cập đã thay đổi. Dữ liệu đánh giá đã được đóng.')).toBeVisible();
   await expect(page.getByRole('region',{name:'Quyền xem điểm theo hồ sơ'})).toHaveCount(0);
@@ -123,4 +129,116 @@ test('T3-12 Mentor context expiry unmounts private draft without another request
   await page.getByRole('combobox',{name:'Hồ sơ trong nhóm',exact:true}).selectOption(caseId);await expect(page.getByRole('region',{name:'Nội dung đánh giá'}).getByText('Private note',{exact:true})).toBeVisible();
   await page.clock.fastForward(11000);await expect(page.getByText('Private note',{exact:true})).toHaveCount(0);await expect(page.getByLabel('Nhận xét Quality',{exact:true})).toHaveCount(0);
   await expect(page.getByText('Chưa có phân công Mentor/HR phù hợp còn hiệu lực.')).toBeVisible();
+});
+
+test('DEV06 School conflict reload preserves decision and reason, then uses current version',async({page})=>{
+  const s=await setup(page,draft({state:'SUBMITTED',version:4}));let conflict=true;
+  s.intercept(async r=>{if(r.request().url().endsWith('/publish') && conflict){conflict=false;s.state.current!.version=8;
+    await r.fulfill({status:409,json:error('VERSION_CONFLICT')});return true;}return false;});
+  await open(page,'school');await page.getByRole('button',{name:/Hồ sơ .*SUBMITTED/}).click();
+  await page.getByLabel('Căn cứ quyết định').fill(' DECISION-RETRY ');
+  await page.getByLabel('Mã lý do tạo revision').fill('CORRECTION');
+  await page.getByRole('button',{name:'Công bố điểm',exact:true}).click();
+  await expect(page.getByRole('alert')).toContainText('VERSION_CONFLICT');
+  await page.getByRole('button',{name:'Tải lại đánh giá đang chọn'}).click();
+  await expect(page.getByText(/Trạng thái: SUBMITTED · Revision 1 · Version 8/)).toBeVisible();
+  await expect(page.getByLabel('Căn cứ quyết định')).toHaveValue(' DECISION-RETRY ');
+  await expect(page.getByLabel('Mã lý do tạo revision')).toHaveValue('CORRECTION');
+  await page.getByRole('button',{name:'Công bố điểm',exact:true}).click();
+  await expect(page.getByText(/Đã công bố điểm\. Sinh viên/)).toBeVisible();
+  expect(s.mutations[1].body).toEqual({expectedVersion:8,decisionRef:'DECISION-RETRY'});
+  expect(s.mutations[1].key).not.toBe(s.mutations[0].key);
+  expect(s.paths.some(p=>p.endsWith('/history') || p==='/t3/evaluations/evaluation')).toBe(false);
+});
+
+test('DEV06 School revision shows DRAFT and preserves previously published student result',async({page})=>{
+  const s=await setup(page,published());await open(page,'school');
+  await page.getByRole('button',{name:/Hồ sơ .*PUBLISHED/}).click();
+  await page.getByLabel('Căn cứ quyết định').fill('REVISION-1');await page.getByLabel('Mã lý do tạo revision').fill('CORRECTION');
+  await page.getByRole('button',{name:'Tạo revision đánh giá'}).click();
+  await page.getByRole('button',{name:/Hồ sơ .*DRAFT/}).click();
+  await expect(page.getByText(/Đang chờ Mentor hoàn thiện/)).toBeVisible();
+  await expect(page.getByRole('button',{name:'Công bố điểm',exact:true})).toHaveCount(0);
+  expect(s.mutations[0].body).toEqual({expectedVersion:1,decisionRef:'REVISION-1',reasonCode:'CORRECTION'});
+  await open(page,'student');await expect(page.getByRole('heading',{name:'Điểm tổng: 76.00 / 100'})).toBeVisible();
+});
+
+test('DEV06 policy conflict keeps unsaved choice across reload, persists after browser reload',async({page})=>{
+  const s=await setup(page);let conflict=true;s.intercept(async r=>{
+    if(r.request().method()==='PUT' && conflict){conflict=false;s.state.policy.version=4;
+      await r.fulfill({status:409,json:error('VERSION_CONFLICT')});return true;}return false;});
+  await open(page,'hr');await page.getByRole('checkbox').check();await page.getByRole('button',{name:'Lưu quyền xem điểm'}).click();
+  await expect(page.getByRole('alert')).toContainText('VERSION_CONFLICT');await page.getByRole('button',{name:'Tải lại chính sách'}).click();
+  await expect(page.getByText('Trạng thái đã lưu: Tắt · Version 4')).toBeVisible();await expect(page.getByRole('checkbox')).toBeChecked();
+  await page.getByRole('button',{name:'Lưu quyền xem điểm'}).click();await expect(page.getByText('Trạng thái đã lưu: Bật · Version 5')).toBeVisible();
+  expect(s.mutations[1].body).toEqual({expectedVersion:4,enabled:true});
+  await page.reload();await expect(page.getByRole('checkbox')).toBeChecked();
+});
+
+test('DEV06 School filter uses scoped list, empty state and removes old decision',async({page})=>{
+  const s=await setup(page,draft({state:'SUBMITTED'}));let query='';
+  s.intercept(async r=>{const u=new URL(r.request().url());if(u.pathname.endsWith('/school/evaluations') && u.searchParams.has('caseId')){
+    query=u.search;await r.fulfill({json:pageOf([])});return true;}return false;});
+  await open(page,'school');await page.getByRole('button',{name:/Hồ sơ .*SUBMITTED/}).click();await page.getByLabel('Căn cứ quyết định').fill('PRIVATE-DRAFT');
+  await page.getByLabel('Lọc theo mã hồ sơ').fill(caseId);await page.getByRole('button',{name:'Áp dụng bộ lọc'}).click();
+  await expect(page.getByText(/Chưa có đánh giá trong phạm vi này/)).toBeVisible();
+  expect(query).toContain('termId='+termId);expect(query).toContain('caseId='+caseId);
+  await expect(page.getByLabel('Căn cứ quyết định')).toHaveCount(0);
+  await page.getByLabel('Lọc theo mã hồ sơ').fill('');await page.getByRole('button',{name:'Áp dụng bộ lọc'}).click();
+  await page.getByRole('button',{name:/Hồ sơ .*SUBMITTED/}).click();await expect(page.getByLabel('Căn cứ quyết định')).toHaveValue('');
+});
+
+test('DEV06 School revoked access clears private score and draft on refresh',async({page})=>{
+  const s=await setup(page,draft({state:'SUBMITTED'}));await open(page,'school');
+  await page.getByRole('button',{name:/Hồ sơ .*SUBMITTED/}).click();await page.getByLabel('Căn cứ quyết định').fill('PRIVATE-DRAFT');
+  s.intercept(async r=>{await r.fulfill({status:403,json:error('ACCESS_DENIED')});return true;});
+  await page.getByRole('button',{name:'Tải lại đánh giá đang chọn'}).click();await expect(page.getByText('Đã đóng dữ liệu fixture')).toBeVisible();
+  await expect(page.getByText('Private note')).toHaveCount(0);await expect(page.getByLabel('Căn cứ quyết định')).toHaveCount(0);
+});
+
+test('DEV06 School uncertain publish locks selection and retries same key/body',async({page})=>{
+  const s=await setup(page,draft({state:'SUBMITTED'}));let fail=true;s.intercept(async r=>{
+    if(r.request().url().endsWith('/publish') && fail){fail=false;await r.abort('failed');return true;}return false;});
+  await open(page,'school');await page.getByRole('button',{name:/Hồ sơ .*SUBMITTED/}).click();await page.getByLabel('Căn cứ quyết định').fill('RETRY');
+  await page.getByRole('button',{name:'Công bố điểm',exact:true}).click();await expect(page.getByRole('button',{name:'Thử lại thao tác vừa gửi'})).toBeVisible();
+  await expect(page.getByLabel('Lọc trạng thái đánh giá')).toBeDisabled();await expect(page.getByLabel('Căn cứ quyết định')).toBeDisabled();
+  await page.getByRole('button',{name:'Thử lại thao tác vừa gửi'}).click();await expect.poll(()=>s.mutations.length).toBe(2);expect(s.mutations[1]).toEqual(s.mutations[0]);
+});
+
+test('DEV06 School desktop and mobile layout has no horizontal overflow',async({page},testInfo)=>{
+  await setup(page,draft({state:'SUBMITTED'}));await open(page,'school');await page.getByRole('button',{name:/Hồ sơ .*SUBMITTED/}).click();
+  for(const width of [1440,768,375]){
+    await page.setViewportSize({width,height:900});
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    await page.screenshot({path:testInfo.outputPath('school-'+width+'.png'),fullPage:true});
+  }
+});
+
+test('DEV06 School changing term clears policy draft and selected decision',async({page})=>{
+  const s=await setup(page,draft({state:'SUBMITTED'})),otherTerm='00000000-0000-4000-8000-000000000099';
+  s.intercept(async r=>{const u=new URL(r.request().url());
+    if(u.pathname.endsWith('/terms')){await r.fulfill({json:pageOf([termId,otherTerm].map((id,i)=>({termId:id,schoolOrgId:'school',termCode:'TERM-'+i})))});return true;}
+    if(u.pathname.includes(otherTerm) && u.pathname.endsWith('/result-visibility')){await r.fulfill({json:{termId:otherTerm,schoolOrgId:'school',enabled:false,version:0}});return true;}
+    return false;});
+  await open(page,'school-root');await page.getByRole('combobox',{name:'Kỳ đánh giá',exact:true}).selectOption(termId);
+  await page.getByRole('checkbox').check();await page.getByRole('button',{name:/Hồ sơ .*SUBMITTED/}).click();await page.getByLabel('Căn cứ quyết định').fill('TERM-PRIVATE');
+  await page.getByRole('combobox',{name:'Kỳ đánh giá',exact:true}).selectOption(otherTerm);await expect(page.getByRole('checkbox')).not.toBeChecked();
+  await expect(page.getByLabel('Căn cứ quyết định')).toHaveCount(0);
+  await page.getByRole('button',{name:/Hồ sơ .*SUBMITTED/}).click();await expect(page.getByLabel('Căn cứ quyết định')).toHaveValue('');
+});
+
+test('DEV06 School expired session during term lookup closes the scope',async({page})=>{
+  const s=await setup(page);s.intercept(async r=>{if(new URL(r.request().url()).pathname.endsWith('/terms')){
+    await r.fulfill({status:401,json:error('SESSION_EXPIRED')});return true;}return false;});
+  await open(page,'school-root');await expect(page.getByText('Quyền truy cập đã thay đổi. Dữ liệu đánh giá đã được đóng.')).toBeVisible();
+  await expect(page.getByLabel('Mã kỳ thực tập')).toHaveCount(0);expect(s.paths.some(p=>p==='/t3/school/evaluations')).toBe(false);
+});
+
+test('DEV06 School without T5 term permission can use a delegated term checked by grade APIs',async({page})=>{
+  const s=await setup(page);s.intercept(async r=>{if(new URL(r.request().url()).pathname.endsWith('/terms')){
+    await r.fulfill({status:404,json:error('RESOURCE_NOT_FOUND')});return true;}return false;});
+  await open(page,'school-root');await expect(page.getByRole('alert')).toContainText('Không tải được danh sách kỳ');
+  await page.getByText('Nhập mã kỳ được phân công',{exact:true}).click();await page.getByLabel('Mã kỳ thực tập').fill(termId);
+  await page.getByRole('button',{name:'Mở kỳ đánh giá'}).click();await expect(page.getByRole('button',{name:/Hồ sơ .*DRAFT/})).toBeVisible();
+  expect(s.paths).toContain('/t3/school/evaluations');
 });

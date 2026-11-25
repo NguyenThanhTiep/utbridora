@@ -10,7 +10,7 @@ const rowErrors:Record<string,string> = {INVALID_IDENTIFIER:'Mã không hợp l�
 
 export function CohortCreator({assignment,changed,denied}:{assignment:WorkspaceAssignment;changed:(id?:string)=>void;denied:()=>void}) {
   const [code,setCode]=useState(''),[name,setName]=useState('');const command=useWorkflowCommand(assignment.id,denied);
-  return <details className="t3-operation-card"><summary>Tạo đợt thực tập</summary><form className="stack" onSubmit={e=>{
+  return <details className="t3-operation-card t3-cohort-creator"><summary>Tạo đợt thực tập</summary><form className="stack" onSubmit={e=>{
     e.preventDefault();command.run<Cohort>('/t3/cohorts',{termId:assignment.scope.termId,code:code.trim(),name:name.trim()},value=>{
       if(value.schoolOrgId!==assignment.scope.schoolOrgId || value.enterpriseOrgId!==assignment.scope.enterpriseOrgId || value.termId!==assignment.scope.termId){denied();return;}changed(value.cohortId);
     });
@@ -18,7 +18,7 @@ export function CohortCreator({assignment,changed,denied}:{assignment:WorkspaceA
     <label>Tên đợt<input value={name} maxLength={200} required onChange={e=>setName(e.target.value)}/></label><button disabled={!code.trim() || !name.trim()}>Tạo đợt trong kỳ đã chọn</button></fieldset><CommandFeedback command={command}/></form></details>;
 }
 
-export function CohortManagement({assignment,cohort,changed,denied}:{assignment:WorkspaceAssignment;cohort:Cohort;changed:()=>void;denied:()=>void}) {
+export function CohortManagement({assignment,cohort,changed,denied,fileImportOnly=false}:{assignment:WorkspaceAssignment;cohort:Cohort;changed:()=>void;denied:()=>void;fileImportOnly?:boolean}) {
   const [file,setFile]=useState<File|null>(null),[preview,setPreview]=useState<Preview|null>(null),[selected,setSelected]=useState<Set<string>>(new Set()),[page,setPage]=useState(0);
   const [result,setResult]=useState<Batch|null>(null),[plan,setPlan]=useState<Plan|null>(null),[groupSize,setGroupSize]=useState('10'),[message,setMessage]=useState('');
   const command=useWorkflowCommand(assignment.id,denied);const blocked=command.busy || command.pending;
@@ -30,7 +30,7 @@ export function CohortManagement({assignment,cohort,changed,denied}:{assignment:
   const validIds=preview?.rows.filter(r=>r.status==='VALID' && !!r.placementId).map(r=>r.placementId!) || [];
   const rows=preview?.rows.slice(page*25,page*25+25) || [];
   return <div className="stack t3-cohort-management">
-    <section className="t3-operation-card stack"><h3>Tiếp nhận Placement từ danh sách</h3>
+    <section className="t3-operation-card stack">{!fileImportOnly && <h3>Tiếp nhận Placement từ danh sách</h3>}
       <p>Tệp CSV/XLSX tối đa 5 MiB, 1.000 dòng. Dùng cột <code>placementId</code> hoặc <code>studentUserId</code>; mỗi dòng điền một loại mã. Chỉ tiếp nhận sinh viên đã có Placement hợp lệ trong phạm vi đợt.</p>
       {message && <p role="status">{message}</p>}
       <form onSubmit={e=>{e.preventDefault();if(!file)return;setPreview(null);setSelected(new Set());setResult(null);setPlan(null);setMessage('');
@@ -39,13 +39,13 @@ export function CohortManagement({assignment,cohort,changed,denied}:{assignment:
           if(value.cohortVersion!==cohort.version || !uuidPattern.test(value.previewId) || !/^[a-f0-9]{64}$/.test(value.fileHash) || !Array.isArray(value.rows) || value.rows.length>1000 || value.rows.some(r=>!Number.isInteger(r.rowNo) || !['VALID','INVALID'].includes(r.status) || r.status==='VALID' && (!r.placementId || !uuidPattern.test(r.placementId)))){denied();return;}
           setPreview(value);setSelected(new Set());setPage(0);
         });
-      }}><fieldset disabled={blocked || !!result}><label>Tệp danh sách Placement<input type="file" accept=".csv,.xlsx" onChange={e=>{const next=e.target.files?.[0] || null;setFile(next);setPreview(null);setSelected(new Set());setMessage(next && next.size>5*1024*1024?'Tệp vượt quá 5 MiB.':'');}}/></label>
+      }}><fieldset disabled={blocked || !!result}><label>Tệp danh sách Placement<span className="t3-placement-file"><input type="file" aria-label="Tệp danh sách Placement" accept=".csv,.xlsx" onChange={e=>{const next=e.target.files?.[0] || null;setFile(next);setPreview(null);setSelected(new Set());setMessage(next && next.size>5*1024*1024?'Tệp vượt quá 5 MiB.':'');}}/><span aria-hidden="true" className="t3-file-prompt"><b>Kéo thả tệp hoặc chọn tệp</b><span>{file?.name || 'CSV hoặc XLSX · Tối đa 5 MiB'}</span></span></span></label>
         <button disabled={!file || file.size>5*1024*1024 || !validVersion(cohort.version)}>Xem trước danh sách tiếp nhận</button></fieldset></form>
       {preview && <div className="stack"><p>{validIds.length} dòng hợp lệ / {preview.rows.length} dòng. Hết hạn: {new Date(preview.expiresAt).toLocaleString('vi-VN')}.</p>
         <fieldset disabled={blocked}><label><input type="checkbox" checked={validIds.length>0 && validIds.every(id=>selected.has(id))} onChange={e=>setSelected(new Set(e.target.checked?validIds:[]))}/>Chọn tất cả dòng hợp lệ</label>
           <div className="t3-table-scroll"><table><caption>Kết quả kiểm tra danh sách Placement</caption><thead><tr><th>Chọn</th><th>Dòng</th><th>Placement</th><th>Kết quả</th></tr></thead><tbody>{rows.map(r=><tr key={r.rowNo}>
             <td><input type="checkbox" aria-label={'Chọn dòng '+r.rowNo} disabled={r.status!=='VALID'} checked={!!r.placementId && selected.has(r.placementId)} onChange={e=>setSelected(old=>{const next=new Set(old);if(r.placementId){if(e.target.checked)next.add(r.placementId);else next.delete(r.placementId);}return next;})}/></td>
-            <td>{r.rowNo}</td><td>{r.placementId || '—'}</td><td>{r.status==='VALID'?'Hợp lệ':rowErrors[r.errorCode || ''] || 'Không hợp lệ'}</td></tr>)}</tbody></table></div>
+            <td>{r.rowNo}</td><td><code>{r.placementId || '—'}</code></td><td><span className="t3-preview-result" data-valid={r.status === 'VALID'}>{r.status==='VALID'?'Hợp lệ':rowErrors[r.errorCode || ''] || 'Không hợp lệ'}</span></td></tr>)}</tbody></table></div>
           <div className="button-row"><button type="button" className="secondary" disabled={page===0} onClick={()=>setPage(n=>n-1)}>Trang trước</button><span>Trang {page+1}/{Math.max(1,Math.ceil(preview.rows.length/25))}</span><button type="button" className="secondary" disabled={(page+1)*25>=preview.rows.length} onClick={()=>setPage(n=>n+1)}>Trang sau</button></div>
           <button disabled={selected.size===0} onClick={()=>command.run<Batch>('/t3/cohorts/'+cohort.cohortId+'/members:batch',{expectedVersion:cohort.version,placementIds:[...selected].sort(),previewId:preview.previewId,fileHash:preview.fileHash},value=>{
             if(value.cohortId!==cohort.cohortId || !validVersion(value.version)){denied();return;}setResult(value);setPreview(null);setSelected(new Set());setMessage('Đã xử lý danh sách. Tải lại đợt để nhận phiên bản mới trước thao tác tiếp.');
@@ -53,7 +53,7 @@ export function CohortManagement({assignment,cohort,changed,denied}:{assignment:
       {result && <div role="status"><p>Đã thêm {result.items.filter(i=>i.outcome==='ADDED').length}; đã có {result.items.filter(i=>i.outcome==='ALREADY_PRESENT').length}; không hợp lệ {result.items.filter(i=>i.outcome==='INVALID').length}.</p>
         <button type="button" onClick={changed}>Tải phiên bản đợt mới</button></div>}
     </section>
-    <section className="t3-operation-card stack"><h3>Chia nhóm tự động</h3><p>Xem trước cách chia trước khi xác nhận. Sinh viên chưa chia hết sẽ nằm trong nhóm cuối.</p>
+    {!fileImportOnly && <section className="t3-operation-card stack"><h3>Chia nhóm tự động</h3><p>Xem trước cách chia trước khi xác nhận. Sinh viên chưa chia hết sẽ nằm trong nhóm cuối.</p>
       <fieldset disabled={blocked || !!result}><label>Số sinh viên mỗi nhóm<input type="number" min={1} max={1000} value={groupSize} onChange={e=>{setGroupSize(e.target.value);setPlan(null);}}/></label>
         <button disabled={!Number.isInteger(Number(groupSize)) || Number(groupSize)<1 || Number(groupSize)>1000} onClick={()=>command.run<Plan>('/t3/cohorts/'+cohort.cohortId+'/groups:auto',{mode:'PREVIEW',groupSize:Number(groupSize),expectedCohortVersion:cohort.version},value=>{
           if(value.cohortVersion!==cohort.version || !uuidPattern.test(value.planId) || !Array.isArray(value.groups) || value.groups.some(g=>!Array.isArray(g.caseIds) || g.caseIds.some(id=>!uuidPattern.test(id)))){denied();return;}setPlan(value);
@@ -63,6 +63,6 @@ export function CohortManagement({assignment,cohort,changed,denied}:{assignment:
             if(!Array.isArray(value) || value.some(g=>g.cohortId!==cohort.cohortId)){denied();return;}changed();
           })}>Xác nhận tạo {plan.groups.length} nhóm</button></div>}
       </fieldset>
-    </section><CommandFeedback command={command}/>
+    </section>}<CommandFeedback command={command}/>
   </div>;
 }

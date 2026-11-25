@@ -1,8 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
+import { mockContextLabels } from './fixtures/internship';
 // Browser contract fixtures; backend privacy/authorization is covered separately in EnterpriseProposalIT.
 const fixture = '/tests/fixtures/proposals.html';
 const item = { proposalItemId: 'proposal-1', cooperationId: 'coop-1', state: 'SHARED', version: 4, shareId: 'share-1', reservationUntil: '2026-11-11T00:00:00Z' };
 function pageOf(content: unknown[]) { return { content, page: 0, size: 10, totalElements: content.length, totalPages: content.length ? 1 : 0 }; }
+// Without an authorized school identity projection, the UI labels rows anonymously.
+function schoolCandidateRow(page: Page, number: number) {
+  return page.getByRole('row').filter({ has: page.getByRole('rowheader', { name: `Ứng viên ${number}`, exact: true }) });
+}
 async function setup(page: Page) {
   await page.clock.install({ time: new Date('2026-11-10T10:00:00Z') });
   await page.route('**/api/v1/auth/csrf', route => route.fulfill({ json: { headerName: 'X-CSRF-TOKEN', token: 'fixture-token' } }));
@@ -11,7 +16,7 @@ async function setup(page: Page) {
     profileVersion: 2, validUntil: item.reservationUntil, allowedFields: ['majorCode', 'skills'], data: { majorCode: 'IT',
       skills: [{ kind: 'CANONICAL', skill: { skillCode: 'JAVA', level: 3, yearsPractice: 2 } }],
       projects: [{ projectId: 'hidden', title: 'PRIVATE-PROJECT', description: '', role: '', skillCodes: [] }],
-      email: 'PRIVATE-EMAIL@example.test', studentUserId: 'PRIVATE-IDENTITY' },
+      email: 'PRIVATE-EMAIL@example.test', displayName: 'PRIVATE-NAME', studentUserId: 'PRIVATE-IDENTITY' },
   } }));
 }
 test('enterprise sees only whitelist fields and acceptance updates the card', async ({ page }) => {
@@ -25,10 +30,47 @@ test('enterprise sees only whitelist fields and acceptance updates the card', as
   });
   await page.goto(fixture);
   await expect(page.getByText('JAVA', { exact: false })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ứng viên 1', exact: true })).toBeVisible();
+  await expect(page.getByText('Họ tên chưa được cấp quyền chia sẻ.', { exact: true })).toBeVisible();
   await expect(page.getByText(/PRIVATE-/)).toHaveCount(0);
   await page.getByRole('button', { name: 'Tiếp nhận thực tập' }).click();
   await expect(page.locator('.proposal-card .cooperation-state').getByText('Doanh nghiệp đã đồng ý', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Tiếp nhận thực tập' })).toHaveCount(0);
+});
+
+test('candidate header clears authorized identity on blur and cannot reuse it after access is revoked', async ({ page }) => {
+  await setup(page);let revoked = false;
+  await page.route('**/api/v1/enterprise/proposals/proposal-1/profile', route => revoked
+    ? route.fulfill({ status: 403, json: { errorCode: 'ACCESS_DENIED' } })
+    : route.fulfill({ json: { profileVersion: 2, validUntil: item.reservationUntil,
+      allowedFields: ['displayName', 'majorCode'], data: { displayName: 'Nguyễn Minh An', majorCode: 'IT', email: 'PRIVATE-EMAIL@example.test' } } }));
+  await page.goto(fixture);
+  await expect(page.getByRole('heading', { name: 'Nguyễn Minh An', exact: true })).toBeVisible();
+  await expect(page.locator('.candidate-identity')).not.toContainText('Ứng viên 1');
+  await expect(page.getByText('Hồ sơ sinh viên được chia sẻ', { exact: true })).toBeVisible();
+  await expect(page.locator('.candidate-avatar')).toHaveText('MA');
+  await expect(page.getByText(/PRIVATE-/)).toHaveCount(0);
+  await page.evaluate(() => window.dispatchEvent(new Event('blur')));
+  await expect(page.getByText('Nguyễn Minh An', { exact: true })).toHaveCount(0);
+  await expect(page.locator('.candidate-avatar')).not.toHaveText('MA');
+  revoked = true;await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await expect(page.getByText(/hồ sơ đã ngừng được chia sẻ/)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ứng viên 1', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Tiếp nhận thực tập', exact: true })).toBeDisabled();
+  await expect(page.getByText('Nguyễn Minh An', { exact: true })).toHaveCount(0);
+});
+
+test('candidate header and avatar disappear when the current shared projection expires', async ({ page }) => {
+  await setup(page);
+  await page.route('**/api/v1/enterprise/proposals/proposal-1/profile', route => route.fulfill({ json: {
+    profileVersion: 2, validUntil: '2026-11-10T10:00:03Z', allowedFields: ['displayName'], data: { displayName: 'Nguyễn Minh An' },
+  } }));
+  await page.goto(fixture);await expect(page.getByRole('heading', { name: 'Nguyễn Minh An', exact: true })).toBeVisible();
+  await page.clock.fastForward(3100);
+  await expect(page.getByText('Nguyễn Minh An', { exact: true })).toHaveCount(0);
+  await expect(page.locator('.candidate-avatar')).not.toHaveText('MA');
+  await expect(page.getByText('Quyền xem hồ sơ đã hết hạn.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Tiếp nhận thực tập', exact: true })).toBeDisabled();
 });
 test('manual refresh fetches newly shared candidates and removes profiles after access is revoked', async ({ page }) => {
   await setup(page);
@@ -72,7 +114,7 @@ test('decline requires a selected reason', async ({ page }) => {
   await expect(page.locator('.proposal-card .cooperation-state').getByText('Doanh nghiệp đã từ chối', { exact: true })).toBeVisible();
 });
 
-test('enterprise state filter requests the server and resets pagination', async ({ page }) => {
+test('enterprise state filter resets the accumulated candidates and requests the first matching page', async ({ page }) => {
   await setup(page);const requests: {page: number; state: string | null}[] = [];
   const rows = Array.from({length: 12}, (_, n) => ({...item, proposalItemId: `proposal-${n + 1}`, state: n === 0 ? 'DECLINED' : 'ENTERPRISE_ACCEPTED'}));
   await page.route('**/api/v1/enterprise/proposals/*/profile', r => r.fulfill({json: {profileVersion: 2, validUntil: item.reservationUntil, allowedFields: ['skills'], data: {skills: []}}}));
@@ -81,13 +123,157 @@ test('enterprise state filter requests the server and resets pagination', async 
     const visible = state ? rows.filter(row => row.state === state) : rows;
     return r.fulfill({json: {content: visible.slice(pageIndex * 10, pageIndex * 10 + 10), page: pageIndex, size: 10, totalElements: visible.length, totalPages: Math.ceil(visible.length / 10)}});
   });
-  await page.goto(fixture);await page.getByRole('button', {name: 'Trang ứng viên sau', exact: true}).click();
-  await expect(page.getByText('Trang 2/2', {exact: true})).toBeVisible();
+  await page.goto(fixture);await expect(page.locator('.enterprise-candidate-card')).toHaveCount(10);
+  await page.locator('.candidate-load-more').scrollIntoViewIfNeeded();
+  await expect(page.locator('.enterprise-candidate-card')).toHaveCount(12);
   await page.getByRole('combobox', {name: 'Lọc trạng thái ứng viên', exact: true}).selectOption('DECLINED');
   await expect(page.locator('.proposal-card .cooperation-state').getByText('Doanh nghiệp đã từ chối', {exact: true})).toBeVisible();
   expect(requests.at(-1)).toEqual({page: 0, state: 'DECLINED'});
   await expect(page.getByRole('heading', {name: 'Ứng viên 1', exact: true})).toBeVisible();
-  await expect(page.getByRole('button', {name: 'Trang ứng viên sau', exact: true})).toHaveCount(0);
+  await expect(page.locator('.candidate-load-more')).toHaveCount(0);
+});
+
+test('scrolling appends candidate batches while retaining one open profile and hiding unshared fields', async ({ page }) => {
+  await setup(page);
+  const requests: {page: number; size: number; state: string | null}[] = [];
+  const candidates = Array.from({length: 23}, (_, n) => ({...item, proposalItemId: `proposal-${n + 1}`, state: n === 0 ? 'DECLINED' : 'SHARED'}));
+  await page.route('**/api/v1/enterprise/cooperations/coop-1/proposals?*', route => {
+    const q = new URL(route.request().url()).searchParams;
+    const number = Number(q.get('page')), size = Number(q.get('size')), state = q.get('state');
+    requests.push({page: number, size, state});
+    const visible = state ? candidates.filter(row => row.state === state) : candidates;
+    return route.fulfill({json: {content: visible.slice(number * size, (number + 1) * size), page: number, size, totalElements: visible.length, totalPages: Math.ceil(visible.length / size)}});
+  });
+  await page.route('**/api/v1/enterprise/proposals/*/profile', route => {
+    const id = new URL(route.request().url()).pathname.split('/').at(-2)!;
+    return route.fulfill({json: {profileVersion: 2, validUntil: item.reservationUntil, allowedFields: ['displayName', 'skills'],
+      data: {displayName: 'Sinh viên ' + id.split('-').at(-1), email: 'PRIVATE@example.test', skills: [{kind: 'CANONICAL', skill: {skillCode: 'JAVA', level: 3, yearsPractice: 1}}]}}});
+  });
+  await page.goto(fixture);
+  const cards = page.locator('.enterprise-candidate-card');
+  await expect(cards).toHaveCount(10);
+  await expect(page.locator('.proposal-profile')).toHaveCount(0);
+  await expect(cards.nth(2).getByRole('heading', {name: 'Sinh viên 3', exact: true})).toBeVisible();
+  await cards.nth(2).getByRole('button', {name: 'Xem hồ sơ', exact: true}).click();
+  await expect(page.locator('.proposal-profile')).toHaveCount(1);
+  await expect(cards.nth(2).getByRole('button', {name: 'Thu gọn hồ sơ', exact: true})).toHaveAttribute('aria-expanded', 'true');
+  await cards.nth(3).getByRole('heading', {name: 'Sinh viên 4', exact: true}).click();
+  await expect(cards.nth(2).locator('.proposal-profile')).toHaveCount(0);
+  await expect(cards.nth(3).locator('.proposal-profile')).toHaveCount(1);
+  await expect(page.getByText('PRIVATE@example.test', {exact: true})).toHaveCount(0);
+  await page.locator('.candidate-load-more').scrollIntoViewIfNeeded();
+  await expect(cards).toHaveCount(20);
+  expect(requests.at(-1)).toEqual({page: 1, size: 10, state: null});
+  await expect(cards.nth(3).locator('.proposal-profile')).toHaveCount(1);
+  await expect(page.locator('.proposal-profile')).toHaveCount(1);
+  await page.locator('.candidate-load-more').scrollIntoViewIfNeeded();
+  await expect(cards).toHaveCount(23);
+  await expect(page.locator('.candidate-load-more')).toHaveCount(0);
+  expect(requests.map(request => request.page)).toEqual([0, 1, 2]);
+  for (const width of [1440, 390, 320]) {
+    await page.setViewportSize({width, height: 844});
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    expect(await cards.first().evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
+  }
+  await page.getByRole('combobox', {name: 'Lọc trạng thái ứng viên', exact: true}).selectOption('DECLINED');
+  await expect(cards).toHaveCount(1);
+  expect(requests.at(-1)).toEqual({page: 0, size: 10, state: 'DECLINED'});
+  await expect(page.getByRole('heading', {name: 'Sinh viên 1', exact: true})).toBeVisible();
+});
+
+test('an uncertain decision keeps its profile mounted and blocks automatic or manual loading', async ({ page }) => {
+  await setup(page);
+  const candidates = Array.from({length: 10}, (_, n) => ({...item, proposalItemId: `proposal-${n + 1}`}));
+  await page.route('**/api/v1/enterprise/cooperations/coop-1/proposals?*', route => route.fulfill({json: {content: candidates, page: 0, size: 10, totalElements: 11, totalPages: 2}}));
+  await page.route('**/api/v1/enterprise/proposals/*/profile', route => route.fulfill({json: {profileVersion: 2, validUntil: item.reservationUntil, allowedFields: ['majorCode'], data: {majorCode: 'IT'}}}));
+  await page.route('**/api/v1/enterprise/proposals/proposal-1/decision', route => route.abort());
+  await page.goto(fixture);
+  const cards = page.locator('.enterprise-candidate-card');
+  await cards.first().getByRole('button', {name: 'Xem hồ sơ', exact: true}).click();
+  await cards.first().getByRole('button', {name: 'Tiếp nhận thực tập', exact: true}).click();
+  await expect(page.getByRole('button', {name: 'Thử lại quyết định đã gửi', exact: true})).toBeVisible();
+  await expect(cards.first().getByRole('button', {name: 'Thu gọn hồ sơ', exact: true})).toBeDisabled();
+  await expect(cards.nth(1).getByRole('button', {name: 'Xem hồ sơ', exact: true})).toBeDisabled();
+  await cards.nth(1).getByRole('heading').click();
+  await expect(cards.first().locator('.proposal-profile')).toBeVisible();
+  await expect(cards.nth(1).locator('.proposal-profile')).toHaveCount(0);
+  await page.locator('.candidate-load-more').scrollIntoViewIfNeeded();
+  await expect(page.getByRole('button', {name: 'Tải thêm ứng viên', exact: true})).toBeDisabled();
+  await expect(cards).toHaveCount(10);
+  await expect(page.getByRole('combobox', {name: 'Lọc trạng thái ứng viên', exact: true})).toBeDisabled();
+});
+
+test('loading more retries the same failed page, deduplicates rows and works without IntersectionObserver', async ({ page }) => {
+  await page.addInitScript(() => { Reflect.deleteProperty(window, 'IntersectionObserver'); });
+  await setup(page);
+  const candidates = Array.from({length: 12}, (_, n) => ({...item, proposalItemId: `proposal-${n + 1}`}));
+  const requests: number[] = [];let failures = 1;
+  await page.route('**/api/v1/enterprise/cooperations/coop-1/proposals?*', route => {
+    const number = Number(new URL(route.request().url()).searchParams.get('page'));requests.push(number);
+    if (number === 1 && failures-- > 0) return route.fulfill({status: 503, json: {errorCode: 'DEPENDENCY_UNAVAILABLE'}});
+    return route.fulfill({json: {content: number === 0 ? candidates.slice(0, 10) : candidates.slice(9), page: number, size: 10, totalElements: 12, totalPages: 2}});
+  });
+  await page.route('**/api/v1/enterprise/proposals/*/profile', route => route.fulfill({json: {profileVersion: 2, validUntil: item.reservationUntil, allowedFields: ['majorCode'], data: {majorCode: 'IT'}}}));
+  await page.goto(fixture);
+  const cards = page.locator('.enterprise-candidate-card');
+  await expect(cards).toHaveCount(10);
+  await cards.first().getByRole('button', {name: 'Xem hồ sơ', exact: true}).click();
+  await page.getByRole('button', {name: 'Tải thêm ứng viên', exact: true}).click();
+  await expect(page.getByRole('button', {name: 'Thử tải thêm ứng viên', exact: true})).toBeVisible();
+  await expect(cards).toHaveCount(10);
+  await expect(cards.first().locator('.proposal-profile')).toHaveCount(1);
+  await page.getByRole('button', {name: 'Thử tải thêm ứng viên', exact: true}).click();
+  await expect(cards).toHaveCount(12);
+  await expect(cards.first().locator('.proposal-profile')).toHaveCount(1);
+  await expect(page.locator('.candidate-list-end')).toHaveText('Đã hiển thị tất cả 12 ứng viên.');
+  expect(requests).toEqual([0, 1, 1]);
+});
+
+test('changing the state filter cancels an in-flight append and ignores its late response', async ({ page }) => {
+  await setup(page);
+  let release: (() => void) | undefined, delivered = false;
+  const candidates = Array.from({length: 10}, (_, n) => ({...item, proposalItemId: `proposal-${n + 1}`}));
+  await page.route('**/api/v1/enterprise/cooperations/coop-1/proposals?*', async route => {
+    const q = new URL(route.request().url()).searchParams;
+    if (q.get('state') === 'DECLINED') return route.fulfill({json: pageOf([{...item, proposalItemId: 'filtered-candidate', state: 'DECLINED'}])});
+    if (q.get('page') === '1') {
+      await new Promise<void>(resolve => {release = resolve;});
+      await route.fulfill({json: {content: [{...item, proposalItemId: 'stale-candidate'}], page: 1, size: 10, totalElements: 11, totalPages: 2}}).catch(() => {});
+      delivered = true;return;
+    }
+    return route.fulfill({json: {content: candidates, page: 0, size: 10, totalElements: 11, totalPages: 2}});
+  });
+  const profileReads: string[] = [];
+  await page.route('**/api/v1/enterprise/proposals/*/profile', route => {
+    profileReads.push(route.request().url());
+    return route.fulfill({json: {profileVersion: 2, validUntil: item.reservationUntil, allowedFields: ['majorCode'], data: {majorCode: 'IT'}}});
+  });
+  await page.goto(fixture);
+  await expect(page.locator('.enterprise-candidate-card')).toHaveCount(10);
+  await page.locator('.candidate-load-more').scrollIntoViewIfNeeded();
+  await expect.poll(() => Boolean(release)).toBe(true);
+  await page.getByRole('combobox', {name: 'Lọc trạng thái ứng viên', exact: true}).selectOption('DECLINED');
+  await expect(page.locator('.enterprise-candidate-card')).toHaveCount(1);
+  release!();await expect.poll(() => delivered).toBe(true);
+  await expect(page.locator('.enterprise-candidate-card')).toHaveCount(1);
+  await expect(page.locator('.candidate-state-badge')).toHaveText('Doanh nghiệp đã từ chối');
+  expect(profileReads.some(url => url.includes('stale-candidate'))).toBe(false);
+});
+
+test('an authorization failure while appending clears the previously visible candidates', async ({ page }) => {
+  await setup(page);
+  const candidates = Array.from({length: 10}, (_, n) => ({...item, proposalItemId: `proposal-${n + 1}`}));
+  await page.route('**/api/v1/enterprise/cooperations/coop-1/proposals?*', route => new URL(route.request().url()).searchParams.get('page') === '1'
+    ? route.fulfill({status: 403, json: {errorCode: 'ACCESS_DENIED'}})
+    : route.fulfill({json: {content: candidates, page: 0, size: 10, totalElements: 11, totalPages: 2}}));
+  await page.route('**/api/v1/enterprise/proposals/*/profile', route => route.fulfill({json: {profileVersion: 2, validUntil: item.reservationUntil, allowedFields: ['displayName'], data: {displayName: 'Tên đã cấp quyền'}}}));
+  await page.goto(fixture);
+  await expect(page.locator('.enterprise-candidate-card')).toHaveCount(10);
+  await expect(page.getByText('Tên đã cấp quyền', {exact: true}).first()).toBeVisible();
+  await page.locator('.candidate-load-more').scrollIntoViewIfNeeded();
+  await expect(page.locator('.enterprise-candidate-card')).toHaveCount(0);
+  await expect(page.getByText('Tên đã cấp quyền', {exact: true})).toHaveCount(0);
+  await expect(page.getByRole('button', {name: 'Tải lại ứng viên', exact: true})).toBeEnabled();
 });
 
 for (const field of ['cv', 'evidence'] as const) test(`${field} download rechecks the profile and uses the authenticated binary File API with a neutral filename`, async ({ page }) => {
@@ -212,11 +398,21 @@ test('case deep link opens the exact T3 resource and respects denied reads', asy
 test('HR case deep link selects a current assignment and preserves T3 denial after revocation', async ({ page }) => {
   const caseId = '00000000-0000-4000-8000-000000000099';
   const membership = {role: 'ENTERPRISE', organizationId: 'enterprise-1'};
+  const unexpected: string[] = [];
+  await page.route('**/api/v1/**', r => {
+    unexpected.push(new URL(r.request().url()).pathname);
+    return r.fulfill({status: 401, json: {errorCode: 'SESSION_EXPIRED'}});
+  });
   await page.route('**/api/v1/auth/me', r => r.fulfill({json: {userId: 'hr-1', email: 'hr@example.test', displayName: 'HR', memberships: [membership]}}));
   await page.route('**/api/v1/auth/me/permissions', r => r.fulfill({json: [{...membership, permissions: ['t3:workspace:read']}]}));
+  await page.route('**/api/v1/cooperation/organizations', r => r.fulfill({json: [
+    {id: 'school-1', name: 'Synthetic School', type: 'UNIVERSITY'},
+    {id: 'enterprise-1', name: 'Synthetic Enterprise', type: 'ENTERPRISE'},
+  ]}));
   const assignment = {kind: 'HR', userId: 'hr-1', active: true, version: 1, grantedBy: 'coordinator-1', decisionRef: 'TEST',
     validFrom: '2020-01-01T00:00:00Z', validUntil: '2099-01-01T00:00:00Z',
     scope: {schoolOrgId: 'school-1', enterpriseOrgId: 'enterprise-1', termId: 'term-1', groupId: null, caseId: null}};
+  await mockContextLabels(page, assignment.scope);
   await page.route('**/api/v1/t3/context-assignments/me', r => r.fulfill({json: [
     {...assignment, id: 'expired', validUntil: '2020-01-02T00:00:00Z'},
     {...assignment, id: 'other-scope', scope: {...assignment.scope, termId: 'other-term'}},
@@ -232,10 +428,13 @@ test('HR case deep link selects a current assignment and preserves T3 denial aft
   });
   await page.goto(`/workspace/cases/${caseId}`);
   await expect(page.getByText('Trạng thái: Đang thực tập', {exact: true})).toBeVisible();
+  await expect(page.getByLabel('Phân công đang làm việc')).toHaveValue('current-scope');
+  await expect(page.getByText('TERM-FIXTURE', {exact: true})).toBeVisible();
   expect(selected).toContain('');expect(selected.filter(Boolean)).toEqual(['other-scope', 'current-scope']);
   denied = true;await page.getByRole('button', {name: 'Tải lại hồ sơ thực tập'}).click();
   await expect(page.getByText('Không đọc được hồ sơ thực tập. Kiểm tra phân công và quyền truy cập hiện hành.', {exact: true})).toBeVisible();
   await expect(page.getByText('Trạng thái: Đang thực tập', {exact: true})).toHaveCount(0);
+  expect(unexpected).toEqual([]);
 });
 test('school progress and capacity distinguish acceptance from placement', async ({ page }) => {
   await setup(page);
@@ -246,7 +445,7 @@ test('school progress and capacity distinguish acceptance from placement', async
   await page.route('**/api/v1/school/cooperations/coop-1/publication', route => route.fulfill({ json: { cooperationId: 'coop-1', publishedAt: null, closedAt: null, version: 3 } }));
   await page.goto(fixture + '?school');
   await expect(page.locator('.proposal-capacity dd')).toHaveText(['3', '1', '0', '2']);
-  const row = page.getByRole('row').filter({ hasText: 'school-student-1' });
+  const row = schoolCandidateRow(page, 1);
   await expect(row).toContainText('Sinh viên đã đồng ý'); await expect(row).toContainText('Đã cấp chia sẻ'); await expect(row).toContainText('Doanh nghiệp đã đồng ý');
   await expect(page.getByLabel('Thời điểm công bố')).toBeVisible();
 });
@@ -265,14 +464,14 @@ test('school separates consent evidence from sharing and filters proposals witho
   await page.route('**/api/v1/school/cooperations/coop-1/publication', r => r.fulfill({json: {cooperationId: 'coop-1', version: 3, publishedAt: null, closedAt: null}}));
   await page.goto(fixture + '?school');
   await expect(page.getByRole('columnheader', {name: 'Sinh viên đồng ý chia sẻ', exact: true})).toBeVisible();
-  const row = page.getByRole('row').filter({hasText: 'student-accepted'});
+  const row = schoolCandidateRow(page, 1);
   await expect(row.locator('td').nth(1)).toContainText('Đồng ý chia sẻ còn hiệu lực.');
   await expect(row.locator('td').nth(1)).toContainText('Thông tin có thể chia sẻ: Kỹ năng');
   await expect(row.locator('td').nth(2)).toContainText('Chưa chia sẻ');
   await page.clock.fastForward(61000);await expect(row.locator('td').nth(1)).toContainText('Chưa có đồng ý chia sẻ còn hiệu lực.');
   await page.getByRole('combobox', {name: 'Lọc trạng thái đề xuất', exact: true}).selectOption('RESERVED');
-  await expect(page.getByRole('row').filter({hasText: 'student-accepted'})).toHaveCount(0);
-  await expect(page.getByRole('row').filter({hasText: 'student-reserved'})).toBeVisible();
+  await expect(page.getByRole('rowheader')).toHaveCount(1);
+  await expect(schoolCandidateRow(page, 1).locator('td').last()).toHaveText('Đang giữ chỗ');
   await expect(page.locator('.proposal-capacity dd')).toHaveText(['3', '2', '0', '1']);
 });
 
@@ -287,7 +486,7 @@ async function schoolSetup(page: Page, proposal: object) {
 }
 test('consent remains separate from reservation and expires correctly for a 30-day grant', async ({ page }) => {
   await schoolSetup(page, {...schoolItem, activeConsentExpiresAt: '2026-12-10T10:00:00Z'});
-  await page.goto(fixture + '?school');const cell = page.getByRole('row').filter({hasText: 'school-student-1'}).locator('td').nth(1);
+  await page.goto(fixture + '?school');const cell = schoolCandidateRow(page, 1).locator('td').nth(1);
   // Each fake-clock jump must stay below the browser's signed 32-bit timer limit.
   await page.clock.fastForward(24 * 86400000);await page.clock.fastForward(2 * 86400000);
   await expect(cell).toContainText('Đồng ý chia sẻ còn hiệu lực.');
@@ -356,11 +555,15 @@ test('student withdraw confirmation cancels the opportunity, while consent revok
   });
   await page.goto(fixture + '?student');
   await expect(page.getByText(/Để chỉ thu hồi quyền xem thông tin cá nhân/)).toBeVisible();
-  page.once('dialog', dialog => { expect(dialog.message()).toContain('không thể hoàn tác'); expect(dialog.message()).toContain('HỦY BỎ'); void dialog.dismiss(); });
-  await page.getByRole('button', { name: 'Rút nhận lời', exact: true }).click();expect(withdrawals).toBe(0);
+  // Hộp xác nhận của giao diện (confirm.tsx) thay cho window.confirm: kiểm nội dung cảnh báo, Quay lại không gửi lệnh.
+  const withdrawDialog = page.getByRole('dialog', { name: 'Rút nhận lời?', exact: true });
+  await page.getByRole('button', { name: 'Rút nhận lời', exact: true }).click();
+  await expect(withdrawDialog).toContainText('không thể hoàn tác'); await expect(withdrawDialog).toContainText('HỦY BỎ');
+  await withdrawDialog.getByRole('button', { name: 'Quay lại', exact: true }).click();
+  await expect(withdrawDialog).toHaveCount(0);expect(withdrawals).toBe(0);
   await page.getByRole('button', { name: 'Thu hồi quyền chia sẻ', exact: true }).click();
   await expect.poll(() => revocations).toBe(1);expect(withdrawals).toBe(0);
-  page.once('dialog', dialog => void dialog.accept());
   await page.getByRole('button', { name: 'Rút nhận lời', exact: true }).click();
+  await withdrawDialog.getByRole('button', { name: 'Rút nhận lời', exact: true }).click();
   await expect.poll(() => withdrawals).toBe(1);
 });

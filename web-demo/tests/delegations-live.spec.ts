@@ -1,3 +1,4 @@
+import { openWorkspacePage } from './helpers/workspace';
 import { test, expect, type Browser, type Page } from '@playwright/test';
 
 test('admin bootstrap, school subdelegation and revocation use real APIs and current sessions', async ({ browser }) => {
@@ -13,7 +14,7 @@ test('admin bootstrap, school subdelegation and revocation use real APIs and cur
   const admin = await actor(browser, 'admin@example.test'), school = await actor(browser, 'school@example.test'), reviewer = await actor(browser, 'delegate@example.test');
   const schoolHeaders = { 'X-Organization-Id': '00000000-0000-4000-8000-000000000011' };
   expect((await reviewer.page.request.get('/api/v1/school/cooperations', { headers: schoolHeaders })).status()).toBe(404);
-  await admin.page.getByRole('button', { name: 'Phân công quyền cán bộ', exact: true }).click();
+  await openWorkspacePage(admin.page, 'Phân công quyền cán bộ');
   await expect(admin.page.getByRole('heading', { name: 'Khởi tạo phân công demo', exact: true })).toBeVisible();
   await admin.page.getByLabel('Tìm cán bộ theo tên hoặc email', { exact: true }).fill('school@example.test');
   await admin.page.getByRole('combobox', { name: 'Cán bộ nhận quyền', exact: true }).selectOption('00000000-0000-4000-8000-000000000002');
@@ -26,7 +27,7 @@ test('admin bootstrap, school subdelegation and revocation use real APIs and cur
   await expect(admin.page.locator('.loading-state')).toHaveCount(0);
   await admin.page.screenshot({ path: '../target/delegations-browser-admin.png', fullPage: true });
   await school.page.reload(); await signIn(school.page, 'school@example.test');
-  await school.page.getByRole('button', { name: 'Phân công quyền cán bộ', exact: true }).click();
+  await openWorkspacePage(school.page, 'Phân công quyền cán bộ');
   await expect(school.page.getByRole('heading', { name: 'Cấp phân công nghiệp vụ', exact: true })).toBeVisible();
   await school.page.getByLabel('Tìm cán bộ theo tên hoặc email', { exact: true }).fill('delegate@example.test');
   await school.page.getByRole('combobox', { name: 'Cán bộ nhận quyền', exact: true }).selectOption('00000000-0000-4000-8000-000000000201');
@@ -43,10 +44,16 @@ test('admin bootstrap, school subdelegation and revocation use real APIs and cur
   await reviewer.page.reload(); await signIn(reviewer.page, 'delegate@example.test');
   const visible = await reviewer.page.request.get('/api/v1/school/cooperations', { headers: schoolHeaders });
   expect(visible.status(), await visible.text()).toBe(200);
-  await reviewer.page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Duyệt hợp tác', exact: true }).click();
-  await expect(reviewer.page.getByRole('heading', { name: 'Đề nghị 1 · Đã gửi', exact: true })).toBeVisible();
-  await reviewer.page.reload(); await reviewer.page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Duyệt hợp tác', exact: true }).click();
-  await expect(reviewer.page.getByRole('heading', { name: 'Đề nghị 1 · Đã gửi', exact: true })).toBeVisible();
+  const first = (await visible.json()).content[0];
+  const firstDetail = await reviewer.page.request.get('/api/v1/school/cooperations/' + first.cooperationId, { headers: schoolHeaders });
+  expect(firstDetail.status()).toBe(200);
+  const demandTitle = (await firstDetail.json()).demand.data.title;
+  await openWorkspacePage(reviewer.page, 'Duyệt hợp tác');
+  await expect(reviewer.page.getByRole('heading', { name: demandTitle, exact: true })).toBeVisible();
+  await expect(reviewer.page.locator('.school-coop-state')).toContainText('Đã gửi');
+  await reviewer.page.reload(); await openWorkspacePage(reviewer.page, 'Duyệt hợp tác');
+  await expect(reviewer.page.getByRole('heading', { name: demandTitle, exact: true })).toBeVisible();
+  await expect(reviewer.page.locator('.school-coop-state')).toContainText('Đã gửi');
   await admin.page.getByRole('button', { name: 'Thu hồi phân công', exact: true }).click();
   await expect(admin.page.getByText('Đã thu hồi phân công và các phiên bị ảnh hưởng.', { exact: true })).toBeVisible();
   await expect(admin.page.getByRole('region', { name: 'Chi tiết phân công' })).toContainText('Đã thu hồi');
@@ -55,7 +62,7 @@ test('admin bootstrap, school subdelegation and revocation use real APIs and cur
   expect((await reviewer.page.request.get('/api/v1/school/cooperations', { headers: schoolHeaders })).status()).toBe(404);
   await school.page.reload(); await signIn(school.page, 'school@example.test');
   await school.page.getByRole('button', { name: 'Mở menu điều hướng', exact: true }).click();
-  await school.page.getByRole('button', { name: 'Phân công quyền cán bộ', exact: true }).click();
+  await openWorkspacePage(school.page, 'Phân công quyền cán bộ');
   await expect(school.page.getByRole('heading', { name: 'Chưa có kỳ được quản lý', exact: true })).toBeVisible();
   await Promise.all([admin.context.close(), school.context.close(), reviewer.context.close()]);
 });

@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { api } from '../../../api';
 import { Notice } from '../../../components';
+import { formatDateDMY } from '../../../ui/dateFormat';
 import type { DemandPage } from '../types';
 import type { FormData } from './form';
 import { failureMessage } from './errors';
@@ -38,7 +39,7 @@ function ReferenceSelect({ label, value, options, placeholder, disabled, error, 
   label: string; value: string; options: Choice[]; placeholder: string; disabled?: boolean; error: string; change: (value: string) => void;
 }) {
   const id = useId();
-  return <div><label htmlFor={id}>{label}</label><select id={id} required value={value} disabled={disabled}
+  return <div><label htmlFor={id}>{label}</label><select id={id} required value={value} disabled={disabled} title={options.find(option => option.value === value)?.label || value || placeholder}
     aria-invalid={!!error} aria-describedby={error ? id + '-error' : undefined} onChange={e => change(e.target.value)}>
     <option value="">{placeholder}</option>
     {value && !options.some(option => option.value === value) && <option value={value} disabled>{value} (đã chọn trước đó)</option>}
@@ -63,7 +64,7 @@ export function DemandReferenceFields({ org, form, existing, change, fieldError 
       <ReferenceSelect label="Trường nhận nhu cầu" value={form.schoolOrgId} options={(schools.value || []).map(s => ({ value: s.schoolOrgId, label: s.name }))}
         placeholder={schools.loading ? 'Đang tải trường…' : 'Chọn trường'} disabled={existing || schools.loading || !schools.value?.length}
         error={fieldError('schoolOrgId')} change={schoolOrgId => change({ schoolOrgId, termId: '', academicCatalogVersion: '', majorCodes: '' })} />
-      <ReferenceSelect label="Kỳ thực tập" value={form.termId} options={(terms.value || []).map(t => ({ value: t.termId, label: `${t.termCode} (${t.startDate} – ${t.endDate})` }))}
+      <ReferenceSelect label="Kỳ thực tập" value={form.termId} options={(terms.value || []).map(t => ({ value: t.termId, label: `${t.termCode} (${formatDateDMY(t.startDate)} – ${formatDateDMY(t.endDate)})` }))}
         placeholder={!form.schoolOrgId ? 'Chọn trường trước' : terms.loading ? 'Đang tải kỳ…' : 'Chọn kỳ thực tập'}
         disabled={existing || !form.schoolOrgId || terms.loading || !terms.value?.length} error={fieldError('termId')}
         change={termId => change({ termId, academicCatalogVersion: '', majorCodes: '' })} />

@@ -1,0 +1,1867 @@
+/* UT.Bridora Figma-Aligned Workspace System (Tokens 112:2318 + Frames 1424/1432/1433)
+ * Strictly scoped to .workspace-native-t3:not(.workspace-student) (HR, Mentor, School Staff T3 routes only). */
+
+/* ========== 0. Unified Top Context Bar & Slim Page Header (Fixes Misalignment & Stacked Boxes) ========== */
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .workspace-main > .topbar.t3-topbar {
+  border: 1px solid #e3eaf2;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 2px 10px rgba(20, 47, 64, 0.05);
+}
+
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar-slot > .t3-context-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.3fr) max-content;
+  align-items: end;
+  gap: 8px 16px;
+  padding: 10px 18px;
+  border-radius: inherit;
+}
+
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar .portal-organization-field {
+  align-items: end;
+  gap: 10px;
+}
+
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar .portal-organization-icon {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+  border-radius: 10px;
+  background: #e7f6f0;
+  border: 1px solid #cbe9de;
+  color: #0b927c;
+}
+
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar :is(.portal-context-select label, .t3-context-label) {
+  display: block;
+  margin: 0 0 4px;
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 600;
+  color: #64788a;
+}
+
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar :is(select, .t3-context-value) {
+  height: 38px;
+  min-height: 38px;
+  margin: 0;
+  padding: 6px 12px;
+  border: 1px solid #dce6ef;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 22px;
+  box-sizing: border-box;
+}
+
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar .portal-context-select select {
+  padding-right: 32px;
+  background-color: #f7fbf9;
+  border-color: #d2e7df;
+  color: #142f40;
+  font-weight: 600;
+}
+
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar .t3-context-value {
+  display: flex;
+  align-items: center;
+  background: #f5f8fc;
+  border-color: #e6edf4;
+  color: #142f40;
+  font-weight: 600;
+}
+
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar .t3-context-actions {
+  display: flex;
+  align-items: center;
+  align-self: end;
+  gap: 10px;
+  padding: 0 0 0 14px;
+  border-top: 0;
+  border-left: 1px solid #e3eaf2;
+}
+
+/* Force identical geometry, radius, vertical baseline, and hover behavior on both topbar action buttons */
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar .t3-context-actions > button.secondary,
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar .t3-context-actions button.portal-role.role-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 38px;
+  min-height: 38px;
+  margin: 0;
+  padding: 0 12px;
+  border: 1px solid #dce6ef;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #142f40;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-sizing: border-box;
+  box-shadow: 0 1px 2px rgba(20, 47, 64, 0.04);
+  transform: none;
+}
+
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar .t3-context-actions button.portal-role.role-menu-trigger {
+  padding: 0 12px 0 6px;
+}
+
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar .t3-context-actions button.portal-role.role-menu-trigger > span:first-child {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  border-radius: 7px;
+  font-size: 11px;
+}
+
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar .t3-context-details {
+  padding: 2px 0 0;
+}
+
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar .t3-context-details summary {
+  font-size: 12px;
+  color: #64788a;
+  font-weight: 600;
+}
+
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar .t3-context-actions > :is(button.secondary, button.role-menu-trigger):enabled:hover {
+  border-color: #93d6c4;
+  background: #f3faf7;
+  color: #087b68;
+  box-shadow: 0 3px 10px -4px rgba(11, 146, 124, 0.28);
+  transform: none;
+}
+
+@media (max-width: 1280px) {
+  #root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar-slot > .t3-context-bar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  }
+  #root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar .t3-context-actions {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: end;
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  #root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar-slot > .t3-context-bar {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 58px 14px 14px;
+  }
+  #root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar .t3-context-scope {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  #root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar .t3-context-actions {
+    grid-column: 1;
+    grid-row: 3;
+    justify-self: stretch;
+    justify-content: space-between;
+  }
+  #root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar.is-condensed .t3-topbar-slot > .t3-context-bar {
+    padding: 10px 64px 10px 58px;
+  }
+  #root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar.is-condensed .t3-context-actions > button,
+  #root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar.is-condensed .role-menu-label,
+  #root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar.is-condensed .role-menu-caret {
+    display: none;
+  }
+  #root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .t3-topbar.is-condensed .t3-context-actions button.role-menu-trigger {
+    width: 42px;
+    padding: 0;
+  }
+}
+
+/* ========== 1. Figma Design System Tokens & Canvas Hierarchy ========== */
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .content:not(:has(.t3-evaluations:not(.t3-pro-surface))):not(:where(.t3-context-bar, .t3-context-bar *)) {
+  --t3-canvas: #f3f6fb;
+  --t3-surface: #ffffff;
+  --t3-subtle: #f8fafc;
+  --t3-hover: #f3faf7;
+  --t3-border: #e3eaf2;
+  --t3-border-strong: #cddae6;
+  --t3-navy: #142f40;
+  --t3-ink: #142f40;
+  --t3-ink-body: #243e50;
+  --t3-muted: #64788a;
+  --t3-teal: #0b927c;
+  --t3-teal-secondary: #11aa91;
+  --t3-teal-hover: #087b68;
+  --t3-teal-soft: #e7f6f0;
+  --t3-teal-border: #bde5d7;
+  --t3-success-bg: #e5f6ed;
+  --t3-success-ink: #1a7d50;
+  --t3-warn-bg: #fff2db;
+  --t3-warn-ink: #986618;
+  --t3-danger-bg: #fff0f0;
+  --t3-danger-ink: #b4434b;
+  --t3-info-bg: #e8f2ff;
+  --t3-info-ink: #2969a9;
+  --t3-suppressed-bg: #f0eafa;
+  --t3-suppressed-ink: #7552b8;
+  --t3-ring: rgba(11, 146, 124, 0.16);
+  --t3-shadow-xs: 0 1px 2px rgba(20, 47, 64, 0.04);
+  --t3-shadow-sm: 0 1px 3px rgba(20, 47, 64, 0.04), 0 6px 20px -14px rgba(20, 47, 64, 0.08);
+  --t3-control-size: 14px;
+  display: grid;
+  gap: 14px;
+  padding-top: 16px;
+}
+
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .content:not(:has(.t3-evaluations:not(.t3-pro-surface))) > .page-header {
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 0;
+  padding: 15px 20px;
+  border: 1px solid var(--t3-border);
+  border-left: 4px solid var(--t3-teal);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ffffff 0%, #f7fbf9 100%);
+  box-shadow: var(--t3-shadow-sm);
+}
+
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .content:not(:has(.t3-evaluations:not(.t3-pro-surface))) > .page-header .section-kicker {
+  margin: 0 0 3px;
+  color: var(--t3-teal-hover);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .content:not(:has(.t3-evaluations:not(.t3-pro-surface))) > .page-header h1 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--t3-ink);
+}
+
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .content:not(:has(.t3-evaluations:not(.t3-pro-surface))) > .page-header .page-description {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--t3-muted);
+}
+
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .content:not(:has(.t3-evaluations:not(.t3-pro-surface))) > .page-header > .workspace-label {
+  display: none;
+}
+
+@media (max-width: 699px) {
+  #root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .content:not(:has(.t3-evaluations:not(.t3-pro-surface))) > .page-header {
+    padding: 13px 15px;
+  }
+
+  #root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .content:not(:has(.t3-evaluations:not(.t3-pro-surface))) > .page-header h1 {
+    font-size: 19px;
+  }
+}
+
+/* ========== 2. Cards, Typography & Control Alignment Baseline ========== */
+#root .workspace-native-t3:not(.workspace-student):not(:has(.student-nav-group)) .content:not(:has(.t3-evaluations:not(.t3-pro-surface))) {
+  &,
+  & :is(.internship-workspace, .t3-workbench, .t3-evaluations, .t3-operations, .t3-scope-operations, .t3-case-operations, .t3-school-grades, .t3-school-case-lookup, .t3-mentor-invitations, .t3-case-entry) {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  & .app-page-stage {
+    display: grid;
+    gap: 14px;
+    min-width: 0;
+  }
+
+  & :is(.stack, .hr-workspace, .internship-workspace, .internship-groups) {
+    gap: 14px;
+    min-width: 0;
+  }
+
+  & :is(.panel, .hr-overview, .t3-operation-card):not(:where(.t3-context-bar, .t3-context-bar *)) {
+    background: var(--t3-surface);
+    border: 1px solid var(--t3-border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: var(--t3-shadow-sm);
+  }
+
+  & .hr-overview {
+    display: grid;
+    gap: 18px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  & .panel .panel:not(.t3-operation-card):not(:where(.t3-operations-cards > .panel)) {
+    padding: 16px;
+    border: 1px solid var(--t3-border);
+    border-radius: 12px;
+    background: var(--t3-surface);
+    box-shadow: none;
+  }
+
+  & h1:not(:where(.t3-context-bar *)) { margin: 0; font-size: 24px; line-height: 1.25; font-weight: 700; color: var(--t3-ink); }
+  & h2:not(:where(.t3-context-bar *)) { margin: 0; font-size: 18px; line-height: 1.3; font-weight: 700; color: var(--t3-ink); letter-spacing: -0.015em; }
+  & h3:not(:where(.t3-context-bar *)) { margin: 0; font-size: 15.5px; line-height: 1.35; font-weight: 700; color: var(--t3-ink); }
+  & h4:not(:where(.t3-context-bar *)) { margin: 0; font-size: 14.5px; line-height: 1.35; font-weight: 700; color: var(--t3-ink); }
+  & p:not(:where(.t3-context-bar *)) { color: var(--t3-ink-body); font-size: 14px; line-height: 1.55; }
+  & :is(.muted, small):not(:where(.t3-context-bar *)) { color: var(--t3-muted); font-size: 13px; line-height: 1.5; }
+
+  /* Kill style.css margin-top: 7px bleed so EVERY form field & toolbar aligns to exact grid gap */
+  & form:not(.t3-inline-form):not(:where(.t3-context-bar *)) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    gap: 14px;
+    max-width: 100%;
+  }
+
+  & fieldset:not(:where(.t3-context-bar *)) {
+    border: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    min-width: 0;
+    max-width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    gap: 14px;
+  }
+
+  & legend:not(:where(.t3-context-bar *)) {
+    padding: 0;
+    margin: 0 0 2px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--t3-ink);
+  }
+
+  & label:not(:where(.t3-context-bar *)) {
+    display: grid;
+    align-content: start;
+    gap: 6px;
+    min-width: 0;
+    max-width: 100%;
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--t3-ink-body);
+  }
+
+  & label:has(> input[type="checkbox"]):not(:where(.t3-context-bar *)),
+  & label:has(> input[type="radio"]):not(:where(.t3-context-bar *)) {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  & :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]), select):not(:where(.t3-context-bar *)),
+  & .vn-date-control:not(:where(.t3-context-bar *)) {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 42px;
+    min-height: 42px;
+    margin: 0;
+    box-sizing: border-box;
+    border-radius: 10px;
+  }
+
+  & :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]), select):not(:where(.t3-context-bar *)) {
+    border: 1px solid var(--t3-border-strong);
+    background: var(--t3-surface);
+    color: var(--t3-ink);
+    font-size: var(--t3-control-size);
+    padding: 8px 12px;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+
+  & select:not(:where(.t3-context-bar *)) {
+    padding-right: 34px;
+  }
+
+  & .vn-date-control > input.vn-date-input {
+    height: 42px;
+    min-height: 42px;
+    margin: 0;
+  }
+
+  & textarea:not(:where(.t3-context-bar *)) {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 92px;
+    margin: 0;
+    padding: 10px 12px;
+    box-sizing: border-box;
+    border: 1px solid var(--t3-border-strong);
+    border-radius: 10px;
+    background: var(--t3-surface);
+    color: var(--t3-ink);
+    font-size: var(--t3-control-size);
+    line-height: 1.6;
+  }
+
+  & :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]), select, textarea):hover:not(:focus):not(:disabled):not([readonly]):not([aria-invalid="true"]):not(:where(.t3-context-bar *)) {
+    border-color: var(--t3-teal-border);
+  }
+
+  & :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]), select, textarea):focus-visible:not(:where(.t3-context-bar *)) {
+    outline: 0;
+    border-color: var(--t3-teal);
+    box-shadow: 0 0 0 3px var(--t3-ring);
+  }
+
+  & :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]), select, textarea)[aria-invalid="true"]:not(:where(.t3-context-bar *)) {
+    border-color: #d32f2f;
+    box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.12);
+  }
+
+  & :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]), select, textarea):is(:disabled, [readonly]):not(:where(.t3-context-bar *)) {
+    background-color: #f3f6fa;
+    border-color: var(--t3-border);
+    color: var(--t3-muted);
+  }
+
+  & :is(input[type="checkbox"], input[type="radio"]):not(:where(.t3-context-bar *)) {
+    width: 17px;
+    height: 17px;
+    min-width: 17px;
+    min-height: 17px;
+    flex: 0 0 17px;
+    padding: 0;
+    margin: 0;
+    accent-color: var(--t3-teal);
+  }
+
+  /* Unified Figma Buttons */
+  & button:not([class]):not(:where(.t3-context-bar *)),
+  & button.primary:not(:where(.t3-context-bar *)) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 42px;
+    padding: 8px 16px;
+    margin: 0;
+    border: 1px solid var(--t3-teal);
+    border-radius: 10px;
+    background: var(--t3-teal);
+    color: #ffffff;
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: normal;
+    box-sizing: border-box;
+    box-shadow: 0 1px 2px rgba(8, 123, 104, 0.16);
+  }
+
+  & button:not([class]):hover:not(:disabled):not(:where(.t3-context-bar *)),
+  & button.primary:hover:not(:disabled):not(:where(.t3-context-bar *)) {
+    background: var(--t3-teal-hover);
+    border-color: var(--t3-teal-hover);
+  }
+
+  & button.secondary:not(:where(.t3-context-bar *)) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 42px;
+    padding: 8px 14px;
+    margin: 0;
+    border: 1px solid var(--t3-border-strong);
+    border-radius: 10px;
+    background: var(--t3-surface);
+    color: var(--t3-ink);
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: normal;
+    box-sizing: border-box;
+  }
+
+  & button.secondary:hover:not(:disabled):not(:where(.t3-context-bar *)) {
+    background: var(--t3-hover);
+    border-color: var(--t3-teal-border);
+    color: var(--t3-teal-hover);
+  }
+
+  & button:disabled:not(:where(.t3-context-bar *)) {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  & :is(button, a):focus-visible:not(:where(.t3-context-bar *)) {
+    outline: 2px solid var(--t3-teal);
+    outline-offset: 3px;
+  }
+
+  & :is(.stack, .panel, article, form:not(.t3-inline-form), fieldset) > button:not(.t3-grade-row):not(.t3-quick-action):not(.t3-week-choice):not(:where(.t3-context-bar *)) {
+    justify-self: start;
+    width: auto;
+    max-width: 100%;
+    margin-top: 2px;
+  }
+
+  & .button-row:not(:has(> label)):not(:where(.t3-context-bar *)) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* ========== 3. Figma Light Tables (Foundations 112:3164) ========== */
+  & :is(.t3-table-scroll, .table-wrap) {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--t3-border);
+    border-radius: 12px;
+    background: var(--t3-surface);
+  }
+
+  & :is(.t3-table-scroll, .table-wrap) table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  & :is(.t3-table-scroll, .table-wrap) thead th,
+  & :is(.t3-cohort-actions, .t3-cohort-management) thead th {
+    background: #f3f6fb;
+    color: #526a7a;
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-align: start;
+    border: 0;
+    border-bottom: 1px solid var(--t3-border);
+    padding: 12px 16px;
+  }
+
+  & :is(.t3-table-scroll, .table-wrap) :is(tbody td, tbody th) {
+    padding: 13px 16px;
+    border-bottom: 1px solid #eef3f8;
+    font-size: 13.5px;
+    color: var(--t3-ink-body);
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+  }
+
+  & :is(.t3-table-scroll, .table-wrap) tbody tr.is-active-row > * {
+    background: #f2fbf7;
+  }
+
+  & :is(.t3-table-scroll, .table-wrap) tbody tr:hover > * {
+    background: #f4fbf8;
+  }
+
+  & :is(.t3-table-scroll, .table-wrap) tbody tr:last-child > * {
+    border-bottom: 0;
+  }
+
+  & .t3-table-scroll button {
+    height: 34px;
+    min-height: 34px;
+    padding: 0 12px;
+    font-size: 12.5px;
+    white-space: nowrap;
+  }
+
+  /* ========== 4. Unified Aligned Toolbars (Fixes ALL Button / Input / Select Height Drift) ========== */
+  & .t3-workbench .button-row:has(> label),
+  & .t3-task-filters,
+  & .t3-inline-form,
+  & .t3-calendar-controls,
+  & .t3-grade-toolbar,
+  & .t3-grade-toolbar > form,
+  & .t3-filter-pair,
+  & .t3-case-search-form,
+  & .t3-case-operations > form {
+    display: grid;
+    align-items: end;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  & :is(.t3-workbench .button-row:has(> label), .t3-task-filters, .t3-inline-form, .t3-calendar-controls, .t3-grade-toolbar) {
+    padding: 14px 16px;
+    background: var(--t3-subtle);
+    border: 1px solid var(--t3-border);
+    border-radius: 12px;
+  }
+
+  & .t3-grade-toolbar > form {
+    padding: 0;
+    background: transparent;
+    border: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  & .t3-grade-toolbar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.65fr) auto;
+  }
+
+  & .t3-task-filters,
+  & .t3-workbench .button-row:has(> label) {
+    grid-template-columns: minmax(0, 1.3fr) repeat(3, minmax(0, 1fr)) auto;
+  }
+
+  & .t3-workbench .button-row:has(> label):not(:has(.t3-work-search)) {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  }
+
+  & .t3-inline-form {
+    grid-template-columns: minmax(0, 440px) auto auto;
+    justify-content: start;
+  }
+
+  & .t3-inline-form:has(label + label) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  }
+
+  & .t3-calendar-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 560px;
+    margin-block: 2px;
+  }
+
+  & .t3-filter-pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  & .t3-case-operations > form {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  & .t3-case-search-form {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  & .t3-case-search-form:has(> label + label) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  }
+
+  & .t3-case-search-form > label:first-child { grid-column: 1; grid-row: 1; }
+  & .t3-case-search-form > label + label { grid-column: 2; grid-row: 1; }
+  & .t3-case-search-form > button { grid-column: 2; grid-row: 1; }
+  & .t3-case-search-form:has(> label + label) > button { grid-column: 3; grid-row: 1; }
+  & .t3-case-search-form > small { grid-column: 1 / -1; }
+
+  & :is(
+    .t3-workbench .button-row:has(> label),
+    .t3-task-filters,
+    .t3-inline-form,
+    .t3-calendar-controls,
+    .t3-grade-toolbar,
+    .t3-grade-toolbar > form,
+    .t3-filter-pair,
+    .t3-case-search-form,
+    .t3-case-operations > form
+  ) {
+    & label {
+      display: grid;
+      align-content: end;
+      gap: 6px;
+      margin: 0;
+      min-width: 0;
+    }
+
+    & :is(input:not([type="checkbox"]):not([type="radio"]), select, .vn-date-control, .vn-date-control > input, .t3-work-search > span, button) {
+      height: 42px;
+      min-height: 42px;
+      margin: 0;
+      box-sizing: border-box;
+    }
+
+    & button {
+      width: auto;
+      white-space: nowrap;
+      align-self: end;
+    }
+  }
+
+  /* Ensure Search Input Wrapper inside .t3-task-filters matches 42px dead-even */
+  & .t3-work-search {
+    width: 100%;
+    margin: 0;
+  }
+  & .t3-work-search > span {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  & .t3-work-search svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--t3-muted);
+  }
+  & .t3-work-search input[type="search"] {
+    padding-inline-start: 36px;
+  }
+
+  /* ========== 5. Figma Scope Bars & Cohort Header ========== */
+  & .hr-workspace-context.t3-scope-toolbar,
+  & .t3-grouping-toolbar,
+  & .t3-group-banner,
+  & .t3-case-hero {
+    display: flex;
+    align-items: end;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+    padding: 14px 18px;
+    background: var(--t3-surface);
+    border: 1px solid var(--t3-border);
+    border-radius: 14px;
+    box-shadow: var(--t3-shadow-xs);
+  }
+
+  & .t3-scope-toolbar > :is(h2, h3, p, dl) { margin: 0; }
+  & .t3-scope-toolbar > :is(label, .internship-context) {
+    flex: 1 1 200px;
+    min-width: 0;
+    margin: 0;
+    display: grid;
+    align-content: end;
+    gap: 6px;
+  }
+  & .t3-scope-toolbar > button {
+    height: 42px;
+    min-height: 42px;
+    margin: 0;
+    align-self: end;
+  }
+  & .t3-scope-toolbar .internship-role {
+    height: 42px;
+    box-sizing: border-box;
+    padding: 0 14px;
+    border-radius: 10px;
+    background: var(--t3-teal-soft);
+    color: var(--t3-teal-hover);
+    border: 1px solid var(--t3-teal-border);
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    align-self: end;
+  }
+  & .t3-scope-summary {
+    margin-inline-start: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 14px;
+    border-radius: 10px;
+    background: #f5fbf8;
+    border: 1px solid var(--t3-teal-border);
+    color: var(--t3-teal-hover);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+  & .t3-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--t3-teal);
+    box-shadow: 0 0 0 3px rgba(11, 146, 124, 0.2);
+  }
+
+  & .t3-group-toolbar {
+    gap: 10px 12px;
+  }
+  & .t3-group-toolbar:has(.t3-grouping-toolbar):has(input[type="search"]) > .t3-scope-summary {
+    display: none;
+  }
+  & .t3-group-toolbar .internship-context {
+    flex: 1.25 1 200px;
+    min-width: 180px;
+  }
+  & .t3-group-toolbar > label:has(input[type="search"]) {
+    flex: 1 1 160px;
+    min-width: 140px;
+  }
+  & .t3-group-toolbar .t3-cohort-actions { display: contents; }
+  & .t3-group-toolbar .t3-grouping-toolbar {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 10px;
+    margin-inline-start: auto;
+    flex: 0 1 auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  & .t3-group-toolbar .t3-grouping-toolbar:has(> div) {
+    flex: 1 0 100%;
+  }
+  & .t3-group-toolbar .t3-grouping-toolbar h3 {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);
+  }
+  & .t3-group-toolbar .t3-grouping-toolbar label {
+    flex: 0 0 118px;
+    min-width: 100px;
+    margin: 0;
+    display: grid;
+    align-content: end;
+    gap: 6px;
+  }
+  & .t3-group-toolbar .t3-grouping-toolbar label input {
+    height: 42px;
+    min-height: 42px;
+    margin: 0;
+  }
+  & .t3-group-toolbar .t3-grouping-toolbar > button {
+    height: 42px;
+    min-height: 42px;
+    margin: 0;
+    align-self: end;
+    white-space: nowrap;
+  }
+  & .t3-group-toolbar .t3-grouping-toolbar > div,
+  & .t3-group-toolbar .t3-cohort-actions > [role="status"] {
+    flex-basis: 100%;
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px solid var(--t3-border);
+  }
+
+  & .t3-group-banner {
+    align-items: center;
+    background: var(--t3-surface);
+    border-color: var(--t3-teal-border);
+  }
+  & .t3-group-banner h3 { font-size: 17px; color: var(--t3-navy); }
+  & .t3-group-banner .internship-facts {
+    display: flex;
+    width: auto;
+    margin-inline-start: auto;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+  & .t3-group-banner .internship-facts > div {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--t3-subtle);
+    border: 1px solid var(--t3-border);
+  }
+  & .t3-group-banner .internship-facts dt { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--t3-muted); }
+  & .t3-group-banner .internship-facts dd { font-size: 14px; font-weight: 700; margin: 0; color: var(--t3-teal-hover); }
+  & .t3-group-banner-mentors {
+    flex: 1 0 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    padding-top: 10px;
+    border-top: 1px solid #edf2f7;
+  }
+  & .t3-group-mentors-label { font-size: 12px; font-weight: 600; color: var(--t3-muted); }
+  & .t3-tech-meta { margin: 0; font-size: 11.5px; line-height: 1.4; color: #8396a7; }
+
+  & :is(.internship-workspace, .app-page-stage) > .empty-state {
+    min-height: 288px;
+    padding: 48px 28px;
+    background: var(--t3-surface);
+    border: 1px dashed var(--t3-border-strong);
+    border-radius: 16px;
+    box-shadow: var(--t3-shadow-xs);
+  }
+  & :is(.internship-workspace, .app-page-stage) > .empty-state > .empty-state-icon {
+    background: var(--t3-teal-soft);
+    color: var(--t3-teal-hover);
+  }
+  & :is(.internship-workspace, .app-page-stage) > .empty-state h3 {
+    color: var(--t3-navy);
+  }
+
+  /* ========== 6. Figma Pastel Left-Rail KPI Cards (1424-17091 & 1432-17091) ========== */
+  & .hr-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin: 0;
+  }
+
+  & .t3-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+  }
+
+  & .t3-metrics {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+  }
+
+  & :is(.hr-kpi-grid, .t3-kpis, .t3-metrics) > div {
+    --metric-ink: #087b68;
+    --metric-accent: #0b927c;
+    --metric-bg: #e5f6ed;
+    --metric-border: #cde9dd;
+    &:nth-child(2) { --metric-ink: #1d5698; --metric-accent: #2868b0; --metric-bg: #e8f2ff; --metric-border: #cddff6; }
+    &:nth-child(3) { --metric-ink: #6a48b0; --metric-accent: #7750b9; --metric-bg: #f0eafa; --metric-border: #ded4f5; }
+    &:nth-child(4) { --metric-ink: #986618; --metric-accent: #c87b06; --metric-bg: #fff2db; --metric-border: #f2dfb7; }
+    &:nth-child(5) { --metric-ink: #b4434b; --metric-accent: #c73e3a; --metric-bg: #fff0f0; --metric-border: #f4d3d3; }
+    &:nth-child(6) { --metric-ink: #087b68; --metric-accent: #0b927c; --metric-bg: #e5f6ed; --metric-border: #cde9dd; }
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 16px 18px;
+    border: 1px solid var(--metric-border);
+    border-left: 4px solid var(--metric-accent);
+    border-radius: 12px;
+    background: var(--metric-bg);
+    box-shadow: var(--t3-shadow-xs);
+
+    & dt {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #4b6374;
+      line-height: 1.35;
+    }
+    & .t3-kpi-icon {
+      display: inline-flex;
+      align-items: center;
+      color: var(--metric-accent);
+      flex: none;
+    }
+    & dd {
+      margin: 2px 0;
+      color: var(--metric-ink);
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+    & .t3-kpi-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+    & .t3-kpi-footer small {
+      font-size: 12px;
+      color: #5b7182;
+    }
+    & .t3-kpi-footer button {
+      min-height: 0;
+      height: auto;
+      padding: 0;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--metric-ink);
+    }
+  }
+
+  /* HR Overview Lower Split & Figma Quick Actions */
+  & .t3-overview-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  & .t3-overview-columns > * {
+    min-width: 0;
+    margin: 0;
+    height: 100%;
+  }
+
+  & .t3-priorities {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+  }
+
+  & .t3-priorities li {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 14px;
+    border: 1px solid var(--t3-border);
+    border-radius: 10px;
+    background: var(--t3-subtle);
+  }
+
+  & .t3-priorities li small {
+    display: inline-grid;
+    place-items: center;
+    width: 32px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--t3-info-bg);
+    color: var(--t3-info-ink);
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  & .t3-priorities li > div { display: grid; gap: 2px; min-width: 0; }
+  & .t3-priorities li strong { font-size: 13.5px; color: var(--t3-navy); font-weight: 600; }
+  & .t3-priorities li span { font-size: 12.5px; color: var(--t3-muted); }
+  & .t3-priorities button { min-height: 32px; height: 32px; padding: 0 10px; border-radius: 8px; font-size: 13px; color: var(--t3-teal-hover); font-weight: 600; }
+
+  & .t3-quick-actions {
+    align-content: start;
+  }
+
+  & .t3-quick-actions button.t3-quick-action {
+    width: 100%;
+    height: 48px;
+    min-height: 48px;
+    padding: 0 16px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13.5px;
+    font-weight: 600;
+    background: #eef8f4;
+    border: 1px solid #cce9de;
+    color: var(--t3-teal-hover);
+    box-shadow: none;
+  }
+
+  & .t3-quick-actions button.t3-quick-action.is-primary {
+    background: #d9f3ea;
+    border-color: #9fdcd0;
+    color: var(--t3-teal-hover);
+  }
+
+  & .t3-quick-actions button.t3-quick-action:hover:not(:disabled) {
+    background: #e2f5ee;
+    border-color: var(--t3-teal-border);
+  }
+
+  & .t3-quick-actions button.t3-quick-action.is-primary:hover:not(:disabled) {
+    background: #c8ede0;
+    border-color: var(--t3-teal);
+    color: #065b4d;
+  }
+
+  /* ========== 7. Operations Progress Stack (Figma 1424-17091 — NO 50% Orphan Hole) ========== */
+  & .t3-operations-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 340px) auto;
+    gap: 14px 18px;
+    align-items: end;
+    padding: 18px 22px;
+  }
+  & .t3-operations-header > div:first-child { min-width: 0; }
+  & .t3-operations-header h1 { font-size: 18px; }
+  & .t3-operations-header p { margin-top: 4px; font-size: 13px; color: var(--t3-muted); }
+  & .t3-operations-header > label { margin: 0; display: grid; align-content: end; gap: 6px; }
+  & .t3-operations-header > button { justify-self: end; margin: 0; height: 42px; min-height: 42px; }
+  & .t3-operations-header > .t3-filter-pair { grid-column: 1 / -1; }
+
+  & .t3-progress-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 16px 18px;
+    border: 1px solid var(--t3-border);
+    border-radius: 12px;
+    background: var(--t3-subtle);
+  }
+  & .t3-progress-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 7px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+  & .t3-progress-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--t3-ink-body);
+  }
+  & .t3-progress-meta strong {
+    font-variant-numeric: tabular-nums;
+    color: var(--t3-teal-hover);
+    font-size: 14px;
+    font-weight: 700;
+  }
+  & .t3-progress-row progress {
+    appearance: none;
+    width: 100%;
+    height: 9px;
+    border: 0;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #e3eaf2;
+    color: var(--t3-teal);
+  }
+  & .t3-progress-row progress::-webkit-progress-bar { border-radius: 999px; background: #e3eaf2; }
+  & .t3-progress-row progress::-webkit-progress-value { border-radius: 999px; background: linear-gradient(90deg, #0b927c, #11aa91); }
+  & .t3-progress-row progress::-moz-progress-bar { border-radius: 999px; background: linear-gradient(90deg, #0b927c, #11aa91); }
+
+  & .t3-operations-support { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 16px; min-width: 0; }
+  & .t3-operations-support > section.panel:has(> h2 + button:last-child) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 16px;
+  }
+  & .t3-operations-support > section.panel:has(> h2 + button:last-child) > h2 { margin: 0; }
+
+  & .t3-case-header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 14px 18px; border: 1px solid var(--t3-teal-border); border-radius: 12px; background: #f5fbf8; }
+  & .t3-case-header > * { margin: 0; }
+  & .t3-case-header > button { margin-inline-start: auto; height: 38px; min-height: 38px; }
+  & .t3-case-header .t3-placement-badge { padding: 4px 10px; border-radius: 8px; background: #ffffff; border: 1px solid var(--t3-border); font-size: 12.5px; }
+  & .t3-operations-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; min-width: 0; }
+  & .t3-operations-cards > :is(.t3-operation-card, .panel):nth-child(odd):last-child { grid-column: 1 / -1; }
+  & .t3-operations-cards > :is(.t3-operation-card, .panel) { align-content: start; margin: 0; padding: 18px 20px; border: 1px solid var(--t3-border); border-radius: 12px; background: var(--t3-surface); box-shadow: var(--t3-shadow-xs); }
+  & .t3-operations-cards .t3-inline-form:has(label + label) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  & .t3-operations-cards .t3-inline-form:has(label + label) > button {
+    grid-column: 1;
+    justify-self: start;
+  }
+  & .t3-operations-cards > * > h3 { font-size: 16px; color: var(--t3-navy); }
+  & .t3-case-operations:has(.t3-operations-cards) { padding: 0; border: 0; background: transparent; box-shadow: none; }
+  & .t3-case-operations:has(.t3-operations-cards) > form { padding: 16px 20px; border: 1px solid var(--t3-border); border-radius: 14px; background: var(--t3-surface); }
+
+  /* ========== 8. Workbench Nav, Figma Kanban Columns (1432-17284) & Calendar ========== */
+  & .t3-view-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px;
+    background: var(--t3-subtle);
+    border: 1px solid var(--t3-border);
+    border-radius: 12px;
+  }
+  & .t3-view-nav button {
+    flex: 1 1 auto;
+    height: 38px;
+    min-height: 38px;
+    padding: 0 14px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--t3-muted);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  & .t3-view-nav button:hover:not(:disabled),
+  & .t3-view-nav button.secondary:hover:not(:disabled),
+  & .t3-view-nav button.selected,
+  & .t3-view-nav button[aria-pressed="true"],
+  & .t3-view-nav button.secondary[aria-pressed="true"],
+  & .t3-view-nav button.secondary[aria-pressed="true"]:hover:not(:disabled),
+  & .t3-view-nav button[aria-current="page"] {
+    background-color: rgb(231, 246, 240);
+    color: var(--t3-teal-hover);
+    border-color: var(--t3-teal-border);
+  }
+
+  & .t3-kanban {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    align-items: stretch;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: 6px;
+  }
+  & .t3-kanban-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    min-height: 210px;
+    padding: 0 0 10px;
+    border: 1px solid var(--t3-border);
+    border-radius: 14px;
+    background: #ffffff;
+    overflow: hidden;
+  }
+  /* Full-bleed pastel column headers matching Figma 1432-17284 */
+  & .t3-kanban-column > h4 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 11px 14px;
+    border-radius: 0;
+    border-bottom: 1px solid rgba(20, 47, 64, 0.06);
+    background: var(--t3-info-bg);
+    color: var(--t3-info-ink);
+    font-size: 12.5px;
+    font-weight: 700;
+  }
+  & .t3-kanban-column:has(.t3-state-NEW) > h4,
+  & .t3-kanban-column:has(.t3-state-IN_PROGRESS) > h4 { background: #e8f2ff; color: #1d5698; }
+  & .t3-kanban-column:has(.t3-state-SUBMITTED) > h4 { background: #e7f6f0; color: #087b68; }
+  & .t3-kanban-column:has(.t3-state-REVISION_REQUIRED) > h4 { background: #fff2db; color: #986618; }
+  & .t3-kanban-column:has(.t3-state-COMPLETED) > h4 { background: #e5f6ed; color: #1a7d50; }
+  & .t3-kanban-column > h4 > .t3-state { background: transparent; padding: 0; color: inherit; font-size: 12.5px; }
+  & .t3-kanban-column > h4 > .muted {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 22px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.85);
+    color: inherit;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  & .t3-kanban-column:not(:has(article))::after {
+    content: 'Chưa có việc';
+    display: grid;
+    place-items: center;
+    flex: 1;
+    min-height: 110px;
+    padding: 20px 10px;
+    text-align: center;
+    border: 0;
+    background: transparent;
+    color: #93a4b3;
+    font-size: 12.5px;
+  }
+
+  & .t3-task-card {
+    margin: 0;
+    padding: 13px 14px;
+    border: 1px solid #e6edf4;
+    border-radius: 11px;
+    background: var(--t3-surface);
+    box-shadow: var(--t3-shadow-xs);
+  }
+  & .t3-kanban-column > .t3-task-card {
+    margin: 0 10px;
+  }
+  & .t3-tech-meta {
+    margin: 0;
+    font-size: 11.5px;
+    color: var(--t3-muted);
+  }
+  & .t3-task-card button.text-button {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    padding: 0;
+    justify-content: flex-start;
+    text-align: left;
+    color: var(--t3-navy);
+    font-size: 13.5px;
+    font-weight: 650;
+    line-height: 1.45;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  & .t3-task-card button.text-button:hover { color: var(--t3-teal-hover); background: transparent; }
+  & .t3-task-card p { margin: 8px 0 0; font-size: 12px; color: var(--t3-muted); }
+  & .t3-task-card p svg { vertical-align: -2px; }
+  & .t3-task-facts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0 0; font-size: 12px; color: var(--t3-muted); }
+  & .t3-priority { background: var(--t3-info-bg); color: var(--t3-info-ink); border-radius: 6px; padding: 2px 7px; font-weight: 600; font-size: 11.5px; }
+  & .t3-priority[data-priority="HIGH"] { background: var(--t3-warn-bg); color: var(--t3-warn-ink); }
+  & .t3-priority[data-priority="LOW"] { background: #edf2f5; color: #405767; }
+
+  & .t3-state { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #eef3f7; color: #365063; }
+  & .t3-state-IN_PROGRESS { background: var(--t3-info-bg); color: var(--t3-info-ink); }
+  & .t3-state-SUBMITTED { background: var(--t3-teal-soft); color: var(--t3-teal-hover); }
+  & .t3-state-REVISION_REQUIRED { background: var(--t3-warn-bg); color: var(--t3-warn-ink); }
+  & .t3-state-COMPLETED { background: var(--t3-success-bg); color: var(--t3-success-ink); }
+
+  & .t3-task-list .t3-task-card { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+  & .t3-task-list .t3-task-card > button { min-width: 0; flex: 1 1 14rem; }
+  & .t3-task-list .t3-task-card > p { flex-basis: 100%; margin: 2px 0 0; }
+
+  & .t3-workbench .button-row:has(> button + span + button:last-child) {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--t3-border);
+  }
+
+  /* Submission Review Split (Figma 1432-17441) */
+  & .t3-task-detail { border-color: var(--t3-teal-border); border-top: 3px solid var(--t3-teal); box-shadow: 0 10px 26px -14px rgba(11, 146, 124, 0.2); }
+  & .t3-submission-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; align-items: start; }
+  & .t3-submission-thread { padding: 16px 18px; border: 1px solid var(--t3-border); border-radius: 12px; background: var(--t3-subtle); }
+  & .t3-submission-thread > article { padding: 10px 12px; border: 1px solid var(--t3-border); border-radius: 10px; background: var(--t3-surface); overflow-wrap: anywhere; }
+  & .t3-submission-thread > article p:first-child { color: var(--t3-muted); font-size: 12px; }
+  & .t3-workflow article.panel,
+  & [aria-label="Chi tiết báo cáo"] dl.t3-preserve-text { padding: 14px 16px; border: 1px solid var(--t3-border); border-radius: 12px; background: var(--t3-subtle); }
+  & .t3-workflow .t3-mentor-review,
+  & .t3-workflow [aria-label="Nhận xét báo cáo đã lưu"],
+  & .t3-workflow [aria-label="Nhận xét bài nộp đã lưu"] { background: #ffffff; border: 1px solid var(--t3-teal-border); border-radius: 12px; padding: 14px 16px; }
+
+  @media (min-width: 901px) {
+    & .internship-group-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+    & .internship-group-grid > .internship-group-card:nth-child(odd):last-child {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      align-items: center;
+      gap: 14px 20px;
+      padding: 16px 20px;
+    }
+    & .internship-group-grid > .internship-group-card:nth-child(odd):last-child .t3-group-card-foot {
+      width: auto;
+      padding-top: 0;
+      border-top: 0;
+      justify-self: end;
+    }
+    & .t3-submission-layout { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+    & [aria-label="Chi tiết báo cáo"]:has(> .t3-mentor-review) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 16px; }
+    & [aria-label="Chi tiết báo cáo"] > :not(dl, .t3-mentor-review, .t3-report-content) { grid-column: 1 / -1; }
+    & .t3-workbench > div > form.panel > fieldset { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    & .t3-workbench > div > form.panel > fieldset > :is(label:first-child, label:has(textarea), fieldset, button) { grid-column: 1 / -1; }
+  }
+
+  /* Calendar (Compact Split Card + Slim Unified Figma Month Table) */
+  & .t3-calendar { padding: 18px 20px; }
+  & .t3-calendar-layout { display: grid; gap: 14px; align-items: start; }
+  & .t3-calendar-aside { display: grid; gap: 10px; align-content: start; min-width: 0; }
+  & .t3-calendar-head h3 { margin: 0 0 4px; }
+  & .t3-calendar-head p { margin: 0; font-size: 13px; line-height: 1.45; }
+  & .t3-calendar-aside > .t3-empty {
+    margin: 0;
+    padding: 12px 14px;
+    border: 1px dashed var(--t3-border-strong);
+    border-radius: 10px;
+    background: var(--t3-subtle);
+    font-size: 12.5px;
+    line-height: 1.45;
+    text-align: left;
+    color: var(--t3-muted);
+  }
+  @media (min-width: 1180px) {
+    & .t3-calendar-layout { grid-template-columns: 276px minmax(0, 1fr); gap: 20px; }
+    & .t3-calendar-controls { grid-template-columns: minmax(0, 1fr); max-width: none; gap: 10px; padding: 12px 14px; margin: 0; }
+  }
+  & .t3-month-scroll { min-width: 0; max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
+  & :is(.t3-month-grid, .t3-calendar-grid) {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(84px, 1fr));
+    grid-template-rows: auto;
+    grid-auto-rows: auto;
+    gap: 1px;
+    padding: 0 !important;
+    background: var(--t3-border);
+    border: 1px solid var(--t3-border);
+    border-radius: 12px;
+    overflow: hidden;
+    & > [role="columnheader"] {
+      padding: 8px 6px;
+      border: 0;
+      border-radius: 0;
+      background: #f3f6fb;
+      color: #526a7a;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.3;
+      text-align: center;
+    }
+    & > :is([role="gridcell"], [aria-hidden="true"]) {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 4px;
+      min-width: 0;
+      min-height: 58px;
+      padding: 7px 8px;
+      border: 0;
+      border-radius: 0;
+      background: #ffffff;
+      box-shadow: none;
+    }
+    & > [aria-hidden="true"] { background: #f8fafc; }
+    & > [role="gridcell"]:has(button) {
+      background: #f4fbf8;
+      box-shadow: inset 0 2px 0 var(--t3-teal);
+    }
+    & [role="gridcell"] > strong {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1;
+      color: var(--t3-navy);
+      text-align: center;
+    }
+    & > [role="gridcell"]:has(button) > strong {
+      background: var(--t3-teal-soft);
+      color: var(--t3-teal-hover);
+      font-weight: 700;
+    }
+    & button.text-button {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-height: 0;
+      justify-content: flex-start;
+      text-align: left;
+      padding: 4px 7px;
+      border-radius: 6px;
+      background: #e7f6f0;
+      border: 1px solid #bce5d8;
+      border-left: 3px solid var(--t3-teal);
+      color: var(--t3-teal-hover);
+      font-size: 11.5px;
+      font-weight: 600;
+      line-height: 1.3;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    & button.text-button:hover { background: #d9f3ea; border-color: var(--t3-teal); }
+  }
+  @media (max-width: 699px) {
+    & :is(.t3-month-grid, .t3-calendar-grid) {
+      grid-template-columns: repeat(7, minmax(76px, 1fr));
+      & > :is([role="gridcell"], [aria-hidden="true"]) { min-height: 52px; padding: 6px; }
+    }
+  }
+
+  /* ========== 9. Rubric Evaluation (Figma 1433-17212) & Group Mgmt ========== */
+  & .t3-evaluation-flow { align-items: start; }
+  @media (min-width: 1000px) {
+    & .t3-evaluation-flow:has(> .t3-evaluation-case) {
+      display: grid;
+      grid-template-columns: minmax(0, .95fr) minmax(0, 1.15fr);
+      align-items: stretch;
+      gap: 16px;
+    }
+    & .t3-evaluation-case, & .t3-evaluation-case > section { display: contents; }
+    & .t3-evaluation-flow > .panel,
+    & .t3-evaluation-case > section > .panel { height: 100%; align-content: start; padding: 18px 20px; }
+    & .t3-evaluation-case > section > div:not(.panel) { grid-column: 1 / -1; }
+  }
+
+  & section[aria-label="Mentor chấm rubric"] {
+    display: grid;
+    gap: 16px;
+    padding: 20px 24px;
+    border: 1px solid var(--t3-border);
+    border-radius: 16px;
+    background: var(--t3-surface);
+    box-shadow: var(--t3-shadow-sm);
+  }
+  & section[aria-label="Mentor chấm rubric"] > form[aria-label="Nội dung đánh giá"] {
+    border-top: 1px solid var(--t3-border);
+    padding-top: 16px;
+  }
+  & .t3-criterion-card {
+    padding: 16px 18px;
+    border: 1px solid var(--t3-border);
+    border-radius: 12px;
+    background: #ffffff;
+    gap: 12px;
+  }
+  & .t3-criterion-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #edf2f7;
+  }
+  & .t3-criterion-head h3 {
+    flex: 1 1 260px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 15px;
+    color: var(--t3-navy);
+  }
+  & .t3-criterion-head .t3-weight {
+    background: var(--t3-info-bg);
+    color: var(--t3-info-ink);
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  & .t3-criterion-score {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+    margin: 0;
+  }
+  & .t3-criterion-score span {
+    white-space: nowrap;
+    font-size: 13px;
+    color: var(--t3-muted);
+  }
+  & .t3-criterion-score input {
+    width: 92px;
+    height: 38px;
+    min-height: 38px;
+    text-align: center;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--t3-teal-hover);
+    background: var(--t3-teal-soft);
+    border-color: var(--t3-teal-border);
+  }
+  & .t3-criterion-card textarea { min-height: 76px; }
+  & .t3-criterion-evidence { display: grid; gap: 12px; padding-top: 10px; border-top: 1px dashed var(--t3-border); }
+  @media (min-width: 820px) {
+    & .t3-criterion-evidence:has(> :nth-child(2)) { grid-template-columns: minmax(0, 1fr) minmax(260px, .9fr); align-items: start; }
+  }
+  & .t3-score-footer {
+    display: grid;
+    gap: 10px;
+    padding: 16px;
+    border-radius: 12px;
+    background: var(--t3-surface);
+    border: 1px solid var(--t3-border);
+  }
+  & .t3-score-footer > * { margin: 0; }
+  & .t3-score-strip {
+    padding: 12px 14px;
+    background: var(--t3-success-bg);
+    border-radius: 10px;
+    color: var(--t3-success-ink);
+    font-weight: 700;
+    font-size: 15px;
+  }
+  & .t3-score-hint {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--t3-warn-bg);
+    color: var(--t3-warn-ink);
+    font-size: 12.5px;
+    font-weight: 500;
+  }
+  & .t3-score-footer .button-row { justify-content: flex-end; padding-top: 4px; }
+
+  /* Cohort, Group Mgmt & Badges */
+  & .t3-cohort-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 16px; }
+  & .t3-cohort-actions > :only-child { grid-column: 1 / -1; }
+  & form.t3-create-cohort:not(.t3-inline-form),
+  & .t3-cohort-creator > form > fieldset:not(.t3-noop),
+  & .t3-mentor-invitation-form > fieldset:not(.t3-noop) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  & :is(form.t3-create-cohort:not(.t3-inline-form), .t3-cohort-creator > form > fieldset:not(.t3-noop), .t3-mentor-invitation-form > fieldset:not(.t3-noop)) > :not(label) { grid-column: 1 / -1; }
+  & :is(form.t3-create-cohort:not(.t3-inline-form), .t3-cohort-creator > form > fieldset:not(.t3-noop), .t3-mentor-invitation-form > fieldset:not(.t3-noop)) > button { grid-column: 1 / -1; justify-self: start; }
+
+  & .t3-group-mgmt-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+  & .t3-group-members-pane .t3-table-scroll {
+    max-height: 296px;
+    overflow: auto;
+    border: 1px solid var(--t3-border);
+    border-radius: 12px;
+    background: var(--t3-surface);
+  }
+  & .t3-group-members-pane .t3-table-scroll table { margin: 0; border: 0; border-radius: 0; }
+  & .t3-group-members-pane .t3-table-scroll thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #f8fafc;
+    box-shadow: inset 0 -1px 0 var(--t3-border);
+  }
+  & .t3-group-forms-pane { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  & .t3-group-forms-pane > form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px 14px;
+    padding: 16px 18px;
+    border: 1px solid var(--t3-border);
+    border-radius: 12px;
+    background: var(--t3-subtle);
+    align-content: start;
+  }
+  & .t3-group-forms-pane > form > h4 { grid-column: 1 / -1; margin: 0; }
+  & .t3-group-forms-pane > form > label { margin: 0; min-width: 0; }
+  @media (min-width: 740px) {
+    & .t3-group-forms-pane > form:first-child {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+    }
+    & .t3-group-forms-pane > form:has(label + label) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: end;
+    }
+    & .t3-group-forms-pane > form :is(input:not([type="checkbox"]):not([type="radio"]), select, button) {
+      min-height: 42px;
+      height: 42px;
+    }
+    & .t3-group-forms-pane > form > button {
+      justify-self: end;
+      white-space: nowrap;
+      padding-inline: 18px;
+    }
+  }
+  @media (min-width: 960px) {
+    & .t3-group-forms-pane > form:has(label + label + label) {
+      grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+      align-items: end;
+    }
+  }
+  & .t3-group-card-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  & .t3-group-card-head h3 { margin: 0; font-size: 16.5px; color: var(--t3-navy); overflow-wrap: anywhere; }
+  & .t3-group-counts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; }
+  & .t3-counts-sep { color: var(--t3-muted); font-weight: 700; font-size: 12px; }
+  & .t3-group-card-foot { display: flex; justify-content: flex-end; width: 100%; padding-top: 8px; border-top: 1px solid #edf2f7; }
+  & .internship-group-card { min-height: 0; padding: 16px 18px; gap: 10px; }
+
+  & .t3-intake-methods .button-row { padding: 4px; width: fit-content; background: #f1f5f9; border: 1px solid var(--t3-border); border-radius: 10px; gap: 4px; }
+  & .t3-intake-methods .button-row button { border: 0; height: 34px; min-height: 34px; padding: 0 14px; border-radius: 7px; font-size: 13px; background: transparent; color: var(--t3-muted); box-shadow: none; }
+  & .t3-intake-methods .button-row button[aria-pressed="true"] { background: #ffffff; color: var(--t3-teal-hover); box-shadow: 0 1px 3px rgba(20, 47, 64, 0.08); }
+  & .t3-intake-methods .t3-cohort-management > .t3-operation-card { border: 0; padding: 0; box-shadow: none; background: transparent; }
+
+  & .t3-placement-file { position: relative; display: block; }
+  & .t3-placement-file input { position: absolute; z-index: 1; inset: 0; height: 100%; opacity: 0; margin: 0; cursor: pointer; }
+  & .t3-file-prompt { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 96px; padding: 14px; background: #fafefc; border: 1.5px dashed #9fdcd0; border-radius: 12px; }
+  & .t3-file-prompt b { padding: 5px 12px; border-radius: 8px; background: var(--t3-teal-soft); color: var(--t3-teal-hover); font-size: 13px; }
+  & .t3-file-prompt span { max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 12.5px; font-weight: 400; color: var(--t3-muted); }
+  & .t3-placement-file:hover .t3-file-prompt { border-color: var(--t3-teal); background: #f3fbf8; }
+
+  & .t3-card-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  & .t3-section-title { display: flex; align-items: center; gap: 8px; }
+  & .t3-section-title svg { flex: none; box-sizing: content-box; padding: 7px; color: var(--t3-teal-hover); background: var(--t3-teal-soft); border-radius: 9px; }
+
+  & .t3-status-pill {
+    display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px;
+    border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 1.4;
+    background: #eff4f8; color: #445b6b; border: 1px solid #d7e2ec; white-space: nowrap;
+  }
+  & .t3-status-pill[data-tone="teal"] { background: var(--t3-success-bg); color: var(--t3-success-ink); border-color: var(--t3-teal-border); }
+  & .t3-status-pill[data-tone="blue"] { background: var(--t3-info-bg); color: var(--t3-info-ink); border-color: #c8def7; }
+  & .t3-status-pill[data-tone="amber"] { background: var(--t3-warn-bg); color: var(--t3-warn-ink); border-color: #f3dbb0; }
+  & .t3-code-pill { display: inline-block; padding: 3px 8px; border-radius: 7px; background: #f1f5f9; border: 1px solid #e1e8f0; color: var(--t3-navy); font-family: ui-monospace, SFMono-Regular, monospace; font-size: 12.5px; }
+
+  & .t3-case-state { display: inline-block; width: fit-content; padding: 3px 9px; border-radius: 999px; background: var(--t3-success-bg); color: var(--t3-success-ink); font-size: 12px; font-weight: 600; }
+  & .t3-case-state[data-state="WAITING_START"] { color: var(--t3-warn-ink); background: var(--t3-warn-bg); }
+  & .t3-case-state:is([data-state="TERMINATED"], [data-state="CANCELLED"]) { color: var(--t3-danger-ink); background: var(--t3-danger-bg); }
+
+  & .t3-preview-result { display: inline-block; padding: 3px 8px; border-radius: 8px; background: var(--t3-success-bg); color: var(--t3-success-ink); font-size: 12px; font-weight: 600; }
+  & .t3-preview-result[data-valid="false"] { background: var(--t3-danger-bg); color: var(--t3-danger-ink); }
+  & .t3-case-link { font-weight: 650; color: var(--t3-teal-hover); }
+  & .t3-case-chips { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0; padding: 0; }
+  & .t3-case-chips li { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 5px 11px; border: 1px solid var(--t3-border); border-radius: 999px; background: var(--t3-surface); color: var(--t3-muted); font-size: 12.5px; }
+  & .t3-member-disclosure { padding: 11px 16px; border-radius: 12px; background: var(--t3-surface); border: 1px solid var(--t3-border); }
+  & .t3-member-disclosure summary { cursor: pointer; font-weight: 600; font-size: 13.5px; color: var(--t3-navy); }
+  & .t3-grade-columns { display: grid; gap: 16px; align-items: start; }
+  & .t3-school-grades { container-type: inline-size; }
+  @media (min-width: 1024px) {
+    @container (min-width: 580px) { & .t3-grade-columns { grid-template-columns: minmax(0, .85fr) minmax(0, 1.3fr); } }
+  }
+  @media (min-width: 740px) {
+    & .t3-coordination-card:only-child .t3-issue-columns:has(form) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 20px; }
+  }
+  & .t3-issue > h4 { width: fit-content; padding: 4px 10px; border-radius: 999px; color: var(--t3-info-ink); background: var(--t3-info-bg); font-size: 12px; }
+  & .t3-issue code { padding: 2px 6px; border-radius: 6px; background: #edf2f6; color: var(--t3-muted); overflow-wrap: anywhere; }
+  & .t3-hiring-interest > p:first-of-type { padding: 10px 12px; background: var(--t3-teal-soft); border: 1px solid var(--t3-teal-border); border-radius: 10px; color: var(--t3-teal-hover); font-size: 13px; }
+  & .t3-week-choice [data-state="REVIEWED"] { color: var(--t3-success-ink); background: var(--t3-success-bg); }
+  & .t3-week-choice [data-state="SUBMITTED"] { color: var(--t3-warn-ink); background: var(--t3-warn-bg); }
+
+  /* ========== 10. Responsive Breakpoints (Zero Overflow 1440 -> 320px) ========== */
+  @media (min-width: 1100px) {
+    & .internship-group-grid:has(> :nth-child(3):last-child) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    & .internship-group-grid:has(> :nth-child(3):last-child) > .internship-group-card:nth-child(3):last-child {
+      grid-column: auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 10px;
+      padding: 16px 18px;
+    }
+    & .internship-group-grid:has(> :nth-child(3):last-child) > .internship-group-card:nth-child(3):last-child .t3-group-card-foot {
+      width: 100%;
+      padding-top: 8px;
+      border-top: 1px solid #edf2f7;
+      justify-self: stretch;
+    }
+  }
+
+  @media (max-width: 1179px) {
+    & .hr-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    & .t3-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    & .t3-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    & .t3-kanban { grid-template-columns: repeat(5, minmax(210px, 1fr)); }
+    & .t3-overview-columns, & .t3-operations-support, & .t3-cohort-actions { grid-template-columns: minmax(0, 1fr); }
+    & .t3-operations-header { grid-template-columns: minmax(0, 1fr) auto; }
+    & .t3-operations-header > label { grid-column: 1 / -1; }
+    & .t3-operations-header > button { grid-column: 2; grid-row: 1; }
+  }
+
+  @media (min-width: 901px) and (max-width: 1179px) {
+    & .t3-metrics > :nth-child(4) { grid-column: span 2; }
+  }
+
+  @media (max-width: 1100px) {
+    & .t3-task-filters,
+    & .t3-workbench .button-row:has(> label) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 900px) {
+    & .t3-operations-cards, & .t3-grade-toolbar, & .t3-grade-toolbar > form { grid-template-columns: minmax(0, 1fr); }
+    & .t3-operations-cards .t3-inline-form:has(label + label) { grid-template-columns: repeat(2, minmax(0, 1fr)) auto; }
+    & .t3-operations-cards .t3-inline-form:has(label + label) > button { grid-column: auto; }
+    & .t3-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    & .t3-metrics > :nth-child(odd):last-child { grid-column: 1 / -1; }
+  }
+
+  @media (max-width: 699px) {
+    --t3-control-size: 16px;
+    & :is(.panel, .hr-overview, .t3-operation-card) { padding: 16px; }
+    & .t3-hr-overview, & .hr-overview { padding: 0; }
+    & .hr-kpi-grid, & .t3-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    & .t3-workbench .button-row:has(> label),
+    & .t3-task-filters,
+    & .t3-calendar-controls,
+    & .t3-inline-form,
+    & .t3-inline-form:has(label + label),
+    & .t3-operations-cards .t3-inline-form:has(label + label),
+    & .t3-filter-pair,
+    & form.t3-create-cohort:not(.t3-inline-form),
+    & .t3-cohort-creator > form > fieldset:not(.t3-noop),
+    & .t3-mentor-invitation-form > fieldset:not(.t3-noop),
+    & .t3-case-operations > form,
+    & .t3-case-search-form,
+    & .t3-operations-header {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    & :is(.t3-operations-header, .t3-case-search-form) > :is(label, button, small) {
+      grid-column: 1;
+      grid-row: auto;
+      justify-self: stretch;
+    }
+    & :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]), select, .vn-date-control, .vn-date-control > input, button.secondary, button.primary, button:not([class])):not(:where(.t3-context-bar *)) {
+      min-height: 44px;
+    }
+    & :is(.t3-workbench .button-row:has(> label), .t3-task-filters, .t3-inline-form, .t3-operations-cards .t3-inline-form, .t3-grade-toolbar) button {
+      width: 100%;
+    }
+    & .t3-group-toolbar .t3-grouping-toolbar { width: 100%; }
+    & .t3-group-toolbar .t3-grouping-toolbar label { flex: 1 1 140px; }
+    & .t3-criterion-head { align-items: stretch; }
+    & .t3-criterion-score { width: 100%; justify-content: space-between; }
+  }
+
+  @media (max-width: 520px) {
+    & .hr-kpi-grid, & .t3-kpis, & .t3-metrics { grid-template-columns: minmax(0, 1fr); }
+  }
+}
+
+/* ========== 11. Reduced-Motion Safe Animations, Spotlight & Tactile Interactions ========== */
+@keyframes t3-content-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes t3-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(11, 146, 124, 0.22); }
+  50% { box-shadow: 0 0 0 6px rgba(11, 146, 124, 0.08); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #root .workspace-native-t3.has-workspace-motion:not(.workspace-student):not(:has(.student-nav-group))
+  .content:not(:has(.t3-evaluations:not(.t3-pro-surface))) .app-page-stage {
+    --t3-ease: cubic-bezier(.22, 1, .36, 1);
+    &,
+    & .panel:not(:where(.t3-context-bar, .t3-context-bar *)),
+    & .t3-operations-cards > *,
+    & .t3-workbench > div:not([hidden]) {
+      animation: t3-content-enter 240ms var(--t3-ease);
+    }
+    & :is(.internship-group-detail, .t3-task-detail, .t3-create-cohort, .hr-kpi-card, .internship-group-card, .t3-priorities > li, .t3-criterion-card) {
+      animation: t3-content-enter 260ms var(--t3-ease) backwards;
+    }
+    & :is(.hr-kpi-card, .internship-group-card, .t3-priorities > li, .t3-criterion-card):nth-child(4n+2) { animation-delay: 40ms; }
+    & :is(.hr-kpi-card, .internship-group-card, .t3-priorities > li, .t3-criterion-card):nth-child(4n+3) { animation-delay: 80ms; }
+    & :is(.hr-kpi-card, .internship-group-card, .t3-priorities > li, .t3-criterion-card):nth-child(4n) { animation-delay: 120ms; }
+    & .t3-status-dot { animation: t3-pulse 2.2s ease-in-out infinite; }
+    & tbody tr > * { transition: background-color 150ms ease; }
+    & :is(.hr-kpi-card, .hr-cohort-choice, .internship-group-card, .t3-operation-card, .t3-month-grid button.text-button, .t3-calendar-grid button.text-button, .t3-grade-row, .t3-task-card, .t3-kpis > div, .t3-metrics > div, .t3-priorities > li, .t3-progress-row, .t3-criterion-card, .t3-quick-action),
+    & button:is(.primary, .secondary, :not([class])):not(:where(.t3-context-bar *)) {
+      transition: transform 180ms var(--t3-ease), box-shadow 180ms ease, border-color 160ms ease, background-color 160ms ease;
+    }
+    & button svg { transition: transform 170ms var(--t3-ease); }
+    @media (hover: hover) and (pointer: fine) {
+      & [data-portal-glow]:not(:disabled) {
+        background-image: radial-gradient(240px circle at var(--portal-glow-x) var(--portal-glow-y), rgba(11, 146, 124, 0.11), transparent 72%);
+      }
+      & button:is(.primary, .secondary, :not([class])):not(:where(.t3-context-bar *)):enabled:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 5px 14px -6px rgba(11, 146, 124, 0.4);
+      }
+      & button:enabled:hover svg { transform: translateX(2px); }
+      & :is(.hr-kpi-card, .hr-cohort-choice, .internship-group-card, .t3-operation-card, .t3-month-grid button.text-button, .t3-calendar-grid button.text-button, .t3-grade-row.secondary, .t3-task-card, .t3-kpis > div, .t3-metrics > div, .t3-priorities > li, .t3-quick-action):not(:disabled):hover {
+        transform: translateY(-2px);
+        border-color: #96d8c8;
+        box-shadow: 0 8px 20px -12px rgba(11, 146, 124, 0.22);
+      }
+    }
+    & button:enabled:active:not(:where(.t3-context-bar *)) { transform: scale(.985); }
+  }
+}

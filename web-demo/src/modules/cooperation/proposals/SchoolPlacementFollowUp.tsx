@@ -43,7 +43,7 @@ export function SchoolPlacementFollowUp({ org, termId, caseId, placementId, plac
     <div className="t5-detail-grid"><section className="t5-detail-card" aria-label="Giám sát đánh giá & công bố điểm">
       <div className="t5-card-heading"><h5>Theo dõi đánh giá</h5><span className="t5-badge t5-badge-info">Dữ liệu từ T3</span></div>
       <button type="button" className="secondary" disabled={loading} onClick={() => {if (canLeaveDemand()) {setRequested(true);setRevision(value => value + 1);}}}>Tải đánh giá từ T3</button>
-      {loading && <p role="status">Đang tải đánh giá…</p>}<Notice message={message} tone="info" />
+      {loading && <p className="rc-loading-state" role="status">Đang tải đánh giá…</p>}<Notice message={message} tone="info" />
       {!requested && <p>Chọn tải đánh giá để kiểm tra kết quả hiện tại của hồ sơ.</p>}
       {rows && (rows.length === 0 ? <p>Chưa có đánh giá được phép xem cho hồ sơ này.</p> : <ul className="school-evaluation-list">{rows.map(row => <li key={row.evaluationId + ':' + row.revisionNo}>
         <span className={'t5-badge ' + (row.state === 'PUBLISHED' ? 't5-badge-success' : 't5-badge-warning')}>{evaluationLabels[row.state]}</span>

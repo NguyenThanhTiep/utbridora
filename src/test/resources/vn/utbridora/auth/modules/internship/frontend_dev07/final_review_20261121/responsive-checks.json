@@ -1,0 +1,42 @@
+[
+  {
+    "screen": "school-case-operations",
+    "width": 1440,
+    "noOverflow": true
+  },
+  {
+    "screen": "school-case-operations",
+    "width": 768,
+    "noOverflow": true
+  },
+  {
+    "screen": "school-case-operations",
+    "width": 375,
+    "noOverflow": true
+  },
+  {
+    "screen": "hr-overview",
+    "width": 1440,
+    "noOverflow": true
+  },
+  {
+    "screen": "hr-overview",
+    "width": 375,
+    "noOverflow": true
+  },
+  {
+    "screen": "mentor-board",
+    "width": 1440,
+    "noOverflow": true
+  },
+  {
+    "screen": "mentor-board",
+    "width": 768,
+    "noOverflow": true
+  },
+  {
+    "screen": "mentor-board",
+    "width": 375,
+    "noOverflow": true
+  }
+]

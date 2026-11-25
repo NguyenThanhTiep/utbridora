@@ -1,0 +1,41 @@
+{
+  "baseCommit": "96de49e",
+  "branch": "feature/t3-frontend-uiux",
+  "packagedAtUtc": "2026-11-20T10:07:44.472635+00:00",
+  "sourceSha256": {
+    "web-demo/src/modules/internship/pages/TaskBoard.tsx": "66c9e7dbc6c9131792e869fb965cf23e20b9355df77c8597482e28c90f7ae30f",
+    "web-demo/src/modules/internship/pages/InternshipWorkspace.tsx": "637418410fda4d6502e80a6b57291a5ae9237f90143691d3467b84d0e66e5a0f",
+    "web-demo/src/modules/internship/styles.css": "032ab471d53157b9324b6cb2116adb2d7ff1ea0b56d55ef5f56669cbb0f0e799",
+    "web-demo/tests/internship-uiux-dev07.spec.ts": "d2d29660b828e4ed1332138889177eb7aeae5ec512efd6ec582dea31f352484a",
+    "web-demo/tests/internship-week3-runtime.spec.ts": "0d8e03f0c1bc89cfc351c748c44fde9b615dc5d87beabb6ed2f7a3d5c45447ef",
+    "web-demo/tests/internship-week4-runtime.spec.ts": "f752cb318da42af9b423902c7103a7a1d4268516920ad2a5a0bbccd85ae419dd"
+  },
+  "evidenceSha256": {
+    "BUILD_RESULTS.txt": "d3beb4dcc53fe5c559d755f72b99539a345b9a238736ebdd0be01bcddacc10be",
+    "EVALUATION_RUNTIME_RESULTS.xml": "eb102836bfd49deb74fe976de27b8ee620caf58faabe63bdd828f9d644ad6ab5",
+    "t3-09-real-pending-evidence.png": "73b7b4c504f11483911316323472aa4872fca144f9552f1ebb47894290b3fe3d",
+    "t3-09-real-report-history.png": "9354fbad3e6118424f60192c7bd022b3cb9e7badbd30f40cf4df3699aca8b239",
+    "t3-09-real-submission.png": "4e7bc306135a98bfccb9495d85da61311b6b7d6478d6efd10462f9757684b960",
+    "t3-12-mentor-evidence.png": "783e0b0f0a2bf7d0f06ade6b35dab9ac093f945ba64f7b26e8f2a4d6550f125b",
+    "t3-12-student-hidden.png": "7c8afb61167bbe9df9e3c97e36a4fdc5d4fbcbd4121aefe84487314af44a6ff5",
+    "t3-12-student-visible.png": "3596cb2a4156a02c9fab6e1a9e3363551fa1517394e5a0d81f0bdcbc529a20c2",
+    "t3-uiux-create-1440.png": "cf83d133d7edd664446c24e9a7c39e6d0701a3f8ea6ef5d58c4829fc48ea4683",
+    "t3-uiux-create-375.png": "67b1905d99daf813a57d5e70e6d27569c25eace56b6df240b58beac73620803a",
+    "t3-uiux-create-768.png": "dfd798602e080f554b4a510b787c1c0acbb337aa39f7b40248718953fca729bd",
+    "t3-uiux-kanban-1440.png": "667fa4b6b0068cbca83332f60dee9394e6acd236e6984dee58768b524e51ca99",
+    "t3-uiux-kanban-375.png": "51e730ad2710bfca9cc18e4ec44cc62b9d94938fa5a34c7a99bee0be1ee6deb3",
+    "t3-uiux-kanban-768.png": "3d66672e698856fddbe1a04215528d0056ecf2f876e40c48cfab6d20a8e39fd9",
+    "t3-uiux-list-1440.png": "92e66f3e807587a6773aba30c914a6048e4a1451e9833ffcf5aa4fd6b18e1faf",
+    "t3-uiux-list-375.png": "add5074dcdcf1ee6c89d490f758f2f8c5e2a5f6e65a0300e966df6676eaf4b20",
+    "t3-uiux-list-768.png": "6bef591747f9a79aaa503c07dacb795364442dee7405184f8a40bbd0cf19845e",
+    "t3-uiux-rubric-1440.png": "cc8e448c7df079e39e53a8b6a1247ffe8d17e51fba45b8bade6fc54b7963b626",
+    "t3-uiux-rubric-375.png": "2e2b70acb69192f5a590fdc46d2c5d50937dc5761ad13e91a336753449563851",
+    "t3-uiux-rubric-768.png": "0f82a714a71dd4b245061084230ee4a35710edf749ae170957b4309d770ac552",
+    "t3-uiux-shell-1440.png": "a26911896e188d811ca5afab8bd1109d600f76ea6338b99c0fbb192032e4d7cc",
+    "t3-uiux-shell-375.png": "663fb4e7fdac69386c4442e69f397e263eed6339dacef94dcb0656f820f1dc0f",
+    "t3-uiux-shell-768.png": "02a1467e435834bf102ba9c6fb20a4d2052d5a462eebab960d4e1a432b6391a9",
+    "UI_RESULTS.xml": "d7f8a08f6a17bb8e2e42a9710da715a6e3dcf54f98e5370bf52150a43e9c72bd",
+    "UNIT_RESULTS.txt": "40550e9a82e44b3e1350772b82eb628a21e658964550bbb7ffa68828b1e0a239",
+    "WORKFLOW_RUNTIME_RESULTS.xml": "0e0ca22fe746fe82e0808c88a92de5dc22e71cfa0f60e724fcaefe7cce452166"
+  }
+}

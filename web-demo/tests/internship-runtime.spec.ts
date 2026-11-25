@@ -1,3 +1,4 @@
+import { signOutFromAccountMenu } from './helpers/workspace';
 import { test, expect } from '@playwright/test';
 
 // Real server/assignment/owner data from InternshipRuntimeIT. No intercepted API responses.
@@ -14,10 +15,11 @@ test('HR and Mentor navigate their actual assigned cohort and group', async ({ p
     await expect(workspace).toBeVisible();
     await workspace.click();
     await page.getByLabel('Phân công đang làm việc').selectOption(assignment);
+    await page.getByRole('button', { name: email === process.env.E2E_T3_HR_EMAIL ? 'Nhóm thực tập' : 'Nhóm được giao', exact: true }).click();
     await page.getByLabel('Đợt thực tập', { exact: true }).selectOption(process.env.E2E_T3_COHORT!);
     await page.getByRole('button', { name: 'Xem nhóm G-' + process.env.E2E_T3_GROUP! }).click();
     await expect(page.getByRole('heading', { name: 'Nhóm G-' + process.env.E2E_T3_GROUP!, exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+    await signOutFromAccountMenu(page);
     await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible();
   }
 });

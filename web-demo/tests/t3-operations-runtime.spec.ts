@@ -1,3 +1,4 @@
+import { expectSignedIn, openWorkspacePage } from './helpers/workspace';
 import { expect, test, type Page } from '@playwright/test';
 
 // Real MySQL, quarantine scanner, owner APIs and Chromium. No route interception.
@@ -8,7 +9,7 @@ async function login(page: Page, email: string) {
   await page.goto('/');await page.getByLabel('Email', { exact: true }).fill(email);
   await page.getByLabel('Mật khẩu', { exact: true }).fill(env('PASSWORD'));
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Quản lý thực tập', exact: true })).toBeVisible();
+  await expectSignedIn(page);
   console.log('T3 runtime: authenticated role navigation available');
 }
 async function openCase(page: Page) {
@@ -19,11 +20,12 @@ async function openCase(page: Page) {
 test('HR imports 40 placements into four groups; school coordinates, evaluates quality and closes the case', async ({ page, browser }) => {
   test.setTimeout(180000);await login(page, env('HR_EMAIL'));
   await page.getByRole('button', { name: 'Không gian thực tập', exact: true }).click();
+  await page.getByRole('button', { name: 'Đợt thực tập', exact: true }).click();
   await page.getByLabel('Phân công đang làm việc', { exact: true }).selectOption(env('ASSIGNMENT'));
-  await page.getByText('Tạo đợt thực tập', { exact: true }).click();
+  await page.getByRole('button', { name: '+ Tạo đợt thực tập', exact: true }).click();
   await page.getByLabel('Mã đợt', { exact: true }).fill('SYNTHETIC-T3-UI');
   await page.getByLabel('Tên đợt', { exact: true }).fill('Synthetic T3 runtime UI');
-  await page.getByRole('button', { name: 'Tạo đợt trong kỳ đã chọn', exact: true }).click();
+  await page.getByRole('button', { name: 'Tạo đợt', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Tiếp nhận Placement từ danh sách', exact: true })).toBeVisible();
   console.log('T3 runtime: cohort created');
   const csv = 'placementId\n' + env('PLACEMENTS').split(',').join('\n') + '\ninvalid-id\n';
@@ -38,13 +40,14 @@ test('HR imports 40 placements into four groups; school coordinates, evaluates q
   await page.getByRole('button', { name: 'Xác nhận tiếp nhận 40 Placement', exact: true }).click();
   await expect(page.getByText('Đã thêm 40; đã có 0; không hợp lệ 0.', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Tải phiên bản đợt mới', exact: true }).click();
-  await page.getByLabel('Số sinh viên mỗi nhóm', { exact: true }).fill('10');
-  await page.getByRole('button', { name: 'Xem trước chia nhóm', exact: true }).click();
+  await page.getByRole('button', { name: 'Nhóm thực tập', exact: true }).click();
+  await page.getByLabel('Số hồ sơ mỗi nhóm', { exact: true }).fill('10');
+  await page.getByRole('button', { name: 'Xem trước nhóm', exact: true }).click();
   await expect(page.getByText('Nhóm 4: 10 hồ sơ', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Xác nhận tạo 4 nhóm', exact: true }).click();
+  await page.getByRole('button', { name: 'Xác nhận chia nhóm', exact: true }).click();
   await expect(page.getByText('4 nhóm trong phạm vi đã chọn', { exact: true })).toBeVisible();
   console.log('T3 runtime: scanned intake and grouping committed');
-  await page.getByRole('button', { name: 'Quản lý thực tập', exact: true }).click();
+  await openWorkspacePage(page, 'Quản lý thực tập');
   await page.getByRole('combobox', { name: 'Phân công quản lý thực tập', exact: true }).selectOption(env('ASSIGNMENT'));await openCase(page);
   await page.getByLabel('Doanh nghiệp quan tâm tuyển dụng', { exact: true }).check();
   await page.getByLabel('Ghi chú quan tâm tuyển dụng', { exact: true }).fill('Synthetic retained hiring interest');
@@ -54,7 +57,7 @@ test('HR imports 40 placements into four groups; school coordinates, evaluates q
   const schoolContext = await browser.newContext({ baseURL: 'http://127.0.0.1:' + (process.env.E2E_PORT || '5178') });
   const school = await schoolContext.newPage();
   try {
-    await login(school, env('STAFF_EMAIL'));await school.getByRole('button', { name: 'Quản lý thực tập', exact: true }).click();
+    await login(school, env('STAFF_EMAIL'));await openWorkspacePage(school, 'Quản lý thực tập');
     await school.getByRole('combobox', { name: 'Kỳ quản lý thực tập', exact: true }).selectOption(env('TERM'));
     const kpi = school.locator('.t3-kpis > div').filter({ has: school.getByText('Hồ sơ thực tập', { exact: true }) });
     await expect(kpi.locator('dd')).toHaveText('40');

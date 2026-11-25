@@ -1,0 +1,110 @@
+/* Shared readable type scale for School and Enterprise; admin/auth retain their own themes. */
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) {
+  --portal-type-title: 24px;
+  --portal-type-section: 18px;
+  --portal-type-heading: 16px;
+  --portal-type-body: 15px;
+  --portal-type-control: 16px;
+  --portal-type-label: 14px;
+  --portal-type-small: 13px;
+  --portal-type-caption: 12px;
+  --portal-type-number: 32px;
+  font-size: var(--portal-type-body);
+  line-height: 1.6;
+}
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) :is(h2, h3, h4, h5) {
+  line-height: 1.4;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) h2 { font-size: 20px; }
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) h3 { font-size: var(--portal-type-section); }
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) :is(h4, h5) { font-size: var(--portal-type-heading); }
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) :is(.portal-page-header, .portal-welcome) h2 { font-size: var(--portal-type-title); }
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) .demand-editor-heading h2 { font-size: 22px; }
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) :is(.school-coop-summary-heading, .enterprise-coop-detail-title, .demand-preview-header) h3 { font-size: 20px; }
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) :is(p, li) { font-size: var(--portal-type-body); line-height: 1.65; }
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) :is(label, dt) { font-size: var(--portal-type-label); line-height: 1.5; }
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) legend { font-size: var(--portal-type-heading); font-weight: 600; line-height: 1.5; }
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea, .vn-date-display) {
+  font-size: var(--portal-type-control);
+  line-height: 1.5;
+}
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) button {
+  font-size: var(--portal-type-label);
+  font-weight: 600;
+  line-height: 1.45;
+}
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) :is(button.portal-stat, button.kpi-card, button.portal-shortcut, .matching-counts button) { font-weight: 400; }
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) :is(th, td) {
+  font-size: var(--portal-type-label);
+  line-height: 1.55;
+}
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) thead th {
+  font-size: var(--portal-type-small);
+  font-weight: 600;
+  line-height: 1.45;
+  text-transform: none;
+  letter-spacing: 0;
+}
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) :is(table h3, .workflow-table-title, .bm03-company-name, .enterprise-coop-name b, .portal-task-title, .notification-kind) {
+  font-size: var(--portal-type-heading);
+  font-weight: 600;
+  line-height: 1.45;
+}
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) :is(small, .muted, .field-hint, .section-description, .form-description,
+  .portal-task-description, .demand-school-name, .demand-editor-subtitle, .demand-criteria-note, .demand-catalog-note,
+  .school-coop-summary-context, .school-coop-person small, .bm03-code-text, .bm03-date-text, .bm03-select-hint,
+  .notification-time, .notification-filter-summary, .notification-results-toolbar, .candidate-profile-meta,
+  .notification-message-meta, .notification-message-meta > span, .notification-category,
+  .candidate-sharing-fields summary, .candidate-show-more, .school-stat-description, .school-stat-link,
+  .portal-stat-sub, .portal-stat-action, .kpi-card-hint, .cooperation-pagination, .pagination-summary) {
+  font-size: var(--portal-type-small);
+  line-height: 1.5;
+}
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) :is(.portal-breadcrumb, .portal-eyebrow, .section-kicker, .school-coop-eyebrow,
+  .demand-kicker, .school-stat-badge, .school-stat-order, .demand-section-count, .workflow-count-pill) {
+  font-size: var(--portal-type-caption);
+  line-height: 1.5;
+}
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) :is(.status-pill, .status-badge, .t5-badge, .cooperation-state, .notification-state) {
+  font-size: var(--portal-type-small);
+  font-weight: 550;
+  line-height: 1.4;
+}
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) :is(.portal-stat-title, .kpi-card-label) {
+  font-size: var(--portal-type-label);
+  font-weight: 600;
+  line-height: 1.45;
+}
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) :is(.portal-stat > strong, .school-stat-metric > strong, .kpi-card-value) {
+  font-size: var(--portal-type-number);
+  font-weight: 700;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) :is(.school-coop-description p, .enterprise-coop-description p) {
+  font-size: 17px;
+  line-height: 1.65;
+}
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) :is(.school-coop-fact p, .school-coop-period, .school-coop-quantity, .candidate-contact-grid dd, .demand-preview-meta dd) {
+  font-size: var(--portal-type-heading);
+  line-height: 1.6;
+}
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) :is(.school-coop-skill-tags > li, .proposal-skills > li, .proposal-skills b, .matching-criteria-inline li) {
+  font-size: var(--portal-type-label);
+  line-height: 1.5;
+}
+#root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) .portal-context-bar :is(select, .portal-notification-shortcut, .role-menu-trigger) {
+  height: 48px;
+  min-height: 48px;
+}
+#root .workspace-t5:has(.portal-workspace) .sidebar :is(.nav, .sidebar-user b) { font-size: 14px; line-height: 1.5; }
+#root .workspace-t5:has(.portal-workspace) .role-menu-header-meta strong { font-size: 15px; line-height: 1.45; }
+#root .workspace-t5:has(.portal-workspace) .role-menu-header-meta small { font-size: 13px; line-height: 1.5; }
+@media (max-width: 700px) {
+  #root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) { --portal-type-title: 22px; --portal-type-number: 28px; }
+  #root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) .demand-editor-heading h2 { font-size: 20px; }
+  #root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) .portal-stat-title { flex-wrap: wrap; gap: 6px; }
+  #root .workspace-t5 .portal-workspace:is(.is-school, .is-enterprise) .portal-stat-title > span:first-child { white-space: normal; }
+}

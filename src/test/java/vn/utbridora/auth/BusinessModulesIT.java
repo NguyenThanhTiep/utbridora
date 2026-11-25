@@ -139,6 +139,30 @@ class BusinessModulesIT {
     Map<String,Object> decision(long version,String action,List<String> missing) {
         var data=new LinkedHashMap<String,Object>();data.put("expectedVersion",version);data.put("decision",action);data.put("reasonCode",action.equals("APPROVE")?null:"MISSING_DATA");data.put("decisionRef","QĐ/DEMO-01");data.put("missingFields",missing);return data;
     }
+    @Test void verificationDraftsStayPrivateUntilSubmittedIncludingSchoolFiltersAndTotals() throws Exception {
+        var s=verificationSetup(true);String id=createVerification(s);
+        var owner=s.owner.verify("GET","enterprise/verifications/"+id,null,null);
+        assertEquals(200,owner.statusCode());assertEquals("DRAFT",JsonPath.read(owner.body(),"$.state"));
+        var ownList=s.owner.verify("GET","enterprise/verifications?state=DRAFT",null,null);
+        assertEquals(200,ownList.statusCode());assertEquals(List.of(id),JsonPath.read(ownList.body(),"$.content[*].verificationId"));
+        for(String query:List.of("?page=0&size=1","?state=DRAFT","?state=DRAFT&schoolOrgId="+s.schoolId)) {
+            var listing=s.reviewer.verify("GET","school/verifications"+query,null,null);
+            assertEquals(200,listing.statusCode(),listing.body());
+            assertEquals(List.of(),JsonPath.read(listing.body(),"$.content"));
+            assertEquals(0,(int)JsonPath.read(listing.body(),"$.totalElements"));assertEquals(0,(int)JsonPath.read(listing.body(),"$.totalPages"));
+        }
+        code(s.reviewer.verify("GET","school/verifications/"+id,null,null),404,"RESOURCE_NOT_FOUND");
+        code(s.reviewer.verify("PATCH","school/verifications/"+id+"/decision",decision(1,"APPROVE",List.of()),UUID.randomUUID().toString()),404,"RESOURCE_NOT_FOUND");
+        String file=evidence(s,id);var data=verificationInput(s.schoolId,List.of(file));data.put("registeredName","Private company draft");
+        assertEquals(200,s.owner.verify("PATCH","enterprise/verifications/"+id,Map.of("expectedVersion",1,"data",data),UUID.randomUUID().toString()).statusCode());
+        code(s.reviewer.verify("GET","school/verifications/"+id,null,null),404,"RESOURCE_NOT_FOUND");
+        assertEquals(200,s.owner.verify("PATCH","enterprise/verifications/"+id+"/submit",Map.of("expectedVersion",2),UUID.randomUUID().toString()).statusCode());
+        var received=s.reviewer.verify("GET","school/verifications/"+id,null,null);
+        assertEquals(200,received.statusCode());assertEquals("SUBMITTED",JsonPath.read(received.body(),"$.state"));
+        assertEquals("Private company draft",JsonPath.read(received.body(),"$.data.registeredName"));
+        var receivedList=s.reviewer.verify("GET","school/verifications?state=SUBMITTED",null,null);
+        assertEquals(200,receivedList.statusCode());assertEquals(List.of(id),JsonPath.read(receivedList.body(),"$.content[*].verificationId"));
+    }
     @Test void verificationUsesCanonicalStatesReplayImmutableHistoryAndScopedReadPort() throws Exception {
         var s=verificationSetup(true);String id=submitted(s),path="school/verifications/"+id+"/decision",key=UUID.randomUUID().toString();
         var request=decision(3,"REQUEST_INFO",List.of("contactPhone"));var changes=s.reviewer.verify("PATCH",path,request,key);
@@ -148,7 +172,15 @@ class BusinessModulesIT {
         String file=jdbc.queryForObject("SELECT file_id FROM file_bindings WHERE resource_id=?",String.class,id);
         var data=verificationInput(s.schoolId,List.of(file));data.put("contactPhone","0907654321");
         assertEquals(200,s.owner.verify("PATCH","enterprise/verifications/"+id,Map.of("expectedVersion",4,"data",data),UUID.randomUUID().toString()).statusCode());
+        var schoolSnapshot=s.reviewer.verify("GET","school/verifications/"+id,null,null);
+        assertEquals(200,schoolSnapshot.statusCode());assertEquals("0901234567",JsonPath.read(schoolSnapshot.body(),"$.data.contactPhone"));
+        assertEquals("NEEDS_CHANGES",JsonPath.read(schoolSnapshot.body(),"$.state"));assertEquals(5,(int)JsonPath.read(schoolSnapshot.body(),"$.version"));
+        assertEquals(List.of("contactPhone"),JsonPath.read(schoolSnapshot.body(),"$.missingFields"));
+        var schoolList=s.reviewer.verify("GET","school/verifications?state=NEEDS_CHANGES",null,null);
+        assertEquals(200,schoolList.statusCode());assertEquals("0901234567",JsonPath.read(schoolList.body(),"$.content[0].data.contactPhone"));
+        assertEquals("0907654321",JsonPath.read(s.owner.verify("GET","enterprise/verifications/"+id,null,null).body(),"$.data.contactPhone"));
         assertEquals(200,s.owner.verify("PATCH","enterprise/verifications/"+id+"/submit",Map.of("expectedVersion",5),UUID.randomUUID().toString()).statusCode());
+        assertEquals("0907654321",JsonPath.read(s.reviewer.verify("GET","school/verifications/"+id,null,null).body(),"$.data.contactPhone"));
         var approved=s.reviewer.verify("PATCH",path,decision(6,"APPROVE",List.of()),UUID.randomUUID().toString());assertEquals(200,approved.statusCode(),approved.body());
         assertEquals("APPROVED",JsonPath.read(approved.body(),"$.state"));assertEquals(2,(int)JsonPath.read(approved.body(),"$.submissionNo"));assertEquals(7,(int)JsonPath.read(approved.body(),"$.version"));
         assertEquals("0901234567",jdbc.queryForObject("SELECT JSON_UNQUOTE(JSON_EXTRACT(snapshot_json,'$.data.contactPhone')) FROM enterprise_verification_history WHERE verification_id=? AND to_state='SUBMITTED' AND submission_no=1",String.class,id));

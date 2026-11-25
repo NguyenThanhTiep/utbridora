@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Notice } from '../../../components';
 import type { ContractPage } from '../../student/types';
 import { scopedRead, workflowError } from './api';
@@ -11,6 +11,7 @@ import type { Demand } from '../types';
 import { PlacementWorkspace } from './PlacementWorkspace';
 import { ConsentStatus } from './ConsentStatus';
 import { ProposalStateFilter } from './ProposalStateFilter';
+import { useStudentIdentities } from './useStudentIdentities';
 import './styles.css';
 
 function invitationLabel(item: SchoolProposal) {
@@ -26,6 +27,8 @@ export function SchoolProposals({ org, cooperationId, demand, includePlacement =
   const [result, setResult] = useState<ContractPage<SchoolProposal> | null>(null), [capacity, setCapacity] = useState<Capacity | null>(null);
   const [pending, setPending] = useState<Set<string>>(new Set()), [notice, setNotice] = useState('');
   const [state, setState] = useState('');
+  const studentIds = useMemo(() => result?.content.map(item => item.studentUserId) ?? [], [result]);
+  const identities = useStudentIdentities(studentIds, demand?.data.termId);
   const markPending = useCallback((id: string, active: boolean) => setPending(old => {
     if (old.has(id) === active) return old;
     const next = new Set(old); if (active) next.add(id); else next.delete(id); return next;
@@ -52,37 +55,67 @@ export function SchoolProposals({ org, cooperationId, demand, includePlacement =
   return <section className="proposal-workspace" aria-label="Tiến trình đề xuất">
     <div className="placement-header-bar">
       <div>
-        <span className="portal-eyebrow">ĐỀ XUẤT VÀ CHIA SẺ HỒ SƠ</span>
-        <h3>Tiến trình đề xuất và chỉ tiêu</h3>
+        <h3 aria-label="Tiến trình đề xuất và chỉ tiêu">Tiến trình đề xuất</h3>
+        <ol className="proposal-flow-pills" aria-hidden="true">
+          <li>1. Lập đề xuất</li>
+          <li>2. Mời sinh viên</li>
+          <li>3. Chia sẻ hồ sơ</li>
+          <li>4. Doanh nghiệp duyệt</li>
+        </ol>
       </div>
       <button className="secondary" disabled={loading || pending.size > 0} onClick={() => setRevision(n => n + 1)}>Tải lại tiến trình</button>
     </div>
     <Notice message={error} tone="error" /><p role="status">{notice}</p>
-    {loading && <p role="status">Đang tải tiến trình…</p>}
-    {capacity && <dl className="proposal-capacity"><div><dt>Chỉ tiêu tuyển</dt><dd>{capacity.quantity}</dd></div>
-      <div><dt>Đang giữ chỗ</dt><dd>{capacity.activeReservations}</dd></div><div><dt>Đã nhận (chốt thực tập)</dt><dd>{capacity.placedCount}</dd></div>
-      <div><dt>Còn lại</dt><dd>{capacity.openForNomination}</dd></div></dl>}
+    {loading && <p className="rc-loading-state" role="status">Đang tải tiến trình…</p>}
+    {capacity && <dl className="proposal-capacity"><div className="kpi-pending"><dt>Chỉ tiêu tuyển</dt><dd>{capacity.quantity}</dd></div>
+      <div className="kpi-warning"><dt>Đang giữ chỗ</dt><dd>{capacity.activeReservations}</dd></div><div className="kpi-approved"><dt>Đã nhận (chốt thực tập)</dt><dd>{capacity.placedCount}</dd></div>
+      <div className="kpi-open"><dt>Còn lại</dt><dd>{capacity.openForNomination}</dd></div></dl>}
     {demand && <NominationPanel key={org + cooperationId + ':' + revision} org={org} cooperationId={cooperationId} demand={demand}
       locked={pending.size > 0 && !pending.has('nomination')} pendingChanged={active => markPending('nomination', active)}
       changed={message => { setNotice(message); setRevision(n => n + 1); }} />}
-    <ProposalStateFilter school value={state} disabled={loading || pending.size > 0} changed={value => {setState(value);setPage(0);}} />
-    {result?.totalElements === 0 && <p>{state ? 'Không có đề xuất trong trạng thái đã chọn.' : 'Chưa có ứng viên được đề xuất.'}</p>}
-    {!!result?.content.length && <div className="proposal-table"><table><caption>Tiến trình của từng ứng viên</caption>
+    <div className="school-proposal-progress"><div className="proposal-filter-toolbar">
+      <ProposalStateFilter school value={state} disabled={loading || pending.size > 0} changed={value => {setState(value);setPage(0);}} />
+      {result && <span className="workflow-count-pill">{result.totalElements} ứng viên</span>}
+    </div>
+    {result && <div className="proposal-table"><table><caption>Tiến trình của từng ứng viên</caption>
       <thead><tr><th>Ứng viên</th><th>Lời mời</th><th>Sinh viên đồng ý chia sẻ</th><th>Chia sẻ hồ sơ</th><th>Doanh nghiệp phản hồi</th><th>Trạng thái hiện tại</th></tr></thead>
-      <tbody>{result.content.map((item, n) => <tr key={item.proposalItemId}>
-        <th scope="row">Ứng viên {page * 25 + n + 1}<small>{item.studentUserId}</small></th>
-        <td>{invitationLabel(item)}<InvitationAction key={item.proposalItemId + ':invite:' + revision} org={org} item={item}
-          locked={pending.size > 0 && !pending.has(item.proposalItemId)} pendingChanged={active => markPending(item.proposalItemId, active)}
-          changed={message => { setNotice(message); setRevision(n => n + 1); }} /></td>
-        <td><ConsentStatus item={item} /></td><td><ShareEditor key={item.proposalItemId + ':' + item.version + ':' + revision} org={org} item={item}
-          locked={pending.size > 0 && !pending.has(item.proposalItemId)}
-          changed={message => { setNotice(message); setRevision(n => n + 1); }}
-          pendingChanged={active => markPending(item.proposalItemId, active)} /></td>
-        <td>{['ENTERPRISE_ACCEPTED', 'PLACED'].includes(item.state) ? 'Đã đồng ý' : item.state === 'DECLINED' && item.shareId ? 'Đã từ chối' : 'Chưa phản hồi'}</td>
-        <td>{proposalStates[item.state] || item.state}</td>
-      </tr>)}</tbody></table></div>}
+      <tbody>{result.content.map((item, n) => {
+        const identity = identities[item.studentUserId];
+        return <tr key={item.proposalItemId}>
+          <th scope="row">
+            {identity?.displayName ? (
+              <div className="proposal-student-ident">
+                <strong>{identity.displayName}</strong>
+                {(identity.studentCode || identity.majorCode) && (
+                  <small>
+                    {identity.studentCode ? `MSSV ${identity.studentCode}` : ''}
+                    {identity.majorCode ? `${identity.studentCode ? ' · ' : ''}Ngành ${identity.majorCode}` : ''}
+                  </small>
+                )}
+              </div>
+            ) : identity?.studentCode ? (
+              <div className="proposal-student-ident">
+                <strong>MSSV {identity.studentCode}</strong>
+                {identity.majorCode && <small>Ngành {identity.majorCode}</small>}
+              </div>
+            ) : (
+              <span>Ứng viên {page * 25 + n + 1}</span>
+            )}
+          </th>
+          <td>{invitationLabel(item)}<InvitationAction key={item.proposalItemId + ':invite:' + revision} org={org} item={item}
+            locked={pending.size > 0 && !pending.has(item.proposalItemId)} pendingChanged={active => markPending(item.proposalItemId, active)}
+            changed={message => { setNotice(message); setRevision(n => n + 1); }} /></td>
+          <td><ConsentStatus item={item} /></td><td><ShareEditor key={item.proposalItemId + ':' + item.version + ':' + revision} org={org} item={item}
+            locked={pending.size > 0 && !pending.has(item.proposalItemId)}
+            changed={message => { setNotice(message); setRevision(n => n + 1); }}
+            pendingChanged={active => markPending(item.proposalItemId, active)} /></td>
+          <td>{['ENTERPRISE_ACCEPTED', 'PLACED'].includes(item.state) ? 'Đã đồng ý' : item.state === 'DECLINED' && item.shareId ? 'Đã từ chối' : 'Chưa phản hồi'}</td>
+          <td>{proposalStates[item.state] || item.state}</td>
+        </tr>;
+      })}{!result.content.length && <tr><td colSpan={6}>{state ? 'Không có đề xuất trong trạng thái đã chọn.' : 'Chưa có ứng viên được đề xuất.'}</td></tr>}</tbody></table></div>}
     {result && result.totalPages > 1 && <div className="button-row"><button className="secondary" disabled={page === 0 || loading || pending.size > 0} onClick={() => setPage(n => n - 1)}>Trang tiến trình trước</button>
       <span>Trang {page + 1}/{result.totalPages}</span><button className="secondary" disabled={page + 1 >= result.totalPages || loading || pending.size > 0} onClick={() => setPage(n => n + 1)}>Trang tiến trình sau</button></div>}
+    </div>
     {demand && includePlacement && <PlacementWorkspace org={org} school cooperationId={cooperationId} demand={demand} candidates={result?.content || []}
       locked={pending.size > 0 && !pending.has('placement')} pendingChanged={active => markPending('placement', active)} changed={() => setRevision(n => n + 1)} />}
     <PublicationEditor key={org + cooperationId} org={org} cooperationId={cooperationId} />

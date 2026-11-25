@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { api, ApiError, type Grant } from '../../api';
-import { EmptyState, LoadingState, Notice, permissionNames } from '../../components';
+import { EmptyState, Icon, LoadingState, Notice, permissionNames } from '../../components';
+import { DateInput } from '../../ui/DateInput';
 import { newIdempotencyKey } from '../student/api';
 import './styles.css';
 
@@ -16,6 +17,10 @@ const fieldNames: Record<string, string> = { displayName: 'Họ tên', studentCo
   skills: 'Kỹ năng', projects: 'Dự án', certificates: 'Chứng chỉ', cv: 'CV', evidence: 'Minh chứng', email: 'Email', phone: 'Điện thoại' };
 const localDate = (date: Date) => new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 const stamp = (value: string) => new Date(value).toLocaleString('vi-VN');
+const initials = (name: string) => {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  return (words.length > 1 ? words[0].charAt(0) + words[words.length - 1].charAt(0) : words[0]?.slice(0, 2) || 'UB').toUpperCase();
+};
 const failure = (error: unknown) => error instanceof ApiError
   ? `${error.message}${error.errorCode ? ' (' + error.errorCode + ')' : ''}${error.requestId ? ' · Mã tra cứu: ' + error.requestId : ''}`
   : error instanceof Error ? error.message : 'Không thể kết nối. Vui lòng thử lại.';
@@ -43,10 +48,10 @@ export function SchoolDelegations({ grants }: { grants: Grant[] }) {
   const [mode, setMode] = useState(admin ? 'admin' : 'school');
   if (!admin && !staff) return <EmptyState icon="lock" title="Chưa có quyền quản lý phân công" />;
   return <div className="stack delegation-workspace">
-    <section className="panel"><h2>Phân công quyền cán bộ</h2>
+    <section className="panel delegation-header"><p className="section-kicker">ỦY QUYỀN & PHẠM VI</p><h2>Phân công quyền cán bộ</h2>
       {admin && staff && <label>Hình thức quản lý<select value={mode} onChange={e => setMode(e.target.value)}><option value="admin">Khởi tạo demo</option><option value="school">Ủy quyền nghiệp vụ</option></select></label>}
-      <p>{mode === 'admin' ? 'Khởi tạo phân công demo bằng quyền quản trị. Căn cứ phải bắt đầu bằng DEMO-. Quyền này không cấp quyền truy cập hồ sơ sinh viên cho admin.'
-        : 'Ủy quyền trong trường và kỳ bạn đang được giao. Quyền, thông tin được xem và thời hạn phải nằm trong một phân công cấp quyền còn hiệu lực.'}</p>
+      <div className="delegation-mode"><Icon name="shield" size={19} /><p>{mode === 'admin' ? 'Khởi tạo phân công demo bằng quyền quản trị. Căn cứ phải bắt đầu bằng DEMO-. Quyền này không cấp quyền truy cập hồ sơ sinh viên cho admin.'
+        : 'Ủy quyền trong trường và kỳ bạn đang được giao. Quyền, thông tin được xem và thời hạn phải nằm trong một phân công cấp quyền còn hiệu lực.'}</p></div>
     </section>
     <ScopePicker key={mode} mode={mode} />
   </div>;
@@ -57,13 +62,16 @@ function ScopePicker({ mode }: { mode: string }) {
   const scopes = useRead<Page<Scope>>(base + '/scopes?page=' + page, revision);
   const current = scopes.data?.content.find(s => s.termId === selected) || scopes.data?.content[0];
   return <>
-    <section className="panel"><div className="section-heading"><h2>Phạm vi quản lý</h2><button type="button" className="secondary" onClick={() => setRevision(n => n + 1)}>Tải lại phạm vi</button></div>
+    <section className="panel delegation-scope"><h2>Phạm vi quản lý</h2>
       <Notice message={scopes.error} tone="error" />
+      <div className="delegation-scope-toolbar">
       {scopes.loading ? <LoadingState /> : scopes.data?.content.length === 0
         ? <EmptyState title="Chưa có kỳ được quản lý" description="Cần phân công có quyền quản lý còn hiệu lực trong đúng trường/kỳ. Vai trò cán bộ trường chưa đủ để ủy quyền." />
         : scopes.data && <label>Trường và kỳ<select value={current?.termId || ''} onChange={e => setSelected(e.target.value)}>
           {scopes.data.content.map(s => <option key={s.termId} value={s.termId}>{s.schoolName} · {s.termCode} · {s.termStatus}</option>)}
         </select></label>}
+        <button type="button" className="secondary" onClick={() => setRevision(n => n + 1)}>Tải lại phạm vi</button>
+      </div>
       <Pager data={scopes.data} busy={scopes.loading} change={p => { setSelected(''); setPage(p); }} />
     </section>
     {current && !scopes.loading && !scopes.error && <ScopeEditor key={mode + current.termId + revision} mode={mode} scope={current} />}
@@ -102,23 +110,28 @@ function ScopeEditor({ mode, scope }: { mode: string; scope: Scope }) {
     } catch (reason) { if (live.current) setError(failure(reason)); } finally { if (live.current) setBusy(false); }
   };
   return <>
-    <section className="panel"><h2>{mode === 'admin' ? 'Khởi tạo phân công demo' : 'Cấp phân công nghiệp vụ'}</h2>
+    <section className="panel delegation-grant"><h2>{mode === 'admin' ? 'Khởi tạo phân công demo' : 'Cấp phân công nghiệp vụ'}</h2>
       <Notice message={message} tone="success" /><Notice message={error || options.error || candidates.error} tone="error" />
       {options.loading ? <LoadingState /> : options.data && <form onSubmit={e => { e.preventDefault(); void submit(); }}><fieldset disabled={busy} className="delegation-form">
         {mode === 'school' && <label>Phân công cấp quyền<select value={authority?.id || ''} onChange={e => chooseAuthority(e.target.value)}>{options.data.authorities.map(a => <option key={a.id} value={a.id}>{a.decisionRef} · đến {stamp(a.validUntil)}</option>)}</select></label>}
-        <label>Tìm cán bộ theo tên hoặc email<input value={search} maxLength={150} onChange={e => { setSearch(e.target.value); setCandidatePage(0); setUserId(''); }} /></label>
+        <div className="delegation-candidates"><label>Tìm cán bộ theo tên hoặc email<input value={search} maxLength={150} onChange={e => { setSearch(e.target.value); setCandidatePage(0); setUserId(''); }} /></label>
         {candidates.loading ? <LoadingState label="Đang tìm cán bộ…" /> : <label>Cán bộ nhận quyền<select required value={chosenUser} onChange={e => setUserId(e.target.value)}><option value="">Chọn cán bộ thuộc trường</option>{candidates.data?.content.map(c => <option key={c.userId} value={c.userId}>{c.displayName} · {c.email}</option>)}</select></label>}
+        </div>
         <Pager data={candidates.data} busy={busy || candidates.loading} change={p => { setCandidatePage(p); setUserId(''); }} />
         <fieldset className="delegation-choices"><legend>Quyền được cấp</legend>{allowed.map(p => <label key={p}><input type="checkbox" checked={permissions.includes(p)} onChange={e => { setPermissions(e.target.checked ? [...permissions, p] : permissions.filter(v => v !== p)); if (p === 'student_profile:school:read') setFields([]); }} />{permissionNames[p] || p}</label>)}</fieldset>
         {permissions.includes('student_profile:school:read') && <fieldset className="delegation-choices"><legend>Thông tin hồ sơ được xem</legend>{allowedFields.map(f => <label key={f}><input type="checkbox" checked={fields.includes(f)} onChange={e => setFields(e.target.checked ? [...fields, f] : fields.filter(v => v !== f))} />{fieldNames[f] || f}</label>)}</fieldset>}
-        <div className="delegation-dates"><label>Có hiệu lực từ<input required type="datetime-local" value={from} onChange={e => setFrom(e.target.value)} /></label><label>Hết hiệu lực lúc<input required type="datetime-local" value={until} onChange={e => setUntil(e.target.value)} /></label></div>
+        <div className="delegation-dates"><label>Có hiệu lực từ<DateInput required type="datetime-local" value={from} onChange={e => setFrom(e.target.value)} /></label><label>Hết hiệu lực lúc<DateInput required type="datetime-local" value={until} onChange={e => setUntil(e.target.value)} /></label></div>
         <label>Căn cứ phân công<input required maxLength={120} value={reference} placeholder={mode === 'admin' ? 'DEMO-...' : 'Số quyết định hoặc căn cứ phân công'} onChange={e => setReference(e.target.value)} /></label>
-        <button disabled={busy || candidates.loading || !!candidates.error || permissions.length === 0 || permissions.includes('student_profile:school:read') && fields.length === 0}>{busy ? 'Đang gửi…' : 'Cấp phân công'}</button>
+        <button className="delegation-submit" disabled={busy || candidates.loading || !!candidates.error || permissions.length === 0 || permissions.includes('student_profile:school:read') && fields.length === 0}>{busy ? 'Đang gửi…' : 'Cấp phân công'}</button>
       </fieldset></form>}
     </section>
-    <section className="panel"><div className="section-heading"><h2>Danh sách phân công</h2><button type="button" className="secondary" disabled={busy} onClick={() => { setRevision(n => n + 1); setDetailRevision(n => n + 1); }}>Tải lại phân công</button></div>
+    <section className="panel delegation-list"><div className="section-heading"><h2>Danh sách phân công</h2><button type="button" className="secondary" disabled={busy} onClick={() => { setRevision(n => n + 1); setDetailRevision(n => n + 1); }}>Tải lại phân công</button></div>
       <Notice message={listing.error} tone="error" />
-      {listing.loading ? <LoadingState /> : listing.data?.content.length === 0 ? <p>Chưa có phân công trong kỳ này.</p> : <div className="table-wrap"><table className="data-table"><thead><tr><th>Cán bộ</th><th>Căn cứ</th><th>Hiệu lực</th><th>Thao tác</th></tr></thead><tbody>{listing.data?.content.map(d => <tr key={d.delegation.id}><td>{d.displayName}<br /><small>{d.email}</small></td><td>{d.delegation.decisionRef}</td><td>{state(d)}<br /><small>{stamp(d.delegation.validFrom)} – {stamp(d.delegation.validUntil)}</small></td><td><button type="button" className="secondary" aria-label={'Xem phân công ' + d.delegation.decisionRef} onClick={() => { setSelected(d.delegation.id); setDetailRevision(n => n + 1); }}>Xem phân công</button></td></tr>)}</tbody></table></div>}
+      {listing.loading ? <LoadingState /> : listing.data?.content.length === 0 ? <p>Chưa có phân công trong kỳ này.</p> : <div className="table-wrap"><table className="data-table"><thead><tr><th>Cán bộ</th><th>Căn cứ</th><th>Hiệu lực</th><th>Thao tác</th></tr></thead><tbody>{listing.data?.content.map(d => <tr key={d.delegation.id}>
+        <td><div className="delegation-person"><span className="delegation-avatar" aria-hidden="true">{initials(d.displayName)}</span><div><b>{d.displayName}</b><small>{d.email}</small></div></div></td>
+        <td>{d.delegation.decisionRef}</td><td><span className={'delegation-status ' + stateTone(d)}>{state(d)}</span><small className="delegation-validity">{stamp(d.delegation.validFrom)} – {stamp(d.delegation.validUntil)}</small></td>
+        <td><button type="button" className="secondary delegation-view" aria-label={'Xem phân công ' + d.delegation.decisionRef} onClick={() => { setSelected(d.delegation.id); setDetailRevision(n => n + 1); }}>Xem phân công</button></td>
+      </tr>)}</tbody></table></div>}
       <Pager data={listing.data} busy={listing.loading || busy} change={setPage} />
     </section>
     {selected && <DelegationDetail key={selected} path={base + '/' + selected} revision={detailRevision} changed={() => { setRevision(n => n + 1); setDetailRevision(n => n + 1); }} close={() => setSelected('')} />}
@@ -127,6 +140,9 @@ function ScopeEditor({ mode, scope }: { mode: string; scope: Scope }) {
 function state(d: Detail) {
   return !d.delegation.active ? 'Đã thu hồi' : d.effectivePermissionCodes.length === d.delegation.permissionCodes.length ? 'Đang có hiệu lực'
     : d.effectivePermissionCodes.length ? 'Hiệu lực một phần' : 'Chưa có hoặc đã mất hiệu lực';
+}
+function stateTone(d: Detail) {
+  return state(d) === 'Đang có hiệu lực' ? 'is-effective' : state(d) === 'Hiệu lực một phần' ? 'is-partial' : 'is-inactive';
 }
 function DelegationDetail({ path, revision, changed, close }: { path: string; revision: number; changed: () => void; close: () => void }) {
   const detail = useRead<Detail>(path, revision), [reason, setReason] = useState('ASSIGNMENT_ENDED'), [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('');
@@ -139,12 +155,13 @@ function DelegationDetail({ path, revision, changed, close }: { path: string; re
     try { await api('/school/delegations/' + d.delegation.id, { method: 'DELETE', headers: { 'Idempotency-Key': pending.current.key }, body: payload }); pending.current = null; setMessage('Đã thu hồi phân công và các phiên bị ảnh hưởng.'); changed(); }
     catch (problem) { setError(failure(problem)); } finally { setBusy(false); }
   };
-  return <section className="panel" aria-label="Chi tiết phân công"><div className="section-heading"><h2>Chi tiết phân công</h2><button type="button" className="secondary" disabled={busy} onClick={close}>Đóng chi tiết</button></div>
+  return <section className="panel delegation-detail" aria-label="Chi tiết phân công"><div className="section-heading"><h2>Chi tiết phân công</h2><button type="button" className="secondary" disabled={busy} onClick={close}>Đóng chi tiết</button></div>
     <Notice message={detail.error || error} tone="error" /><Notice message={message} tone="success" />
-    {detail.loading ? <LoadingState /> : d && <><h3>{d.displayName}</h3><p>{d.email} · {state(d)}</p><dl className="delegation-meta"><dt>Căn cứ</dt><dd>{d.delegation.decisionRef}</dd><dt>Người cấp</dt><dd>{d.grantorName}</dd><dt>Thời hạn</dt><dd>{stamp(d.delegation.validFrom)} – {stamp(d.delegation.validUntil)}</dd><dt>Phiên bản</dt><dd>{d.delegation.version}</dd><dt>Phân công</dt><dd>{d.parentId ? 'Được ủy quyền từ phân công ' + d.parentId : 'Phân công gốc'}</dd></dl>
-      <h3>Quyền được cấp</h3><ul>{d.delegation.permissionCodes.map(p => <li key={p}>{permissionNames[p] || p}{!d.effectivePermissionCodes.includes(p) && ' · Chưa có hoặc đã mất hiệu lực'}</li>)}</ul>
-      {d.delegation.profileReadFields.length > 0 && <p>Thông tin được xem: {d.delegation.profileReadFields.map(f => fieldNames[f] || f).join(', ')}</p>}
-      {d.canRevoke ? <form onSubmit={e => { e.preventDefault(); void revoke(); }}><label>Lý do thu hồi<select value={reason} disabled={busy} onChange={e => setReason(e.target.value)}><option value="ASSIGNMENT_ENDED">Kết thúc phân công</option><option value="SECURITY_REVIEW">Rà soát quyền truy cập</option><option value="SCOPE_CHANGED">Thay đổi phạm vi phụ trách</option></select></label><button className="danger" disabled={busy}>Thu hồi phân công</button></form>
+    {detail.loading ? <LoadingState /> : d && <><div className="delegation-person delegation-detail-person"><span className="delegation-avatar" aria-hidden="true">{initials(d.displayName)}</span><div><h3>{d.displayName}</h3><p>{d.email} · <span className={'delegation-status ' + stateTone(d)}>{state(d)}</span></p></div></div>
+      <dl className="delegation-meta"><div><dt>Căn cứ</dt><dd>{d.delegation.decisionRef}</dd></div><div><dt>Người cấp</dt><dd>{d.grantorName}</dd></div><div><dt>Thời hạn</dt><dd>{stamp(d.delegation.validFrom)} – {stamp(d.delegation.validUntil)}</dd></div><div><dt>Phiên bản</dt><dd>{d.delegation.version}</dd></div><div><dt>Phân công</dt><dd>{d.parentId ? 'Được ủy quyền từ phân công ' + d.parentId : 'Phân công gốc'}</dd></div></dl>
+      <h3>Quyền được cấp</h3><ul className="delegation-tags">{d.delegation.permissionCodes.map(p => <li className={!d.effectivePermissionCodes.includes(p) ? 'is-limited' : undefined} key={p}>{permissionNames[p] || p}{!d.effectivePermissionCodes.includes(p) && ' · Chưa có hoặc đã mất hiệu lực'}</li>)}</ul>
+      {d.delegation.profileReadFields.length > 0 && <p className="delegation-fields">Thông tin được xem: {d.delegation.profileReadFields.map((f, index) => <Fragment key={f}>{index > 0 && ', '}<span className="delegation-tag">{fieldNames[f] || f}</span></Fragment>)}</p>}
+      {d.canRevoke ? <form className="delegation-revoke" onSubmit={e => { e.preventDefault(); void revoke(); }}><label>Lý do thu hồi<select value={reason} disabled={busy} onChange={e => setReason(e.target.value)}><option value="ASSIGNMENT_ENDED">Kết thúc phân công</option><option value="SECURITY_REVIEW">Rà soát quyền truy cập</option><option value="SCOPE_CHANGED">Thay đổi phạm vi phụ trách</option></select></label><button className="danger" disabled={busy}>Thu hồi phân công</button></form>
         : d.delegation.active && <p>Chỉ người đã cấp và còn thẩm quyền mới được thu hồi phân công này.</p>}
     </>}
   </section>;

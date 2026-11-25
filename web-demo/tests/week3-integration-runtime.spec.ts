@@ -1,3 +1,4 @@
+import { expectSignedIn, openWorkspacePage } from './helpers/workspace';
 import { expect, test, type Page } from '@playwright/test';
 
 test('school publication, student preference and matching use real T5 and T2 providers', async ({ browser }) => {
@@ -11,7 +12,7 @@ test('school publication, student preference and matching use real T5 and T2 pro
     await page.goto('/'); await page.getByLabel('Email', { exact: true }).fill(email);
     await page.getByLabel('Mật khẩu', { exact: true }).fill(process.env.E2E_PASSWORD!);
     await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Đăng xuất', exact: true })).toBeVisible();
+    await expectSignedIn(page);
   }
   function localTime(date: Date) { return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16); }
   let original: { profileVersion: number; profile: Record<string, unknown> } | null = null;
@@ -26,7 +27,7 @@ test('school publication, student preference and matching use real T5 and T2 pro
   }
   try {
     await login(school, 'school@example.test'); await login(student, 'student@example.test');
-    await school.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Duyệt hợp tác', exact: true }).click();
+    await openWorkspacePage(school, 'Duyệt hợp tác');
     await school.getByLabel('Nhà trường đang làm việc', { exact: true }).selectOption('00000000-0000-4000-8000-000000000011');
     const cooperationPanel = school.locator('section.panel').filter({ has: school.getByRole('heading', { name: 'Đề nghị hợp tác', exact: true }) });
     let positionInList = -1;
@@ -45,10 +46,10 @@ test('school publication, student preference and matching use real T5 and T2 pro
     await cooperationPanel.getByRole('button', { name: `Xem nội dung đề nghị ${positionInList + 1}`, exact: true }).click();
     const detailResponse = await detailLoaded;
     expect(detailResponse.ok(), await detailResponse.text()).toBeTruthy();
-    await school.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Đề xuất sinh viên', exact: true }).click();
+    await openWorkspacePage(school, 'Đề xuất sinh viên');
     await school.getByLabel('Hợp tác đang xem', { exact: true }).selectOption(coop);
-    await school.getByLabel('Thời điểm công bố', { exact: true }).fill(localTime(new Date(Date.now() - 3600000)));
-    await school.getByLabel('Thời điểm đóng', { exact: true }).fill(localTime(new Date(Date.now() + 86400000)));
+    await school.getByLabel(/^Thời điểm công bố/).fill(localTime(new Date(Date.now() - 3600000)));
+    await school.getByLabel(/^Thời điểm đóng/).fill(localTime(new Date(Date.now() + 86400000)));
     await school.getByRole('button', { name: 'Lưu thời gian công bố', exact: true }).click();
     await expect(school.getByText('Đã lưu thời gian công bố cơ hội.', { exact: true })).toBeVisible();
     const opportunity = await (await student.request.get(`/api/v1/opportunities/${coop}`)).json();
@@ -76,8 +77,8 @@ test('school publication, student preference and matching use real T5 and T2 pro
     await student.getByRole('button', { name: 'Lời mời & nguyện vọng', exact: true }).click();
     await student.getByRole('tab', { name: 'Nguyện vọng', exact: true }).click();
     const preference = student.locator('li.student-list-item').filter({ hasText: 'Real provider week 3 browser' });
-    student.once('dialog', dialog => void dialog.accept());
     await preference.getByRole('button', { name: 'Rút nguyện vọng', exact: true }).click();
+    await student.getByRole('dialog', { name: 'Rút nguyện vọng?', exact: true }).getByRole('button', { name: 'Rút nguyện vọng', exact: true }).click();
     await expect(preference.getByText('Đã rút', { exact: true })).toBeVisible();
     await school.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Đối chiếu hồ sơ', exact: true }).click();
     const matching = school.locator('.matching-workspace');

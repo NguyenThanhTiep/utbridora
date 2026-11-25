@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 import { api } from '../../../api';
 export function useFocusedWorkflow<T>(org: string, path: string, id: string | undefined, revision: number,
   loaded: (value: T) => void, failed: () => void) {
@@ -11,4 +11,17 @@ export function useFocusedWorkflow<T>(org: string, path: string, id: string | un
       .catch(() => { if (!controller.signal.aborted) handlers.current.failed(); });
     return () => controller.abort();
   }, [org, path, id, revision]);
+}
+
+export function useWorkflowFocus(ref: RefObject<HTMLElement | null>, enabled: boolean, record: unknown) {
+  useEffect(() => {
+    if (!enabled || !record) return;
+    const frame = window.requestAnimationFrame(() => {
+      const target = ref.current;
+      if (!target) return;
+      target.focus({ preventScroll: true });
+      target.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [ref, enabled, record]);
 }
