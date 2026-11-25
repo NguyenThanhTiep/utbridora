@@ -6,6 +6,7 @@ import org.springframework.security.core.Authentication;
 public interface MentorScopePort {
     record InviteScope(String hrAssignmentId,String hrUserId,String enterpriseOrgId,String schoolOrgId,String termId,List<String> groupIds,Instant validUntil) {}
     InviteScope validateInvite(Authentication actor,String enterprise,String term,List<String> groups);
+    InviteScope invitationManagementScope(Authentication actor,String enterprise,String term);
     List<String> activateAccepted(String invitationId,String subject,InviteScope scope);
     void revokeAccepted(String invitationId,InviteScope scope);
 }

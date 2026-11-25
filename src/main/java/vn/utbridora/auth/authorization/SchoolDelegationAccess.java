@@ -16,6 +16,18 @@ public class SchoolDelegationAccess {
     public SchoolDelegationAccess(JdbcTemplate jdbc,AuthorizationPolicy access) {this.jdbc=jdbc;this.access=access;}
     private record Grant(String id,String user,String school,String term,String parent,String grantor) {}
     public record DelegationStamp(String id,long version) {}
+    public record ConfirmationScope(String delegationId,String schoolOrgId,String termId,String termCode,java.time.Instant validFrom,java.time.Instant validUntil) {}
+    /** Own current delegated scopes, not an organization-wide directory of staff. */
+    public List<ConfirmationScope> confirmationScopes(Authentication actor) {
+        return currentScopes(actor,"t3:coordinator:confirm");
+    }
+    public List<ConfirmationScope> currentScopes(Authentication actor,String permission) {
+        String user=vn.utbridora.auth.operations.WorkflowValues.actor(actor);
+        if(!access.isSelf(actor,user)) throw missing();
+        return jdbc.query("SELECT d.*,t.term_code FROM school_delegations d JOIN terms t ON t.id=d.term_id JOIN organizations o ON o.id=d.school_org_id WHERE d.user_id=? AND d.active=true AND t.status='ACTIVE' AND o.status='VERIFIED' ORDER BY d.school_org_id,d.term_id,d.id",
+            (r,n)->new ConfirmationScope(r.getString("id"),r.getString("school_org_id"),r.getString("term_id"),r.getString("term_code"),vn.utbridora.auth.operations.WorkflowValues.instant(r,"valid_from"),vn.utbridora.auth.operations.WorkflowValues.instant(r,"valid_until")),user)
+            .stream().filter(s->currentAssignment(s.delegationId(),user,s.schoolOrgId(),s.termId(),permission)).toList();
+    }
     /** Capture the exact current assignment for a durable delegated job, never a role-only grant. */
     public DelegationStamp capture(Authentication actor,String school,String term,String permission) {
         require(actor,school,term,permission);String user=((AppPrincipal)actor.getPrincipal()).userId();

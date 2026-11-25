@@ -28,6 +28,7 @@ public class StudentPreferenceService {
     public record SubmitPreference(String action, String opportunityId, String message, Integer expectedIntentVersion) {}
     public record WithdrawPreference(String action, String preferenceId, Long expectedVersion, String reasonCode) {}
     public record ReviewPreference(Long expectedVersion, String reasonCode) {}
+    public record ReviewScope(String schoolOrgId,String termId,String termCode) {}
 
     private record Stored(String preferenceId, String studentUserId, String schoolOrgId, String termId,
             String opportunityId, int intentVersion, long version, String status, String message,
@@ -75,6 +76,33 @@ public class StudentPreferenceService {
             (row, index) -> StudentPreferenceService.map(row, index).view(),
             student, term, term, size, (long) page * size);
         return new Page<>(all, page, size, total, (int) ((total + size - 1) / size));
+    }
+
+    @Transactional(readOnly=true)
+    public Page<ReviewScope> schoolScopes(Authentication auth,int page,int size) {
+        page(page,size);
+        var rows=schoolAccess.currentScopes(auth,"student:preference:school:review").stream()
+            .map(s->new ReviewScope(s.schoolOrgId(),s.termId(),s.termCode())).distinct().toList();
+        int start=Math.min(page*size,rows.size());
+        return new Page<>(List.copyOf(rows.subList(start,Math.min(start+size,rows.size()))),page,size,rows.size(),(rows.size()+size-1)/size);
+    }
+    @Transactional(readOnly=true)
+    public Page<PreferenceView> schoolList(Authentication auth,String schoolId,String termId,String status,int page,int size) {
+        page(page,size);String school=uuid(schoolId),term=uuid(termId);
+        schoolAccess.require(auth,school,term,"student:preference:school:review");
+        if(status!=null && !java.util.Set.of("SUBMITTED","WITHDRAWN","REVIEWED").contains(status)) throw failure(400,"SCHEMA_VALIDATION");
+        String where=" WHERE school_org_id=? AND term_id=? AND (? IS NULL OR status=?)";
+        long total=jdbc.queryForObject("SELECT COUNT(*) FROM student_preferences"+where,Long.class,school,term,status,status);
+        var rows=jdbc.query("SELECT * FROM student_preferences"+where+" ORDER BY updated_at DESC,preference_id LIMIT ? OFFSET ?",
+            (r,n)->map(r,n).view(),school,term,status,status,size,(long)page*size);
+        return new Page<>(rows,page,size,total,(int)((total+size-1)/size));
+    }
+    @Transactional(readOnly=true)
+    public PreferenceView schoolDetail(Authentication auth,String preferenceId) {
+        var row=jdbc.query("SELECT * FROM student_preferences WHERE preference_id=?",StudentPreferenceService::map,uuid(preferenceId))
+            .stream().findFirst().orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
+        schoolAccess.require(auth,row.schoolOrgId(),row.termId(),"student:preference:school:review");
+        return row.view();
     }
 
     @Transactional

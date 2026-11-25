@@ -63,6 +63,13 @@ public class WorkspaceAssignmentService implements MentorScopePort {
             return insert(auth,request.userId(),"MENTOR",new Scope(hr.scope().schoolOrgId(),hr.scope().enterpriseOrgId(),hr.scope().termId(),group,null),hr.id(),null,request.validFrom(),request.validUntil(),request.decisionRef(),invite);
         },Assignment::id);
     }
+    @Override @Transactional(readOnly=true)
+    public InviteScope invitationManagementScope(Authentication auth,String enterprise,String term) {
+        var hr=authority.selected(auth);
+        if(!hr.kind().equals("HR") || !hr.scope().enterpriseOrgId().equals(uuid(enterprise)) || !hr.scope().termId().equals(uuid(term))
+            || !core.hasOrganization(auth,enterprise,Role.ENTERPRISE,"t3:mentor:invite")) throw failure(404,"RESOURCE_NOT_FOUND");
+        return new InviteScope(hr.id(),actor(auth),enterprise,hr.scope().schoolOrgId(),term,List.of(),hr.validUntil());
+    }
     @Transactional public MutationAck handover(Authentication auth,String caseId,String key,Handover request) {
         if(!uuid(caseId).equals(uuid(request.caseId()))) throw failure(400,"SCHEMA_VALIDATION");uuid(request.newMentorUserId());version(request.expectedCaseVersion());reason(request.reasonCode());var hr=authority.selected(auth);
         if(!hr.kind().equals("HR") || !core.holdOrganization(auth,hr.scope().enterpriseOrgId(),Role.ENTERPRISE,"t3:mentors:manage")) throw failure(403,"ACCESS_DENIED");

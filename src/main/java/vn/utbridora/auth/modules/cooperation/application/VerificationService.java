@@ -134,6 +134,20 @@ public class VerificationService implements OrganizationSchoolVerificationPort {
                 .orElseGet(()->new SchoolVerificationView(enterprise,school,null,null,null,null,false)));
         } catch(OperationFailure failure) {return new DomainError(failure.code);}
     }
+    @Override @Transactional(readOnly=true)
+    public List<EnterpriseReference> coordinatorEnterprises(ReadContext context,String schoolOrgId) {
+        if(context==null || context.purpose!=Purpose.CONFIRM_COORDINATOR) throw missing();
+        String school=uuid(schoolOrgId),term=uuid(context.termId);
+        actor(context.actor,false);delegations.require(context.actor,school,term,"t3:coordinator:confirm");
+        // Enumerate T5-owned approved references, then recheck the latest attempt exactly as get().
+        return records.findAll((root,q,cb)->cb.and(cb.equal(root.get("schoolOrgId"),school),cb.equal(root.get("state"),VerificationState.APPROVED)))
+            .stream().map(row->row.enterpriseOrgId).distinct()
+            .filter(id->get(context,id,school) instanceof Success ok && ok.value().schoolApproved())
+            .map(organizations::findById).flatMap(Optional::stream)
+            .filter(o->o.type==Organization.Type.ENTERPRISE && o.status==Organization.Status.VERIFIED)
+            .map(o->new EnterpriseReference(o.id,o.name))
+            .sorted(Comparator.comparing(EnterpriseReference::name,String.CASE_INSENSITIVE_ORDER).thenComparing(EnterpriseReference::enterpriseOrgId)).toList();
+    }
     private void changed(String actor,EnterpriseVerification row,VerificationState from,String reason,String action) {
         VerificationHistory entry=new VerificationHistory();entry.verificationId=row.id;entry.fromState=from==null?null:from.name();entry.toState=row.state.name();entry.actorId=actor;
         entry.reasonCode=reason;entry.missingFields=row.missingFields;entry.decisionRef=row.decisionRef;entry.submissionNo=row.submissionNo;entry.snapshotJson=JSON.writeValueAsString(view(row));history.save(entry);

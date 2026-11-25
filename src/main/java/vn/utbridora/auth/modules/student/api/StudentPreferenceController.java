@@ -57,6 +57,17 @@ public class StudentPreferenceController {
         return preferences.review(actor, key, id, body(data, ReviewPreference.class));
     }
 
+    @GetMapping("/school/preferences")
+    public Page<PreferenceView> schoolList(Authentication actor,@RequestHeader("X-Organization-Id") String schoolOrgId,
+            @RequestParam String termId,@RequestParam(required=false) String status,
+            @RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="25") int size) {
+        return preferences.schoolList(actor,schoolOrgId,termId,status,page,size);
+    }
+    @GetMapping("/school/preferences/scopes")
+    public Page<StudentPreferenceService.ReviewScope> schoolScopes(Authentication actor,@RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="25") int size) {return preferences.schoolScopes(actor,page,size);}
+    @GetMapping("/school/preferences/{id}")
+    public PreferenceView schoolDetail(Authentication actor,@PathVariable String id) {return preferences.schoolDetail(actor,id);}
+
     private static JsonNode request(String data) {
         try {
             if (data == null || data.length() > 2_000_000) throw failure(400, "SCHEMA_VALIDATION");

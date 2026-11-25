@@ -1,0 +1,14 @@
+.assignment-management{max-width:1180px;margin-inline:auto}
+.assignment-management fieldset{border:0;padding:0;min-width:0;display:grid;gap:16px}
+.assignment-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.assignment-management .assignment-check{display:flex;align-items:flex-start;gap:10px}
+.assignment-management .assignment-check input{width:auto;flex:none;margin-top:5px}
+.assignment-pager{display:flex;align-items:center;flex-wrap:wrap;gap:12px;font-size:.9rem}
+.assignment-table{overflow-x:auto}
+.assignment-table table{min-width:620px;width:100%;border-collapse:collapse}
+.assignment-table th,.assignment-table td{text-align:left;padding:12px;border-bottom:1px solid var(--border,#dce3e9);vertical-align:top}
+.assignment-table small{display:block;color:var(--text-muted,#586879);margin-top:4px}
+.assignment-detail{border:1px solid var(--border,#dce3e9);border-radius:12px;padding:20px;overflow-wrap:anywhere}
+.assignment-detail dl{display:grid;grid-template-columns:minmax(100px,.4fr) minmax(0,1fr);gap:8px 16px}
+.assignment-detail dd{margin:0}.assignment-detail dt{font-weight:600}
+@media(max-width:680px){.assignment-form-grid{grid-template-columns:1fr}.assignment-pager{gap:8px}.assignment-detail dl{grid-template-columns:1fr}}

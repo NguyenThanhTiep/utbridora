@@ -127,6 +127,10 @@ public class WorkspaceAuthority implements CoreWorkspaceAccess.BusinessAuthority
         return s.groupId()!=null && jdbc.queryForObject("SELECT COUNT(*) FROM internship_groups g JOIN internship_cohorts c ON c.id=g.cohort_id WHERE g.id=? AND c.enterprise_org_id=? AND c.school_org_id=? AND c.term_id=?",Integer.class,s.groupId(),s.enterpriseOrgId(),s.schoolOrgId(),s.termId())==1
             && (s.caseId()==null || currentCaseGroup(UUID.fromString(s.caseId()),s.groupId()));
     }
+    /** Internal projection helper, only after a management/read boundary has authorized the row's scope. */
+    public boolean effectiveAssignment(String id) {
+        Grant grant=load(id);return grant!=null && valid(grant,new HashSet<>(),true);
+    }
     private Grant load(String id) {
         if(id==null) return null;
         return jdbc.query("SELECT * FROM internship_context_assignments WHERE id=?"+lock(),(r,n)->new Grant(

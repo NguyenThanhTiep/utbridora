@@ -18,4 +18,7 @@ public interface OrganizationSchoolVerificationPort {
     record Success(SchoolVerificationView value) implements ReadResult {}
     record DomainError(String errorCode) implements ReadResult {}
     ReadResult get(ReadContext actor,String enterpriseOrgId,String schoolOrgId);
+    record EnterpriseReference(String enterpriseOrgId,String name) {}
+    /** Authorized reference data only; no verification dossiers or contact information. */
+    java.util.List<EnterpriseReference> coordinatorEnterprises(ReadContext actor,String schoolOrgId);
 }

@@ -18,6 +18,7 @@ public class MentorInvitationService implements MentorActivationPort {
     public record MentorInviteDto(String invitationId,long version,String state,String enterpriseOrgId,List<String> groupIds,String termId,Instant expiresAt) {}
     public record Accept(Long expectedVersion) {}
     public record Revoke(Long expectedVersion,String reasonCode) {}
+    public record SentInvitation(MentorInviteDto invitation,String email,String recipientUserId) {}
     private record Stored(String id,String email,String userId,String tokenId,String hr,String state,long version,MentorScopePort.InviteScope scope,List<String> assignments,Instant expires) {
         MentorInviteDto dto() {return new MentorInviteDto(id,version,state,scope.enterpriseOrgId(),scope.groupIds(),scope.termId(),state.equals("REVIEW_REQUIRED")?null:expires);}
     }
@@ -136,5 +137,26 @@ public class MentorInvitationService implements MentorActivationPort {
         var ids=jdbc.queryForList("SELECT id FROM mentor_invitation_refs WHERE user_id=? ORDER BY id",String.class,actor(auth));int from=Math.min(page*size,ids.size());
         return new vn.utbridora.auth.modules.cooperation.domain.DemandModels.Page<>(ids.subList(from,Math.min(from+size,ids.size())).stream().map(this::read).map(Stored::dto).toList(),page,size,ids.size(),(ids.size()+size-1)/size);
     }
-    private Stored read(String id) {return jdbc.query("SELECT * FROM mentor_invitation_refs WHERE id=? FOR UPDATE",(r,n)->new Stored(r.getString("id"),r.getString("email"),r.getString("user_id"),r.getString("token_id"),r.getString("hr_user_id"),r.getString("state"),r.getLong("version"),JSON.readValue(r.getString("scope_json"),MentorScopePort.InviteScope.class),List.of(JSON.readValue(r.getString("assignment_ids"),String[].class)),instant(r,"expires_at")),id).stream().findFirst().orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));}
+    @Transactional(readOnly=true)
+    public vn.utbridora.auth.modules.cooperation.domain.DemandModels.Page<SentInvitation> sent(Authentication auth,String enterprise,String term,int page,int size) {
+        page(page,size);var scope=workspace.invitationManagementScope(auth,uuid(enterprise),uuid(term));
+        String where=" WHERE hr_user_id=? AND JSON_UNQUOTE(JSON_EXTRACT(scope_json,'$.enterpriseOrgId'))=? AND JSON_UNQUOTE(JSON_EXTRACT(scope_json,'$.schoolOrgId'))=? AND JSON_UNQUOTE(JSON_EXTRACT(scope_json,'$.termId'))=?";
+        Object[] args={actor(auth),scope.enterpriseOrgId(),scope.schoolOrgId(),scope.termId()};
+        long total=jdbc.queryForObject("SELECT COUNT(*) FROM mentor_invitation_refs"+where,Long.class,args);
+        var params=new ArrayList<Object>(List.of(args));params.add(size);params.add((long)page*size);
+        var rows=jdbc.query("SELECT * FROM mentor_invitation_refs"+where+" ORDER BY id LIMIT ? OFFSET ?",MentorInvitationService::stored,params.toArray());
+        return new vn.utbridora.auth.modules.cooperation.domain.DemandModels.Page<>(rows.stream().map(s->new SentInvitation(s.dto(),s.email(),s.userId())).toList(),page,size,total,(int)((total+size-1)/size));
+    }
+    @Transactional(readOnly=true)
+    public SentInvitation sentDetail(Authentication auth,String enterprise,String term,String id) {
+        var scope=workspace.invitationManagementScope(auth,uuid(enterprise),uuid(term));
+        var s=jdbc.query("SELECT * FROM mentor_invitation_refs WHERE id=? AND hr_user_id=?",MentorInvitationService::stored,uuid(id),actor(auth))
+            .stream().findFirst().orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));
+        if(!scope.enterpriseOrgId().equals(s.scope().enterpriseOrgId()) || !scope.schoolOrgId().equals(s.scope().schoolOrgId()) || !scope.termId().equals(s.scope().termId())) throw failure(404,"RESOURCE_NOT_FOUND");
+        return new SentInvitation(s.dto(),s.email(),s.userId());
+    }
+    private static Stored stored(java.sql.ResultSet r,int n) throws java.sql.SQLException {
+        return new Stored(r.getString("id"),r.getString("email"),r.getString("user_id"),r.getString("token_id"),r.getString("hr_user_id"),r.getString("state"),r.getLong("version"),JSON.readValue(r.getString("scope_json"),MentorScopePort.InviteScope.class),List.of(JSON.readValue(r.getString("assignment_ids"),String[].class)),instant(r,"expires_at"));
+    }
+    private Stored read(String id) {return jdbc.query("SELECT * FROM mentor_invitation_refs WHERE id=? FOR UPDATE",MentorInvitationService::stored,id).stream().findFirst().orElseThrow(()->failure(404,"RESOURCE_NOT_FOUND"));}
 }
