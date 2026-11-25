@@ -38,7 +38,7 @@ export function GrantAssignment({ scope, enterprise, query, command, changed }: 
     }}>
       <fieldset disabled={busy}><div className="assignment-form-grid">
         <label>Tìm người nhận theo tên<input value={search} maxLength={120} onChange={e => { setSearch(e.target.value); setTarget(null); }} /></label>
-        <label>Người nhận {kind}<select value={target?.userId || ''} disabled={members.loading || !!members.error} onChange={e => setTarget(members.data?.content.find(m => m.userId === e.target.value) || null)}>
+        <label>Người nhận {kind}<select aria-label={'Người nhận ' + kind} value={target?.userId || ''} disabled={members.loading || !!members.error} onChange={e => setTarget(members.data?.content.find(m => m.userId === e.target.value) || null)}>
           <option value="">Chọn thành viên doanh nghiệp…</option>{members.data?.content.map(m => <option key={m.userId} value={m.userId}>{m.displayName} · {shortId(m.userId)}</option>)}
         </select></label>
       </div><ManagementPager data={members.data} disabled={busy || members.loading} change={p => { setTarget(null); setPage(p); }} />
@@ -46,9 +46,9 @@ export function GrantAssignment({ scope, enterprise, query, command, changed }: 
       {members.data?.totalElements === 0 && <p>Chưa có thành viên phù hợp; cần tài khoản ACTIVE và membership doanh nghiệp hợp lệ.</p>}
       {!coordinator && <div className="stack"><label className="assignment-check"><input type="checkbox" checked={limited} onChange={e => { setLimited(e.target.checked); setGroupId(''); setCaseId(''); setGroupPage(0); setCasePage(0); }} />Giới hạn HR theo nhóm/Case cho nghiệp vụ điểm</label>
         <p className="muted">HR giới hạn nhóm/Case không có quyền quản lý toàn bộ đợt hoặc mời Mentor.</p>
-        {limited && <><label>Nhóm được phân công<select value={groupId} onChange={e => { setGroupId(e.target.value); setCaseId(''); setCasePage(0); }}><option value="">Chọn nhóm…</option>{groups.data?.content.map(g => <option key={g.groupId} value={g.groupId}>{g.cohortCode} · {g.code}</option>)}</select></label>
+        {limited && <><label>Nhóm được phân công<select aria-label="Nhóm được phân công" value={groupId} onChange={e => { setGroupId(e.target.value); setCaseId(''); setCasePage(0); }}><option value="">Chọn nhóm…</option>{groups.data?.content.map(g => <option key={g.groupId} value={g.groupId}>{g.cohortCode} · {g.code}</option>)}</select></label>
           {groups.error && <p role="alert">{groups.error}</p>}<ManagementPager data={groups.data} disabled={busy || groups.loading} change={p => { setGroupId(''); setCaseId(''); setGroupPage(p); }} />
-          {groupId && <><label>Giới hạn thêm một hồ sơ<select value={caseId} onChange={e => setCaseId(e.target.value)}><option value="">Tất cả hồ sơ trong nhóm</option>{cases.data?.content.map(c => <option key={c.caseId} value={c.caseId}>Hồ sơ {shortId(c.caseId)} · {caseStateLabel(c.state)}</option>)}</select></label>
+          {groupId && <><label>Giới hạn thêm một hồ sơ<select aria-label="Giới hạn thêm một hồ sơ" value={caseId} onChange={e => setCaseId(e.target.value)}><option value="">Tất cả hồ sơ trong nhóm</option>{cases.data?.content.map(c => <option key={c.caseId} value={c.caseId}>Hồ sơ {shortId(c.caseId)} · {caseStateLabel(c.state)}</option>)}</select></label>
             {cases.error && <p role="alert">{cases.error}</p>}<ManagementPager data={cases.data} disabled={busy || cases.loading} change={p => { setCaseId(''); setCasePage(p); }} /></>}
         </>}
       </div>}
@@ -76,9 +76,9 @@ export function MentorHandover({ scope, query, command, changed }: Omit<FormProp
         setSelected(null); setMentor(''); setReason(''); setRevision(n => n + 1); changed('Đã ghi nhận bàn giao Mentor. Mentor cần đăng nhập lại để cập nhật quyền.');
       });
     }} className="stack"><fieldset disabled={busy}>
-      <label>Hồ sơ cần bàn giao<select value={selected?.caseId || ''} onChange={e => { setSelected(cases.data?.content.find(c => c.caseId === e.target.value) || null); setMentor(''); setMentorPage(0); }}><option value="">Chọn hồ sơ đang thực tập…</option>{cases.data?.content.map(c => <option key={c.caseId} value={c.caseId}>Hồ sơ {shortId(c.caseId)} · {c.groupCode} · {caseStateLabel(c.state)}</option>)}</select></label>
+      <label>Hồ sơ cần bàn giao<select aria-label="Hồ sơ cần bàn giao" value={selected?.caseId || ''} onChange={e => { setSelected(cases.data?.content.find(c => c.caseId === e.target.value) || null); setMentor(''); setMentorPage(0); }}><option value="">Chọn hồ sơ đang thực tập…</option>{cases.data?.content.map(c => <option key={c.caseId} value={c.caseId}>Hồ sơ {shortId(c.caseId)} · {c.groupCode} · {caseStateLabel(c.state)}</option>)}</select></label>
       {cases.error && <p role="alert">{cases.error}</p>}<ManagementPager data={cases.data} disabled={busy || cases.loading} change={p => { setSelected(null); setMentor(''); setCasePage(p); }} />
-      {selected && <><label>Mentor tiếp nhận<select value={mentor} onChange={e => setMentor(e.target.value)}><option value="">Chọn Mentor đủ điều kiện…</option>{mentors.data?.content.map(m => <option key={m.userId} value={m.userId}>{m.displayName} · {shortId(m.userId)}</option>)}</select></label>
+      {selected && <><label>Mentor tiếp nhận<select aria-label="Mentor tiếp nhận" value={mentor} onChange={e => setMentor(e.target.value)}><option value="">Chọn Mentor đủ điều kiện…</option>{mentors.data?.content.map(m => <option key={m.userId} value={m.userId}>{m.displayName} · {shortId(m.userId)}</option>)}</select></label>
         {mentors.error && <p role="alert">{mentors.error}</p>}{mentors.data?.totalElements === 0 && <p>Chưa có Mentor đủ điều kiện. Cần hoàn tất luồng mời và tự chấp thuận trước.</p>}
         <ManagementPager data={mentors.data} disabled={busy || mentors.loading} change={p => { setMentor(''); setMentorPage(p); }} />
         <p className="muted">Phiên bản hồ sơ: {selected.version}. Nếu có thay đổi, tải lại danh sách rồi chọn lại.</p></>}

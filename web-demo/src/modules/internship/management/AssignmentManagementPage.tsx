@@ -24,7 +24,7 @@ export function AssignmentManagementPage() {
   return <div className="stack assignment-management"><section className="panel stack"><h2>Quản lý phân công thực tập</h2>
     <p>Xác nhận Coordinator, phân công HR, bàn giao Mentor và thu hồi quyền trong phạm vi đang được giao.</p>
     <Notice message={scopes.error} tone="error" />{scopes.loading && <LoadingState />}
-    <label>Phạm vi cấp quyền<select disabled={locked || scopes.loading} value={scope?.id || ''} onChange={e => setId(e.target.value)}>
+    <label>Phạm vi cấp quyền<select aria-label="Phạm vi cấp quyền" disabled={locked || scopes.loading} value={scope?.id || ''} onChange={e => setId(e.target.value)}>
       <option value="">Chọn phạm vi…</option>{scopes.data?.content.map(s => <option key={s.id} value={s.id}>{modeNames[s.mode]} · {names[s.schoolOrgId] || 'Trường ' + shortId(s.schoolOrgId)} · {s.termCode}{s.enterpriseOrgId ? ' · ' + (names[s.enterpriseOrgId] || 'DN ' + shortId(s.enterpriseOrgId)) : ''}</option>)}
     </select></label><ManagementPager data={scopes.data} disabled={locked || scopes.loading} change={p => { setId(''); setPage(p); }} />
     <button type="button" className="secondary" disabled={locked} onClick={() => { setId(''); setRevision(n => n + 1); }}>Tải lại phạm vi cấp quyền</button>
@@ -40,7 +40,7 @@ function EnterpriseScope({ scope, locked, lock, reset }: { scope: ManagementScop
   const selected = scope.enterpriseOrgId || (options.data?.content.some(o => o.enterpriseOrgId === enterprise) ? enterprise : '');
   return <>
     {scope.mode === 'SCHOOL' && <section className="panel stack"><h2>Doanh nghiệp được xác nhận</h2><Notice message={options.error} tone="error" />
-      <label>Doanh nghiệp<select disabled={locked || options.loading} value={selected} onChange={e => setEnterprise(e.target.value)}><option value="">Chọn doanh nghiệp…</option>{options.data?.content.map(o => <option key={o.enterpriseOrgId} value={o.enterpriseOrgId}>{o.name}{o.canConfirm ? '' : ' · Chỉ tra cứu/thu hồi'}</option>)}</select></label>
+      <label>Doanh nghiệp<select aria-label="Doanh nghiệp" disabled={locked || options.loading} value={selected} onChange={e => setEnterprise(e.target.value)}><option value="">Chọn doanh nghiệp…</option>{options.data?.content.map(o => <option key={o.enterpriseOrgId} value={o.enterpriseOrgId}>{o.name}{o.canConfirm ? '' : ' · Chỉ tra cứu/thu hồi'}</option>)}</select></label>
       {options.data?.totalElements === 0 && <p>Chưa có doanh nghiệp VERIFIED và có hồ sơ xác minh được trường chấp thuận.</p>}
       <ManagementPager data={options.data} disabled={locked || options.loading} change={p => { setEnterprise(''); setPage(p); }} />
     </section>}

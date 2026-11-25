@@ -10,7 +10,7 @@ import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import vn.utbridora.auth.modules.internship.domain.WorkspaceRuleException;
 
-@RestControllerAdvice(assignableTypes=WorkspaceController.class)
+@RestControllerAdvice(assignableTypes={WorkspaceController.class,AssignmentManagementReadController.class,WorkspaceAssignmentController.class})
 @Order(Ordered.HIGHEST_PRECEDENCE+5)
 public class WorkspaceErrors {
     @ExceptionHandler(WorkspaceRuleException.class)

@@ -71,6 +71,7 @@ public class SecurityConfig {
                .requestMatchers(HttpMethod.PUT,"/api/v1/students/me/profile").authenticated()
                // T2-07 Preference (BC22); owner, school scope and delegation are checked in StudentPreferenceService.
                .requestMatchers(HttpMethod.GET,"/api/v1/students/me/preferences").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/school/preferences","/api/v1/school/preferences/*").authenticated()
                .requestMatchers(HttpMethod.POST,"/api/v1/students/me/preferences","/api/v1/school/preferences/*/review").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/demands").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/demand-references/schools","/api/v1/enterprise/demand-references/terms","/api/v1/enterprise/demand-references/academic-catalog").authenticated()

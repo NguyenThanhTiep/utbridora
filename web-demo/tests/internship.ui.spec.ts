@@ -200,7 +200,7 @@ test('DEV05 HR creates cohort, intakes Placement and confirms a versioned groupi
   await page.route('**/api/v1/auth/me/permissions', route => route.fulfill({ json: grants }));
   await page.route('**/api/v1/auth/csrf', route => route.fulfill({ json: { headerName: 'X-CSRF-TOKEN', token: 'fixture-csrf' } }));
   await page.route('**/api/v1/t3/context-assignments/me', route => route.fulfill({ json: [hr] }));
-  let created = false;
+  let created = false, grouped = false;
   const requests: { path: string; body: Record<string, unknown>; context: string | undefined; key: string | undefined }[] = [];
   await page.route('**/api/v1/t3/cohorts**', route => {
     const request = route.request(), path = new URL(request.url()).pathname;
@@ -208,7 +208,7 @@ test('DEV05 HR creates cohort, intakes Placement and confirms a versioned groupi
       return route.fulfill({ json: { content: created ? [cohort] : [], page: 0, size: 100, totalElements: created ? 1 : 0, totalPages: created ? 1 : 0 } });
     }
     if (request.method() === 'GET' && path.endsWith('/groups')) {
-      return route.fulfill({ json: { content: [], page: 0, size: 100, totalElements: 0, totalPages: 0 } });
+      return route.fulfill({ json: { content: grouped ? [group] : [], page: 0, size: 100, totalElements: grouped ? 1 : 0, totalPages: grouped ? 1 : 0 } });
     }
     const body = request.postDataJSON() as Record<string, unknown>;
     requests.push({ path, body, context: request.headers()['x-context-assignment-id'], key: request.headers()['idempotency-key'] });
@@ -217,7 +217,7 @@ test('DEV05 HR creates cohort, intakes Placement and confirms a versioned groupi
       items: [{ placementId: ids.other, caseId: ids.case, outcome: 'ADDED', reasonCode: 'NONE' }] } });
     if (body.mode === 'PREVIEW') return route.fulfill({ json: { planId: ids.other, cohortVersion: 2,
       expiresAt: '2026-11-19T10:15:00Z', groups: [{ ordinal: 1, caseIds: [ids.case] }] } });
-    return route.fulfill({ json: [group] });
+    grouped = true; return route.fulfill({ json: [group] });
   });
   await page.goto('/');
   await page.getByRole('button', { name: 'Không gian thực tập', exact: true }).click();
@@ -244,7 +244,9 @@ test('DEV05 HR creates cohort, intakes Placement and confirms a versioned groupi
   expect(requests.map(item => item.body.expectedCohortVersion)).toEqual([undefined, undefined, 2, 2]);
   expect(requests[1].body).toMatchObject({ expectedVersion: cohort.version, placementIds: [ids.other], previewId: null, fileHash: null });
   expect(requests.every(item => item.context === ids.hr && !!item.key)).toBe(true);
-  await page.setViewportSize({ width: 1440, height: 500 });
+  await expect(page.getByRole('button', { name: 'Xem nhóm N-01', exact: true })).toBeVisible();
+  // A short group list must still have actual scroll room before asserting the sticky threshold.
+  await page.setViewportSize({ width: 1440, height: 320 });
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(120);
   await expect.poll(() => page.locator('.t3-topbar').evaluate(node => Math.round(node.getBoundingClientRect().top))).toBe(0);
