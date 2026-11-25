@@ -9,6 +9,7 @@ import { CaseStatus } from './CaseStatus';
 
 /** Deep link remains a T3 read: the Placement link itself confers no case/task authority. */
 export function CaseEntry({ caseId, me, grants }: { caseId: string; me: Me; grants: Grant[] }) {
+  const [operations, setOperations] = useState(() => ['policy', 'quality', 'close'].includes(new URLSearchParams(location.search).get('followup') || ''));
   const [value, setValue] = useState<CaseRef | null>(null), [error, setError] = useState(''), [revision, setRevision] = useState(0);
   useEffect(() => {
     const c = new AbortController();setValue(null);setError('');
@@ -30,7 +31,9 @@ export function CaseEntry({ caseId, me, grants }: { caseId: string; me: Me; gran
       <><header className="t3-case-hero"><h2>Hồ sơ thực tập</h2>{status}{refresh}</header><Notice message={error} tone="error" /></>}
     {!value && !error && <p role="status">Đang kiểm tra quyền truy cập hồ sơ…</p>}
     {student && status}
-    </section>{value?.caseId === caseId && scope && <ScopeOperations key={caseId+':'+revision} scope={scope} caseId={caseId} initialEvaluations={followup==='policy'} denied={()=>{setValue(null);setError('Quyền truy cập hồ sơ đã thay đổi. Hãy xác nhận lại quyền.');}} />}
+    </section>{value?.caseId === caseId && scope && (operations
+      ? <ScopeOperations key={caseId+':'+revision} scope={scope} caseId={caseId} initialEvaluations={followup==='policy'} denied={()=>{setValue(null);setError('Quyền truy cập hồ sơ đã thay đổi. Hãy xác nhận lại quyền.');}} />
+      : <button className="secondary" onClick={()=>setOperations(true)}>Mở vận hành hồ sơ theo quyền nhà trường</button>)}
     {value?.caseId === caseId && !scope && me.memberships.some(m => m.role === 'ENTERPRISE')
       && <InternshipWorkspace me={me} grants={grants} initialCase={value} />}</div>;
 }
