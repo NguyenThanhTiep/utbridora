@@ -119,6 +119,7 @@ export function Field({ label, value, onChange, type = 'text', required = true, 
     floating ? 'is-float' : '',
     floating && focused ? 'is-f' : '',
     floating && isUp ? 'is-up' : '',
+    isInvalid && shakeNonce ? 'is-shake' : '',
     floating && isInvalid ? 'is-err' : '',
   ].filter(Boolean).join(' ');
 
