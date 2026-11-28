@@ -34,11 +34,14 @@ test('drop forwards real files once and rejects multiple, unsupported, empty and
 test('keyboard chooser preserves input label, reselecting the same file and clearing controlled selection', async ({ page }) => {
   await page.goto('/tests/fixtures/file-dropzone.html');
   const zone = page.getByRole('button', { name: 'Mở hộp chọn tệp', exact: true });
+  let selections = 0;
   for (const key of ['Enter', 'Space']) {
     await zone.focus();
+    await expect(zone).toBeFocused();
     const chooser = page.waitForEvent('filechooser');
-    await page.keyboard.press(key);
+    await zone.press(key);
     await (await chooser).setFiles({ name: 'minh-chung.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4') });
+    await expect(page.getByLabel('Số lần chọn')).toHaveText(String(++selections));
   }
   await expect(page.getByLabel('Số lần chọn')).toHaveText('2');
   await page.getByRole('button', { name: 'Xóa tệp đã chọn' }).click();
