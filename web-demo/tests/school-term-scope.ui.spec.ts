@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { openWorkspacePage } from './helpers/workspace';
 
 // Isolated browser fixtures; no production accounts or database writes.
 const school = '22222222-2222-4222-8222-222222222222';
@@ -71,6 +72,8 @@ test('school term selection updates KPIs, task list and term details and clearin
   await expect(page.getByRole('region', { name: 'Danh sách đợt thực tập' }).getByRole('rowheader')).toHaveText(['Kỳ trước']);
   await selector.selectOption(next);
   await expect(values).toHaveText(['0', '0', '1', '1']);
+  await expect(page.getByRole('region', { name: 'Danh sách đợt thực tập' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Đợt thực tập: 1', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Danh sách đợt thực tập' }).getByRole('rowheader')).toHaveText(['Kỳ tiếp theo']);
   await expect(page.locator('.school-overview-stat').last()).toContainText('Chờ xác minh của toàn trường');
   await selector.selectOption('');
@@ -117,6 +120,6 @@ test('school navigation keeps the term in cooperation, placement and matching re
   await page.getByRole('combobox', { name: 'Kỳ tiếp nhận', exact: true }).selectOption(past);
   await expect(page.getByLabel('Kỳ theo dõi', { exact: true })).toHaveValue(past);
   await expect.poll(() => reads.some(read => read.path === '/school/placements/progress' && read.termId === past)).toBe(true);
-  await page.getByRole('button', { name: 'Đối chiếu hồ sơ', exact: true }).click();
+  await openWorkspacePage(page, 'Đối chiếu hồ sơ');
   await expect.poll(() => reads.some(read => read.path === '/school/cooperations' && read.state === 'APPROVED' && read.termId === past)).toBe(true);
 });
