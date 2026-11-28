@@ -19,7 +19,7 @@ Tất cả test tự động của QA04 đều gọi **trực tiếp vào mã ng
 | # | Bộ kiểm thử | Lệnh chạy | Kết quả | Thời gian / Chỉ số |
 | :-: | :--- | :--- | :---: | :--- |
 | 1 | `QA04MatchingPrivacyTest` *(Unit + Oracle + Smoke Perf của QA04)* | `.\mvnw.cmd -B -o "-Dtest=QA04MatchingPrivacyTest" test` | **5/5 PASS** | `1.875 s` · 400 hồ sơ × 5 kỹ năng: **cold = 26 ms, p95 = 8.490 ms** |
-| 2 | `QA04MatchingPrivacyIT` *(Integration thật MySQL 8.4 + HTTP của QA04)* | `.\mvnw.cmd -B -o failsafe:integration-test failsafe:verify "-Dit.test=QA04MatchingPrivacyIT"` | **4/4 PASS** | `79.40 s` · Fixture `0/1/4/5/10/20`, `10/10/10` vs `9/10/11`, Export CSV/Chart, Security & Adapter, Ghép động T2/T5 (`IT04`) |
+| 2 | `QA04MatchingPrivacyIT` *(Integration thật MySQL 8.4 + HTTP của QA04)* | `.\mvnw.cmd -B -o failsafe:integration-test failsafe:verify "-Dit.test=QA04MatchingPrivacyIT"` | **6/6 PASS** | `93.42 s` · Fixture `0/1/4/5/10/20`, `10/10/10` vs `9/10/11`, Export CSV/Chart, Security & Adapter, Ghép động T2/T5 (`IT04`), **7 vector phép trừ đối kháng (`IT05`)**, **`MATCH`/`fitScore` R11 T2/T5 (`IT06`)** |
 | 3 | `verify_s1_s11_fixture.py` *(SRS Oracle độc lập)* | `python scripts/fixtures/t4/verify_s1_s11_fixture.py` | **PASS** | 11/11 kỳ vọng SRS §16.3 S1–S11 |
 | 4 | `ProtectedAggregatePolicyTest` + `StrictClassifierTest` + `MatchingPerformanceSmokeTest` | `.\mvnw.cmd -B "-Dtest=ProtectedAggregatePolicyTest,StrictClassifierTest,MatchingPerformanceSmokeTest" test` | **7/7 PASS** | `cold = 31 ms, p95 = 8.702 ms` |
 | 5 | `EnterpriseProposalIT` *(Privacy/Differencing/Concurrency)* | `.\mvnw.cmd -B failsafe:integration-test failsafe:verify "-Dit.test=EnterpriseProposalIT#protectedReleasesEnforceBandsFrozenReplayGateAndAllHttpRepresentations+privacyReleaseBlocksNearIdenticalDifferencingAcrossActorsAndKeys+protectedReleaseRollsBackAuditFailureAndSerializesTwentyRequests"` | **3/3 PASS** | `95.45 s` · 20 request đồng thời = 1 release; audit rollback sạch |
@@ -81,6 +81,8 @@ Tất cả test tự động của QA04 đều gọi **trực tiếp vào mã ng
 | **TC-QA04-21** | T4-04, T2-04 | Đổi kỹ năng sinh viên trên API thật T2 (`MATCH → NOT_MATCH`) | SV `id(6)` đang đạt `MATCH` (`JAVA`) | SV gọi `PUT /api/v1/students/me/profile` xóa danh sách kỹ năng (`skills: []`); cán bộ trường bấm `Chạy lại Matching` | Số `Đáp ứng` giảm `1`, số `Không đáp ứng` tăng `1`; chi tiết hiển thị `Không đạt · Kỹ năng JAVA (REQUIRED_NOT_SATISFIED)` | Khớp 100% trên cả trình duyệt thật (`week3-integration-runtime.spec.ts`) và `QA04MatchingPrivacyIT.IT04` | **PASS** |
 | **TC-QA04-22** | T4-04, T2-04 | Đổi trạng thái chưa khai báo kỹ năng trên T2 (`NOT_MATCH → MISSING_DATA`) | SV `id(6)` đang ở trạng thái `NOT_MATCH` | SV gọi `PUT /api/v1/students/me/profile` với `skillsDeclared = false`; cán bộ trường chạy lại Matching | Số `Thiếu dữ liệu` tăng `1`, chi tiết hiển thị `DATA_NOT_DECLARED`; khi khôi phục kỹ năng gốc, SV quay lại `MATCH` | PASS 100% trong `QA04MatchingPrivacyIT.IT04` | **PASS** |
 | **TC-QA04-23** | T4-04, T5-02 | Đổi tiêu chí nhu cầu thật trên T5 (`majorCodes: ["AI"]`) | Nhu cầu mới trên T5 yêu cầu ngành `AI` trong khi SV `id(6)` học ngành `SE` | Duyệt nhu cầu mới trên T5 và cán bộ trường chạy Matching | `matched = 0`, SV `id(6)` chuyển sang `NOT_MATCH` với lý do `criterionCode = "MAJOR", status = "FAIL"` (không phụ thuộc dữ liệu giả cố định) | PASS 100% trong `QA04MatchingPrivacyIT.IT04` | **PASS** |
+| **TC-QA04-24** | QA-04, T4-07 | **Truy vấn thống kê đối kháng đa bộ lọc phép trừ (7 vector)** | Batch 10 SV (`10-19`) gồm nhóm nhỏ **2 SV** ngành `major2`; khóa `Q0` trên `hr` | Thử 7 vector phép trừ qua `hr`/`coordinator`: `V1` tăng `minYearsPractice +0.5`, `V2` tăng `minLevel +1`, `V3` thêm kỹ năng `REQUIRED` (`SQL`), `V4` thu hẹp `majorCodes` tách nhóm 2 SV, `V5` thu hẹp `dateRange` (-1 ngày), `V6` đổi `preferred`, `V7` sửa trực tiếp `DRAFT demand` gốc (`criteriaVersion++`); cộng ca đối chứng đảo thứ tự `majorCodes` | 7/7 vector trả **`409 PRIVACY_RELEASE_LOCKED`** (0 rò rỉ khóa nhạy cảm/`%`/băng, 0 `match_runs` mới, ghi đủ 7 audit `DENIED`, ledger giữ `1` release); ca đối chứng đảo thứ tự trả `200` phát lại nguyên release cũ | PASS 100% trong `QA04MatchingPrivacyIT.IT05` (0 lỗi privacy regression) | **PASS** |
+| **TC-QA04-25** | QA-04, T4-04, T4-06 | **Kiểm tra `MATCH` & `fitScore` (R11) theo biến động dữ liệu thật T2/T5** | Demand T5 thật có `1 REQUIRED` + `3 PREFERRED` (`SQL`, `SPRING`, `DOCKER`) | Đổi kỹ năng SV `id(6)` qua `PUT /students/me/profile`: `0/3 → 1/3 → 2/3 → 3/3 PREFERRED`; xóa `REQUIRED` giữ nguyên 3 `PREFERRED`; đặt `skillsDeclared=false`; đổi demand T5 còn `2 PREFERRED` | `MATCH` đạt `0.00 → 33.33 → 66.67 → 100.00`; xóa `REQUIRED` → `NOT_MATCH` & `fitScore = null`; `skillsDeclared=false` → `MISSING_DATA` & `fitScore = null`; demand 2 `PREFERRED` (đạt 1) → `50.00` | PASS 100% trong `QA04MatchingPrivacyIT.IT06` | **PASS** |
 
 ---
 
@@ -104,7 +106,7 @@ Target endpoint: `/api/v1/auth/csrf` (Spring Security + Tomcat thread pool)
 
 ### 3.3. Test Assets Added by QA04
 - `src/test/java/vn/utbridora/auth/modules/matching/QA04MatchingPrivacyTest.java` — Unit + SRS Oracle S1–S11 + Smoke Performance (5/5 PASS).
-- `src/test/java/vn/utbridora/auth/QA04MatchingPrivacyIT.java` — Full-stack MySQL 8.4 + HTTP Privacy, Anti-Differencing `10/10/10` vs `9/10/11`, Export/Chart Non-Bypass, Adapter & Real T2/T5 Dynamic Integration IT (4/4 PASS).
+- `src/test/java/vn/utbridora/auth/QA04MatchingPrivacyIT.java` — Full-stack MySQL 8.4 + HTTP Privacy, Anti-Differencing `10/10/10` vs `9/10/11`, 7-Vector Multi-Filter Subtraction (`IT05`), Export/Chart Non-Bypass, Adapter & Real T2/T5 Dynamic `MATCH`/`fitScore` R11 Integration IT (**6/6 PASS**).
 - `scripts/qa-matching/load_stress_benchmark.py` — Multi-stage concurrency load benchmark.
 - `scripts/qa-matching/nginx_stress_test.py` — Frontend throughput test.
 - `scripts/qa-matching/bcrypt_stress_test.py` — CPU-bound authentication stress test.
@@ -113,7 +115,7 @@ Target endpoint: `/api/v1/auth/csrf` (Spring Security + Tomcat thread pool)
 
 ## 4. Kết luận tổng thể
 
-**PASS (23/23 Test Case QA04 đạt 100%)** — Toàn bộ yêu cầu bảo vệ riêng tư `k=5`, suppression, Zero PII (JSON/CSV/Chart), chống suy luận chênh lệch `10/10/10` → `9/10/11` (HTTP `409`), ghép dữ liệu thật T2/T5 động trên màn hình trường và hiệu năng nhỏ (`T4-03`, `T4-04`, `T4-05`, `T2-04`, `T5-02`) đều đã được kiểm chứng thực tế trên MySQL 8.4, Spring Boot HTTP và Chromium.
+**PASS (25/25 Test Case QA04 đạt 100%)** — Toàn bộ yêu cầu bảo vệ riêng tư `k=5`, suppression, Zero PII (JSON/CSV/Chart), chống suy luận chênh lệch `10/10/10` → `9/10/11` và 7 vector phép trừ đa bộ lọc (HTTP `409`), ghép dữ liệu thật T2/T5 động kèm kiểm định `MATCH`/`fitScore` (R11) và hiệu năng nhỏ (`T4-03`, `T4-04`, `T4-05`, `T4-06`, `T4-07`, `T4-08`, `T2-04`, `T5-02`) đều đã được kiểm chứng thực tế trên MySQL 8.4, Spring Boot HTTP và Chromium.
 
 **Người kiểm thử:** QA04  
-**Ngày cập nhật:** 20/11/2026
+**Ngày cập nhật:** 28/11/2026

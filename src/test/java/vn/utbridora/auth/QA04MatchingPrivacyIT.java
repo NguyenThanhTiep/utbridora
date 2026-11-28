@@ -145,6 +145,13 @@ class QA04MatchingPrivacyIT {
         coordinator = login("coordinator@example.test");
         school = login("school@example.test");
         student = login("student@example.test");
+
+        String categoryId = jdbc.queryForObject("SELECT id FROM skill_categories LIMIT 1", String.class);
+        for (String code : List.of("SQL", "SPRING", "DOCKER")) {
+            jdbc.update("INSERT IGNORE INTO skills(id,skill_code,name,normalized_name,category_id,parent_skill_id,status,version,created_at,updated_at) " +
+                            "VALUES(?,?,?,?,?,NULL,'ACTIVE',1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",
+                    key(), code, code, code.toLowerCase(Locale.ROOT), categoryId);
+        }
         SecurityContextHolder.clearContext();
     }
 
@@ -629,6 +636,294 @@ class QA04MatchingPrivacyIT {
         } finally {
             restoreOriginalStudentSkills(originalSkills);
         }
+    }
+
+    @Test
+    @DisplayName("TC-QA04-IT05 [QA-04 Tuần 4 / T4-07]: Truy vấn đối kháng đa bộ lọc có thể trừ nhau (7 vector) -> chặn 100% HTTP 409, không suy ra nhóm nhỏ")
+    void blocksMultiVectorAdversarialSubtractionFiltersInSameBatch() throws Exception {
+        jdbc.update("UPDATE matching_privacy_release_settings SET enabled=true WHERE id=1");
+
+        List<String> activeMajors = jdbc.queryForList(
+                "SELECT code FROM academic_catalog_entries WHERE term_id=? AND kind='MAJOR' AND status='ACTIVE' ORDER BY code",
+                String.class, id(21));
+        assertTrue(activeMajors.size() >= 2, "Cần tối thiểu 2 ngành ACTIVE để thử phép trừ theo ngành: " + activeMajors);
+        String major1 = seedProfile.majorCode();
+        String major2 = activeMajors.stream().filter(m -> !m.equals(major1)).findFirst().orElseThrow();
+
+        var baseSkill = baseInput.required().skills().getFirst();
+        List<String> activeSkills = jdbc.queryForList(
+                "SELECT skill_code FROM skills WHERE status='ACTIVE' ORDER BY skill_code", String.class);
+        String extraSkill = activeSkills.stream().filter(s -> !s.equals(baseSkill.skillCode())).findFirst().orElseThrow();
+
+        BigDecimal baseYears = baseSkill.minYearsPractice() == null ? BigDecimal.ZERO : baseSkill.minYearsPractice();
+        int baseLevel = baseSkill.minLevel() == null ? 1 : baseSkill.minLevel();
+        var baseRange = baseInput.required().dateRange();
+
+        // Tạo batch 10 SV đạt MATCH gồm nhóm nhỏ 2 SV (major2) + 8 SV (major1) để có thể dựng mọi phép trừ hợp lệ
+        String datasetId = key(), batchId = key();
+        var snapshotSet = new StudentProfileSnapshotPort.SnapshotSet(
+                datasetId, id(11), id(21), "qa04-adversarial-sub-7vec",
+                baseInput.academicCatalogVersion(), baseInput.taxonomyVersion(), Instant.now(), 10);
+        jdbc.update("INSERT INTO student_snapshot_sets VALUES(?,?,?,?)", datasetId, id(11), id(21), JSON.writeValueAsString(snapshotSet));
+
+        for (int i = 0; i < 10; i++) {
+            String uid = key(), sid = key();
+            jdbc.update("INSERT INTO users(id,email,password_hash,display_name,status,created_at,updated_at) " +
+                            "SELECT ?,?,password_hash,?,'ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6) FROM users WHERE id=?",
+                    uid, "qa04.adv." + i + "." + uid.substring(0, 6) + "@example.test", "QA04 Adv SV " + i, id(6));
+            String studentMajor = (i < 2) ? major2 : major1; // Nhóm nhỏ 2 SV thuộc major2
+            int studentLevel = (i == 2) ? baseLevel : Math.min(5, baseLevel + 2);
+            BigDecimal studentYears = (i == 3) ? baseYears : baseYears.add(new BigDecimal("3"));
+            List<StudentProfileSnapshotPort.SkillValue> svSkills = new ArrayList<>();
+            svSkills.add(new StudentProfileSnapshotPort.SkillValue(baseSkill.skillCode(), studentLevel, studentYears, "CANONICAL"));
+            if (i >= 4) {
+                svSkills.add(new StudentProfileSnapshotPort.SkillValue(extraSkill, 4, new BigDecimal("2"), "CANONICAL"));
+            }
+            var snap = new StudentProfileSnapshotPort.ProfileSnapshot(
+                    sid, uid, id(11), id(21), studentMajor,
+                    true, List.copyOf(svSkills), true, seedProfile.availablePeriods(),
+                    seedProfile.profileVersion(), "qa04-adv-hash-" + i,
+                    seedProfile.completenessVersion(), seedProfile.academicCatalogVersion(),
+                    seedProfile.taxonomyVersion(), Instant.now());
+            jdbc.update("INSERT INTO student_profile_snapshots VALUES(?,?,?,?)", sid, datasetId, uid, JSON.writeValueAsString(snap));
+        }
+        activateBatch(batchId, datasetId);
+
+        // Q0 (Base): majorCodes=[major1, major2], skill=baseSkill(minLevel=baseLevel, minYears=baseYears), full dateRange -> 10 MATCH -> 10-19
+        var baseReqCriteria = new RequiredCriteria(
+                List.of(major1, major2),
+                List.of(new SkillCriterion(baseSkill.skillCode(), baseLevel, baseYears)),
+                baseRange);
+        var q0Input = new DemandInput(
+                baseInput.schoolOrgId(), baseInput.termId(), "QA04 Adv Base Q0 " + key(),
+                baseInput.quantity(), baseInput.description(), baseInput.location(), baseInput.benefits(),
+                baseInput.deadline(), baseReqCriteria, List.of(),
+                baseInput.academicCatalogVersion(), baseInput.taxonomyVersion());
+        var q0Demand = demands.create(as(4), id(12), key(), q0Input);
+        var q0Resp = http(hr, "POST", "/matching/evaluate",
+                JSON.writeValueAsString(new MatchingService.Evaluate(q0Demand.demandId(), q0Demand.version(), q0Demand.criteriaVersion())),
+                id(12), key(), true);
+        assertEquals(200, q0Resp.statusCode(), q0Resp.body());
+        var lockedRelease = JSON.readValue(q0Resp.body(), MatchingService.Evaluated.class).release();
+        assertEquals("10-19", lockedRelease.eligibleBand());
+
+        // Control: Đảo thứ tự majorCodes ([major2, major1]) + đổi title/description -> cùng canonical fingerprint -> replay nguyên release cũ (200)
+        var reorderedInput = new DemandInput(
+                baseInput.schoolOrgId(), baseInput.termId(), "QA04 Adv Reordered Canonical " + key(),
+                baseInput.quantity(), "Mô tả khác không đổi tiêu chí", baseInput.location(), baseInput.benefits(),
+                baseInput.deadline(),
+                new RequiredCriteria(List.of(major2, major1), baseReqCriteria.skills(), baseRange),
+                List.of(), baseInput.academicCatalogVersion(), baseInput.taxonomyVersion());
+        var reorderedDemand = demands.create(as(4), id(12), key(), reorderedInput);
+        var replayResp = http(coordinator, "POST", "/matching/evaluate",
+                JSON.writeValueAsString(new MatchingService.Evaluate(reorderedDemand.demandId(), reorderedDemand.version(), reorderedDemand.criteriaVersion())),
+                id(12), key(), true);
+        assertEquals(200, replayResp.statusCode(), replayResp.body());
+        assertEquals(lockedRelease, JSON.readValue(replayResp.body(), MatchingService.Evaluated.class).release());
+
+        // 6 Vector tấn công phép trừ qua demand mới (khác nhau từng chiều bộ lọc)
+        Map<String, DemandInput> attackProbes = new LinkedHashMap<>();
+        attackProbes.put("V1_minYearsPractice_subtraction", new DemandInput(
+                baseInput.schoolOrgId(), baseInput.termId(), "QA04 V1 Years " + key(),
+                baseInput.quantity(), baseInput.description(), baseInput.location(), baseInput.benefits(),
+                baseInput.deadline(),
+                new RequiredCriteria(List.of(major1, major2),
+                        List.of(new SkillCriterion(baseSkill.skillCode(), baseLevel, baseYears.add(new BigDecimal("0.5")))), baseRange),
+                List.of(), baseInput.academicCatalogVersion(), baseInput.taxonomyVersion()));
+        attackProbes.put("V2_minLevel_subtraction", new DemandInput(
+                baseInput.schoolOrgId(), baseInput.termId(), "QA04 V2 Level " + key(),
+                baseInput.quantity(), baseInput.description(), baseInput.location(), baseInput.benefits(),
+                baseInput.deadline(),
+                new RequiredCriteria(List.of(major1, major2),
+                        List.of(new SkillCriterion(baseSkill.skillCode(), Math.min(5, baseLevel + 1), baseYears)), baseRange),
+                List.of(), baseInput.academicCatalogVersion(), baseInput.taxonomyVersion()));
+        attackProbes.put("V3_extraRequiredSkill_subtraction", new DemandInput(
+                baseInput.schoolOrgId(), baseInput.termId(), "QA04 V3 ExtraSkill " + key(),
+                baseInput.quantity(), baseInput.description(), baseInput.location(), baseInput.benefits(),
+                baseInput.deadline(),
+                new RequiredCriteria(List.of(major1, major2),
+                        List.of(new SkillCriterion(baseSkill.skillCode(), baseLevel, baseYears),
+                                new SkillCriterion(extraSkill, 1, BigDecimal.ZERO)), baseRange),
+                List.of(), baseInput.academicCatalogVersion(), baseInput.taxonomyVersion()));
+        attackProbes.put("V4_narrowMajorCodes_isolate_2_students", new DemandInput(
+                baseInput.schoolOrgId(), baseInput.termId(), "QA04 V4 NarrowMajor " + key(),
+                baseInput.quantity(), baseInput.description(), baseInput.location(), baseInput.benefits(),
+                baseInput.deadline(),
+                new RequiredCriteria(List.of(major1), baseReqCriteria.skills(), baseRange),
+                List.of(), baseInput.academicCatalogVersion(), baseInput.taxonomyVersion()));
+        attackProbes.put("V5_narrowDateRange_subtraction", new DemandInput(
+                baseInput.schoolOrgId(), baseInput.termId(), "QA04 V5 DateRange " + key(),
+                baseInput.quantity(), baseInput.description(), baseInput.location(), baseInput.benefits(),
+                baseInput.deadline(),
+                new RequiredCriteria(List.of(major1, major2), baseReqCriteria.skills(),
+                        new DateRange(baseRange.startDate(), baseRange.endDate().minusDays(1))),
+                List.of(), baseInput.academicCatalogVersion(), baseInput.taxonomyVersion()));
+        attackProbes.put("V6_preferredCriteria_mutation", new DemandInput(
+                baseInput.schoolOrgId(), baseInput.termId(), "QA04 V6 Preferred " + key(),
+                baseInput.quantity(), baseInput.description(), baseInput.location(), baseInput.benefits(),
+                baseInput.deadline(),
+                baseReqCriteria, List.of(new SkillCriterion(extraSkill, null, null)),
+                baseInput.academicCatalogVersion(), baseInput.taxonomyVersion()));
+
+        Set<String> forbiddenErrorKeys = Set.of(
+                "total", "rawCount", "count", "matched", "missingData", "notMatched",
+                "percent", "percentage", "difference", "fingerprint", "criteriaHash", "eligibleCount",
+                "eligibleBand", "email", "studentUserId"
+        );
+
+        int blockedCountBefore = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM audit_logs WHERE action='PRIVACY_RELEASE_BLOCKED'", Integer.class);
+
+        for (var entry : attackProbes.entrySet()) {
+            var probeDemand = demands.create(as(4), id(12), key(), entry.getValue());
+            var payload = JSON.writeValueAsString(new MatchingService.Evaluate(
+                    probeDemand.demandId(), probeDemand.version(), probeDemand.criteriaVersion()));
+            Session attacker = entry.getKey().startsWith("V1") || entry.getKey().startsWith("V3") || entry.getKey().startsWith("V5")
+                    ? hr : coordinator;
+            var resp = http(attacker, "POST", "/matching/evaluate", payload, id(12), key(), true);
+            assertEquals(409, resp.statusCode(), entry.getKey() + " bắt buộc bị chặn 409: " + resp.body());
+            var tree = JSON.readTree(resp.body());
+            assertEquals("PRIVACY_RELEASE_LOCKED", tree.get("errorCode").asString(), entry.getKey() + ": " + resp.body());
+            String msg = tree.path("message").asString("");
+            assertFalse(msg.contains("%") || msg.contains("5-9") || msg.contains("10-19") || msg.contains("SUPPRESSED"),
+                    entry.getKey() + " không được lộ băng/tỷ lệ: " + msg);
+            var keys = new HashSet<String>();
+            collectKeys(tree, keys);
+            assertTrue(Collections.disjoint(forbiddenErrorKeys, keys), entry.getKey() + " rò rỉ khóa nhạy cảm: " + keys);
+            assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM match_runs WHERE demand_id=?", Integer.class, probeDemand.demandId()));
+        }
+
+        // Vector 7: Sửa trực tiếp chính DRAFT demand gốc (tăng criteriaVersion) rồi gọi lại bằng actor khác (coordinator) -> vẫn phải 409
+        var editedQ0 = demands.update(as(4), id(12), q0Demand.demandId(), key(),
+                new UpdateDemand(q0Demand.version(), attackProbes.get("V4_narrowMajorCodes_isolate_2_students")));
+        assertTrue(editedQ0.criteriaVersion() > q0Demand.criteriaVersion());
+        var v7Resp = http(coordinator, "POST", "/matching/evaluate",
+                JSON.writeValueAsString(new MatchingService.Evaluate(editedQ0.demandId(), editedQ0.version(), editedQ0.criteriaVersion())),
+                id(12), key(), true);
+        assertEquals(409, v7Resp.statusCode(), "V7 in-place demand edit bắt buộc trả 409: " + v7Resp.body());
+        assertEquals("PRIVACY_RELEASE_LOCKED", JSON.readTree(v7Resp.body()).get("errorCode").asString());
+
+        // Ledger vẫn khóa chặt đúng 1 release; ghi đủ 7 audit PRIVACY_RELEASE_BLOCKED (DENIED)
+        assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM matching_privacy_releases WHERE demo_batch_id=?", Integer.class, batchId));
+        int blockedCountAfter = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM audit_logs WHERE action='PRIVACY_RELEASE_BLOCKED'", Integer.class);
+        assertEquals(blockedCountBefore + 7, blockedCountAfter, "Cả 7 vector tấn công đối kháng phải được ghi nhận audit DENIED");
+    }
+
+    @Test
+    @DisplayName("TC-QA04-IT06 [QA-04 Tuần 4 / T4-04, T4-06]: Kiểm tra MATCH và fitScore (R11) sau khi ghép & biến động dữ liệu thật T2/T5")
+    void verifiesMatchAndPreferredFitScoreAfterLiveT2AndT5Mutations() throws Exception {
+        var originalProfileResp = http(student, "GET", "/students/me/profile?termId=" + id(21), null, null, null, false);
+        assertEquals(200, originalProfileResp.statusCode(), originalProfileResp.body());
+        var originalSkills = JSON.readTree(originalProfileResp.body()).get("profile").get("skills");
+
+        var reqSkill = baseInput.required().skills().getFirst();
+        List<String> otherSkills = jdbc.queryForList(
+                "SELECT skill_code FROM skills WHERE status='ACTIVE' AND skill_code <> ? ORDER BY skill_code",
+                String.class, reqSkill.skillCode());
+        assertTrue(otherSkills.size() >= 3, "Cần tối thiểu 3 kỹ năng ACTIVE khác để kiểm tra fitScore R11: " + otherSkills);
+        String p1 = otherSkills.get(0), p2 = otherSkills.get(1), p3 = otherSkills.get(2);
+
+        try {
+            // Tạo & duyệt nhu cầu thật trên T5 với 1 REQUIRED và 3 PREFERRED (R11: 0/3=0.00, 1/3=33.33, 2/3=66.67, 3/3=100.00)
+            var demand3PrefInput = new DemandInput(
+                    baseInput.schoolOrgId(), baseInput.termId(), "QA04 R11 Score 3 Preferred " + key(),
+                    baseInput.quantity(), baseInput.description(), baseInput.location(), baseInput.benefits(),
+                    baseInput.deadline(), baseInput.required(),
+                    List.of(new SkillCriterion(p1, null, null), new SkillCriterion(p2, null, null), new SkillCriterion(p3, null, null)),
+                    baseInput.academicCatalogVersion(), baseInput.taxonomyVersion());
+            var demand3Pref = createReadyApprovedDemand(demand3PrefInput);
+
+            // 1. SV id(6) chỉ có REQUIRED (0/3 PREFERRED) -> MATCH, fitScore = 0.00
+            saveStudentSkillsViaT2Api(true, List.of(skillEntry(reqSkill.skillCode(), 5, new BigDecimal("5"))));
+            var r0 = evaluateSchoolAndFindStudent(demand3Pref, "MATCH", id(6));
+            assertEquals("MATCH", r0.get("overallStatus").asString());
+            assertEquals(0, new BigDecimal("0.00").compareTo(r0.get("fitScore").decimalValue()), "0/3 PREFERRED phải đạt 0.00");
+
+            // 2. Thêm P1 qua T2 (1/3 PREFERRED) -> MATCH, fitScore = 33.33
+            saveStudentSkillsViaT2Api(true, List.of(
+                    skillEntry(reqSkill.skillCode(), 5, new BigDecimal("5")),
+                    skillEntry(p1, 3, new BigDecimal("1"))));
+            var r1 = evaluateSchoolAndFindStudent(demand3Pref, "MATCH", id(6));
+            assertEquals(0, new BigDecimal("33.33").compareTo(r1.get("fitScore").decimalValue()), "1/3 PREFERRED phải đạt 33.33");
+
+            // 3. Thêm P2 qua T2 (2/3 PREFERRED) -> MATCH, fitScore = 66.67
+            saveStudentSkillsViaT2Api(true, List.of(
+                    skillEntry(reqSkill.skillCode(), 5, new BigDecimal("5")),
+                    skillEntry(p1, 3, new BigDecimal("1")),
+                    skillEntry(p2, 4, new BigDecimal("2"))));
+            var r2 = evaluateSchoolAndFindStudent(demand3Pref, "MATCH", id(6));
+            assertEquals(0, new BigDecimal("66.67").compareTo(r2.get("fitScore").decimalValue()), "2/3 PREFERRED phải đạt 66.67");
+
+            // 4. Thêm P3 qua T2 (3/3 PREFERRED) -> MATCH, fitScore = 100.00
+            saveStudentSkillsViaT2Api(true, List.of(
+                    skillEntry(reqSkill.skillCode(), 5, new BigDecimal("5")),
+                    skillEntry(p1, 3, new BigDecimal("1")),
+                    skillEntry(p2, 4, new BigDecimal("2")),
+                    skillEntry(p3, 5, new BigDecimal("3"))));
+            var r3 = evaluateSchoolAndFindStudent(demand3Pref, "MATCH", id(6));
+            assertEquals(0, new BigDecimal("100.00").compareTo(r3.get("fitScore").decimalValue()), "3/3 PREFERRED phải đạt 100.00");
+
+            // 5. Xóa REQUIRED nhưng giữ cả 3 PREFERRED -> NOT_MATCH và fitScore BẮT BUỘC là null (R11)
+            saveStudentSkillsViaT2Api(true, List.of(
+                    skillEntry(p1, 3, new BigDecimal("1")),
+                    skillEntry(p2, 4, new BigDecimal("2")),
+                    skillEntry(p3, 5, new BigDecimal("3"))));
+            var rNotMatch = evaluateSchoolAndFindStudent(demand3Pref, "NOT_MATCH", id(6));
+            assertEquals("NOT_MATCH", rNotMatch.get("overallStatus").asString());
+            assertTrue(rNotMatch.get("fitScore").isNull(), "R11: NOT_MATCH không được phép có fitScore dù đủ 3/3 PREFERRED");
+
+            // 6. Đặt skillsDeclared=false -> MISSING_DATA và fitScore BẮT BUỘC là null (R11)
+            saveStudentSkillsViaT2Api(false, List.of());
+            var rMissing = evaluateSchoolAndFindStudent(demand3Pref, "MISSING_DATA", id(6));
+            assertEquals("MISSING_DATA", rMissing.get("overallStatus").asString());
+            assertTrue(rMissing.get("fitScore").isNull(), "R11: MISSING_DATA không được phép có fitScore");
+
+            // 7. Đổi nhu cầu thật trên T5 còn 2 PREFERRED [p1, p2], SV có [reqSkill, p1] -> MATCH, fitScore = 50.00
+            saveStudentSkillsViaT2Api(true, List.of(
+                    skillEntry(reqSkill.skillCode(), 5, new BigDecimal("5")),
+                    skillEntry(p1, 3, new BigDecimal("1"))));
+            var demand2PrefInput = new DemandInput(
+                    baseInput.schoolOrgId(), baseInput.termId(), "QA04 R11 Score 2 Preferred " + key(),
+                    baseInput.quantity(), baseInput.description(), baseInput.location(), baseInput.benefits(),
+                    baseInput.deadline(), baseInput.required(),
+                    List.of(new SkillCriterion(p1, null, null), new SkillCriterion(p2, null, null)),
+                    baseInput.academicCatalogVersion(), baseInput.taxonomyVersion());
+            var demand2Pref = createReadyApprovedDemand(demand2PrefInput);
+            var r50 = evaluateSchoolAndFindStudent(demand2Pref, "MATCH", id(6));
+            assertEquals(0, new BigDecimal("50.00").compareTo(r50.get("fitScore").decimalValue()), "1/2 PREFERRED trên demand T5 mới phải đạt 50.00");
+        } finally {
+            restoreOriginalStudentSkills(originalSkills);
+        }
+    }
+
+    private Map<String, Object> skillEntry(String code, int level, BigDecimal years) {
+        var m = new LinkedHashMap<String, Object>();
+        m.put("skillCode", code);
+        m.put("level", level);
+        m.put("yearsPractice", years);
+        m.put("note", null);
+        return m;
+    }
+
+    private tools.jackson.databind.JsonNode evaluateSchoolAndFindStudent(DemandDto demand, String expectedBucket, String studentId) throws Exception {
+        var evalResp = http(school, "POST", "/matching/evaluate",
+                JSON.writeValueAsString(new MatchingService.Evaluate(demand.demandId(), demand.version(), demand.criteriaVersion())),
+                id(11), key(), true);
+        assertEquals(200, evalResp.statusCode(), evalResp.body());
+        var runId = JSON.readValue(evalResp.body(), MatchingService.Evaluated.class).summary().run().matchRunId();
+        var detResp = http(school, "GET",
+                "/matching/runs/" + runId + "/details?overallStatus=" + expectedBucket + "&page=0&size=50",
+                null, id(11), null, false);
+        assertEquals(200, detResp.statusCode(), detResp.body());
+        var content = JSON.readTree(detResp.body()).get("results").get("content");
+        for (var row : content) {
+            if (studentId.equals(row.get("studentUserId").asString())) {
+                return row;
+            }
+        }
+        fail("Không tìm thấy SV " + studentId + " trong nhóm " + expectedBucket + ": " + detResp.body());
+        return null;
     }
 
     private void saveStudentSkillsViaT2Api(boolean skillsDeclared, List<Map<String, Object>> skillsPayload) throws Exception {
