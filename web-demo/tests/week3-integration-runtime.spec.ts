@@ -82,7 +82,7 @@ test('school publication, student preference and matching use real T5 and T2 pro
     await preference.getByRole('button', { name: 'Rút nguyện vọng', exact: true }).click();
     await student.getByRole('dialog', { name: 'Rút nguyện vọng?', exact: true }).getByRole('button', { name: 'Rút nguyện vọng', exact: true }).click();
     await expect(preference.getByText('Đã rút', { exact: true })).toBeVisible();
-    await school.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Đối chiếu hồ sơ', exact: true }).click();
+    await openWorkspacePage(school, 'Đối chiếu hồ sơ');
     const matching = school.locator('.matching-workspace');
     // The picker uses Cooperation identity; evaluate derives the authoritative demandId.
     await matching.getByLabel('Nhu cầu đã duyệt').selectOption(coop);
