@@ -45,6 +45,11 @@ export function FileDropzone({ label, hint, maxBytes, validateFile, file, state 
   const [picked, setPicked] = useState<File | null>(null);
   const selected = file === undefined ? picked : file;
   const isDisabled = () => !input.current || input.current.matches(':disabled');
+  const openPicker = () => {
+    if (isDisabled()) return;
+    input.current!.value = '';
+    input.current!.click();
+  };
   const percent = progress === undefined || !Number.isFinite(progress) ? undefined : Math.min(100, Math.max(0, progress));
   const working = state === 'uploading' || state === 'processing';
   const changed = (event: ChangeEvent<HTMLInputElement>) => {
@@ -65,7 +70,13 @@ export function FileDropzone({ label, hint, maxBytes, validateFile, file, state 
     <label className="u032-label" htmlFor={inputId}>{label}</label>
     <button className="u032-zone" type="button" disabled={disabled} aria-label="Mở hộp chọn tệp"
       aria-controls={inputId} aria-describedby={inputId + '-hint'}
-      onClick={() => { if (!isDisabled()) { input.current!.value = ''; input.current!.click(); } }}
+      onClick={openPicker}
+      onKeyDown={event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          if (!event.repeat) openPicker();
+        }
+      }}
       onDragEnter={event => { event.preventDefault(); if (!isDisabled() && event.dataTransfer.types.includes('Files')) { depth.current++; setOver(true); } }}
       onDragOver={event => { event.preventDefault(); event.dataTransfer.dropEffect = isDisabled() ? 'none' : 'copy'; }}
       onDragLeave={() => { if (--depth.current <= 0) { depth.current = 0; setOver(false); } }}

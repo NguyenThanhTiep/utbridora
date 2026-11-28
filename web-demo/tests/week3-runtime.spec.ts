@@ -81,6 +81,7 @@ test('week 3 school, student and enterprise use real share, decision, Placement 
     const effective = await school.page.getByLabel('Ngày bắt đầu', {exact: true}).inputValue();
     await school.page.getByLabel(/^Thời điểm có hiệu lực/).fill(`${effective}T00:00`);
     await school.page.getByRole('button', {name: 'Tạo hồ sơ chờ phê duyệt', exact: true}).click();
+    await school.page.getByRole('button', {name: 'Xem hồ sơ tiếp nhận 1', exact: true}).click();
     await expect(school.page.getByRole('heading', {name: 'Tiếp nhận 1 · Chờ trường phê duyệt', exact: true})).toBeVisible();
     await school.page.getByRole('button', {name: 'Phê duyệt tiếp nhận', exact: true}).click();
     await school.page.getByLabel('Căn cứ thao tác tiếp nhận').fill('DEMO-WEEK3-BROWSER');
