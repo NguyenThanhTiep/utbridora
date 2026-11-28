@@ -59,7 +59,7 @@ class Week4ConvergenceIT {
         }
         var oldHistory=lineage.equals("clean")?Map.<String,String>of():history();
         var before=lineage.equals("clean")?Map.<String,String>of():data();
-        var upgraded=flyway(t1,null);upgraded.migrate();upgraded.validate();assertEquals("44",upgraded.info().current().getVersion().getVersion());
+        var upgraded=flyway(t1,null);upgraded.migrate();upgraded.validate();assertEquals("45",upgraded.info().current().getVersion().getVersion());
         assertEquals(0,upgraded.migrate().migrationsExecuted);
         var after=history();oldHistory.forEach((key,value)->assertEquals(value,after.get(key),key));
         if(!lineage.equals("clean")){var current=data();before.forEach((key,value)->assertEquals(value,current.get(key),key));}

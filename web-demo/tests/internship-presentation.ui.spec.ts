@@ -189,11 +189,7 @@ for (const width of [1440, 768, 320]) test(`HR expanded cohort and mentor forms 
   await page.setViewportSize({ width, height: 900 });
   const requests = await workspace(page, 'HR', true);
   const issues: string[] = [];
-  const navigate = async (label: string) => {
-    const toggle = page.getByRole('button', { name: 'Mở menu điều hướng', exact: true });
-    if (await toggle.isVisible()) await toggle.click();
-    await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: label, exact: true }).click();
-  };
+  const navigate = (label: string) => openWorkspacePage(page, label);
   const check = async (stage: string) => {
     await page.evaluate(() => window.scrollTo(0, 0));
     issues.push(...(await layoutIssues(page)).map(issue => stage + ': ' + issue));

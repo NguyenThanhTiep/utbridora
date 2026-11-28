@@ -232,7 +232,7 @@ test('DEV05 HR creates cohort, intakes Placement and confirms a versioned groupi
   await page.getByLabel('Placement ID').fill(ids.other);
   await page.getByRole('button', { name: 'Đối chiếu và nhận hồ sơ' }).click();
   await expect(page.getByText(ids.other + ': Đã nhận')).toBeVisible();
-  await page.getByRole('button', { name: 'Nhóm thực tập', exact: true }).click();
+  await openWorkspacePage(page, 'Nhóm thực tập');
   await page.getByRole('button', { name: 'Xem trước nhóm' }).click();
   await expect(page.getByText('1 nhóm dự kiến', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'Xác nhận chia nhóm' }).click();

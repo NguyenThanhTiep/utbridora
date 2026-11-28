@@ -10,6 +10,8 @@ export async function openWorkspacePage(page: Page, title: string) {
   await expectSignedIn(page);
   const toggle = page.getByRole('button', { name: 'Mở menu điều hướng', exact: true });
   if (await toggle.isVisible() && await toggle.getAttribute('aria-expanded') !== 'true') await toggle.click();
+  const expandRail = page.getByRole('button', { name: 'Mở rộng thanh điều hướng', exact: true });
+  if (await expandRail.isVisible()) await expandRail.click();
   const navigation = page.getByRole('navigation', { name: 'Điều hướng chính' });
   const entry = navigation.getByRole('button', { name: title, exact: true, includeHidden: true });
   // The enterprise T3 submenu is mounted only after its parent is opened.

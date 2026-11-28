@@ -32,7 +32,7 @@ class Week3MigrationIT {
                 var after = history(url, mysql);
                 before.forEach((key, value) -> assertEquals(value, after.get(key), "Changed installed history " + lineage + target + ":" + key));
                 if (immutable != null) assertEquals(immutable, criteria(url, mysql), "Changed immutable criteria " + lineage + target);
-                assertEquals("44", flyway.info().current().getVersion().getVersion());
+                assertEquals("45", flyway.info().current().getVersion().getVersion());
                 var dataSource = new org.springframework.jdbc.datasource.DriverManagerDataSource(url, mysql.getUsername(), mysql.getPassword());
                 var jdbc = new org.springframework.jdbc.core.JdbcTemplate(dataSource);
                 var submission = new vn.utbridora.auth.modules.internship.infrastructure.JdbcSubmissionSession(jdbc,
@@ -55,6 +55,7 @@ class Week3MigrationIT {
                     assertTrue(schema.stream().anyMatch(v -> v.startsWith("internship_evaluation_versions|")));
                     assertTrue(schema.stream().anyMatch(v -> v.startsWith("internship_school_result_policies|")));
                     assertTrue(schema.stream().anyMatch(v -> v.startsWith("internship_grade_visibility|")));
+                    assertTrue(schema.stream().anyMatch(v -> v.startsWith("verification_tax_checks|")));
                     try (var rows = s.executeQuery("SELECT enabled FROM matching_privacy_release_settings")) { assertTrue(rows.next()); assertFalse(rows.getBoolean(1)); }
                     try (var rows = s.executeQuery("SELECT COUNT(*) FROM role_permissions WHERE permission_code IN ('file:upload','file:download')")) { rows.next(); assertEquals(8, rows.getInt(1)); }
                 }

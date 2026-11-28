@@ -40,7 +40,7 @@ test('HR imports 40 placements into four groups; school coordinates, evaluates q
   await page.getByRole('button', { name: 'Xác nhận tiếp nhận 40 Placement', exact: true }).click();
   await expect(page.getByText('Đã thêm 40; đã có 0; không hợp lệ 0.', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Tải phiên bản đợt mới', exact: true }).click();
-  await page.getByRole('button', { name: 'Nhóm thực tập', exact: true }).click();
+  await openWorkspacePage(page, 'Nhóm thực tập');
   await page.getByLabel('Số hồ sơ mỗi nhóm', { exact: true }).fill('10');
   await page.getByRole('button', { name: 'Xem trước nhóm', exact: true }).click();
   await expect(page.getByText('Nhóm 4: 10 hồ sơ', { exact: true })).toBeVisible();

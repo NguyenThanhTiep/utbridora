@@ -124,8 +124,7 @@ for (const width of [1440, 390, 320]) test(`demand row opens details with click 
   await row.locator('[data-label="Chỉ tiêu"]').click();
   await expect(detail).toBeVisible();
   await expect(detail.getByRole('heading', { name: record.data.title, exact: true })).toBeFocused();
-  await row.locator('[data-label="Chỉ tiêu"]').click();
-  await expect(detail).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'Chi tiết nhu cầu thực tập', exact: true })).toBeVisible();
   await detail.getByRole('button', { name: 'Đóng chi tiết nhu cầu', exact: true }).click();
   await expect(row).toBeFocused();
   for (const key of ['Enter', 'Space']) {

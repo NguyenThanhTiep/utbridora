@@ -881,6 +881,12 @@ function AuthForm({ screen, token, clearToken, navigate, signedIn }: {
   const [shakeSeq, setShakeSeq] = useState<{ email?: number; name?: number; password?: number; confirm?: number }>({});
   const action = useAction();
   const submitting = useRef(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    if (!action.busy && Object.values(invalidFields).some(Boolean)) {
+      formRef.current?.querySelector<HTMLInputElement>('input[aria-invalid="true"]')?.focus();
+    }
+  }, [action.busy, invalidFields]);
   const titles: Record<string, string> = { login: 'Đăng nhập', forgot: 'Quên mật khẩu', reset: 'Mật khẩu mới', activate: 'Kích hoạt tài khoản' };
   const overlines: Record<string, string> = { login: 'CHÀO MỪNG TRỞ LẠI', forgot: 'BƯỚC 01 / YÊU CẦU', reset: 'BƯỚC 03 / ĐẶT LẠI', activate: 'TÀI KHOẢN / LỜI MỜI' };
   const submitLabels: Record<string, string> = { login: 'Đăng nhập', forgot: 'Gửi hướng dẫn', reset: 'Lưu mật khẩu mới', activate: 'Kích hoạt tài khoản' };
@@ -958,7 +964,7 @@ function AuthForm({ screen, token, clearToken, navigate, signedIn }: {
       } finally { submitting.current = false; }
     });
   };
-  return <form key={screen} noValidate className={'auth-form' + (screen === 'login' ? ' auth-form-login' : '')} onSubmit={submit} aria-busy={action.busy} aria-label={'Biểu mẫu ' + titles[screen]}>
+  return <form ref={formRef} key={screen} noValidate className={'auth-form' + (screen === 'login' ? ' auth-form-login' : '')} onSubmit={submit} aria-busy={action.busy} aria-label={'Biểu mẫu ' + titles[screen]}>
     <span className="auth-form-icon" aria-hidden="true"><Icon name="check" size={16} /></span>
     <p className="auth-overline">{overlines[screen]}</p>
     <h2 className="auth-title" id="auth-title">{titles[screen]}</h2><p className="auth-description">{descriptions[screen]}</p>
