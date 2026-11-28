@@ -5,6 +5,16 @@ param(
 )
 $ErrorActionPreference='Stop'
 $project=Split-Path -Parent $PSScriptRoot
+if ($project -match '[^\x00-\x7F]') {
+    $cleanPath = Join-Path $env:USERPROFILE 'utbridora'
+    if (!(Test-Path -LiteralPath $cleanPath)) {
+        & cmd /c mklink /J "$cleanPath" "$project" | Out-Null
+    }
+    if (Test-Path -LiteralPath $cleanPath) {
+        $project = $cleanPath
+        Set-Location $cleanPath
+    }
+}
 $configuration=Join-Path $project 'compose.local.yaml'
 $environmentFile=Join-Path $project $EnvironmentFileName
 if (($ProjectName -ne 'utbridora-local') -xor ($EnvironmentFileName -ne '.env.local')) {
