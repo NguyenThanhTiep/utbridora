@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Notice } from '../../../components';
+import { PagerNav } from '../../../ui/PagerNav';
 import type { ContractPage } from '../../student/types';
 import { scopedRead, workflowError } from './api';
 import { proposalStates, type SchoolProposal, type Capacity } from './types';
@@ -113,8 +114,7 @@ export function SchoolProposals({ org, cooperationId, demand, includePlacement =
           <td>{proposalStates[item.state] || item.state}</td>
         </tr>;
       })}{!result.content.length && <tr><td colSpan={6}>{state ? 'Không có đề xuất trong trạng thái đã chọn.' : 'Chưa có ứng viên được đề xuất.'}</td></tr>}</tbody></table></div>}
-    {result && result.totalPages > 1 && <div className="button-row"><button className="secondary" disabled={page === 0 || loading || pending.size > 0} onClick={() => setPage(n => n - 1)}>Trang tiến trình trước</button>
-      <span>Trang {page + 1}/{result.totalPages}</span><button className="secondary" disabled={page + 1 >= result.totalPages || loading || pending.size > 0} onClick={() => setPage(n => n + 1)}>Trang tiến trình sau</button></div>}
+    {result && result.totalPages > 1 && <PagerNav page={page} totalPages={result.totalPages} busy={loading || pending.size > 0} prevLabel="Trang tiến trình trước" nextLabel="Trang tiến trình sau" ariaLabel="Phân trang tiến trình" onChange={setPage} />}
     </div>
     {demand && includePlacement && <PlacementWorkspace org={org} school cooperationId={cooperationId} demand={demand} candidates={result?.content || []}
       locked={pending.size > 0 && !pending.has('placement')} pendingChanged={active => markPending('placement', active)} changed={() => setRevision(n => n + 1)} />}

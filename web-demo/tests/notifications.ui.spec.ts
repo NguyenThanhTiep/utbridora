@@ -56,6 +56,17 @@ async function session(page: Page, schoolSide = false, f = fixtures()) {
 const bellCount = (page: Page) => page.locator('.notification-count:not(.is-loading)');
 const openCenter = (page: Page) => page.getByRole('button', { name: 'Mở trung tâm thông báo', exact: true }).click();
 
+test('notification record rows open dossiers and marking a message read does not navigate', async ({ page }) => {
+  await session(page);
+  await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Thông báo', exact: true }).click();
+  const title = 'Nhà trường yêu cầu bổ sung hồ sơ BM-03';
+  const row = page.getByRole('row').filter({ has: page.getByText(title, { exact: true }) });
+  await row.getByRole('button', { name: 'Đánh dấu đã đọc ' + title, exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);await expect(row).toHaveClass(/notification-read/);
+  await row.getByText(title, { exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('Doanh nghiệp từ API');
+});
+
 test('enterprise receives the five API-driven cases, real timestamps, and translated missing fields', async ({ page }) => {
   await session(page);
   await expect(bellCount(page)).toHaveText('5');

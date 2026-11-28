@@ -6,7 +6,7 @@ import './cooperation-review.css';
 
 const date = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) ? value.split('-').reverse().join('/') : value;
 
-export function SchoolCooperationSummary({ detail, termName, close }: { detail: Detail; termName?: string; close: () => void }) {
+export function SchoolCooperationSummary({ detail, termName, close, busy = false }: { detail: Detail; termName?: string; close: () => void; busy?: boolean }) {
   const { demand, cooperation: c, feedback } = detail;
   const data = demand.data;
   const status = states[c.state] || c.state;
@@ -25,7 +25,7 @@ export function SchoolCooperationSummary({ detail, termName, close }: { detail: 
       <div className="school-coop-summary-heading"><p className="school-coop-eyebrow">BM-02 · Đề nghị hợp tác</p><h3>{data.title}</h3>
         <p className="school-coop-summary-context">{termName && <><span>{termName}</span><span aria-hidden="true">·</span></>}<span>Lần gửi {c.submissionNo}</span></p></div>
       <div className="school-coop-summary-actions"><span className={`status-pill pill-${c.state.toLowerCase()}`}><span className="pill-dot" />{status}</span>
-        <button type="button" className="secondary school-coop-close" onClick={close}><Icon name="close" size={15} />Đóng chi tiết</button></div>
+        <button type="button" className="secondary school-coop-close" disabled={busy} onClick={close}><Icon name="close" size={15} />Đóng chi tiết</button></div>
     </header>
     {c.state !== 'APPROVED' && <p className="school-coop-status-note" role="note"><Icon name="shield" size={17} /><span>{messages[c.state] || status}</span></p>}
     <CooperationDescription text={data.description} />

@@ -27,6 +27,9 @@ export function PortalNavigation({
   extraItems = [],
   activeScreen,
   onNavigateScreen,
+  unreadCount = 0,
+  isRail = false,
+  onExpandRail,
 }: {
   side: PortalSide;
   page?: PortalPage;
@@ -34,6 +37,9 @@ export function PortalNavigation({
   extraItems?: ExtraMenuItem[];
   activeScreen?: string;
   onNavigateScreen?: (screenId: string) => void;
+  unreadCount?: number;
+  isRail?: boolean;
+  onExpandRail?: () => void;
 }) {
   const schoolGroups: SchoolNavGroup[] = [
     {
@@ -67,8 +73,7 @@ export function PortalNavigation({
       id: 'reports',
       title: 'Báo cáo',
       icon: 'activity',
-      children: [],
-      emptyText: 'Chưa có chức năng báo cáo thống kê',
+      children: [{ kind: 'portal', id: 'reports', title: 'Thống kê đối chiếu' }],
     },
     ...(extraItems.length > 0
       ? [
@@ -101,6 +106,8 @@ export function PortalNavigation({
     setOpenGroupId(findActiveGroupId());
   }, [side, page, activeScreen]);
 
+  const unreadBadge = unreadCount > 99 ? '99+' : unreadCount > 0 ? String(unreadCount) : '';
+
   if (side !== 'school') {
     return (
       <div className={'portal-navigation is-' + side}>
@@ -109,11 +116,15 @@ export function PortalNavigation({
           <button
             key={item.id}
             className={'nav' + (page === item.id ? ' active' : '')}
+            title={item.title}
             aria-current={page === item.id ? 'page' : undefined}
             onClick={() => navigate(item.id)}
           >
             <Icon name={item.icon} />
             <span>{item.title}</span>
+            {item.id === 'notifications' && unreadBadge && (
+              <span className="u417-bd" data-badge={unreadBadge} aria-hidden="true" />
+            )}
           </button>
         ))}
       </div>
@@ -121,6 +132,11 @@ export function PortalNavigation({
   }
 
   const toggleGroup = (groupId: string) => {
+    if (isRail && onExpandRail) {
+      onExpandRail();
+      setOpenGroupId(groupId);
+      return;
+    }
     setOpenGroupId(prev => (prev === groupId ? null : groupId));
   };
 
@@ -132,6 +148,7 @@ export function PortalNavigation({
       <button
         type="button"
         className={'nav' + (page === 'overview' ? ' active' : '')}
+        title="Tổng quan"
         aria-current={page === 'overview' ? 'page' : undefined}
         onClick={() => {
           setOpenGroupId(null);
@@ -155,13 +172,14 @@ export function PortalNavigation({
               + (hasActiveChild ? ' has-active-child' : '')
             }
           >
-            <button
+              <button
               type="button"
               className={
                 'nav school-nav-group-toggle'
                 + (isOpen || hasActiveChild ? ' is-group-active' : '')
               }
-              aria-expanded={isOpen}
+              title={group.title}
+              aria-expanded={isOpen && !isRail}
               onClick={() => toggleGroup(group.id)}
             >
               <Icon name={group.icon} />
@@ -174,8 +192,8 @@ export function PortalNavigation({
             </button>
 
             <div
-              className={'school-nav-collapse-wrap' + (isOpen ? ' is-open' : '')}
-              aria-hidden={!isOpen}
+              className={'school-nav-collapse-wrap' + (isOpen && !isRail ? ' is-open' : '')}
+              aria-hidden={!isOpen || isRail}
             >
               <div className="school-nav-sublist">
                 {group.children.length > 0 ? (
@@ -187,6 +205,7 @@ export function PortalNavigation({
                         type="button"
                         tabIndex={isOpen ? 0 : -1}
                         className={'nav school-nav-subitem' + (active ? ' active' : '')}
+                        title={child.title}
                         aria-current={active ? 'page' : undefined}
                         onClick={() => {
                           if (child.kind === 'portal') navigate(child.id);
@@ -210,6 +229,7 @@ export function PortalNavigation({
       <button
         type="button"
         className={'nav' + (page === 'notifications' ? ' active' : '')}
+        title="Thông báo"
         aria-current={page === 'notifications' ? 'page' : undefined}
         onClick={() => {
           setOpenGroupId(null);
@@ -218,6 +238,9 @@ export function PortalNavigation({
       >
         <Icon name="bell" />
         <span>Thông báo</span>
+        {unreadBadge && (
+          <span className="u417-bd" data-badge={unreadBadge} aria-hidden="true" />
+        )}
       </button>
     </div>
   );

@@ -20,6 +20,7 @@ export function useWorkflowFocus(ref: RefObject<HTMLElement | null>, enabled: bo
       const target = ref.current;
       if (!target) return;
       target.focus({ preventScroll: true });
+      if (target.closest('dialog')) return;
       target.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
     });
     return () => window.cancelAnimationFrame(frame);

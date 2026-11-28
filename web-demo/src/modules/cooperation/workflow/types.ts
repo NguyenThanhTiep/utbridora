@@ -4,7 +4,7 @@ export type CooperationRecord = { cooperationId: string; demandId: string; state
   schoolOrgId?: string; enterpriseOrgId?: string; submittedAt?: string | null };
 export type Cooperation = CooperationRecord;
 export type VerificationInput = { schoolOrgId: string; previousVerificationId: string | null; registrationCode: string; registeredName: string; address: string; contactName: string; contactEmail: string; contactPhone: string; evidenceFileIds: string[] };
-export type VerificationRecord = { verificationId: string; state: string; version: number; data: VerificationInput; missingFields: string[]; decisionRef: string | null;
+export type VerificationRecord = { verificationId: string; state: string; version: number; submissionNo?: number; data: VerificationInput; missingFields: string[]; decisionRef: string | null;
   enterpriseOrgId?: string; schoolOrgId?: string; submittedAt?: string | null; decidedAt?: string | null };
 export type Verification = VerificationRecord;
 export type Detail = { demand: Demand; cooperation: Cooperation; feedback: { reasonCode: string | null; missingFields: string[]; decisionRef: string } | null };

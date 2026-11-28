@@ -74,7 +74,7 @@ try {
         if ($_ -match '^([A-Z][A-Z0-9_]*)=(.*)$') { $settings[$matches[1]]=$matches[2] }
     }
     $requiredKeys=@('LOCAL_HTTP_PORT','MAILPIT_HTTP_PORT','DB_PASSWORD','DB_ROOT_PASSWORD','BOOTSTRAP_ADMIN_EMAIL','BOOTSTRAP_ADMIN_PASSWORD')
-    $managedKeys=$requiredKeys+@('LOCAL_MYSQL_PORT','LOCAL_DEMO_ENABLED','LOCAL_PORTABLE_DEMO_ENABLED','DEMO_PASSWORD')
+    $managedKeys=$requiredKeys+@('LOCAL_MYSQL_PORT','LOCAL_DEMO_ENABLED','LOCAL_PORTABLE_DEMO_ENABLED','DEMO_PASSWORD','FILE_SCAN_ENABLED','FILE_SCAN_HOST','FILE_SCAN_PORT')
     foreach ($key in $requiredKeys) {
         if ([string]::IsNullOrWhiteSpace($settings[$key])) { throw "Thieu gia tri $key trong .env.local." }
     }
@@ -103,6 +103,11 @@ try {
             [Environment]::SetEnvironmentVariable($key,$null,'Process')
         }
         $compose=@('compose','--project-name',$projectName,'--env-file',$environmentFile,'-f',$configuration)
+        if ($settings['FILE_SCAN_ENABLED'] -eq 'true' -and $settings['FILE_SCAN_HOST'] -eq 'clamav') {
+            $scannerConfiguration=Join-Path $project 'compose.scanner.yaml'
+            if (!(Test-Path -LiteralPath $scannerConfiguration)) { throw 'Thieu compose.scanner.yaml cho scanner local da bat.' }
+            $compose+=@('-f',$scannerConfiguration)
+        }
         Invoke-LocalDocker ($compose+@('config','--quiet'))
         switch ($Action) {
             'reset-demo' {

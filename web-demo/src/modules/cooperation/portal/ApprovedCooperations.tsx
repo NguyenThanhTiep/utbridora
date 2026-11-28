@@ -16,10 +16,11 @@ import { PlacementOverview } from '../proposals/PlacementOverview';
 import type { PlacementProgress } from '../proposals/placementProgress';
 import { useCooperationTitles } from '../workflow/useCooperationTitles';
 import { useViewRouting } from '../../../routing/BrowserRouting';
+import { cooperationInScope, demandInScope } from './scope';
 
-export function ApprovedCooperations({ org, side, placements, records, demands = [], selected, select, focusProposalId, termId, onTermChange }: {
+export function ApprovedCooperations({ org, side, placements, records, demands = [], selected, select, focusProposalId, termId, onTermChange, schoolOrgId, onSchoolChange }: {
   org: string; side: PortalSide; placements: boolean; records: Resource<CooperationRecord>;
-  selected: string; select: (id: string) => void; focusProposalId?: string; demands?: Demand[]; termId?: string; onTermChange?: (termId: string) => void;
+  selected: string; select: (id: string) => void; focusProposalId?: string; demands?: Demand[]; termId?: string; onTermChange?: (termId: string) => void; schoolOrgId?: string; onSchoolChange?: (schoolOrgId: string) => void;
 }) {
   const selectId = useId();
   const routing=useViewRouting(side==='school'?'school':'demands');
@@ -52,7 +53,7 @@ export function ApprovedCooperations({ org, side, placements, records, demands =
     detailRef.current.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' });
     detailRef.current.focus({ preventScroll: true });
   }, [detailFocusTick, detailExpanded, selected, progressChoice?.demandId]);
-  const approved = records.items.filter(record => record.state === 'APPROVED');
+  const approved = records.items.filter(record => record.state === 'APPROVED' && cooperationInScope(record, { schoolOrgId, termId }));
   const titles = useCooperationTitles(org, side === 'school', approved);
   const matchedSelected = approved.find(record => record.cooperationId === selected);
   const activeApproved = progressChoice?.cooperationState === 'APPROVED' && progressChoice.cooperationId
@@ -66,7 +67,7 @@ export function ApprovedCooperations({ org, side, placements, records, demands =
   const currentId = current?.cooperationId;
   const activeOverviewDemandId = detailExpanded ? (progressChoice?.demandId ?? activeApproved?.demandId) : undefined;
   const activeOverviewCooperationId = detailExpanded ? (progressChoice ? (progressChoice.cooperationId ?? undefined) : currentId) : undefined;
-  const overview = placements && <PlacementOverview org={org} school={side === 'school'} termId={termId} onTermChange={onTermChange}
+  const overview = placements && <PlacementOverview org={org} school={side === 'school'} termId={termId} onTermChange={onTermChange} schoolOrgId={schoolOrgId} onSchoolChange={onSchoolChange}
     selectedDemandId={activeOverviewDemandId} selectedCooperationId={activeOverviewCooperationId}
     select={row => {
       setProgressChoice(row);
@@ -103,14 +104,14 @@ export function ApprovedCooperations({ org, side, placements, records, demands =
         </option>;
       })}
     </select>{enterpriseCompactPlacements && <button type="button" className="secondary placement-collapse-btn" onClick={collapse}>Đóng chi tiết</button>}</div></section>;
-  const detail = <ApprovedDetail key={org + current.cooperationId + placements + focusProposalId} org={org} side={side} id={current.cooperationId} placements={placements} focusProposalId={focusProposalId} loaded={rememberTitle} />;
+  const detail = <ApprovedDetail key={org + current.cooperationId + placements + focusProposalId} org={org} side={side} id={current.cooperationId} placements={placements} focusProposalId={focusProposalId} loaded={rememberTitle} schoolOrgId={schoolOrgId} termId={termId} />;
   return <>
     {overview}
     {enterpriseCandidates ? <div className="enterprise-candidate-review">{picker}{detail}</div> : <>{picker}{detail}</>}
   </>;
 }
 
-function ApprovedDetail({ org, side, id, placements, focusProposalId, loaded }: { org: string; side: PortalSide; id: string; placements: boolean; focusProposalId?: string;
+function ApprovedDetail({ org, side, id, placements, focusProposalId, loaded, schoolOrgId, termId }: { org: string; side: PortalSide; id: string; placements: boolean; focusProposalId?: string; schoolOrgId?: string; termId?: string;
   loaded: (record: { demand: Demand; cooperation: CooperationRecord }) => void;
 }) {
   const enterpriseCandidates = side === 'enterprise' && !placements;
@@ -129,12 +130,13 @@ function ApprovedDetail({ org, side, id, placements, focusProposalId, loaded }: 
       if (controller.signal.aborted) return;
       if (record.cooperation.cooperationId !== id || record.cooperation.state !== 'APPROVED'
         || record.demand.cooperationId !== id || (side === 'enterprise' && record.demand.enterpriseOrgId !== org)
-        || (side === 'school' && record.demand.data.schoolOrgId !== org)) throw new Error('Phạm vi hợp tác đã thay đổi. Hãy tải lại.');
+        || (side === 'school' && record.demand.data.schoolOrgId !== org)
+        || !cooperationInScope(record.cooperation, { schoolOrgId, termId }) || !demandInScope(record.demand, { schoolOrgId, termId })) throw new Error('Phạm vi hợp tác đã thay đổi. Hãy tải lại.');
       setDetail(record);setCandidates(rows);loaded(record);
     }).catch(reason => { if (!controller.signal.aborted) {setDetail(null);setCandidates([]);setError(workflowError(reason));} })
       .finally(() => {if (!controller.signal.aborted) setRefreshing(false);});
     return () => controller.abort();
-  }, [org, side, id, placements, revision, loaded]);
+  }, [org, side, id, placements, revision, loaded, schoolOrgId, termId]);
   return <section className={(enterpriseCandidates ? '' : 'panel ') + 'portal-detail' + (enterpriseCandidates ? ' enterprise-candidate-detail' : '')}>
     <Notice tone="error" message={error} />
     {!detail && !error && <p className="rc-loading-state" role="status">Đang tải nội dung hợp tác…</p>}

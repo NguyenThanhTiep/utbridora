@@ -393,3 +393,161 @@ test('all four access screens fit desktop, tablet and small phones without horiz
     }
   }
 });
+
+test('login floating labels, eye toggle, error shake and morphing pill CTA animate cleanly', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await anonymous(page);
+
+  const controls = page.locator('.auth-form .input-control.is-float');
+  const emailControl = controls.nth(0);
+  const pwControl = controls.nth(1);
+  const emailInput = page.getByLabel('Email', { exact: true });
+  const pwInput = page.getByLabel('Mật khẩu', { exact: true });
+
+  await expect(emailControl).not.toHaveClass(/\bis-up\b/);
+  await emailInput.focus();
+  await expect(emailControl).toHaveClass(/\bis-f\b/);
+  await expect(emailControl).toHaveClass(/\bis-up\b/);
+  await emailInput.fill('invalid-email');
+  await pwInput.focus();
+  await expect(emailControl).not.toHaveClass(/\bis-f\b/);
+  await expect(emailControl).toHaveClass(/\bis-up\b/);
+
+  const toggle = page.getByRole('button', { name: 'Hiện mật khẩu', exact: true });
+  await expect(toggle.locator('.u-eye-lid')).toBeVisible();
+  await expect(toggle.locator('.u-eye-lash')).toBeVisible();
+  await toggle.click();
+  await expect(page.getByRole('button', { name: 'Ẩn mật khẩu', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(pwInput).toHaveAttribute('type', 'text');
+
+  // Client validation flags & shakes the malformed email field and clears once edited.
+  await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
+  await expect(emailControl).toHaveClass(/\bis-err\b/);
+  await expect(emailControl).toHaveClass(/\bis-shake\b/);
+  await expect(emailInput).toHaveAttribute('aria-invalid', 'true');
+  await emailInput.fill('login@example.test');
+  await expect(emailControl).not.toHaveClass(/\bis-err\b/);
+
+  // Backend 401 shakes credential fields; next valid submit morphs CTA to 48px pill then green check.
+  let failOnce = true;
+  let release!: () => void;
+  const pending = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/api/v1/auth/login', async route => {
+    if (failOnce) {
+      failOnce = false;
+      return route.fulfill({ status: 401, json: { error: 'INVALID_CREDENTIALS' } });
+    }
+    await pending;
+    return route.fulfill({
+      json: { userId: 'browser-test-user', email: 'login@example.test', displayName: 'Người dùng thử', memberships: [] },
+    });
+  });
+
+  await pwInput.fill('wrong-password');
+  await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
+  await expect(pwControl).toHaveClass(/\bis-err\b/);
+  await expect(pwControl).toHaveClass(/\bis-shake\b/);
+  await expect(page.getByRole('status')).toContainText('Email, mật khẩu không đúng');
+
+  await pwInput.fill(password);
+  const submitBtn = page.locator('.auth-submit');
+  try {
+    await submitBtn.click();
+    await expect(submitBtn).toHaveClass(/\bis-busy\b/);
+    await expect.poll(async () => Math.round((await submitBtn.boundingBox())!.width)).toBe(48);
+    await expect(submitBtn).toHaveCSS('border-radius', '24px');
+  } finally { release(); }
+
+  await expect(page.getByRole('heading', { name: 'Tài khoản của tôi', exact: true })).toBeVisible();
+});
+
+test('constellation mesh #341 renders inside the teal frame, responds to pointer/keyboard bursts, themes, and reduced motion', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await anonymous(page);
+
+  const root = page.locator('.connection-art .u341');
+  const canvas = root.locator('.u341-cv');
+  const counter = root.locator('.u341-ct');
+  const title = page.locator('.connection-title');
+
+  await expect(canvas).toBeVisible();
+  await expect(canvas).toHaveAttribute('role', 'img');
+  await expect(canvas).toHaveAttribute('aria-label', /Mạng lưới kết nối tương tác/);
+  await expect(root).toHaveAttribute('data-node-count', '72');
+  await expect(counter).toHaveText(/^\d+ kết nối$/);
+
+  // Verify uniform teal tokens inside auth-story frame.
+  const storyTokens = await root.evaluate(el => {
+    const s = getComputedStyle(el);
+    return {
+      bg: s.getPropertyValue('--u341-bg').trim(),
+      dot: s.getPropertyValue('--u341-dot').trim().toLowerCase(),
+      ptr: s.getPropertyValue('--u341-ptr').trim().toLowerCase(),
+      hue: s.getPropertyValue('--u341-link-h').trim(),
+    };
+  });
+  expect(storyTokens.bg).toBe('transparent');
+  expect(storyTokens.dot).toBe('#e7f6f0');
+  expect(storyTokens.ptr).toBe('#8cf2db');
+  expect(storyTokens.hue).toBe('162');
+
+  // Verify counter pill never overlaps title or Student/School nodes across breakpoints.
+  const overlaps = (a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) =>
+    a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+  for (const [width, height] of [[768, 1000], [900, 1000], [1024, 1000], [1024, 600], [1101, 900], [1280, 600], [1440, 900], [1920, 1080]]) {
+    await page.setViewportSize({ width, height });
+    const ctBox = (await counter.boundingBox())!;
+    const titleTextBox = await title.evaluate(el => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const r = range.getBoundingClientRect();
+      return { x: r.x, y: r.y, width: r.width, height: r.height };
+    });
+    const studentCircle = (await page.locator('.node-student > span').boundingBox())!;
+    const schoolCircle = (await page.locator('.node-school > span').boundingBox())!;
+    expect(overlaps(ctBox, titleTextBox), `counter overlaps title text at ${width}x${height}`).toBe(false);
+    expect(overlaps(ctBox, studentCircle), `counter overlaps student circle at ${width}x${height}`).toBe(false);
+    expect(overlaps(ctBox, schoolCircle), `counter overlaps school circle at ${width}x${height}`).toBe(false);
+  }
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const cvBox = (await canvas.boundingBox())!;
+  // Click anywhere inside the connection diagram (not blocked by SVG overlay) bursts 9 dots.
+  await page.mouse.move(cvBox.x + cvBox.width * 0.5, cvBox.y + cvBox.height * 0.5);
+  await page.mouse.click(cvBox.x + cvBox.width * 0.25, cvBox.y + cvBox.height * 0.72);
+  await expect(root).toHaveAttribute('data-node-count', '81');
+
+  // Keyboard activation also bursts 9 dots cleanly.
+  await canvas.focus();
+  await expect(canvas).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(root).toHaveAttribute('data-node-count', '90');
+
+  // Particle pool caps at MAX_PARTICLES = 120 after repeated bursts.
+  for (let i = 0; i < 5; i++) await page.keyboard.press('Space');
+  await expect(root).toHaveAttribute('data-node-count', '120');
+
+  // Reduced motion keeps counter and manual burst working without continuous animation.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.mouse.click(cvBox.x + cvBox.width * 0.75, cvBox.y + cvBox.height * 0.65);
+  await expect(counter).toHaveText(/^\d+ kết nối$/);
+
+  // Light and dark CSS token sets map to UTBridora palette variables on non-story .u341 instances.
+  const themeCheck = await page.evaluate(() => {
+    const probe = document.createElement('div');
+    probe.className = 'u341';
+    probe.setAttribute('data-theme', 'light');
+    document.body.appendChild(probe);
+    const lightDot = getComputedStyle(probe).getPropertyValue('--u341-dot').trim().toLowerCase();
+    const lightPtr = getComputedStyle(probe).getPropertyValue('--u341-ptr').trim().toLowerCase();
+    probe.setAttribute('data-theme', 'dark');
+    const darkDot = getComputedStyle(probe).getPropertyValue('--u341-dot').trim().toLowerCase();
+    const darkPtr = getComputedStyle(probe).getPropertyValue('--u341-ptr').trim().toLowerCase();
+    probe.remove();
+    return { lightDot, lightPtr, darkDot, darkPtr };
+  });
+  expect(themeCheck.lightDot).toBe('#087f8c');
+  expect(themeCheck.lightPtr).toBe('#056670');
+  expect(themeCheck.darkDot).toBe('#e7f6f0');
+  expect(themeCheck.darkPtr).toBe('#8cf2db');
+});

@@ -170,11 +170,69 @@ input.vn-date-input::-webkit-calendar-picker-indicator {
   position: relative;
   z-index: 3;
   cursor: pointer;
-  opacity: 0.82;
+  opacity: 0;
+  pointer-events: none;
+  width: 30px;
 }
 
-input.vn-date-input::-webkit-calendar-picker-indicator:hover {
-  opacity: 1;
+#root .vn-date-control > button.vn-date-icon,
+.vn-date-control > button.vn-date-icon {
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  min-height: 28px;
+  min-block-size: 28px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #5d7687;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  cursor: pointer;
+  box-shadow: none;
+  transition: color .18s ease, background-color .18s ease;
+}
+
+#root .student-page :is(.field .input-control, label) > .vn-date-control > button.vn-date-icon {
+  right: 0;
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  min-height: 24px;
+  min-block-size: 24px;
+}
+
+#root .vn-date-control:not(.is-disabled):not(.is-readonly) > button.vn-date-icon:hover,
+#root .vn-date-control.is-open > button.vn-date-icon {
+  color: #0b927c;
+  background: #e7f6f0;
+  transform: translateY(-50%);
+  box-shadow: none;
+}
+
+#root .vn-date-control.is-open > input.vn-date-input {
+  border-color: #0b927c;
+  box-shadow: 0 0 0 3px #e3f4f1;
+}
+
+#root .vn-date-control.is-disabled > button.vn-date-icon,
+#root .vn-date-control.is-readonly > button.vn-date-icon {
+  opacity: .55;
+  cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root .vn-date-control > button.vn-date-icon {
+    transition: none !important;
+  }
 }
 
 @supports (-moz-appearance: none) {

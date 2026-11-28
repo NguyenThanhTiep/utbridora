@@ -5,6 +5,7 @@ export function scopedRead<T>(org: string, path: string, signal: AbortSignal) {
 export function workflowError(error: unknown): string {
   if (!(error instanceof ApiError)) return 'Chưa nhận được phản hồi từ máy chủ. Kiểm tra kết nối rồi thử lại.';
   const messages: Record<string, string> = {
+    VERIFICATION_ALREADY_OPEN: 'Doanh nghiệp đã có hồ sơ đang xử lý hoặc đã được xác minh tại trường này. Mở hồ sơ hiện có để xem trạng thái; chọn trường khác nếu cần gửi hồ sơ mới.',
     VERSION_CONFLICT: 'Dữ liệu vừa thay đổi. Hãy tải lại và kiểm tra trước khi quyết định.',
     STATE_CONFLICT: 'Đề xuất không còn ở trạng thái cho phép thao tác. Hãy kiểm tra dữ liệu mới.',
     PROPOSAL_STATE_CONFLICT: 'Đề xuất không còn cho phép cấp hoặc cập nhật chia sẻ. Hãy kiểm tra trạng thái mới.',

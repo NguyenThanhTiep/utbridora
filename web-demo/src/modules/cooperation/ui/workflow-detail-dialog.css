@@ -1,0 +1,45 @@
+#root .t5-detail-dialog {
+  --t5-dialog-gap: clamp(20px, 3dvh, 28px);
+  --t5-dialog-padding: 22px;
+  position: fixed; inset: 50% auto auto 50%; translate: -50% -50%;
+  box-sizing: border-box; width: min(1080px, calc(100% - 32px)); max-width: none;
+  height: fit-content; min-height: 0; max-height: calc(100dvh - 2 * var(--t5-dialog-gap)); margin: 0; padding: var(--t5-dialog-padding);
+  border: 1px solid var(--saas-teal-border, #9fdcd0); border-radius: 18px;
+  background: var(--saas-surface, var(--surface, #fff)); color: var(--saas-ink-body, var(--ink, #142f40));
+  box-shadow: 0 24px 80px #102f3d38; overflow: auto; overscroll-behavior: contain;
+  scrollbar-gutter: stable; animation: t5-detail-enter 180ms ease-out;
+}
+#root .t5-detail-dialog.is-compact { width: min(760px, calc(100% - 32px)); }
+#root .t5-detail-dialog::backdrop { background: #102f3d66; backdrop-filter: blur(3px); }
+#root .t5-detail-dialog > :is(article, section, .panel) { min-width: 0; margin: 0 !important; padding: 0 !important; border: 0 !important; background: transparent; box-shadow: none !important; overflow: visible !important; animation: none !important; }
+#root .t5-detail-dialog > :is(article, section):focus { outline: none; }
+#root .t5-detail-dialog :is(.demand-preview-header, .bm03-detail-header, .school-coop-summary-header, .enterprise-coop-detail-header, .workflow-card-top, .placement-card-header, .candidate-dialog-header, .delegation-detail-heading) {
+  position: sticky; top: calc(-1 * var(--t5-dialog-padding)); z-index: 2; margin-top: 0; padding-block: 12px;
+  background: var(--saas-surface, #fff); border-bottom: 1px solid var(--saas-border, #e3eaf2);
+}
+#root .t5-detail-dialog :is(input, select, textarea, button) { max-width: 100%; }
+#root .t5-detail-dialog :is(.workflow-card-list, .workflow-detail-drawer, .bm03-detail-body, .candidate-expanded-content) { min-width: 0; }
+#root .t5-detail-dialog .candidate-dialog-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+#root .t5-detail-dialog .candidate-dialog-header h3 { min-width: 0; font-size: 20px; overflow-wrap: anywhere; }
+#root .t5-detail-dialog > .placement-decision-panel { margin: 0; padding: 0; border: 0; box-shadow: none; }
+/* One neutral surface and one Teal accent for record viewers; status colors retain their meaning. */
+#root .t5-detail-dialog :is(h2, h3, h4, h5) { color: var(--saas-ink, #142f40); }
+#root .t5-detail-dialog :is(.workflow-card-meta, .field-hint, .placement-meta-label, dt, .bm03-meta-line, .bm03-section-label, .school-coop-eyebrow, .enterprise-coop-eyebrow) { color: var(--saas-ink-muted, #526a7a); }
+#root .t5-detail-dialog :is(.placement-meta-grid, .placement-meta-strip) { padding: 0 !important; border: 0 !important; background: transparent !important; box-shadow: none !important; gap: 12px; }
+#root .t5-detail-dialog .bm03-dl-grid { gap: 12px; border: 0; }
+#root .t5-detail-dialog :is(.placement-meta-item, .demand-preview-meta > div, .school-coop-fact, .enterprise-coop-meta > div, .bm03-dl-row, .candidate-contact-grid > div) {
+  padding: 14px 16px !important; border: 1px solid var(--saas-border, #e3eaf2) !important; border-radius: 12px;
+  background: var(--saas-surface-subtle, #f8fafc) !important; color: var(--saas-ink-body, #142f40); box-shadow: none !important;
+}
+#root .t5-detail-dialog :is(.t5-process-steps > li, .placement-stepper) { border-color: var(--saas-border, #e3eaf2); background: var(--saas-surface-subtle, #f8fafc); }
+#root .t5-detail-dialog .t5-process-steps > li[aria-current="step"] { border-color: var(--saas-teal-border, #9fdcd0); background: var(--saas-teal-soft, #e7f6f0); color: var(--saas-teal-hover, #087b68); }
+#root .t5-detail-dialog :is(.verification-journey, .candidate-expanded-content) { margin-top: 18px; }
+#root .t5-detail-dialog :is(.candidate-profile-section, .bm03-subblock, .bm03-decision-card) { border-color: var(--saas-border, #e3eaf2); background: var(--saas-surface-subtle, #f8fafc); box-shadow: none; }
+#root .t5-detail-dialog :is(a, .demand-kicker, .placement-meta-value a) { color: var(--saas-teal-hover, #087b68); }
+#root .t5-detail-dialog :is(.workflow-review-form, .placement-decision-panel) { background: var(--saas-teal-soft, #e7f6f0); border-color: var(--saas-teal-border, #9fdcd0); }
+@keyframes t5-detail-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 600px) {
+  #root .t5-detail-dialog, #root .t5-detail-dialog.is-compact { --t5-dialog-gap: 12px; --t5-dialog-padding: 14px; width: calc(100% - 24px); border-radius: 14px; }
+  #root .t5-detail-dialog :is(.placement-meta-item, .demand-preview-meta > div, .school-coop-fact, .enterprise-coop-meta > div, .bm03-dl-row, .candidate-contact-grid > div) { padding: 12px !important; }
+}
+@media (prefers-reduced-motion: reduce) { #root .t5-detail-dialog { animation: none; } }

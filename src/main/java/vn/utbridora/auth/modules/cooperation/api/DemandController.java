@@ -24,10 +24,10 @@ public class DemandController {
     }
     @GetMapping
     public Page<DemandDto> list(Authentication authentication,@RequestHeader("X-Organization-Id") String org,
-            @RequestParam(required=false) String termId,@RequestParam(required=false) String state,
+            @RequestParam(required=false) String termId,@RequestParam(required=false) String state,@RequestParam(required=false) String schoolOrgId,
             @RequestParam(defaultValue="false") boolean includeDeleted,@RequestParam(defaultValue="0") int page,
             @RequestParam(defaultValue="25") int size) {
-        return service.list(authentication,org,termId,state,includeDeleted,page,size);
+        return service.list(authentication,org,termId,state,includeDeleted,page,size,schoolOrgId);
     }
     @PatchMapping("/{id}/reopen")
     public DemandDto reopen(Authentication auth,@RequestHeader("X-Organization-Id") String org,@PathVariable String id,

@@ -10,11 +10,11 @@ import { SkillCatalogPicker } from './SkillCatalogPicker';
 import { DemandReferenceFields } from './DemandReferenceFields';
 import './demands.css';
 
-export function DemandEditor({ organizationId, existing, onBusy, onUnconfirmed, onClose, onSaved }: {
+export function DemandEditor({ organizationId, existing, onBusy, onUnconfirmed, onClose, onSaved, schoolOrgId = '', termId = '' }: {
   organizationId: string; existing: Demand | null; onBusy: (value: boolean) => void;
-  onUnconfirmed: (value: boolean) => void; onClose: () => void; onSaved: (record: Demand) => void;
+  onUnconfirmed: (value: boolean) => void; onClose: () => void; onSaved: (record: Demand) => void; schoolOrgId?: string; termId?: string;
 }) {
-  const [form, setForm] = useState(() => initialForm(existing));
+  const [form, setForm] = useState(() => ({ ...initialForm(existing), ...(!existing && schoolOrgId ? { schoolOrgId, termId } : {}) }));
   const [busy, setBusy] = useState(false), [retry, setRetry] = useState(false), [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<string[]>([]);
   const [details, setDetails] = useState<ApiFieldError[]>([]);
@@ -97,7 +97,7 @@ export function DemandEditor({ organizationId, existing, onBusy, onUnconfirmed, 
     </div>
     <form ref={formRef} onSubmit={event => void submit(event)} aria-busy={busy}>
       <fieldset disabled={locked} className="cooperation-fields demand-reference-section"><legend><Icon name="university" size={17} />Trường và kỳ thực tập</legend>
-        <DemandReferenceFields org={organizationId} form={form} existing={!!existing} fieldError={fieldError}
+        <DemandReferenceFields org={organizationId} form={form} existing={!!existing} schoolScope={schoolOrgId} termScope={termId} fieldError={fieldError}
           change={values => setForm(previous => ({ ...previous, ...values }))} />
       </fieldset>
       <div className="bm01-two-col-grid">
@@ -132,8 +132,24 @@ export function DemandEditor({ organizationId, existing, onBusy, onUnconfirmed, 
             <Field error={fieldError('required.majorCodes')} label="Mã ngành chính thức (không bắt buộc)" value={form.majorCodes} onChange={value => set('majorCodes', value)} required={false}
               hint="Nhập mã, cách nhau bằng dấu phẩy; để trống nếu không giới hạn ngành." />
             <div className="cooperation-form-grid">
-              <Field error={fieldError('required.dateRange')} label="Ngày bắt đầu thực tập" value={form.startDate} onChange={value => set('startDate', value)} type="date" />
-              <Field error={fieldError('required.dateRange.endDate')} label="Ngày kết thúc thực tập" value={form.endDate} onChange={value => set('endDate', value)} type="date" min={form.startDate || undefined} />
+              <Field error={fieldError('required.dateRange')} label="Ngày bắt đầu thực tập" value={form.startDate} onChange={value => set('startDate', value)} type="date"
+                dateRange={{
+                  startValue: form.startDate,
+                  endValue: form.endDate,
+                  activeEndpoint: 'start',
+                  startLabel: 'Bắt đầu thực tập',
+                  endLabel: 'Kết thúc thực tập',
+                  onApplyRange: (startDate, endDate) => setForm(previous => ({ ...previous, startDate, endDate })),
+                }} />
+              <Field error={fieldError('required.dateRange.endDate')} label="Ngày kết thúc thực tập" value={form.endDate} onChange={value => set('endDate', value)} type="date" min={form.startDate || undefined}
+                dateRange={{
+                  startValue: form.startDate,
+                  endValue: form.endDate,
+                  activeEndpoint: 'end',
+                  startLabel: 'Bắt đầu thực tập',
+                  endLabel: 'Kết thúc thực tập',
+                  onApplyRange: (startDate, endDate) => setForm(previous => ({ ...previous, startDate, endDate })),
+                }} />
             </div>
             <SkillFields error={fieldError('required.skills')} label="Bắt buộc" rows={form.required} change={rows => set('required', rows)} />
           </fieldset>

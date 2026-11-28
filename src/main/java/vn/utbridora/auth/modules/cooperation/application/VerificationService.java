@@ -36,11 +36,15 @@ public class VerificationService implements OrganizationSchoolVerificationPort {
     private final OperationLedger operations;
     private final FileBindingChecks files;
     private final AuditService audit;
+    private final VerificationTaxCheckStore taxChecks;
+    @org.springframework.beans.factory.annotation.Value("${app.cooperation.tax-verification.strict-submit-validation:false}")
+    private boolean strictSubmitValidation;
     @jakarta.persistence.PersistenceContext private jakarta.persistence.EntityManager entityManager;
     public VerificationService(VerificationRepository records,VerificationHistoryRepository history,OrganizationRepository organizations,
-        UserRepository users,AuthorizationPolicy access,SchoolDelegationAccess delegations,OperationLedger operations,FileBindingChecks files,AuditService audit) {
+        UserRepository users,AuthorizationPolicy access,SchoolDelegationAccess delegations,OperationLedger operations,FileBindingChecks files,AuditService audit,VerificationTaxCheckStore taxChecks) {
         this.records=records;this.history=history;this.organizations=organizations;this.users=users;this.access=access;
         this.delegations=delegations;this.operations=operations;this.files=files;this.audit=audit;
+        this.taxChecks=taxChecks;
     }
     @Transactional public VerificationView create(Authentication auth,String organization,String key,VerificationInput data) {
         String org=uuid(organization),actor=enterprise(auth,org,true),school=uuid(data.schoolOrgId());
@@ -73,12 +77,14 @@ public class VerificationService implements OrganizationSchoolVerificationPort {
         String org=uuid(organization),actor=enterprise(auth,org,true),recordId=uuid(id);
         return operations.execute(new OperationLedger.Command(actor,org,"VERIFICATION_SUBMIT",key,Map.of("id",recordId,"data",request),200),VerificationView.class,()->{
             var row=find(recordId,org,false,true);version(row,request.expectedVersion());editable(row);requireSchool(row.schoolOrgId);
+            if(strictSubmitValidation && !TaxCodeValidator.validate(row.registrationCode).validEnterprise()) throw failure(422,"VERIFICATION_DATA_INVALID");
             if(evidence(row).isEmpty()) throw failure(422,"VERIFICATION_DATA_INVALID");
             files.requireVerificationEvidence(actor,org,row.id,evidence(row));
             if(row.submissionNo==Integer.MAX_VALUE) throw failure(409,"STATE_CONFLICT");
             var before=row.state;row.state=VerificationState.SUBMITTED;row.submissionNo++;row.submitterId=actor;row.submittedAt=Instant.now();
             row.reviewerId=null;row.reviewedAt=null;row.decisionRef=null;row.missingFields="[]";
-            records.saveAndFlush(row);changed(actor,row,before,null,"ENTERPRISE_VERIFICATION_SUBMITTED");return view(row);
+            records.saveAndFlush(row);changed(actor,row,before,null,"ENTERPRISE_VERIFICATION_SUBMITTED");
+            var submitted=view(row);taxChecks.enqueue(submitted);return submitted;
         },VerificationView::verificationId);
     }
     @Transactional public VerificationView decide(Authentication auth,String organization,String id,String key,VerificationDecision request) {

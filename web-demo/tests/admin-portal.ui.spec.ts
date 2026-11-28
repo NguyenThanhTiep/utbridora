@@ -389,8 +389,11 @@ test('delegation forms, effectiveness badges and populated detail fit desktop an
   await page.getByRole('checkbox', { name: 'Xem hồ sơ trong phạm vi trường được giao', exact: true }).check();
   await page.getByRole('checkbox', { name: 'Họ tên', exact: true }).check();
   await expect(page.locator('.delegation-choices label').filter({ has: page.getByRole('checkbox', { name: 'Họ tên', exact: true }) })).toHaveCSS('background-color', 'rgb(231, 246, 240)');
-  await page.getByRole('button', { name: 'Xem phân công DEMO-UI-0', exact: true }).click();
+  const firstRow = table.getByRole('row').filter({ hasText: 'DEMO-UI-0' });
+  await firstRow.getByRole('cell').first().click();
   const detail = page.getByRole('region', { name: 'Chi tiết phân công', exact: true });
+  const dialog = page.getByRole('dialog', { name: 'Chi tiết phân công', exact: true });
+  await expect(dialog).toBeVisible();
   await expect(detail.getByText('DEMO-UI-0', { exact: true })).toBeVisible();
   await expect(detail.getByRole('button', { name: 'Thu hồi phân công', exact: true })).toBeVisible();
   await page.evaluate(() => scrollTo(0, 0));
@@ -404,6 +407,15 @@ test('delegation forms, effectiveness badges and populated detail fit desktop an
     await page.evaluate(() => scrollTo(0, 0));
     await page.screenshot({ path: screenshotPath(`delegation-ui-${width}.png`), fullPage: true, animations: 'disabled' });
   }
+  await page.keyboard.press('Escape');await expect(dialog).toHaveCount(0);await expect(firstRow).toBeFocused();
+  const otherRow = table.getByRole('row').filter({ hasText: 'DEMO-UI-1' });
+  await otherRow.press('Enter');await expect(dialog).toBeVisible();
+  await expect(detail.getByText('DEMO-UI-1', { exact: true })).toBeVisible();
+  await dialog.getByRole('button', { name: 'Đóng chi tiết', exact: true }).click();
+  await expect(dialog).toHaveCount(0);await expect(otherRow).toBeFocused();
+  await page.getByRole('button', { name: 'Xem phân công DEMO-UI-0', exact: true }).click();
+  await expect(dialog).toBeVisible();await expect(dialog).toHaveCount(1);
+  await expect(detail.getByText('DEMO-UI-0', { exact: true })).toBeVisible();
 });
 
 test('audit enriches actor and organization from permitted real-shaped API pages and keeps original codes', async ({ page }) => {
@@ -496,4 +508,109 @@ test('admin pointer lighting clears on leave, reduced motion and touch input wit
   await expect(shortcut).toHaveAttribute('data-admin-glow', '');
   await shortcut.click();
   await expect(page.getByLabel('Tìm tên hoặc email')).toBeVisible();
+});
+
+test('animated pagination switches pages via slots and arrows and fits 320px mobile width', async ({ page }) => {
+  await session(page);
+  const requestedPages: number[] = [];
+  await page.route('**/api/v1/admin/users*', async route => {
+    const reqUrl = new URL(route.request().url());
+    const p = Number(reqUrl.searchParams.get('page') || '0');
+    const isTableQuery = reqUrl.searchParams.has('search');
+    if (isTableQuery) requestedPages.push(p);
+    await route.fulfill({
+      json: {
+        content: [{ ...staff, userId: '00000000-0000-4000-8000-000000000' + String(100 + p), displayName: `Người dùng trang ${p + 1}`, email: `user-p${p + 1}@example.test` }],
+        number: p,
+        page: p,
+        size: 10,
+        totalElements: isTableQuery ? 120 : 1,
+        totalPages: isTableQuery ? 12 : 1,
+      },
+    });
+  });
+
+  await navigate(page, 'Tài khoản & phân quyền');
+  const pager = page.locator('.u-pager').first();
+  const nav = pager.getByRole('navigation', { name: 'Phân trang' });
+  await expect(nav).toBeVisible();
+  await expect(pager.locator('.u-pager-summary')).toContainText('120 kết quả');
+  await expect(pager.locator('.u-pager-summary')).toContainText('Trang 1/12');
+  await expect(pager.locator('.u-pager-n')).toHaveCount(7);
+  await expect(pager.locator('.u-pager-n.is-dots')).toHaveCount(1);
+  await expect(pager.getByRole('button', { name: 'Trang 1', exact: true })).toHaveAttribute('aria-current', 'page');
+
+  await pager.getByRole('button', { name: 'Trang 5', exact: true }).click();
+  await expect(pager.getByRole('button', { name: 'Trang 5', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByText('Người dùng trang 5', { exact: true })).toBeVisible();
+  await expect(pager.locator('.u-pager-n.is-dots')).toHaveCount(2);
+  await expect(pager.locator('.u-pager-sl')).toHaveCSS('--pg-index', '3');
+  await expect(pager.locator('.u-pager-live')).toHaveText('Trang 5/12');
+
+  await pager.getByRole('button', { name: 'Sau', exact: true }).click();
+  await expect(pager.getByRole('button', { name: 'Trang 6', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByText('Người dùng trang 6', { exact: true })).toBeVisible();
+  await expect(pager.locator('.u-pager-live')).toHaveText('Trang 6/12');
+
+  await pager.getByRole('button', { name: 'Trước', exact: true }).click();
+  await expect(pager.getByRole('button', { name: 'Trang 5', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByText('Người dùng trang 5', { exact: true })).toBeVisible();
+  expect(requestedPages.filter((p, idx, arr) => idx === 0 || arr[idx - 1] !== p)).toEqual([0, 4, 5, 4]);
+
+  await page.setViewportSize({ width: 320, height: 844 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
+  const navBox = await nav.boundingBox();
+  expect(navBox).not.toBeNull();
+  expect(navBox!.x + navBox!.width).toBeLessThanOrEqual(320);
+});
+
+test('skeleton shimmer cards cross-fade into metrics, spin reload icon and respect reduced motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await session(page);
+
+  let holdUsers = true;
+  let releaseUsers!: () => void;
+  const usersGate = new Promise<void>(resolve => { releaseUsers = resolve; });
+  await page.route('**/api/v1/admin/users*', async route => {
+    if (holdUsers) await usersGate;
+    await route.fulfill({ json: pageOf([staff], 17) });
+  });
+
+  await navigate(page, 'Tổng quan quản trị');
+  const firstMetric = page.locator('.admin-metric.metric-0');
+  const reloadBtn = page.getByRole('button', { name: 'Tải lại dữ liệu', exact: true });
+  await expect(firstMetric).toHaveClass(/\bis-sk-loading\b/);
+  await expect(firstMetric.locator('.u-sk-ph')).toHaveCSS('opacity', '1');
+  await expect(firstMetric.locator('.u-sk-real')).toHaveCSS('opacity', '0');
+  await expect(reloadBtn).toBeDisabled();
+  await expect(reloadBtn.locator('svg[data-icon="refresh"]')).toHaveCSS('animation-name', 'u-sk-rot');
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(firstMetric.locator('.u-sk-bar')).toHaveCSS('animation-name', 'none');
+  await expect(firstMetric.locator('.u-sk-bar')).toHaveCSS('background-image', 'none');
+  await expect(reloadBtn.locator('svg[data-icon="refresh"]')).toHaveCSS('animation-name', 'none');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+
+  holdUsers = false;
+  releaseUsers();
+  await expect(firstMetric).not.toHaveClass(/\bis-sk-loading\b/);
+  await expect(firstMetric.locator('.u-sk-real')).toHaveText('17');
+  await expect(firstMetric.locator('.u-sk-real')).toHaveCSS('opacity', '1');
+  await expect(firstMetric.locator('.u-sk-ph')).toHaveCSS('opacity', '0');
+
+  let holdList = true;
+  let releaseList!: () => void;
+  const listGate = new Promise<void>(resolve => { releaseList = resolve; });
+  await page.route('**/api/v1/admin/users*', async route => {
+    if (holdList) await listGate;
+    await route.fulfill({ json: pageOf([staff], 17) });
+  });
+  await navigate(page, 'Tài khoản & phân quyền');
+  const skeletonCard = page.locator('.loading-state .u-sk-card');
+  await expect(skeletonCard).toBeVisible();
+  await expect(skeletonCard.locator('.u-sk-bar.is-title')).toHaveCSS('animation-name', 'u-sk-sweep');
+  holdList = false;
+  releaseList();
+  await expect(page.locator('.loading-state')).toHaveCount(0);
+  await expect(page.getByRole('cell', { name: /Cán bộ thử nghiệm/ })).toBeVisible();
 });

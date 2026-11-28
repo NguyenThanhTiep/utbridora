@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ApiError } from '../../../api';
 import { Notice } from '../../../components';
+import { PagerNav } from '../../../ui/PagerNav';
 import type { ContractPage } from '../../student/types';
 import { scopedRead, workflowError } from '../proposals/api';
 import './submission-history.css';
@@ -31,7 +32,6 @@ function HistoryScope({org,cooperationId,disabled=false}:{org:string;cooperation
     {open && result && <><div className="submission-history-table"><table><thead><tr><th>Lần gửi / thời điểm</th><th>Phiên bản nhu cầu / tiêu chí</th><th>Chỉ tiêu lúc gửi</th><th>Quyết định</th><th>Căn cứ / lý do</th></tr></thead><tbody>{result.content.map(v=><tr key={v.submissionNo}>
       <td>Lần gửi {v.submissionNo}<small>{date(v.submittedAt)}</small></td><td>{v.demandVersion} / {v.criteriaVersion}</td><td>{v.quantitySnapshot}</td><td>{v.decision?labels[v.decision] || v.decision:'Chưa có quyết định'}<small>{date(v.decidedAt)}</small></td><td>{v.decisionRef || '—'}<small>{v.reasonCode || '—'}</small></td>
     </tr>)}</tbody></table></div>{result.totalElements===0 && <p>Chưa có lần gửi trong lịch sử được phép xem.</p>}
-    <div className="button-row" aria-label="Phân trang lịch sử"><button type="button" className="secondary" disabled={disabled || loading || page===0} onClick={()=>setPage(n=>n-1)}>Lịch sử trước</button>
-      <span>Trang {page+1}/{Math.max(1,result.totalPages)} · {result.totalElements} lần gửi</span><button type="button" className="secondary" disabled={disabled || loading || page+1>=result.totalPages} onClick={()=>setPage(n=>n+1)}>Lịch sử sau</button></div></>}
+    <PagerNav page={page} totalPages={result.totalPages} totalElements={result.totalElements} unitLabel="lần gửi" busy={disabled || loading} prevLabel="Lịch sử trước" nextLabel="Lịch sử sau" ariaLabel="Phân trang lịch sử" onChange={setPage} /></>}
   </section>;
 }

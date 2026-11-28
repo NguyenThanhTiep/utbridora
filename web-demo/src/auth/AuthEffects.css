@@ -45,7 +45,7 @@
     animation: auth-stagger-up 0.36s cubic-bezier(0.22, 1, 0.36, 1) 0.26s backwards;
   }
 
-  .auth-form .auth-submit {
+  .auth-form .auth-submit:not(.is-busy):not(.is-ok) {
     animation: auth-stagger-up 0.38s cubic-bezier(0.22, 1, 0.36, 1) 0.25s backwards;
   }
 
@@ -109,14 +109,6 @@
     animation: auth-button-sheen 0.9s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .auth-shell button.auth-submit > .icon {
-    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  .auth-shell button.auth-submit:not(:disabled):hover > .icon {
-    transform: translateX(4px);
-  }
-
   /* Authenticating (in-flight API) shimmer & ring feedback */
   .auth-card:has(.auth-form[aria-busy="true"]) {
     box-shadow:
@@ -137,11 +129,7 @@
     animation: auth-busy-pulse 1.2s ease-in-out infinite;
   }
 
-  /* Credential error shake + crisp notice slide-in */
-  .auth-card:has(.auth-form .notice-error) {
-    animation: auth-error-shake 0.38s cubic-bezier(0.36, 0.07, 0.19, 0.97);
-  }
-
+  /* Slide-in notice when error/status updates (individual fields shake directly) */
   .auth-form .notice {
     animation: auth-notice-in 0.25s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   }
@@ -448,7 +436,23 @@
   .workspace.is-just-signed-in .content > *,
   .auth-shell.is-just-signed-out .auth-story-content,
   .auth-shell.is-just-signed-out .auth-entry-header,
-  .auth-shell.is-just-signed-out .auth-entry-body {
+  .auth-shell.is-just-signed-out .auth-entry-body,
+  .u-eye-lid,
+  .u-eye-lash,
+  .auth-form .input-control.is-float::after,
+  .auth-form .input-control.is-float > label,
+  .auth-form .input-control.is-float.is-shake,
+  .auth-shell button.auth-submit,
+  .auth-shell button.auth-submit > *,
+  .auth-submit-spin,
+  .auth-submit-check path {
     animation: none !important;
+    transition-duration: 0.001ms !important;
   }
+}
+
+/* Allow pointer cursor/burst interaction on the constellation canvas across the diagram frame. */
+.connection-art > .connection-map,
+.connection-art > .connection-title {
+  pointer-events: none;
 }

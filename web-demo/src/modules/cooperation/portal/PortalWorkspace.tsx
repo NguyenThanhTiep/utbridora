@@ -21,6 +21,7 @@ import { MatchingWorkspace } from '../../matching/MatchingWorkspace';
 import { useSurfaceSpotlight } from '../../../ui/useSurfaceSpotlight';
 import { portalSpotlightTargets } from '../../../ui/workspaceSurfaces';
 import { PortalPageHeader } from './PortalPageHeader';
+import { SchoolMatchingReport } from '../reports/SchoolMatchingReport';
 import './portal.css';
 import './features.css';
 import '../notifications/notifications.css';
@@ -39,6 +40,7 @@ const schoolPageMeta: Partial<Record<PortalPage, { kicker: string; subtitle: str
   proposals: { kicker: 'ĐIỀU PHỐI ỨNG VIÊN', subtitle: 'Xét điều kiện thực tập, lập danh sách đề xuất, gửi lời mời và chia sẻ hồ sơ.' },
   placements: { kicker: 'QUẢN LÝ NHÀ TRƯỜNG', subtitle: 'Phê duyệt tiếp nhận và theo dõi thực tập.' },
   notifications: { kicker: 'QUẢN LÝ NHÀ TRƯỜNG', subtitle: 'Theo dõi cập nhật và hồ sơ cần xử lý.' },
+  reports: { kicker: 'BÁO CÁO NHÀ TRƯỜNG', subtitle: 'Tổng hợp kết quả đối chiếu theo trường, kỳ và nhu cầu; xuất báo cáo CSV.' },
 };
 
 const enterprisePageMeta: Partial<Record<PortalPage, { kicker: string; subtitle: string }>> = {
@@ -85,19 +87,27 @@ function ScopedPortal({ org, side, page, navigate, viewerId, organizationPicker,
   const routing=useViewRouting(side==='school'?'school':'demands');
   const [localScope, setScope] = useState({ schoolOrgId: side === 'school' ? org : '', termId: '' });
   const scope=routing?{schoolOrgId:school?org:routing.route.schoolId || '',termId:routing.route.termId || ''}:localScope;
-  const termId = school ? scope.termId : '';
-  const data = usePortalData(org, side, termId);
+  const termId = scope.termId;
+  const schoolOrgId = school ? org : scope.schoolOrgId;
+  const scopeKey = org + ':' + side + ':' + schoolOrgId + ':' + termId;
+  const data = usePortalData(org, side, termId, schoolOrgId);
   const [revision, setRevision] = useState(0), [localCooperationId, setLocalCooperationId] = useState('');
   const cooperationId=routing?routing.route.cooperationId || '':localCooperationId;
   const setCooperationId=(id:string)=>{if(routing)routing.go({...routing.route,orgId:org,cooperationId:id || undefined,recordId:page==='placements' && id?id:undefined,proposalId:undefined});else setLocalCooperationId(id);};
   const [localFocus, setFocus] = useState<{ key: string; target: NotificationTarget } | null>(null);
   const focus=routing?routing.route.recordId?{key:routing.route.recordId,target:{page,recordId:routing.route.recordId,cooperationId:routing.route.cooperationId,proposalId:routing.route.proposalId}}:null:localFocus;
   const notifications = useNotifications({ org, side, viewerId, ...scope }, data);
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('bridora:portal-unread', { detail: notifications.unread }));
+    return () => {
+      window.dispatchEvent(new CustomEvent('bridora:portal-unread', { detail: 0 }));
+    };
+  }, [notifications.unread]);
   const meta = pagesFor(side).find(item => item.id === page) || pagesFor(side)[0];
   const pageMeta = page !== 'overview' ? (school ? schoolPageMeta : enterprisePageMeta)[page] : undefined;
   const changeScope = (schoolOrgId: string, selectedTermId: string) => {
     if(routing)routing.go({...routing.route,orgId:org,schoolId:school?undefined:schoolOrgId || undefined,termId:selectedTermId || undefined,recordId:undefined,cooperationId:undefined,proposalId:undefined});
-    else {setScope({ schoolOrgId,termId:selectedTermId });if(school){setCooperationId('');setFocus(null);}}
+    else {setScope({ schoolOrgId,termId:selectedTermId });setCooperationId('');setFocus(null);}
   };
   useEffect(() => { if (focus && focus.target.page !== page) setFocus(null); }, [page, focus]);
   const openWorkflow = (target: NotificationTarget, key: string) => {
@@ -121,26 +131,29 @@ function ScopedPortal({ org, side, page, navigate, viewerId, organizationPicker,
       refresh={['overview', 'statistics', 'notifications'].includes(page) ? refresh : undefined} />;
   const pageContent = <>
     {page === 'overview' && <PortalDashboard side={side} organizationId={org} revision={data.revision} demands={data.demands} cooperations={data.cooperations} verifications={data.verifications} navigate={navigate} openTask={openTask} notifications={notifications} termId={termId} />}
-    {page === 'students' && school && <StudentRosterPanel org={org} viewerId={viewerId} embedded />}
-    {page === 'demands' && !school && <ScopedDemands key={'d:' + revision} organizationId={org} cooperations={data.cooperations} />}
+    {page === 'students' && school && <StudentRosterPanel org={org} viewerId={viewerId} termId={termId} onTermChange={value => { if (canLeaveDemand()) changeScope(org, value); }} embedded />}
+    {page === 'demands' && !school && <ScopedDemands key={'d:' + revision} organizationId={org} cooperations={data.cooperations} schoolOrgId={schoolOrgId} termId={termId} />}
     {page === 'statistics' && !school && <ProtectedStatistics org={org} demands={data.demands} navigate={navigate} />}
     {page === 'matching' && school && <MatchingWorkspace key={termId} organizationId={org} grants={grants} termId={termId} onOpenProposals={coopId => { setCooperationId(coopId); navigate('proposals'); }} />}
+    {page === 'reports' && school && <SchoolMatchingReport org={org} termId={termId} openMatching={() => navigate('matching')} />}
     {page === 'notifications' && <NotificationCenter store={notifications} open={openNotification} refresh={refresh} />}
     {page === 'verifications' && <>
       {!school && <div className="enterprise-info-banner" role="note"><Icon name="shield" size={20} /><div>
         <strong>Xác minh độc lập tại từng trường</strong><p>Kết quả xác minh chỉ áp dụng tại trường đã xét duyệt hồ sơ.</p>
       </div></div>}
-      <VerificationFlows key={'v:' + revision + (focus?.key || '')} org={org} school={school} focusId={focus?.target.recordId} />
+      <VerificationFlows key={'v:' + revision + ':' + (school ? org : scope.schoolOrgId) + ':' + (focus?.key || '')}
+        org={org} school={school} schoolOrgId={school ? undefined : scope.schoolOrgId} focusId={focus?.target.recordId} />
     </>}
     {page === 'cooperations' && <>
       {!school && <Notice tone="error" message={data.demands.error} />}
-      <CooperationFlows key={'c:' + revision + ':' + termId} org={org} school={school} demands={data.demands.items} includeProgress={false} focusId={focus?.target.recordId} termId={termId} />
+      <CooperationFlows key={'c:' + revision + ':' + termId} org={org} school={school} demands={data.demands.items} includeProgress={false} focusId={focus?.target.recordId} termId={termId} schoolOrgId={schoolOrgId} />
     </>}
     {(page === 'proposals' || page === 'placements') && <>
       {!school && page === 'placements' && <div className="enterprise-info-banner" role="note"><Icon name="graduation" size={20} /><div>
         <strong>Nhà trường quản lý việc tạo tiếp nhận</strong><p>Doanh nghiệp theo dõi kết quả tiếp nhận và bàn giao sau khi nhà trường phê duyệt.</p>
       </div></div>}
-      <ApprovedCooperations key={page + revision + ':' + termId} org={org} side={side} termId={school ? termId : undefined} onTermChange={school ? value => changeScope(org, value) : undefined}
+      <ApprovedCooperations key={page + revision + ':' + termId} org={org} side={side} schoolOrgId={schoolOrgId} termId={termId}
+        onTermChange={value => changeScope(schoolOrgId, value)} onSchoolChange={value => changeScope(value, '')}
         placements={page === 'placements'} records={data.cooperations} demands={data.demands.items} selected={cooperationId} select={setCooperationId} focusProposalId={focus?.target.proposalId} />
     </>}
   </>;
@@ -149,7 +162,7 @@ function ScopedPortal({ org, side, page, navigate, viewerId, organizationPicker,
       <NotificationScopeFields org={org} side={side} {...scope} change={(schoolOrgId, value) => { if (canLeaveDemand()) changeScope(schoolOrgId, value); }} />
     </div><div className="portal-context-actions"><NotificationBell store={notifications} open={() => navigate('notifications')} />
     </div></div>
-    <div key={page} className={'portal-page-stage' + (page === 'overview' ? ' is-overview' : '')}>
+    <div key={page + ':' + scopeKey} className={'portal-page-stage' + (page === 'overview' ? ' is-overview' : '')}>
       {pageHeader}
       {page === 'overview' ? pageContent : <div className={'portal-subpage-sheet ' + (school ? 'school-page-' + page : 'enterprise-page enterprise-page-' + page)}>{pageContent}</div>}
     </div>

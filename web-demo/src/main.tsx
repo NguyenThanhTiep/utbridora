@@ -15,5 +15,6 @@ import './modules/cooperation/portal/presentation.css';
 import './ui/internship-shell.css';
 import './modules/cooperation/portal/redesign-content.css';
 import './modules/internship/redesign-t3-content.css';
+import './ui/sidebar-motion.css';
 
 createRoot(document.getElementById('root')!).render(<React.StrictMode><App /><OperationToasts /></React.StrictMode>);

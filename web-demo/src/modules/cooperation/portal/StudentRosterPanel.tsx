@@ -1,6 +1,8 @@
 ﻿import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { api, ApiError } from '../../../api';
 import { Icon, Notice } from '../../../components';
+import { PagerNav } from '../../../ui/PagerNav';
+import { FileDropzone } from '../../../ui/FileDropzone';
 import { askConfirm } from '../../../confirm';
 import { formatDateDMY } from '../../../ui/dateFormat';
 import { readAll } from './data';
@@ -182,10 +184,11 @@ function downloadSampleCsv(termCode: string, majorCode: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export function StudentRosterPanel({ org, viewerId, embedded = false }: { org: string; viewerId: string; embedded?: boolean }) {
+export function StudentRosterPanel({ org, viewerId, embedded = false, termId, onTermChange }: { org: string; viewerId: string; embedded?: boolean; termId?: string; onTermChange?: (termId: string) => void }) {
   const id = useId();
   const [terms, setTerms] = useState<Term[]>([]);
-  const [term, setTerm] = useState('');
+  const [localTerm, setTerm] = useState('');
+  const term = termId ?? localTerm;
   const [error, setError] = useState('');
   const [step, setStep] = useState(1);
   const [activeMajor, setActiveMajor] = useState('SE');
@@ -289,12 +292,13 @@ export function StudentRosterPanel({ org, viewerId, embedded = false }: { org: s
               id={id}
               value={term}
               onChange={event => {
-                setTerm(event.target.value);
+                if (onTermChange) onTermChange(event.target.value);else setTerm(event.target.value);
                 setStep(1);
                 setActiveMajor('SE');
               }}
             >
               <option value="">Chọn kỳ đang hoạt động</option>
+              {term && !selectedTerm && <option value={term} disabled>Kỳ đang theo dõi không mở nhập danh sách</option>}
               {terms.map(row => <option key={row.termId} value={row.termId}>{row.termCode}</option>)}
             </select>
           </div>
@@ -302,7 +306,8 @@ export function StudentRosterPanel({ org, viewerId, embedded = false }: { org: s
         </div>
       </div>
 
-      {term && (
+      {term && !selectedTerm && <Notice message="Kỳ đang theo dõi không mở nhập danh sách. Chọn một kỳ đang hoạt động để tiếp tục." tone="error" />}
+      {selectedTerm && (
         <ImportSession
           key={viewerId + ':' + org + ':' + term}
           org={org}
@@ -576,12 +581,12 @@ function ImportSession({
                 <h3>Tải tệp danh sách lên hệ thống</h3>
                 {file && <span className="t5-badge t5-badge-neutral">{formatFileSize(file.size)}</span>}
               </div>
-              <div className="roster-upload-dropzone">
+              <div>
                 <p>Chọn tệp bảng tính chứa thông tin sinh viên thuộc kỳ <strong>{termCode || 'đã chọn'}</strong>.</p>
-                <label htmlFor={id + '-file'}>Tệp danh sách sinh viên</label>
-                <input
+                <FileDropzone
+                  label="Tệp danh sách sinh viên" hint="CSV hoặc XLSX · Tối đa 5 MiB" maxBytes={5 * 1024 * 1024}
+                  file={file} state={busy ? 'processing' : 'selected'}
                   id={id + '-file'}
-                  type="file"
                   accept=".csv,.xlsx"
                   disabled={busy}
                   onChange={event => {
@@ -589,12 +594,6 @@ function ImportSession({
                     setPreviewKey(randomUuid());
                   }}
                 />
-                {file && (
-                  <p className={'roster-file-meta' + (file.size > 5 * 1024 * 1024 ? ' is-oversize' : '')}>
-                    Đã chọn: <strong>{file.name}</strong> ({formatFileSize(file.size)})
-                    {file.size > 5 * 1024 * 1024 ? ' — vượt quá giới hạn 5 MB.' : ''}
-                  </p>
-                )}
               </div>
               <div className="button-row roster-upload-actions">
                 <button
@@ -895,11 +894,7 @@ function ImportSession({
                 </table>
               </div>
 
-              <div className="button-row roster-pagination">
-                <button className="secondary" disabled={page === 0 || busy} onClick={() => setPage(old => old - 1)}>Trang trước</button>
-                <span>Trang {page + 1} / {Math.max(1, rows?.totalPages || 0)} · {rows?.totalElements || 0} dòng</span>
-                <button className="secondary" disabled={busy || page + 1 >= (rows?.totalPages || 0)} onClick={() => setPage(old => old + 1)}>Trang sau</button>
-              </div>
+              <PagerNav page={page} totalPages={rows?.totalPages || 0} totalElements={rows?.totalElements || 0} unitLabel="dòng" busy={busy} prevLabel="Trang trước" nextLabel="Trang sau" ariaLabel="Phân trang danh sách sinh viên" onChange={setPage} />
             </div>
           )}
 

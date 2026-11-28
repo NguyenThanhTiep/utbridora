@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type FocusEvent, type FormEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { api, send, login, logout, whoAmI, ApiError, type Me, type Grant } from './api';
 import { Brand, EmptyState, Field, Icon, Notice, useAction, roleNames, permissionNames } from './components';
 import { MatchingStatistics } from './modules/matching/MatchingStatistics';
 import { AdminOverview, UserManagement, OrganizationManagement, AuditViewer } from './management';
 import { useAdminSpotlight } from './adminEffects';
 import { RotatingHeadline } from './auth/RotatingHeadline';
+import { ConstellationMesh } from './auth/ConstellationMesh';
 import { InternshipWorkspace } from './modules/internship/pages/InternshipWorkspace';
 import type { HrSection } from './modules/internship/pages/InternshipWorkspace';
 import { CaseEntry } from './modules/internship/pages/CaseEntry';
@@ -33,6 +34,7 @@ import { DemandWorkspace, SchoolWorkspace, PortalNavigation, portalPageTitle, ca
 import { SchoolDelegations } from './modules/delegations/SchoolDelegations';
 import { RoleAccountMenu } from './RoleAccountMenu';
 import { useSurfaceSpotlight } from './ui/useSurfaceSpotlight';
+import { useSidebarNav } from './ui/useSidebarNav';
 import { internshipSpotlightTargets, studentSpotlightTargets, workspaceFrames } from './ui/workspaceSurfaces';
 import { useOrganizationNames } from './modules/useOrganizationNames';
 import './auth/AuthEffects.css';
@@ -127,6 +129,9 @@ function AppShell() {
   const [context, setContext] = useState('0');
   const [organizationForm, setOrganizationForm] = useState<'invite' | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [railTip, setRailTip] = useState<{ label: string; top: number } | null>(null);
+  const [portalUnreadCount, setPortalUnreadCount] = useState(0);
   const [justSignedIn, setJustSignedIn] = useState(false);
   const [justSignedOut, setJustSignedOut] = useState(false);
   const [internshipTopbar, setInternshipTopbar] = useState<HTMLDivElement | null>(null);
@@ -136,6 +141,7 @@ function AppShell() {
   const generation = useRef(0);
   const heading = useRef<HTMLHeadingElement>(null);
   const sidebar = useRef<HTMLElement>(null);
+  const navTrack = useRef<HTMLDivElement>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
   const [accountOpen, setAccountOpen] = useState(false);
   const accountMenu = useRef<HTMLDivElement>(null);
@@ -198,6 +204,94 @@ function AppShell() {
   const pageKicker = screen === 'account' || screen === 'mentor-invitations' ? 'KHÔNG GIAN CÁ NHÂN'
     : current.group === 'student' ? 'KHÔNG GIAN SINH VIÊN' : 'QUẢN LÝ THỰC TẬP';
 
+  const { onNavKeyDown } = useSidebarNav(navTrack, {
+    isRail: sidebarCollapsed,
+    syncKey: [
+      me?.userId || '',
+      workspaceReady,
+      screen,
+      portalPage,
+      internshipSection,
+      internshipMenuOpen,
+      menus.length,
+      portalSide || '',
+      sidebarCollapsed,
+      portalUnreadCount,
+    ].join('|'),
+  });
+
+  useEffect(() => {
+    if (!sidebarCollapsed) setRailTip(null);
+  }, [sidebarCollapsed]);
+
+  const updateRailTipFromTarget = (target: EventTarget | null) => {
+    if (!sidebarCollapsed || !sidebar.current || !window.matchMedia('(min-width: 901px)').matches) {
+      if (railTip) setRailTip(null);
+      return;
+    }
+    const button = (target as HTMLElement | null)?.closest<HTMLButtonElement>('button.nav');
+    if (!button || !sidebar.current.contains(button)) {
+      if (railTip) setRailTip(null);
+      return;
+    }
+    const label = button.getAttribute('title') || button.textContent?.trim() || '';
+    if (!label) {
+      if (railTip) setRailTip(null);
+      return;
+    }
+    const btnRect = button.getBoundingClientRect();
+    const asideRect = sidebar.current.getBoundingClientRect();
+    const top = Math.round(btnRect.top - asideRect.top + btnRect.height / 2);
+    setRailTip(prev => (prev && prev.label === label && prev.top === top ? prev : { label, top }));
+  };
+
+  const handleSidebarPointerMove = (event: ReactPointerEvent<HTMLElement>) => {
+    const aside = sidebar.current;
+    if (!aside) return;
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const rect = aside.getBoundingClientRect();
+      aside.style.setProperty('--u417-mx', `${Math.round(event.clientX - rect.left)}px`);
+      aside.style.setProperty('--u417-my', `${Math.round(event.clientY - rect.top)}px`);
+      aside.setAttribute('data-u417-glow', 'true');
+    }
+    updateRailTipFromTarget(event.target);
+  };
+
+  const handleSidebarPointerLeave = () => {
+    sidebar.current?.removeAttribute('data-u417-glow');
+    setRailTip(null);
+  };
+
+  const handleSidebarFocus = (event: FocusEvent<HTMLElement>) => {
+    updateRailTipFromTarget(event.target);
+  };
+
+  const handleSidebarBlur = (event: FocusEvent<HTMLElement>) => {
+    const next = event.relatedTarget as Node | null;
+    if (!next || !sidebar.current?.contains(next)) setRailTip(null);
+  };
+
+  const handleWorkspaceMainClick = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (sidebarCollapsed) return;
+    if (!window.matchMedia('(min-width: 901px)').matches) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('.menu-toggle')) return;
+    requestAnimationFrame(() => setSidebarCollapsed(true));
+  };
+
+  useEffect(() => {
+    if (!portalSide) setPortalUnreadCount(0);
+  }, [portalSide, me?.userId]);
+
+  useEffect(() => {
+    const onUnread = (event: Event) => {
+      const next = Number((event as CustomEvent<number>).detail);
+      setPortalUnreadCount(Number.isFinite(next) && next > 0 ? next : 0);
+    };
+    window.addEventListener('bridora:portal-unread', onUnread);
+    return () => window.removeEventListener('bridora:portal-unread', onUnread);
+  }, []);
+
   useEffect(() => {
     const authTitles: Record<string, string> = { login: 'Đăng nhập', forgot: 'Quên mật khẩu', reset: 'Đặt lại mật khẩu', activate: 'Kích hoạt tài khoản' };
     document.title = (me ? screenTitle : authTitles[authScreen] || 'Không gian kết nối') + ' | UT.Bridora';
@@ -221,6 +315,7 @@ function AppShell() {
     const expired = () => {
       generation.current += 1;
       setJustSignedIn(false); setJustSignedOut(false); setMe(null); setGrants([]); setMobileOpen(false);
+      setSidebarCollapsed(false); setPortalUnreadCount(0);
       setInternshipKind(null); setInternshipMenuOpen(false);
       setSessionMessage('Phiên đã hết hạn hoặc bị thu hồi. Vui lòng đăng nhập lại.');
     };
@@ -319,7 +414,7 @@ function AppShell() {
   const signOut = async () => {
     if (!canLeaveDemand()) return;
     await logout(); generation.current += 1;
-    setJustSignedIn(false); setJustSignedOut(true); setMe(null); setGrants([]); setContext('0'); setMobileOpen(false); requestedDestination.current=null;setToken('');
+    setJustSignedIn(false); setJustSignedOut(true); setMe(null); setGrants([]); setContext('0'); setMobileOpen(false); setSidebarCollapsed(false); setPortalUnreadCount(0); requestedDestination.current=null;setToken('');
     setInternshipKind(null); setInternshipMenuOpen(false);
     setSessionMessage(''); router.go({kind:'auth',auth:'login'},{replace:true,guard:false});
   };
@@ -364,22 +459,42 @@ function AppShell() {
     <button className="text-button full" disabled={action.busy} onClick={() => { setToken(''); router.go(defaultDestination(me,grants),{replace:true,guard:false}); }}>Về tài khoản của tôi</button>
   </AuthLayout>;
 
-  return <div className={'workspace' + (studentShell ? ' workspace-student' : '') + (adminShell ? ' workspace-admin' : '') + (t5Shell ? ' workspace-t5' : '') + (portalSide ? ' workspace-role-portal' : '') + (portalScreen ? ' workspace-t5-portal' : '') + (internshipShell ? ' workspace-t5-internship' : '') + (nativeInternship ? ' workspace-native-t3' : '') + ((t5Shell && !portalScreen && !nativeInternship) || internshipMotion ? ' has-workspace-motion' : '') + (justSignedIn ? ' is-just-signed-in' : '')}>
+  return <div className={'workspace' + (studentShell ? ' workspace-student' : '') + (adminShell ? ' workspace-admin' : '') + (t5Shell ? ' workspace-t5' : '') + (portalSide ? ' workspace-role-portal' : '') + (portalScreen ? ' workspace-t5-portal' : '') + (internshipShell ? ' workspace-t5-internship' : '') + (nativeInternship ? ' workspace-native-t3' : '') + ((t5Shell && !portalScreen && !nativeInternship) || internshipMotion ? ' has-workspace-motion' : '') + (sidebarCollapsed ? ' is-rail' : '') + (justSignedIn ? ' is-just-signed-in' : '')}>
     {justSignedIn && <SessionFeedback variant="login" title="Đăng nhập thành công" subtitle={`Chào mừng ${me.displayName}`} />}
     <a className="skip-link" href="#main-content">Bỏ qua điều hướng</a>
     {mobileOpen && <button className="sidebar-backdrop" aria-label="Đóng phần nền menu" onClick={() => setMobileOpen(false)} tabIndex={-1} />}
-    <aside className={'sidebar' + (mobileOpen ? ' is-open' : '')} ref={sidebar} id="main-navigation">
+    <aside
+      className={'sidebar' + (mobileOpen ? ' is-open' : '')}
+      ref={sidebar}
+      id="main-navigation"
+      onPointerMove={handleSidebarPointerMove}
+      onPointerLeave={handleSidebarPointerLeave}
+      onFocusCapture={handleSidebarFocus}
+      onBlurCapture={handleSidebarBlur}
+    >
       <div className="sidebar-brand"><a href={routeHref(defaultDestination(me,grants))} aria-label="UT.Bridora trang chủ">{adminShell ? <span className="admin-brand"><span>U</span><span><b>UT.BRIDORA</b><small>Quản trị hệ thống</small></span></span> : <Brand inverse={t5Shell || studentShell} />}</a>
         <button className="btn-icon sidebar-close" aria-label="Đóng menu điều hướng" onClick={() => setMobileOpen(false)}><Icon name="close" /></button></div>
-      <nav aria-label="Điều hướng chính">
+      <button
+        type="button"
+        className="u417-rail-toggle"
+        aria-expanded={!sidebarCollapsed}
+        aria-controls="main-navigation"
+        aria-label={sidebarCollapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'}
+        title={sidebarCollapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'}
+        onClick={() => setSidebarCollapsed(prev => !prev)}
+      >
+        <Icon name="chevron-left" size={15} />
+      </button>
+      <nav aria-label="Điều hướng chính" onKeyDown={onNavKeyDown}>
+        <div className="u417-nav-track" ref={navTrack}>
         {adminShell ? <>
           <p className="nav-group-label">QUẢN TRỊ HỆ THỐNG</p>
           {['admin-overview', 'users', 'organizations', 'taxonomy', 'audit', 'delegations'].map(id => menus.find(item => item.id === id)).filter(item => item !== undefined).map(item => <button key={item.id}
-            className={'nav' + (screen === item.id ? ' active' : '')} aria-current={screen === item.id ? 'page' : undefined}
+            className={'nav' + (screen === item.id ? ' active' : '')} title={item.title} aria-current={screen === item.id ? 'page' : undefined}
             onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
           <p className="nav-group-label nav-group-utilities">TÀI KHOẢN & TIỆN ÍCH</p>
           {menus.filter(item => !['admin-overview', 'users', 'organizations', 'taxonomy', 'audit', 'delegations'].includes(item.id)).map(item => <button key={item.id}
-            className={'nav' + (screen === item.id ? ' active' : '')} aria-current={screen === item.id ? 'page' : undefined}
+            className={'nav' + (screen === item.id ? ' active' : '')} title={item.title} aria-current={screen === item.id ? 'page' : undefined}
             onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
         </> : studentShell ? <StudentNavigation items={menus} activeScreen={screen} navigate={navigate} /> : portalSide === 'school' ? (
           <PortalNavigation
@@ -389,33 +504,46 @@ function AppShell() {
             extraItems={menus.filter(item => item.id !== portalEntry && item.group !== 'student')}
             activeScreen={portalScreen ? undefined : screen}
             onNavigateScreen={navigate}
+            unreadCount={portalUnreadCount}
+            isRail={sidebarCollapsed}
+            onExpandRail={() => setSidebarCollapsed(false)}
           />
         ) : internshipShell ? <>
           <div className="portal-navigation is-internship">
             <p className="nav-group-label">KHÔNG GIAN THỰC TẬP</p>
             {menus.filter(item => ['internship', 'internship-operations', 'evaluations', 'mentor-invitations'].includes(item.id)).map(item => <button key={item.id}
-              className={'nav' + (screen === item.id ? ' active' : '')} aria-current={screen === item.id ? 'page' : undefined}
+              className={'nav' + (screen === item.id ? ' active' : '')} title={item.title} aria-current={screen === item.id ? 'page' : undefined}
               onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
             {screen === 'internship' && <div className="internship-submenu">{visibleInternshipSections.map(section => <button key={section.id}
               className={'nav internship-subnav' + (internshipSection === section.id ? ' active' : '')}
+              title={section.label}
               aria-current={internshipSection === section.id ? 'page' : undefined}
               onClick={() => navigateInternship(section.id)}>
               <Icon name={section.icon} size={16} /><span>{section.label}</span></button>)}</div>}
           </div>
           <p className="nav-group-label">TÀI KHOẢN & TIỆN ÍCH</p>
           {menus.filter(item => !['internship', 'internship-operations', 'evaluations', 'mentor-invitations'].includes(item.id)).map(item => <button key={item.id}
-            className={'nav' + (screen === item.id ? ' active' : '')} aria-current={screen === item.id ? 'page' : undefined}
+            className={'nav' + (screen === item.id ? ' active' : '')} title={item.title} aria-current={screen === item.id ? 'page' : undefined}
             onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
         </> : <>
-        {portalSide && <PortalNavigation side={portalSide} page={portalScreen ? portalPage : undefined} navigate={navigatePortal} />}
+        {portalSide && <PortalNavigation side={portalSide} page={portalScreen ? portalPage : undefined} navigate={navigatePortal} unreadCount={portalUnreadCount} isRail={sidebarCollapsed} onExpandRail={() => setSidebarCollapsed(false)} />}
         <p className="nav-group-label">{portalSide ? 'TÀI KHOẢN & TIỆN ÍCH' : 'KHÔNG GIAN CỦA BẠN'}</p>
         {menus.filter(item => utilityScreens.includes(item.id) && item.id !== 'school-internship-cases'
           && !(item.id === 'evaluations' && nestedEvaluations) && (!portalSide || item.id !== portalEntry)).map(item =>
           item.id === 'internship' ? <div key={item.id}>
             <button className={'nav internship-parent' + (internshipActive ? ' active' : '')}
-              aria-expanded={internshipMenuOpen} aria-controls="internship-submenu"
+              title={item.title}
+              aria-expanded={internshipMenuOpen && !sidebarCollapsed} aria-controls="internship-submenu"
               onClick={() => {
                 if (!internshipActive && !canLeaveDemand()) return;
+                if (sidebarCollapsed) {
+                  setSidebarCollapsed(false);
+                  setInternshipMenuOpen(true);
+                  if (!internshipActive) {
+                    navigate(enterpriseInternship ? 'internship' : schoolCaseAccess ? 'school-internship-cases' : 'evaluations');
+                  }
+                  return;
+                }
                 setInternshipMenuOpen(open => !open);
                 if (!internshipMenuOpen && !internshipActive) {
                   navigate(enterpriseInternship ? 'internship' : schoolCaseAccess ? 'school-internship-cases' : 'evaluations');
@@ -423,9 +551,10 @@ function AppShell() {
               }}>
               <Icon name={item.icon} /><span>{item.title}</span><Icon name="chevron-down" size={15} />
             </button>
-            {internshipMenuOpen && <div id="internship-submenu" className="internship-submenu">
+            {internshipMenuOpen && !sidebarCollapsed && <div id="internship-submenu" className="internship-submenu">
               {visibleInternshipSections.map(section => <button key={section.id}
                 className={'nav internship-subnav' + (screen === 'internship' && internshipSection === section.id ? ' active' : '')}
+                title={section.label}
                 aria-current={screen === 'internship' && internshipSection === section.id ? 'page' : undefined}
                 onClick={() => navigateInternship(section.id)}>
                 <Icon name={section.icon} size={16} /><span>{section.label}</span>
@@ -433,19 +562,25 @@ function AppShell() {
               {menus.filter(child => (child.id === 'evaluations' && nestedEvaluations) || child.id === 'school-internship-cases')
                 .map(child => <button key={child.id}
                   className={'nav internship-subnav' + (screen === child.id ? ' active' : '')}
+                  title={child.title}
                   aria-current={screen === child.id ? 'page' : undefined} onClick={() => navigate(child.id)}>
                   <Icon name={child.icon} size={16} /><span>{child.title}</span>
                 </button>)}
             </div>}
           </div> : <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
+            title={item.title}
             aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
         {menus.some(item => item.group === 'student') && <p className="nav-group-label student-nav-group">SINH VIÊN</p>}
         {menus.filter(item => item.group === 'student').map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
+          title={item.title}
           aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
         {menus.some(item => !utilityScreens.includes(item.id) && item.group !== 'student') && <p className="nav-group-label nav-group-admin">QUẢN TRỊ HỆ THỐNG</p>}
         {menus.filter(item => !utilityScreens.includes(item.id) && item.group !== 'student').map(item => <button key={item.id} className={'nav' + (screen === item.id ? ' active' : '')}
+          title={item.title}
           aria-current={screen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.title}</span></button>)}
         </>}
+        <span className="u417-ind" aria-hidden="true" />
+        </div>
       </nav>
       {internshipShell && (
         <div className="internship-sidebar-role-badge" aria-hidden="true">
@@ -454,12 +589,17 @@ function AppShell() {
         </div>
       )}
       <div className="sidebar-bottom">
-        <div className="sidebar-user"><span className="avatar">{initials(me.displayName)}</span><div><b>{me.displayName}</b></div></div>
+        <div className="sidebar-user"><span className="avatar" title={me.displayName}>{initials(me.displayName)}</span><div><b>{me.displayName}</b></div></div>
       </div>
       {!t5Shell && !adminShell && !studentShell && <p className="sidebar-caption">Nhà trường · Doanh nghiệp · Sinh viên</p>}
+      {sidebarCollapsed && railTip && (
+        <div className="u417-rail-tip" aria-hidden="true" style={{ top: railTip.top }}>
+          {railTip.label}
+        </div>
+      )}
     </aside>
 
-    <div className="workspace-main">
+    <div className="workspace-main" onClickCapture={handleWorkspaceMainClick}>
       <header className={'topbar' + (!nativeInternship && (studentShell || portalSide) ? ' workspace-topbar' : '') + (t5Shell && !nativeInternship ? ` is-portal-topbar is-${portalSide || 'internship'}-topbar` : '')
         + (screen === 'internship' ? ' t3-topbar' + (internshipScrolled ? ' is-condensed' : '') : '')}>
         {screen === 'internship' ? <><button className="btn-icon menu-toggle t3-topbar-menu" ref={menuButton}
@@ -636,9 +776,10 @@ function AuthLayout({ screen, justSignedOut = false, children }: { screen: strin
         <RotatingHeadline />
         <span className="auth-heading-rule" aria-hidden="true" />
         <p className="auth-story-description">Cùng quản lý hành trình thực tập giữa sinh viên, nhà trường và doanh nghiệp trên một nền tảng thống nhất.</p>
-        <div className="connection-art" aria-hidden="true">
+        <div className="connection-art">
+          <ConstellationMesh />
           <p className="connection-title">MỘT NỀN TẢNG CHUNG</p>
-          <div className="connection-map">
+          <div className="connection-map" aria-hidden="true">
           <svg viewBox="0 0 460 460" className="connection-lines">
             <path d="M121.747 144.5 230 207l108.253-62.5M230 207v125" />
             <circle cx="230" cy="207" r="60" /><circle cx="230" cy="207" r="76" />
@@ -735,6 +876,9 @@ function AuthForm({ screen, token, clearToken, navigate, signedIn }: {
 }) {
   const [email, setEmail] = useState(''), [password, setPassword] = useState(''), [confirm, setConfirm] = useState(''), [name, setName] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [loginOk, setLoginOk] = useState(false);
+  const [invalidFields, setInvalidFields] = useState<{ email?: boolean; name?: boolean; password?: boolean; confirm?: boolean }>({});
+  const [shakeSeq, setShakeSeq] = useState<{ email?: number; name?: number; password?: number; confirm?: number }>({});
   const action = useAction();
   const submitting = useRef(false);
   const titles: Record<string, string> = { login: 'Đăng nhập', forgot: 'Quên mật khẩu', reset: 'Mật khẩu mới', activate: 'Kích hoạt tài khoản' };
@@ -754,51 +898,105 @@ function AuthForm({ screen, token, clearToken, navigate, signedIn }: {
   };
   const tokenFlow = ['reset', 'activate'].includes(screen);
   const linkError = tokenFlow && action.error && action.message.startsWith('Liên kết');
+  const flagFieldError = (targets: Array<'email' | 'name' | 'password' | 'confirm'>) => {
+    setInvalidFields(targets.reduce<Record<string, boolean>>((acc, field) => ({ ...acc, [field]: true }), {}));
+    setShakeSeq(prev => targets.reduce((acc, field) => ({ ...acc, [field]: (prev[field] || 0) + 1 }), { ...prev }));
+  };
+  const clearFieldError = (field: 'email' | 'name' | 'password' | 'confirm') => {
+    setInvalidFields(prev => prev[field] ? { ...prev, [field]: false } : prev);
+  };
   const changeScreen = () => {
-    if (action.busy) return;
-    action.setMessage(''); setPassword(''); setConfirm(''); setPasswordVisible(false); navigate(screen === 'login' ? 'forgot' : 'login');
+    if (action.busy || loginOk) return;
+    action.setMessage(''); setPassword(''); setConfirm(''); setPasswordVisible(false);
+    setLoginOk(false); setInvalidFields({});
+    navigate(screen === 'login' ? 'forgot' : 'login');
   };
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (submitting.current) return;
+    if (submitting.current || loginOk) return;
     submitting.current = true;
+    setInvalidFields({});
     void action.run(async () => {
       try {
-        if (screen === 'login') { const user = await login(email, password); setPassword(''); await signedIn(user); return; }
-        if (screen === 'forgot') { await send('/auth/password/forgot', 'POST', { email }); action.setMessage('Nếu địa chỉ hợp lệ, hướng dẫn đặt lại mật khẩu sẽ được gửi qua email.'); return; }
+        if (screen === 'login') {
+          if (!/\S+@\S+\.\S+/.test(email.trim())) { flagFieldError(['email']); throw new Error('Vui lòng nhập địa chỉ email hợp lệ.'); }
+          if (!password) { flagFieldError(['password']); throw new Error('Vui lòng nhập mật khẩu.'); }
+          try {
+            const user = await login(email, password);
+            setLoginOk(true);
+            setPassword('');
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+              await new Promise(resolve => window.setTimeout(resolve, 340));
+            }
+            await signedIn(user);
+          } catch (error) {
+            setLoginOk(false);
+            if (error instanceof ApiError && (error.status === 401 || error.errorCode === 'INVALID_CREDENTIALS')) {
+              flagFieldError(['email', 'password']);
+            } else {
+              flagFieldError(['password']);
+            }
+            throw error;
+          }
+          return;
+        }
+        if (screen === 'forgot') {
+          if (!/\S+@\S+\.\S+/.test(email.trim())) { flagFieldError(['email']); throw new Error('Vui lòng nhập địa chỉ email hợp lệ.'); }
+          await send('/auth/password/forgot', 'POST', { email });
+          action.setMessage('Nếu địa chỉ hợp lệ, hướng dẫn đặt lại mật khẩu sẽ được gửi qua email.');
+          return;
+        }
         if (!token) throw new Error('Liên kết thiếu mã xác nhận. Vui lòng yêu cầu liên kết mới.');
-        if (password !== confirm) throw new Error('Mật khẩu xác nhận chưa khớp.');
-        if ([...password].length < 12 || new TextEncoder().encode(password).length > 72) throw new Error('Mật khẩu cần ít nhất 12 ký tự, tối đa 72 byte UTF-8.');
+        if (screen === 'activate' && !name.trim()) { flagFieldError(['name']); throw new Error('Vui lòng nhập họ và tên của bạn.'); }
+        if (password !== confirm) { flagFieldError(['confirm']); throw new Error('Mật khẩu xác nhận chưa khớp.'); }
+        if ([...password].length < 12 || new TextEncoder().encode(password).length > 72) {
+          flagFieldError(['password']); throw new Error('Mật khẩu cần ít nhất 12 ký tự, tối đa 72 byte UTF-8.');
+        }
         try { await send(screen === 'reset' ? '/auth/password/reset' : '/auth/invitations/accept', 'POST', screen === 'reset' ? { token, newPassword: password } : { token, displayName: name, password }); }
         catch (error) { if (error instanceof ApiError && error.status === 400) throw new Error('Liên kết không hợp lệ, đã hết hạn hoặc đã được sử dụng.'); throw error; }
         clearToken(); setPassword(''); setConfirm(''); navigate('login'); action.setMessage('Thành công. Vui lòng đăng nhập bằng mật khẩu mới.');
       } finally { submitting.current = false; }
     });
   };
-  return <form key={screen} className={'auth-form' + (screen === 'login' ? ' auth-form-login' : '')} onSubmit={submit} aria-busy={action.busy} aria-label={'Biểu mẫu ' + titles[screen]}>
+  return <form key={screen} noValidate className={'auth-form' + (screen === 'login' ? ' auth-form-login' : '')} onSubmit={submit} aria-busy={action.busy} aria-label={'Biểu mẫu ' + titles[screen]}>
     <span className="auth-form-icon" aria-hidden="true"><Icon name="check" size={16} /></span>
     <p className="auth-overline">{overlines[screen]}</p>
     <h2 className="auth-title" id="auth-title">{titles[screen]}</h2><p className="auth-description">{descriptions[screen]}</p>
     <div className="auth-fields">
-      {['login', 'forgot'].includes(screen) && <Field label="Email" icon="mail" type="email" value={email} onChange={setEmail}
-        placeholder="Nhập địa chỉ email" autoComplete="username" maxLength={254} disabled={action.busy} />}
-      {screen === 'activate' && <Field label="Họ và tên" icon="user" value={name} onChange={setName} maxLength={150} autoComplete="name" placeholder="Nhập họ và tên của bạn" disabled={action.busy} />}
-      {screen !== 'forgot' && <Field label={screen === 'login' ? 'Mật khẩu' : 'Mật khẩu mới'} type="password" value={password}
-        onChange={setPassword} placeholder={screen === 'login' ? 'Nhập mật khẩu' : 'Tạo mật khẩu mới'}
+      {['login', 'forgot'].includes(screen) && <Field floating label="Email" icon="mail" type="email" value={email}
+        onChange={value => { setEmail(value); clearFieldError('email'); }}
+        placeholder="Nhập địa chỉ email" autoComplete="username" maxLength={254} disabled={action.busy || loginOk}
+        invalidHighlight={invalidFields.email} shakeNonce={shakeSeq.email} />}
+      {screen === 'activate' && <Field floating label="Họ và tên" icon="user" value={name}
+        onChange={value => { setName(value); clearFieldError('name'); }} maxLength={150} autoComplete="name"
+        placeholder="Nhập họ và tên của bạn" disabled={action.busy}
+        invalidHighlight={invalidFields.name} shakeNonce={shakeSeq.name} />}
+      {screen !== 'forgot' && <Field floating label={screen === 'login' ? 'Mật khẩu' : 'Mật khẩu mới'} type="password" value={password}
+        onChange={value => { setPassword(value); clearFieldError('password'); }}
+        placeholder={screen === 'login' ? 'Nhập mật khẩu' : 'Tạo mật khẩu mới'}
         passwordVisible={screen === 'login' ? passwordVisible : undefined} onPasswordVisibilityChange={screen === 'login' ? setPasswordVisible : undefined}
-        autoComplete={screen === 'login' ? 'current-password' : 'new-password'} disabled={action.busy} />}
-      {tokenFlow && <Field label="Xác nhận mật khẩu" type="password" value={confirm} onChange={setConfirm}
-        placeholder="Nhập lại mật khẩu mới" autoComplete="new-password" disabled={action.busy} />}
+        autoComplete={screen === 'login' ? 'current-password' : 'new-password'} disabled={action.busy || loginOk}
+        invalidHighlight={invalidFields.password} shakeNonce={shakeSeq.password} />}
+      {tokenFlow && <Field floating label="Xác nhận mật khẩu" type="password" value={confirm}
+        onChange={value => { setConfirm(value); clearFieldError('confirm'); }}
+        placeholder="Nhập lại mật khẩu mới" autoComplete="new-password" disabled={action.busy}
+        invalidHighlight={invalidFields.confirm} shakeNonce={shakeSeq.confirm} />}
     </div>
     {screen === 'login' && <div className="auth-options">
-      <label className="auth-show-password"><input type="checkbox" checked={passwordVisible} onChange={event => setPasswordVisible(event.target.checked)} disabled={action.busy} />Hiện mật khẩu</label>
-      <button className="text-button" type="button" disabled={action.busy} onClick={changeScreen}>Quên mật khẩu?</button>
+      <label className="auth-show-password"><input type="checkbox" checked={passwordVisible} onChange={event => setPasswordVisible(event.target.checked)} disabled={action.busy || loginOk} />Hiện mật khẩu</label>
+      <button className="text-button" type="button" disabled={action.busy || loginOk} onClick={changeScreen}>Quên mật khẩu?</button>
     </div>}
     {tokenFlow && <p className="password-requirement"><Icon name="info" size={15} />Tối thiểu 12 ký tự, tối đa 72 byte UTF-8.</p>}
     <div className={linkError ? 'auth-warning' : undefined}><Notice message={action.message} tone={action.error ? 'error' : 'success'} /></div>
     {tokenFlow && !token && <div className="auth-warning"><Notice tone="error" message="Liên kết thiếu mã xác nhận. Vui lòng mở lại liên kết trong email hoặc yêu cầu liên kết mới." /></div>}
-    <button className="auth-submit full" disabled={action.busy || tokenFlow && !token}>
-      {action.busy ? <><span className="spinner spinner-light" />Đang xử lý…</> : <>{submitLabels[screen]}{screen === 'login' && <Icon name="arrow-right" size={18} />}</>}
+    <button
+      className={'auth-submit full' + (action.busy && !loginOk ? ' is-busy' : '') + (loginOk ? ' is-ok' : '')}
+      disabled={action.busy || loginOk || tokenFlow && !token}
+      aria-label={action.busy && !loginOk ? 'Đang xử lý…' : loginOk ? 'Đăng nhập thành công' : undefined}
+    >
+      <span className="auth-submit-text">{submitLabels[screen]}{screen === 'login' && <Icon name="arrow-right" size={18} />}</span>
+      <i className="auth-submit-spin" aria-hidden="true" />
+      <svg className="auth-submit-check" viewBox="0 0 22 22" aria-hidden="true"><path d="M5.5 11.5l4 4L17 7.5" /></svg>
     </button>
     {guidance[screen] && <div className="auth-guidance"><b>{guidanceTitles[screen]}</b><p>{guidance[screen]}</p></div>}
     {screen !== 'login' && <button className="text-button auth-back full" type="button" disabled={action.busy} onClick={changeScreen}><Icon name="arrow-left" size={16} />Quay lại đăng nhập</button>}

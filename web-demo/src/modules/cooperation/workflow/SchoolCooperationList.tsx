@@ -1,5 +1,6 @@
 import { Icon } from '../../../components';
 import { states, type Cooperation } from './types';
+import { recordRow } from '../ui/recordRow';
 import './cooperation-review.css';
 
 export function SchoolCooperationList({ items, selectedId, termNames, demandTitles, titlesLoading, loading, emptyMessage, busy, open }: {
@@ -13,7 +14,7 @@ export function SchoolCooperationList({ items, selectedId, termNames, demandTitl
         const selected = selectedId === c.cooperationId;
         const status = states[c.state] || c.state;
         const title = demandTitles[c.cooperationId] || (titlesLoading ? 'Đang tải tên nhu cầu…' : 'Chưa tải được tên nhu cầu');
-        return <tr key={c.cooperationId} className={selected ? 'is-selected' : undefined}>
+        return <tr key={c.cooperationId} className={selected ? 'is-selected' : undefined} {...recordRow(() => open(c), busy)}>
           <td className="school-coop-identity"><div className="school-coop-person"><span className="school-coop-document" aria-hidden="true"><Icon name="briefcase" size={20} /></span>
             <div><h3 id={'school-cooperation-title-' + c.cooperationId} className="workflow-table-title" title={title}>{title}</h3>
               <small>Lần gửi {c.submissionNo}</small></div></div></td>

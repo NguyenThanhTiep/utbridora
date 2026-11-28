@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Icon, Notice } from '../../../components';
 import { DateInput } from '../../../ui/DateInput';
+import { PagerNav } from '../../../ui/PagerNav';
 import { useReveal } from '../../../useReveal';
 import type { WorkspaceAssignment, InternshipGroup, WorkspacePage } from '../types';
 import { formatEntityShort, formatGroupCode } from '../displayLabels';
@@ -113,7 +114,7 @@ function TaskBoardContent({ assignment, group, student = false, showReports = tr
         </article>)}
       </section>;
     })}</div>}
-    <div className={'button-row' + (student ? '' : ' t3-pagination-row')}><button className="secondary" disabled={page === 0} onClick={() => setPage(n => n - 1)}>Trước</button><span>Trang {page + 1}/{Math.max(1, total)}</span><button className="secondary" disabled={page + 1 >= total} onClick={() => setPage(n => n + 1)}>Sau</button></div>
+    <PagerNav page={page} totalPages={total} onChange={setPage} ariaLabel="Phân trang nhiệm vụ" />
     {detail && <section className={'panel' + (student ? '' : ' t3-task-detail')} ref={reveal.ref}><h3>{detail.title}</h3><p>{detail.description}</p>
       {student ? <p>Ưu tiên: {{ LOW: 'Thấp', NORMAL: 'Bình thường', HIGH: 'Cao' }[detail.priority]} · Hạn: {new Date(detail.dueAt).toLocaleString('vi-VN')}</p>
         : <p className="t3-task-meta"><span className={'t3-priority-pill is-' + detail.priority.toLowerCase()}>Ưu tiên: {{ LOW: 'Thấp', NORMAL: 'Bình thường', HIGH: 'Cao' }[detail.priority]}</span><span>Hạn: {new Date(detail.dueAt).toLocaleString('vi-VN')}</span></p>}
@@ -169,7 +170,7 @@ function TaskBoardContent({ assignment, group, student = false, showReports = tr
         <button type="button" className="text-button" onClick={() => { setSelected(t.taskId); setArtifactAssignment(a.assignmentId); setCalendarTask(''); }}>{t.title}</button><div className="t3-task-facts"><span className="t3-priority" data-priority={t.priority}>{{ LOW: 'Thấp', NORMAL: 'Bình thường', HIGH: 'Cao' }[t.priority]}</span><span>{names[a.state]}</span></div><p><Icon name="clock" size={14} /> Hạn: {new Date(t.dueAt).toLocaleString('vi-VN')}</p>
         {student && ['NEW', 'REVISION_REQUIRED'].includes(a.state) && <button disabled={busy} onClick={() => void command('/t3/assignments/' + a.assignmentId + '/status', 'PATCH', { expectedVersion: a.version, state: 'IN_PROGRESS' })}>Bắt đầu làm</button>}
       </article>))}</section>)}</div>
-    <div className="button-row"><button className="secondary" disabled={page === 0} onClick={() => setPage(n => n - 1)}>Trước</button><span>Trang {page + 1}/{Math.max(1, total)}</span><button className="secondary" disabled={page + 1 >= total} onClick={() => setPage(n => n + 1)}>Sau</button></div>
+    <PagerNav page={page} totalPages={total} onChange={setPage} ariaLabel="Phân trang nhiệm vụ" />
     </div>
     <div hidden={!visible('create')}>{assignment?.kind === 'MENTOR' && group && <CreateTask key={group.groupId+':'+created} group={group} busy={busy} command={command} />}</div>
     <section hidden={!visible('calendar')} className="panel t3-calendar">

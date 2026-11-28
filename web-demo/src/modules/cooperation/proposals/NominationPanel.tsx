@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Notice } from '../../../components';
+import { PagerNav } from '../../../ui/PagerNav';
 import { askConfirm } from '../../../confirm';
 import type { ContractPage } from '../../student/types';
 import type { Demand } from '../types';
@@ -110,8 +111,7 @@ export function NominationPanel({ org, cooperationId, demand, locked, changed, p
           })}</tbody>
         </table></div>
       </>}
-      {context.candidates.totalPages > 1 && <div className="button-row"><button className="secondary" disabled={disabled || page === 0} onClick={() => setPage(n => n - 1)}>Trang sinh viên trước</button>
-        <span>Trang {page + 1}/{context.candidates.totalPages}</span><button className="secondary" disabled={disabled || page + 1 >= context.candidates.totalPages} onClick={() => setPage(n => n + 1)}>Trang sinh viên sau</button></div>}
+      {context.candidates.totalPages > 1 && <PagerNav page={page} totalPages={context.candidates.totalPages} busy={disabled} prevLabel="Trang sinh viên trước" nextLabel="Trang sinh viên sau" ariaLabel="Phân trang ứng viên" onChange={setPage} />}
     </>}
     {approving && <form className="nomination-eligibility-drawer" onSubmit={e => {e.preventDefault();void command.submit('/school/student-eligibilities/decisions', 'POST', {
       studentUserId: approving.match.studentUserId, termId: demand.data.termId, expectedVersion: approving.eligibilityVersion,

@@ -47,8 +47,8 @@ function ReferenceSelect({ label, value, options, placeholder, disabled, error, 
   </select>{error && <p className="field-error" id={id + '-error'}>{error}</p>}</div>;
 }
 
-export function DemandReferenceFields({ org, form, existing, change, fieldError }: {
-  org: string; form: FormData; existing: boolean; change: (values: Partial<FormData>) => void; fieldError: (field: string) => string;
+export function DemandReferenceFields({ org, form, existing, change, fieldError, schoolScope = '', termScope = '' }: {
+  org: string; form: FormData; existing: boolean; change: (values: Partial<FormData>) => void; fieldError: (field: string) => string; schoolScope?: string; termScope?: string;
 }) {
   const [revision, setRevision] = useState(0);
   const schools = useChoices(org, revision, signal => readPages<School>(org, 'schools', signal));
@@ -62,11 +62,11 @@ export function DemandReferenceFields({ org, form, existing, change, fieldError 
   return <div className="cooperation-reference-fields">
     <div className="cooperation-form-grid">
       <ReferenceSelect label="Trường nhận nhu cầu" value={form.schoolOrgId} options={(schools.value || []).map(s => ({ value: s.schoolOrgId, label: s.name }))}
-        placeholder={schools.loading ? 'Đang tải trường…' : 'Chọn trường'} disabled={existing || schools.loading || !schools.value?.length}
+        placeholder={schools.loading ? 'Đang tải trường…' : 'Chọn trường'} disabled={existing || !!schoolScope || schools.loading || !schools.value?.length}
         error={fieldError('schoolOrgId')} change={schoolOrgId => change({ schoolOrgId, termId: '', academicCatalogVersion: '', majorCodes: '' })} />
       <ReferenceSelect label="Kỳ thực tập" value={form.termId} options={(terms.value || []).map(t => ({ value: t.termId, label: `${t.termCode} (${formatDateDMY(t.startDate)} – ${formatDateDMY(t.endDate)})` }))}
         placeholder={!form.schoolOrgId ? 'Chọn trường trước' : terms.loading ? 'Đang tải kỳ…' : 'Chọn kỳ thực tập'}
-        disabled={existing || !form.schoolOrgId || terms.loading || !terms.value?.length} error={fieldError('termId')}
+        disabled={existing || !!termScope || !form.schoolOrgId || terms.loading || !terms.value?.length} error={fieldError('termId')}
         change={termId => change({ termId, academicCatalogVersion: '', majorCodes: '' })} />
       <ReferenceSelect label="Phiên bản danh mục học vụ" value={form.academicCatalogVersion}
         options={academic.value ? [{ value: academic.value.academicCatalogVersion, label: academic.value.academicCatalogVersion + ' (hiện hành)' }] : []}

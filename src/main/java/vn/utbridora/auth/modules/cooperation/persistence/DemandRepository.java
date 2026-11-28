@@ -70,7 +70,11 @@ public class DemandRepository {
         return DemandJson.read(data,DemandCriteriaSnapshot.class);
     }
     public Page<DemandDto> list(String org,String term,String state,boolean includeDeleted,int page,int size) {
+        return list(org,term,state,includeDeleted,page,size,null);
+    }
+    public Page<DemandDto> list(String org,String term,String state,boolean includeDeleted,int page,int size,String school) {
         String where=" WHERE enterprise_org_id=?"; var args=new ArrayList<Object>(); args.add(org);
+        if(school!=null) { where+=" AND school_org_id=?"; args.add(school); }
         if(term!=null) { where+=" AND term_id=?"; args.add(term); }
         if(state!=null) { where+=" AND state=?"; args.add(state); }
         if(!includeDeleted) where+=" AND soft_deleted_at IS NULL";

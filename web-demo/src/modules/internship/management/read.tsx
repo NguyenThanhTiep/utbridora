@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ApiError } from '../../../api';
+import { PagerNav } from '../../../ui/PagerNav';
 import { workflowError, workflowRead } from '../workflow-api';
 import type { ContextAssignment, WorkspacePage } from '../types';
 
@@ -24,11 +25,7 @@ export function useManagementRead<T>(path: string | null, contextId?: string, re
   return state.path === path && state.contextId === contextId && state.revision === revision ? state : { data: undefined, error: '', status: undefined, loading: !!path };
 }
 export function ManagementPager<T>({ data, disabled, change }: { data?: WorkspacePage<T>; disabled: boolean; change: (page: number) => void }) {
-  return data && <div className="assignment-pager" aria-label="Phân trang">
-    <button type="button" className="secondary" disabled={disabled || data.page === 0} onClick={() => change(data.page - 1)}>Trang trước</button>
-    <span>Trang {data.page + 1}/{Math.max(1, data.totalPages)} · {data.totalElements} kết quả</span>
-    <button type="button" className="secondary" disabled={disabled || data.page + 1 >= data.totalPages} onClick={() => change(data.page + 1)}>Trang sau</button>
-  </div>;
+  return data ? <PagerNav page={data.page} totalPages={data.totalPages} totalElements={data.totalElements} busy={disabled} prevLabel="Trang trước" nextLabel="Trang sau" ariaLabel="Phân trang" onChange={change} /> : null;
 }
 export const shortId = (id: string) => '…' + id.slice(-8);
 export const dateLabel = (v: string) => new Date(v).toLocaleString('vi-VN');

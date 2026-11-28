@@ -1,5 +1,6 @@
 import { useEffect, useId, useState } from 'react';
 import { Icon, LoadingState, Notice } from '../../../components';
+import { PagerNav } from '../../../ui/PagerNav';
 import { failureMessage } from './errors';
 import { readSkillCatalog, type CatalogSkill, type SkillCatalog } from './skillCatalog';
 
@@ -55,11 +56,7 @@ export function SkillCatalogPicker({ selected, onPick, onVersion }: {
               </div>
             </li>)}
           </ul>}
-        <div className="button-row">
-          <button type="button" className="secondary" disabled={catalog.skills.page === 0} onClick={() => { setPage(page - 1); setCatalog(null); }}>Kỹ năng trước</button>
-          <span>Trang {catalog.skills.page + 1}/{Math.max(1, catalog.skills.totalPages)}</span>
-          <button type="button" className="secondary" disabled={catalog.skills.page + 1 >= catalog.skills.totalPages} onClick={() => { setPage(page + 1); setCatalog(null); }}>Kỹ năng sau</button>
-        </div>
+        <PagerNav page={catalog.skills.page} totalPages={catalog.skills.totalPages} prevLabel="Kỹ năng trước" nextLabel="Kỹ năng sau" ariaLabel="Phân trang danh mục kỹ năng" onChange={next => { setPage(next); setCatalog(null); }} />
       </>}
     </>}
   </div>;

@@ -1,0 +1,12 @@
+#root .enterprise-verification-editor .verification-evidence { display: grid; gap: 12px; min-width: 0; }
+#root .enterprise-verification-editor .verification-evidence p { margin: 0; line-height: 1.6; overflow-wrap: anywhere; }
+#root .enterprise-verification-editor .verification-evidence-list { display: grid; gap: 10px; padding: 0; margin: 0; list-style: none; }
+#root .enterprise-verification-editor .verification-evidence-list li { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 12px; border: 1px solid #e3eaf2; border-radius: 10px; }
+#root .enterprise-verification-editor .verification-evidence-list small { display: block; margin-top: 4px; color: #64788a; }
+#root .enterprise-verification-editor .verification-scan-note { padding: 12px; border: 1px solid #cdece4; border-radius: 10px; background: #eef9f5; }
+#root .portal-workspace.is-enterprise .enterprise-verifications-workspace .verification-submit-hint { display: block; max-width: none; margin-top: 8px; color: #64788a; font-size: var(--text-sm, 14px); line-height: 1.5; white-space: normal; text-wrap: pretty; word-break: normal; overflow-wrap: normal; }
+#root .enterprise-verifications-workspace .verification-submit-tail { white-space: nowrap; }
+@media (max-width: 480px) {
+  #root .enterprise-verification-editor .verification-evidence-list .button-row { display: grid; width: 100%; }
+  #root .enterprise-verification-editor .verification-evidence-list button { width: 100%; }
+}

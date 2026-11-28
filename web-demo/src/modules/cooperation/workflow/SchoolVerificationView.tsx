@@ -1,6 +1,10 @@
 import { useEffect, useState, type RefObject } from 'react';
 import { Icon, Notice } from '../../../components';
+import { PagerNav } from '../../../ui/PagerNav';
 import { fieldLabels, states, type Verification } from './types';
+import { TaxAssessmentPanel } from './TaxAssessmentPanel';
+import { WorkflowDetailDialog } from '../ui/WorkflowDetailDialog';
+import { recordRow } from '../ui/recordRow';
 
 const schoolStateLabels: Record<string, string> = {
   SUBMITTED: 'Chờ duyệt',
@@ -34,6 +38,7 @@ function formatDossierCode(index: number) {
 }
 
 export function SchoolVerificationView({
+  org,
   items,
   loading,
   error,
@@ -51,6 +56,7 @@ export function SchoolVerificationView({
   total,
   onPageChange,
 }: {
+  org: string;
   items: Verification[];
   loading: boolean;
   error: string;
@@ -254,8 +260,8 @@ export function SchoolVerificationView({
           )}
         </div>
 
-        <Notice message={error || actionMessage || validationHint} tone="error" />
-        {retryable && (
+        <Notice message={error || (!activeRecord ? actionMessage || validationHint : '')} tone="error" />
+        {!activeRecord && retryable && (
           <button disabled={retrying} onClick={onRetry}>
             Thử lại yêu cầu đã gửi
           </button>
@@ -336,7 +342,7 @@ export function SchoolVerificationView({
                     key={v.verificationId}
                     className={isSelected ? 'table-row-selected' : undefined}
                     aria-selected={isSelected}
-                    onClick={() => toggleRow(v.verificationId)}
+                    {...recordRow(() => toggleRow(v.verificationId), busy)}
                   >
                     <td>
                       <strong className="bm03-company-name">{v.data.registeredName}</strong>
@@ -379,19 +385,7 @@ export function SchoolVerificationView({
           <p className="bm03-select-hint">Nhấn vào một doanh nghiệp trong bảng để xem chi tiết hồ sơ và xét duyệt.</p>
         )}
 
-        {total > 1 && (
-          <div className="button-row">
-            <button className="secondary" disabled={page === 0} onClick={() => onPageChange(page - 1)}>
-              Trước
-            </button>
-            <span>
-              Trang {page + 1}/{Math.max(1, total)}
-            </span>
-            <button className="secondary" disabled={page + 1 >= total} onClick={() => onPageChange(page + 1)}>
-              Sau
-            </button>
-          </div>
-        )}
+        {total > 1 && <PagerNav page={page} totalPages={total} onChange={onPageChange} ariaLabel="Phân trang xác minh" />}
       </div>
 
       {/* Natural Administrative Dossier Detail Panel (opens on row click or task focus) */}
@@ -402,6 +396,10 @@ export function SchoolVerificationView({
         const statusLabel = schoolStateLabels[activeRecord.state] || states[activeRecord.state] || activeRecord.state;
 
         return (
+          <WorkflowDetailDialog key={activeRecord.verificationId} label="Chi tiết hồ sơ xác minh BM-03" blocked={busy}
+            onClose={() => setSelectedId('__NONE__')}>
+          <Notice message={actionMessage} tone="error" />
+          {retryable && <button type="button" disabled={retrying} onClick={onRetry}>Thử lại yêu cầu đã gửi</button>}
           <article
             key={activeRecord.verificationId}
             id="school-bm03-detail"
@@ -424,6 +422,7 @@ export function SchoolVerificationView({
                 type="button"
                 className="bm03-close-btn"
                 aria-label="Đóng chi tiết hồ sơ"
+                disabled={busy}
                 onClick={() => setSelectedId('__NONE__')}
               >
                 <Icon name="close" size={14} />
@@ -432,6 +431,9 @@ export function SchoolVerificationView({
             </div>
 
             <div className="bm03-detail-body">
+              <TaxAssessmentPanel org={org} record={activeRecord} busy={busy} requestInfo={fields => {
+                setMissingFields(fields); setDecisionMode('REQUEST_INFO'); setValidationHint('');
+              }} />
               {activeRecord.missingFields.length > 0 && (
                 <div className="bm03-missing-callout" role="note">
                   <Icon name="alert" size={15} />
@@ -591,6 +593,7 @@ export function SchoolVerificationView({
               )}
 
               {/* Bottom Action Footer — only for SUBMITTED */}
+              <Notice message={validationHint} tone="error" />
               {activeRecord.state === 'SUBMITTED' && (
                 <div className="bm03-action-footer">
                   <p className="bm03-action-note">
@@ -638,7 +641,7 @@ export function SchoolVerificationView({
                 </div>
               )}
             </div>
-          </article>
+          </article></WorkflowDetailDialog>
         );
       })()}
     </section>

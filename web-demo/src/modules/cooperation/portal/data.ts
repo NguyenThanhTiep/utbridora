@@ -4,6 +4,7 @@ import { workflowError } from '../proposals/api';
 import type { Demand } from '../types';
 import type { CooperationRecord, VerificationRecord } from '../WorkflowViews';
 import type { PortalSide } from './navigation';
+import { cooperationInScope, demandInScope, scopeQuery } from './scope';
 
 export type Resource<T> = { items: T[]; loading: boolean; error: string };
 type Data = { key: string; demands: Resource<Demand>; cooperations: Resource<CooperationRecord>; verifications: Resource<VerificationRecord> };
@@ -21,8 +22,8 @@ export async function readAll<T>(org: string, path: string, signal: AbortSignal)
   }
 }
 
-export function usePortalData(org: string, side: PortalSide, termId = '') {
-  const key = side + ':' + org + ':' + termId;
+export function usePortalData(org: string, side: PortalSide, termId = '', schoolOrgId = '') {
+  const key = side + ':' + org + ':' + schoolOrgId + ':' + termId;
   const [revision, setRevision] = useState(0);
   const [data, setData] = useState<Data>({ key: '', demands: empty(), cooperations: empty(), verifications: empty() });
   const reload = useCallback(() => setRevision(value => value + 1), []);
@@ -46,11 +47,13 @@ export function usePortalData(org: string, side: PortalSide, termId = '') {
         if (!controller.signal.aborted) setData(old => ({ ...old, [name]: { items: [], loading: false, error: workflowError(error) } }));
       });
     }
-    if (side === 'enterprise') load('demands', '/enterprise/demands');
-    load<CooperationRecord>('cooperations', `/${side}/cooperations${termId ? '?' + new URLSearchParams({ termId }) : ''}`,
-      row => !termId || row.termId === termId);
-    load('verifications', `/${side}/verifications`);
+    const scope = { schoolOrgId, termId }, query = scopeQuery(scope).toString();
+    if (side === 'enterprise') load<Demand>('demands', '/enterprise/demands' + (query ? '?' + query : ''), row => demandInScope(row, scope));
+    load<CooperationRecord>('cooperations', `/${side}/cooperations${query ? '?' + query : ''}`,
+      row => cooperationInScope(row, scope));
+    load<VerificationRecord>('verifications', `/${side}/verifications${schoolOrgId ? '?' + new URLSearchParams({ schoolOrgId }) : ''}`,
+      row => !schoolOrgId || row.data.schoolOrgId === schoolOrgId);
     return () => controller.abort();
-  }, [key, org, side, termId, revision]);
+  }, [key, org, side, termId, schoolOrgId, revision]);
   return { ...(data.key === key ? data : { key, demands: empty<Demand>(), cooperations: empty<CooperationRecord>(), verifications: empty<VerificationRecord>() }), reload, revision };
 }

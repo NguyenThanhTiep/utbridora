@@ -1,7 +1,7 @@
 /* Action buttons across Admin, School, Enterprise and Student share the same feedback.
    Cards, navigation and icon controls retain their own dedicated effects. */
 :is(.workspace-admin, .workspace-t5:not(:where(.workspace-native-t3)), .workspace-native-t3.has-workspace-motion:not(.workspace-student), .workspace-student) :is(.content, .topbar) button:not(:where(
-  .nav, .btn-icon, .profile-shortcut, .password-toggle, .text-button, .quick-ref-chip, .role-menu-trigger, .role-menu-item, .menu-toggle, .student-report-card,
+  .nav, .btn-icon, .profile-shortcut, .password-toggle, .vn-date-icon, .text-button, .quick-ref-chip, .role-menu-trigger, .role-menu-item, .menu-toggle, .student-report-card,
   .admin-metric, .admin-shortcut, .portal-stat, .portal-shortcut, .kpi-card, .matching-counts > button, .taxonomy-node, [role="tab"]
 )) {
   --action-sheen: #ffffff80;
@@ -12,7 +12,7 @@
 :is(.workspace-admin, .workspace-t5:not(:where(.workspace-native-t3)), .workspace-native-t3.has-workspace-motion:not(.workspace-student), .workspace-student) :is(.content, .topbar) button.secondary { --action-sheen: #0b927c30; }
 :is(.workspace-admin, .workspace-t5:not(:where(.workspace-native-t3)), .workspace-native-t3.has-workspace-motion:not(.workspace-student), .workspace-student) :is(.content, .topbar) button.danger { --action-sheen: #c23b4e28; }
 :is(.workspace-admin, .workspace-t5:not(:where(.workspace-native-t3)), .workspace-native-t3.has-workspace-motion:not(.workspace-student), .workspace-student) :is(.content, .topbar) button:not(:where(
-  .nav, .btn-icon, .profile-shortcut, .password-toggle, .text-button, .quick-ref-chip, .role-menu-trigger, .role-menu-item, .menu-toggle, .student-report-card,
+  .nav, .btn-icon, .profile-shortcut, .password-toggle, .vn-date-icon, .text-button, .quick-ref-chip, .role-menu-trigger, .role-menu-item, .menu-toggle, .student-report-card,
   .admin-metric, .admin-shortcut, .portal-stat, .portal-shortcut, .kpi-card, .matching-counts > button, .taxonomy-node, [role="tab"]
 ))::before {
   content: '';
@@ -25,14 +25,14 @@
 }
 @media (prefers-reduced-motion: no-preference) {
   :is(.workspace-admin, .workspace-t5:not(:where(.workspace-native-t3)), .workspace-native-t3.has-workspace-motion:not(.workspace-student), .workspace-student) :is(.content, .topbar) button:not(:where(
-    .nav, .btn-icon, .profile-shortcut, .password-toggle, .text-button, .quick-ref-chip, .role-menu-trigger, .role-menu-item, .menu-toggle, .student-report-card,
+    .nav, .btn-icon, .profile-shortcut, .password-toggle, .vn-date-icon, .text-button, .quick-ref-chip, .role-menu-trigger, .role-menu-item, .menu-toggle, .student-report-card,
     .admin-metric, .admin-shortcut, .portal-stat, .portal-shortcut, .kpi-card, .matching-counts > button, .taxonomy-node, [role="tab"],
     :disabled, [aria-disabled="true"]
   )):focus-visible::before { animation: action-light-sweep var(--ui-motion-sheen, 800ms) var(--ui-motion-ease, ease-out); }
 }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   :is(.workspace-admin, .workspace-t5:not(:where(.workspace-native-t3)), .workspace-native-t3.has-workspace-motion:not(.workspace-student), .workspace-student) :is(.content, .topbar) button:not(:where(
-    .nav, .btn-icon, .profile-shortcut, .password-toggle, .text-button, .quick-ref-chip, .role-menu-trigger, .role-menu-item, .menu-toggle, .student-report-card,
+    .nav, .btn-icon, .profile-shortcut, .password-toggle, .vn-date-icon, .text-button, .quick-ref-chip, .role-menu-trigger, .role-menu-item, .menu-toggle, .student-report-card,
     .admin-metric, .admin-shortcut, .portal-stat, .portal-shortcut, .kpi-card, .matching-counts > button, .taxonomy-node, [role="tab"],
     :disabled, [aria-disabled="true"]
   )):hover::before { animation: action-light-sweep var(--ui-motion-sheen, 800ms) var(--ui-motion-ease, ease-out); }

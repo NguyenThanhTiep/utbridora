@@ -41,10 +41,14 @@ export type StudentTone = 'green' | 'blue' | 'purple' | 'amber';
 export function StudentStat({ tone, icon, value, label, hint, progress, children }: {
   tone: StudentTone; icon: string; value: string; label: string; hint: string; progress?: number; children?: ReactNode;
 }) {
-  return <div className={'student-home-stat tone-' + tone}>
+  const loading = value === '…';
+  return <div className={'student-home-stat tone-' + tone + (loading ? ' is-sk-loading' : '')}>
     <span className="student-home-stat-icon"><Icon name={icon} size={20} /></span>
     <p className="student-home-stat-label">{label}</p>
-    <p className={'student-home-stat-value' + (/^[\d/]+$/.test(value) ? '' : ' is-text')}>{value}</p>
+    <div className="u-sk-slot student-home-stat-value-slot">
+      <p className={'u-sk-real student-home-stat-value' + (/^[\d/]+$/.test(value) ? '' : ' is-text')}>{value}</p>
+      <i className="u-sk-ph u-sk-bar is-metric" aria-hidden="true" />
+    </div>
     {progress !== undefined && <span className="student-home-stat-bar" aria-hidden="true" style={{ '--value': progress + '%' } as CSSProperties}><span /></span>}
     <p className="student-home-stat-hint">{hint}</p>
     {children}

@@ -26,8 +26,24 @@ export function AvailabilityEditor({ declared, periods, errors, groupError, disa
         return <fieldset className="student-period" key={index}>
           <legend>Khoảng thời gian {index + 1}</legend>
           <div className="student-period-fields">
-            <Field label="Từ ngày" type="date" value={period.startDate} onChange={value => update(index, 'startDate', value)} {...invalid} />
-            <Field label="Đến ngày" type="date" value={period.endDate} min={period.startDate || undefined} onChange={value => update(index, 'endDate', value)} {...invalid} />
+            <Field label="Từ ngày" type="date" value={period.startDate} onChange={value => update(index, 'startDate', value)} {...invalid}
+              dateRange={{
+                startValue: period.startDate,
+                endValue: period.endDate,
+                activeEndpoint: 'start',
+                startLabel: 'Từ ngày',
+                endLabel: 'Đến ngày',
+                onApplyRange: (startDate, endDate) => setPeriods(periods.map((item, at) => at === index ? { startDate, endDate } : item)),
+              }} />
+            <Field label="Đến ngày" type="date" value={period.endDate} min={period.startDate || undefined} onChange={value => update(index, 'endDate', value)} {...invalid}
+              dateRange={{
+                startValue: period.startDate,
+                endValue: period.endDate,
+                activeEndpoint: 'end',
+                startLabel: 'Từ ngày',
+                endLabel: 'Đến ngày',
+                onApplyRange: (startDate, endDate) => setPeriods(periods.map((item, at) => at === index ? { startDate, endDate } : item)),
+              }} />
           </div>
           {errors[index] && <p className="student-field-error" id={errorId}>{errors[index]}</p>}
           <button type="button" className="text-button" onClick={() => setPeriods(periods.filter((_, at) => at !== index))}><Icon name="close" size={15} />Xóa<span className="student-sr-only"> khoảng {index + 1}</span></button>

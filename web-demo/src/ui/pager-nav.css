@@ -1,0 +1,257 @@
+/* UTBridora system-themed animated pagination (adapted from Lucian UX/UI #449). */
+#root .u-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  min-width: 0;
+  margin-top: 14px;
+  padding-top: 16px;
+  border-top: 1px solid #e3eaf2;
+}
+#root .u-pager.is-standalone {
+  justify-content: flex-end;
+}
+#root .u-pager.is-inline {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+#root .u-pager-summary {
+  color: #5e7382;
+  font-size: 13.5px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+#root .u-pager-summary strong {
+  display: inline-block;
+  min-width: 24px;
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: #e7f6f0;
+  color: #087b68;
+  font-weight: 650;
+  text-align: center;
+}
+#root .u-pager-summary .u-pager-divider {
+  margin: 0 7px;
+  color: #93a5b1;
+}
+#root .u-pager-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+#root .u-pager-nav {
+  --pg-w: 32px;
+  --pg-ar: 32px;
+  --pg-h: 36px;
+  --pg-gap: 2px;
+  --pg-ease: cubic-bezier(.2, .8, .2, 1);
+  --pg-spring: cubic-bezier(.34, 1.45, .64, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 6px;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px #dce6ec, 0 10px 24px -18px rgba(20, 47, 64, 0.34);
+}
+#root .u-pager.u-pager button.u-pager-ar {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--pg-ar);
+  min-width: var(--pg-ar);
+  height: var(--pg-h);
+  min-height: var(--pg-h);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #425d6e;
+  box-shadow: none;
+  font-family: inherit;
+  line-height: 1;
+  transition: background-color 0.2s, color 0.2s, opacity 0.25s, transform 0.35s var(--pg-spring);
+}
+#root .u-pager.u-pager button.u-pager-ar:hover:not(:disabled) {
+  background: #e7f6f0;
+  color: #087463;
+  box-shadow: none;
+}
+#root .u-pager.u-pager button.u-pager-ar:active:not(:disabled) {
+  transform: scale(0.9);
+  box-shadow: none;
+}
+#root .u-pager.u-pager button.u-pager-ar:disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+#root .u-pager.u-pager button.u-pager-ar svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#root .u-pager-sl {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--pg-cols, 1), var(--pg-w));
+  gap: var(--pg-gap);
+}
+#root .u-pager-pill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--pg-w);
+  height: var(--pg-h);
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0b927c, #087f8c);
+  box-shadow: 0 5px 14px -5px rgba(11, 146, 124, 0.52);
+  transform: translateX(calc(var(--pg-index, 0) * (var(--pg-w) + var(--pg-gap))));
+  transition: transform 0.55s var(--pg-spring);
+  pointer-events: none;
+}
+#root .u-pager-pill.is-sq {
+  animation: u-pager-sq 0.55s var(--pg-ease);
+}
+@keyframes u-pager-sq {
+  35% {
+    scale: 1.22 0.9;
+  }
+}
+#root .u-pager.u-pager button.u-pager-n {
+  box-sizing: border-box;
+  position: relative;
+  width: var(--pg-w);
+  min-width: var(--pg-w);
+  height: var(--pg-h);
+  min-height: var(--pg-h);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  box-shadow: none;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: #425d6e;
+  overflow: hidden;
+  transition: color 0.3s, background-color 0.2s;
+}
+#root .u-pager.u-pager button.u-pager-n:hover:not(.is-dots):not([aria-current="page"]):not(:disabled) {
+  background: #edf8f4;
+  color: #087463;
+  box-shadow: none;
+  transform: none;
+}
+#root .u-pager.u-pager button.u-pager-n[aria-current="page"],
+#root .u-pager.u-pager button.u-pager-n[aria-current="page"]:hover {
+  background: transparent;
+  color: #ffffff;
+  box-shadow: none;
+  transform: none;
+}
+#root .u-pager.u-pager button.u-pager-n.is-dots {
+  cursor: default;
+  color: #7d91a1;
+  pointer-events: none;
+}
+#root .u-pager.u-pager button.u-pager-n:disabled:not([aria-current="page"]):not(.is-dots) {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+#root .u-pager.u-pager :is(button.u-pager-ar, button.u-pager-n):focus-visible {
+  outline: 2px solid #0b927c;
+  outline-offset: 2px;
+}
+#root .u-pager button.u-pager-n > span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+#root .u-pager button.u-pager-n > span.is-in {
+  animation: u-pager-in 0.4s var(--pg-spring);
+}
+#root .u-pager button.u-pager-n > span.is-out {
+  animation: u-pager-out 0.3s var(--pg-ease) forwards;
+}
+#root .u-pager button.u-pager-n.is-back > span.is-in {
+  animation-name: u-pager-in-back;
+}
+#root .u-pager button.u-pager-n.is-back > span.is-out {
+  animation-name: u-pager-out-back;
+}
+@keyframes u-pager-in {
+  from {
+    transform: translateY(22px);
+    opacity: 0;
+  }
+}
+@keyframes u-pager-out {
+  to {
+    transform: translateY(-22px);
+    opacity: 0;
+  }
+}
+@keyframes u-pager-in-back {
+  from {
+    transform: translateY(-22px);
+    opacity: 0;
+  }
+}
+@keyframes u-pager-out-back {
+  to {
+    transform: translateY(22px);
+    opacity: 0;
+  }
+}
+#root .u-pager-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  margin: 0;
+}
+@media (max-width: 600px) {
+  #root .u-pager.is-standalone {
+    justify-content: center;
+  }
+}
+@media (max-width: 440px) {
+  #root .u-pager-nav {
+    --pg-w: 27px;
+    --pg-ar: 28px;
+    --pg-h: 36px;
+    --pg-gap: 2px;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #root .u-pager-pill,
+  #root .u-pager button.u-pager-ar,
+  #root .u-pager button.u-pager-n,
+  #root .u-pager button.u-pager-n > span.is-in,
+  #root .u-pager button.u-pager-n > span.is-out {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

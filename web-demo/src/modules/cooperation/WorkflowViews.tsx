@@ -1,15 +1,20 @@
 import { useViewRouting } from '../../routing/BrowserRouting';
 ﻿import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { api } from '../../api';
+import { api, ApiError } from '../../api';
 import { EmptyState, Icon, Notice } from '../../components';
+import { PagerNav } from '../../ui/PagerNav';
 import { formatDateDMY } from '../../ui/dateFormat';
 import type { ContractPage } from '../student/types';
+import { newIdempotencyKey } from '../student/api';
+import { workflowError } from './proposals/api';
 import { states, fieldLabels } from './workflow/types';
-import type { Cooperation, Detail, Verification } from './workflow/types';
+import type { Cooperation, Detail, Verification, VerificationInput } from './workflow/types';
 import { useCommand } from './workflow/useCommand';
 import { ReviewDecision } from './workflow/ReviewDecision';
 import { CooperationComposer } from './workflow/CooperationComposer';
 import { VerificationEditor } from './workflow/VerificationEditor';
+import type { QueuedEvidenceFile, VerificationEvidenceSeed } from './workflow/VerificationEvidence';
+import { uploadVerificationFile, validateVerificationFile, verificationFileError, type VerificationFile } from './workflow/verificationFiles';
 import { VerificationJourney } from './workflow/VerificationJourney';
 import { useSchoolNames } from './portal/useSchoolNames';
 import type { Demand } from './types';
@@ -26,10 +31,13 @@ import { useSchoolTermNames } from './workflow/useSchoolTermNames';
 import { useCooperationTitles } from './workflow/useCooperationTitles';
 import { EnterpriseCooperationList } from './workflow/EnterpriseCooperationList';
 import { EnterpriseCooperationSummary } from './workflow/EnterpriseCooperationSummary';
+import { WorkflowDetailDialog } from './ui/WorkflowDetailDialog';
+import { recordRow } from './ui/recordRow';
+import { cooperationInScope, demandInScope, scopeQuery } from './portal/scope';
 import './workflow/enterprise-cooperations.css';
 export type { CooperationRecord, VerificationInput, VerificationRecord } from './workflow/types';
 
-export function CooperationFlows({ org, school, demands = [], onLoaded, includeProgress = true, focusId, termId = '' }: { org: string; school: boolean; demands?: Demand[]; onLoaded?: (items: Cooperation[]) => void; includeProgress?: boolean; focusId?: string; termId?: string }) {
+export function CooperationFlows({ org, school, demands = [], onLoaded, includeProgress = true, focusId, termId = '', schoolOrgId = '' }: { org: string; school: boolean; demands?: Demand[]; onLoaded?: (items: Cooperation[]) => void; includeProgress?: boolean; focusId?: string; termId?: string; schoolOrgId?: string }) {
   const [items, setItems] = useState<Cooperation[]>([]), [detail, setDetail] = useState<Detail | null>(null);
   const routeContext=useViewRouting(school?'school':'demands');
   const routing=routeContext?.route.portalPage==='cooperations'?routeContext:null;
@@ -53,14 +61,14 @@ export function CooperationFlows({ org, school, demands = [], onLoaded, includeP
   useFocusedWorkflow<Detail>(org, '/' + side + '/cooperations', focusId, refresh, value => {
     if (value.cooperation.cooperationId !== focusId || value.cooperation.demandId!==value.demand.demandId
       || (school?value.demand.data.schoolOrgId!==org:value.demand.enterpriseOrgId!==org)
-      || termId && value.cooperation.termId!==termId) throw new Error('Unexpected cooperation');
+      || !cooperationInScope(value.cooperation, { schoolOrgId, termId }) || !demandInScope(value.demand, { schoolOrgId, termId })) throw new Error('Unexpected cooperation');
     setDetailError('');setDetail(value);
   }, () => setDetailError('Đề nghị đã thay đổi hoặc không còn trong phạm vi truy cập.'));
   // Enterprise summary owns its heading focus. School deep links focus the dossier.
   useWorkflowFocus(focusedRef, school && !!focusId && !loading, detail);
   useLayoutEffect(()=>{
     detailRequest.current?.abort();setOpeningId('');setDetailError('');setDetail(null);setComposing(false);
-  },[org,school,termId,focusId]);
+  },[org,school,schoolOrgId,termId,focusId]);
 
   useEffect(() => {
     const update = () => {if(canLeaveDemand())changed();};
@@ -71,15 +79,16 @@ export function CooperationFlows({ org, school, demands = [], onLoaded, includeP
   useEffect(() => {
     detailRequest.current?.abort(); setOpeningId(''); setDetailError('');
     const c = new AbortController(); setError(''); setDetail(null); setItems([]); setLoading(true);
-    void api<ContractPage<Cooperation>>('/' + side + '/cooperations?page=' + page + '&size=25' + (termId ? '&' + new URLSearchParams({ termId }) : ''), { signal: c.signal, headers: { 'X-Organization-Id': org } })
+    const filters = scopeQuery({ schoolOrgId, termId }).toString();
+    void api<ContractPage<Cooperation>>('/' + side + '/cooperations?page=' + page + '&size=25' + (filters ? '&' + filters : ''), { signal: c.signal, headers: { 'X-Organization-Id': org } })
       .then(p => { if (!c.signal.aborted) {
-        const visible = p.content.filter(item => (!school || item.state !== 'DRAFT') && (!termId || item.termId === termId));
+        const visible = p.content.filter(item => (!school || item.state !== 'DRAFT') && cooperationInScope(item, { schoolOrgId, termId }));
         setItems(visible); setTotal(p.totalPages); loadedRef.current?.(visible);
       } })
       .catch(() => { if (!c.signal.aborted) setError('Chưa tải được đề nghị hợp tác.'); })
       .finally(() => { if (!c.signal.aborted) setLoading(false); });
     return () => { c.abort(); detailRequest.current?.abort(); };
-  }, [org, side, termId, refresh, page]);
+  }, [org, side, schoolOrgId, termId, refresh, page]);
 
   const titles = useCooperationTitles(org, school, items);
   const demandTitles = { ...titles.names };
@@ -133,7 +142,8 @@ export function CooperationFlows({ org, school, demands = [], onLoaded, includeP
       .then(value => {
         if (controller.signal.aborted) return;
         if (value.cooperation.cooperationId !== item.cooperationId || value.cooperation.demandId !== item.demandId
-          || value.demand.demandId !== item.demandId || value.demand.enterpriseOrgId !== org) throw new Error('Unexpected cooperation');
+          || value.demand.demandId !== item.demandId || value.demand.enterpriseOrgId !== org
+          || !cooperationInScope(value.cooperation, { schoolOrgId, termId }) || !demandInScope(value.demand, { schoolOrgId, termId })) throw new Error('Unexpected cooperation');
         setDetail(value);
       })
       .catch(() => { if (!controller.signal.aborted) setDetailError('Không đọc được đề nghị. Vui lòng chọn lại đề nghị để thử lại.'); })
@@ -170,8 +180,8 @@ export function CooperationFlows({ org, school, demands = [], onLoaded, includeP
         </div>
       </div>
 
-      <Notice message={action.message || error || detailError} tone="error" />
-      {action.retryable && <button disabled={action.retrying} onClick={() => void action.retry()}>Thử lại yêu cầu đã gửi</button>}
+      <Notice message={error || (!detail ? action.message || detailError : '')} tone="error" />
+      {!detail && action.retryable && <button disabled={action.retrying} onClick={() => void action.retry()}>Thử lại yêu cầu đã gửi</button>}
 
       {!school && composing && <CooperationComposer org={org} demands={demands} busy={action.busy} close={() => {
         document.getElementById('enterprise-cooperation-compose-' + org)?.focus(); setComposing(false);
@@ -205,21 +215,21 @@ export function CooperationFlows({ org, school, demands = [], onLoaded, includeP
         emptyMessage={items.length === 0 ? 'Chưa có đề nghị trong phạm vi này.' : 'Không tìm thấy đề nghị hợp tác phù hợp bộ lọc hiện tại.'}
         open={c => {if(routing)routing.go({...routing.route,orgId:org,recordId:c.cooperationId});else void api<Detail>('/school/cooperations/' + c.cooperationId, { headers: { 'X-Organization-Id': org } }).then(setDetail).catch(() => setError('Không đọc được đề nghị.'));}} />}
 
-      {total > 1 && <div className="button-row cooperation-pagination">
-        <button className="secondary" disabled={page === 0 || (!school && (action.busy || loading))} onClick={() => setPage(n => n - 1)}>Trước</button>
-        <span>Trang {page + 1}/{Math.max(1, total)}</span>
-        <button className="secondary" disabled={page + 1 >= total || (!school && (action.busy || loading))} onClick={() => setPage(n => n + 1)}>Sau</button>
-      </div>}
+      {total > 1 && <PagerNav page={page} totalPages={total} busy={!school && (action.busy || loading)} onChange={setPage} ariaLabel="Phân trang hợp tác" />}
     </div>
 
-    {detail && <article className={'workflow-detail-drawer' + (school ? ' school-cooperation-detail' : ' enterprise-cooperation-detail')}
+    {detail && <WorkflowDetailDialog key={detail.cooperation.cooperationId} label="Chi tiết đề nghị hợp tác" blocked={action.busy}
+      onClose={() => { if (closeRoute()) setDetail(null); }}>
+      <Notice message={action.message || detailError} tone="error" />
+      {action.retryable && <button disabled={action.retrying} onClick={() => void action.retry()}>Thử lại yêu cầu đã gửi</button>}
+      <article className={'workflow-detail-drawer' + (school ? ' school-cooperation-detail' : ' enterprise-cooperation-detail')}
       id={school ? 'school-cooperation-detail-' + detail.cooperation.cooperationId : undefined} ref={focusedRef} tabIndex={-1}>
-      {school ? <SchoolCooperationSummary key={detail.cooperation.cooperationId + ':' + detail.demand.version + ':' + detail.cooperation.version} detail={detail} termName={termNames[detail.demand.data.termId]} close={() => {
-        document.getElementById('school-cooperation-open-' + detail.cooperation.cooperationId)?.focus();
+      {school ? <SchoolCooperationSummary key={detail.cooperation.cooperationId + ':' + detail.demand.version + ':' + detail.cooperation.version} detail={detail} busy={action.busy} termName={termNames[detail.demand.data.termId]} close={() => {
+        if (action.busy || !canLeaveDemand()) return;
         if(closeRoute())setDetail(null);
       }} /> : <EnterpriseCooperationSummary key={detail.cooperation.cooperationId + ':' + detail.demand.version + ':' + detail.cooperation.version}
         detail={detail} schoolName={schoolNames[detail.demand.data.schoolOrgId]} busy={action.busy} close={() => {
-          document.getElementById('enterprise-cooperation-open-' + detail.cooperation.cooperationId)?.focus(); if(closeRoute())setDetail(null);
+          if (!action.busy && canLeaveDemand() && closeRoute()) setDetail(null);
         }} />}
 
       {school && <CooperationSubmissionHistory key={org+':'+detail.cooperation.cooperationId+':'+detail.cooperation.version} org={org} cooperationId={detail.cooperation.cooperationId} disabled={action.busy} />}
@@ -254,14 +264,26 @@ export function CooperationFlows({ org, school, demands = [], onLoaded, includeP
             <EnterpriseProposals org={org} cooperationId={detail.cooperation.cooperationId} />
             <PlacementWorkspace org={org} school={false} cooperationId={detail.cooperation.cooperationId} demand={detail.demand} />
           </div>)}
-    </article>}
+    </article></WorkflowDetailDialog>}
   </section>;
 }
 
-export function VerificationFlows({ org, school, onLoaded, focusId }: { org: string; school: boolean; onLoaded?: (items: Verification[]) => void; focusId?: string }) {
+export function VerificationFlows({ org, school, onLoaded, focusId, schoolOrgId = '' }: {
+  org: string; school: boolean; onLoaded?: (items: Verification[]) => void; focusId?: string; schoolOrgId?: string;
+}) {
+  const schoolFilter = school ? '' : schoolOrgId;
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Verification[]>([]), [refresh, setRefresh] = useState(0), [page, setPage] = useState(0), [total, setTotal] = useState(0);
   const [editing, setEditing] = useState<Verification | null | undefined>(undefined), [error, setError] = useState('');
+  const [creatingWithFiles, setCreatingWithFiles] = useState(false);
+  const [createError, setCreateError] = useState('');
+  const [evidenceHandoff, setEvidenceHandoff] = useState<{
+    recordId: string;
+    initialFileIds: string[];
+    seed: VerificationEvidenceSeed;
+  } | null>(null);
+  const createAttemptRef = useRef<{ body: string; key: string } | null>(null);
+  const createAbortRef = useRef<AbortController | null>(null);
   const [stateFilter, setStateFilter] = useState(''), [searchText, setSearchText] = useState('');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [focusedRecord, setFocusedRecord] = useState<Verification | null>(null);
@@ -269,26 +291,38 @@ export function VerificationFlows({ org, school, onLoaded, focusId }: { org: str
   const schools = useSchoolNames(org, !school);
   const loadedRef = useRef(onLoaded);
   loadedRef.current = onLoaded;
-  const changed = () => { setEditing(undefined); setRefresh(n => n + 1); }, action = useCommand(org, changed), side = school ? 'school' : 'enterprise';
+  const changed = () => {
+    setCreatingWithFiles(false);
+    setCreateError('');
+    setEvidenceHandoff(null);
+    createAttemptRef.current = null;
+    setEditing(undefined);
+    setRefresh(n => n + 1);
+  }, action = useCommand(org, changed), side = school ? 'school' : 'enterprise';
+  useEffect(() => () => { createAbortRef.current?.abort(); }, [org]);
   useFocusedWorkflow<Verification>(org, '/' + side + '/verifications', focusId, refresh, value => {
-    if (value.verificationId !== focusId || (school && value.state === 'DRAFT')) throw new Error('Unexpected verification');
+    if (value.verificationId !== focusId || (school && value.state === 'DRAFT')
+      || (schoolFilter && value.data.schoolOrgId !== schoolFilter)) throw new Error('Unexpected verification');
     setFocusedRecord(value); setExpanded(value.verificationId);
   }, () => setError('Hồ sơ xác minh đã thay đổi hoặc không còn trong phạm vi truy cập.'));
   useWorkflowFocus(focusedRef, !!focusId && !loading, focusedRecord);
 
   useEffect(() => {
     const c = new AbortController(); setError(''); setItems([]); setLoading(true);
-    void api<ContractPage<Verification>>('/' + side + '/verifications?page=' + page + '&size=25', { signal: c.signal, headers: { 'X-Organization-Id': org } })
+    const query = new URLSearchParams({ page: String(page), size: '25' });
+    if (schoolFilter) query.set('schoolOrgId', schoolFilter);
+    void api<ContractPage<Verification>>('/' + side + '/verifications?' + query, { signal: c.signal, headers: { 'X-Organization-Id': org } })
       .then(p => { if (!c.signal.aborted) {
-        const visible = school ? p.content.filter(item => item.state !== 'DRAFT') : p.content;
+        const visible = p.content.filter(item => (!school || item.state !== 'DRAFT') && (!schoolFilter || item.data.schoolOrgId === schoolFilter));
         setItems(visible); setTotal(p.totalPages); loadedRef.current?.(visible);
       } })
       .catch(() => { if (!c.signal.aborted) setError('Chưa tải được hồ sơ xác minh.'); })
       .finally(() => { if (!c.signal.aborted) setLoading(false); });
     return () => c.abort();
-  }, [org, side, page, refresh]);
+  }, [org, side, schoolFilter, page, refresh]);
 
   const filteredItems = items.filter(v => {
+    if (schoolFilter && v.data.schoolOrgId !== schoolFilter) return false;
     if (stateFilter && v.state !== stateFilter) return false;
     if (searchText.trim()) {
       const q = searchText.trim().toLowerCase();
@@ -314,11 +348,13 @@ export function VerificationFlows({ org, school, onLoaded, focusId }: { org: str
     : undefined;
   const visibleDetails = school
     ? (selectedSchoolRecord ? [selectedSchoolRecord] : [])
-    : [...filteredItems.filter(v => expanded === v.verificationId && v.verificationId !== focusedRecord?.verificationId), ...(focusedRecord ? [focusedRecord] : [])];
+    : [...filteredItems.filter(v => expanded === v.verificationId && v.verificationId !== focusedRecord?.verificationId),
+      ...(focusedRecord && (!schoolFilter || focusedRecord.data.schoolOrgId === schoolFilter) ? [focusedRecord] : [])];
 
   if (school) {
     return (
       <SchoolVerificationView
+        org={org}
         items={items}
         loading={loading}
         error={error}
@@ -362,15 +398,18 @@ export function VerificationFlows({ org, school, onLoaded, focusId }: { org: str
         </div>
       </div>
       <div className="button-row">
-        {!school && <button className="t5-btn-teal" disabled={action.busy} onClick={() => {
-          if (canLeaveDemand()) { setExpanded(null); setFocusedRecord(null); setEditing(null); }
+        {!school && <button className="t5-btn-teal" disabled={action.busy || creatingWithFiles} onClick={() => {
+          if (canLeaveDemand()) {
+            setCreateError(''); setEvidenceHandoff(null); createAttemptRef.current = null;
+            setExpanded(null); setFocusedRecord(null); setEditing(null);
+          }
         }}><Icon name="plus" size={17} />Tạo hồ sơ xác minh</button>}
-        <button className="secondary" disabled={action.busy || loading} onClick={changed}><Icon name="refresh" size={17} />Tải lại xác minh</button>
+        <button className="secondary" disabled={action.busy || creatingWithFiles || loading} onClick={changed}><Icon name="refresh" size={17} />Tải lại xác minh</button>
       </div>
     </div>
 
-    <Notice message={error || action.message} tone="error" />
-    {action.retryable && <button disabled={action.retrying} onClick={() => void action.retry()}>Thử lại yêu cầu đã gửi</button>}
+    <Notice message={error || (editing === undefined ? action.message : '')} tone="error" />
+    {action.retryable && <button disabled={action.retrying || creatingWithFiles} onClick={() => void action.retry()}>Thử lại yêu cầu đã gửi</button>}
 
     {(school || items.length > 0) && <>
       <div className="placement-filter-bar">
@@ -392,7 +431,8 @@ export function VerificationFlows({ org, school, onLoaded, focusId }: { org: str
     {!school && items.length > 0 && filteredItems.length === 0 && <p>Không có hồ sơ xác minh khớp với bộ lọc hiện tại.</p>}
 
     {!school && filteredItems.length > 0 && <div className="proposal-table enterprise-mobile-list"><table><thead><tr><th>Trường tiếp nhận</th><th>Doanh nghiệp</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
-      <tbody>{filteredItems.map(v => <tr key={v.verificationId} className={expanded === v.verificationId ? 'table-row-selected' : undefined}>
+      <tbody>{filteredItems.map(v => <tr key={v.verificationId} className={expanded === v.verificationId ? 'table-row-selected' : undefined}
+        {...recordRow(() => { if (canLeaveDemand()) { setEditing(undefined);setFocusedRecord(null);setExpanded(v.verificationId); } }, action.busy)}>
         <th scope="row" data-label="Trường tiếp nhận">{schools[v.data.schoolOrgId] || 'Trường đối tác'}<small>{v.data.registrationCode}</small></th>
         <td data-label="Doanh nghiệp">{v.data.registeredName}</td><td data-label="Trạng thái"><span className={'status-pill pill-' + v.state.toLowerCase()}><span className="pill-dot" />{states[v.state] || v.state}</span></td>
         <td data-label="Thao tác"><div className="button-row"><button className="secondary" aria-expanded={expanded === v.verificationId}
@@ -400,17 +440,21 @@ export function VerificationFlows({ org, school, onLoaded, focusId }: { org: str
             if (canLeaveDemand()) { setEditing(undefined); setFocusedRecord(null); setExpanded(old => old === v.verificationId ? null : v.verificationId); }
           }}>Xem hồ sơ</button>
           {['DRAFT', 'NEEDS_CHANGES'].includes(v.state) && <>
-            <button className="secondary" disabled={action.busy} onClick={() => {
-              if (canLeaveDemand()) { setExpanded(null); setFocusedRecord(null); setEditing(v); }
+            <button className="secondary" disabled={action.busy || creatingWithFiles} onClick={() => {
+              if (canLeaveDemand()) {
+                setCreateError(''); setEvidenceHandoff(null); createAttemptRef.current = null;
+                setExpanded(null); setFocusedRecord(null); setEditing(v);
+              }
             }}>Bổ sung hồ sơ</button>
-            <button className="t5-btn-teal" disabled={action.busy || !v.data.evidenceFileIds.length} onClick={() => void action.command('/enterprise/verifications/' + v.verificationId + '/submit', 'PATCH', { expectedVersion: v.version })}>Gửi xác minh</button>
+            <button className="t5-btn-teal" disabled={action.busy || creatingWithFiles || editing !== undefined || !v.data.evidenceFileIds.length} onClick={() => void action.command('/enterprise/verifications/' + v.verificationId + '/submit', 'PATCH', { expectedVersion: v.version })}>Gửi xác minh</button>
           </>}
-        </div></td>
+        </div>{['DRAFT', 'NEEDS_CHANGES'].includes(v.state) && !v.data.evidenceFileIds.length && <small className="verification-submit-hint">Chọn Bổ sung hồ sơ để thêm tài liệu minh chứng <span className="verification-submit-tail">trước khi gửi.</span></small>}</td>
       </tr>)}</tbody></table></div>}
     {school && <div className="proposal-table"><table><thead><tr><th>Doanh nghiệp</th><th>Mã ĐKKD</th><th>Liên hệ</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
       <tbody>{filteredItems.map(v => {
         const isSelected = selectedSchoolRecord?.verificationId === v.verificationId;
-        return <tr key={v.verificationId} className={isSelected ? 'table-row-selected' : undefined}>
+        return <tr key={v.verificationId} className={isSelected ? 'table-row-selected' : undefined}
+          {...recordRow(() => setExpanded(v.verificationId), action.busy)}>
           <td><h3 className="workflow-table-title" title={v.data.registeredName}>{v.data.registeredName}</h3><small title={v.data.address}>{v.data.address}</small></td>
           <td><code>{v.data.registrationCode}</code></td>
           <td>{v.data.contactName}<small title={v.data.contactEmail}>{v.data.contactEmail}</small></td>
@@ -420,7 +464,9 @@ export function VerificationFlows({ org, school, onLoaded, focusId }: { org: str
         </tr>;
       })}{!loading && !error && filteredItems.length === 0 && <tr><td colSpan={5}>{items.length === 0 ? 'Chưa có hồ sơ xác minh trong phạm vi này.' : 'Không có hồ sơ xác minh khớp với bộ lọc hiện tại.'}</td></tr>}</tbody></table></div>}
     <div className="workflow-card-list">
-      {visibleDetails.map(v => <article key={v.verificationId} ref={v.verificationId === focusId ? focusedRef : undefined} tabIndex={-1} className={`${school ? 'workflow-detail-drawer' : 'workflow-item-card'} state-border-${v.state.toLowerCase()}`}>
+      {visibleDetails.map(v => <WorkflowDetailDialog key={v.verificationId} label="Chi tiết hồ sơ xác minh" blocked={action.busy}
+        onClose={() => { setExpanded(null); setFocusedRecord(null); }}>
+        <article ref={v.verificationId === focusId ? focusedRef : undefined} tabIndex={-1} className={`${school ? 'workflow-detail-drawer' : 'workflow-item-card'} state-border-${v.state.toLowerCase()}`}>
         <div className="workflow-card-top">
           <div>
             <h3>{v.data.registeredName} · {states[v.state]}</h3>
@@ -431,7 +477,7 @@ export function VerificationFlows({ org, school, onLoaded, focusId }: { org: str
               <span className="pill-dot" />
               {states[v.state] || v.state}
             </span>
-            {!school && <button type="button" className="secondary" onClick={() => { setExpanded(null); setFocusedRecord(null); }}>Đóng chi tiết</button>}
+            {!school && <button type="button" className="secondary" disabled={action.busy} onClick={() => { setExpanded(null); setFocusedRecord(null); }}>Đóng chi tiết</button>}
           </div>
         </div>
 
@@ -463,24 +509,134 @@ export function VerificationFlows({ org, school, onLoaded, focusId }: { org: str
           />
         )}
 
-      </article>)}
+      </article></WorkflowDetailDialog>)}
     </div>
 
     {editing !== undefined && (
       <VerificationEditor
+        schoolScope={schoolFilter}
         org={org}
         key={editing?.verificationId || 'new'}
         existing={editing}
-        busy={action.busy}
-        onCancel={() => setEditing(undefined)}
-        save={data => action.command('/enterprise/verifications' + (editing ? '/' + editing.verificationId : ''), editing ? 'PATCH' : 'POST', editing ? { expectedVersion: editing.version, data } : data)}
+        busy={action.busy || creatingWithFiles}
+        submitError={createError || action.message}
+        evidenceSeed={editing && evidenceHandoff?.recordId === editing.verificationId ? evidenceHandoff.seed : undefined}
+        initialFileIds={editing && evidenceHandoff?.recordId === editing.verificationId ? evidenceHandoff.initialFileIds : undefined}
+        openExisting={record => {
+          setCreateError(''); setEvidenceHandoff(null); createAttemptRef.current = null;
+          setEditing(undefined); setFocusedRecord(record); setExpanded(record.verificationId);
+        }}
+        onCancel={() => {
+          createAbortRef.current?.abort();
+          setCreatingWithFiles(false); setCreateError(''); setEvidenceHandoff(null); createAttemptRef.current = null;
+          setEditing(undefined);
+        }}
+        save={async (data: VerificationInput, queuedFiles: QueuedEvidenceFile[] = []) => {
+          if (editing || !queuedFiles.length) {
+            setCreateError('');
+            return action.command(
+              '/enterprise/verifications' + (editing ? '/' + editing.verificationId : ''),
+              editing ? 'PATCH' : 'POST',
+              editing ? { expectedVersion: editing.version, data } : data,
+            );
+          }
+          if (creatingWithFiles) return;
+          const body = JSON.stringify(data);
+          if (!createAttemptRef.current || createAttemptRef.current.body !== body) {
+            createAttemptRef.current = { body, key: newIdempotencyKey() };
+          }
+          const controller = new AbortController();
+          createAbortRef.current = controller;
+          setCreatingWithFiles(true);
+          setCreateError('');
+          let created: Verification;
+          try {
+            created = await api<Verification>('/enterprise/verifications', {
+              method: 'POST',
+              body,
+              signal: controller.signal,
+              headers: { 'X-Organization-Id': org, 'Idempotency-Key': createAttemptRef.current.key },
+            });
+            createAttemptRef.current = null;
+          } catch (createErr) {
+            if (!controller.signal.aborted) {
+              const definitive = createErr instanceof ApiError && [400, 401, 403, 404, 409, 422].includes(createErr.status)
+                && createErr.errorCode !== 'REQUEST_IN_PROGRESS';
+              if (definitive) createAttemptRef.current = null;
+              setCreateError(workflowError(createErr));
+              setCreatingWithFiles(false);
+            }
+            return;
+          }
+
+          if (controller.signal.aborted) return;
+          setRefresh(n => n + 1);
+          const cleanIds: string[] = [];
+          const pendingFiles: VerificationFile[] = [];
+          let rejectedCount = 0;
+          let failedUpload: VerificationEvidenceSeed['failed'] = null;
+
+          for (const item of queuedFiles) {
+            if (controller.signal.aborted) break;
+            try {
+              const uploaded = validateVerificationFile(
+                await uploadVerificationFile(org, created.verificationId, item.file, item.key, controller.signal),
+                created.verificationId,
+              );
+              if (uploaded.scanStatus === 'CLEAN') cleanIds.push(uploaded.fileId);
+              else if (uploaded.scanStatus === 'PENDING') pendingFiles.push(uploaded);
+              else rejectedCount++;
+            } catch (uploadErr) {
+              if (controller.signal.aborted) break;
+              const definitive = uploadErr instanceof ApiError && [400, 401, 403, 404, 409, 413, 422].includes(uploadErr.status)
+                && uploadErr.errorCode !== 'REQUEST_IN_PROGRESS';
+              failedUpload = {
+                file: item.file,
+                key: definitive ? newIdempotencyKey() : item.key,
+                message: verificationFileError(uploadErr),
+                retryable: !definitive,
+              };
+              break;
+            }
+          }
+
+          if (controller.signal.aborted) return;
+
+          if (!failedUpload && !pendingFiles.length && rejectedCount === 0 && cleanIds.length === queuedFiles.length) {
+            try {
+              await api<Verification>('/enterprise/verifications/' + created.verificationId, {
+                method: 'PATCH',
+                signal: controller.signal,
+                headers: { 'X-Organization-Id': org, 'Idempotency-Key': newIdempotencyKey() },
+                body: JSON.stringify({ expectedVersion: created.version, data: { ...created.data, evidenceFileIds: cleanIds } }),
+              });
+              if (!controller.signal.aborted) {
+                changed();
+                window.dispatchEvent(new Event('cooperation-data-updated'));
+              }
+              return;
+            } catch (patchErr) {
+              if (controller.signal.aborted) return;
+              setCreateError(workflowError(patchErr));
+            }
+          }
+
+          const notice = pendingFiles.length
+            ? 'Hồ sơ nháp đã được lưu. Hệ thống đang kiểm tra an toàn tài liệu vừa chọn.'
+            : rejectedCount > 0
+              ? 'Hồ sơ nháp đã được lưu, nhưng tài liệu chưa đạt kiểm tra an toàn nên chưa được gắn vào hồ sơ.'
+              : '';
+          setEvidenceHandoff({
+            recordId: created.verificationId,
+            initialFileIds: cleanIds,
+            seed: { pending: pendingFiles, failed: failedUpload, notice },
+          });
+          setEditing(created);
+          setCreatingWithFiles(false);
+        }}
       />
     )}
 
-    {total > 1 && <div className="button-row">
-      <button className="secondary" disabled={page === 0 || action.busy || loading} onClick={() => setPage(n => n - 1)}>Trước</button>
-      <span>Trang {page + 1}/{Math.max(1, total)}</span>
-      <button className="secondary" disabled={page + 1 >= total || action.busy || loading} onClick={() => setPage(n => n + 1)}>Sau</button>
-    </div>}
+    {total > 1 && <PagerNav page={page} totalPages={total} busy={action.busy || loading} onChange={setPage} ariaLabel="Phân trang xác minh" />}
   </section>;
 }

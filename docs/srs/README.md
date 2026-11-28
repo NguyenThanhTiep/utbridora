@@ -3,6 +3,7 @@
 | Tài liệu | Trạng thái | Contract đi kèm |
 |---|---|---|
 | [UTBridora SRS tổng thể v1.2.4](UTBridora_SRS_Tong_The_v1.2.4.docx) | Đề xuất hợp nhất; chưa có signoff đầy đủ | [Contract Pack B01–B06 v1.0 Candidate](../contracts/UTBridora_Contract_Pack_B01_B06_v1.0_Candidate.md) |
+| [Bổ sung xác minh MST và tải minh chứng ngày 28/11/2026](SRS_T5_XAC_MINH_MST_VA_TAI_MINH_CHUNG_2026_11_28.md) | Phiên bản 0.1 theo phần triển khai DEV11/DEV12; chờ Leader/QA rà soát | Giữ nguyên DTO hiện có; đối chiếu Contract v1.1 trong tài liệu bổ sung |
 
 SRS v1.2.4 là phiên bản tổng thể hiện có trong repository. Mục §25.9 bổ sung các đề xuất B01–B06, không chứng minh source đã triển khai hoặc kiểm thử chức năng mới.
 

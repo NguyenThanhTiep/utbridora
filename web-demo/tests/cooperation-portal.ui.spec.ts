@@ -1,4 +1,504 @@
 import { expect, test, type Page } from '@playwright/test';
+import type { TaxAssessment } from '../src/modules/cooperation/workflow/taxApi';
+import { openWorkspacePage } from './helpers/workspace';
+
+const taxFixture = (overrides: Partial<TaxAssessment> = {}): TaxAssessment => ({
+  rawRegistrationCode: '0101248141', normalizedTaxCode: '0101248141', codeKind: 'ENTERPRISE_10', checksumValid: true,
+  lookupStatus: 'FOUND', taxpayerStatus: 'ACTIVE', taxpayerStatusLabel: 'Đang hoạt động (dữ liệu minh họa)',
+  officialName: 'CÔNG TY CỔ PHẦN FPT', officialAddress: '123 Đường Minh Họa, TP.HCM', taxDepartment: 'Cơ quan thuế minh họa',
+  provider: 'mock', checkedAt: '2026-11-27T02:00:00Z', verdict: 'MATCHED_ACTIVE',
+  nameMatch: { kind: 'NORMALIZED_MATCH', score: 100 }, addressMatch: { kind: 'NORMALIZED_MATCH', score: 100 },
+  mismatchedFields: [], reasons: ['Dữ liệu minh họa ngoại tuyến; cần kiểm tra minh chứng.'], ...overrides,
+});
+
+for (const width of [1440, 390, 320]) test(`enterprise MST lookup autofills empty fields and requires explicit apply before replacing user edits at ${width}px`, async ({ page }, testInfo) => {
+  await page.setViewportSize({ width, height: 900 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await session(page);
+  await page.route('**/api/v1/enterprise/verifications/tax-lookup?*', route => {
+    expect(route.request().headers()['x-organization-id']).toBe(enterprise);
+    return route.fulfill({ json: taxFixture() });
+  });
+  await openWorkspacePage(page, 'Xác minh theo trường');
+  await page.getByRole('button', { name: 'Tạo hồ sơ xác minh', exact: true }).click();
+  const code = page.getByLabel('Mã đăng ký doanh nghiệp', { exact: true });
+  await code.fill('0101 248141');
+  await page.getByRole('button', { name: 'Tra cứu MST', exact: true }).click();
+  await expect(page.getByLabel('Tên đăng ký', { exact: true })).toHaveValue(taxFixture().officialName!);
+  await expect(page.getByLabel('Địa chỉ', { exact: true })).toHaveValue(taxFixture().officialAddress!);
+  await expect(code).toHaveValue('0101 248141');
+  const preview = page.locator('.tax-lookup-preview'), fields = page.locator('.enterprise-verification-editor .cooperation-form-grid');
+  const fieldBox = await fields.boundingBox(), previewBox = await preview.boundingBox();
+  expect(previewBox!.y).toBeGreaterThanOrEqual(fieldBox!.y + fieldBox!.height);
+  await expect(preview.locator('.tax-source-meta')).toContainText('Dữ liệu minh họa ngoại tuyến');
+  await expect(page.locator('.tax-validation').first()).toContainText('Định dạng MST hợp lệ');
+  await expect(page.locator('.tax-validation').first()).not.toContainText('checksum');
+  await page.getByLabel('Tên đăng ký', { exact: true }).fill('Thông tin người dùng đã sửa');
+  await page.getByRole('button', { name: 'Tra cứu MST', exact: true }).click();
+  await expect(page.getByLabel('Tên đăng ký', { exact: true })).toHaveValue('Thông tin người dùng đã sửa');
+  await page.getByRole('button', { name: 'Áp dụng thông tin thuế', exact: true }).click();
+  await expect(page.getByLabel('Tên đăng ký', { exact: true })).toHaveValue(taxFixture().officialName!);
+  await expect(preview).toContainText('Đã áp dụng thông tin tra cứu.');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  expect(await preview.evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
+  await preview.screenshot({ path: testInfo.outputPath(`enterprise-tax-result-${width}.png`) });
+  await code.fill('CT-TEST');
+  await expect(page.getByRole('button', { name: 'Tra cứu MST', exact: true })).toBeDisabled();
+  await expect(page.locator('.tax-lookup-preview')).toHaveCount(0);
+});
+
+test('enterprise unavailable lookup leaves saving possible and a changed tax code cannot inherit a late result', async ({ page }) => {
+  await session(page);
+  let release: (() => void) | undefined;
+  await page.route('**/api/v1/enterprise/verifications/tax-lookup?*', async route => {
+    await new Promise<void>(resolve => { release = resolve; });
+    await route.fulfill({ json: taxFixture() }).catch(() => {});
+  });
+  await openWorkspacePage(page, 'Xác minh theo trường');
+  await page.getByRole('button', { name: 'Tạo hồ sơ xác minh', exact: true }).click();
+  const code = page.getByLabel('Mã đăng ký doanh nghiệp', { exact: true });
+  await code.fill('0101248141');
+  await page.getByRole('button', { name: 'Tra cứu MST', exact: true }).click();
+  await expect.poll(() => !!release).toBe(true);
+  await code.fill('0300588569'); release!();
+  await expect(page.getByLabel('Tên đăng ký', { exact: true })).toHaveValue('');
+  await expect(page.locator('.tax-lookup-preview')).toHaveCount(0);
+  await page.route('**/api/v1/enterprise/verifications/tax-lookup?*', route => route.fulfill({ status: 503, json: { errorCode: 'DEPENDENCY_UNAVAILABLE' } }));
+  await page.getByRole('button', { name: 'Tra cứu MST', exact: true }).click();
+  await expect(page.locator('.tax-lookup-field')).toContainText('Chưa tra cứu được MST');
+  await expect(page.getByRole('button', { name: 'Lưu hồ sơ xác minh', exact: true })).toBeEnabled();
+});
+
+for (const [verdict, tone] of [['MATCHED_ACTIVE', 'success'], ['INFO_MISMATCH', 'warning'], ['INACTIVE_OR_INVALID', 'danger'], ['UNVERIFIED_OFFLINE', 'neutral']] as const) {
+  test(`school tax assistant renders ${verdict}, comparison and suggested REQUEST_INFO fields at 390px`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await session(page, true);
+    const record = { verificationId: '66666666-6666-4666-8666-666666666666', schoolOrgId: school, enterpriseOrgId: enterprise,
+      state: 'SUBMITTED', version: 3, submissionNo: 1, missingFields: [], decisionRef: null, submittedAt: '2026-11-27T01:00:00Z',
+      data: { schoolOrgId: school, previousVerificationId: null, registrationCode: '0101248141', registeredName: 'Doanh nghiệp khai báo',
+        address: 'Địa chỉ khai báo', contactName: 'Contact', contactEmail: 'contact@example.test', contactPhone: '0901234567', evidenceFileIds: [] } };
+    await page.route('**/api/v1/school/verifications?*', route => route.fulfill({ json: rows([record]) }));
+    await page.route('**/api/v1/school/verifications/*/tax-check', route => {
+      expect(route.request().headers()['x-organization-id']).toBe(school);
+      return route.fulfill({ json: { verificationId: record.verificationId, submissionNo: 1, state: verdict === 'UNVERIFIED_OFFLINE' ? 'FAILED' : 'COMPLETED',
+        attemptCount: 1, nextAttemptAt: null, completedAt: '2026-11-27T01:00:00Z',
+        assessment: taxFixture({ verdict, mismatchedFields: verdict === 'INFO_MISMATCH' ? ['registeredName', 'address'] : [],
+        lookupStatus: verdict === 'UNVERIFIED_OFFLINE' ? 'UNAVAILABLE' : 'FOUND', taxpayerStatus: verdict === 'INACTIVE_OR_INVALID' ? 'SUSPENDED' : 'ACTIVE' }) } });
+    });
+    await openWorkspacePage(page, 'Xác minh doanh nghiệp');
+    await page.locator('.school-verification-table tbody tr').filter({ hasText: record.data.registeredName }).click();
+    const assistant = page.getByRole('region', { name: 'Trợ lý đối chiếu Mã số thuế', exact: true });
+    await expect(assistant.locator('.tax-verdict')).toHaveClass(new RegExp('tax-tone-' + tone));
+    await expect(assistant).toContainText('Dữ liệu minh họa ngoại tuyến');
+    await expect(assistant.locator('.tax-source-meta')).toBeVisible();
+    await expect(assistant.locator('.tax-result-details')).not.toHaveAttribute('open');
+    await expect(assistant.getByText('Kết quả tra cứu hỗ trợ đối chiếu. Quyết định xác minh hồ sơ do nhà trường thực hiện.', { exact: true })).toBeVisible();
+    await page.evaluate(() => window.dispatchEvent(new Event('blur')));
+    await expect(assistant.locator('.tax-verdict')).toHaveClass(new RegExp('tax-tone-' + tone));
+    if (verdict !== 'UNVERIFIED_OFFLINE') await expect(assistant.getByRole('table', { name: 'So sánh thông tin thuế' })).toBeVisible();
+    if (verdict === 'INFO_MISMATCH' || verdict === 'INACTIVE_OR_INVALID') {
+      await assistant.getByRole('button', { name: 'Chọn mục sai lệch để yêu cầu bổ sung', exact: true }).click();
+      const selected = page.locator('.bm03-missing-chip[aria-pressed="true"]');
+      await expect(selected).toHaveCount(verdict === 'INFO_MISMATCH' ? 2 : 1);
+      await expect(selected.first()).toHaveText(verdict === 'INFO_MISMATCH' ? 'Tên đăng ký' : 'Mã đăng ký');
+      await page.getByRole('dialog').getByRole('button', { name: 'Xác nhận yêu cầu bổ sung', exact: true }).click();
+      await expect(page.getByRole('dialog').getByText('Vui lòng nhập lý do / căn cứ yêu cầu bổ sung.', { exact: true })).toBeVisible();
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await assistant.screenshot({ path: testInfo.outputPath(`school-tax-${verdict}-390.png`) });
+  });
+}
+
+test('school automatic tax check polls pending work and requests a recheck only on explicit click', async ({ page }) => {
+  await session(page, true);
+  const record = { verificationId: '66666666-6666-4666-8666-666666666666', schoolOrgId: school, enterpriseOrgId: enterprise,
+    state: 'SUBMITTED', version: 3, submissionNo: 1, missingFields: [], decisionRef: null, submittedAt: '2026-11-27T01:00:00Z',
+    data: { schoolOrgId: school, previousVerificationId: null, registrationCode: '0101248141', registeredName: 'Công ty đang xét duyệt',
+      address: 'Địa chỉ khai báo', contactName: 'Contact', contactEmail: 'contact@example.test', contactPhone: '0901234567', evidenceFileIds: [] } };
+  await page.route('**/api/v1/school/verifications?*', route => route.fulfill({ json: rows([record]) }));
+  let completed = false, writes = 0;
+  await page.route('**/api/v1/school/verifications/*/tax-check', route => {
+    const mutation = route.request().method() === 'POST';
+    if (mutation) { writes++; completed = false; }
+    return route.fulfill({ status: mutation ? 202 : 200, json: { verificationId: record.verificationId, submissionNo: 1,
+      state: completed ? 'COMPLETED' : 'PENDING', attemptCount: completed ? 1 : 0, nextAttemptAt: null,
+      completedAt: completed ? '2026-11-27T01:00:00Z' : null, assessment: completed ? taxFixture() : null } });
+  });
+  await openWorkspacePage(page, 'Xác minh doanh nghiệp');
+  await page.locator('.school-verification-table tbody tr').filter({ hasText: record.data.registeredName }).click();
+  const assistant = page.getByRole('region', { name: 'Trợ lý đối chiếu Mã số thuế', exact: true });
+  await expect(assistant).toContainText('Hệ thống đang tự động kiểm tra');
+  const recheck = assistant.getByRole('button', { name: 'Kiểm tra lại MST', exact: true });
+  await expect(recheck).toBeDisabled();
+  completed = true;
+  await expect(assistant).toContainText('Thông tin phù hợp');
+  await expect(assistant).toContainText('Kết quả lưu cho lần gửi 1');
+  expect(writes).toBe(0);
+  await recheck.click();
+  await expect(assistant).toContainText('Hệ thống đang tự động kiểm tra');
+  completed = true;
+  await expect(assistant).toContainText('Thông tin phù hợp');
+  expect(writes).toBe(1);
+});
+
+test('school tax check removes previous comparison when a recheck loses delegation', async ({ page }) => {
+  await session(page, true);
+  const record = { verificationId: '66666666-6666-4666-8666-666666666666', state: 'SUBMITTED', version: 3, submissionNo: 1,
+    missingFields: [], decisionRef: null, data: { schoolOrgId: school, previousVerificationId: null,
+      registrationCode: '0101248141', registeredName: 'Doanh nghiệp kiểm tra quyền', address: 'Địa chỉ',
+      contactName: 'Contact', contactEmail: 'contact@example.test', contactPhone: '0901234567', evidenceFileIds: [] } };
+  await page.route('**/api/v1/school/verifications?*', route => route.fulfill({ json: rows([record]) }));
+  await page.route('**/api/v1/school/verifications/*/tax-check', route => route.request().method() === 'POST'
+    ? route.fulfill({ status: 404, json: { errorCode: 'RESOURCE_NOT_FOUND' } })
+    : route.fulfill({ json: { verificationId: record.verificationId, submissionNo: 1, state: 'COMPLETED', attemptCount: 1,
+      nextAttemptAt: null, completedAt: '2026-11-27T01:00:00Z', assessment: taxFixture() } }));
+  await openWorkspacePage(page, 'Xác minh doanh nghiệp');
+  await page.locator('.school-verification-table tbody tr').filter({ hasText: record.data.registeredName }).click();
+  const assistant = page.getByRole('region', { name: 'Trợ lý đối chiếu Mã số thuế', exact: true });
+  await expect(assistant.getByRole('table')).toBeVisible();
+  await assistant.getByRole('button', { name: 'Kiểm tra lại MST', exact: true }).click();
+  await expect(assistant).toContainText('Không còn quyền đọc kết quả');
+  await expect(assistant.getByRole('table')).toHaveCount(0);
+});
+
+test('enterprise verification marks existing approved schools across pages and opens the current dossier', async ({ page }) => {
+  await session(page);
+  const input = { schoolOrgId: school, previousVerificationId: null, registrationCode: '0101248141', registeredName: 'Doanh nghiệp đã được xác minh',
+    address: 'Địa chỉ đăng ký', contactName: 'Contact', contactEmail: 'contact@example.test', contactPhone: '0901234567', evidenceFileIds: [] };
+  const approved = { verificationId: '66666666-6666-4666-8666-666666666666', state: 'APPROVED', version: 4, submissionNo: 1,
+    missingFields: [], decisionRef: 'QD-01', data: input };
+  const submitted = { ...approved, verificationId: '77777777-7777-4777-8777-777777777777', state: 'SUBMITTED', data: { ...input, schoolOrgId: other } };
+  const available = '88888888-8888-4888-8888-888888888888';
+  await page.route('**/api/v1/enterprise/demand-references/schools?*', route => route.fulfill({ json: rows([
+    { schoolOrgId: school, name: 'Trường đã xác minh' }, { schoolOrgId: other, name: 'Trường đang xét duyệt' }, { schoolOrgId: available, name: 'Trường chưa có hồ sơ' },
+  ]) }));
+  await page.route('**/api/v1/enterprise/verifications?*', route => {
+    const second = new URL(route.request().url()).searchParams.get('page') === '1';
+    return route.fulfill({ json: rows([second ? submitted : approved], second ? 1 : 0, 2) });
+  });
+  await openWorkspacePage(page, 'Xác minh theo trường');
+  await page.getByRole('button', { name: 'Tạo hồ sơ xác minh', exact: true }).click();
+  const editor = page.locator('.enterprise-verification-editor');
+  await editor.getByLabel('Trường nhận hồ sơ', { exact: true }).selectOption(other);
+  await expect(editor).toContainText('Doanh nghiệp đã có hồ sơ tại trường này.');
+  await expect(editor.getByRole('button', { name: 'Lưu hồ sơ xác minh', exact: true })).toBeDisabled();
+  await editor.getByLabel('Trường nhận hồ sơ', { exact: true }).selectOption(available);
+  await expect(editor.getByRole('button', { name: 'Lưu hồ sơ xác minh', exact: true })).toBeEnabled();
+  await editor.getByLabel('Trường nhận hồ sơ', { exact: true }).selectOption(school);
+  await expect(editor).toContainText('Doanh nghiệp đã được xác minh tại trường này.');
+  page.once('dialog', dialog => dialog.accept());
+  await editor.getByRole('button', { name: 'Mở hồ sơ hiện có', exact: true }).click();
+  await expect(editor).toHaveCount(0);
+  await expect(page.locator('.workflow-item-card')).toContainText(input.registeredName);
+});
+
+test('enterprise verification keeps entered data and shows a specific inline error when another session creates a duplicate', async ({ page }) => {
+  await session(page);
+  await page.route('**/api/v1/enterprise/verifications', route => route.fulfill({ status: 409,
+    json: { errorCode: 'VERIFICATION_ALREADY_OPEN', requestId: 'verification-conflict' } }));
+  await openWorkspacePage(page, 'Xác minh theo trường');
+  await page.getByRole('button', { name: 'Tạo hồ sơ xác minh', exact: true }).click();
+  const editor = page.locator('.enterprise-verification-editor');
+  await editor.getByLabel('Trường nhận hồ sơ', { exact: true }).selectOption(school);
+  for (const [label, value] of [['Mã đăng ký doanh nghiệp', '0101248141'], ['Tên đăng ký', 'Công ty vừa nhập'], ['Địa chỉ', 'Địa chỉ đăng ký'],
+    ['Người liên hệ', 'Contact'], ['Email liên hệ', 'contact@example.test'], ['Điện thoại liên hệ', '0901234567']]) {
+    await editor.getByLabel(label, { exact: true }).fill(value);
+  }
+  await editor.getByRole('button', { name: 'Lưu hồ sơ xác minh', exact: true }).click();
+  await expect(editor).toContainText('Doanh nghiệp đã có hồ sơ đang xử lý hoặc đã được xác minh tại trường này.');
+  await expect(editor.getByLabel('Tên đăng ký', { exact: true })).toHaveValue('Công ty vừa nhập');
+});
+
+for (const width of [1440, 390, 320]) test(`enterprise verification follows the selected school, resets pagination and keeps scope on reload at ${width}px`, async ({ page }, testInfo) => {
+  await page.setViewportSize({ width, height: 900 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await session(page);
+  const third = '33333333-3333-4333-8333-333333333333';
+  const makeRecord = (schoolOrgId: string, verificationId: string, name: string) => ({ verificationId, enterpriseOrgId: enterprise, state: 'DRAFT', version: 1,
+    submissionNo: 0, missingFields: [], decisionRef: null, data: { schoolOrgId, previousVerificationId: null, registrationCode: '0101248141', registeredName: name,
+      address: 'Địa chỉ kiểm thử', contactName: 'Contact', contactEmail: 'contact@example.test', contactPhone: '0901234567', evidenceFileIds: [] } });
+  const records = [makeRecord(school, '11111111-1111-4111-8111-111111111111', 'Hồ sơ trường Một'),
+    makeRecord(third, '33333333-3333-4333-8333-333333333334', 'Hồ sơ trường Ba')];
+  const requests: { school: string | null; page: string | null }[] = [];
+  await page.route('**/api/v1/enterprise/demand-references/schools?*', route => route.fulfill({ json: rows([
+    { schoolOrgId: school, name: 'Trường Một' }, { schoolOrgId: third, name: 'Trường Ba' },
+  ]) }));
+  await page.route('**/api/v1/enterprise/verifications?*', route => {
+    const query = new URL(route.request().url()).searchParams, filter = query.get('schoolOrgId'), index = Number(query.get('page'));
+    if (query.get('size') === '100') return route.fulfill({ json: rows(records) });
+    requests.push({ school: filter, page: query.get('page') });
+    return route.fulfill({ json: filter ? rows(records.filter(record => record.data.schoolOrgId === filter)) : rows([records[index ? 0 : 1]], index, 2) });
+  });
+  await openWorkspacePage(page, 'Xác minh theo trường');
+  const workspace = page.locator('.enterprise-verifications-workspace'), selector = page.getByLabel('Trường theo dõi', { exact: true });
+  const schoolOneCell = workspace.getByRole('cell', { name: 'Hồ sơ trường Một' });
+  const schoolThreeCell = workspace.getByRole('cell', { name: 'Hồ sơ trường Ba' });
+  await expect(schoolThreeCell).toBeVisible();
+  await workspace.getByRole('navigation', { name: 'Phân trang xác minh' }).getByRole('button', { name: 'Sau', exact: true }).click();
+  await expect(schoolOneCell).toBeVisible();
+  await selector.selectOption(school);
+  await expect(schoolOneCell).toBeVisible();
+  await expect(schoolThreeCell).toHaveCount(0);
+  expect(requests.at(-1)).toEqual({ school, page: '0' });
+  await workspace.screenshot({ path: testInfo.outputPath(`school-one-only-${width}.png`) });
+  await page.reload();
+  await expect(selector).toHaveValue(school);
+  await expect(schoolOneCell).toBeVisible();
+  await selector.selectOption(third);
+  await expect(schoolThreeCell).toBeVisible();
+  await workspace.getByRole('button', { name: 'Bổ sung hồ sơ', exact: true }).click();
+  await expect(workspace.getByLabel('Trường nhận hồ sơ', { exact: true })).toHaveValue(third);
+  await selector.selectOption(school);
+  await expect(workspace.locator('.enterprise-verification-editor')).toHaveCount(0);
+  await selector.selectOption('');
+  await expect(schoolThreeCell).toBeVisible();
+  expect(requests.at(-1)).toEqual({ school: null, page: '0' });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('enterprise verification excludes a foreign-school response, preselects an empty school and rejects an inconsistent deep link', async ({ page }) => {
+  await session(page);
+  const third = '33333333-3333-4333-8333-333333333333', id = '33333333-3333-4333-8333-333333333334';
+  const record = { verificationId: id, enterpriseOrgId: enterprise, state: 'DRAFT', version: 1, submissionNo: 0, missingFields: [], decisionRef: null,
+    data: { schoolOrgId: third, previousVerificationId: null, registrationCode: '0101248141', registeredName: 'Hồ sơ riêng trường Ba',
+      address: 'Địa chỉ kiểm thử', contactName: 'Contact', contactEmail: 'contact@example.test', contactPhone: '0901234567', evidenceFileIds: [] } };
+  let release: (() => void) | undefined;
+  await page.route('**/api/v1/enterprise/demand-references/schools?*', route => route.fulfill({ json: rows([
+    { schoolOrgId: school, name: 'Trường Một' }, { schoolOrgId: third, name: 'Trường Ba' },
+  ]) }));
+  await page.route('**/api/v1/enterprise/verifications?*', async route => {
+    const query = new URL(route.request().url()).searchParams;
+    if (query.get('size') === '25' && query.get('schoolOrgId') === third) await new Promise<void>(resolve => { release = resolve; });
+    // Deliberately overbroad response: the client must not display a record outside the selected school.
+    await route.fulfill({ json: rows([record]) }).catch(() => {});
+  });
+  await page.route('**/api/v1/enterprise/verifications/' + id, route => route.fulfill({ json: record }));
+  await openWorkspacePage(page, 'Xác minh theo trường');
+  const workspace = page.locator('.enterprise-verifications-workspace'), selector = page.getByLabel('Trường theo dõi', { exact: true });
+  await selector.selectOption(third);
+  await expect.poll(() => !!release).toBe(true);
+  await selector.selectOption(school); release!();
+  await expect(workspace.getByRole('heading', { name: 'Chưa có hồ sơ xác minh trong phạm vi này.', exact: true })).toBeVisible();
+  await expect(workspace).not.toContainText(record.data.registeredName);
+  await workspace.getByRole('button', { name: 'Tạo hồ sơ xác minh', exact: true }).click();
+  await expect(workspace.getByLabel('Trường nhận hồ sơ', { exact: true })).toHaveValue(school);
+  await expect(workspace.getByLabel('Trường nhận hồ sơ', { exact: true })).toBeDisabled();
+  await expect(workspace.getByLabel('Tên đăng ký', { exact: true })).toHaveValue('');
+  await page.goto('/enterprise/verifications?' + new URLSearchParams({ orgId: enterprise, schoolId: school, recordId: id }));
+  await expect(workspace).toContainText('Hồ sơ xác minh đã thay đổi hoặc không còn trong phạm vi truy cập.');
+  await expect(workspace).not.toContainText(record.data.registeredName);
+});
+
+test('verification evidence is attached only after CLEAN and then enables the normal submit command', async ({ page }, testInfo) => {
+  await session(page);
+  const id = '66666666-6666-4666-8666-666666666666', fileId = '99999999-9999-4999-8999-999999999999';
+  let clean = false, uploads = 0, submits = 0;
+  let record = { verificationId: id, state: 'DRAFT', version: 1, submissionNo: 0, missingFields: [], decisionRef: null,
+    data: { schoolOrgId: school, previousVerificationId: null, registrationCode: '0101248141', registeredName: 'Doanh nghiệp tải minh chứng',
+      address: 'Địa chỉ đăng ký', contactName: 'Contact', contactEmail: 'contact@example.test', contactPhone: '0901234567', evidenceFileIds: [] as string[] } };
+  const file = () => ({ fileId, resource: { resourceType: 'ENTERPRISE_VERIFICATION', resourceId: id }, purpose: 'VERIFICATION',
+    originalName: 'evidence.pdf', contentType: 'application/pdf', sizeBytes: 32, scanStatus: clean ? 'CLEAN' : 'PENDING', deletedAt: null });
+  await page.route('**/api/v1/enterprise/verifications?*', route => route.fulfill({ json: rows([record]) }));
+  await page.route('**/api/v1/files', route => {
+    uploads++; expect(route.request().headers()['content-type']).toContain('multipart/form-data');
+    expect(route.request().headers()['idempotency-key']).toBeTruthy();
+    expect(route.request().postData()).toContain('ENTERPRISE_VERIFICATION'); expect(route.request().postData()).toContain(id);
+    return route.fulfill({ status: 202, json: file() });
+  });
+  await page.route('**/api/v1/files/*/metadata', route => route.fulfill({ json: file() }));
+  await page.route('**/api/v1/enterprise/verifications/' + id, route => {
+    const body = route.request().postDataJSON(); expect(body.expectedVersion).toBe(1); expect(body.data.evidenceFileIds).toEqual([fileId]);
+    record = { ...record, version: 2, data: body.data }; return route.fulfill({ json: record });
+  });
+  await page.route('**/api/v1/enterprise/verifications/' + id + '/submit', route => {
+    submits++; expect(route.request().postDataJSON()).toEqual({ expectedVersion: 2 });
+    record = { ...record, version: 3, submissionNo: 1, state: 'SUBMITTED' }; return route.fulfill({ json: record });
+  });
+  await openWorkspacePage(page, 'Xác minh theo trường');
+  await expect(page.getByRole('button', { name: 'Gửi xác minh', exact: true })).toBeDisabled();
+  await expect(page.getByText('Chọn Bổ sung hồ sơ để thêm tài liệu minh chứng trước khi gửi.', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Bổ sung hồ sơ', exact: true }).click();
+  const editor = page.locator('.enterprise-verification-editor');
+  const transfer = await page.evaluateHandle(() => {
+    const value = new DataTransfer();
+    value.items.add(new File(['%PDF-1.4\nSynthetic evidence\n%%EOF'], 'evidence.pdf', { type: 'application/pdf' }));
+    return value;
+  });
+  await editor.locator('.u032-zone').dispatchEvent('drop', { dataTransfer: transfer });
+  await transfer.dispose();
+  await expect(editor).toContainText('Đang chờ kiểm tra an toàn tài liệu');
+  await expect(editor.getByRole('button', { name: 'Lưu hồ sơ xác minh', exact: true })).toBeDisabled();
+  clean = true;
+  await expect(editor).toContainText('Tài liệu đã được xác nhận an toàn');
+  await editor.screenshot({ path: testInfo.outputPath('verification-drag-drop-clean.png') });
+  await editor.getByRole('button', { name: 'Lưu hồ sơ xác minh', exact: true }).click();
+  await expect(editor).toHaveCount(0);
+  await page.getByRole('button', { name: 'Gửi xác minh', exact: true }).click();
+  await expect(page.locator('.enterprise-verifications-workspace tbody')).toContainText('Đã gửi');
+  expect(uploads).toBe(1); expect(submits).toBe(1);
+});
+
+test('verification evidence retry reuses its upload key and never attaches a rejected file', async ({ page }) => {
+  await session(page);
+  const id = '66666666-6666-4666-8666-666666666666', fileId = '99999999-9999-4999-8999-999999999999';
+  const record = { verificationId: id, state: 'DRAFT', version: 1, submissionNo: 0, missingFields: [], decisionRef: null,
+    data: { schoolOrgId: school, previousVerificationId: null, registrationCode: '0101248141', registeredName: 'Doanh nghiệp kiểm tra tài liệu',
+      address: 'Địa chỉ', contactName: 'Contact', contactEmail: 'contact@example.test', contactPhone: '0901234567', evidenceFileIds: [] } };
+  const keys: string[] = [];
+  await page.route('**/api/v1/enterprise/verifications?*', route => route.fulfill({ json: rows([record]) }));
+  await page.route('**/api/v1/files', route => {
+    keys.push(route.request().headers()['idempotency-key']);
+    return keys.length === 1 ? route.abort('failed') : route.fulfill({ status: 202, json: { fileId,
+      resource: { resourceType: 'ENTERPRISE_VERIFICATION', resourceId: id }, purpose: 'VERIFICATION',
+      originalName: 'evidence.pdf', contentType: 'application/pdf', sizeBytes: 20, scanStatus: 'REJECTED', deletedAt: null } });
+  });
+  await page.route('**/api/v1/enterprise/verifications/' + id, route => {
+    expect(route.request().postDataJSON().data.evidenceFileIds).toEqual([]);
+    return route.fulfill({ json: { ...record, version: 2 } });
+  });
+  await openWorkspacePage(page, 'Xác minh theo trường');
+  await page.getByRole('button', { name: 'Bổ sung hồ sơ', exact: true }).click();
+  const editor = page.locator('.enterprise-verification-editor');
+  await editor.getByLabel('Chọn tài liệu minh chứng', { exact: true }).setInputFiles({ name: 'wrong.zip', mimeType: 'application/zip', buffer: Buffer.from('PK') });
+  await expect(editor).toContainText('Chỉ nhận tài liệu PDF, PNG hoặc JPEG.'); expect(keys).toHaveLength(0);
+  await editor.getByLabel('Chọn tài liệu minh chứng', { exact: true }).setInputFiles({ name: 'evidence.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4\nSynthetic\n%%EOF') });
+  await editor.getByRole('button', { name: 'Thử lại tải tài liệu', exact: true }).click();
+  await expect(editor).toContainText('Tài liệu chưa đạt kiểm tra an toàn, chưa được gắn vào hồ sơ.');
+  expect(keys).toHaveLength(2); expect(keys[0]).toBe(keys[1]);
+  await editor.getByRole('button', { name: 'Lưu hồ sơ xác minh', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Gửi xác minh', exact: true })).toBeDisabled();
+});
+
+for (const schoolSide of [false, true]) for (const width of [1440, 390]) test(`${schoolSide ? 'school' : 'enterprise'} record rows open the selected cooperation by cell, button or keyboard at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 900 });await page.emulateMedia({ reducedMotion: 'reduce' });await session(page, schoolSide);
+  const details = [0, 1].map(n => {
+    const id = `77777777-7777-4777-8777-77777777777${n}`;
+    return { cooperation: { ...cooperation, cooperationId: id, demandId: `row-demand-${n}` }, feedback: null,
+      demand: { ...demand, demandId: `row-demand-${n}`, cooperationId: id, data: { ...demand.data, title: `Vị trí được chọn ${n + 1}` } } };
+  });
+  const side = schoolSide ? 'school' : 'enterprise', mutations: string[] = [];
+  page.on('request', request => { if (request.method() !== 'GET' && request.url().includes('/api/v1/')) mutations.push(request.method()); });
+  await page.route(`**/api/v1/${side}/cooperations?*`, route => route.fulfill({ json: rows(details.map(detail => detail.cooperation)) }));
+  await page.route('**/api/v1/enterprise/demands?*', route => route.fulfill({ json: rows(details.map(detail => detail.demand)) }));
+  for (const detail of details) await page.route(`**/api/v1/${side}/cooperations/${detail.cooperation.cooperationId}`, route => route.fulfill({ json: detail }));
+  await openWorkspacePage(page, schoolSide ? 'Duyệt hợp tác' : 'Hợp tác');
+  const selected = page.locator(schoolSide ? '.school-cooperation-table tbody tr' : '.enterprise-cooperations-table tbody tr').nth(1);
+  await expect(selected).toContainText(details[1].demand.data.title);
+  await selected.dispatchEvent('click', { ctrlKey: true });await expect(page.getByRole('dialog')).toHaveCount(0);
+  await selected.locator(schoolSide ? 'h3' : 'b').evaluate(node => { const range = document.createRange();range.selectNodeContents(node);window.getSelection()?.removeAllRanges();window.getSelection()?.addRange(range); });
+  await selected.dispatchEvent('click');await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.evaluate(() => window.getSelection()?.removeAllRanges());
+  await selected.locator('td').first().click();
+  await expect(page.getByRole('dialog').getByRole('heading', { name: details[1].demand.data.title, exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await selected.focus();await page.keyboard.press('Space');
+  await expect(page.getByRole('dialog').getByRole('heading', { name: details[1].demand.data.title, exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await selected.getByRole('button', { name: 'Xem nội dung đề nghị 2', exact: true }).click();
+  await expect(page.getByRole('dialog').getByRole('heading', { name: details[1].demand.data.title, exact: true })).toBeVisible();
+  expect(mutations).toEqual([]);
+});
+
+for (const schoolSide of [false, true]) test(`${schoolSide ? 'school' : 'enterprise'} verification record rows support keyboard opening and keep editing separate`, async ({ page }) => {
+  await session(page, schoolSide);
+  const record = { verificationId: '66666666-6666-4666-8666-666666666666', enterpriseOrgId: enterprise, state: schoolSide ? 'SUBMITTED' : 'DRAFT', version: 1, missingFields: [], decisionRef: null,
+    data: { schoolOrgId: school, previousVerificationId: null, registrationCode: '0101248141', registeredName: 'Hồ sơ chọn bằng dòng', address: 'Địa chỉ',
+      contactName: 'Người liên hệ', contactEmail: 'contact@example.test', contactPhone: '0901234567', evidenceFileIds: [] } };
+  await page.route(`**/api/v1/${schoolSide ? 'school' : 'enterprise'}/verifications?*`, route => route.fulfill({ json: rows([record]) }));
+  await openWorkspacePage(page, schoolSide ? 'Xác minh doanh nghiệp' : 'Xác minh theo trường');
+  const row = page.getByRole('row').filter({ hasText: record.data.registeredName });
+  await row.getByText(record.data.registeredName, { exact: true }).click();await expect(page.getByRole('dialog')).toBeVisible();
+  await page.keyboard.press('Escape');await row.focus();await page.keyboard.press('Enter');await expect(page.getByRole('dialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  if (!schoolSide) {
+    await row.getByRole('button', { name: 'Bổ sung hồ sơ', exact: true }).click();
+    await expect(page.locator('.enterprise-verification-editor')).toBeVisible();await expect(page.getByRole('dialog')).toHaveCount(0);
+  }
+});
+
+for (const height of [870, 650, 480]) test(`long school tax dossier retains equal viewport margins and its close header while scrolling at ${height}px high`, async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1536, height });await page.emulateMedia({ reducedMotion: 'reduce' });await session(page, true);
+  const record = { verificationId: '66666666-6666-4666-8666-666666666666', enterpriseOrgId: enterprise, state: 'SUBMITTED', version: 3, submissionNo: 1, missingFields: [], decisionRef: null,
+    data: { schoolOrgId: school, previousVerificationId: null, registrationCode: '0101248141', registeredName: 'Doanh nghiệp kiểm tra hồ sơ dài',
+      address: 'Địa chỉ đăng ký dài để kiểm tra nội dung cửa sổ. '.repeat(8), contactName: 'Người liên hệ', contactEmail: 'contact@example.test', contactPhone: '0901234567', evidenceFileIds: [] } };
+  await page.route('**/api/v1/school/verifications?*', route => route.fulfill({ json: rows([record]) }));
+  await page.route('**/api/v1/school/verifications/*/tax-check', route => route.fulfill({ json: { verificationId: record.verificationId, submissionNo: 1, state: 'COMPLETED',
+    attemptCount: 1, completedAt: '2026-11-28T04:58:15Z', nextAttemptAt: null, assessment: taxFixture({ officialName: record.data.registeredName, officialAddress: record.data.address }) } }));
+  await openWorkspacePage(page, 'Xác minh doanh nghiệp');
+  await page.locator('.school-verification-table tbody tr').filter({ hasText: record.data.registeredName }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.locator('.tax-verdict')).toContainText('Thông tin phù hợp');
+  const centered = async () => {
+    const box = (await dialog.boundingBox())!;
+    expect(box.y).toBeGreaterThanOrEqual(19);
+    expect(height - box.y - box.height).toBeGreaterThanOrEqual(19);
+    expect(Math.abs(box.y - (height - box.y - box.height))).toBeLessThan(2);
+  };
+  await centered();
+  await dialog.evaluate(node => { node.scrollTop = 450; });
+  await centered();
+  const close = dialog.getByRole('button', { name: 'Đóng chi tiết hồ sơ', exact: true });
+  await expect(close).toBeInViewport();
+  const closeBox = (await close.boundingBox())!, box = (await dialog.boundingBox())!;
+  expect(closeBox.y).toBeGreaterThanOrEqual(box.y);
+  expect((await dialog.locator('.bm03-detail-header').boundingBox())!.y).toBeLessThanOrEqual(box.y + 2);
+  await page.screenshot({ path: testInfo.outputPath(`tax-dossier-scrolled-${height}.png`) });
+  await close.click();await expect(dialog).toHaveCount(0);
+});
+
+for (const schoolSide of [false, true]) for (const width of [1440, 390, 320]) test(`${schoolSide ? 'school' : 'enterprise'} record dialogs share the Teal palette and a single outer frame at ${width}px`, async ({ page }, testInfo) => {
+  await page.setViewportSize({ width, height: 900 });await page.emulateMedia({ reducedMotion: 'reduce' });await session(page, schoolSide);
+  const record = { verificationId: '66666666-6666-4666-8666-666666666666', enterpriseOrgId: enterprise, state: 'APPROVED', version: 3, missingFields: [], decisionRef: 'QD-2026',
+    data: { schoolOrgId: school, previousVerificationId: null, registrationCode: '0101248141', registeredName: 'Doanh nghiệp kiểm tra giao diện', address: 'Địa chỉ đăng ký',
+      contactName: 'Người liên hệ', contactEmail: 'contact@example.test', contactPhone: '0901234567', evidenceFileIds: [] } };
+  await page.route(`**/api/v1/${schoolSide ? 'school' : 'enterprise'}/verifications?*`, route => route.fulfill({ json: rows([record]) }));
+  await openWorkspacePage(page, schoolSide ? 'Xác minh doanh nghiệp' : 'Xác minh theo trường');
+  if (schoolSide) await page.locator('.school-verification-table tbody tr').filter({ hasText: record.data.registeredName }).click();
+  else await page.getByRole('button', { name: 'Xem hồ sơ', exact: true }).click();
+  let dialog = page.getByRole('dialog');await expect(dialog).toBeVisible();
+  await expect(dialog).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+  await expect(dialog.locator(':scope > article')).toHaveCSS('border-top-width', '0px');
+  const contact = dialog.locator(schoolSide ? '.bm03-dl-row' : '.placement-meta-item').first();
+  await expect(contact).toHaveCSS('background-color', 'rgb(248, 250, 252)');
+  if (!schoolSide) {
+    await expect(dialog.locator('.placement-meta-grid')).toHaveCSS('border-top-width', '0px');
+    await expect(dialog.locator('.t5-process-steps > li[aria-current="step"]')).toHaveCSS('background-color', 'rgb(231, 246, 240)');
+  }
+  expect(await dialog.evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
+  await dialog.screenshot({ path: testInfo.outputPath('verification-dialog.png') });
+  await page.keyboard.press('Escape');
+  await openWorkspacePage(page, schoolSide ? 'Duyệt hợp tác' : 'Hợp tác');
+  await page.locator(schoolSide ? '.school-cooperation-table' : '.enterprise-cooperations-table').getByRole('button', { name: 'Xem nội dung đề nghị 1', exact: true }).click();
+  dialog = page.getByRole('dialog');await expect(dialog).toBeVisible();
+  await expect(dialog).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+  await expect(dialog.locator(schoolSide ? '.school-coop-fact' : '.enterprise-coop-meta > div').first()).toHaveCSS('background-color', 'rgb(248, 250, 252)');
+  expect(await dialog.evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
+  await dialog.screenshot({ path: testInfo.outputPath('cooperation-dialog.png') });
+});
+
+test('school student roster and shared term selector stay synchronized without importing into another term', async ({ page }) => {
+  await session(page, true);
+  const nextTerm = '44444444-4444-4444-8444-444444444449';
+  await page.route('**/api/v1/terms?*', route => route.fulfill({ json: rows([
+    { termId: term, termCode: 'Kỳ đang mở 1', schoolOrgId: school, status: 'ACTIVE' },
+    { termId: nextTerm, termCode: 'Kỳ đang mở 2', schoolOrgId: school, status: 'ACTIVE' },
+  ]) }));
+  await page.reload();
+  await page.getByRole('combobox', { name: 'Kỳ theo dõi', exact: true }).selectOption(term);
+  const reads: string[] = [];
+  await page.route('**/api/v1/school/student-imports**', route => {
+    const url = new URL(route.request().url());reads.push(url.searchParams.get('termId') || '');
+    return route.fulfill({ json: url.pathname.endsWith('/majors') ? [] : rows([]) });
+  });
+  await openWorkspacePage(page, 'Danh sách & kích hoạt');
+  await expect(page.getByRole('combobox', { name: 'Kỳ nhập danh sách', exact: true })).toHaveValue(term);
+  await page.getByRole('combobox', { name: 'Kỳ nhập danh sách', exact: true }).selectOption(nextTerm);
+  await expect(page.getByRole('combobox', { name: 'Kỳ theo dõi', exact: true })).toHaveValue(nextTerm);
+  await expect.poll(() => reads.includes(nextTerm)).toBe(true);
+  await page.getByRole('combobox', { name: 'Kỳ theo dõi', exact: true }).selectOption(term);
+  await expect(page.getByRole('combobox', { name: 'Kỳ nhập danh sách', exact: true })).toHaveValue(term);
+});
 
 // Browser contract fixtures, not evidence of a live backend or business database.
 const enterprise = '11111111-1111-4111-8111-111111111111';
@@ -203,14 +703,15 @@ for (const width of [1440, 390]) test(`school dashboard tasks resolve actual nam
   await expect(tasks.getByText(titles[0], { exact: true })).toBeVisible();
   const selected = tasks.getByRole('row').filter({ hasText: titles[1] });
   await expect(selected).toContainText('Lần gửi 1');
-  await selected.getByRole('button', { name: 'Xem hồ sơ', exact: true }).click();
+  await selected.locator('.portal-task-title').click();
   const detail = page.locator('#school-cooperation-detail-' + pending[1].cooperationId);
   await expect(detail.getByRole('heading', { name: titles[1], exact: true })).toBeVisible();
   await expect(detail.getByRole('heading', { name: titles[0], exact: true })).toHaveCount(0);
   await expect(detail).toBeFocused();
   const heading = (await detail.getByRole('heading', { name: titles[1], exact: true }).boundingBox())!;
-  const toolbar = await page.locator(width > 900 ? '.portal-context-bar' : '.workspace-main > .topbar').boundingBox();
-  expect(heading.y).toBeGreaterThanOrEqual((toolbar ? toolbar.y + toolbar.height : 0) + 8);
+  const dialog = page.getByRole('dialog', { name: 'Chi tiết đề nghị hợp tác', exact: true });
+  await expect(dialog).toBeVisible();
+  expect(heading.y).toBeGreaterThanOrEqual((await dialog.boundingBox())!.y);
   expect(heading.y).toBeLessThan(860);
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
   expect(commands).toEqual([]);
@@ -235,10 +736,12 @@ test('school dashboard verification task opens and expands the exact dossier out
   await expect(detail.locator('.bm03-expanded-section')).toBeVisible();
   await expect(detail).toContainText(dossiers[1].data.address);await expect(detail).not.toContainText(dossiers[0].data.registeredName);
   await expect(detail).toBeFocused();
+  await detail.getByRole('button', { name: 'Đóng chi tiết hồ sơ', exact: true }).click();
   await page.getByRole('row').filter({ hasText: dossiers[0].data.registeredName }).click();
   await expect(detail.getByRole('heading', { name: 'Hồ sơ BM-03 · ' + dossiers[0].data.registeredName, exact: true })).toBeVisible();
   await expect(detail).not.toContainText(dossiers[1].data.registeredName);
   await page.route('**/api/v1/school/verifications/' + dossiers[1].verificationId, route => route.fulfill({ status: 404, json: { errorCode: 'RESOURCE_NOT_FOUND' } }));
+  await detail.getByRole('button', { name: 'Đóng chi tiết hồ sơ', exact: true }).click();
   await page.getByRole('button', { name: 'Tổng quan', exact: true }).click();
   await page.locator('.portal-dashboard-tasks').getByRole('row').filter({ hasText: dossiers[1].data.registeredName }).getByRole('button', { name: 'Xem hồ sơ', exact: true }).click();
   await expect(page.getByText('Hồ sơ xác minh đã thay đổi hoặc không còn trong phạm vi truy cập.', { exact: true })).toBeVisible();
@@ -523,7 +1026,7 @@ test('verification selects a school from the API and saves entered data without 
   await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Xác minh theo trường', exact: true }).click();
   await page.getByRole('button', { name: 'Tạo hồ sơ xác minh', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Chọn tài liệu', exact: true })).toHaveCount(0);
-  await expect(page.locator('.verification-evidence-note')).toContainText('hồ sơ cần có minh chứng hợp lệ trước khi gửi xét duyệt');
+  await expect(page.locator('.verification-evidence-note')).toContainText('Lưu hồ sơ trước, sau đó chọn Bổ sung hồ sơ');
   await page.getByLabel('Trường nhận hồ sơ').selectOption(school);
   for (const [label, value] of [['Mã đăng ký doanh nghiệp', 'CT-TEST'], ['Tên đăng ký', 'Doanh nghiệp kiểm thử'], ['Địa chỉ', 'Địa chỉ kiểm thử'],
     ['Người liên hệ', 'Người liên hệ kiểm thử'], ['Email liên hệ', 'contact@example.test'], ['Điện thoại liên hệ', '0901234567']]) {
@@ -532,6 +1035,146 @@ test('verification selects a school from the API and saves entered data without 
   await page.getByRole('button', { name: 'Lưu hồ sơ xác minh', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Gửi xác minh', exact: true })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Dùng thông tin hồ sơ', exact: true })).toHaveCount(0);
+});
+
+test('creating a verification dossier allows queuing evidence before saving and auto-attaches CLEAN uploads', async ({ page }) => {
+  await session(page);
+  const id = '66666666-6666-4666-8666-666666666667';
+  const fileId = '99999999-9999-4999-8999-999999999998';
+  let record: { verificationId: string; state: string; version: number; data: Record<string, unknown>; missingFields: string[]; decisionRef: null } | null = null;
+  let uploads = 0;
+  let patches = 0;
+  const cleanFile = {
+    fileId,
+    resource: { resourceType: 'ENTERPRISE_VERIFICATION', resourceId: id },
+    purpose: 'VERIFICATION',
+    originalName: 'giay-phep.pdf',
+    contentType: 'application/pdf',
+    sizeBytes: 32,
+    scanStatus: 'CLEAN',
+    deletedAt: null,
+  };
+  await page.route('**/api/v1/enterprise/demand-references/schools?*', route => route.fulfill({ json: rows([{ schoolOrgId: school, name: 'Trường từ API' }]) }));
+  await page.route('**/api/v1/enterprise/verifications?*', route => route.fulfill({ json: rows(record ? [record] : []) }));
+  await page.route('**/api/v1/enterprise/verifications', async route => {
+    const data = route.request().postDataJSON();
+    expect(data.evidenceFileIds).toEqual([]);
+    record = { verificationId: id, state: 'DRAFT', version: 1, data, missingFields: [], decisionRef: null };
+    await route.fulfill({ status: 201, json: record });
+  });
+  await page.route('**/api/v1/files', async route => {
+    uploads++;
+    expect(route.request().postData()).toContain(id);
+    await route.fulfill({ status: 202, json: cleanFile });
+  });
+  await page.route('**/api/v1/files/*/metadata', route => route.fulfill({ json: cleanFile }));
+  await page.route('**/api/v1/enterprise/verifications/' + id, async route => {
+    patches++;
+    const body = route.request().postDataJSON();
+    expect(body.expectedVersion).toBe(1);
+    expect(body.data.evidenceFileIds).toEqual([fileId]);
+    record = { ...record!, version: 2, data: body.data };
+    await route.fulfill({ json: record });
+  });
+
+  await openWorkspacePage(page, 'Xác minh theo trường');
+  await page.getByRole('button', { name: 'Tạo hồ sơ xác minh', exact: true }).click();
+  const editor = page.locator('.enterprise-verification-editor');
+  await expect(editor.getByLabel('Chọn tài liệu minh chứng', { exact: true })).toBeEnabled();
+
+  await editor.getByLabel('Chọn tài liệu minh chứng', { exact: true }).setInputFiles({
+    name: 'wrong.zip',
+    mimeType: 'application/zip',
+    buffer: Buffer.from('PK'),
+  });
+  await expect(editor).toContainText('Chỉ nhận tài liệu PDF, PNG hoặc JPEG.');
+
+  await editor.getByLabel('Chọn tài liệu minh chứng', { exact: true }).setInputFiles({
+    name: 'giay-phep.pdf',
+    mimeType: 'application/pdf',
+    buffer: Buffer.from('%PDF-1.4\nSynthetic\n%%EOF'),
+  });
+  await expect(editor).toContainText('Tài liệu chờ tải 1 · giay-phep.pdf');
+
+  await editor.getByLabel('Trường nhận hồ sơ', { exact: true }).selectOption(school);
+  for (const [label, value] of [
+    ['Mã đăng ký doanh nghiệp', '0101248141'],
+    ['Tên đăng ký', 'Doanh nghiệp tạo kèm tệp'],
+    ['Địa chỉ', 'Địa chỉ kiểm thử'],
+    ['Người liên hệ', 'Người liên hệ'],
+    ['Email liên hệ', 'contact@example.test'],
+    ['Điện thoại liên hệ', '0901234567'],
+  ]) {
+    await editor.getByLabel(label, { exact: true }).fill(value);
+  }
+  await editor.getByRole('button', { name: 'Lưu hồ sơ xác minh', exact: true }).click();
+  await expect(editor).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Gửi xác minh', exact: true })).toBeEnabled();
+  expect(uploads).toBe(1);
+  expect(patches).toBe(1);
+});
+
+test('creating a verification dossier transitions to async scan polling if queued file starts PENDING', async ({ page }) => {
+  await session(page);
+  const id = '66666666-6666-4666-8666-666666666668';
+  const fileId = '99999999-9999-4999-8999-999999999997';
+  let clean = false;
+  let record: { verificationId: string; state: string; version: number; data: Record<string, unknown>; missingFields: string[]; decisionRef: null } | null = null;
+  const file = () => ({
+    fileId,
+    resource: { resourceType: 'ENTERPRISE_VERIFICATION', resourceId: id },
+    purpose: 'VERIFICATION',
+    originalName: 'scan-pending.pdf',
+    contentType: 'application/pdf',
+    sizeBytes: 32,
+    scanStatus: clean ? 'CLEAN' : 'PENDING',
+    deletedAt: null,
+  });
+  await page.route('**/api/v1/enterprise/demand-references/schools?*', route => route.fulfill({ json: rows([{ schoolOrgId: school, name: 'Trường từ API' }]) }));
+  await page.route('**/api/v1/enterprise/verifications?*', route => route.fulfill({ json: rows(record ? [record] : []) }));
+  await page.route('**/api/v1/enterprise/verifications', async route => {
+    const data = route.request().postDataJSON();
+    record = { verificationId: id, state: 'DRAFT', version: 1, data, missingFields: [], decisionRef: null };
+    await route.fulfill({ status: 201, json: record });
+  });
+  await page.route('**/api/v1/files', route => route.fulfill({ status: 202, json: file() }));
+  await page.route('**/api/v1/files/*/metadata', route => route.fulfill({ json: file() }));
+  await page.route('**/api/v1/enterprise/verifications/' + id, async route => {
+    const body = route.request().postDataJSON();
+    expect(body.data.evidenceFileIds).toEqual([fileId]);
+    record = { ...record!, version: 2, data: body.data };
+    await route.fulfill({ json: record });
+  });
+
+  await openWorkspacePage(page, 'Xác minh theo trường');
+  await page.getByRole('button', { name: 'Tạo hồ sơ xác minh', exact: true }).click();
+  const editor = page.locator('.enterprise-verification-editor');
+  await editor.getByLabel('Chọn tài liệu minh chứng', { exact: true }).setInputFiles({
+    name: 'scan-pending.pdf',
+    mimeType: 'application/pdf',
+    buffer: Buffer.from('%PDF-1.4\nPending\n%%EOF'),
+  });
+  await editor.getByLabel('Trường nhận hồ sơ', { exact: true }).selectOption(school);
+  for (const [label, value] of [
+    ['Mã đăng ký doanh nghiệp', '0101248141'],
+    ['Tên đăng ký', 'Doanh nghiệp chờ quét'],
+    ['Địa chỉ', 'Địa chỉ kiểm thử'],
+    ['Người liên hệ', 'Người liên hệ'],
+    ['Email liên hệ', 'contact@example.test'],
+    ['Điện thoại liên hệ', '0901234567'],
+  ]) {
+    await editor.getByLabel(label, { exact: true }).fill(value);
+  }
+  await editor.getByRole('button', { name: 'Lưu hồ sơ xác minh', exact: true }).click();
+
+  await expect(editor.getByRole('heading', { name: 'Bổ sung thông tin xác minh', exact: true })).toBeVisible();
+  await expect(editor).toContainText('Đang chờ kiểm tra an toàn tài liệu');
+  await expect(editor.getByRole('button', { name: 'Lưu hồ sơ xác minh', exact: true })).toBeDisabled();
+  clean = true;
+  await expect(editor).toContainText('Tài liệu đã được xác nhận an toàn', { timeout: 6000 });
+  await editor.getByRole('button', { name: 'Lưu hồ sơ xác minh', exact: true }).click();
+  await expect(editor).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Gửi xác minh', exact: true })).toBeEnabled();
 });
 
 test('selected cooperation stays selected when switching between candidates and placements', async ({ page }) => {
@@ -585,6 +1228,7 @@ test('school portal keeps the placement conflict visible while refreshing its ap
   });
   await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Đợt thực tập', exact: true }).click();
   await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Tiếp nhận thực tập', exact: true }).click();
+  await page.getByRole('button', { name: 'Xem hồ sơ tiếp nhận 1', exact: true }).click();
   await page.getByRole('button', { name: 'Phê duyệt tiếp nhận', exact: true }).click();
   await page.getByLabel('Căn cứ thao tác tiếp nhận').fill('QD-WEEK4');const beforeCandidates = candidateReads, beforeDetail = detailReads;
   await page.getByRole('button', { name: 'Xác nhận phê duyệt', exact: true }).click();
@@ -680,8 +1324,8 @@ test('school overview reads every page and deduplicates active students, partner
     return route.fulfill({ json: rows([{ termId: pageNumber ? 'term-next' : term, schoolOrgId: school, termCode: pageNumber ? 'HK2' : 'HK1', startDate: '2027-01-01', endDate: '2027-06-30' }], pageNumber, 2) });
   });
   await page.route('**/api/v1/school/verifications?*', route => route.fulfill({ json: rows([
-    { verificationId: 'verification-1', state: 'SUBMITTED', data: { registeredName: 'API Partner 1' } },
-    { verificationId: 'verification-2', state: 'SUBMITTED', data: { registeredName: 'API Partner 2' } },
+    { verificationId: 'verification-1', state: 'SUBMITTED', data: { schoolOrgId: school, registeredName: 'API Partner 1' } },
+    { verificationId: 'verification-2', state: 'SUBMITTED', data: { schoolOrgId: school, registeredName: 'API Partner 2' } },
   ]) }));
   await page.getByRole('button', { name: 'Tải lại dữ liệu', exact: true }).click();
   const cards = page.locator('.school-overview-stat');
@@ -760,7 +1404,9 @@ test('enterprise batch uses live-shaped API data and opens the same cooperation 
     profileVersion: 2, validUntil: candidate.reservationUntil, allowedFields: ['majorCode'], data: { majorCode: 'IT' },
   } }));
   await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Ứng viên đề xuất', exact: true }).click();
+  await page.getByRole('button', { name: 'Xem hồ sơ', exact: true }).click();
   await expect(page.locator('.proposal-profile')).toBeVisible();
+  await page.getByRole('dialog').getByRole('button', { name: 'Thu gọn hồ sơ', exact: true }).click();
   await page.getByRole('tab', { name: 'Lô đề xuất', exact: true }).click();
   await expect(page.getByRole('tab', { name: 'Lô đề xuất', exact: true })).toHaveCSS('border-radius', '0px');
   await page.getByRole('tab', { name: 'Lô đề xuất', exact: true }).hover();
@@ -773,8 +1419,9 @@ test('enterprise batch uses live-shaped API data and opens the same cooperation 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
   const reads = candidateReads;
-  await batch.getByRole('button', { name: 'Xem ứng viên trong lô', exact: true }).click();
+  await batch.getByRole('row').filter({ hasText: batchId }).locator('.candidate-batch-count').click();
   await expect(page.getByRole('tab', { name: 'Ứng viên được chia sẻ', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await page.getByRole('button', { name: 'Xem hồ sơ', exact: true }).click();
   await expect(page.locator('.proposal-profile')).toBeVisible();await expect.poll(() => candidateReads).toBeGreaterThan(reads);
 });
 
@@ -819,10 +1466,13 @@ test('switching to batch UI cannot discard an uncertain enterprise decision', as
   } }));
   await page.route('**/api/v1/enterprise/proposals/candidate-test/decision', route => route.fulfill({ status: 503, json: { errorCode: 'TEMPORARILY_UNAVAILABLE' } }));
   await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Ứng viên đề xuất', exact: true }).click();
+  await page.getByRole('button', { name: 'Xem hồ sơ', exact: true }).click();
   await page.locator('.proposal-workspace').getByRole('button', { name: 'Tiếp nhận thực tập', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Thử lại quyết định đã gửi', exact: true })).toBeVisible();
-  await page.getByRole('tab', { name: 'Lô đề xuất', exact: true }).click();
-  await expect(page.getByRole('tab', { name: 'Ứng viên được chia sẻ', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.getByRole('dialog').getByRole('button', { name: 'Thu gọn hồ sơ', exact: true })).toBeDisabled();
+  await expect(page.getByRole('tab', { name: 'Ứng viên được chia sẻ', exact: true, includeHidden: true })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('button', { name: 'Thử lại quyết định đã gửi', exact: true })).toBeVisible();
 });
 
@@ -888,7 +1538,16 @@ test('enterprise handoff detail uses the actual placement link and keeps placeme
   await page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('button', { name: 'Tiếp nhận thực tập', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Kiểm tra bàn giao sang không gian thực tập', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Xem tiếp nhận', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Xem chi tiết', exact: true }).click();
+  const modal = page.getByRole('dialog');
+  await expect(modal).toBeVisible();
+  await expect(modal.getByRole('heading', { name: 'Tiếp nhận 1 · Đang thực tập', exact: true })).toBeVisible();
+  await expect(page.locator('.proposal-placement > article.placement-item-card')).toHaveCount(0);
+  await modal.getByRole('button', { name: 'Đóng chi tiết tiếp nhận', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.getByRole('button', { name: 'Kiểm tra bàn giao sang không gian thực tập', exact: true }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Mở hồ sơ thực tập', exact: true })).toHaveAttribute('href', casePath);
   await page.getByRole('button', { name: 'Chi tiết bàn giao', exact: true }).click();
   const detail = page.getByRole('region', { name: 'Chi tiết bàn giao không gian thực tập', exact: true });
@@ -1132,6 +1791,7 @@ test('enterprise candidate redesign uses authorized names, folds long lists and 
     await expect(profile.getByRole('button', { name: 'Tiếp nhận thực tập', exact: true })).toBeEnabled();
     if (width === 390) await page.screenshot({ path: '../target/enterprise-candidates-redesign-390.png', fullPage: true, animations: 'disabled' });
   }
+  await page.getByRole('dialog').getByRole('button', { name: 'Thu gọn hồ sơ', exact: true }).click();
   await page.getByRole('tab', { name: 'Lô đề xuất', exact: true }).click();
   const batches = page.getByRole('region', { name: 'Lô đề xuất được chia sẻ', exact: true });
   await expect(batches.getByText(batchId, { exact: true })).toBeVisible();
@@ -1334,17 +1994,22 @@ for (const width of [1440, 390, 320]) test(`enterprise final review keeps verifi
   if (width === 1440) await page.screenshot({ path: '../target/enterprise-overview-final-1440.png', fullPage: true, animations: 'disabled' });
   await task.getByRole('button', { name: 'Xem hồ sơ', exact: false }).click();
   const workspace = page.locator('.enterprise-verifications-workspace');
+  await expect(workspace.locator('.verification-contact').getByRole('link', { name: verification.data.contactEmail, exact: true })).toHaveAttribute('href', 'mailto:' + verification.data.contactEmail);
+  await page.getByRole('dialog').getByRole('button', { name: 'Đóng chi tiết', exact: true }).click();
   await expect(workspace.getByRole('rowheader').first()).toContainText('Trường Đại học Giao thông vận tải TP.HCM');
+  const hint = workspace.locator('.verification-submit-hint');
+  await expect(hint).toHaveText('Chọn Bổ sung hồ sơ để thêm tài liệu minh chứng trước khi gửi.');
+  expect(await hint.locator('.verification-submit-tail').evaluate(node => node.getClientRects().length)).toBe(1);
+  expect(await hint.evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
   await workspace.getByLabel('Tìm kiếm hồ sơ xác minh', { exact: true }).fill('Giao thông vận tải');
   await expect(workspace.getByRole('rowheader')).toHaveCount(1);
-  await expect(workspace.locator('.verification-contact').getByRole('link', { name: verification.data.contactEmail, exact: true })).toHaveAttribute('href', 'mailto:' + verification.data.contactEmail);
   await workspace.getByRole('button', { name: 'Bổ sung hồ sơ', exact: true }).click();
   const editor = page.locator('.enterprise-verification-editor');
   await expect(workspace.locator('.workflow-card-list > article')).toHaveCount(0);
   await expect(editor.getByLabel('Tên đăng ký', { exact: true })).toHaveValue(verification.data.registeredName);
   await expect(editor.getByLabel('Email liên hệ', { exact: true })).toHaveValue(verification.data.contactEmail);
-  await expect(editor.getByRole('button', { name: 'Chọn tài liệu', exact: true })).toHaveCount(0);
-  await expect(editor.locator('.verification-evidence-note')).toContainText('minh chứng hợp lệ');
+  await expect(editor.getByLabel('Chọn tài liệu minh chứng', { exact: true })).toBeEnabled();
+  await expect(editor.locator('.verification-evidence-note')).toContainText('được xác nhận an toàn trước khi gửi');
   await expect(workspace.getByRole('button', { name: 'Gửi xác minh', exact: true })).toBeDisabled();
   if (width < 700) await expect(editor.locator('.cooperation-form-grid')).toHaveCSS('grid-template-columns', /^(?!.*px .*px).*px$/);
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();

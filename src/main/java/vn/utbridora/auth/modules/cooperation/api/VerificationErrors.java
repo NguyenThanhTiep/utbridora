@@ -8,10 +8,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.utbridora.auth.operations.OperationErrors.Error;
 
-@RestControllerAdvice(assignableTypes=VerificationController.class)
+@RestControllerAdvice(assignableTypes={VerificationController.class,VerificationTaxController.class})
 @Order(-100)
 public class VerificationErrors {
-    @ExceptionHandler({org.springframework.web.bind.MissingRequestHeaderException.class,org.springframework.http.converter.HttpMessageNotReadableException.class,
+    @ExceptionHandler({org.springframework.web.bind.MissingRequestHeaderException.class,org.springframework.web.bind.MissingServletRequestParameterException.class,org.springframework.http.converter.HttpMessageNotReadableException.class,
         org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class})
     ResponseEntity<Error> schema(Exception e,HttpServletRequest r) {return response(r,400,"SCHEMA_VALIDATION");}
     @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)

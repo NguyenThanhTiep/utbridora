@@ -14,6 +14,28 @@ async function setup(page: Page) {
   await page.route('**/api/v1/auth/csrf', route => route.fulfill({ json: { headerName: 'X-CSRF-TOKEN', token: 'fixture-token' } }));
 }
 
+for (const school of [false, true]) test(`${school ? 'school' : 'enterprise'} placement record rows open the selected dossier and leave handoff buttons independent`, async ({ page }) => {
+  await setup(page);const side = school ? 'school' : 'enterprise';let handoffs = 0;
+  await page.route(`**/api/v1/${side}/placements**`, route => {
+    const path = new URL(route.request().url()).pathname;
+    if (path.endsWith('/internship-link')) { handoffs++;return route.fulfill({ json: { state: 'AVAILABLE', caseId: '00000000-0000-4000-8000-000000000099', route: '/workspace/cases/00000000-0000-4000-8000-000000000099' } }); }
+    return route.fulfill({ json: path.endsWith('/summary') ? { demandId: 'demand-1', cooperationId: 'coop-1', target: 3, placed: 2, pending: 0, remaining: 1 }
+      : pageOf([{ ...placement, state: 'ACTIVE' }, { ...placement, placementId: 'placement-b', state: 'ACTIVE' }]) });
+  });
+  await page.goto(fixture + (school ? '?school-placement' : '?enterprise-placement'));
+  const row = page.locator(school ? '.school-placement-table tbody tr' : '.proposal-placement > .proposal-table tbody tr').nth(1);
+  await row.locator('td').first().click();
+  await expect(page.getByRole('dialog').getByText('Tiếp nhận 2 · Đang thực tập', { exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');await row.focus();await page.keyboard.press('Enter');
+  await expect(page.getByRole('dialog').getByText('Tiếp nhận 2 · Đang thực tập', { exact: true })).toBeVisible();
+  expect(handoffs).toBe(0);await page.keyboard.press('Escape');
+  if (!school) {
+    await row.getByRole('button', { name: 'Kiểm tra bàn giao sang không gian thực tập', exact: true }).click();
+    await expect(page.getByRole('dialog').getByRole('link', { name: 'Mở hồ sơ thực tập', exact: true })).toBeVisible();
+    expect(handoffs).toBe(1);
+  }
+});
+
 test('school placement table selects one detail and sends the selected record version', async ({ page }) => {
   await setup(page);
   let second = { ...placement, placementId: 'placement-b', proposalItemId: 'proposal-b', version: 7 };
@@ -27,15 +49,16 @@ test('school placement table selects one detail and sends the selected record ve
     submitted = true;second = { ...second, state: 'APPROVED', version: 8 };
     return route.fulfill({ json: second });
   });
-  await page.goto(fixture + '?school-placement');
+  await page.goto(fixture + '?school-placement');await page.getByRole('button', { name: 'Xem hồ sơ tiếp nhận 1', exact: true }).click();
   await expect(page.getByText('Tiếp nhận 1 · Chờ trường phê duyệt', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Đóng chi tiết tiếp nhận', exact: true }).click();
   const chooseSecond = page.getByRole('button', { name: 'Xem hồ sơ tiếp nhận 2', exact: true });
   await chooseSecond.focus();await page.keyboard.press('Enter');
-  await expect(chooseSecond).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('button', { name: 'Xem hồ sơ tiếp nhận 2', exact: true, includeHidden: true })).toHaveAttribute('aria-expanded', 'true');
   await expect(page.getByText('Tiếp nhận 1 · Chờ trường phê duyệt', { exact: true })).toHaveCount(0);
   await expect(page.getByText('Tiếp nhận 2 · Chờ trường phê duyệt', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Phê duyệt tiếp nhận', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Xem hồ sơ tiếp nhận 1', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Xem hồ sơ tiếp nhận 1', exact: true, includeHidden: true })).toBeDisabled();
   await page.getByLabel('Căn cứ thao tác tiếp nhận').fill('QD-SECOND');
   await page.getByRole('button', { name: 'Xác nhận phê duyệt', exact: true }).click();
   await expect(page.getByText('Tiếp nhận 2 · Đã duyệt, chờ bắt đầu', { exact: true })).toBeVisible();
@@ -68,7 +91,7 @@ test('placement focus and visibility reload data while an open decision preserve
     if (new URL(route.request().url()).pathname.endsWith('/summary')) return route.fulfill({ json: { demandId: 'demand-1', cooperationId: 'coop-1', target: 3, placed: state === 'ACTIVE' ? 1 : 0, pending: state === 'ACTIVE' ? 0 : 1, remaining: state === 'ACTIVE' ? 2 : 3 } });
     reads++;return route.fulfill({ json: pageOf([{ ...placement, state }]) });
   });
-  await page.goto(fixture + '?school-placement');await expect(page.getByRole('button', { name: 'Phê duyệt tiếp nhận', exact: true })).toBeVisible();
+  await page.goto(fixture + '?school-placement');await page.getByRole('button', { name: 'Xem hồ sơ tiếp nhận 1', exact: true }).click();await expect(page.getByRole('button', { name: 'Phê duyệt tiếp nhận', exact: true })).toBeVisible();
   const initial = reads;state = 'ACTIVE';
   await page.evaluate(() => window.dispatchEvent(new Event('focus')));
   await expect(page.getByText('Tiếp nhận 1 · Đang thực tập')).toBeVisible();expect(reads).toBeGreaterThan(initial);
@@ -105,6 +128,7 @@ for (const conflict of [
   });
   await page.goto(fixture + '?school&workflow');
   const workspace = page.getByRole('region', { name: 'Tiếp nhận thực tập', exact: true });
+  await page.getByRole('button', { name: 'Xem hồ sơ tiếp nhận 1', exact: true }).click();
   await workspace.getByRole('button', { name: conflict.button, exact: true }).click();
   await page.getByLabel('Căn cứ thao tác tiếp nhận').fill('QD-WEEK4');
   if (conflict.action === 'cancel') await page.getByRole('combobox', { name: 'Lý do hủy', exact: true }).selectOption('SCHOOL_CANCELLED');
@@ -127,7 +151,7 @@ test('uncertain placement response preserves its key and blocks focus refresh un
     attempts.push({ key: route.request().headers()['idempotency-key'], body: route.request().postData() });
     return attempts.length === 1 ? route.abort('connectionfailed') : route.fulfill({ json: { ...placement, state: 'APPROVED', version: 2 } });
   });
-  await page.goto(fixture + '?school-placement');
+  await page.goto(fixture + '?school-placement');await page.getByRole('button', { name: 'Xem hồ sơ tiếp nhận 1', exact: true }).click();
   await page.getByRole('button', { name: 'Phê duyệt tiếp nhận', exact: true }).click();await page.getByLabel('Căn cứ thao tác tiếp nhận').fill('QD-UNCERTAIN');
   await page.getByRole('button', { name: 'Xác nhận phê duyệt', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Thử lại thao tác tiếp nhận đã gửi' })).toBeVisible();const before = reads;
@@ -161,13 +185,16 @@ for (const school of [true, false]) test(`${school ? 'school' : 'enterprise'} pl
     return route.fulfill({ json: pageOf([{ ...placement, placementId: searched ? 'p-page-two' : 'p-original', state: searched ? 'ACTIVE' : 'PENDING_APPROVAL' }]) });
   });
   await page.goto(fixture + (school ? '?school-placement' : '?enterprise-placement'));
+  if (school) await page.getByRole('button', { name: 'Xem hồ sơ tiếp nhận 1', exact: true }).click();
   await expect(page.getByText('Tiếp nhận 1 · Chờ trường phê duyệt', { exact: true })).toBeVisible();
+  if (school) await page.getByRole('button', { name: 'Đóng chi tiết tiếp nhận', exact: true }).click();
   await page.getByRole('combobox', { name: 'Trạng thái tiếp nhận', exact: true }).selectOption('ACTIVE');
   await page.getByLabel('Tìm kiếm tiếp nhận', { exact: true }).fill('p-page-two');
   await page.getByRole('button', { name: 'Tìm tiếp nhận', exact: true }).click();
   await expect.poll(() => Object.fromEntries(requests.at(-1)!.searchParams)).toMatchObject({
     demandId: 'demand-1', cooperationId: 'coop-1', termId: 'term-1', schoolOrgId: 'school-1', state: 'ACTIVE', q: 'p-page-two', page: '0',
   });
+  if (school) await page.getByRole('button', { name: 'Xem hồ sơ tiếp nhận 1', exact: true }).click();
   await expect(page.getByText('Tiếp nhận 1 · Đang thực tập', { exact: true })).toBeVisible();
   await expect(page.getByText('Tiếp nhận 1 · Chờ trường phê duyệt', { exact: true })).toHaveCount(0);
 });
@@ -202,7 +229,7 @@ for (const school of [true, false]) test(`${school ? 'school' : 'enterprise'} ov
   await page.getByRole('combobox', { name: 'Tình trạng chỉ tiêu', exact: true }).selectOption('FULL');
   await expect(page.getByRole('cell', { name: 'Đủ chỉ tiêu', exact: true })).toBeVisible();
   await page.evaluate(() => window.addEventListener('progress-selected', event => {document.body.dataset.selectedCooperation = (event as CustomEvent).detail.cooperationId;}));
-  await page.getByRole('button', { name: 'Xem tiếp nhận', exact: true }).click();
+  await page.getByRole('cell', { name: 'Đủ chỉ tiêu', exact: true }).click();
   await expect(page.locator('body')).toHaveAttribute('data-selected-cooperation', 'coop-1');
 });
 
@@ -257,7 +284,7 @@ for (const provider of ['missing', 'denied', 'ready']) test(`school handoff load
       { evaluationId: 'foreign', caseId: 'other-case', state: 'PUBLISHED', total100: 99, revisionNo: 1, version: 1, publishedAt: null }], totalPages: 1 } })
       : route.fulfill({ status: provider === 'missing' ? 404 : 403, json: { errorCode: provider === 'missing' ? 'RESOURCE_NOT_FOUND' : 'ACCESS_DENIED' } });
   });
-  await page.goto(fixture + '?school-placement');await page.getByRole('button', { name: 'Kiểm tra bàn giao sang không gian thực tập' }).click();
+  await page.goto(fixture + '?school-placement');await page.getByRole('button', { name: 'Xem hồ sơ tiếp nhận 1', exact: true }).click();await page.getByRole('button', { name: 'Kiểm tra bàn giao sang không gian thực tập' }).click();
   await expect(page.getByRole('link', { name: 'Mở hồ sơ thực tập', exact: true })).toHaveAttribute('href', path);
   await page.getByRole('button', { name: 'Chi tiết bàn giao', exact: true }).click();await page.getByRole('button', { name: 'Tải đánh giá từ T3', exact: true }).click();
   if (provider === 'ready') {await expect(page.getByText('Đã công bố · Lần 1 · Điểm: 88/100')).toBeVisible();await expect(page.getByText(/Điểm: 99/)).toHaveCount(0);}
@@ -279,7 +306,7 @@ async function openSchoolFollowUp(page: Page, evaluations: unknown[]) {
     expect(params.get('caseId')).toBe(reviewCaseId);expect(params.get('placementId')).toBe(placement.placementId);expect(params.get('termId')).toBe('term-1');
     return route.fulfill({ json: { content: evaluations, totalPages: 1 } });
   });
-  await page.goto(fixture + '?school-placement');await page.getByRole('button', { name: 'Kiểm tra bàn giao sang không gian thực tập', exact: true }).click();
+  await page.goto(fixture + '?school-placement');await page.getByRole('button', { name: 'Xem hồ sơ tiếp nhận 1', exact: true }).click();await page.getByRole('button', { name: 'Kiểm tra bàn giao sang không gian thực tập', exact: true }).click();
   await page.getByRole('button', { name: 'Chi tiết bàn giao', exact: true }).click();
   return page.getByRole('region', { name: 'Theo dõi đánh giá và lịch sử', exact: true });
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../../api';
+import { PagerNav } from '../../ui/PagerNav';
 
 type Run = { matchRunId: string; demandVersion: number; criteriaVersion: number; profileSnapshotVersion: string };
 type Row = { studentUserId: string; position: number; rank: number | null; fitScore: number;
@@ -157,9 +158,8 @@ export function AdvisoryPanel({ run, termId, cooperationId, organizationId, canC
         <p>Điểm ưu tiên: {row.fitScore.toFixed(2)}{row.limited ? ' · Nội dung đã được giới hạn khi phân tích' : ''}</p>
         {row.scoreStatus !== 'SCORED' && <p>{row.scoreStatus === 'INPUT_TOO_LARGE' ? 'Nội dung vượt giới hạn phân tích; hồ sơ vẫn có thể được xem xét.' : 'Chưa đủ nội dung ngữ nghĩa; đây không phải đánh giá năng lực thấp.'}</p>}
       </article>)}</div>
-      <div className="matching-pagination"><button className="secondary" disabled={!page || busy} onClick={() => setPage(n => n - 1)}>Trước</button>
-        <span>Trang {page + 1}/{Math.max(1, rows.totalPages)}</span><button className="secondary" disabled={page + 1 >= rows.totalPages || busy} onClick={() => setPage(n => n + 1)}>Sau</button>
-        {canNominate && <button disabled={busy || !selected.length} onClick={() => void nominate()}>Đề cử {selected.length} sinh viên đã chọn</button>}</div>
+      <PagerNav page={page} totalPages={rows.totalPages} busy={busy} onChange={setPage} ariaLabel="Phân trang ứng viên AI"
+        extra={canNominate && <button disabled={busy || !selected.length} onClick={() => void nominate()}>Đề cử {selected.length} sinh viên đã chọn</button>} />
     </>}
   </section>;
 }

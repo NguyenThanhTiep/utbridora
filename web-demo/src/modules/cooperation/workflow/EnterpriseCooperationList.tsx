@@ -1,5 +1,6 @@
 import { Icon } from '../../../components';
 import { states, type Cooperation } from './types';
+import { recordRow } from '../ui/recordRow';
 
 export function EnterpriseCooperationList({ items, titles, schools, schoolIds, selectedId, openingId, busy, idPrefix, open }: {
   items: { item: Cooperation; seq: number }[]; titles: Record<string, string>; schools: Record<string, string>;
@@ -12,7 +13,8 @@ export function EnterpriseCooperationList({ items, titles, schools, schoolIds, s
     <tbody>{items.map(({ item, seq }) => {
       const selected = selectedId === item.cooperationId;
       const opening = openingId === item.cooperationId;
-      return <tr key={item.cooperationId} className={selected ? 'table-row-selected' : undefined}>
+      return <tr key={item.cooperationId} className={selected ? 'table-row-selected' : undefined}
+        {...recordRow(() => open(item), busy || opening)}>
         <th scope="row" data-label="Đề nghị hợp tác"><div className="enterprise-coop-name">
           <span className="enterprise-coop-icon" aria-hidden="true"><Icon name="briefcase" size={20} /></span>
           <div><b>{titles[item.cooperationId] || `Đề nghị ${seq}`}</b><small>{item.submissionNo > 0 ? `Lần gửi ${item.submissionNo}` : 'Chưa gửi hồ sơ'}</small></div>

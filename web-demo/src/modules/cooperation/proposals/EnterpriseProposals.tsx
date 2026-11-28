@@ -24,8 +24,8 @@ export function EnterpriseProposals({ org, cooperationId, focusProposalId }: { o
     window.addEventListener('focus', revalidate);document.addEventListener('visibilitychange', revalidate);
     return () => {window.removeEventListener('focus', revalidate);document.removeEventListener('visibilitychange', revalidate);};
   }, [pending]);
-  // A single candidate or notification target can open immediately; longer lists stay compact.
-  const activeId = expandedId ?? (focusId || (result?.totalElements === 1 ? result.content[0]?.proposalItemId : ''));
+  // A notification opens its target; ordinary lists open a profile only after an explicit click.
+  const activeId = expandedId ?? focusId;
   const toggle = (id: string) => {
     if (pending.size > 0 || !canLeaveDemand()) return;
     setExpandedId(activeId === id ? '' : id);

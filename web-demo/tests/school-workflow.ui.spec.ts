@@ -117,7 +117,9 @@ test('Placement UI separates create, approve, activate, handoff and cancel; ente
   await start.evaluate(node => { (node as HTMLInputElement).value='2026-12-01'; });
   await end.evaluate(node => { (node as HTMLInputElement).value='2027-01-01'; });
   await page.getByLabel('Thời điểm có hiệu lực').fill('2026-11-11T10:00');
-  await page.getByRole('button', {name: 'Tạo hồ sơ chờ phê duyệt', exact: true}).click();await expect(page.getByText('Tiếp nhận 1 · Chờ trường phê duyệt')).toBeVisible();expect(commands).toEqual(['create']);
+  await page.getByRole('button', {name: 'Tạo hồ sơ chờ phê duyệt', exact: true}).click();
+  await page.getByRole('button', { name: 'Xem hồ sơ tiếp nhận 1', exact: true }).click();
+  await expect(page.getByText('Tiếp nhận 1 · Chờ trường phê duyệt')).toBeVisible();expect(commands).toEqual(['create']);
   await page.getByRole('button', {name: 'Phê duyệt tiếp nhận', exact: true}).click();await page.getByLabel('Căn cứ thao tác tiếp nhận').fill('QD-APPROVE');await page.getByRole('button', {name: 'Xác nhận phê duyệt', exact: true}).click();
   await expect(page.getByRole('button', {name: 'Kích hoạt thực tập', exact: true})).toBeDisabled();expect(commands).toEqual(['create', 'approve']);
   await page.clock.fastForward(24 * 3600 * 1000 + 1000);await page.getByRole('button', {name: 'Kích hoạt thực tập', exact: true}).click();await page.getByLabel('Căn cứ thao tác tiếp nhận').fill('QD-START');

@@ -3,6 +3,7 @@ import { useViewRouting } from '../../../routing/BrowserRouting';
 import { ApiError, type Grant, type Me } from '../../../api';
 import { EmptyState, Icon, LoadingState, Notice } from '../../../components';
 import { askConfirm } from '../../../confirm';
+import { FileDropzone } from '../../../ui/FileDropzone';
 import { httpsArtifact } from '../../internship/workflow';
 import { getMyProfile, newIdempotencyKey, saveMyProfile, toProfileInput } from '../api';
 import { StudentTabs } from '../components/StudentTabs';
@@ -196,13 +197,14 @@ function FileList({ ids, files }: { ids: string[]; files: Files }) {
 function UploadForm({ label, action, busy, onUpload }: { label: string; action: string; busy: boolean; onUpload: (file: File, key: string) => Promise<boolean> }) {
   const [file, setFile] = useState<File | null>(null), [reset, setReset] = useState(0), keys = useRef(new Map<File, string>());
   const problem = file ? fileProblem(file) : '';
-  return <form className="student-upload" onSubmit={event => {
+  return <form className="student-upload u032 u032-profile-upload" onSubmit={event => {
     event.preventDefault(); if (!file || problem) return;
     const key = keys.current.get(file) ?? newIdempotencyKey(); keys.current.set(file, key);
     void onUpload(file, key).then(ok => { if (ok) { keys.current.delete(file); setFile(null); setReset(previous => previous + 1); } });
   }}>
-    <span className="student-upload-icon" aria-hidden="true"><StudentIcon name="upload" size={20} /></span>
-    <label>{label}<input key={reset} type="file" accept=".pdf,.png,.jpg,.jpeg" onChange={event => setFile(event.target.files?.[0] ?? null)} /></label>
+    <FileDropzone key={reset} label={label} hint="PDF, PNG hoặc JPEG · Tối đa 10 MiB"
+      maxBytes={10 * 1024 * 1024} accept=".pdf,.png,.jpg,.jpeg" file={file} disabled={busy}
+      state={busy ? 'processing' : 'selected'} onChange={event => setFile(event.target.files?.[0] ?? null)} />
     {problem && <p className="student-field-error">{problem}</p>}
     <p className="field-hint">PDF, PNG hoặc JPEG; tối đa 10 MiB. Tệp mới luôn chờ quét trước khi gắn vào hồ sơ.</p>
     <button type="submit" disabled={busy || !file || !!problem}>{action}</button>

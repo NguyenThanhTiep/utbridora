@@ -4,6 +4,7 @@ import { accessLost, workflowError, workflowPages, workflowRead } from '../workf
 import { mondayDate, textWithin, uuidPattern, validVersion, type InternshipTask, type WeeklyReport, type ReportReview, type ReportFile } from '../workflow';
 import { CommandFeedback, useWorkflowCommand } from '../useWorkflowCommand';
 import { ReportEvidence } from './ReportEvidence';
+import { FileDropzone } from '../../../ui/FileDropzone';
 
 export function WeeklyReports({ contextId, caseIds, student, mentor, denied }: {
   contextId?: string; caseIds?: string[]; student: boolean; mentor: boolean; denied: () => void;
@@ -159,7 +160,9 @@ function ReportEditor({ reportId, caseId, contextId, student, mentor, denied, ch
             setEvidence(ids => [...new Set([...ids, file.fileId])]); setDirty(true); setUpload(null); setUploadReset(n => n + 1);
           });
         }}><fieldset disabled={!!blocked || evidence.length >= 20}><legend>Thêm minh chứng vào bản nháp</legend>
-          <label>Chọn tệp minh chứng<input key={uploadReset} type="file" accept=".pdf,.png,.jpg,.jpeg" onChange={event => setUpload(event.target.files?.[0] || null)} /></label>
+          <FileDropzone key={uploadReset} label="Chọn tệp minh chứng" hint="PDF, PNG hoặc JPEG · Tối đa 10 MiB"
+            maxBytes={10 * 1024 * 1024} accept=".pdf,.png,.jpg,.jpeg" file={upload} disabled={!!blocked || evidence.length >= 20}
+            state={command.busy ? 'processing' : 'selected'} onChange={event => setUpload(event.target.files?.[0] || null)} />
           <p>PDF, PNG hoặc JPEG; tối đa 10 MiB/tệp, 20 tệp/báo cáo. Sau khi tải lên, lưu bản nháp để gắn minh chứng.</p>
           {upload && !uploadValid && <p role="alert">Tệp phải đúng định dạng, không rỗng và không vượt quá 10 MiB.</p>}
           <button disabled={!uploadValid}>Tải lên minh chứng</button></fieldset></form>

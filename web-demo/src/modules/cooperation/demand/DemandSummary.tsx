@@ -15,6 +15,7 @@ export function DemandSummary({ id, demand, schoolName, onClose }: {
   const data = demand.data;
   useEffect(() => {
     heading.current?.focus({ preventScroll: true });
+    if (heading.current?.closest('dialog')) return;
     heading.current?.closest('section')?.scrollIntoView({ block: 'nearest',
       behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   }, []);

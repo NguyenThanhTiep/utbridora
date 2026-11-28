@@ -86,6 +86,38 @@ class DemandIT {
         var r=browser.send("POST",path,input,org,true); assertEquals(201,r.statusCode(),r.body());
         return DemandJson.read(r.body(),DemandDto.class);
     }
+    @Test void listScopeFiltersSchoolAndTermBeforePagingWithoutBroadeningEnterprise() throws Exception {
+        String secondSchool=organization(Organization.Type.UNIVERSITY);
+        var secondTerm=new vn.utbridora.auth.modules.cooperation.domain.Term();secondTerm.schoolOrgId=secondSchool;secondTerm.termCode="SCOPE-"+UUID.randomUUID();
+        secondTerm.startDate=LocalDate.parse("2027-01-01");secondTerm.endDate=LocalDate.parse("2027-06-01");secondTerm.status=vn.utbridora.auth.modules.cooperation.domain.TermStatus.ACTIVE;
+        terms.saveAndFlush(secondTerm);
+        var anotherTerm=new vn.utbridora.auth.modules.cooperation.domain.Term();anotherTerm.schoolOrgId=school;anotherTerm.termCode="SCOPE-"+UUID.randomUUID();
+        anotherTerm.startDate=secondTerm.startDate;anotherTerm.endDate=secondTerm.endDate;anotherTerm.status=secondTerm.status;terms.saveAndFlush(anotherTerm);
+        var ids=new ArrayList<String>();
+        for(int n=0;n<5;n++) {browser.key=UUID.randomUUID().toString();ids.add(create().demandId());}
+        jdbc.update("UPDATE demands SET school_org_id=?,term_id=?,data_json=JSON_SET(data_json,'$.schoolOrgId',?,'$.termId',?) WHERE id=?",
+            secondSchool,secondTerm.id,secondSchool,secondTerm.id,ids.get(2));
+        jdbc.update("UPDATE demands SET term_id=?,data_json=JSON_SET(data_json,'$.termId',?) WHERE id=?",anotherTerm.id,anotherTerm.id,ids.get(3));
+        jdbc.update("UPDATE demands SET enterprise_org_id=? WHERE id=?",other,ids.get(4));
+        for(String id:ids) jdbc.update("INSERT INTO cooperations(id,demand_id,school_org_id,enterprise_org_id,term_id,state,created_at) SELECT ?,id,school_org_id,enterprise_org_id,term_id,'APPROVED',UTC_TIMESTAMP(6) FROM demands WHERE id=?",UUID.randomUUID().toString(),id);
+        var json=JsonMapper.builder().build();
+        for(String endpoint:List.of(path,"/api/v1/enterprise/cooperations")) {
+            var first=browser.send("GET",endpoint+"?schoolOrgId="+school+"&termId="+input.termId()+"&size=1",null,org,false);
+            assertEquals(200,first.statusCode(),first.body());var a=json.readTree(first.body());
+            assertEquals(2,a.get("totalElements").asInt());assertEquals(2,a.get("totalPages").asInt());assertEquals(1,a.get("content").size());
+            var second=browser.send("GET",endpoint+"?schoolOrgId="+school+"&termId="+input.termId()+"&size=1&page=1",null,org,false);
+            assertEquals(200,second.statusCode(),second.body());var b=json.readTree(second.body());
+            assertNotEquals(a.get("content").get(0).get("demandId").asString(),b.get("content").get(0).get("demandId").asString());
+            var schoolOnly=browser.send("GET",endpoint+"?schoolOrgId="+secondSchool,null,org,false);
+            assertEquals(200,schoolOnly.statusCode(),schoolOnly.body());assertEquals(1,json.readTree(schoolOnly.body()).get("totalElements").asInt());
+            var incompatible=browser.send("GET",endpoint+"?schoolOrgId="+school+"&termId="+secondTerm.id,null,org,false);
+            assertEquals(200,incompatible.statusCode(),incompatible.body());assertEquals(0,json.readTree(incompatible.body()).get("totalElements").asInt());
+            var all=browser.send("GET",endpoint,null,org,false);assertEquals(200,all.statusCode(),all.body());assertEquals(4,json.readTree(all.body()).get("totalElements").asInt());
+            assertEquals(403,browser.send("GET",endpoint+"?schoolOrgId="+school,null,other,false).statusCode());
+            assertEquals(400,browser.send("GET",endpoint+"?schoolOrgId=invalid",null,org,false).statusCode());
+        }
+    }
+
     @Test void createListEditAndImmutableRevision() throws Exception {
         var d=create();
         var list=browser.send("GET",path,null,org,false); assertEquals(200,list.statusCode()); assertTrue(list.body().contains(d.demandId()));

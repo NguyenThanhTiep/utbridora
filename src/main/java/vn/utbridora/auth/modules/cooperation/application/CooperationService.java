@@ -157,12 +157,17 @@ public class CooperationService {
         },CooperationDto::cooperationId);
     }
     @Transactional(readOnly=true) public Page<CooperationDto> list(Authentication auth,String org,boolean school,String term,String state,int page,int size) {
+        return list(auth,org,school,term,state,page,size,null);
+    }
+    @Transactional(readOnly=true) public Page<CooperationDto> list(Authentication auth,String org,boolean school,String term,String state,int page,int size,String schoolOrgId) {
         uuid(org);page(page,size);if(term!=null) uuid(term);
+        if(schoolOrgId!=null) uuid(schoolOrgId);
         if(school) scope.require(auth,org,term,"cooperation:school:review");else enterprise(auth,org);
         if(state!=null && !Set.of("DRAFT","SUBMITTED","NEEDS_CHANGES","APPROVED","REJECTED").contains(state)) throw failure(400,"SCHEMA_VALIDATION");
         String where=" WHERE "+(school?"school_org_id":"enterprise_org_id")+"=? AND (? IS NULL OR term_id=?) AND (? IS NULL OR state=?)"
             +(school?" AND state<>'DRAFT'":"");
-        Object[] args={org,term,term,state,state};
+        where+=" AND (? IS NULL OR school_org_id=?)";
+        Object[] args={org,term,term,state,state,schoolOrgId,schoolOrgId};
         var rows=jdbc.queryForList("SELECT id FROM cooperations"+where+" ORDER BY created_at DESC,id ASC",String.class,args);
         var visible=rows.stream().map(this::read).filter(c->{if(!school)return true;try {scope.require(auth,org,c.termId(),"cooperation:school:review");return true;}catch(vn.utbridora.auth.operations.OperationFailure denied){return false;}}).toList();
         int from=Math.min(page*size,visible.size());return new Page<>(visible.subList(from,Math.min(from+size,visible.size())),page,size,visible.size(),(visible.size()+size-1)/size);

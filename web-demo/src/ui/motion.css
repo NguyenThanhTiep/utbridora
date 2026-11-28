@@ -126,7 +126,7 @@
     box-shadow: 0 0 0 1px #dbe8f180, 0 5px 18px #142f4012;
   }
   #root .workspace:not(:where(.workspace-native-t3)) .portal-welcome[data-portal-glow] .portal-welcome-icon::after { animation: ui-welcome-halo 1.2s ease-out; }
-  #root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(.content, .topbar) button:not(:where(.password-toggle, .nav, .taxonomy-node, .text-button, .btn-icon, .profile-shortcut, .menu-toggle, .role-menu-trigger, .role-menu-item, .student-report-card, .admin-metric, .admin-shortcut, .portal-stat, .portal-shortcut, .kpi-card, .matching-counts > button, [role="tab"], :disabled, [aria-disabled="true"])):hover {
+  #root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(.content, .topbar) button:not(:where(.password-toggle, .vn-date-icon, .nav, .taxonomy-node, .text-button, .btn-icon, .profile-shortcut, .menu-toggle, .role-menu-trigger, .role-menu-item, .student-report-card, .admin-metric, .admin-shortcut, .portal-stat, .portal-shortcut, .kpi-card, .matching-counts > button, .u-pager-ar, .u-pager-n, [role="tab"], :disabled, [aria-disabled="true"])):hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px #0b927c18;
   }
@@ -169,7 +169,7 @@
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   #root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) :is(.role-menu-trigger, .workspace-account-trigger):not(:disabled):hover::after { animation: action-light-sweep var(--ui-motion-sheen) var(--ui-motion-ease); }
 }
-#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) button:not(:where(.password-toggle, .nav, .taxonomy-node, .text-button, .btn-icon, .profile-shortcut, .menu-toggle, .role-menu-trigger, .role-menu-item, .student-report-card, [role="tab"], :disabled, [aria-disabled="true"])):active {
+#root .workspace:where(:not(.workspace-native-t3), .workspace-native-t3.has-workspace-motion:not(.workspace-student)) button:not(:where(.password-toggle, .vn-date-icon, .nav, .taxonomy-node, .text-button, .btn-icon, .profile-shortcut, .menu-toggle, .role-menu-trigger, .role-menu-item, .student-report-card, .u-pager-ar, .u-pager-n, [role="tab"], :disabled, [aria-disabled="true"])):active {
   transform: translateY(1px);
   box-shadow: none;
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ApiError, api, type Grant } from '../../api';
 import { EmptyState, Icon, Notice } from '../../components';
+import { PagerNav } from '../../ui/PagerNav';
 import { formatDateDMY } from '../../ui/dateFormat';
 import type { ContractPage } from '../student/types';
 import { formatCriterionLabel } from '../cooperation/proposals/useStudentIdentities';
@@ -361,9 +362,7 @@ export function MatchingWorkspace({ organizationId, grants, onOpenProposals, ter
             })}</tbody>
           </table></div>
           : <p role="status">Đang tải kết quả…</p>}
-        <div className="matching-pagination"><span>{details?.results.totalElements ?? 0} kết quả · Trang {(details?.results.page ?? page) + 1}/{Math.max(1, details?.results.totalPages ?? 1)}</span>
-          <button className="secondary" disabled={page === 0 || busy} onClick={() => setPage(value => value - 1)}>Trước</button>
-          <button className="secondary" disabled={!details || page + 1 >= details.results.totalPages || busy} onClick={() => setPage(value => value + 1)}>Sau</button></div>
+        <PagerNav page={details?.results.page ?? page} totalPages={details?.results.totalPages ?? 1} totalElements={details?.results.totalElements ?? 0} busy={busy || !details} onChange={setPage} ariaLabel="Phân trang kết quả gợi ý" />
       </>}
     </div>
   </section>;

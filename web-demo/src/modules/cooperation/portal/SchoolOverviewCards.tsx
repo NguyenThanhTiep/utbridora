@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useState, type CSSProperties } from 'react';
 import { Icon } from '../../../components';
 import { formatDateDMY } from '../../../ui/dateFormat';
 import type { CooperationRecord, VerificationRecord } from '../WorkflowViews';
@@ -57,7 +57,8 @@ export function SchoolOverviewCards({ organizationId, revision, cooperations, ve
   ];
   return <>
     <div className="portal-stat-grid school-overview-grid" aria-label="Tình hình tổng quan nhà trường">
-      {cards.map((card, index) => <button key={card.badge} type="button" className={'portal-stat school-overview-stat tone-' + card.tone}
+      {cards.map((card, index) => <button key={card.badge} type="button" className={'portal-stat school-overview-stat tone-' + card.tone + (card.loading ? ' is-sk-loading' : '')}
+        style={{ '--d': `${index * 65}ms` } as CSSProperties}
         aria-label={`${card.title}: ${card.value ?? 'Chưa có số liệu'}`} aria-busy={card.loading}
         aria-expanded={card.badge === 'ĐT' ? showTerms : undefined} aria-controls={card.badge === 'ĐT' ? termsId : undefined}
         disabled={card.badge === 'ĐT' && references.terms === null} onClick={card.open}>
@@ -69,7 +70,7 @@ export function SchoolOverviewCards({ organizationId, revision, cooperations, ve
           </span>
         </span>
         <span className="school-stat-metric">
-          <strong>{card.value ?? '—'}</strong>
+          <div className="u-sk-slot"><strong className="u-sk-real">{card.value ?? '—'}</strong><i className="u-sk-ph u-sk-bar is-metric" aria-hidden="true" /></div>
           <span className="portal-stat-icon school-stat-icon-tile" aria-hidden="true">
             <Icon name={card.icon} size={20} />
           </span>

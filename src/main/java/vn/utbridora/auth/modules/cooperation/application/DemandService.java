@@ -105,11 +105,16 @@ public class DemandService implements DemandCriteriaPort {
     }
     @Transactional
     public Page<DemandDto> list(Authentication authentication,String organization,String termId,String state,boolean includeDeleted,int page,int size) {
+        return list(authentication,organization,termId,state,includeDeleted,page,size,null);
+    }
+    @Transactional
+    public Page<DemandDto> list(Authentication authentication,String organization,String termId,String state,boolean includeDeleted,int page,int size,String schoolOrgId) {
         String org=DemandValidator.uuid(organization,"X-Organization-Id"); authorize(authentication,org);
         if(page<0 || page>10000 || size<1 || size>100) throw new DemandFailure(400,"INVALID_PAGINATION","Phân trang không hợp lệ.");
         String term=termId==null?null:DemandValidator.uuid(termId,"termId");
         if(state!=null && !state.equals("DRAFT") && !state.equals("READY")) throw new DemandFailure(400,"SCHEMA_VALIDATION","Trạng thái nhu cầu không hợp lệ.");
-        return repository.list(org,term,state,includeDeleted,page,size);
+        String school=schoolOrgId==null?null:DemandValidator.uuid(schoolOrgId,"schoolOrgId");
+        return repository.list(org,term,state,includeDeleted,page,size,school);
     }
     @Transactional
     public void checkWorkspaceAccess(Authentication authentication,String organization) {

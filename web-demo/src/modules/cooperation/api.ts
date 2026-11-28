@@ -1,5 +1,6 @@
 import { api } from '../../api';
 import type { Demand, DemandInput, DemandPage } from './types';
+import { scopeQuery, type PortalDataScope } from './portal/scope';
 
 export type SaveAttempt = {
   key: string;
@@ -8,8 +9,9 @@ export type SaveAttempt = {
   body: string;
 };
 
-export function listDemands(organizationId: string, page: number, signal: AbortSignal, includeDeleted = false) {
-  return api<DemandPage>(`/enterprise/demands?page=${page}&size=25${includeDeleted ? '&includeDeleted=true' : ''}`, {
+export function listDemands(organizationId: string, page: number, signal: AbortSignal, includeDeleted = false, scope: PortalDataScope = {}) {
+  const filters = scopeQuery(scope).toString();
+  return api<DemandPage>(`/enterprise/demands?page=${page}&size=25${includeDeleted ? '&includeDeleted=true' : ''}${filters ? '&' + filters : ''}`, {
     signal,
     headers: { 'X-Organization-Id': organizationId }
   });

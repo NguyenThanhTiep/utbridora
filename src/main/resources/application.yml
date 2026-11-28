@@ -53,6 +53,21 @@ server:
         secure: ${COOKIE_SECURE:false} # true behind HTTPS in production
         same-site: lax
 app:
+  cooperation:
+    tax-verification:
+      mode: ${TAX_VERIFICATION_MODE:mock}
+      strict-submit-validation: ${TAX_STRICT_SUBMIT_VALIDATION:false}
+      live:
+        provider: ${TAX_LIVE_PROVIDER:casso}
+        base-url: ${TAX_LIVE_BASE_URL:https://openapi.casso.vn}
+        app-id: ${TAX_LIVE_APP_ID:}
+        app-secret: ${TAX_LIVE_APP_SECRET:}
+        timeout-ms: 2500
+      cache-ttl-seconds: 86400
+      rate-limit-per-minute: 30
+      automatic:
+        enabled: ${TAX_AUTOMATIC_CHECK_ENABLED:true}
+        delay-ms: 3000
   matching:
     advisory:
       enabled: ${AI_ADVISORY_ENABLED:false}

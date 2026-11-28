@@ -5,6 +5,8 @@ import { SharedProfileView } from './SharedProfileView';
 import { useWorkflowCommand } from './useWorkflowCommand';
 import { useSharedProfile } from './useSharedProfile';
 import { useCandidateVisibility } from './useCandidateVisibility';
+import { WorkflowDetailDialog } from '../ui/WorkflowDetailDialog';
+import { recordCard } from '../ui/recordRow';
 
 export function EnterpriseCandidateCard({ org, item, number, changed, locked, markPending, expanded, onToggle }: {
   org: string; item: EnterpriseProposal; number: number; changed: (notice: string) => void;
@@ -44,12 +46,9 @@ export function EnterpriseCandidateCard({ org, item, number, changed, locked, ma
   const decide = (decision: 'ACCEPT' | 'DECLINE') => command.submit(`/enterprise/proposals/${item.proposalItemId}/decision`, 'PATCH',
     { expectedVersion: item.version, decision, ...(decision === 'DECLINE' ? { reasonCode: reason } : {}) });
 
-  return <article ref={cardRef} className={'proposal-card enterprise-candidate-card candidate-state-' + item.state.toLowerCase() + (expanded ? ' is-expanded' : ' is-collapsed')}>
-    <header className="cooperation-demand-title candidate-card-header" onClick={event => {
-      if (locked || command.blocked || window.getSelection()?.toString().trim()) return;
-      if (event.target instanceof Element && event.target.closest('button, a, input, select, textarea, label')) return;
-      onToggle();
-    }}>
+  return <article ref={cardRef} className={'proposal-card enterprise-candidate-card candidate-state-' + item.state.toLowerCase() + (expanded ? ' is-expanded' : ' is-collapsed')}
+    {...recordCard(onToggle, locked || command.blocked || expanded)}>
+    <header className="cooperation-demand-title candidate-card-header">
       <div className="candidate-identity"><span className="candidate-avatar" aria-hidden="true">{initials || <Icon name="user" size={24} />}</span>
         <div><h4>{name || `Ứng viên ${number}`}</h4>{(expanded || !name) && <p>{identityNote}</p>}</div>
       </div>
@@ -59,7 +58,10 @@ export function EnterpriseCandidateCard({ org, item, number, changed, locked, ma
       <button type="button" className="secondary candidate-details-toggle" aria-expanded={expanded} aria-controls={detailsId}
         disabled={locked || command.blocked} onClick={onToggle}>{expanded ? 'Thu gọn hồ sơ' : 'Xem hồ sơ'}<Icon name="chevron-down" size={16} /></button>
     </header>
-    <div id={detailsId} className="candidate-expanded-content" hidden={!expanded}>{expanded && <>
+    {expanded && <WorkflowDetailDialog label={name ? 'Hồ sơ ứng viên ' + name : `Hồ sơ ứng viên ${number}`} blocked={locked || command.blocked} onClose={onToggle}>
+    <header className="candidate-dialog-header"><h3>{name || `Ứng viên ${number}`}</h3>
+      <button type="button" className="secondary" aria-expanded="true" aria-controls={detailsId} disabled={locked || command.blocked} onClick={onToggle}><Icon name="close" size={16} />Thu gọn hồ sơ</button></header>
+    <div id={detailsId} className="candidate-expanded-content">
     <Notice message={fileError || error || command.message} tone="error" />
     {profile && <SharedProfileView profile={profile} hideDisplayName={!!name} files={{ org, proposalItemId: item.proposalItemId,
       denied: message => {setFileError(message);clear();setUnavailable(true);} }} />}
@@ -84,6 +86,6 @@ export function EnterpriseCandidateCard({ org, item, number, changed, locked, ma
       </fieldset>
     </footer>}
     {item.state === 'ENTERPRISE_ACCEPTED' && <p className="candidate-next-step"><Icon name="check-circle" size={18} />Đã đồng ý tiếp nhận. Nhà trường sẽ thực hiện bước chốt thực tập.</p>}
-    </>}</div>
+    </div></WorkflowDetailDialog>}
   </article>;
 }

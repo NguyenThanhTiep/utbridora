@@ -1,0 +1,80 @@
+.tax-lookup-field { min-width: 0; }
+.tax-lookup-section { display: grid; gap: 14px; min-width: 0; }
+#root .enterprise-verification-editor .cooperation-form-grid { align-items: start; }
+#root .enterprise-verification-editor .cooperation-form-grid > label {
+  align-self: start; align-content: start; margin: 0; gap: 8px; line-height: 1.5;
+}
+#root .enterprise-verification-editor .tax-lookup-field {
+  display: grid; align-self: start; align-content: start; gap: 8px;
+}
+#root .enterprise-verification-editor .tax-lookup-field > label { margin: 0; line-height: 1.5; }
+#root .enterprise-verification-editor .tax-lookup-control {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; min-width: 0;
+}
+#root .enterprise-verification-editor :is(.cooperation-form-grid input, select, .select-trigger) {
+  height: 48px; min-height: 48px; margin: 0; padding: 12px 14px; box-sizing: border-box;
+}
+#root .enterprise-verification-editor .tax-lookup-control > button {
+  height: 48px; min-height: 48px; margin: 0; padding: 10px 16px; white-space: nowrap;
+}
+.tax-validation { margin: 0; color: #526a7a; font-size: 14px; line-height: 1.6; }
+.tax-validation.is-warning { color: #99620e; }
+.tax-lookup-preview, .tax-verdict { display: grid; gap: 12px; margin-top: 0; padding: 18px; border: 1px solid var(--tax-border, #dfe7ef); border-radius: 12px; background: var(--tax-bg, #f8fafc); color: var(--tax-ink, #475569); overflow-wrap: anywhere; }
+:is(.tax-lookup-preview, .tax-verdict) p { margin: 0; line-height: 1.6; }
+.tax-tone-success { --tax-bg: var(--saas-teal-soft, #edf9f4); --tax-border: #bce7d5; --tax-ink: var(--saas-teal-hover, #087b68); }
+.tax-tone-warning { --tax-bg: #fff8eb; --tax-border: #f3d79e; --tax-ink: #99620e; }
+.tax-tone-danger { --tax-bg: #fff3f3; --tax-border: #f3c5c5; --tax-ink: #a33a3a; }
+.tax-tone-neutral { --tax-bg: #f8fafc; --tax-border: #dfe7ef; --tax-ink: #475569; }
+.tax-assessment { display: grid; min-width: 0; gap: 14px; padding-bottom: 22px; border-bottom: 1px solid #dfe7ef; }
+.tax-assessment-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+.tax-assessment-heading h4 { margin: 0; color: #0f172a; font-size: 16px; }
+.tax-assessment-heading > div { min-width: 0; }
+.tax-assessment .tax-section-hint { margin: 5px 0 0; color: #526a7a; font-size: 14px; line-height: 1.6; }
+.tax-result-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-width: 0; }
+.tax-result-heading > strong { flex: 1 1 140px; min-width: 0; font-size: 16px; line-height: 1.5; }
+.tax-result-icon { display: grid; place-items: center; flex: 0 0 34px; width: 34px; height: 34px; border-radius: 10px; background: color-mix(in srgb, currentColor 9%, transparent); }
+.tax-result-badge { flex: none; max-width: 100%; padding: 4px 10px; border: 1px solid var(--tax-border); border-radius: 999px; background: var(--surface, #fff); font-size: 13px; font-weight: 600; line-height: 1.5; }
+.tax-result-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px 24px; margin: 0; padding: 14px 0; border-block: 1px solid var(--tax-border); }
+.tax-result-fields > div { min-width: 0; }
+.tax-result-fields dt { margin-bottom: 4px; color: #526a7a; font-size: 13px; }
+.tax-result-fields dd { margin: 0; color: var(--saas-ink, var(--ink, #142f40)); font-size: 15px; font-weight: 550; line-height: 1.65; overflow-wrap: anywhere; }
+.tax-apply-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 18px; }
+.tax-apply-row > p { flex: 1 1 240px; font-size: 14px; }
+.tax-apply-row > button { flex: none; max-width: 100%; }
+.tax-source-meta { display: flex; flex-wrap: wrap; gap: 4px 18px; color: #526a7a; font-size: 13px; line-height: 1.6; }
+.tax-source-meta > * { min-width: 0; overflow-wrap: anywhere; }
+.tax-source-meta > span { font-weight: 600; }
+.tax-result-details { min-width: 0; padding-top: 10px; border-top: 1px solid var(--tax-border); font-size: 14px; line-height: 1.6; }
+.tax-result-details > summary { width: fit-content; max-width: 100%; cursor: pointer; font-weight: 600; border-radius: 4px; }
+.tax-result-details > summary:focus-visible { outline: 2px solid var(--brand, #0b927c); outline-offset: 4px; }
+.tax-result-details ul { margin: 8px 0 0; padding-left: 20px; }
+.tax-result-details li + li { margin-top: 5px; }
+.tax-lookup-section .tax-review-note, .tax-assessment > .tax-review-note { margin: 0; color: #526a7a; font-size: 13px; line-height: 1.6; }
+.tax-lookup-section .tax-review-note { padding-top: 10px; border-top: 1px solid var(--tax-border); }
+.tax-comparison .tax-match-label { margin-top: 5px; color: #087b68; font-size: 12px; font-weight: 500; }
+.tax-comparison .tax-match-label.is-warning { color: #99620e; }
+.tax-assessment .tax-verdict { margin-top: 0; }
+.tax-verdict small { color: inherit; }
+.tax-assessment > button { justify-self: start; }
+.tax-assessment .tax-check-meta { margin: 0; color: #64788a; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.tax-comparison { min-width: 0; border: 1px solid #dfe7ef; border-radius: 10px; overflow: hidden; }
+.tax-comparison > [role="row"] { display: grid; grid-template-columns: minmax(130px, .7fr) minmax(0, 1fr) minmax(0, 1fr); border-bottom: 1px solid #dfe7ef; }
+.tax-comparison > [role="row"]:last-child { border-bottom: 0; }
+.tax-comparison [role="row"] > * { min-width: 0; padding: 12px; overflow-wrap: anywhere; line-height: 1.6; }
+.tax-comparison-head { background: #f1f5f9; color: #475569; font-size: 13px; font-weight: 600; }
+.tax-comparison .is-mismatch { background: #fff8eb; }
+@media (max-width: 700px) {
+  .tax-result-fields { grid-template-columns: minmax(0, 1fr); }
+  .tax-comparison > [role="row"] { grid-template-columns: minmax(0, 1fr); }
+  .tax-comparison .tax-comparison-head { display: none; }
+  .tax-comparison [role="cell"]::before { content: attr(data-label); display: block; color: #64788a; font-size: 12px; }
+  .tax-comparison [role="rowheader"] { padding-bottom: 0; }
+  .tax-assessment-heading button { max-width: 100%; }
+}
+@media (max-width: 480px) {
+  .tax-lookup-preview, .tax-assessment .tax-verdict { padding: 14px; }
+  .tax-result-heading .tax-result-badge { margin-left: 44px; }
+  .tax-apply-row > button { width: 100%; }
+  #root .enterprise-verification-editor .tax-lookup-control { grid-template-columns: minmax(0, 1fr); }
+  #root .enterprise-verification-editor .tax-lookup-control > button { width: 100%; }
+}

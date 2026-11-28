@@ -25,6 +25,7 @@ export function EnterpriseCooperationSummary({ detail, schoolName, busy, close }
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     heading.current?.focus({ preventScroll: true });
+    if (heading.current?.closest('dialog')) return;
     heading.current?.closest('article')?.scrollIntoView({ block: 'start',
       behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   }, []);

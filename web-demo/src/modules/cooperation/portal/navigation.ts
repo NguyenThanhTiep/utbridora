@@ -1,4 +1,4 @@
-export type PortalPage = 'matching' | 'overview' | 'students' | 'verifications' | 'demands' | 'statistics' | 'cooperations' | 'proposals' | 'placements' | 'notifications';
+export type PortalPage = 'matching' | 'overview' | 'students' | 'verifications' | 'demands' | 'statistics' | 'cooperations' | 'proposals' | 'placements' | 'notifications' | 'reports';
 export type PortalSide = 'school' | 'enterprise';
 
 const pages: { id: PortalPage; title: string; icon: string; schoolTitle?: string; enterpriseOnly?: boolean; schoolOnly?: boolean }[] = [
@@ -11,6 +11,7 @@ const pages: { id: PortalPage; title: string; icon: string; schoolTitle?: string
   { id: 'matching', title: 'Đối chiếu hồ sơ', icon: 'activity', schoolOnly: true },
   { id: 'proposals', title: 'Ứng viên đề xuất', schoolTitle: 'Đề xuất sinh viên', icon: 'users' },
   { id: 'placements', title: 'Tiếp nhận thực tập', icon: 'graduation' },
+  { id: 'reports', title: 'Thống kê đối chiếu', icon: 'activity', schoolOnly: true },
   { id: 'notifications', title: 'Thông báo', icon: 'bell' },
 ];
 

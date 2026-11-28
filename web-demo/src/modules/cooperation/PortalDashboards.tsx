@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { EmptyState, Icon, Notice } from '../../components';
 import type { CooperationRecord, VerificationRecord } from './WorkflowViews';
 import type { Demand } from './types';
@@ -8,6 +9,7 @@ import type { NotificationTarget } from './notifications/notificationService';
 import { useCooperationTitles } from './workflow/useCooperationTitles';
 import { SchoolOverviewCards } from './portal/SchoolOverviewCards';
 import { PortalStatusSummary } from './portal/PortalStatusSummary';
+import { recordRow } from './ui/recordRow';
 
 export function PortalDashboard({ side, organizationId, revision, demands, cooperations, verifications, navigate, openTask, notifications, termId = '' }: {
   organizationId: string; revision: number; termId?: string;
@@ -65,7 +67,7 @@ export function PortalDashboard({ side, organizationId, revision, demands, coope
     </div>
     {loading ? <p className="rc-loading-state" role="status">Đang tải công việc…</p> : tasks.length ? <div className="proposal-table"><table>
       <thead><tr><th>Nội dung</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
-      <tbody>{tasks.map(task => <tr key={task.page + ':' + task.id} className={!school ? 'enterprise-task' : undefined}>
+      <tbody>{tasks.map(task => <tr key={task.page + ':' + task.id} className={!school ? 'enterprise-task' : undefined} {...recordRow(() => openTask(task.target))}>
         <td>
           <div className="school-task-item">
             <span className={'school-task-type-icon is-' + task.page} aria-hidden="true">
@@ -112,10 +114,10 @@ export function PortalDashboard({ side, organizationId, revision, demands, coope
       <button className="t5-btn-teal" onClick={() => navigate('notifications')}>Xem thông báo</button>
     </section>}
     {school ? <SchoolOverviewCards organizationId={organizationId} revision={revision} cooperations={cooperations} verifications={verifications} navigate={navigate} termId={termId} />
-      : <div className="portal-stat-grid">{cards.map(card => <button key={card.title} className={'portal-stat tone-' + card.tone}
-      onClick={() => navigate(card.page)}>
+      : <div className="portal-stat-grid">{cards.map((card, index) => <button key={card.title} className={'portal-stat tone-' + card.tone + (card.resource.loading ? ' is-sk-loading' : '')}
+      style={{ '--d': `${index * 65}ms` } as CSSProperties} onClick={() => navigate(card.page)}>
       <span className="portal-stat-title"><span>{card.title}</span><span className="portal-stat-icon" aria-hidden="true"><Icon name={card.icon} size={18} /></span></span>
-      <strong>{card.resource.loading || card.resource.error ? '—' : card.value}</strong>
+      <div className="u-sk-slot"><strong className="u-sk-real">{card.resource.loading || card.resource.error ? '—' : card.value}</strong><i className="u-sk-ph u-sk-bar is-metric" aria-hidden="true" /></div>
       <small className="portal-stat-sub">{card.hint}</small>
       <span className="portal-stat-action">Xem chi tiết <Icon name="arrow-right" size={14} /></span>
     </button>)}</div>}

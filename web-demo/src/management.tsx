@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { api, send, type Audit, type History, type Me, type Organization, type Page, type User } from './api';
 import { askConfirm } from './confirm';
 import {
@@ -177,8 +177,8 @@ export function AdminOverview({ permissions, navigate }: { permissions: Set<stri
     <section className="admin-welcome"><div>
       <h2>Tổng quan Quản trị hệ thống</h2><p>Theo dõi tài khoản, tổ chức, danh mục và hoạt động trên nền tảng UT.Bridora.</p></div><span className="admin-welcome-icon"><Icon name="shield" size={44} /></span></section>
     <div className="section-heading"><h2 className="admin-section-title">TÌNH HÌNH TỔNG QUAN</h2><button className="secondary" onClick={() => setRevision(value => value + 1)} disabled={metrics.some(item => item.read.loading)}><Icon name="refresh" size={16} />Tải lại dữ liệu</button></div>
-    <div className="admin-metrics">{metrics.map((item, index) => <button key={item.title} className={'admin-metric metric-' + index} disabled={!item.allowed} onClick={() => navigate(item.screen)}>
-      <span className="admin-metric-heading"><b>{item.title}</b></span><span className="admin-metric-value"><strong>{!item.read.loading && !item.read.error && item.read.data ? item.read.data.totalElements.toLocaleString('vi-VN') : '—'}</strong><span>{item.icon}</span></span>
+    <div className="admin-metrics">{metrics.map((item, index) => <button key={item.title} className={'admin-metric metric-' + index + (item.read.loading ? ' is-sk-loading' : '')} style={{ '--d': `${index * 65}ms` } as CSSProperties} disabled={!item.allowed} onClick={() => navigate(item.screen)}>
+      <span className="admin-metric-heading"><b>{item.title}</b></span><span className="admin-metric-value"><div className="u-sk-slot"><strong className="u-sk-real">{!item.read.loading && !item.read.error && item.read.data ? item.read.data.totalElements.toLocaleString('vi-VN') : '—'}</strong><i className="u-sk-ph u-sk-bar is-metric" aria-hidden="true" /></div><span>{item.icon}</span></span>
       <small className="admin-metric-description">{item.description}</small>
       <small>{!item.allowed ? 'Chưa có quyền xem' : item.read.error ? 'Chưa tải được dữ liệu' : item.read.loading ? 'Đang tải…' : 'Xem chi tiết →'}</small></button>)}</div>
     {metrics.some(item => item.read.error) && <Notice message="Một số số liệu chưa tải được. Bạn có thể tải lại hoặc mở màn chi tiết." tone="info" />}

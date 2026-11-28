@@ -27,7 +27,7 @@ export function NotificationScopeFields({ org, side, schoolOrgId, termId, change
       .then(rows => { if (!c.signal.aborted) setTerms(rows); }).catch(reason => { if (!c.signal.aborted) setError(workflowError(reason)); });
     return () => c.abort();
   }, [org, side, schoolOrgId]);
-  return <><div className="notification-scope" role="group" aria-label="Phạm vi thông báo"><div className="notification-scope-fields">
+  return <><div className="notification-scope" role="group" aria-label="Phạm vi dữ liệu"><div className="notification-scope-fields">
     {side === 'enterprise' && <div><label htmlFor={id + '-school'}>Trường theo dõi</label><select id={id + '-school'} value={schoolOrgId}
       onChange={event => change(event.target.value, '')}><option value="">Tất cả trường</option>
       {schools.map(school => <option key={school.schoolOrgId} value={school.schoolOrgId}>{school.name}</option>)}

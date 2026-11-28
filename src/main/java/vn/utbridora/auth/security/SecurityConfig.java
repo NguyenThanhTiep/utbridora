@@ -93,6 +93,7 @@ public class SecurityConfig {
                .requestMatchers(HttpMethod.GET,"/api/v1/matching/runs/*/details","/api/v1/enterprise/cooperations","/api/v1/school/cooperations","/api/v1/school/cooperations/*","/api/v1/school/cooperations/*/submission-history","/api/v1/school/cooperations/*/capacity","/api/v1/school/cooperations/*/proposals").authenticated()
                // DEV08 bổ sung: yêu cầu đăng nhập cho các route JSON, CSV và biểu đồ của release matching; MatchingService tiếp tục kiểm tra phạm vi tổ chức.
                .requestMatchers(HttpMethod.GET,"/api/v1/matching/runs/*/summary","/api/v1/matching/runs/*/summary.csv","/api/v1/matching/runs/*/summary.chart").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/school/matching-reports","/api/v1/school/matching-reports/export.csv").authenticated()
                .requestMatchers(HttpMethod.PATCH,"/api/v1/enterprise/cooperations/*/submit","/api/v1/enterprise/cooperations/*/reopen","/api/v1/school/cooperations/*/decision").authenticated()
                .requestMatchers(HttpMethod.DELETE,"/api/v1/school/delegations/*","/api/v1/t3/context-assignments/*").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/cooperations/*/proposals","/api/v1/enterprise/cooperations/*/proposal-batches","/api/v1/enterprise/proposals/*/profile","/api/v1/opportunities","/api/v1/opportunities/*").authenticated()
@@ -111,6 +112,8 @@ public class SecurityConfig {
                .requestMatchers(HttpMethod.PATCH,"/api/v1/t3/assignments/*/status","/api/v1/t3/reports/*").authenticated()
                .requestMatchers(HttpMethod.POST,"/api/v1/school/student-imports/preview","/api/v1/school/student-imports/*/confirm","/api/v1/school/student-imports/*/resume","/api/v1/school/student-imports/*/rows/*/resend").authenticated()
                .requestMatchers(HttpMethod.GET,"/api/v1/school/student-imports","/api/v1/school/student-imports/*","/api/v1/school/student-imports/*/rows","/api/v1/school/student-rosters").authenticated()
+               .requestMatchers(HttpMethod.GET,"/api/v1/enterprise/verifications/tax-lookup","/api/v1/school/verifications/*/tax-assessment","/api/v1/school/verifications/*/tax-check").authenticated()
+               .requestMatchers(HttpMethod.POST,"/api/v1/school/verifications/*/tax-check").authenticated()
                .anyRequest().denyAll())
            .exceptionHandling(ex->ex
                .authenticationEntryPoint((req,res,error)->{

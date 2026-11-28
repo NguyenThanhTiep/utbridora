@@ -1,5 +1,6 @@
 import { EmptyState, Icon } from '../../../components';
 import type { PortalNotification } from './notificationService';
+import { recordRow } from '../ui/recordRow';
 
 const categories: Record<PortalNotification['category'], { label: string; icon: string }> = {
   verification: { label: 'Xác minh', icon: 'shield' },
@@ -17,7 +18,7 @@ export function NotificationList({ items, read, loading, hasErrors, hasItems, op
     <thead><tr><th>Thông báo</th><th>Nội dung liên quan</th><th>Thời gian</th><th>Trạng thái / Hành động</th></tr></thead>
     <tbody>{items.map(item => {
       const isRead = read.has(item.id), category = categories[item.category];
-      return <tr key={item.id} className={isRead ? 'notification-read' : 'notification-unread'}>
+      return <tr key={item.id} className={isRead ? 'notification-read' : 'notification-unread'} {...recordRow(() => open(item), loading)}>
         <th scope="row" data-label="Thông báo"><div className="notification-message">
           <span className={'notification-message-icon tone-' + item.tone} aria-hidden="true"><Icon name={category.icon} size={20} /></span>
           <div className="notification-message-content"><div className="notification-message-meta"><span>{category.label}</span>

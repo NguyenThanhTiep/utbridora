@@ -19,6 +19,57 @@ async function setup(page: Page) {
       email: 'PRIVATE-EMAIL@example.test', displayName: 'PRIVATE-NAME', studentUserId: 'PRIVATE-IDENTITY' },
   } }));
 }
+for (const width of [1440, 390, 320]) test(`candidate cards open from the full surface and keyboard without submitting decisions at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 844 });await page.emulateMedia({ reducedMotion: 'reduce' });
+  await setup(page);
+  const commands: string[] = [];
+  page.on('request', request => { if (request.url().includes('/api/v1/') && request.method() !== 'GET') commands.push(request.url()); });
+  await page.goto(fixture);
+  const card = page.locator('.enterprise-candidate-card');
+  await expect(card).toHaveAttribute('data-record-card', 'ready');
+  await card.locator('.candidate-state-badge').click({ modifiers: ['Control'] });
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await card.click({ position: { x: 5, y: 5 } });
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  await dialog.getByText('JAVA', { exact: true }).click();
+  await expect(dialog).toBeVisible();
+  expect(commands).toEqual([]);
+  await page.keyboard.press('Escape');await expect(dialog).toHaveCount(0);await expect(card).toBeFocused();
+  for (const key of ['Enter', 'Space']) {
+    await card.press(key);await expect(dialog).toBeVisible();
+    await page.keyboard.press('Escape');await expect(dialog).toHaveCount(0);await expect(card).toBeFocused();
+  }
+  await card.getByRole('button', { name: 'Xem hồ sơ', exact: true }).click();
+  await expect(dialog).toBeVisible();await expect(dialog).toHaveCount(1);
+  await dialog.getByRole('button', { name: 'Thu gọn hồ sơ', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(commands).toEqual([]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+for (const width of [1440, 390, 320]) test(`shared candidate dossier uses an internally scrolling dialog at ${width}px`, async ({ page }, testInfo) => {
+  await page.setViewportSize({ width, height: 844 });await page.emulateMedia({ reducedMotion: 'reduce' });
+  await setup(page);
+  await page.route('**/api/v1/enterprise/proposals/proposal-1/profile', route => route.fulfill({ json: {
+    profileVersion: 2, validUntil: item.reservationUntil, allowedFields: ['displayName', 'email', 'skills', 'projects'], data: {
+      displayName: 'Nguyễn Thị Minh Anh', email: 'nguyen.thi.minh.anh@example.test',
+      skills: Array.from({ length: 12 }, () => ({ kind: 'CANONICAL', skill: { skillCode: 'JAVA', level: 3, yearsPractice: 2 } })),
+      projects: Array.from({ length: 8 }, (_, i) => ({ projectId: `project-${i}`, title: `Dự án ${i + 1}`, description: 'Mô tả công việc và kết quả thực hiện. '.repeat(20), role: 'Lập trình viên', skillCodes: ['JAVA'] })),
+    },
+  } }));
+  await page.goto(fixture);
+  const opener = page.getByRole('button', { name: 'Xem hồ sơ', exact: true });await opener.click();
+  const dialog = page.getByRole('dialog');await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('heading', { name: 'Nguyễn Thị Minh Anh', exact: true })).toBeVisible();
+  await expect(dialog.getByText('Dự án 1', { exact: true })).toBeVisible();
+  expect(await dialog.evaluate(node => node.scrollHeight > node.clientHeight)).toBe(true);
+  expect(await dialog.evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath(`candidate-dossier-${width}.png`) });
+  await page.keyboard.press('Escape');await expect(dialog).toHaveCount(0);await expect(opener).toBeFocused();
+});
+
 test('enterprise sees only whitelist fields and acceptance updates the card', async ({ page }) => {
   await setup(page);
   await page.route('**/api/v1/enterprise/proposals/proposal-1/decision', async route => {
@@ -28,9 +79,9 @@ test('enterprise sees only whitelist fields and acceptance updates the card', as
     await page.route('**/api/v1/enterprise/cooperations/coop-1/proposals?*', r => r.fulfill({ json: pageOf([{ ...item, state: 'ENTERPRISE_ACCEPTED', version: 5 }]) }));
     await route.fulfill({ json: { ...item, state: 'ENTERPRISE_ACCEPTED', version: 5 } });
   });
-  await page.goto(fixture);
+  await page.goto(fixture);await page.getByRole('button', { name: 'Xem hồ sơ', exact: true }).click();
   await expect(page.getByText('JAVA', { exact: false })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Ứng viên 1', exact: true })).toBeVisible();
+  await expect(page.getByRole('dialog').getByRole('heading', { name: 'Ứng viên 1', exact: true })).toBeVisible();
   await expect(page.getByText('Họ tên chưa được cấp quyền chia sẻ.', { exact: true })).toBeVisible();
   await expect(page.getByText(/PRIVATE-/)).toHaveCount(0);
   await page.getByRole('button', { name: 'Tiếp nhận thực tập' }).click();
@@ -44,8 +95,8 @@ test('candidate header clears authorized identity on blur and cannot reuse it af
     ? route.fulfill({ status: 403, json: { errorCode: 'ACCESS_DENIED' } })
     : route.fulfill({ json: { profileVersion: 2, validUntil: item.reservationUntil,
       allowedFields: ['displayName', 'majorCode'], data: { displayName: 'Nguyễn Minh An', majorCode: 'IT', email: 'PRIVATE-EMAIL@example.test' } } }));
-  await page.goto(fixture);
-  await expect(page.getByRole('heading', { name: 'Nguyễn Minh An', exact: true })).toBeVisible();
+  await page.goto(fixture);await page.getByRole('button', { name: 'Xem hồ sơ', exact: true }).click();
+  await expect(page.getByRole('dialog').getByRole('heading', { name: 'Nguyễn Minh An', exact: true })).toBeVisible();
   await expect(page.locator('.candidate-identity')).not.toContainText('Ứng viên 1');
   await expect(page.getByText('Hồ sơ sinh viên được chia sẻ', { exact: true })).toBeVisible();
   await expect(page.locator('.candidate-avatar')).toHaveText('MA');
@@ -55,7 +106,7 @@ test('candidate header clears authorized identity on blur and cannot reuse it af
   await expect(page.locator('.candidate-avatar')).not.toHaveText('MA');
   revoked = true;await page.evaluate(() => window.dispatchEvent(new Event('focus')));
   await expect(page.getByText(/hồ sơ đã ngừng được chia sẻ/)).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Ứng viên 1', exact: true })).toBeVisible();
+  await expect(page.getByRole('dialog').getByRole('heading', { name: 'Ứng viên 1', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Tiếp nhận thực tập', exact: true })).toBeDisabled();
   await expect(page.getByText('Nguyễn Minh An', { exact: true })).toHaveCount(0);
 });
@@ -65,7 +116,7 @@ test('candidate header and avatar disappear when the current shared projection e
   await page.route('**/api/v1/enterprise/proposals/proposal-1/profile', route => route.fulfill({ json: {
     profileVersion: 2, validUntil: '2026-11-10T10:00:03Z', allowedFields: ['displayName'], data: { displayName: 'Nguyễn Minh An' },
   } }));
-  await page.goto(fixture);await expect(page.getByRole('heading', { name: 'Nguyễn Minh An', exact: true })).toBeVisible();
+  await page.goto(fixture);await page.getByRole('button', { name: 'Xem hồ sơ', exact: true }).click();await expect(page.getByRole('dialog').getByRole('heading', { name: 'Nguyễn Minh An', exact: true })).toBeVisible();
   await page.clock.fastForward(3100);
   await expect(page.getByText('Nguyễn Minh An', { exact: true })).toHaveCount(0);
   await expect(page.locator('.candidate-avatar')).not.toHaveText('MA');
@@ -89,11 +140,13 @@ test('manual refresh fetches newly shared candidates and removes profiles after 
 
   visible = [item];
   await page.getByRole('button', { name: 'Tải lại ứng viên', exact: true }).click();
+  await page.getByRole('button', { name: 'Xem hồ sơ', exact: true }).click();
   await expect(page.getByText('JAVA', { exact: false })).toBeVisible();
   await expect(page.getByText('Chưa có hồ sơ được chia sẻ hợp lệ.')).toHaveCount(0);
   expect(reads).toBe(2);
 
   visible = [];
+  await page.getByRole('dialog').getByRole('button', { name: 'Thu gọn hồ sơ', exact: true }).click();
   await page.getByRole('button', { name: 'Tải lại ứng viên', exact: true }).click();
   await expect(page.getByText('Chưa có hồ sơ được chia sẻ hợp lệ.')).toBeVisible();
   await expect(page.getByText('JAVA', { exact: false })).toHaveCount(0);
@@ -107,7 +160,7 @@ test('decline requires a selected reason', async ({ page }) => {
     await page.route('**/api/v1/enterprise/cooperations/coop-1/proposals?*', r => r.fulfill({ json: pageOf([{ ...item, state: 'DECLINED', version: 5 }]) }));
     await route.fulfill({ json: { ...item, state: 'DECLINED', version: 5 } });
   });
-  await page.goto(fixture); await page.getByRole('button', { name: 'Từ chối', exact: true }).click();
+  await page.goto(fixture);await page.getByRole('button', { name: 'Xem hồ sơ', exact: true }).click(); await page.getByRole('button', { name: 'Từ chối', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Xác nhận từ chối' })).toBeDisabled();
   await page.getByLabel('Lý do từ chối').selectOption('SCHEDULE_CONFLICT');
   await page.getByRole('button', { name: 'Xác nhận từ chối' }).click();
@@ -133,7 +186,7 @@ test('enterprise state filter resets the accumulated candidates and requests the
   await expect(page.locator('.candidate-load-more')).toHaveCount(0);
 });
 
-test('scrolling appends candidate batches while retaining one open profile and hiding unshared fields', async ({ page }) => {
+test('candidate dialogs open one profile at a time and scrolling the closed list appends batches without unshared fields', async ({ page }) => {
   await setup(page);
   const requests: {page: number; size: number; state: string | null}[] = [];
   const candidates = Array.from({length: 23}, (_, n) => ({...item, proposalItemId: `proposal-${n + 1}`, state: n === 0 ? 'DECLINED' : 'SHARED'}));
@@ -156,16 +209,17 @@ test('scrolling appends candidate batches while retaining one open profile and h
   await expect(cards.nth(2).getByRole('heading', {name: 'Sinh viên 3', exact: true})).toBeVisible();
   await cards.nth(2).getByRole('button', {name: 'Xem hồ sơ', exact: true}).click();
   await expect(page.locator('.proposal-profile')).toHaveCount(1);
-  await expect(cards.nth(2).getByRole('button', {name: 'Thu gọn hồ sơ', exact: true})).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('dialog').getByRole('button', {name: 'Thu gọn hồ sơ', exact: true})).toHaveAttribute('aria-expanded', 'true');
+  await page.getByRole('dialog').getByRole('button', {name: 'Thu gọn hồ sơ', exact: true}).click();
   await cards.nth(3).getByRole('heading', {name: 'Sinh viên 4', exact: true}).click();
   await expect(cards.nth(2).locator('.proposal-profile')).toHaveCount(0);
   await expect(cards.nth(3).locator('.proposal-profile')).toHaveCount(1);
   await expect(page.getByText('PRIVATE@example.test', {exact: true})).toHaveCount(0);
+  await page.getByRole('dialog').getByRole('button', {name: 'Thu gọn hồ sơ', exact: true}).click();
   await page.locator('.candidate-load-more').scrollIntoViewIfNeeded();
   await expect(cards).toHaveCount(20);
   expect(requests.at(-1)).toEqual({page: 1, size: 10, state: null});
-  await expect(cards.nth(3).locator('.proposal-profile')).toHaveCount(1);
-  await expect(page.locator('.proposal-profile')).toHaveCount(1);
+  await expect(page.locator('.proposal-profile')).toHaveCount(0);
   await page.locator('.candidate-load-more').scrollIntoViewIfNeeded();
   await expect(cards).toHaveCount(23);
   await expect(page.locator('.candidate-load-more')).toHaveCount(0);
@@ -192,15 +246,16 @@ test('an uncertain decision keeps its profile mounted and blocks automatic or ma
   await cards.first().getByRole('button', {name: 'Xem hồ sơ', exact: true}).click();
   await cards.first().getByRole('button', {name: 'Tiếp nhận thực tập', exact: true}).click();
   await expect(page.getByRole('button', {name: 'Thử lại quyết định đã gửi', exact: true})).toBeVisible();
-  await expect(cards.first().getByRole('button', {name: 'Thu gọn hồ sơ', exact: true})).toBeDisabled();
-  await expect(cards.nth(1).getByRole('button', {name: 'Xem hồ sơ', exact: true})).toBeDisabled();
-  await cards.nth(1).getByRole('heading').click();
+  await expect(page.getByRole('dialog').getByRole('button', {name: 'Thu gọn hồ sơ', exact: true})).toBeDisabled();
+  await expect(cards.nth(1).getByRole('button', {name: 'Xem hồ sơ', exact: true, includeHidden: true})).toBeDisabled();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toBeVisible();
   await expect(cards.first().locator('.proposal-profile')).toBeVisible();
   await expect(cards.nth(1).locator('.proposal-profile')).toHaveCount(0);
   await page.locator('.candidate-load-more').scrollIntoViewIfNeeded();
-  await expect(page.getByRole('button', {name: 'Tải thêm ứng viên', exact: true})).toBeDisabled();
+  await expect(page.getByRole('button', {name: 'Tải thêm ứng viên', exact: true, includeHidden: true})).toBeDisabled();
   await expect(cards).toHaveCount(10);
-  await expect(page.getByRole('combobox', {name: 'Lọc trạng thái ứng viên', exact: true})).toBeDisabled();
+  await expect(page.getByRole('combobox', {name: 'Lọc trạng thái ứng viên', exact: true, includeHidden: true})).toBeDisabled();
 });
 
 test('loading more retries the same failed page, deduplicates rows and works without IntersectionObserver', async ({ page }) => {
@@ -218,12 +273,15 @@ test('loading more retries the same failed page, deduplicates rows and works wit
   const cards = page.locator('.enterprise-candidate-card');
   await expect(cards).toHaveCount(10);
   await cards.first().getByRole('button', {name: 'Xem hồ sơ', exact: true}).click();
+  await expect(cards.first().locator('.proposal-profile')).toHaveCount(1);
+  await page.getByRole('dialog').getByRole('button', {name: 'Thu gọn hồ sơ', exact: true}).click();
   await page.getByRole('button', {name: 'Tải thêm ứng viên', exact: true}).click();
   await expect(page.getByRole('button', {name: 'Thử tải thêm ứng viên', exact: true})).toBeVisible();
   await expect(cards).toHaveCount(10);
-  await expect(cards.first().locator('.proposal-profile')).toHaveCount(1);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.getByRole('button', {name: 'Thử tải thêm ứng viên', exact: true}).click();
   await expect(cards).toHaveCount(12);
+  await cards.first().getByRole('button', {name: 'Xem hồ sơ', exact: true}).click();
   await expect(cards.first().locator('.proposal-profile')).toHaveCount(1);
   await expect(page.locator('.candidate-list-end')).toHaveText('Đã hiển thị tất cả 12 ứng viên.');
   expect(requests).toEqual([0, 1, 1]);
@@ -287,7 +345,7 @@ for (const field of ['cv', 'evidence'] as const) test(`${field} download recheck
     downloads++;expect(r.request().method()).toBe('GET');expect(r.request().headers()['x-organization-id']).toBe('enterprise-1');
     return r.fulfill({contentType: 'application/pdf', body: pdf});
   });
-  await page.goto(fixture);const downloaded = page.waitForEvent('download');
+  await page.goto(fixture);await page.getByRole('button', { name: 'Xem hồ sơ', exact: true }).click();const downloaded = page.waitForEvent('download');
   await page.getByRole('button', {name: field === 'cv' ? 'Tải CV' : 'Tải minh chứng', exact: true}).click();
   expect((await downloaded).suggestedFilename()).toBe(`${fileId}.pdf`);expect(profileReads).toBeGreaterThanOrEqual(2);expect(downloads).toBe(1);
 });
@@ -298,7 +356,7 @@ test('revoked profile prevents a CV content request and an unavailable File API 
     ? r.fulfill({status: 403, json: {errorCode: 'ACCESS_DENIED'}})
     : r.fulfill({json: {profileVersion: 2, validUntil: item.reservationUntil, allowedFields: ['cv'], data: {cv: {fileId, contentType: 'application/pdf', sizeBytes: 100, scanStatus: 'CLEAN'}}}}));
   await page.route(`**/api/v1/files/${fileId}/content`, r => {contentRequests++;return r.fulfill({status: 503, json: {errorCode: 'DEPENDENCY_UNAVAILABLE'}});});
-  await page.goto(fixture);await page.getByRole('button', {name: 'Tải CV', exact: true}).click();
+  await page.goto(fixture);await page.getByRole('button', { name: 'Xem hồ sơ', exact: true }).click();await page.getByRole('button', {name: 'Tải CV', exact: true}).click();
   await expect(page.getByText('Chưa tải được tệp. Vui lòng thử lại sau.', {exact: true})).toBeVisible();expect(contentRequests).toBe(1);
   revoked = true;await page.getByRole('button', {name: 'Tải CV', exact: true}).click();
   await expect(page.getByRole('button', {name: 'Kiểm tra lại ứng viên', exact: true})).toBeVisible();
@@ -311,9 +369,9 @@ test('lost response retries the exact key and payload and blocks a second decisi
     if (attempts.length === 1) return route.abort('failed');
     await route.fulfill({ json: { ...item, state: 'ENTERPRISE_ACCEPTED', version: 5 } });
   });
-  await page.goto(fixture); await page.getByRole('button', { name: 'Tiếp nhận thực tập' }).click();
+  await page.goto(fixture);await page.getByRole('button', { name: 'Xem hồ sơ', exact: true }).click(); await page.getByRole('button', { name: 'Tiếp nhận thực tập' }).click();
   await expect(page.getByRole('button', { name: 'Tiếp nhận thực tập' })).toBeDisabled();
-  await expect(page.getByRole('button', { name: 'Tải lại ứng viên' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Tải lại ứng viên', includeHidden: true })).toBeDisabled();
   expect(await page.evaluate(() => window.dispatchEvent(new Event('demand-before-leave', {cancelable: true})))).toBe(false);
   await page.getByRole('button', { name: 'Thử lại quyết định đã gửi' }).click();
   await expect.poll(() => attempts.length).toBe(2); expect(attempts[0]).toEqual(attempts[1]); expect(attempts[0].key).toMatch(/^[0-9a-f-]{36}$/);
@@ -321,7 +379,7 @@ test('lost response retries the exact key and payload and blocks a second decisi
 test('version conflict clears the profile and forces a reload', async ({ page }) => {
   await setup(page);
   await page.route('**/api/v1/enterprise/proposals/proposal-1/decision', route => route.fulfill({ status: 409, json: { errorCode: 'VERSION_CONFLICT' } }));
-  await page.goto(fixture); await page.getByRole('button', { name: 'Tiếp nhận thực tập' }).click();
+  await page.goto(fixture);await page.getByRole('button', { name: 'Xem hồ sơ', exact: true }).click(); await page.getByRole('button', { name: 'Tiếp nhận thực tập' }).click();
   await expect(page.getByRole('button', { name: 'Kiểm tra lại ứng viên' })).toBeVisible();
   await expect(page.getByText('JAVA', { exact: false })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Tiếp nhận thực tập' })).toHaveCount(0);
@@ -329,10 +387,12 @@ test('version conflict clears the profile and forces a reload', async ({ page })
 test('expired reservation and revoked profile cannot be decided', async ({ page }) => {
   await setup(page);
   await page.route('**/api/v1/enterprise/cooperations/coop-1/proposals?*', route => route.fulfill({ json: pageOf([{ ...item, reservationUntil: '2026-11-09T00:00:00Z' }]) }));
-  await page.goto(fixture); await expect(page.getByRole('button', { name: 'Tiếp nhận thực tập' })).toBeDisabled();
+  await page.goto(fixture);await page.getByRole('button', { name: 'Xem hồ sơ', exact: true }).click(); await expect(page.getByRole('button', { name: 'Tiếp nhận thực tập' })).toBeDisabled();
   await expect(page.getByText('Đã hết thời gian giữ chỗ.')).toBeVisible();
   await page.route('**/api/v1/enterprise/proposals/proposal-1/profile', route => route.fulfill({ status: 403, json: { errorCode: 'ACCESS_DENIED' } }));
+  await page.getByRole('dialog').getByRole('button', { name: 'Thu gọn hồ sơ', exact: true }).click();
   await page.getByRole('button', { name: 'Tải lại ứng viên' }).click();
+  await page.getByRole('button', { name: 'Xem hồ sơ', exact: true }).click();
   await expect(page.getByText(/hồ sơ đã ngừng được chia sẻ/)).toBeVisible();
   await expect(page.getByText('JAVA', { exact: false })).toHaveCount(0);
 });
@@ -343,7 +403,7 @@ test('shared profile expires on screen and focus rechecks revoked authority', as
     profileVersion: 2, validUntil: '2026-11-10T10:00:03Z', allowedFields: ['phone', 'certificates'],
     data: {phone: '0901234567', certificates: [{certificateId: 'cert-1', title: 'Java Certificate', issuer: 'School', issuedOn: '2026-01-01', expiresOn: null}], email: 'PRIVATE-EMAIL'},
   }}));
-  await page.goto(fixture);await expect(page.getByText('Java Certificate', {exact: true})).toBeVisible();
+  await page.goto(fixture);await page.getByRole('button', { name: 'Xem hồ sơ', exact: true }).click();await expect(page.getByText('Java Certificate', {exact: true})).toBeVisible();
   await expect(page.getByText('0901234567', {exact: false})).toBeVisible();await expect(page.getByText('PRIVATE-EMAIL')).toHaveCount(0);
   await page.clock.fastForward(4000);await expect(page.getByText('Quyền xem hồ sơ đã hết hạn.', {exact: true})).toBeVisible();
   await expect(page.getByText('Java Certificate', {exact: true})).toHaveCount(0);
@@ -360,7 +420,7 @@ test('focus revalidation preserves an uncertain enterprise decision key', async 
     attempts.push({key: route.request().headers()['idempotency-key'], body: route.request().postData()});
     return attempts.length === 1 ? route.abort('failed') : route.fulfill({json: {...item, state: 'ENTERPRISE_ACCEPTED', version: 5}});
   });
-  await page.goto(fixture);await page.getByRole('button', {name: 'Tiếp nhận thực tập'}).click();
+  await page.goto(fixture);await page.getByRole('button', { name: 'Xem hồ sơ', exact: true }).click();await page.getByRole('button', {name: 'Tiếp nhận thực tập'}).click();
   await expect(page.getByRole('button', {name: 'Thử lại quyết định đã gửi'})).toBeVisible();
   await page.evaluate(() => {window.dispatchEvent(new Event('blur'));window.dispatchEvent(new Event('focus'));});
   await page.getByRole('button', {name: 'Thử lại quyết định đã gửi'}).click();

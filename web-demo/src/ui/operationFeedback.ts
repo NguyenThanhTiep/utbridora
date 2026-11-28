@@ -97,8 +97,10 @@ export function mutationFailed(operation: MutationFeedback, error: unknown) {
   const status = typeof error === 'object' && error !== null && 'status' in error ? Number(error.status) : null;
   const inProgress = typeof error === 'object' && error !== null && 'errorCode' in error && error.errorCode === 'REQUEST_IN_PROGRESS';
   const uncertain = status === null || status >= 500 || inProgress;
+  const verificationExists = typeof error === 'object' && error !== null && 'errorCode' in error && error.errorCode === 'VERIFICATION_ALREADY_OPEN';
   showFeedback({ key: operation.key, tone: uncertain ? 'info' : 'error',
     title: uncertain ? 'Chưa xác nhận được kết quả' : 'Chưa thể hoàn tất thao tác',
     description: uncertain ? 'Giữ nội dung đang nhập và kiểm tra hướng dẫn tại biểu mẫu trước khi thử lại.'
+      : verificationExists ? 'Doanh nghiệp đã có hồ sơ xác minh tại trường này. Mở hồ sơ hiện có để xem trạng thái.'
       : operation.description + ' · Kiểm tra thông tin và hướng dẫn tại biểu mẫu để tiếp tục.' });
 }

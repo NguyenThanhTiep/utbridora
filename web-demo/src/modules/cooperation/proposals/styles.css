@@ -54,25 +54,52 @@
 .proposal-nomination input[type="checkbox"] { width: 20px; height: 20px; }
 .proposal-nomination > button, .proposal-placement > button { margin: 8px 8px 8px 0; }
 .proposal-nomination fieldset, .proposal-placement fieldset { min-width: 0; margin: 18px 0 0; padding: 16px 18px; border: 1px solid #d8e4ec; border-radius: 12px; background: #f9fcfd; }
-.proposal-placement > article {
+.proposal-placement > article, .placement-detail-dialog > article {
   margin: 16px 0; padding: 18px 20px; border: 1px solid #dce7ee; border-radius: 12px;
   background: #fbfdfe; transition: border-color .15s, box-shadow .15s;
 }
 .proposal-placement > article:hover { border-color: #bdd5df; box-shadow: 0 4px 14px rgba(20, 48, 64, .05); }
-.proposal-placement > article.state-pending_approval { border-left: 4px solid #f59e0b; }
-.proposal-placement > article.state-approved { border-left: 4px solid #0284c7; }
-.proposal-placement > article.state-active { border-left: 4px solid #10b981; }
-.proposal-placement > article.state-cancelled { border-left: 4px solid #ef4444; opacity: .88; }
-.proposal-placement > article.state-completed { border-left: 4px solid #8b5cf6; }
+:is(.proposal-placement, .placement-detail-dialog) > article.state-pending_approval { border-left: 4px solid #f59e0b; }
+:is(.proposal-placement, .placement-detail-dialog) > article.state-approved { border-left: 4px solid #0284c7; }
+:is(.proposal-placement, .placement-detail-dialog) > article.state-active { border-left: 4px solid #10b981; }
+:is(.proposal-placement, .placement-detail-dialog) > article.state-cancelled { border-left: 4px solid #ef4444; opacity: .88; }
+:is(.proposal-placement, .placement-detail-dialog) > article.state-completed { border-left: 4px solid #8b5cf6; }
 
 .placement-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.placement-header-actions { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.placement-modal-close { min-height: 32px; padding: 5px 12px; font-size: 12.5px; }
 .placement-title-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .placement-seq-badge {
   display: inline-flex; align-items: center; justify-content: center;
   padding: 3px 8px; border-radius: 6px; background: #eef3f6; color: #476072;
   font-size: 11px; font-weight: 700; letter-spacing: .5px;
 }
-.proposal-placement > article h5 { font-size: var(--text-md); color: var(--ink); margin: 0; }
+:is(.proposal-placement, .placement-detail-dialog) > article h5 { font-size: var(--text-md); color: var(--ink); margin: 0; }
+.placement-detail-dialog {
+  width: min(760px, calc(100% - 32px));
+  max-height: calc(100dvh - 48px);
+  margin: auto;
+  padding: 12px;
+  border: 1px solid #dce7ee;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 24px 80px #102f3d38;
+  overflow: auto;
+}
+.placement-detail-dialog::backdrop {
+  background: #102f3d66;
+  backdrop-filter: blur(3px);
+}
+.placement-detail-dialog[open] {
+  animation: auth-dialog-enter .2s ease-out;
+}
+.placement-detail-dialog > .placement-item-card {
+  margin: 0 !important;
+  border-radius: 14px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .placement-detail-dialog[open] { animation: none; }
+}
 
 .status-pill {
   display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px;

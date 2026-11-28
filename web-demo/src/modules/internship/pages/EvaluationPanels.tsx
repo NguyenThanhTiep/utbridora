@@ -9,6 +9,7 @@ import { CommandFeedback, useWorkflowCommand } from '../useWorkflowCommand';
 import { formatEntityShort } from '../displayLabels';
 import { validVersion, type ReportFile } from '../workflow';
 import { ReportEvidence } from './ReportEvidence';
+import { FileDropzone } from '../../../ui/FileDropzone';
 
 type Scope = { caseId: string; contextId?: string; denied: () => void };
 
@@ -119,10 +120,10 @@ function EvaluationUploads({ value, score, changed, denied, command, blocked }: 
     },{resourceType:'EVALUATION',purpose:'EVIDENCE'});
   }
   return <div className="stack t3-rubric-upload">
-    <label>Tệp minh chứng đánh giá<span className="t3-placement-file">
-      <input key={reset} aria-label="Tệp minh chứng đánh giá" type="file" accept=".pdf,.png,.jpg,.jpeg" onChange={e=>setFile(e.target.files?.[0] || null)}/>
-      <span className="t3-file-prompt" aria-hidden="true"><b>Kéo thả tệp hoặc chọn tệp</b><span>{file?.name || 'PDF, PNG, JPEG · Tối đa 10 MiB'}</span></span>
-    </span></label>
+    <FileDropzone key={reset} label="Tệp minh chứng đánh giá" aria-label="Tệp minh chứng đánh giá"
+      hint="PDF, PNG, JPEG · Tối đa 10 MiB" maxBytes={10*1024*1024} accept=".pdf,.png,.jpg,.jpeg" file={file}
+      disabled={blocked || score.evidenceFileIds.length >= 20} state={command.busy ? 'processing' : 'selected'}
+      onChange={e=>setFile(e.target.files?.[0] || null)}/>
     <small>Tối đa 20 tệp mỗi tiêu chí. Lưu đánh giá sau khi tải lên.</small>
     <button type="button" className="secondary" disabled={blocked || !valid || score.evidenceFileIds.length>=20} onClick={upload}>Tải tệp đánh giá</button>
   </div>;

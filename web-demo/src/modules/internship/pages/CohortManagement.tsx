@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Cohort, WorkspaceAssignment, InternshipGroup } from '../types';
+import { PagerNav } from '../../../ui/PagerNav';
+import { FileDropzone } from '../../../ui/FileDropzone';
 import { CommandFeedback, useWorkflowCommand } from '../useWorkflowCommand';
 import { uuidPattern, validVersion } from '../workflow';
 
@@ -39,14 +41,17 @@ export function CohortManagement({assignment,cohort,changed,denied,fileImportOnl
           if(value.cohortVersion!==cohort.version || !uuidPattern.test(value.previewId) || !/^[a-f0-9]{64}$/.test(value.fileHash) || !Array.isArray(value.rows) || value.rows.length>1000 || value.rows.some(r=>!Number.isInteger(r.rowNo) || !['VALID','INVALID'].includes(r.status) || r.status==='VALID' && (!r.placementId || !uuidPattern.test(r.placementId)))){denied();return;}
           setPreview(value);setSelected(new Set());setPage(0);
         });
-      }}><fieldset disabled={blocked || !!result}><label>Tệp danh sách Placement<span className="t3-placement-file"><input type="file" aria-label="Tệp danh sách Placement" accept=".csv,.xlsx" onChange={e=>{const next=e.target.files?.[0] || null;setFile(next);setPreview(null);setSelected(new Set());setMessage(next && next.size>5*1024*1024?'Tệp vượt quá 5 MiB.':'');}}/><span aria-hidden="true" className="t3-file-prompt"><b>Kéo thả tệp hoặc chọn tệp</b><span>{file?.name || 'CSV hoặc XLSX · Tối đa 5 MiB'}</span></span></span></label>
+      }}><fieldset disabled={blocked || !!result}><FileDropzone label="Tệp danh sách Placement" aria-label="Tệp danh sách Placement"
+        hint="CSV hoặc XLSX · Tối đa 5 MiB" maxBytes={5*1024*1024} accept=".csv,.xlsx" file={file}
+        state={command.busy ? 'processing' : 'selected'} disabled={blocked || !!result}
+        onChange={e=>{const next=e.target.files?.[0] || null;setFile(next);setPreview(null);setSelected(new Set());setMessage(next && next.size>5*1024*1024?'Tệp vượt quá 5 MiB.':'');}}/>
         <button disabled={!file || file.size>5*1024*1024 || !validVersion(cohort.version)}>Xem trước danh sách tiếp nhận</button></fieldset></form>
       {preview && <div className="stack"><p>{validIds.length} dòng hợp lệ / {preview.rows.length} dòng. Hết hạn: {new Date(preview.expiresAt).toLocaleString('vi-VN')}.</p>
         <fieldset disabled={blocked}><label><input type="checkbox" checked={validIds.length>0 && validIds.every(id=>selected.has(id))} onChange={e=>setSelected(new Set(e.target.checked?validIds:[]))}/>Chọn tất cả dòng hợp lệ</label>
           <div className="t3-table-scroll"><table><caption>Kết quả kiểm tra danh sách Placement</caption><thead><tr><th>Chọn</th><th>Dòng</th><th>Placement</th><th>Kết quả</th></tr></thead><tbody>{rows.map(r=><tr key={r.rowNo}>
             <td><input type="checkbox" aria-label={'Chọn dòng '+r.rowNo} disabled={r.status!=='VALID'} checked={!!r.placementId && selected.has(r.placementId)} onChange={e=>setSelected(old=>{const next=new Set(old);if(r.placementId){if(e.target.checked)next.add(r.placementId);else next.delete(r.placementId);}return next;})}/></td>
             <td>{r.rowNo}</td><td><code>{r.placementId || '—'}</code></td><td><span className="t3-preview-result" data-valid={r.status === 'VALID'}>{r.status==='VALID'?'Hợp lệ':rowErrors[r.errorCode || ''] || 'Không hợp lệ'}</span></td></tr>)}</tbody></table></div>
-          <div className="button-row"><button type="button" className="secondary" disabled={page===0} onClick={()=>setPage(n=>n-1)}>Trang trước</button><span>Trang {page+1}/{Math.max(1,Math.ceil(preview.rows.length/25))}</span><button type="button" className="secondary" disabled={(page+1)*25>=preview.rows.length} onClick={()=>setPage(n=>n+1)}>Trang sau</button></div>
+          <PagerNav page={page} totalPages={Math.ceil(preview.rows.length / 25)} totalElements={preview.rows.length} unitLabel="dòng" prevLabel="Trang trước" nextLabel="Trang sau" ariaLabel="Phân trang xem trước danh sách" onChange={setPage} />
           <button disabled={selected.size===0} onClick={()=>command.run<Batch>('/t3/cohorts/'+cohort.cohortId+'/members:batch',{expectedVersion:cohort.version,placementIds:[...selected].sort(),previewId:preview.previewId,fileHash:preview.fileHash},value=>{
             if(value.cohortId!==cohort.cohortId || !validVersion(value.version)){denied();return;}setResult(value);setPreview(null);setSelected(new Set());setMessage('Đã xử lý danh sách. Tải lại đợt để nhận phiên bản mới trước thao tác tiếp.');
           })}>Xác nhận tiếp nhận {selected.size} Placement</button></fieldset></div>}

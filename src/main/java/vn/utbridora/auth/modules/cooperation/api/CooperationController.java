@@ -31,7 +31,7 @@ public class CooperationController {
     @PatchMapping("/school/cooperations/{id}/decision")
     public CooperationDto decision(Authentication a,@RequestHeader("X-Organization-Id") String org,@PathVariable String id,@RequestHeader("Idempotency-Key") String key,@RequestBody String data) {return service.decide(a,org,id,key,body(data,Decision.class));}
     @GetMapping("/{side:school|enterprise}/cooperations")
-    public Page<CooperationDto> list(Authentication a,@RequestHeader("X-Organization-Id") String org,@PathVariable String side,@RequestParam(required=false) String termId,@RequestParam(required=false) String state,@RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="25") int size) {return service.list(a,org,side.equals("school"),termId,state,page,size);}
+    public Page<CooperationDto> list(Authentication a,@RequestHeader("X-Organization-Id") String org,@PathVariable String side,@RequestParam(required=false) String termId,@RequestParam(required=false) String state,@RequestParam(required=false) String schoolOrgId,@RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="25") int size) {return service.list(a,org,side.equals("school"),termId,state,page,size,schoolOrgId);}
     @GetMapping("/school/cooperations/{id}/submission-history")
     public Page<SubmissionHistory> history(Authentication a,@RequestHeader("X-Organization-Id") String org,@PathVariable String id,@RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="25") int size) {return service.history(a,org,id,page,size);}
     @GetMapping("/{side:school|enterprise}/cooperations/{id}")

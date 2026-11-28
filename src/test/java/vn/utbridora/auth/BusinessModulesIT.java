@@ -19,7 +19,8 @@ import vn.utbridora.auth.user.*;
 import vn.utbridora.auth.organization.*;
 
 /** Real sessions, production filter chain, named TAX grants, Flyway and MySQL transactions. */
-@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT,properties={"app.bootstrap.admin.email=","app.bootstrap.admin.password="})
+@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT,properties={"app.bootstrap.admin.email=","app.bootstrap.admin.password=",
+    "app.cooperation.tax-verification.mode=mock","app.cooperation.tax-verification.automatic.initial-delay-ms=3600000"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class BusinessModulesIT {
     static final MySQLContainer<?> MYSQL=new MySQLContainer<>("mysql:8.4").withPassword(UUID.randomUUID().toString());
@@ -35,6 +36,8 @@ class BusinessModulesIT {
     @Autowired vn.utbridora.auth.modules.cooperation.persistence.TermRepository terms;
     @Autowired PasswordEncoder encoder;
     @Autowired vn.utbridora.auth.modules.cooperation.port.OrganizationSchoolVerificationPort verificationPort;
+    @Autowired vn.utbridora.auth.modules.cooperation.persistence.VerificationTaxCheckStore taxChecks;
+    @Autowired vn.utbridora.auth.modules.cooperation.application.VerificationTaxCheckWorker taxWorker;
     String password="Test-"+UUID.randomUUID(),hash;
     UserAccount editor,admin,student;
     @BeforeAll void hash() {hash=encoder.encode(password);}
@@ -162,6 +165,139 @@ class BusinessModulesIT {
         assertEquals("Private company draft",JsonPath.read(received.body(),"$.data.registeredName"));
         var receivedList=s.reviewer.verify("GET","school/verifications?state=SUBMITTED",null,null);
         assertEquals(200,receivedList.statusCode());assertEquals(List.of(id),JsonPath.read(receivedList.body(),"$.content[*].verificationId"));
+    }
+    @Test void taxSidecarKeepsDraftPrivateAndUsesSubmittedSnapshotAfterEnterpriseEdits() throws Exception {
+        var s=verificationSetup(true);String id=createVerification(s);
+        var lookup=s.owner.verify("GET","enterprise/verifications/tax-lookup?taxCode=0101248141",null,null);
+        assertEquals(200,lookup.statusCode(),lookup.body());assertEquals("FOUND",JsonPath.read(lookup.body(),"$.lookupStatus"));
+        code(s.reviewer.verify("GET","school/verifications/"+id+"/tax-assessment",null,null),404,"RESOURCE_NOT_FOUND");
+        String file=evidence(s,id);var data=verificationInput(s.schoolId,List.of(file));
+        data.put("registrationCode","0101248141");data.put("registeredName",JsonPath.read(lookup.body(),"$.officialName"));data.put("address",JsonPath.read(lookup.body(),"$.officialAddress"));
+        assertEquals(200,s.owner.verify("PATCH","enterprise/verifications/"+id,Map.of("expectedVersion",1,"data",data),UUID.randomUUID().toString()).statusCode());
+        assertEquals(200,s.owner.verify("PATCH","enterprise/verifications/"+id+"/submit",Map.of("expectedVersion",2),UUID.randomUUID().toString()).statusCode());
+        var assessment=s.reviewer.verify("GET","school/verifications/"+id+"/tax-assessment",null,null);
+        assertEquals(200,assessment.statusCode(),assessment.body());assertEquals("MATCHED_ACTIVE",JsonPath.read(assessment.body(),"$.verdict"));
+        assertEquals(200,s.reviewer.verify("PATCH","school/verifications/"+id+"/decision",decision(3,"REQUEST_INFO",List.of("address")),UUID.randomUUID().toString()).statusCode());
+        data.put("registrationCode","0300000000");data.put("registeredName","UNSENT PRIVATE EDIT");
+        assertEquals(200,s.owner.verify("PATCH","enterprise/verifications/"+id,Map.of("expectedVersion",4,"data",data),UUID.randomUUID().toString()).statusCode());
+        assessment=s.reviewer.verify("GET","school/verifications/"+id+"/tax-assessment",null,null);
+        assertEquals(200,assessment.statusCode(),assessment.body());assertEquals("0101248141",JsonPath.read(assessment.body(),"$.rawRegistrationCode"));
+        assertEquals("MATCHED_ACTIVE",JsonPath.read(assessment.body(),"$.verdict"));assertFalse(assessment.body().contains("UNSENT PRIVATE EDIT"));
+        jdbc.update("UPDATE school_delegations SET active=false WHERE user_id=?",s.staff.id);
+        code(s.reviewer.verify("GET","school/verifications/"+id+"/tax-assessment",null,null),404,"RESOURCE_NOT_FOUND");
+        var outsider=login(student);outsider.organization=s.enterpriseId;
+        code(outsider.verify("GET","enterprise/verifications/tax-lookup?taxCode=0101248141",null,null),403,"ACCESS_DENIED");
+    }
+    @Test void submittedTaxCheckIsQueuedAtomicallyDeduplicatedAndReadableWithoutRepeatingLookup() throws Exception {
+        var s=verificationSetup(true);String id=createVerification(s),file=evidence(s,id);
+        var lookup=s.owner.verify("GET","enterprise/verifications/tax-lookup?taxCode=0101248141",null,null);
+        var data=verificationInput(s.schoolId,List.of(file));data.put("registrationCode","0101248141");
+        data.put("registeredName",JsonPath.read(lookup.body(),"$.officialName"));data.put("address",JsonPath.read(lookup.body(),"$.officialAddress"));
+        assertEquals(200,s.owner.verify("PATCH","enterprise/verifications/"+id,Map.of("expectedVersion",1,"data",data),UUID.randomUUID().toString()).statusCode());
+        String key=UUID.randomUUID().toString();var submit=s.owner.verify("PATCH","enterprise/verifications/"+id+"/submit",Map.of("expectedVersion",2),key);
+        assertEquals(200,submit.statusCode(),submit.body());
+        assertEquals("PENDING",jdbc.queryForObject("SELECT state FROM verification_tax_checks WHERE verification_id=?",String.class,id));
+        assertEquals(submit.body(),s.owner.verify("PATCH","enterprise/verifications/"+id+"/submit",Map.of("expectedVersion",2),key).body());
+        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM verification_tax_checks WHERE verification_id=?",Integer.class,id));
+        taxWorker.processPending();
+        var check=s.reviewer.verify("GET","school/verifications/"+id+"/tax-check",null,null);
+        assertEquals(200,check.statusCode(),check.body());assertEquals("COMPLETED",JsonPath.read(check.body(),"$.state"));
+        assertEquals("MATCHED_ACTIVE",JsonPath.read(check.body(),"$.assessment.verdict"));
+        assertEquals(1,(int)JsonPath.read(check.body(),"$.submissionNo"));assertEquals(1,(int)JsonPath.read(check.body(),"$.attemptCount"));
+        assertEquals(check.body(),s.reviewer.verify("GET","school/verifications/"+id+"/tax-check",null,null).body());
+        assertEquals("SUBMITTED",jdbc.queryForObject("SELECT state FROM enterprise_verifications WHERE id=?",String.class,id));
+        assertEquals(3L,jdbc.queryForObject("SELECT version FROM enterprise_verifications WHERE id=?",Long.class,id));
+        assertEquals(202,s.reviewer.verify("POST","school/verifications/"+id+"/tax-check",null,null).statusCode());
+        assertEquals("COMPLETED",jdbc.queryForObject("SELECT state FROM verification_tax_checks WHERE verification_id=?",String.class,id)); // cooldown
+        jdbc.update("UPDATE verification_tax_checks SET completed_at=DATE_SUB(UTC_TIMESTAMP(6),INTERVAL 31 SECOND) WHERE verification_id=?",id);
+        var refresh=s.reviewer.verify("POST","school/verifications/"+id+"/tax-check",null,null);
+        assertEquals(202,refresh.statusCode(),refresh.body());assertEquals("PENDING",JsonPath.read(refresh.body(),"$.state"));
+        taxWorker.processPending();
+        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM verification_tax_checks WHERE verification_id=?",Integer.class,id));
+    }
+    @Test void failedQueueInsertRollsBackSubmissionHistoryAndAllowsSafeCommandRetry() throws Exception {
+        var s=verificationSetup(true);String id=createVerification(s),file=evidence(s,id),key=UUID.randomUUID().toString();
+        assertEquals(200,s.owner.verify("PATCH","enterprise/verifications/"+id,Map.of("expectedVersion",1,"data",verificationInput(s.schoolId,List.of(file))),UUID.randomUUID().toString()).statusCode());
+        jdbc.execute("ALTER TABLE verification_tax_checks ADD CONSTRAINT test_tax_queue_failure CHECK(submission_no <> 1)");
+        try {
+            assertTrue(s.owner.verify("PATCH","enterprise/verifications/"+id+"/submit",Map.of("expectedVersion",2),key).statusCode()>=400);
+        } finally { jdbc.execute("ALTER TABLE verification_tax_checks DROP CHECK test_tax_queue_failure"); }
+        assertEquals("DRAFT",jdbc.queryForObject("SELECT state FROM enterprise_verifications WHERE id=?",String.class,id));
+        assertEquals(2L,jdbc.queryForObject("SELECT version FROM enterprise_verifications WHERE id=?",Long.class,id));
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM enterprise_verification_history WHERE verification_id=? AND to_state='SUBMITTED'",Integer.class,id));
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM verification_tax_checks",Integer.class));
+        assertEquals(200,s.owner.verify("PATCH","enterprise/verifications/"+id+"/submit",Map.of("expectedVersion",2),key).statusCode());
+        assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM verification_tax_checks WHERE verification_id=?",Integer.class,id));
+    }
+    @Test void taxChecksKeepEachSubmissionSeparateAndNeverExposeUnsentEditsOrDrafts() throws Exception {
+        var s=verificationSetup(true);String id=createVerification(s);
+        code(s.reviewer.verify("GET","school/verifications/"+id+"/tax-check",null,null),404,"RESOURCE_NOT_FOUND");
+        code(s.reviewer.verify("POST","school/verifications/"+id+"/tax-check",null,null),404,"RESOURCE_NOT_FOUND");
+        assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM verification_tax_checks",Integer.class));
+        String file=evidence(s,id);var data=verificationInput(s.schoolId,List.of(file));
+        assertEquals(200,s.owner.verify("PATCH","enterprise/verifications/"+id,Map.of("expectedVersion",1,"data",data),UUID.randomUUID().toString()).statusCode());
+        assertEquals(200,s.owner.verify("PATCH","enterprise/verifications/"+id+"/submit",Map.of("expectedVersion",2),UUID.randomUUID().toString()).statusCode());
+        taxWorker.processPending();
+        assertEquals(200,s.reviewer.verify("PATCH","school/verifications/"+id+"/decision",decision(3,"REQUEST_INFO",List.of("registeredName")),UUID.randomUUID().toString()).statusCode());
+        data.put("registeredName","UNSENT PRIVATE EDIT");data.put("registrationCode","0300000000");
+        assertEquals(200,s.owner.verify("PATCH","enterprise/verifications/"+id,Map.of("expectedVersion",4,"data",data),UUID.randomUUID().toString()).statusCode());
+        var before=s.reviewer.verify("GET","school/verifications/"+id+"/tax-check",null,null);
+        assertEquals(200,before.statusCode(),before.body());assertEquals("DEMO-123",JsonPath.read(before.body(),"$.assessment.rawRegistrationCode"));
+        assertFalse(before.body().contains("UNSENT PRIVATE EDIT"));
+        assertEquals(200,s.owner.verify("PATCH","enterprise/verifications/"+id+"/submit",Map.of("expectedVersion",5),UUID.randomUUID().toString()).statusCode());
+        assertEquals(2,jdbc.queryForObject("SELECT COUNT(*) FROM verification_tax_checks WHERE verification_id=?",Integer.class,id));
+        var pending=s.reviewer.verify("GET","school/verifications/"+id+"/tax-check",null,null);
+        assertEquals(2,(int)JsonPath.read(pending.body(),"$.submissionNo"));assertNull(JsonPath.read(pending.body(),"$.assessment"));
+        taxWorker.processPending();
+        var after=s.reviewer.verify("GET","school/verifications/"+id+"/tax-check",null,null);
+        assertEquals("INACTIVE_OR_INVALID",JsonPath.read(after.body(),"$.assessment.verdict"));
+        assertEquals("0300000000",JsonPath.read(after.body(),"$.assessment.rawRegistrationCode"));
+        var outsider=login(student);outsider.organization=s.schoolId;
+        code(outsider.verify("GET","school/verifications/"+id+"/tax-check",null,null),404,"RESOURCE_NOT_FOUND");
+        assertEquals(403,s.reviewer.send("POST","/api/v1/school/verifications/"+id+"/tax-check",null,null,false).statusCode());
+        jdbc.update("UPDATE school_delegations SET active=false WHERE user_id=?",s.staff.id);
+        code(s.reviewer.verify("GET","school/verifications/"+id+"/tax-check",null,null),404,"RESOURCE_NOT_FOUND");
+    }
+    @Test void expiredTaxLeaseIsRecoveredAndStaleWorkerCannotOverwriteReplacement() throws Exception {
+        var s=verificationSetup(true);String id=submitted(s);
+        var first=taxChecks.claim().orElseThrow();assertTrue(taxChecks.claim().isEmpty());
+        var json=new tools.jackson.databind.json.JsonMapper();
+        var assessment=json.readValue(s.reviewer.verify("GET","school/verifications/"+id+"/tax-assessment",null,null).body(),vn.utbridora.auth.modules.cooperation.api.TaxAssessmentView.class);
+        jdbc.update("UPDATE verification_tax_checks SET lease_until=DATE_SUB(UTC_TIMESTAMP(6),INTERVAL 1 SECOND) WHERE id=?",first.id());
+        var replacement=taxChecks.claim().orElseThrow();assertNotEquals(first.leaseToken(),replacement.leaseToken());
+        assertEquals(2,replacement.attemptCount());taxChecks.finish(first,assessment);
+        assertEquals("PROCESSING",jdbc.queryForObject("SELECT state FROM verification_tax_checks WHERE id=?",String.class,first.id()));
+        taxChecks.finish(replacement,assessment);
+        assertEquals("COMPLETED",jdbc.queryForObject("SELECT state FROM verification_tax_checks WHERE id=?",String.class,first.id()));
+    }
+    @Test void unavailableTaxProviderRetriesWithBackoffAndStopsAfterFourAttempts() throws Exception {
+        var s=verificationSetup(true);String id=submitted(s);
+        var json=new tools.jackson.databind.json.JsonMapper();
+        var tree=(tools.jackson.databind.node.ObjectNode)json.readTree(s.reviewer.verify("GET","school/verifications/"+id+"/tax-assessment",null,null).body());
+        tree.put("lookupStatus","UNAVAILABLE");
+        var offline=json.readValue(tree.toString(),vn.utbridora.auth.modules.cooperation.api.TaxAssessmentView.class);
+        for(int attempt=1;attempt<=4;attempt++) {
+            var job=taxChecks.claim().orElseThrow();assertEquals(attempt,job.attemptCount());taxChecks.finish(job,offline);
+            if(attempt<4) {
+                assertTrue(taxChecks.claim().isEmpty());
+                assertEquals("PENDING",jdbc.queryForObject("SELECT state FROM verification_tax_checks WHERE verification_id=?",String.class,id));
+                jdbc.update("UPDATE verification_tax_checks SET next_attempt_at=DATE_SUB(UTC_TIMESTAMP(6),INTERVAL 1 SECOND) WHERE verification_id=?",id);
+            }
+        }
+        assertEquals("FAILED",jdbc.queryForObject("SELECT state FROM verification_tax_checks WHERE verification_id=?",String.class,id));
+        assertTrue(taxChecks.claim().isEmpty());
+    }
+    @Test void taxStrictFlagRejectsSubmitButDoesNotRejectOrRewriteLegacyDrafts() throws Exception {
+        var s=verificationSetup(true);String id=createVerification(s),file=evidence(s,id);
+        var data=verificationInput(s.schoolId,List.of(file));
+        assertEquals(200,s.owner.verify("PATCH","enterprise/verifications/"+id,Map.of("expectedVersion",1,"data",data),UUID.randomUUID().toString()).statusCode());
+        var service=org.springframework.test.util.AopTestUtils.getUltimateTargetObject(verificationPort);
+        org.springframework.test.util.ReflectionTestUtils.setField(service,"strictSubmitValidation",true);
+        try {
+            code(s.owner.verify("PATCH","enterprise/verifications/"+id+"/submit",Map.of("expectedVersion",2),UUID.randomUUID().toString()),422,"VERIFICATION_DATA_INVALID");
+            assertEquals("DEMO-123",jdbc.queryForObject("SELECT registration_code FROM enterprise_verifications WHERE id=?",String.class,id));
+        } finally { org.springframework.test.util.ReflectionTestUtils.setField(service,"strictSubmitValidation",false); }
+        assertEquals(200,s.owner.verify("PATCH","enterprise/verifications/"+id+"/submit",Map.of("expectedVersion",2),UUID.randomUUID().toString()).statusCode());
     }
     @Test void verificationUsesCanonicalStatesReplayImmutableHistoryAndScopedReadPort() throws Exception {
         var s=verificationSetup(true);String id=submitted(s),path="school/verifications/"+id+"/decision",key=UUID.randomUUID().toString();

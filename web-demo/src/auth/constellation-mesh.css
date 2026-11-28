@@ -1,0 +1,168 @@
+/* Lucian UX/UI Prompt #341 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#341 */
+
+.u341 {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  overflow: hidden;
+  --u341-bg: radial-gradient(
+    120% 90% at 20% 0%,
+    color-mix(in srgb, var(--brand, #087f8c) 14%, var(--brand-light, #eaf7f5)),
+    color-mix(in srgb, var(--surface, #ffffff) 92%, var(--brand-light, #eaf7f5)) 68%
+  );
+  --u341-dot: var(--brand, #087f8c);
+  --u341-link-h: 176;
+  --u341-link-span: 14;
+  --u341-link-s: 74%;
+  --u341-link-l: 35%;
+  --u341-ptr: var(--brand-dark, #056670);
+  --u341-ptr-rgb: 5, 102, 112;
+  --u341-ct-bg: rgba(8, 127, 140, 0.11);
+  --u341-ct-line: rgba(8, 127, 140, 0.24);
+  --u341-ct-fg: var(--brand-dark, #056670);
+  --u341-focus: var(--brand, #087f8c);
+  background: var(--u341-bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .u341 {
+    --u341-bg: radial-gradient(
+      120% 90% at 20% 0%,
+      rgba(14, 72, 78, 0.92),
+      rgba(10, 44, 54, 0.96) 68%
+    );
+    --u341-dot: #e7f6f0;
+    --u341-link-h: 162;
+    --u341-link-span: 14;
+    --u341-link-s: 78%;
+    --u341-link-l: 68%;
+    --u341-ptr: #8cf2db;
+    --u341-ptr-rgb: 140, 242, 219;
+    --u341-ct-bg: rgba(11, 56, 63, 0.54);
+    --u341-ct-line: rgba(86, 218, 187, 0.28);
+    --u341-ct-fg: #b9eadb;
+    --u341-focus: #56dabb;
+  }
+}
+
+:root[data-theme="dark"] .u341,
+[data-theme="dark"] .u341,
+.u341[data-theme="dark"] {
+  --u341-bg: radial-gradient(
+    120% 90% at 20% 0%,
+    rgba(14, 72, 78, 0.92),
+    rgba(10, 44, 54, 0.96) 68%
+  );
+  --u341-dot: #e7f6f0;
+  --u341-link-h: 162;
+  --u341-link-span: 14;
+  --u341-link-s: 78%;
+  --u341-link-l: 68%;
+  --u341-ptr: #8cf2db;
+  --u341-ptr-rgb: 140, 242, 219;
+  --u341-ct-bg: rgba(11, 56, 63, 0.54);
+  --u341-ct-line: rgba(86, 218, 187, 0.28);
+  --u341-ct-fg: #b9eadb;
+  --u341-focus: #56dabb;
+}
+
+.u341.u341-in-story {
+  --u341-bg: transparent;
+  --u341-dot: #e7f6f0;
+  --u341-link-h: 162;
+  --u341-link-span: 14;
+  --u341-link-s: 78%;
+  --u341-link-l: 68%;
+  --u341-ptr: #8cf2db;
+  --u341-ptr-rgb: 140, 242, 219;
+  --u341-ct-bg: rgba(11, 56, 63, 0.54);
+  --u341-ct-line: rgba(86, 218, 187, 0.28);
+  --u341-ct-fg: #b9eadb;
+  --u341-focus: #56dabb;
+}
+
+.u341[data-theme="light"] {
+  --u341-bg: radial-gradient(
+    120% 90% at 20% 0%,
+    color-mix(in srgb, var(--brand, #087f8c) 14%, var(--brand-light, #eaf7f5)),
+    color-mix(in srgb, var(--surface, #ffffff) 92%, var(--brand-light, #eaf7f5)) 68%
+  );
+  --u341-dot: var(--brand, #087f8c);
+  --u341-link-h: 176;
+  --u341-link-span: 14;
+  --u341-link-s: 74%;
+  --u341-link-l: 35%;
+  --u341-ptr: var(--brand-dark, #056670);
+  --u341-ptr-rgb: 5, 102, 112;
+  --u341-ct-bg: rgba(8, 127, 140, 0.11);
+  --u341-ct-line: rgba(8, 127, 140, 0.24);
+  --u341-ct-fg: var(--brand-dark, #056670);
+  --u341-focus: var(--brand, #087f8c);
+}
+
+.u341.u341-in-story {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 0;
+}
+
+.u341-cv {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: crosshair;
+  border-radius: inherit;
+}
+
+.u341-cv:focus-visible {
+  outline: 2px solid var(--u341-focus);
+  outline-offset: -3px;
+}
+
+.u341-ct {
+  position: absolute;
+  left: 16px;
+  top: 14px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--u341-ct-line);
+  background: var(--u341-ct-bg);
+  color: var(--u341-ct-fg);
+  font: 700 11.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.01em;
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+  user-select: none;
+  z-index: 3;
+}
+
+.u341-in-story .u341-ct {
+  left: 20px;
+  top: 44px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+@media (max-width: 1100px) {
+  .u341-in-story .u341-ct {
+    left: auto;
+    right: 14px;
+    top: 17px;
+    padding: 3px 9px;
+    font-size: 10.5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .u341,
+  .u341 * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

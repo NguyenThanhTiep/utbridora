@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { EmptyState, Icon, LoadingState, Notice } from '../../../components';
+import { PagerNav } from '../../../ui/PagerNav';
 import { askConfirm } from '../../../confirm';
 import { formatDateDMY } from '../../../ui/dateFormat';
 import { listDemands } from '../api';
@@ -8,6 +9,8 @@ import { canLeaveDemand } from '../navigation';
 import { DemandEditor } from './DemandEditor';
 import { failureMessage } from './errors';
 import { DemandSummary } from './DemandSummary';
+import { WorkflowDetailDialog } from '../ui/WorkflowDetailDialog';
+import { recordRow } from '../ui/recordRow';
 import { DemandSkillSummary } from './DemandSkillSummary';
 import { useSchoolNames } from '../portal/useSchoolNames';
 import { api } from '../../../api';
@@ -15,10 +18,11 @@ import { newIdempotencyKey } from '../../student/api';
 import { DemandStatus, demandStatus } from './DemandStatus';
 import type { Resource } from '../portal/data';
 import type { CooperationRecord } from '../workflow/types';
+import { demandInScope } from '../portal/scope';
 import './demands.css';
 
-export function ScopedDemands({ organizationId, cooperations, onLoaded }: {
-  organizationId: string; cooperations: Resource<CooperationRecord>; onLoaded?: (items: Demand[]) => void;
+export function ScopedDemands({ organizationId, cooperations, onLoaded, schoolOrgId = '', termId = '' }: {
+  organizationId: string; cooperations: Resource<CooperationRecord>; onLoaded?: (items: Demand[]) => void; schoolOrgId?: string; termId?: string;
 }) {
   const [pageIndex, setPageIndex] = useState(0), [refresh, setRefresh] = useState(0);
   const [page, setPage] = useState<DemandPage | null>(null), [loading, setLoading] = useState(true);
@@ -94,8 +98,9 @@ export function ScopedDemands({ organizationId, cooperations, onLoaded }: {
     let active = true;
     const controller = new AbortController();
     setLoading(true); setListError(''); setPage(null); setPreviewId('');
-    void listDemands(organizationId, pageIndex, controller.signal, includeDeleted).then(result => {
+    void listDemands(organizationId, pageIndex, controller.signal, includeDeleted, { schoolOrgId, termId }).then(result => {
       if (active) {
+        if (result.content.some(row => row.enterpriseOrgId !== organizationId || !demandInScope(row, { schoolOrgId, termId }))) throw new Error('Nhu cầu không thuộc phạm vi đang chọn.');
         setPage(result);
         loadedRef.current?.(result.content);
       }
@@ -103,7 +108,7 @@ export function ScopedDemands({ organizationId, cooperations, onLoaded }: {
       if (active) setListError(failureMessage(error));
     }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; controller.abort(); };
-  }, [organizationId, pageIndex, refresh, includeDeleted]);
+  }, [organizationId, schoolOrgId, termId, pageIndex, refresh, includeDeleted]);
 
   const open = (record: Demand | null) => {
     if (!canLeaveDemand()) return;
@@ -168,18 +173,9 @@ export function ScopedDemands({ organizationId, cooperations, onLoaded }: {
             <thead><tr><th>Vị trí / nhu cầu</th><th>Trạng thái</th><th>Thời gian thực tập</th><th>Chỉ tiêu</th><th>Thao tác</th></tr></thead>
             <tbody>{visible.map(record => <tr key={record.demandId}
               className={'demand-clickable-row' + (previewId === record.demandId ? ' table-row-selected' : '')}
-              tabIndex={blocked ? -1 : 0} aria-expanded={previewId === record.demandId} aria-disabled={blocked || undefined}
+              {...recordRow(row => openPreview(record, row), blocked)} aria-expanded={previewId === record.demandId}
               aria-controls={previewId === record.demandId ? prefix + '-preview' : undefined}
-              onClick={event => {
-                if (event.target instanceof Element && event.target.closest('button, a, input, select, textarea, label, [role="button"]')) return;
-                const selection = window.getSelection();
-                if (selection && !selection.isCollapsed && event.currentTarget.contains(selection.anchorNode)) return;
-                openPreview(record, event.currentTarget);
-              }}
-              onKeyDown={event => {
-                if (event.target !== event.currentTarget || !['Enter', ' '].includes(event.key)) return;
-                event.preventDefault(); openPreview(record, event.currentTarget);
-              }}>
+              >
               <th scope="row" data-label="Vị trí / nhu cầu"><div className="demand-list-identity"><span className="demand-position-icon"><Icon name="briefcase" size={19} /></span><div>
                 <h3>{record.data.title}</h3><p className="demand-school-name">{schools[record.data.schoolOrgId] || 'Trường đối tác'}</p>
                 <DemandSkillSummary required={record.data.required.skills.length} preferred={record.data.preferred.length} />
@@ -203,21 +199,17 @@ export function ScopedDemands({ organizationId, cooperations, onLoaded }: {
             </tr>)}</tbody>
           </table>
         </div>}
-        {page.totalPages > 1 && <div className="pagination"><span className="pagination-summary">{page.totalElements} kết quả · Trang {page.page + 1}/{Math.max(1, page.totalPages)}</span>
-          <div className="pagination-buttons">
-            <button className="secondary" disabled={blocked || page.page === 0} onClick={() => setPageIndex(page.page - 1)}>Trước</button>
-            <button className="secondary" disabled={blocked || page.page + 1 >= page.totalPages} onClick={() => setPageIndex(page.page + 1)}>Sau</button>
-          </div>
-        </div>}
+        {page.totalPages > 1 && <PagerNav page={page.page} totalPages={page.totalPages} totalElements={page.totalElements} busy={blocked} onChange={setPageIndex} ariaLabel="Phân trang nhu cầu" />}
       </>}
     </section>
-    {preview && <DemandSummary key={preview.demandId + ':' + preview.version} id={prefix + '-preview'} demand={preview} schoolName={schools[preview.data.schoolOrgId]}
+    {preview && <WorkflowDetailDialog key={preview.demandId} label="Chi tiết nhu cầu thực tập" onClose={() => setPreviewId('')}>
+      <DemandSummary key={preview.demandId + ':' + preview.version} id={prefix + '-preview'} demand={preview} schoolName={schools[preview.data.schoolOrgId]}
       onClose={() => {
         setPreviewId('');
         if (previewOpener.current?.isConnected) previewOpener.current.focus();
         else document.getElementById(prefix + '-view-' + preview.demandId)?.focus();
-      }} />}
-    {editor && <DemandEditor key={editor.key} organizationId={organizationId} existing={editor.record}
+      }} /></WorkflowDetailDialog>}
+    {editor && <DemandEditor key={editor.key} organizationId={organizationId} existing={editor.record} schoolOrgId={schoolOrgId} termId={termId}
       onBusy={setSaving} onUnconfirmed={setUnconfirmed} onClose={() => { if (canLeaveDemand()) {setEditor(null);editorOpener.current?.focus();} }} onSaved={record => {
         setEditor(null); setUnconfirmed(false); setSuccess(`Đã lưu bản nháp “${record.data.title}”, phiên bản ${record.version}.`);
         setPageIndex(0); setRefresh(value => value + 1);

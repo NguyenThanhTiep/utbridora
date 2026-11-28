@@ -1,0 +1,9 @@
+#root :is(.portal-workspace, .delegation-workspace) tr[data-record-row="ready"],
+#root .enterprise-candidate-card[data-record-card="ready"] { cursor: pointer; }
+#root :is(.portal-workspace, .delegation-workspace) tr[data-record-row="ready"] > :is(td, th) { transition: background-color .16s ease; }
+#root :is(.portal-workspace, .delegation-workspace) tr[data-record-row="ready"]:hover > :is(td, th) { background-color: var(--saas-surface-hover, #f4fbf8); }
+#root :is(.portal-workspace, .delegation-workspace) tr[data-record-row="ready"]:focus-visible,
+#root .enterprise-candidate-card[data-record-card="ready"]:focus-visible { outline: 2px solid var(--saas-teal, #0b927c); outline-offset: -2px; }
+@media (prefers-reduced-motion: reduce) {
+  #root :is(.portal-workspace, .delegation-workspace) tr[data-record-row] > :is(td, th) { transition: none; }
+}

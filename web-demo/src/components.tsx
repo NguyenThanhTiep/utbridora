@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useId, useRef, useState, type InputHTMLAttributes, type ReactNode } from 'react';
 import type { Page } from './api';
-import { DateInput } from './ui/DateInput';
+import { DateInput, type DateInputRangeConfig } from './ui/DateInput';
+import { PagerNav } from './ui/PagerNav';
+import './ui/skeleton.css';
 
 export function Icon({ name, size = 20, className = '' }: { name: string; size?: number; className?: string }) {
   const paths: Record<string, ReactNode> = {
@@ -43,7 +45,7 @@ export function Icon({ name, size = 20, className = '' }: { name: string; size?:
     trash: <><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6" /></>,
     download: <path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />,
   };
-  return <svg className={'icon ' + className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">{paths[name] || paths.grid}</svg>;
+  return <svg className={'icon ' + className} data-icon={name} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">{paths[name] || paths.grid}</svg>;
 }
 
 export function Brand({ inverse = false }: { inverse?: boolean }) {
@@ -63,30 +65,71 @@ export function Notice({ message, tone = 'info' }: { message: string; tone?: 'in
   </div> : null;
 }
 
+function EyeToggleIcon() {
+  return <svg className="u-eye-svg" viewBox="0 0 20 20" aria-hidden="true">
+    <g className="u-eye-lid"><path d="M2 10s3-5.2 8-5.2S18 10 18 10s-3 5.2-8 5.2S2 10 2 10z" /><circle cx="10" cy="10" r="2.4" /></g>
+    <g className="u-eye-lash"><path d="M3 10.4c2 2.4 4.4 3.4 7 3.4s5-1 7-3.4M6 13l-1 1.6M10 14v1.8M14 13l1 1.6" /></g>
+  </svg>;
+}
+
 type FieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> & {
   label: string; value: string; onChange: (value: string) => void; hint?: string; icon?: string; error?: string;
   passwordVisible?: boolean; onPasswordVisibilityChange?: (visible: boolean) => void;
+  floating?: boolean; invalidHighlight?: boolean; shakeNonce?: number; dateRange?: DateInputRangeConfig;
 };
-export function Field({ label, value, onChange, type = 'text', required = true, hint, icon, error, passwordVisible, onPasswordVisibilityChange, ...props }: FieldProps) {
+export function Field({ label, value, onChange, type = 'text', required = true, hint, icon, error, passwordVisible, onPasswordVisibilityChange, floating = false, invalidHighlight = false, shakeNonce = 0, dateRange, onFocus, onBlur, ...props }: FieldProps) {
   const id = useId();
   const [localVisible, setLocalVisible] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const controlRef = useRef<HTMLDivElement>(null);
   const visible = passwordVisible ?? localVisible;
   const password = type === 'password';
-  return <div className="field">
-    <label htmlFor={id}>{label}</label>
-    <div className={'input-control' + (icon ? ' with-icon' : '') + (password ? ' with-toggle' : '')}>
+  const isInvalid = Boolean(error || invalidHighlight);
+  const isUp = focused || value.length > 0;
+  const describedBy = [hint ? id + '-hint' : '', error ? id + '-error' : ''].filter(Boolean).join(' ') || undefined;
+
+  useEffect(() => {
+    if (!shakeNonce || !controlRef.current) return;
+    const node = controlRef.current;
+    node.classList.remove('is-shake');
+    void node.offsetWidth;
+    node.classList.add('is-shake');
+  }, [shakeNonce]);
+
+  const inputElement = type === 'date' || type === 'datetime-local'
+    ? <DateInput id={id} value={value} onChange={event => onChange(event.target.value)}
+        onFocus={event => { setFocused(true); onFocus?.(event); }}
+        onBlur={event => { setFocused(false); onBlur?.(event); }}
+        dateRange={dateRange}
+        pickerLabel={label}
+        type={type === 'datetime-local' ? 'datetime-local' : 'date'} required={required}
+        aria-invalid={isInvalid ? true : undefined}
+        aria-describedby={describedBy} {...props} />
+    : <input id={id} value={value} onChange={event => onChange(event.target.value)}
+        onFocus={event => { setFocused(true); onFocus?.(event); }}
+        onBlur={event => { setFocused(false); onBlur?.(event); }}
+        type={password && visible ? 'text' : type} required={required}
+        aria-invalid={isInvalid ? true : undefined}
+        aria-describedby={describedBy} {...props} />;
+
+  const controlClass = [
+    'input-control',
+    icon ? 'with-icon' : '',
+    password ? 'with-toggle' : '',
+    floating ? 'is-float' : '',
+    floating && focused ? 'is-f' : '',
+    floating && isUp ? 'is-up' : '',
+    floating && isInvalid ? 'is-err' : '',
+  ].filter(Boolean).join(' ');
+
+  return <div className={'field' + (floating ? ' field-float' : '')}>
+    {!floating && <label htmlFor={id}>{label}</label>}
+    <div ref={controlRef} className={controlClass}>
+      {inputElement}
+      {floating && <label htmlFor={id}>{label}</label>}
       {icon && <Icon name={icon} size={18} className="input-leading-icon" />}
-      {type === 'date' || type === 'datetime-local'
-        ? <DateInput id={id} value={value} onChange={event => onChange(event.target.value)}
-            type={type === 'datetime-local' ? 'datetime-local' : 'date'} required={required}
-            aria-invalid={error ? true : undefined}
-            aria-describedby={[hint ? id + '-hint' : '', error ? id + '-error' : ''].filter(Boolean).join(' ') || undefined} {...props} />
-        : <input id={id} value={value} onChange={event => onChange(event.target.value)}
-            type={password && visible ? 'text' : type} required={required}
-            aria-invalid={error ? true : undefined}
-            aria-describedby={[hint ? id + '-hint' : '', error ? id + '-error' : ''].filter(Boolean).join(' ') || undefined} {...props} />}
       {password && <button className="password-toggle" type="button" disabled={props.disabled} aria-label={visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'} aria-pressed={visible}
-        onClick={() => { setLocalVisible(!visible); onPasswordVisibilityChange?.(!visible); }}><Icon name={visible ? 'eye-off' : 'eye'} size={19} /></button>}
+        onClick={() => { setLocalVisible(!visible); onPasswordVisibilityChange?.(!visible); }}><EyeToggleIcon /></button>}
     </div>
     {hint && <p className="field-hint" id={id + '-hint'}>{hint}</p>}
     {error && <p className="field-error" id={id + '-error'}>{error}</p>}
@@ -119,7 +162,20 @@ export function EmptyState({ icon = 'search', title, description, children }: {
     <h3>{title}</h3>{description && <p>{description}</p>}{children && <div className="empty-state-actions">{children}</div>}</div>;
 }
 export function LoadingState({ label = 'Đang tải dữ liệu…' }: { label?: string }) {
-  return <div className="loading-state" role="status"><span className="spinner" aria-hidden="true" />{label}</div>;
+  return <div className="loading-state" role="status" aria-busy="true">
+    <div className="u-sk-card">
+      <div className="u-sk-hero" aria-hidden="true" />
+      <div className="u-sk-body" aria-hidden="true">
+        <i className="u-sk-bar is-tag" />
+        <i className="u-sk-bar is-title" style={{ ['--d' as string]: '0.12s' }} />
+        <i className="u-sk-bar is-sub" style={{ ['--d' as string]: '0.18s' }} />
+      </div>
+      <div className="u-sk-foot">
+        <span className="spinner" aria-hidden="true" />
+        <span>{label}</span>
+      </div>
+    </div>
+  </div>;
 }
 export function StatusBadge({ status }: { status: string }) {
   const labels: Record<string, string> = { ...statusNames, SUCCESS: 'Thành công', FAILURE: 'Thất bại', DENIED: 'Bị từ chối' };
@@ -127,9 +183,7 @@ export function StatusBadge({ status }: { status: string }) {
 }
 export function Pagination({ page, change, busy }: { page: Page<unknown> | null; change: (page: number) => void; busy: boolean }) {
   if (!page) return null;
-  return <div className="pagination"><span className="pagination-summary"><strong>{page.totalElements}</strong> kết quả <span className="pagination-divider">·</span> Trang {page.number + 1}/{Math.max(1, page.totalPages)}</span>
-    <div className="pagination-buttons"><button className="secondary" disabled={busy || page.number === 0} onClick={() => change(page.number - 1)}><Icon name="chevron-left" size={15} />Trước</button>
-      <button className="secondary" disabled={busy || page.number + 1 >= page.totalPages} onClick={() => change(page.number + 1)}>Sau<Icon name="chevron-right" size={15} /></button></div></div>;
+  return <PagerNav page={page.number} totalPages={page.totalPages} totalElements={page.totalElements} busy={busy} onChange={change} />;
 }
 export const roleNames: Record<string, string> = { STUDENT: 'Sinh viên', ENTERPRISE: 'Đại diện doanh nghiệp', SCHOOL_STAFF: 'Cán bộ trường', ADMIN: 'Quản trị viên' };
 export const statusNames: Record<string, string> = { ACTIVE: 'Đang hoạt động', SUSPENDED: 'Tạm khóa', DEACTIVATED: 'Đã vô hiệu hóa', PENDING_ACTIVATION: 'Chờ kích hoạt', PENDING: 'Chờ xác thực', VERIFIED: 'Đã xác thực' };

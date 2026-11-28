@@ -9,6 +9,7 @@ export function StudentNavigation({ items, activeScreen, navigate }: {
   const utilities = items.filter(item => item.group !== 'student');
   const entry = (item: MenuItem) => <button type="button" key={item.id}
     className={'nav' + (activeScreen === item.id ? ' active' : '')}
+    title={item.title}
     aria-current={activeScreen === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}>
     <Icon name={item.icon} /><span>{item.title}</span>
   </button>;
